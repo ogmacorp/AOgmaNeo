@@ -33,7 +33,9 @@ public:
             delete p;
     }
 
-    Ptr &operator=(const Ptr &other) {
+    Ptr &operator=(
+        const Ptr &other
+    ) {
         if (p != nullptr)
             delete p;
 
@@ -48,7 +50,9 @@ public:
         return *this;
     }
 
-    Ptr &operator=(typeof(nullptr)) {
+    Ptr &operator=(
+        typeof(nullptr)
+    ) {
         if (p != nullptr)
             delete p;
 
