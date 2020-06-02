@@ -73,7 +73,7 @@ void SparseCoder::learn(
 
             float sum = vl.weights.multiplyOHVsT(hiddenCs, visibleIndex, hiddenSize.z) / (vl.weights.countT(visibleIndex) / hiddenSize.z);
 
-            float delta = ((vc == targetC ? 1.0f : 0.0f) - expf(sum));
+            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(sum));
 
             vl.weights.deltaChangedOHVsT(hiddenCs, hiddenCsPrev, delta, visibleIndex, hiddenSize.z);
         }
