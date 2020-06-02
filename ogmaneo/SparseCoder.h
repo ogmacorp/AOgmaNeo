@@ -39,8 +39,6 @@ private:
     IntBuffer hiddenCs; // Hidden states
     IntBuffer hiddenCsPrev; // Previous hidden states
 
-    FloatBuffer hiddenUsages;
-
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -49,8 +47,7 @@ private:
     
     void forward(
         const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCs
     );
 
     void learn(
@@ -65,7 +62,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.005f)
+    alpha(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization

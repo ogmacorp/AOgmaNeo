@@ -12,8 +12,7 @@ using namespace ogmaneo;
 
 void SparseCoder::forward(
     const Int2 &pos,
-    const Array<const IntBuffer*> &inputCs,
-    bool learnEnabled
+    const Array<const IntBuffer*> &inputCs
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -35,8 +34,6 @@ void SparseCoder::forward(
             count += vl.weights.count(hiddenIndex) / vld.size.z;
         }
 
-        sum /= count;
-
         if (sum > maxActivation) {
             maxActivation = sum;
             maxIndex = hc;
@@ -44,12 +41,6 @@ void SparseCoder::forward(
     }
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
-
-    if (learnEnabled) {
-        int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
-
-        hiddenUsages[hiddenIndexMax] -= alpha * hiddenUsages[hiddenIndexMax];
-    }
 }
 
 void SparseCoder::learn(
@@ -62,16 +53,32 @@ void SparseCoder::learn(
 
     int visibleColumnIndex = address2(pos, Int2(vld.size.x, vld.size.y));
 
-    int targetC = (*inputCs)[visibleColumnIndex];
+    int maxIndex = 0;
+    float maxActivation = -999999.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-        float sum = vl.weights.multiplyOHVsT(hiddenCs, visibleIndex, hiddenSize.z) / (vl.weights.countT(visibleIndex) / hiddenSize.z);
+        float sum = vl.weights.multiplyOHVsT(hiddenCs, visibleIndex, hiddenSize.z);
 
-        float delta = ((vc == targetC ? 1.0f : 0.0f) - sum);
+        if (sum > maxActivation) {
+            maxActivation = sum;
+            maxIndex = vc;
+        }
+    }
 
-        vl.weights.deltaUsageOHVsT(hiddenCs, hiddenCsPrev, hiddenUsages, delta, visibleIndex, hiddenSize.z);
+    int targetC = (*inputCs)[visibleColumnIndex];
+
+    if (maxIndex != targetC) {
+        for (int vc = 0; vc < vld.size.z; vc++) {
+            int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
+
+            float sum = vl.weights.multiplyOHVsT(hiddenCs, visibleIndex, hiddenSize.z) / (vl.weights.countT(visibleIndex) / hiddenSize.z);
+
+            float delta = ((vc == targetC ? 1.0f : 0.0f) - expf(sum));
+
+            vl.weights.deltaChangedOHVsT(hiddenCs, hiddenCsPrev, delta, visibleIndex, hiddenSize.z);
+        }
     }
 }
 
@@ -101,14 +108,12 @@ void SparseCoder::initRandom(
         vl.weights.initT();
 
         for (int i = 0; i < vl.weights.nonZeroValues.size(); i++)
-            vl.weights.nonZeroValues[i] = randf();
+            vl.weights.nonZeroValues[i] = -randf();
     }
 
     // Hidden Cs
     hiddenCs = IntBuffer(numHiddenColumns, 0);
     hiddenCsPrev = IntBuffer(numHiddenColumns, 0);
-
-    hiddenUsages = FloatBuffer(numHidden, 1.0f);
 }
 
 void SparseCoder::step(
@@ -117,7 +122,7 @@ void SparseCoder::step(
 ) {
     for (int x = 0; x < hiddenSize.x; x++)
         for (int y = 0; y < hiddenSize.y; y++)
-            forward(Int2(x, y), inputCs, learnEnabled);
+            forward(Int2(x, y), inputCs);
 
     if (learnEnabled) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
