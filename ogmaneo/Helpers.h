@@ -279,11 +279,11 @@ inline float sigmoid(
 extern unsigned long seed;
 
 inline unsigned int MWC64X(unsigned long* state) {
-    unsigned int c = (*state) >> 32, x= (*state) & 0xFFFFFFFF;
+    unsigned int c = (*state) >> 32, x = (*state) & 0xFFFFFFFF;
 
-    *state = x*((unsigned long)4294883355U) + c;
+    *state = x * ((unsigned long)4294883355U) + c;
 
-    return x^c;
+    return x ^ c;
 }
 
 int rand();

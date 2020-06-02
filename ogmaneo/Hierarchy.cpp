@@ -257,7 +257,7 @@ void Hierarchy::step(
 
             // Step actor layers
             for (int p = 0; p < pLayers[l].size(); p++) {
-                if (pLayers[l][p] != 0) {
+                if (pLayers[l][p] != nullptr) {
                     if (learnEnabled)
                         pLayers[l][p]->learn(l == 0 ? inputCs[p] : &histories[l][0][p]);
 
