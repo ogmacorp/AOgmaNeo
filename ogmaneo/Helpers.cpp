@@ -145,11 +145,11 @@ Array<const FloatBuffer*> ogmaneo::constGet(
 unsigned long ogmaneo::seed = 1234;
 
 int ogmaneo::rand() {
-    return MWC64X(&seed) % 10000;
+    return MWC64X(&seed) % 100000;
 }
 
 float ogmaneo::randf() {
-    return rand() / 9999.0f;
+    return rand() / 99999.0f;
 }
 
 float ogmaneo::randf(float low, float high) {
