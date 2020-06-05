@@ -9,7 +9,7 @@
 #pragma once
 
 #include "Helpers.h"
-#include <iostream>
+
 namespace ogmaneo {
 // Visible layer descriptor
 struct SparseCoderVisibleLayerDesc {
@@ -157,7 +157,7 @@ private:
                     Int2 visibleCenter = project(hiddenPos, hToV);
 
                     if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                        Int2 offset(ix - visibleCenter.x + vld.radius, iy - visibleCenter.y + vld.radius);
+                        Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
                         T weight = vl.weights[offset.y + offset.x * diam + area * hiddenIndex];
 
@@ -186,7 +186,7 @@ private:
                         Int2 visibleCenter = project(hiddenPos, hToV);
 
                         if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                            Int2 offset(ix - visibleCenter.x + vld.radius, iy - visibleCenter.y + vld.radius);
+                            Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
                             T weight = vl.weights[offset.y + offset.x * diam + area * hiddenIndex];
 
@@ -212,7 +212,7 @@ private:
 
                                 if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                                     if (randf(state) < probIncrease) {
-                                        Int2 offset(ix - visibleCenter.x + vld.radius, iy - visibleCenter.y + vld.radius);
+                                        Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
                                         int wi = offset.y + offset.x * diam + area * hiddenIndex;
                                     
@@ -237,7 +237,7 @@ private:
 
                                 if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                                     if (randf(state) < probDecrease) {
-                                        Int2 offset(ix - visibleCenter.x + vld.radius, iy - visibleCenter.y + vld.radius);
+                                        Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
                                         int wi = offset.y + offset.x * diam + area * hiddenIndex;
                                     
