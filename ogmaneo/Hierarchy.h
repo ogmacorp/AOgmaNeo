@@ -10,66 +10,44 @@
 
 #include "SparseCoder.h"
 #include "Predictor.h"
-#include "Actor.h"
 
 namespace ogmaneo {
 // Type of hierarchy input layer
 enum InputType {
     none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 1
 };
 
-// State of hierarchy
-struct State {
-    Array<IntBuffer> hiddenCs;
-    Array<IntBuffer> hiddenCsPrev;
-    Array<Array<Array<IntBuffer>>> predInputCsPrev;
-    Array<Array<IntBuffer>> predHiddenCs;
+// Describes a layer for construction
+struct HierarchyLayerDesc {
+    Int3 hiddenSize; // Size of hidden layer
 
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
+    int ffRadius; // Feed forward radius
+    int pRadius; // Prediction radius
 
-    Array<char> updates;
-    Array<int> ticks;
+    int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
+    int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
+
+    HierarchyLayerDesc()
+    :
+    hiddenSize(4, 4, 16),
+    ffRadius(2),
+    pRadius(2),
+    ticksPerUpdate(2),
+    temporalHorizon(4)
+    {}
 };
 
 // A SPH
+template <typename T>
 class Hierarchy {
-public:
-    // Describes a layer for construction
-    struct LayerDesc {
-        Int3 hiddenSize; // Size of hidden layer
-
-        int ffRadius; // Feed forward radius
-        int pRadius; // Prediction radius
-
-        int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-
-        int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
-
-        // If there is an actor (only valid for first layer)
-        int aRadius;
-        int historyCapacity;
-
-        LayerDesc()
-        :
-        hiddenSize(4, 4, 16),
-        ffRadius(2),
-        pRadius(2),
-        ticksPerUpdate(2),
-        temporalHorizon(4),
-        aRadius(2),
-        historyCapacity(32)
-        {}
-    };
 private:
     // Layers
-    Array<SparseCoder> scLayers;
-    Array<Array<Ptr<Predictor>>> pLayers;
-    Array<Ptr<Actor>> aLayers;
+    Array<SparseCoder<T>> scLayers;
+    Array<Array<Ptr<Predictor<T>>>> pLayers;
 
     // Histories
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
+    Array<Array<CircleBuffer<ByteBuffer>>> histories;
 
     // Per-layer values
     Array<char> updates;
@@ -94,32 +72,230 @@ public:
     // Assignment
     const Hierarchy &operator=(
         const Hierarchy &other // Hierarchy to assign from
-    );
+    ) {
+        // Layers
+        scLayers = other.scLayers;
+
+        updates = other.updates;
+        ticks = other.ticks;
+        ticksPerUpdate = other.ticksPerUpdate;
+        inputSizes = other.inputSizes;
+        histories = other.histories;
+
+        pLayers.resize(other.pLayers.size());
+        
+        for (int l = 0; l < scLayers.size(); l++) {
+            pLayers[l].resize(other.pLayers[l].size());
+
+            for (int v = 0; v < pLayers[l].size(); v++) {
+                if (other.pLayers[l][v] != nullptr) {
+                    pLayers[l][v].make();
+
+                    (*pLayers[l][v]) = (*other.pLayers[l][v]);
+                }
+                else
+                    pLayers[l][v] = nullptr;
+            }
+        }
+
+        return *this;
+    }
     
     // Create a randomly initialized hierarchy
     void initRandom(
         const Array<Int3> &inputSizes, // Sizes of input layers
         const Array<InputType> &inputTypes, // Types of input layers (same size as inputSizes)
-        const Array<LayerDesc> &layerDescs // Descriptors for layers
-    );
+        const Array<HierarchyLayerDesc> &layerDescs // Descriptors for layers
+    ) {
+        // Create layers
+        scLayers.resize(layerDescs.size());
+        pLayers.resize(layerDescs.size());
+
+        ticks.resize(layerDescs.size(), 0);
+
+        histories.resize(layerDescs.size());
+        
+        ticksPerUpdate.resize(layerDescs.size());
+
+        // Default update state is no update
+        updates.resize(layerDescs.size(), false);
+
+        // Cache input sizes
+        this->inputSizes = inputSizes;
+
+        // Determine ticks per update, first layer is always 1
+        for (int l = 0; l < layerDescs.size(); l++)
+            ticksPerUpdate[l] = l == 0 ? 1 : layerDescs[l].ticksPerUpdate; // First layer always 1
+
+        // Iterate through layers
+        for (int l = 0; l < layerDescs.size(); l++) {
+            // Create sparse coder visible layer descriptors
+            Array<SparseCoderVisibleLayerDesc> scVisibleLayerDescs;
+
+            // If first layer
+            if (l == 0) {
+                scVisibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon);
+
+                for (int i = 0; i < inputSizes.size(); i++) {
+                    for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
+                        int index = t + layerDescs[l].temporalHorizon * i;
+
+                        scVisibleLayerDescs[index].size = inputSizes[i];
+                        scVisibleLayerDescs[index].radius = layerDescs[l].ffRadius;
+                    }
+                }
+                
+                // Initialize history buffers
+                histories[l].resize(inputSizes.size());
+
+                for (int i = 0; i < histories[l].size(); i++) {
+                    int inSize = inputSizes[i].x * inputSizes[i].y;
+
+                    histories[l][i].resize(layerDescs[l].temporalHorizon);
+                    
+                    for (int t = 0; t < histories[l][i].size(); t++)
+                        histories[l][i][t] = ByteBuffer(inSize, 0);
+                }
+
+                // Predictors
+                pLayers[l].resize(inputSizes.size());
+
+                // Predictor visible layer descriptors
+                Array<PredictorVisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+
+                pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+                pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
+
+                if (l < scLayers.size() - 1)
+                    pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
+
+                // Create predictors
+                for (int p = 0; p < pLayers[l].size(); p++) {
+                    if (inputTypes[p] == InputType::prediction) {
+                        pLayers[l][p].make();
+
+                        pLayers[l][p]->initRandom(inputSizes[p], pVisibleLayerDescs);
+                    }
+                }
+            }
+            else {
+                scVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
+
+                for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
+                    scVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
+                    scVisibleLayerDescs[t].radius = layerDescs[l].ffRadius;
+                }
+
+                histories[l].resize(1);
+
+                int inSize = layerDescs[l - 1].hiddenSize.x * layerDescs[l - 1].hiddenSize.y;
+
+                histories[l][0].resize(layerDescs[l].temporalHorizon);
+
+                for (int t = 0; t < histories[l][0].size(); t++)
+                    histories[l][0][t] = ByteBuffer(inSize, 0);
+
+                pLayers[l].resize(layerDescs[l].ticksPerUpdate);
+
+                // Predictor visible layer descriptors
+                Array<PredictorVisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+
+                pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+                pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
+
+                if (l < scLayers.size() - 1)
+                    pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
+
+                // Create actors
+                for (int p = 0; p < pLayers[l].size(); p++) {
+                    pLayers[l][p].make();
+
+                    pLayers[l][p]->initRandom(layerDescs[l - 1].hiddenSize, pVisibleLayerDescs);
+                }
+            }
+            
+            // Create the sparse coding layer
+            scLayers[l].initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
+        }
+    }
 
     // Simulation step/tick
     void step(
-        const Array<const IntBuffer*> &inputCs, // Inputs to remember
-        bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f, // Optional reward for actor layers
-        bool mimic = false
-    );
+        const Array<const ByteBuffer*> &inputCs, // Inputs to remember
+        bool learnEnabled = true // Whether learning is enabled
+    ) {
+        // First tick is always 0
+        ticks[0] = 0;
 
-    // State get
-    void getState(
-        State &state
-    ) const;
+        // Add input to first layer history   
+        for (int i = 0; i < inputSizes.size(); i++) {
+            histories[0][i].pushFront();
 
-    // State set
-    void setState(
-        const State &state
-    );
+            histories[0][i][0] = *inputCs[i];
+        }
+
+        // Set all updates to no update, will be set to true if an update occurred later
+        for (int i = 0; i < updates.size(); i++)
+            updates[i] = false;
+
+        // Forward
+        for (int l = 0; l < scLayers.size(); l++) {
+            // If is time for layer to tick
+            if (l == 0 || ticks[l] >= ticksPerUpdate[l]) {
+                // Reset tick
+                ticks[l] = 0;
+
+                // Updated
+                updates[l] = true;
+
+                Array<const ByteBuffer*> layerInputCs(histories[l].size() * histories[l][0].size());
+
+                int index = 0;
+
+                for (int i = 0; i < histories[l].size(); i++) {
+                    for (int t = 0; t < histories[l][i].size(); t++)
+                        layerInputCs[index++] = &histories[l][i][t];
+                }
+
+                // Activate sparse coder
+                scLayers[l].step(layerInputCs, learnEnabled);
+
+                // Add to next layer's history
+                if (l < scLayers.size() - 1) {
+                    int lNext = l + 1;
+
+                    histories[lNext][0].pushFront();
+
+                    histories[lNext][0][0] = scLayers[l].getHiddenCs();
+
+                    ticks[lNext]++;
+                }
+            }
+        }
+
+        // Backward
+        for (int l = scLayers.size() - 1; l >= 0; l--) {
+            if (updates[l]) {
+                // Feed back is current layer state and next higher layer prediction
+                Array<const ByteBuffer*> feedBackCs(l < scLayers.size() - 1 ? 2 : 1);
+
+                feedBackCs[0] = &scLayers[l].getHiddenCs();
+
+                if (l < scLayers.size() - 1)
+                    feedBackCs[1] = &pLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]]->getHiddenCs();
+
+                // Step actor layers
+                for (int p = 0; p < pLayers[l].size(); p++) {
+                    if (pLayers[l][p] != nullptr) {
+                        if (learnEnabled)
+                            pLayers[l][p]->learn(l == 0 ? inputCs[p] : &histories[l][0][p]);
+
+                        pLayers[l][p]->activate(feedBackCs);
+                    }
+                }
+            }
+        }
+    }
 
     // Get the number of layers (scLayers)
     int getNumLayers() const {
@@ -127,12 +303,9 @@ public:
     }
 
     // Retrieve predictions
-    const IntBuffer &getPredictionCs(
+    const ByteBuffer &getPredictionCs(
         int i // Index of input layer to get predictions for
     ) const {
-        if (aLayers[i] != nullptr) // If is an action layer
-            return aLayers[i]->getHiddenCs();
-
         return pLayers[0][i]->getHiddenCs();
     }
 
@@ -163,41 +336,31 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    SparseCoder &getSCLayer(
+    SparseCoder<T> &getSCLayer(
         int l // Layer index
     ) {
         return scLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const SparseCoder &getSCLayer(
+    const SparseCoder<T> &getSCLayer(
         int l // Layer index
     ) const {
         return scLayers[l];
     }
 
     // Retrieve predictor layer(s)
-    Array<Ptr<Predictor>> &getPLayers(
+    Array<Ptr<Predictor<T>>> &getPLayers(
         int l // Layer index
     ) {
         return pLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Ptr<Predictor>> &getPLayers(
+    const Array<Ptr<Predictor<T>>> &getPLayers(
         int l // Layer index
     ) const {
         return pLayers[l];
-    }
-
-    // Retrieve predictor layer(s)
-    Array<Ptr<Actor>> &getALayers() {
-        return aLayers;
-    }
-
-    // Retrieve predictor layer(s), const version
-    const Array<Ptr<Actor>> &getALayers() const {
-        return aLayers;
     }
 };
 } // namespace ogmaneo

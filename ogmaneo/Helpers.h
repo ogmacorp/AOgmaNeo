@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "SparseMatrix.h"
+#include "Array.h"
 #include "Ptr.h"
 
 namespace ogmaneo {
@@ -16,6 +16,15 @@ const int expIters = 10;
 const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
 
 float expf(float x);
+
+inline float ceilf(
+    float x
+) {
+    if (x > 0)
+        return (x - static_cast<int>(x)) > 0 ? static_cast<int>(x + 1) : static_cast<int>(x);
+
+    return (x - static_cast<int>(x)) < 0 ? static_cast<int>(x - 1) : static_cast<int>(x);
+}
 
 template <typename T>
 T min(
@@ -98,6 +107,12 @@ typedef Vec4<float> Float4;
 
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
+typedef Array<unsigned char> ByteBuffer;
+
+typedef unsigned char ColSize8;
+typedef unsigned short ColSize16;
+typedef unsigned int ColSize32;
+typedef unsigned long ColSize64;
 
 // --- Circular Buffer ---
 
@@ -152,18 +167,6 @@ struct CircleBuffer {
         return data.size();
     }
 };
-
-// --- Basic Kernels ---
-
-void copyInt(
-    const IntBuffer* src, // Source buffer
-    IntBuffer* dst // Destination buffer
-);
-
-void copyFloat(
-    const FloatBuffer* src, // Source buffer
-    FloatBuffer* dst // Destination buffer
-);
 
 // --- Bounds ---
 
@@ -226,37 +229,53 @@ inline int address4(
 
 // --- Getters ---
 
-Array<IntBuffer*> get(
-    Array<IntBuffer> &v
-);
+template <typename T>
+Array<Array<T>*> get(
+    Array<Array<T>> &v
+) {
+    Array<T*> vp(v.size());
 
-Array<FloatBuffer*> get(
-    Array<FloatBuffer> &v
-);
+    for (int i = 0; i < v.size(); i++)
+        vp[i] = &v[i];
 
-Array<const IntBuffer*> constGet(
-    const Array<IntBuffer> &v
-);
+    return vp;
+}
 
-Array<const FloatBuffer*> constGet(
-    const Array<FloatBuffer> &v
-);
+template <typename T>
+Array<const Array<T>*> constGet(
+    Array<Array<T>> &v
+) {
+    Array<const T*> vp(v.size());
 
-Array<IntBuffer*> get(
-    CircleBuffer<IntBuffer> &v
-);
+    for (int i = 0; i < v.size(); i++)
+        vp[i] = &v[i];
 
-Array<FloatBuffer*> get(
-    CircleBuffer<FloatBuffer> &v
-);
+    return vp;
+}
 
-Array<const IntBuffer*> constGet(
-    const CircleBuffer<IntBuffer> &v
-);
+template <typename T>
+Array<Array<T>*> get(
+    const CircleBuffer<Array<T>> &v
+) {
+    Array<T*> vp(v.size());
 
-Array<const FloatBuffer*> constGet(
-    const CircleBuffer<FloatBuffer> &v
-);
+    for (int i = 0; i < v.size(); i++)
+        vp[i] = &v[i];
+
+    return vp;
+}
+
+template <typename T>
+Array<const Array<T>*> constGet(
+    const CircleBuffer<Array<T>> &v
+) {
+    Array<const T*> vp(v.size());
+
+    for (int i = 0; i < v.size(); i++)
+        vp[i] = &v[i];
+
+    return vp;
+}
 
 // --- Noninearities ---
 
@@ -276,9 +295,11 @@ inline float sigmoid(
 
 // From http://cas.ee.ic.ac.uk/people/dt10/research/rngs-gpu-mwc64x.html
 
-extern unsigned long seed;
+extern unsigned long globalState;
 
-inline unsigned int MWC64X(unsigned long* state) {
+inline unsigned int MWC64X(
+    unsigned long* state
+) {
     unsigned int c = (*state) >> 32, x = (*state) & 0xffffffff;
 
     *state = x * ((unsigned long)4294883355u) + c;
@@ -286,17 +307,37 @@ inline unsigned int MWC64X(unsigned long* state) {
     return x ^ c;
 }
 
-int rand();
-float randf();
-float randf(float low, float high);
-
-// --- Sparse Matrix Generation ---
-
-// Sparse matrix init
-void initSMLocalRF(
-    const Int3 &inSize, // Size of input field
-    const Int3 &outSize, // Size of output field
-    int radius, // Radius of output onto input
-    SparseMatrix &mat // Matrix to fill
+unsigned int rand(
+    unsigned long* state = &globalState
 );
+
+float randf(
+    unsigned long* state = &globalState
+);
+
+float randf(
+    float low,
+    float high,
+    unsigned long* state = &globalState
+);
+
+template <typename T>
+T randBits(
+    unsigned long* state = &globalState
+) {
+    int numBytes = sizeof(T);
+
+    T out = 0;
+
+    for (int i = 0; i < numBytes; i++) {
+        unsigned char b = rand(state) % 256;
+
+        out = out | b;
+
+        if (i < numBytes - 1)
+            out = out << 8;
+    }
+
+    return out;
+}
 } // namespace ogmaneo

@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #pragma once
-
+#include <assert.h>
 namespace ogmaneo {
 template<class T>
 class Array {
@@ -117,12 +117,16 @@ public:
     T &operator[](
         int index
     ) {
+        assert(index >= 0 && index < s);
+
         return p[index];
     }
 
     const T &operator[](
         int index
     ) const {
+        assert(index >= 0 && index < s);
+        
         return p[index];
     }
 
