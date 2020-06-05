@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "Array.h"
 #include "Ptr.h"
+#include "Array.h"
 
 namespace ogmaneo {
 const int expIters = 10;
@@ -243,9 +243,9 @@ Array<Array<T>*> get(
 
 template <typename T>
 Array<const Array<T>*> constGet(
-    Array<Array<T>> &v
+    const Array<Array<T>> &v
 ) {
-    Array<const T*> vp(v.size());
+    Array<const Array<T>*> vp(v.size());
 
     for (int i = 0; i < v.size(); i++)
         vp[i] = &v[i];
@@ -255,7 +255,7 @@ Array<const Array<T>*> constGet(
 
 template <typename T>
 Array<Array<T>*> get(
-    const CircleBuffer<Array<T>> &v
+    CircleBuffer<Array<T>> &v
 ) {
     Array<T*> vp(v.size());
 
@@ -269,7 +269,7 @@ template <typename T>
 Array<const Array<T>*> constGet(
     const CircleBuffer<Array<T>> &v
 ) {
-    Array<const T*> vp(v.size());
+    Array<const Array<T>*> vp(v.size());
 
     for (int i = 0; i < v.size(); i++)
         vp[i] = &v[i];

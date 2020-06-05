@@ -10,12 +10,14 @@
 
 #include "SparseCoder.h"
 #include "Predictor.h"
+#include "Actor.h"
 
 namespace ogmaneo {
 // Type of hierarchy input layer
 enum InputType {
     none = 0,
-    prediction = 1
+    prediction = 1,
+    action = 2
 };
 
 // Describes a layer for construction
@@ -24,17 +26,22 @@ struct HierarchyLayerDesc {
 
     int ffRadius; // Feed forward radius
     int pRadius; // Prediction radius
+    int aRadius; // Actor radius
 
     int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
     int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
+
+    int historyCapacity;
 
     HierarchyLayerDesc()
     :
     hiddenSize(4, 4, 16),
     ffRadius(2),
     pRadius(2),
+    aRadius(2),
     ticksPerUpdate(2),
-    temporalHorizon(4)
+    temporalHorizon(4),
+    historyCapacity(32)
     {}
 };
 
@@ -45,6 +52,7 @@ private:
     // Layers
     Array<SparseCoder<T>> scLayers;
     Array<Array<Ptr<Predictor<T>>>> pLayers;
+    Array<Ptr<Actor<T>>> aLayers;
 
     // Histories
     Array<Array<CircleBuffer<ByteBuffer>>> histories;
@@ -96,6 +104,18 @@ public:
                 else
                     pLayers[l][v] = nullptr;
             }
+        }
+
+        aLayers.resize(inputSizes.size());
+    
+        for (int v = 0; v < aLayers.size(); v++) {
+            if (other.aLayers[v] != nullptr) {
+                aLayers[v].make();
+
+                (*aLayers[v]) = (*other.aLayers[v]);
+            }
+            else
+                aLayers[v] = nullptr;
         }
 
         return *this;
@@ -169,12 +189,29 @@ public:
                 if (l < scLayers.size() - 1)
                     pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
 
+                // Actors
+                aLayers.resize(inputSizes.size());
+
+                // Actor visible layer descriptors
+                Array<ActorVisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+
+                aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+                aVisibleLayerDescs[0].radius = layerDescs[l].aRadius;
+
+                if (l < scLayers.size() - 1)
+                    aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
+
                 // Create predictors
                 for (int p = 0; p < pLayers[l].size(); p++) {
                     if (inputTypes[p] == InputType::prediction) {
                         pLayers[l][p].make();
 
                         pLayers[l][p]->initRandom(inputSizes[p], pVisibleLayerDescs);
+                    }
+                    else if (inputTypes[p] == InputType::action) {
+                        aLayers[p].make();
+
+                        aLayers[p]->initRandom(inputSizes[p], layerDescs[l].historyCapacity, aVisibleLayerDescs);
                     }
                 }
             }
@@ -222,7 +259,9 @@ public:
     // Simulation step/tick
     void step(
         const Array<const ByteBuffer*> &inputCs, // Inputs to remember
-        bool learnEnabled = true // Whether learning is enabled
+        bool learnEnabled = true, // Whether learning is enabled
+        float reward = 0.0f, // Reinforcement signal
+        bool mimic = false // For imitation learning
     ) {
         // First tick is always 0
         ticks[0] = 0;
@@ -293,6 +332,14 @@ public:
                         pLayers[l][p]->activate(feedBackCs);
                     }
                 }
+
+                if (l == 0) {
+                    // Step actors
+                    for (int p = 0; p < aLayers.size(); p++) {
+                        if (aLayers[p] != nullptr)
+                            aLayers[p]->step(feedBackCs, inputCs[p], reward, learnEnabled, mimic);
+                    }
+                }
             }
         }
     }
@@ -306,6 +353,9 @@ public:
     const ByteBuffer &getPredictionCs(
         int i // Index of input layer to get predictions for
     ) const {
+        if (aLayers[i] != nullptr) // If is an action layer
+            return aLayers[i]->getHiddenCs();
+
         return pLayers[0][i]->getHiddenCs();
     }
 
@@ -361,6 +411,16 @@ public:
         int l // Layer index
     ) const {
         return pLayers[l];
+    }
+
+    // Retrieve predictor layer(s)
+    Array<Ptr<Actor<T>>> &getALayers() {
+        return aLayers;
+    }
+
+    // Retrieve predictor layer(s), const version
+    const Array<Ptr<Actor<T>>> &getALayers() const {
+        return aLayers;
     }
 };
 } // namespace ogmaneo
