@@ -200,7 +200,7 @@ void Actor::initRandom(
         initSMLocalRF(vld.size, hiddenSize, vld.radius, vl.actionWeights);
 
         for (int i = 0; i < vl.valueWeights.nonZeroValues.size(); i++)
-            vl.valueWeights.nonZeroValues[i] = 0.0f;
+            vl.valueWeights.nonZeroValues[i] = randf(-0.01f, 0.01f);
 
         for (int i = 0; i < vl.actionWeights.nonZeroValues.size(); i++)
             vl.actionWeights.nonZeroValues[i] = randf(-0.01f, 0.01f);
