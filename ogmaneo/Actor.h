@@ -231,8 +231,6 @@ private:
 
             float prob = static_cast<float>(sum) / static_cast<float>(count);
 
-            std::cout << prob << std::endl;
-            
             if ((hc == targetC) == (tdErrorAction > 0.0f)) {
                 float probIncrease = beta * (1.0f - prob);
 
