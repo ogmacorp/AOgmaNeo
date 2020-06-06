@@ -195,59 +195,57 @@ private:
                         }
                     }
 
-                if (count > 0) {
-                    float prob = static_cast<float>(sum) / static_cast<float>(count);
+                float prob = static_cast<float>(sum) / static_cast<float>(count);
 
-                    if (vc == targetC) {
-                        float probIncrease = alpha * (1.0f - prob);
+                if (vc == targetC) {
+                    float probIncrease = alpha * (1.0f - prob);
 
-                        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                                Int2 hiddenPos = Int2(ix, iy);
+                    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                            Int2 hiddenPos = Int2(ix, iy);
 
-                                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                                int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+                            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                            int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-                                Int2 visibleCenter = project(hiddenPos, hToV);
+                            Int2 visibleCenter = project(hiddenPos, hToV);
 
-                                if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                                    if (randf(state) < probIncrease) {
-                                        Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
+                            if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                                if (randf(state) < probIncrease) {
+                                    Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                                        int wi = offset.y + offset.x * diam + area * hiddenIndex;
-                                    
-                                        T weight = vl.weights[wi];
-                                    
-                                        vl.weights[wi] = weight | (1 << vc);
-                                    }
+                                    int wi = offset.y + offset.x * diam + area * hiddenIndex;
+                                
+                                    T weight = vl.weights[wi];
+                                
+                                    vl.weights[wi] = weight | (1 << vc);
                                 }
                             }
-                    }
-                    else {
-                        float probDecrease = alpha * prob;
+                        }
+                }
+                else {
+                    float probDecrease = alpha * prob;
 
-                        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                                Int2 hiddenPos = Int2(ix, iy);
+                    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                            Int2 hiddenPos = Int2(ix, iy);
 
-                                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                                int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+                            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                            int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-                                Int2 visibleCenter = project(hiddenPos, hToV);
+                            Int2 visibleCenter = project(hiddenPos, hToV);
 
-                                if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                                    if (randf(state) < probDecrease) {
-                                        Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
+                            if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                                if (randf(state) < probDecrease) {
+                                    Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                                        int wi = offset.y + offset.x * diam + area * hiddenIndex;
-                                    
-                                        T weight = vl.weights[wi];
-                                    
-                                        vl.weights[wi] = weight & ~(1 << vc);
-                                    }
+                                    int wi = offset.y + offset.x * diam + area * hiddenIndex;
+                                
+                                    T weight = vl.weights[wi];
+                                
+                                    vl.weights[wi] = weight & ~(1 << vc);
                                 }
                             }
-                    }
+                        }
                 }
             }
         }

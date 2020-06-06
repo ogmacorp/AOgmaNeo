@@ -204,90 +204,88 @@ private:
                         }
                 }
 
-                if (count > 0) {
-                    float prob = static_cast<float>(sum) / static_cast<float>(count);
-                    
-                    if (hc == targetC) {
-                        float probIncrease = alpha * (1.0f - prob);
+                float prob = static_cast<float>(sum) / static_cast<float>(count);
+                
+                if (hc == targetC) {
+                    float probIncrease = alpha * (1.0f - prob);
 
-                        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                            VisibleLayer &vl = visibleLayers[vli];
-                            const PredictorVisibleLayerDesc &vld = visibleLayerDescs[vli];
+                    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+                        VisibleLayer &vl = visibleLayers[vli];
+                        const PredictorVisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-                            int diam = vld.radius * 2 + 1;
-                            int area = diam * diam;
+                        int diam = vld.radius * 2 + 1;
+                        int area = diam * diam;
 
-                            // Projection
-                            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+                        // Projection
+                        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-                            Int2 visibleCenter = project(pos, hToV);
+                        Int2 visibleCenter = project(pos, hToV);
 
-                            // Lower corner
-                            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+                        // Lower corner
+                        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-                            // Bounds of receptive field, clamped to input size
-                            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+                        // Bounds of receptive field, clamped to input size
+                        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+                        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                                    if (randf(state) < probIncrease) {
-                                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                                if (randf(state) < probIncrease) {
+                                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                                        int wi = offset.y + offset.x * diam + area * hiddenIndex;
+                                    int wi = offset.y + offset.x * diam + area * hiddenIndex;
 
-                                        T weight = vl.weights[wi];
+                                    T weight = vl.weights[wi];
 
-                                        unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
+                                    unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                                        vl.weights[wi] = weight | (1 << inC);
-                                    }
+                                    vl.weights[wi] = weight | (1 << inC);
                                 }
-                        }
+                            }
                     }
-                    else {
-                        float probDecrease = alpha * prob;
+                }
+                else {
+                    float probDecrease = alpha * prob;
 
-                        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                            VisibleLayer &vl = visibleLayers[vli];
-                            const PredictorVisibleLayerDesc &vld = visibleLayerDescs[vli];
+                    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+                        VisibleLayer &vl = visibleLayers[vli];
+                        const PredictorVisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-                            int diam = vld.radius * 2 + 1;
-                            int area = diam * diam;
+                        int diam = vld.radius * 2 + 1;
+                        int area = diam * diam;
 
-                            // Projection
-                            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+                        // Projection
+                        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-                            Int2 visibleCenter = project(pos, hToV);
+                        Int2 visibleCenter = project(pos, hToV);
 
-                            // Lower corner
-                            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+                        // Lower corner
+                        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-                            // Bounds of receptive field, clamped to input size
-                            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+                        // Bounds of receptive field, clamped to input size
+                        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+                        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                                    if (randf(state) < probDecrease) {
-                                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                                if (randf(state) < probDecrease) {
+                                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                                        int wi = offset.y + offset.x * diam + area * hiddenIndex;
+                                    int wi = offset.y + offset.x * diam + area * hiddenIndex;
 
-                                        T weight = vl.weights[wi];
+                                    T weight = vl.weights[wi];
 
-                                        unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
+                                    unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                                        vl.weights[wi] = weight & ~(1 << inC);
-                                    }
+                                    vl.weights[wi] = weight & ~(1 << inC);
                                 }
-                        }
+                            }
                     }
                 }
             }
