@@ -298,15 +298,15 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.5f)
+    alpha(0.3f)
     {}
 
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
-        const Array<PredictorVisibleLayerDesc> &visibleLayerDescs // First visible layer must be from current hidden state, second must be feed back state, rest can be whatever
+        const Array<PredictorVisibleLayerDesc> &visibleLayerDescs
     ) {
-        this->visibleLayerDescs = visibleLayerDescs;
+        this->visibleLayerDescs = visibleLayerDescs; 
 
         this->hiddenSize = hiddenSize;
 
