@@ -32,6 +32,8 @@ public:
     // Visible layer
     struct VisibleLayer {
         Array<T> weights; // Binary weight matrix
+
+        FloatBuffer visibleProbs; // Temporary storage for probabilties
     };
 
 private:
@@ -143,7 +145,10 @@ private:
 
         // Find current max
         for (int vc = 0; vc < vld.size.z; vc++) {
+            int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
+
             int sum = 0;
+            int count = 0;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -160,8 +165,11 @@ private:
                         T weight = vl.weights[offset.y + offset.x * diam + area * hiddenIndex];
 
                         sum += (weight & (1 << vc)) == 0 ? 0 : 1;
+                        count++;
                     }
                 }
+
+            vl.visibleProbs[visibleIndex] = static_cast<float>(sum) / static_cast<float>(count);
 
             if (sum > maxActivation) {
                 maxActivation = sum;
@@ -171,29 +179,9 @@ private:
 
         if (maxIndex != targetC) {
             for (int vc = 0; vc < vld.size.z; vc++) {
-                int sum = 0;
-                int count = 0;
+                int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                        Int2 hiddenPos = Int2(ix, iy);
-
-                        int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                        int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
-
-                        Int2 visibleCenter = project(hiddenPos, hToV);
-
-                        if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                            Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
-
-                            T weight = vl.weights[offset.y + offset.x * diam + area * hiddenIndex];
-
-                            sum += (weight & (1 << vc)) == 0 ? 0 : 1;
-                            count++;
-                        }
-                    }
-
-                float prob = static_cast<float>(sum) / static_cast<float>(count);
+                float prob = vl.visibleProbs[visibleIndex];
 
                 if (vc == targetC) {
                     float probIncrease = alpha * (1.0f - prob);
@@ -278,6 +266,9 @@ public:
             VisibleLayer &vl = visibleLayers[vli];
             const SparseCoderVisibleLayerDesc &vld = this->visibleLayerDescs[vli];
 
+            int numVisibleColumns = vld.size.x * vld.size.y;
+            int numVisible = numVisibleColumns * vld.size.z;
+
             int diam = vld.radius * 2 + 1;
             int area = diam * diam;
 
@@ -286,6 +277,8 @@ public:
             // Initialize to random values
             for (int i = 0; i < vl.weights.size(); i++)
                 vl.weights[i] = randBits<T>();
+
+            vl.visibleProbs = FloatBuffer(numVisible, 0.0f);
         }
 
         // Hidden Cs

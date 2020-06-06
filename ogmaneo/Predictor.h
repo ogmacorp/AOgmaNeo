@@ -41,6 +41,8 @@ private:
 
     ByteBuffer hiddenCs; // Hidden state
 
+    FloatBuffer hiddenProbs; // Temporary storage for probabilties
+
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
     Array<PredictorVisibleLayerDesc> visibleLayerDescs;
@@ -121,6 +123,7 @@ private:
             int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
             int sum = 0;
+            int count = 0;
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -153,8 +156,11 @@ private:
                         unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
                         sum += (weight & (1 << inC)) == 0 ? 0 : 1;
+                        count++;
                     }
             }
+
+            hiddenProbs[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(count);
 
             if (sum > maxActivation) {
                 maxActivation = sum;
@@ -166,45 +172,7 @@ private:
             for (int hc = 0; hc < hiddenSize.z; hc++) {
                 int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-                int sum = 0;
-                int count = 0;
-
-                for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                    VisibleLayer &vl = visibleLayers[vli];
-                    const PredictorVisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-                    int diam = vld.radius * 2 + 1;
-                    int area = diam * diam;
-
-                    // Projection
-                    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-
-                    Int2 visibleCenter = project(pos, hToV);
-
-                    // Lower corner
-                    Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
-
-                    // Bounds of receptive field, clamped to input size
-                    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                    Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
-
-                    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                            int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
-
-                            Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                            T weight = vl.weights[offset.y + offset.x * diam + area * hiddenIndex];
-
-                            unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
-
-                            sum += (weight & (1 << inC)) == 0 ? 0 : 1;
-                            count++;
-                        }
-                }
-
-                float prob = static_cast<float>(sum) / static_cast<float>(count);
+                float prob = hiddenProbs[hiddenIndex];
                 
                 if (hc == targetC) {
                     float probIncrease = alpha * (1.0f - prob);
@@ -337,6 +305,8 @@ public:
 
         // Hidden Cs
         hiddenCs = ByteBuffer(numHiddenColumns, 0);
+
+        hiddenProbs = FloatBuffer(numHidden, 0.0f);
     }
 
     // Activate the predictor (predict values)
