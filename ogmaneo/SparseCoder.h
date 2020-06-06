@@ -291,20 +291,24 @@ public:
         const Array<const ByteBuffer*> &inputCs, // Input states
         bool learnEnabled // Whether to learn
     ) {
-        for (int x = 0; x < hiddenSize.x; x++)
-            for (int y = 0; y < hiddenSize.y; y++)
-                forward(Int2(x, y), inputCs);
+        int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+        
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
 
         if (learnEnabled) {
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 const SparseCoderVisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-                for (int x = 0; x < vld.size.x; x++)
-                    for (int y = 0; y < vld.size.y; y++) {
-                        unsigned long state = rand();
+                int numVisibleColumns = vld.size.x * vld.size.y;
+            
+                #pragma omp parallel for
+                for (int i = 0; i < numVisibleColumns; i++) {
+                    unsigned long state = rand();
 
-                        learn(Int2(x, y), inputCs[vli], vli, &state);
-                    }
+                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs[vli], vli, &state);
+                }
             }
         }
 

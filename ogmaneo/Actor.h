@@ -425,10 +425,12 @@ public:
         bool learnEnabled,
         bool mimic
     ) {
+        int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+
         // Forward kernel
-        for (int x = 0; x < hiddenSize.x; x++)
-            for (int y = 0; y < hiddenSize.y; y++)
-                forward(Int2(x, y), inputCs);
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
 
         historySamples.pushFront();
 
@@ -470,12 +472,12 @@ public:
                     g *= gamma;
                 }
 
-                for (int x = 0; x < hiddenSize.x; x++)
-                    for (int y = 0; y < hiddenSize.y; y++) {
-                        unsigned long state = rand();
+                #pragma omp parallel for
+                for (int i = 0; i < numHiddenColumns; i++) {
+                    unsigned long state = rand();
 
-                        learn(Int2(x, y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic, &state);
-                    }
+                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic, &state);
+                }
             }
         }
     }

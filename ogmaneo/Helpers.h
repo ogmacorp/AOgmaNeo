@@ -10,6 +10,7 @@
 
 #include "Ptr.h"
 #include "Array.h"
+#include <omp.h>
 
 namespace ogmaneo {
 const int expIters = 10;
@@ -46,6 +47,14 @@ T max(
         return left;
     
     return right;
+}
+
+inline void setNumThreads(int numThreads) {
+    omp_set_num_threads(numThreads);
+}
+
+inline int getNumThreads() {
+    return omp_get_num_threads();
 }
 
 // Vector types

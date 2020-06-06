@@ -313,10 +313,12 @@ public:
     void activate(
         const Array<const ByteBuffer*> &inputCs // Hidden/output/prediction size
     ) {
+        int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+
         // Forward kernel
-        for (int x = 0; x < hiddenSize.x; x++)
-            for (int y = 0; y < hiddenSize.y; y++)
-                forward(Int2(x, y), inputCs);
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
 
         // Copy to prevs
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -330,13 +332,15 @@ public:
     void learn(
         const ByteBuffer* hiddenTargetCs
     ) {
+        int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+        
         // Learn kernel
-        for (int x = 0; x < hiddenSize.x; x++)
-            for (int y = 0; y < hiddenSize.y; y++) {
-                unsigned long state = rand();
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++) {
+            unsigned long state = rand();
 
-                learn(Int2(x, y), hiddenTargetCs, &state);
-            }
+            learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCs, &state);
+        }
     }
 
     // Get number of visible layers
