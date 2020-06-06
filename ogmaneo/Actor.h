@@ -283,7 +283,7 @@ private:
                         float prob = static_cast<float>(sum) / static_cast<float>(count);
                         
                         if (hc == targetC) {
-                            float probIncrease = alpha * (1.0f - prob);
+                            float probIncrease = beta * (1.0f - prob);
 
                             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                                 VisibleLayer &vl = visibleLayers[vli];
@@ -324,7 +324,7 @@ private:
                             }
                         }
                         else {
-                            float probDecrease = alpha * prob;
+                            float probDecrease = beta * prob;
 
                             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                                 VisibleLayer &vl = visibleLayers[vli];
@@ -380,11 +380,11 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.03f),
-    beta(0.03f),
+    alpha(0.01f),
+    beta(0.5f),
     gamma(0.99f),
-    minSteps(4),
-    historyIters(4)
+    minSteps(8),
+    historyIters(8)
     {}
 
     // Initialized randomly
