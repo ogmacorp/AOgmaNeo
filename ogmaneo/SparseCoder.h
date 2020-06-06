@@ -102,8 +102,6 @@ private:
         }
 
         hiddenCs[hiddenColumnIndex] = maxIndex;
-
-        //std::cout << maxIndex << std::endl;
     }
 
     void learn(
@@ -257,7 +255,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.5f)
+    alpha(0.3f)
     {}
 
     // Create a sparse coding layer with random initialization
