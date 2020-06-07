@@ -245,13 +245,11 @@ private:
 
             if (maxIndex != targetC) {
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+                    int hiddenIndexTarget = address3(Int3(pos.x, pos.y, targetC), hiddenSize);
+                    int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
-                    float prob = hiddenProbs[hiddenIndex];
-                    
-                    T (*update)(T, unsigned char) = hc == targetC ? &randomIncrease<T> : &randomDecrease<T>;
-
-                    float updateProb = (hc == targetC ? beta * (1.0f - prob) : beta * prob);
+                    float probIncrease = beta * (1.0f - hiddenProbs[hiddenIndexTarget]);
+                    float probDecrease = beta * hiddenProbs[hiddenIndexMax];
 
                     for (int vli = 0; vli < visibleLayers.size(); vli++) {
                         VisibleLayer &vl = visibleLayers[vli];
@@ -275,18 +273,28 @@ private:
 
                         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                                if (randf(state) < updateProb) {
-                                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                                    int wi = offset.y + offset.x * diam + area * hiddenIndex;
+                                if (randf(state) < probIncrease) {
+                                    int wi = offset.y + offset.x * diam + area * hiddenIndexTarget;
 
                                     T weight = vl.actionWeights[wi];
 
                                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                                    vl.actionWeights[wi] = (*update)(weight, inC);
+                                    vl.actionWeights[wi] = randomIncrease<T>(weight, inC);
+                                }
+
+                                if (randf(state) < probDecrease) {
+                                    int wi = offset.y + offset.x * diam + area * hiddenIndexMax;
+
+                                    T weight = vl.actionWeights[wi];
+
+                                    unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+
+                                    vl.actionWeights[wi] = randomDecrease<T>(weight, inC);
                                 }
                             }
                     }
