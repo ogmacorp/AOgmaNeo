@@ -8,9 +8,9 @@
 
 #include "Helpers.h"
 
-using namespace ogmaneo;
+using namespace aon;
 
-float ogmaneo::expf(float x) {
+float aon::expf(float x) {
     if (x > 0.0f) {
         float res = 1.0f;
 
@@ -38,16 +38,16 @@ float ogmaneo::expf(float x) {
     return 1.0f / res;
 }
 
-unsigned long ogmaneo::globalState = 1234;
+unsigned long aon::globalState = 1234;
 
-unsigned int ogmaneo::rand(unsigned long* state) {
+unsigned int aon::rand(unsigned long* state) {
     return MWC64X(state);
 }
 
-float ogmaneo::randf(unsigned long* state) {
+float aon::randf(unsigned long* state) {
     return (rand(state) % 100000) / 99999.0f;
 }
 
-float ogmaneo::randf(float low, float high, unsigned long* state) {
+float aon::randf(float low, float high, unsigned long* state) {
     return low + (high - low) * randf(state);
 }

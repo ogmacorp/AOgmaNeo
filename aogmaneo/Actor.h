@@ -11,7 +11,7 @@
 #include "Helpers.h"
 #include "SparseMatrix.h"
 
-namespace ogmaneo {
+namespace aon {
 // Visible layer descriptor
 struct ActorVisibleLayerDesc {
     Int3 size; // Visible/input size
@@ -470,4 +470,4 @@ public:
         return hiddenSize;
     }
 };
-} // namespace ogmaneo
+} // namespace aon

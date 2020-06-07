@@ -10,7 +10,7 @@
 
 #include "Helpers.h"
 
-namespace ogmaneo {
+namespace aon {
 // Visible layer descriptor
 struct SparseCoderVisibleLayerDesc {
     Int3 size; // Size of input
@@ -324,4 +324,4 @@ public:
         return hiddenSize;
     }
 };
-} // namespace ogmaneo
+} // namespace aon

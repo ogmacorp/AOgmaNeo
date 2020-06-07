@@ -10,7 +10,7 @@
 
 #include "Helpers.h"
 
-namespace ogmaneo {
+namespace aon {
 // Compressed sparse row (CSR) format
 struct SparseMatrix {
 	int rows, columns; // Dimensions
@@ -111,4 +111,4 @@ struct SparseMatrix {
 		int oneHotSize
 	);
 };
-} // namespace ogmaneo
+} // namespace aon

@@ -12,7 +12,7 @@
 #include "Array.h"
 #include <omp.h>
 
-namespace ogmaneo {
+namespace aon {
 const int expIters = 10;
 const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
 
@@ -361,4 +361,4 @@ template <typename T>
 T randomDecrease(T weight, unsigned char index) {
     return weight & ~(1 << index);
 }
-} // namespace ogmaneo
+} // namespace aon

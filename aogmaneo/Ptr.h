@@ -8,7 +8,7 @@
 
 #pragma once
 
-namespace ogmaneo {
+namespace aon {
 template<class T>
 class Ptr {
 private:
@@ -120,4 +120,4 @@ public:
         return p != nullptr;
     }
 };
-} // namespace ogmaneo
+} // namespace aon

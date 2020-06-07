@@ -12,7 +12,7 @@
 #include "Predictor.h"
 #include "Actor.h"
 
-namespace ogmaneo {
+namespace aon {
 // Type of hierarchy input layer
 enum InputType {
     none = 0,
@@ -423,4 +423,4 @@ public:
         return aLayers;
     }
 };
-} // namespace ogmaneo
+} // namespace aon

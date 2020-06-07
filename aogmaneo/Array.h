@@ -10,7 +10,7 @@
 
 #include <assert.h>
 
-namespace ogmaneo {
+namespace aon {
 template<class T>
 class Array {
 private:
@@ -136,4 +136,4 @@ public:
         return s;
     }
 };
-} // namespace ogmaneo
+} // namespace aon

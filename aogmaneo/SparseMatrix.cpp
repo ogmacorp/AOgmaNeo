@@ -8,7 +8,7 @@
 
 #include "SparseMatrix.h"
 
-using namespace ogmaneo;
+using namespace aon;
 
 void SparseMatrix::initSMLocalRF(
     const Int3 &inSize,

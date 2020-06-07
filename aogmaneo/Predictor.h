@@ -10,7 +10,7 @@
 
 #include "Helpers.h"
 
-namespace ogmaneo {
+namespace aon {
 // Visible layer descriptor
 struct PredictorVisibleLayerDesc {
     Int3 size; // Size of input
@@ -331,4 +331,4 @@ public:
         return hiddenSize;
     }
 };
-} // Namespace ogmaneo
+} // Namespace aon
