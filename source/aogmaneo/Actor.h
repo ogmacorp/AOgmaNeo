@@ -251,7 +251,7 @@ private:
                     
                     T (*update)(T, unsigned char) = hc == targetC ? &randomIncrease<T> : &randomDecrease<T>;
 
-                    float updateProb = (hc == targetC ? beta * (1.0f - prob) : beta * prob / hiddenSize.z);
+                    float updateProb = (hc == targetC ? beta * (1.0f - prob) : beta * prob);
 
                     for (int vli = 0; vli < visibleLayers.size(); vli++) {
                         VisibleLayer &vl = visibleLayers[vli];
@@ -431,9 +431,11 @@ public:
                     g *= gamma;
                 }
 
+                unsigned long baseState = rand();
+
                 #pragma omp parallel for
                 for (int i = 0; i < numHiddenColumns; i++) {
-                    unsigned long state = rand();
+                    unsigned long state = baseState + i;
 
                     learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic, &state);
                 }

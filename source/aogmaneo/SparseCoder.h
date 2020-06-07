@@ -185,7 +185,7 @@ private:
 
                 T (*update)(T, unsigned char) = vc == targetC ? &randomIncrease<T> : &randomDecrease<T>;
 
-                float updateProb = (vc == targetC ? alpha * (1.0f - prob) : alpha * prob / vld.size.z);
+                float updateProb = (vc == targetC ? alpha * (1.0f - prob) : alpha * prob);
                 
                 for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -278,9 +278,11 @@ public:
 
                 int numVisibleColumns = vld.size.x * vld.size.y;
             
+                unsigned long baseState = rand();
+
                 #pragma omp parallel for
                 for (int i = 0; i < numVisibleColumns; i++) {
-                    unsigned long state = rand();
+                    unsigned long state = baseState + i;
 
                     learn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs[vli], vli, &state);
                 }
