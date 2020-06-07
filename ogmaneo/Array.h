@@ -7,7 +7,9 @@
 // ----------------------------------------------------------------------------
 
 #pragma once
+
 #include <assert.h>
+
 namespace ogmaneo {
 template<class T>
 class Array {

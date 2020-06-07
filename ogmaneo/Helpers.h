@@ -349,4 +349,16 @@ T randBits(
 
     return out;
 }
+
+// --- Weight mutation ---
+
+template <typename T>
+T randomIncrease(T weight, unsigned char index) {
+    return weight | (1 << index);
+}
+
+template <typename T>
+T randomDecrease(T weight, unsigned char index) {
+    return weight & ~(1 << index);
+}
 } // namespace ogmaneo
