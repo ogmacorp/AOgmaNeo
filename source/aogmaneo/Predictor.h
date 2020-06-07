@@ -176,7 +176,7 @@ private:
 
                 T (*update)(T, unsigned char) = hc == targetC ? &randomIncrease<T> : &randomDecrease<T>;
 
-                float updateProb = (hc == targetC ? alpha * (1.0f - prob) : alpha * prob);
+                float updateProb = (hc == targetC ? alpha * (1.0f - prob) : alpha * prob / hiddenSize.z);
                 
                 for (int vli = 0; vli < visibleLayers.size(); vli++) {
                     VisibleLayer &vl = visibleLayers[vli];
@@ -225,7 +225,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.3f)
+    alpha(0.5f)
     {}
 
     // Create with random initialization

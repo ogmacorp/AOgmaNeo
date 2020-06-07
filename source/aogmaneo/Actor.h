@@ -251,7 +251,7 @@ private:
                     
                     T (*update)(T, unsigned char) = hc == targetC ? &randomIncrease<T> : &randomDecrease<T>;
 
-                    float updateProb = (hc == targetC ? beta * (1.0f - prob) : beta * prob);
+                    float updateProb = (hc == targetC ? beta * (1.0f - prob) : beta * prob / hiddenSize.z);
 
                     for (int vli = 0; vli < visibleLayers.size(); vli++) {
                         VisibleLayer &vl = visibleLayers[vli];
@@ -306,10 +306,10 @@ public:
     Actor()
     :
     alpha(0.02f),
-    beta(0.3f),
+    beta(0.5f),
     gamma(0.99f),
-    minSteps(4),
-    historyIters(4)
+    minSteps(8),
+    historyIters(8)
     {}
 
     // Initialized randomly

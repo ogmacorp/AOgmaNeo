@@ -185,7 +185,7 @@ private:
 
                 T (*update)(T, unsigned char) = vc == targetC ? &randomIncrease<T> : &randomDecrease<T>;
 
-                float updateProb = (vc == targetC ? alpha * (1.0f - prob) : alpha * prob);
+                float updateProb = (vc == targetC ? alpha * (1.0f - prob) : alpha * prob / vld.size.z);
                 
                 for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -218,7 +218,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.3f)
+    alpha(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
