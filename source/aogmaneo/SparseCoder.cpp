@@ -190,7 +190,7 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area);
+        vl.weights.resize(numHidden * area * vld.size.z);
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
