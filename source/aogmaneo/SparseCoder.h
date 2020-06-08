@@ -183,7 +183,7 @@ private:
 
                 float prob = vl.visibleProbs[visibleIndex];
 
-                T (*update)(T, unsigned char) = vc == targetC ? &increase<T> : &decrease<T>;
+                T (*update)(T, unsigned char) = (vc == targetC ? &increase<T> : &decrease<T>);
 
                 float updateProb = (vc == targetC ? alpha * (1.0f - prob) : alpha * prob);
                 
@@ -218,7 +218,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.3f)
+    alpha(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
