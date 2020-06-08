@@ -63,7 +63,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(1)
+    alpha(30)
     {}
 
     // Create with random initialization
