@@ -104,7 +104,6 @@ private:
                 const ActorVisibleLayerDesc &vld = visibleLayerDescs[vli];
 
                 int diam = vld.radius * 2 + 1;
-                int area = diam * diam;
 
                 // Projection
                 Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
@@ -125,7 +124,7 @@ private:
 
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                        T weight = vl.actionWeights[offset.y + offset.x * diam + area * hiddenIndex];
+                        T weight = vl.actionWeights[offset.y + diam * (offset.x + diam * hiddenIndex)];
 
                         unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
@@ -205,7 +204,6 @@ private:
                     const ActorVisibleLayerDesc &vld = visibleLayerDescs[vli];
 
                     int diam = vld.radius * 2 + 1;
-                    int area = diam * diam;
 
                     // Projection
                     Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
@@ -226,7 +224,7 @@ private:
 
                             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                            T weight = vl.actionWeights[offset.y + offset.x * diam + area * hiddenIndex];
+                            T weight = vl.actionWeights[offset.y + diam * (offset.x + diam * hiddenIndex)];
 
                             unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
@@ -256,7 +254,6 @@ private:
                         const ActorVisibleLayerDesc &vld = visibleLayerDescs[vli];
 
                         int diam = vld.radius * 2 + 1;
-                        int area = diam * diam;
 
                         // Projection
                         Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
@@ -278,7 +275,7 @@ private:
                                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                                 if (randf(state) < probIncrease) {
-                                    int wi = offset.y + offset.x * diam + area * hiddenIndexTarget;
+                                    int wi = offset.y + diam * (offset.x + diam * hiddenIndexTarget);
 
                                     T weight = vl.actionWeights[wi];
 
@@ -288,7 +285,7 @@ private:
                                 }
 
                                 if (randf(state) < probDecrease) {
-                                    int wi = offset.y + offset.x * diam + area * hiddenIndexMax;
+                                    int wi = offset.y + diam * (offset.x + diam * hiddenIndexMax);
 
                                     T weight = vl.actionWeights[wi];
 

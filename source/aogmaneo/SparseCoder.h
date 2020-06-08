@@ -68,7 +68,6 @@ private:
                 const SparseCoderVisibleLayerDesc &vld = visibleLayerDescs[vli];
 
                 int diam = vld.radius * 2 + 1;
-                int area = diam * diam;
 
                 // Projection
                 Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
@@ -89,7 +88,7 @@ private:
 
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                        T weight = vl.weights[offset.y + offset.x * diam + area * hiddenIndex];
+                        T weight = vl.weights[offset.y + diam * (offset.x + diam * hiddenIndex)];
 
                         unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
@@ -116,7 +115,6 @@ private:
         SparseCoderVisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         int diam = vld.radius * 2 + 1;
-        int area = diam * diam;
 
         int visibleColumnIndex = address2(pos, Int2(vld.size.x, vld.size.y));
 
@@ -162,7 +160,7 @@ private:
                     if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                         Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                        T weight = vl.weights[offset.y + offset.x * diam + area * hiddenIndex];
+                        T weight = vl.weights[offset.y + diam * (offset.x + diam * hiddenIndex)];
 
                         sum += (weight & (1 << vc)) == 0 ? 0 : 1;
                         count++;
@@ -200,7 +198,7 @@ private:
                             if (randf(state) < updateProb) {
                                 Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                                int wi = offset.y + offset.x * diam + area * hiddenIndex;
+                                int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
                             
                                 T weight = vl.weights[wi];
                             
