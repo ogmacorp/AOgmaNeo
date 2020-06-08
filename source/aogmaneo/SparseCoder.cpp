@@ -30,8 +30,7 @@ void SparseCoder::forward(
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
             int diam = vld.radius * 2 + 1;
-            int area = diam * diam;
-
+ 
             // Projection
             Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
@@ -53,7 +52,7 @@ void SparseCoder::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    unsigned char weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + area * hiddenIndex))];
+                    unsigned char weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
                     sum += weight;
                 }
@@ -78,7 +77,6 @@ void SparseCoder::learn(
     VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
     int diam = vld.radius * 2 + 1;
-    int area = diam * diam;
 
     int visibleColumnIndex = address2(pos, Int2(vld.size.x, vld.size.y));
 
@@ -123,7 +121,7 @@ void SparseCoder::learn(
                 if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                    unsigned char weight = vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + area * hiddenIndex))];
+                    unsigned char weight = vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
                     sum += weight;
                 }
@@ -151,7 +149,7 @@ void SparseCoder::learn(
                     if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                         Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + area * hiddenIndex));
+                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
                     
                         unsigned char weight = vl.weights[wi];
                     

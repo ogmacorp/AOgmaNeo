@@ -48,7 +48,6 @@ void Actor::forward(
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
             int diam = vld.radius * 2 + 1;
-            int area = diam * diam;
 
             // Projection
             Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
@@ -71,7 +70,7 @@ void Actor::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    unsigned char weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + area * hiddenIndex))];
+                    unsigned char weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
 
                     sum += weight;
                 }
@@ -148,7 +147,6 @@ void Actor::learn(
                 const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
                 int diam = vld.radius * 2 + 1;
-                int area = diam * diam;
 
                 // Projection
                 Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
@@ -171,7 +169,7 @@ void Actor::learn(
 
                         unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                        unsigned char weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + area * hiddenIndex))];
+                        unsigned char weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
 
                         sum += weight;
                     }
@@ -193,7 +191,6 @@ void Actor::learn(
                     const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
                     int diam = vld.radius * 2 + 1;
-                    int area = diam * diam;
 
                     // Projection
                     Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
@@ -217,7 +214,7 @@ void Actor::learn(
                             unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                             {
-                                int wi = inC + vld.size.z * (offset.y + diam * (offset.x + area * hiddenIndexTarget));
+                                int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget));
 
                                 unsigned char weight = vl.actionWeights[wi];
 
@@ -225,7 +222,7 @@ void Actor::learn(
                             }
 
                             {
-                                int wi = inC + vld.size.z * (offset.y + diam * (offset.x + area * hiddenIndexMax));
+                                int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
 
                                 unsigned char weight = vl.actionWeights[wi];
 
