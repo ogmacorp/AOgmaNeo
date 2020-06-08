@@ -198,7 +198,7 @@ private:
                 int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
                 int sum = 0;
-                int count = 0;
+                count = 0;
 
                 for (int vli = 0; vli < visibleLayers.size(); vli++) {
                     VisibleLayer &vl = visibleLayers[vli];
@@ -314,7 +314,7 @@ public:
     Actor()
     :
     alpha(0.02f),
-    beta(0.3f),
+    beta(0.1f),
     gamma(0.99f),
     minSteps(8),
     historyIters(8)
