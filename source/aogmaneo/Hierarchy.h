@@ -52,7 +52,7 @@ private:
     // Layers
     Array<SparseCoder<T>> scLayers;
     Array<Array<Ptr<Predictor<T>>>> pLayers;
-    Array<Ptr<Actor<T>>> aLayers;
+    Array<Ptr<Actor>> aLayers;
 
     // Histories
     Array<Array<CircleBuffer<ByteBuffer>>> histories;
@@ -414,12 +414,12 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Ptr<Actor<T>>> &getALayers() {
+    Array<Ptr<Actor>> &getALayers() {
         return aLayers;
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Ptr<Actor<T>>> &getALayers() const {
+    const Array<Ptr<Actor>> &getALayers() const {
         return aLayers;
     }
 };
