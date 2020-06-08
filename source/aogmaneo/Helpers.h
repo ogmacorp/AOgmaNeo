@@ -334,17 +334,36 @@ template <typename T>
 T randBits(
     unsigned long* state = &globalState
 ) {
-    int numBytes = sizeof(T);
+    unsigned char numBytes = sizeof(T);
 
     T out = 0;
 
-    for (int i = 0; i < numBytes; i++) {
+    for (unsigned char i = 0; i < numBytes; i++) {
         unsigned char b = rand(state) % 256;
 
         out = out | b;
 
         if (i < numBytes - 1)
-            out = out << 8;
+            out <<= 8;
+    }
+
+    return out;
+}
+
+template <typename T>
+T randBits(
+    float ratio,
+    unsigned long* state = &globalState
+) {
+    unsigned char numBits = sizeof(T) * 8;
+
+    T out = 0;
+
+    for (unsigned char i = 0; i < numBits; i++) {
+        out = out | (randf(state) < ratio ? 1 : 0);
+
+        if (i < numBits - 1)
+            out <<= 1;
     }
 
     return out;
@@ -366,5 +385,21 @@ T decrease(
     unsigned char index
 ) {
     return weight & ~(1 << index);
+}
+
+template <typename T>
+unsigned char countBits(
+    T value
+) {
+    unsigned char numBits = sizeof(T) * 8;
+
+    unsigned char c = 0;
+
+    for (unsigned char i = 0; i < numBits; i++) {
+        c += 1 & value;
+        value >>= 1;
+    }
+
+    return c;
 }
 } // namespace aon
