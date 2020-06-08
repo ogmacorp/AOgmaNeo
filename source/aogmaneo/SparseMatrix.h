@@ -42,7 +42,7 @@ struct SparseMatrix {
 	// --- Dense ---
 
 	float multiply(
-		const Array<float> &in,
+		const FloatBuffer &in,
 		int row
 	);
 
@@ -50,22 +50,12 @@ struct SparseMatrix {
 		int row
 	);
 
-	float count(
-		const Array<float> &in,
-		int row
-	);
-
 	float multiplyT(
-		const Array<float> &in,
+		const FloatBuffer &in,
 		int column
 	);
 
 	int countT(
-		int column
-	);
-
-	float countT(
-		const Array<float> &in,
 		int column
 	);
 
@@ -86,13 +76,13 @@ struct SparseMatrix {
 	// --- Delta Rules ---
 
 	void deltas(
-		const Array<float> &in,
+		const FloatBuffer &in,
 		float delta,
 		int row
 	);
 
 	void deltasT(
-		const Array<float> &in,
+		const FloatBuffer &in,
 		float delta,
 		int column
 	);
@@ -106,6 +96,22 @@ struct SparseMatrix {
 
 	void deltaOHVsT(
 		const ByteBuffer &nonZeroIndices,
+		float delta,
+		int column,
+		int oneHotSize
+	);
+
+	void deltaChangedOHVs(
+		const ByteBuffer &nonZeroIndices,
+		const ByteBuffer &nonZeroIndicesPrev,
+		float delta,
+		int row,
+		int oneHotSize
+	);
+
+	void deltaChangedOHVsT(
+		const ByteBuffer &nonZeroIndices,
+		const ByteBuffer &nonZeroIndicesPrev,
 		float delta,
 		int column,
 		int oneHotSize

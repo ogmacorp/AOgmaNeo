@@ -12,23 +12,23 @@
 #include "SparseMatrix.h"
 
 namespace aon {
-// Visible layer descriptor
-struct ActorVisibleLayerDesc {
-    Int3 size; // Visible/input size
-
-    int radius; // Radius onto input
-
-    // Defaults
-    ActorVisibleLayerDesc()
-    :
-    size(4, 4, 16),
-    radius(2)
-    {}
-};
-
 // A reinforcement learning layer
 class Actor {
 public:
+    // Visible layer descriptor
+    struct VisibleLayerDesc {
+        Int3 size; // Visible/input size
+
+        int radius; // Radius onto input
+
+        // Defaults
+        VisibleLayerDesc()
+        :
+        size(4, 4, 16),
+        radius(2)
+        {}
+    };
+
     // Visible layer
     struct VisibleLayer {
         SparseMatrix valueWeights; // Value function weights
@@ -59,7 +59,7 @@ private:
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
-    Array<ActorVisibleLayerDesc> visibleLayerDescs;
+    Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
 
@@ -99,7 +99,7 @@ public:
     void initRandom(
         const Int3 &hiddenSize,
         int historyCapacity,
-        const Array<ActorVisibleLayerDesc> &visibleLayerDescs
+        const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
     // Step (get actions and update)
@@ -124,7 +124,7 @@ public:
     }
 
     // Get a visible layer descriptor
-    const ActorVisibleLayerDesc &getVisibleLayerDesc(
+    const VisibleLayerDesc &getVisibleLayerDesc(
         int i // Index of layer
     ) const {
         return visibleLayerDescs[i];

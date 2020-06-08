@@ -142,7 +142,7 @@ void SparseMatrix::initT() {
 }
 
 float SparseMatrix::multiply(
-	const Array<float> &in,
+	const FloatBuffer &in,
 	int row
 ) {
 	float sum = 0.0f;
@@ -163,22 +163,8 @@ int SparseMatrix::count(
 	return rowRanges[nextIndex] - rowRanges[row];
 }
 
-float SparseMatrix::count(
-	const Array<float> &in,
-	int row
-) {
-	float sum = 0.0f;
-
-	int nextIndex = row + 1;
-	
-	for (int j = rowRanges[row]; j < rowRanges[nextIndex]; j++)
-		sum += in[columnIndices[j]];
-
-	return sum;
-}
-
 float SparseMatrix::multiplyT(
-	const Array<float> &in,
+	const FloatBuffer &in,
 	int column
 ) {
 	float sum = 0.0f;
@@ -197,20 +183,6 @@ int SparseMatrix::countT(
 	int nextIndex = column + 1;
 	
 	return columnRanges[nextIndex] - columnRanges[column];
-}
-
-float SparseMatrix::countT(
-	const Array<float> &in,
-	int column
-) {
-	float sum = 0.0f;
-
-	int nextIndex = column + 1;
-	
-	for (int j = columnRanges[column]; j < columnRanges[nextIndex]; j++)
-		sum += in[rowIndices[j]];
-
-	return sum;
 }
 
 float SparseMatrix::multiplyOHVs(
@@ -250,7 +222,7 @@ float SparseMatrix::multiplyOHVsT(
 }
 
 void SparseMatrix::deltas(
-	const Array<float> &in,
+	const FloatBuffer &in,
 	float delta,
 	int row
 ) {
@@ -261,7 +233,7 @@ void SparseMatrix::deltas(
 }
 
 void SparseMatrix::deltasT(
-	const Array<float> &in,
+	const FloatBuffer &in,
 	float delta,
 	int column
 ) {
@@ -298,5 +270,45 @@ void SparseMatrix::deltaOHVsT(
 		int j = jj + nonZeroIndices[rowIndices[jj] / oneHotSize];
 
 		nonZeroValues[nonZeroValueIndices[j]] += delta;
+	}
+}
+
+void SparseMatrix::deltaChangedOHVs(
+	const ByteBuffer &nonZeroIndices,
+	const ByteBuffer &nonZeroIndicesPrev,
+	float delta,
+	int row,
+	int oneHotSize
+) {
+	int nextIndex = row + 1;
+
+	for (int jj = rowRanges[row]; jj < rowRanges[nextIndex]; jj += oneHotSize) {
+		int i = columnIndices[jj] / oneHotSize;
+
+		if (nonZeroIndices[i] != nonZeroIndicesPrev[i]) {
+			int j = jj + nonZeroIndices[i];
+
+			nonZeroValues[j] += delta;
+		}
+	}
+}
+
+void SparseMatrix::deltaChangedOHVsT(
+	const ByteBuffer &nonZeroIndices,
+	const ByteBuffer &nonZeroIndicesPrev,
+	float delta,
+	int column,
+	int oneHotSize
+) {
+	int nextIndex = column + 1;
+
+	for (int jj = columnRanges[column]; jj < columnRanges[nextIndex]; jj += oneHotSize) {
+		int i = rowIndices[jj] / oneHotSize;
+
+		if (nonZeroIndices[i] != nonZeroIndicesPrev[i]) {
+			int j = jj + nonZeroIndices[i];
+
+			nonZeroValues[nonZeroValueIndices[j]] += delta;
+		}
 	}
 }
