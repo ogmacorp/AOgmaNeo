@@ -190,9 +190,9 @@ void Hierarchy::initRandom(
 // Simulation step/tick
 void Hierarchy::step(
     const Array<const ByteBuffer*> &inputCs, // Inputs to remember
-    bool learnEnabled = true, // Whether learning is enabled
-    float reward = 0.0f, // Reinforcement signal
-    bool mimic = false // For imitation learning
+    bool learnEnabled, // Whether learning is enabled
+    float reward, // Reinforcement signal
+    bool mimic // For imitation learning
 ) {
     // First tick is always 0
     ticks[0] = 0;
