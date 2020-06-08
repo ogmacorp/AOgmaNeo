@@ -353,12 +353,18 @@ T randBits(
 // --- Weight mutation ---
 
 template <typename T>
-T randomIncrease(T weight, unsigned char index) {
+T increase(
+    T weight,
+    unsigned char index
+) {
     return weight | (1 << index);
 }
 
 template <typename T>
-T randomDecrease(T weight, unsigned char index) {
+T decrease(
+    T weight,
+    unsigned char index
+) {
     return weight & ~(1 << index);
 }
 } // namespace aon

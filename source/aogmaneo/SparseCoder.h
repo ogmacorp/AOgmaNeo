@@ -183,7 +183,7 @@ private:
 
                 float prob = vl.visibleProbs[visibleIndex];
 
-                T (*update)(T, unsigned char) = vc == targetC ? &randomIncrease<T> : &randomDecrease<T>;
+                T (*update)(T, unsigned char) = vc == targetC ? &increase<T> : &decrease<T>;
 
                 float updateProb = (vc == targetC ? alpha * (1.0f - prob) : alpha * prob);
                 

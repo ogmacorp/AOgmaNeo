@@ -208,7 +208,7 @@ private:
 
                             unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                            vl.weights[wi] = randomIncrease<T>(weight, inC);
+                            vl.weights[wi] = increase<T>(weight, inC);
                         }
 
                         if (randf(state) < probDecrease) {
@@ -218,7 +218,7 @@ private:
 
                             unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                            vl.weights[wi] = randomDecrease<T>(weight, inC);
+                            vl.weights[wi] = decrease<T>(weight, inC);
                         }
                     }
             }
