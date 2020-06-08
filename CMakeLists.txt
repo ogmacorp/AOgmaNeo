@@ -28,6 +28,7 @@ set(SOURCE_PATH "${PROJECT_SOURCE_DIR}/source")
 set(SOURCES
     "${SOURCE_PATH}/aogmaneo/Helpers.cpp"
     "${SOURCE_PATH}/aogmaneo/SparseMatrix.cpp"
+    "${SOURCE_PATH}/aogmaneo/ImageEncoder.cpp"
 )
 
 set(HEADERS
