@@ -117,7 +117,7 @@ private:
         int targetC = (*hiddenTargetCs)[hiddenColumnIndex];
 
         int maxIndex = 0;
-        float maxActivation = 0;
+        int maxActivation = 0;
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -231,7 +231,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.5f)
+    alpha(0.3f)
     {}
 
     // Create with random initialization
