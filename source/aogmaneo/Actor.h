@@ -80,7 +80,7 @@ private:
 
 public:
     float alpha; // Value learning rate
-    unsigned char beta; // Action learning rate
+    float beta; // Action learning rate
     float gamma; // Discount factor
     int minSteps;
     int historyIters;
@@ -89,7 +89,7 @@ public:
     Actor()
     :
     alpha(0.02f),
-    beta(30),
+    beta(0.5f),
     gamma(0.99f),
     minSteps(8),
     historyIters(8)
