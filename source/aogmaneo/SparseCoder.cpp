@@ -222,7 +222,7 @@ void SparseCoder::step(
             for (int i = 0; i < numVisibleColumns; i++) {
                 unsigned long state = baseState + i;
 
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs[vli], vli, &state);
+                learn(Int2(i / vld.size.y, i % vld.size.y), inputCs[vli], vli, &state);
             }
         }
     }
