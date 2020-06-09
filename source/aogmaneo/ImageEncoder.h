@@ -71,7 +71,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const ByteBuffer*> &inputCs, // Input states
+        const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -81,7 +81,7 @@ public:
 
     const ByteBuffer &getReconstruction(
         int i
-    ) {
+    ) const {
         return visibleLayers[i].reconstruction;
     }
 

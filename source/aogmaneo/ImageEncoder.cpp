@@ -12,7 +12,7 @@ using namespace aon;
 
 void ImageEncoder::forward(
     const Int2 &pos,
-    const Array<const ByteBuffer*> &inputCs,
+    const Array<const ByteBuffer*> &inputs,
     bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
@@ -54,7 +54,7 @@ void ImageEncoder::forward(
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        unsigned char input = (*inputCs[vli])[address3(Int3(ix, iy, vc), vld.size)];
+                        unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
                         unsigned char weight = vl.weights[start + vc];
 
@@ -105,7 +105,7 @@ void ImageEncoder::forward(
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        unsigned char input = (*inputCs[vli])[address3(Int3(ix, iy, vc), vld.size)];
+                        unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
                         unsigned char weight = vl.weights[start + vc];
 
@@ -213,14 +213,14 @@ void ImageEncoder::initRandom(
 }
 
 void ImageEncoder::step(
-    const Array<const ByteBuffer*> &inputCs,
+    const Array<const ByteBuffer*> &inputs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, learnEnabled);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputs, learnEnabled);
 }
 
 void ImageEncoder::reconstruct(
