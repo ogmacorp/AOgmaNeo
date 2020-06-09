@@ -108,6 +108,7 @@ void SparseCoder::learn(
         int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
         int sum = 0;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -124,8 +125,11 @@ void SparseCoder::learn(
                     unsigned char weight = vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
                     sum += weight;
+                    count++;
                 }
             }
+
+        vl.reconstruction[visibleIndex] = sum / count;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -136,6 +140,8 @@ void SparseCoder::learn(
     if (maxIndex != targetC) {
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
+
+            int delta = alpha * ((vc == targetC ? 0xff : 0) - vl.reconstruction[visibleIndex]);
             
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -153,10 +159,10 @@ void SparseCoder::learn(
                     
                         unsigned char weight = vl.weights[wi];
                     
-                        if (vc == targetC)
-                            vl.weights[wi] = min<unsigned char>(0xff - alpha, weight) + alpha;
+                        if (delta > 0)
+                            vl.weights[wi] = min<unsigned char>(0xff - delta, weight) + delta;
                         else
-                            vl.weights[wi] = max<unsigned char>(alpha, weight) - alpha;
+                            vl.weights[wi] = max<unsigned char>(-delta, weight) + delta;
                     }
                 }
         }
@@ -193,6 +199,8 @@ void SparseCoder::initRandom(
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randBits<unsigned char>();
+
+        vl.reconstruction = ByteBuffer(numVisible, 0);
     }
 
     // Hidden Cs

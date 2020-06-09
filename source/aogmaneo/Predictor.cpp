@@ -76,9 +76,6 @@ void Predictor::learn(
 
     int targetC = (*hiddenTargetCs)[hiddenColumnIndex];
 
-    int maxIndex = 0;
-    int maxActivation = 0;
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
@@ -115,18 +112,11 @@ void Predictor::learn(
                     unsigned char weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
                     sum += weight;
+                    count++;
                 }
         }
 
-        if (sum > maxActivation) {
-            maxActivation = sum;
-            maxIndex = hc;
-        }
-    }
-
-    if (maxIndex != targetC) {
-        int hiddenIndexTarget = address3(Int3(pos.x, pos.y, targetC), hiddenSize);
-        int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+        int delta = alpha * ((hc == targetC ? 0xff : 0) - sum / count);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -155,21 +145,14 @@ void Predictor::learn(
 
                     unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                    {
-                        int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget));
+                    int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                        unsigned char weight = vl.weights[wi];
-
-                        vl.weights[wi] = min<unsigned char>(0xff - alpha, weight) + alpha;
-                    }
-
-                    {
-                        int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
-
-                        unsigned char weight = vl.weights[wi];
-
-                        vl.weights[wi] = max<unsigned char>(alpha, weight) - alpha;
-                    }
+                    unsigned char weight = vl.weights[wi];
+                    
+                    if (delta > 0)
+                        vl.weights[wi] = min<unsigned char>(0xff - delta, weight) + delta;
+                    else
+                        vl.weights[wi] = max<unsigned char>(-delta, weight) + delta;
                 }
         }
     }

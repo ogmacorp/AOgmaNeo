@@ -58,12 +58,12 @@ private:
     );
 
 public:
-    unsigned char alpha; // Learning rate
+    float alpha; // Learning rate
 
     // Defaults
     Predictor()
     :
-    alpha(30)
+    alpha(0.1f)
     {}
 
     // Create with random initialization
