@@ -173,7 +173,7 @@ void Actor::learn(
                 }
         }
 
-        int delta = alpha * (tdErrorAction > 0 || mimic ? 1 : -1) * ((hc == targetC ? 0xff : 0) - sum / count);
+        int delta = (mimic ? alpha : alpha * (sigmoid(tdErrorAction) * 2.0f - 1.0f)) * ((hc == targetC ? 0xff : 0) - sum / count);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
