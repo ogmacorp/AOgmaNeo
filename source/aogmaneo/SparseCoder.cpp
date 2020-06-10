@@ -141,7 +141,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            int delta = roundftoi(alpha * ((vc == targetC ? 255.0f : 127.0f) - vl.reconstruction[visibleIndex]));
+            int delta = roundftoi(alpha * ((vc == targetC ? 255.0f : 0.0f) - vl.reconstruction[visibleIndex]));
             
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
