@@ -142,7 +142,7 @@ void SparseCoder::learn(
         int visibleIndexMax = address3(Int3(pos.x, pos.y, maxIndex), vld.size);
 
         int deltaTarget = roundftoi(alpha * (255.0f - vl.reconstruction[visibleIndexTarget]));
-        int deltaMax = roundftoi(alpha * (0.0f - vl.reconstruction[visibleIndexTarget]));
+        int deltaMax = roundftoi(alpha * (0.0f - vl.reconstruction[visibleIndexMax]));
         
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
