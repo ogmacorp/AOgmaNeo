@@ -12,6 +12,7 @@
 #include "SparseMatrix.h"
 
 namespace aon {
+// A reinforcement learning layer
 class Actor {
 public:
     // Visible layer descriptor
@@ -31,7 +32,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         SparseMatrix valueWeights; // Value function weights
-        ByteBuffer actionWeights; // Action function weights
+        SparseMatrix actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
@@ -64,7 +65,8 @@ private:
 
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs
+        const Array<const ByteBuffer*> &inputCs,
+        unsigned long* state
     );
 
     void learn(
@@ -74,8 +76,7 @@ private:
         const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
-        bool mimic,
-        unsigned long* state
+        bool mimic
     );
 
 public:
