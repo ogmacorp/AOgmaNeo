@@ -188,7 +188,7 @@ void Predictor::initRandom(
         char range = 16;
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % (2 * range) + 255 / 2 - range;
+            vl.weights[i] = rand() % (2 * range) + 127 - range;
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
     }
