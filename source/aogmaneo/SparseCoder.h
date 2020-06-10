@@ -60,13 +60,11 @@ private:
 
 public:
     float alpha; // Learning rate
-    float expScale; // Scaling for exp
-
+    
     // Defaults
     SparseCoder()
     :
-    alpha(0.05f),
-    expScale(4.0f)
+    alpha(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
