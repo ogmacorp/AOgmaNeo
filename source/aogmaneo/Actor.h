@@ -94,7 +94,7 @@ public:
     gamma(0.99f),
     minSteps(8),
     historyIters(8),
-    expScale(2.0f)
+    expScale(4.0f)
     {}
 
     // Initialized randomly
