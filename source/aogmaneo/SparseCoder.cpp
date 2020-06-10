@@ -129,7 +129,7 @@ void SparseCoder::learn(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = (static_cast<float>(sum) / static_cast<float>(count)) / 255.0f;
+        vl.reconstruction[visibleIndex] = static_cast<float>(sum) / static_cast<float>(count);
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -141,7 +141,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            int delta = alpha * 127 * ((vc == targetC ? 1.0f : 0.0f) - expf(expScale * (vl.reconstruction[visibleIndex] - 1.0f)));
+            int delta = roundftoi(alpha * ((vc == targetC ? 255.0f : 0.0f) - vl.reconstruction[visibleIndex]));
             
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -160,9 +160,9 @@ void SparseCoder::learn(
                         unsigned char weight = vl.weights[wi];
                     
                         if (delta > 0)
-                            vl.weights[wi] = min<unsigned char>(0xff - delta, weight) + delta;
+                            vl.weights[wi] = min<int>(255 - delta, weight) + delta;
                         else
-                            vl.weights[wi] = max<unsigned char>(-delta, weight) + delta;
+                            vl.weights[wi] = max<int>(-delta, weight) + delta;
                     }
                 }
         }
@@ -200,7 +200,7 @@ void SparseCoder::initRandom(
         char range = 16;
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % range;
+            vl.weights[i] = rand() % (2 * range) + 127 - range;
 
         vl.reconstruction = FloatBuffer(numVisible, 0);
     }

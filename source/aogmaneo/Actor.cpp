@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Actor.h"
-
+#include <iostream>
 using namespace aon;
 
 void Actor::forward(
@@ -173,8 +173,8 @@ void Actor::learn(
                 }
         }
 
-        int delta = (mimic ? beta : beta * (tdErrorAction > 0.0f ? 1.0f : -1.0f)) * 127 * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(expScale * ((static_cast<float>(sum) / static_cast<float>(count)) / 255.0f * 2.0f - 1.0f)));
-
+        int delta = roundftoi((mimic ? beta : (tdErrorAction > 0.0f ? beta : -beta)) * ((hc == targetC ? 255.0f : 0.0f) - static_cast<float>(sum) / static_cast<float>(count)));
+        
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -207,9 +207,9 @@ void Actor::learn(
                     unsigned char weight = vl.actionWeights[wi];
                     
                     if (delta > 0)
-                        vl.actionWeights[wi] = min<unsigned char>(0xff - delta, weight) + delta;
+                        vl.actionWeights[wi] = min<int>(255 - delta, weight) + delta;
                     else
-                        vl.actionWeights[wi] = max<unsigned char>(-delta, weight) + delta;
+                        vl.actionWeights[wi] = max<int>(-delta, weight) + delta;
                 }
         }
     }

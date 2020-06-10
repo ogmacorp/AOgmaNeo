@@ -116,7 +116,7 @@ void Predictor::learn(
                 }
         }
 
-        int delta = alpha * 127 * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(expScale * ((static_cast<float>(sum) / static_cast<float>(count)) / 255.0f * 2.0f - 1.0f)));
+        int delta = roundftoi(alpha * ((hc == targetC ? 255.0f : 0.0f) - static_cast<float>(sum) / static_cast<float>(count)));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -150,9 +150,9 @@ void Predictor::learn(
                     unsigned char weight = vl.weights[wi];
                     
                     if (delta > 0)
-                        vl.weights[wi] = min<unsigned char>(0xff - delta, weight) + delta;
+                        vl.weights[wi] = min<int>(255 - delta, weight) + delta;
                     else
-                        vl.weights[wi] = max<unsigned char>(-delta, weight) + delta;
+                        vl.weights[wi] = max<int>(-delta, weight) + delta;
                 }
         }
     }

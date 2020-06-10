@@ -64,8 +64,8 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.2f),
-    expScale(2.0f)
+    alpha(0.1f),
+    expScale(4.0f)
     {}
 
     // Create with random initialization
