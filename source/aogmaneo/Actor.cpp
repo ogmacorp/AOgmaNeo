@@ -173,7 +173,7 @@ void Actor::learn(
                 }
         }
 
-        int delta = (mimic ? alpha : alpha * (sigmoid(tdErrorAction) * 2.0f - 1.0f)) * ((hc == targetC ? 0xff : 0) - sum / count);
+        int delta = (mimic ? alpha : alpha * (tdErrorAction > 0.0f ? 1.0f : -1.0f)) * 127 * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(expScale * ((static_cast<float>(sum) / static_cast<float>(count)) / 255.0f * 2.0f - 1.0f)));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -247,8 +247,10 @@ void Actor::initRandom(
         vl.actionWeights.resize(numHidden * area * vld.size.z);
 
         // Initialize to random values
+        char range = 16;
+
         for (int i = 0; i < vl.actionWeights.size(); i++)
-            vl.actionWeights[i] = randBits<unsigned char>();
+            vl.actionWeights[i] = rand() % (2 * range) + 255 / 2 - range;
     }
 
     hiddenCs = ByteBuffer(numHiddenColumns, 0);

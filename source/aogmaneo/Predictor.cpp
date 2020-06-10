@@ -116,7 +116,7 @@ void Predictor::learn(
                 }
         }
 
-        int delta = alpha * ((hc == targetC ? 0xff : 0) - sum / count);
+        int delta = alpha * 127 * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(expScale * ((static_cast<float>(sum) / static_cast<float>(count)) / 255.0f * 2.0f - 1.0f)));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -185,8 +185,10 @@ void Predictor::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
 
         // Initialize to random values
+        char range = 16;
+
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randBits<unsigned char>();
+            vl.weights[i] = rand() % (2 * range) + 255 / 2 - range;
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
     }

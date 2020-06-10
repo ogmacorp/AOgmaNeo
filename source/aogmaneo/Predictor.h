@@ -59,11 +59,13 @@ private:
 
 public:
     float alpha; // Learning rate
+    float expScale; // Scaling for exp
 
     // Defaults
     Predictor()
     :
-    alpha(0.5f)
+    alpha(0.2f),
+    expScale(4.0f)
     {}
 
     // Create with random initialization

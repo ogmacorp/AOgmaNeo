@@ -129,7 +129,7 @@ void SparseCoder::learn(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = sum / count;
+        vl.reconstruction[visibleIndex] = (static_cast<float>(sum) / static_cast<float>(count)) / 255.0f;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -141,7 +141,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            int delta = alpha * ((vc == targetC ? 0xff : 0) - vl.reconstruction[visibleIndex]);
+            int delta = alpha * 127 * ((vc == targetC ? 1.0f : 0.0f) - expf(expScale * (vl.reconstruction[visibleIndex] - 1.0f)));
             
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -197,10 +197,12 @@ void SparseCoder::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
 
         // Initialize to random values
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randBits<unsigned char>();
+        char range = 16;
 
-        vl.reconstruction = ByteBuffer(numVisible, 0);
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = 0xff - rand() % range;
+
+        vl.reconstruction = FloatBuffer(numVisible, 0);
     }
 
     // Hidden Cs

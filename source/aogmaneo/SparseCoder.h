@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         ByteBuffer weights; // Binary weight matrix
 
-        ByteBuffer reconstruction; // Temporary buffer
+        FloatBuffer reconstruction; // Temporary buffer
     };
 
 private:
@@ -60,11 +60,13 @@ private:
 
 public:
     float alpha; // Learning rate
+    float expScale; // Scaling for exp
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f)
+    alpha(0.1f),
+    expScale(4.0f)
     {}
 
     // Create a sparse coding layer with random initialization
