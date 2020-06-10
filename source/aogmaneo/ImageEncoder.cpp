@@ -107,7 +107,7 @@ void ImageEncoder::forward(
 
                         unsigned char weight = vl.weights[start + vc];
 
-                        vl.weights[start + vc] = min(255.0f, max(0.0f, vl.weights[start + vc] + alpha * (input - weight)));
+                        vl.weights[start + vc] = min(255.0f, max(0.0f, vl.weights[start + vc] + alpha * (min(input, weight) - weight)));
                     }
                 }
         }
