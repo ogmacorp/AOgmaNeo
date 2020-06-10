@@ -129,7 +129,7 @@ void SparseCoder::learn(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = (static_cast<float>(sum) / static_cast<float>(count)) / 255.0f;
+        vl.reconstruction[visibleIndex] = static_cast<float>(sum) / static_cast<float>(count);
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -141,7 +141,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            int delta = roundftoi(alpha * 255.0f * ((vc == targetC ? 1.0f : 0.0f) - expf(expScale * (vl.reconstruction[visibleIndex] - 1.0f))));
+            int delta = roundftoi(alpha * ((vc == targetC ? 255.0f : 127.0f) - vl.reconstruction[visibleIndex]));
             
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
