@@ -416,7 +416,7 @@ template <typename T>
 int partition(Array<T> &arr, int low, int high) {
     T pivotVal = arr[high];
 
-    int i = 0;
+    int i = low;
 
     for (int j = low; j < high; j++) {
         if (arr[j] < pivotVal) {
@@ -438,6 +438,8 @@ void quicksort(Array<T> &arr, int low = 0, int high = -1) {
 
     if (high == -1)
         high = arr.size() - 1;
+    else
+        high--;
 
     Array<int> stack(high - low + 1);
 

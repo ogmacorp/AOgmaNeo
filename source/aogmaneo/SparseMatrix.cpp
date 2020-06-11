@@ -155,6 +155,23 @@ float SparseMatrix::multiply(
 	return sum;
 }
 
+float SparseMatrix::distance2(
+	const FloatBuffer &in,
+	int row
+) {
+	float sum = 0.0f;
+
+	int nextIndex = row + 1;
+	
+	for (int j = rowRanges[row]; j < rowRanges[nextIndex]; j++) {
+		float delta = nonZeroValues[j] - in[columnIndices[j]];
+
+		sum += delta * delta;
+	}
+
+	return sum;
+}
+
 int SparseMatrix::count(
 	int row
 ) {
@@ -173,6 +190,23 @@ float SparseMatrix::multiplyT(
 	
 	for (int j = columnRanges[column]; j < columnRanges[nextIndex]; j++)
 		sum += nonZeroValues[nonZeroValueIndices[j]] * in[rowIndices[j]];
+
+	return sum;
+}
+
+float SparseMatrix::distance2T(
+	const FloatBuffer &in,
+	int column
+) {
+	float sum = 0.0f;
+
+	int nextIndex = column + 1;
+	
+	for (int j = columnRanges[column]; j < columnRanges[nextIndex]; j++) {
+		float delta = nonZeroValues[nonZeroValueIndices[j]] - in[rowIndices[j]];
+
+		sum += delta * delta;
+	}
 
 	return sum;
 }

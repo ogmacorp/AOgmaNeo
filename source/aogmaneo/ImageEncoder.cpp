@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "ImageEncoder.h"
-
+#include <iostream>
 using namespace aon;
 
 void ImageEncoder::forward(
@@ -18,7 +18,7 @@ void ImageEncoder::forward(
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
-    int maxActivation = 0;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -29,12 +29,12 @@ void ImageEncoder::forward(
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
 
-            sum += vl.weights.multiply(*inputs[vli], hiddenIndex);
+            sum -= vl.weights.distance2(*inputs[vli], hiddenIndex);
         }
 
         if (learnEnabled) {
             hiddenActivations[hiddenIndex].f = sum;
-            hiddenActivations[hiddenIndex].i = hc;
+            hiddenActivations[hiddenIndex].i = hiddenIndex;
         }
 
         if (sum > maxActivation) {
@@ -48,23 +48,21 @@ void ImageEncoder::forward(
     if (learnEnabled) {
         int startIndex = address3(Int3(pos.x, pos.y, 0), hiddenSize);
 
-        quicksort(hiddenActivations, startIndex, startIndex + hiddenSize.z);
+        quicksort<FloatInt>(hiddenActivations, startIndex, startIndex + hiddenSize.z);
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+            int hiddenIndex = hiddenActivations[address3(Int3(pos.x, pos.y, hc), hiddenSize)].i;
 
-            int sortedHiddenIndex = address3(Int3(pos.x, pos.y, hiddenActivations[hiddenIndex].i), hiddenSize);
-
-            float strength = alpha * hiddenResources[sortedHiddenIndex] * expf(-gamma * hc / max(0.0001f, hiddenResources[sortedHiddenIndex]));
+            float strength = hiddenResources[hiddenIndex] * expf(-gamma * (hiddenSize.z - 1 - hc) / max(0.0001f, hiddenResources[hiddenIndex]));
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
 
-                vl.weights.hebb(*inputs[vli], sortedHiddenIndex, strength);
+                vl.weights.hebb(*inputs[vli], hiddenIndex, strength);
             }
 
-            hiddenResources[sortedHiddenIndex] *= gamma;
+            hiddenResources[hiddenIndex] -= alpha * hiddenResources[hiddenIndex];
         }
     }
 }
@@ -81,7 +79,7 @@ void ImageEncoder::reconstruct(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-        vl.reconstruction[visibleIndex] = vl.weights.multiplyOHVsT(*reconCs, visibleIndex, hiddenSize.z) / vl.weights.countT(visibleIndex);
+        vl.reconstruction[visibleIndex] = vl.weights.multiplyOHVsT(*reconCs, visibleIndex, hiddenSize.z) / (vl.weights.countT(visibleIndex) / hiddenSize.z);
     }
 }
 
@@ -111,6 +109,8 @@ void ImageEncoder::initRandom(
         int area = diam * diam;
 
         vl.weights.initSMLocalRF(vld.size, hiddenSize, vld.radius);
+
+        vl.weights.initT();
 
         for (int i = 0; i < vl.weights.nonZeroValues.size(); i++)
             vl.weights.nonZeroValues[i] = randf();

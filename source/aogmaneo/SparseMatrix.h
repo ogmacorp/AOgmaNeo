@@ -46,11 +46,21 @@ struct SparseMatrix {
 		int row
 	);
 
+	float distance2(
+		const FloatBuffer &in,
+		int row
+	);
+
 	int count(
 		int row
 	);
 
 	float multiplyT(
+		const FloatBuffer &in,
+		int column
+	);
+
+	float distance2T(
 		const FloatBuffer &in,
 		int column
 	);
