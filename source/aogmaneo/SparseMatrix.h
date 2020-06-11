@@ -116,5 +116,19 @@ struct SparseMatrix {
 		int column,
 		int oneHotSize
 	);
+
+	// --- Hebbian ---
+
+	void hebb(
+		const FloatBuffer &in,
+		int row,
+		float alpha
+	);
+
+	void hebbT(
+		const FloatBuffer &in,
+		int column,
+		float alpha
+	);
 };
 } // namespace aon

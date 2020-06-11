@@ -312,3 +312,25 @@ void SparseMatrix::deltaChangedOHVsT(
 		}
 	}
 }
+
+void SparseMatrix::hebb(
+	const FloatBuffer &in,
+	int row,
+	float alpha
+) {
+	int nextIndex = row + 1;
+	
+	for (int j = rowRanges[row]; j < rowRanges[nextIndex]; j++)
+		nonZeroValues[j] += alpha * (in[columnIndices[j]] - nonZeroValues[j]);
+}
+
+void SparseMatrix::hebbT(
+	const FloatBuffer &in,
+	int column,
+	float alpha
+) {
+	int nextIndex = column + 1;
+	
+	for (int j = columnRanges[column]; j < columnRanges[nextIndex]; j++)
+		nonZeroValues[nonZeroValueIndices[j]] += alpha * (in[rowIndices[j]] - nonZeroValues[nonZeroValueIndices[j]]);
+}

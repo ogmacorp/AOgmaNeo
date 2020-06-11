@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Helpers.h"
+#include "SparseMatrix.h"
 
 namespace aon {
 // Visible layer descriptor
@@ -30,15 +31,30 @@ class ImageEncoder {
 public:
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Byte weight matrix
+        SparseMatrix weights;
 
-        ByteBuffer reconstruction;
+        FloatBuffer reconstruction;
+    };
+
+    struct FloatInt {
+        float f;
+        int i;
+
+        bool operator<(
+            const FloatInt &other
+        ) const {
+            return f < other.f;
+        }
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    Array<FloatInt> hiddenActivations; // Activations temporary buffer
+
     ByteBuffer hiddenCs; // Hidden states
+
+    FloatBuffer hiddenResources; // Resources left to hidden units (exponential decaying)
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -48,7 +64,7 @@ private:
     
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
+        const Array<const FloatBuffer*> &inputCs,
         bool learnEnabled
     );
 
@@ -60,11 +76,13 @@ private:
 
 public:
     float alpha;
+    float gamma;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.1f)
+    alpha(0.01f),
+    gamma(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -75,7 +93,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const ByteBuffer*> &inputs, // Input states
+        const Array<const FloatBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -83,7 +101,7 @@ public:
         const ByteBuffer* reconCs
     );
 
-    const ByteBuffer &getReconstruction(
+    const FloatBuffer &getReconstruction(
         int i
     ) const {
         return visibleLayers[i].reconstruction;

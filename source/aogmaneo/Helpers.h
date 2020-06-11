@@ -49,6 +49,13 @@ T max(
     return right;
 }
 
+template <typename T>
+void swap(T &left, T &right) {
+    T temp = left;
+    left = right;
+    right = temp;
+}
+
 inline void setNumThreads(int numThreads) {
     omp_set_num_threads(numThreads);
 }
@@ -401,5 +408,64 @@ unsigned char countBits(
     }
 
     return c;
+}
+
+// --- Sorting ---
+
+template <typename T>
+int partition(Array<T> &arr, int low, int high) {
+    T pivotVal = arr[high];
+
+    int i = 0;
+
+    for (int j = low; j < high; j++) {
+        if (arr[j] < pivotVal) {
+            swap<T>(arr[i], arr[j]);
+            i++;
+        }
+    }
+
+    swap<T>(arr[i], arr[high]);
+
+    return i;
+}
+
+// In-place
+template <typename T>
+void quicksort(Array<T> &arr, int low = 0, int high = -1) {
+    if (arr.size() <= 1)
+        return;
+
+    if (high == -1)
+        high = arr.size() - 1;
+
+    Array<int> stack(high - low + 1);
+
+    int top = 0;
+
+    stack[top] = low;
+    top++;
+    stack[top] = high;
+
+    while (top >= 0) {
+        high = stack[top--];
+        low = stack[top--];
+
+        int pivotIndex = partition<T>(arr, low, high);
+
+        if (pivotIndex - 1 > low) {
+            top++;
+            stack[top] = low;
+            top++;
+            stack[top] = pivotIndex - 1;
+        }
+
+        if (pivotIndex + 1 < high) {
+            top++;
+            stack[top] = pivotIndex + 1;
+            top++;
+            stack[top] = high;
+        }
+    }
 }
 } // namespace aon
