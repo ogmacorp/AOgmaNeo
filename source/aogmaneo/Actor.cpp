@@ -12,7 +12,8 @@ using namespace aon;
 
 void Actor::forward(
     const Int2 &pos,
-    const Array<const ByteBuffer*> &inputCs
+    const Array<const ByteBuffer*> &inputCs,
+    unsigned long* state
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -65,7 +66,7 @@ void Actor::forward(
         total += activations[hc];
     }
 
-    float cusp = randf() * total;
+    float cusp = randf(state) * total;
 
     int selectIndex = 0;
     float sumSoFar = 0.0f;
@@ -241,9 +242,14 @@ void Actor::step(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     // Forward kernel
+    int baseState = rand();
+
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
+    for (int i = 0; i < numHiddenColumns; i++) {
+        unsigned long state = baseState + i;
+
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, &state);
+    }
 
     historySamples.pushFront();
 
