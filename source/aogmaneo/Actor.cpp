@@ -35,7 +35,7 @@ void Actor::forward(
 
     // --- Action ---
 
-    Array<float> activations(hiddenSize.z);
+    int maxIndex = 0;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -51,37 +51,13 @@ void Actor::forward(
             sum += vl.actionWeights.multiplyOHVs(*inputCs[vli], hiddenIndex, vld.size.z);
         }
 
-        sum /= count;
-
-        activations[hc] = sum;
-
-        maxActivation = max(maxActivation, sum);
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        activations[hc] = expf(activations[hc] - maxActivation);
-        
-        total += activations[hc];
-    }
-
-    float cusp = randf(state) * total;
-
-    int selectIndex = 0;
-    float sumSoFar = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        sumSoFar += activations[hc];
-
-        if (sumSoFar >= cusp) {
-            selectIndex = hc;
-
-            break;
+        if (sum > maxActivation) {
+            maxActivation = sum;
+            maxIndex = hc;
         }
     }
     
-    hiddenCs[hiddenColumnIndex] = selectIndex;
+    hiddenCs[hiddenColumnIndex] = maxIndex;
 }
 
 void Actor::learn(
@@ -131,7 +107,6 @@ void Actor::learn(
 
     int targetC = (*hiddenTargetCsPrev)[hiddenColumnIndex];
 
-    Array<float> activations(hiddenSize.z);
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -149,7 +124,7 @@ void Actor::learn(
 
         sum /= count;
 
-        activations[hc] = sum;
+        hiddenActivations[hiddenIndex] = sum;
 
         maxActivation = max(maxActivation, sum);
     }
@@ -157,15 +132,17 @@ void Actor::learn(
     float total = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        activations[hc] = expf(activations[hc] - maxActivation);
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
         
-        total += activations[hc];
+        total += hiddenActivations[hiddenIndex];
     }
     
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        float deltaAction = (mimic ? beta : (tdErrorAction > 0.0f ? beta : -beta)) * ((hc == targetC ? 1.0f : 0.0f) - activations[hc] / max(0.0001f, total));
+        float deltaAction = (mimic ? beta : (tdErrorAction > 0.0f ? beta : -beta)) * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex] / max(0.0001f, total));
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -190,6 +167,7 @@ void Actor::initRandom(
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+    int numHidden = numHiddenColumns * hiddenSize.z;
 
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -206,6 +184,8 @@ void Actor::initRandom(
         for (int i = 0; i < vl.actionWeights.nonZeroValues.size(); i++)
             vl.actionWeights.nonZeroValues[i] = randf(-0.01f, 0.01f);
     }
+
+    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
 

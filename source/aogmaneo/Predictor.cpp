@@ -21,6 +21,7 @@ void Predictor::forward(
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         float sum = 0.0f;
+        int count = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -28,7 +29,12 @@ void Predictor::forward(
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
             sum += vl.weights.multiplyOHVs(*inputCs[vli], hiddenIndex, vld.size.z);
+            count += vl.weights.count(hiddenIndex) / vld.size.z;
         }
+
+        sum /= count;
+
+        hiddenActivations[hiddenIndex] = sum;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -47,23 +53,28 @@ void Predictor::learn(
 
     int targetC = (*hiddenTargetCs)[hiddenColumnIndex];
 
+    float maxActivation = -999999.0f;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
-        int count = 0;
+        maxActivation = max(maxActivation, hiddenActivations[hiddenIndex]);
+    }
 
-        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-            VisibleLayer &vl = visibleLayers[vli];
-            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+    float total = 0.0f;
 
-            sum += vl.weights.multiplyOHVs(vl.inputCsPrev, hiddenIndex, vld.size.z);
-            count += vl.weights.count(hiddenIndex) / vld.size.z;
-        }
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        sum /= count;
+        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
+        
+        total += hiddenActivations[hiddenIndex];
+    }
 
-        float delta = alpha * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(sum));
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+        float delta = alpha * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex] / max(0.0001f, total));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -86,6 +97,7 @@ void Predictor::initRandom(
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+    int numHidden = numHiddenColumns * hiddenSize.z;
 
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -102,6 +114,8 @@ void Predictor::initRandom(
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
     }
+
+    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
