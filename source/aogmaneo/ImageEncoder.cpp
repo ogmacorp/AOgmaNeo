@@ -51,7 +51,9 @@ void ImageEncoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = hiddenActivations[address3(Int3(pos.x, pos.y, hc), hiddenSize)].i;
 
-            float strength = hiddenResources[hiddenIndex] * expf(-gamma * (hiddenSize.z - 1 - hc) / max(0.0001f, hiddenResources[hiddenIndex]));
+            float dist = static_cast<float>(hiddenSize.z - 1 - hc) / static_cast<float>(hiddenSize.z);
+
+            float strength = hiddenResources[hiddenIndex] * expf(-gamma * dist * dist / max(0.0001f, hiddenResources[hiddenIndex]));
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
