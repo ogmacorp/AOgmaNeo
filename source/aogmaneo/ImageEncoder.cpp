@@ -32,10 +32,8 @@ void ImageEncoder::forward(
             sum -= vl.weights.distance2(*inputs[vli], hiddenIndex);
         }
 
-        if (learnEnabled) {
-            hiddenActivations[hiddenIndex].f = sum;
-            hiddenActivations[hiddenIndex].i = hiddenIndex;
-        }
+        hiddenActivations[hiddenIndex].f = sum;
+        hiddenActivations[hiddenIndex].i = hiddenIndex;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -53,7 +51,7 @@ void ImageEncoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = hiddenActivations[address3(Int3(pos.x, pos.y, hc), hiddenSize)].i;
 
-            float strength = hiddenResources[hiddenIndex] * expf(-gamma * (hiddenSize.z - 1 - hc)); // / max(0.0001f, hiddenResources[hiddenIndex])
+            float strength = hiddenResources[hiddenIndex] * expf(-gamma * (hiddenSize.z - 1 - hc) / max(0.0001f, hiddenResources[hiddenIndex]));
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
