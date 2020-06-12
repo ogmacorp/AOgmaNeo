@@ -57,7 +57,9 @@ void SparseCoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-        float sum = vl.weights.multiplyOHVsT(hiddenCs, visibleIndex, hiddenSize.z);
+        float sum = vl.weights.multiplyOHVsT(hiddenCs, visibleIndex, hiddenSize.z) / (vl.weights.countT(visibleIndex) / hiddenSize.z);
+
+        vl.visibleActivations[visibleIndex] = sum;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -71,9 +73,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            float sum = vl.weights.multiplyOHVsT(hiddenCs, visibleIndex, hiddenSize.z) / (vl.weights.countT(visibleIndex) / hiddenSize.z);
-
-            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(sum));
+            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(vl.visibleActivations[visibleIndex]));
 
             vl.weights.deltaChangedOHVsT(hiddenCs, hiddenCsPrev, delta, visibleIndex, hiddenSize.z);
         }
@@ -99,6 +99,9 @@ void SparseCoder::initRandom(
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
 
+        int numVisibleColumns = vld.size.x * vld.size.y;
+        int numVisible = numVisibleColumns * vld.size.z;
+
         // Create weight matrix for this visible layer and initialize randomly
         vl.weights.initSMLocalRF(vld.size, hiddenSize, vld.radius);
 
@@ -107,6 +110,8 @@ void SparseCoder::initRandom(
 
         for (int i = 0; i < vl.weights.nonZeroValues.size(); i++)
             vl.weights.nonZeroValues[i] = -randf();
+
+        vl.visibleActivations = FloatBuffer(numVisible, 0.0f);
     }
 
     // Hidden Cs
