@@ -121,7 +121,7 @@ void ImageEncoder::forward(
 
                             unsigned char weight = vl.weights[start + vc];
 
-                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, vl.weights[start + vc] + 255.0f * strength * (input - weight))));
+                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, vl.weights[start + vc] + strength * (static_cast<float>(input) - static_cast<float>(weight)))));
                         }
                     }
             }
@@ -220,7 +220,7 @@ void ImageEncoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 16;
+            vl.weights[i] = rand() % 255;
 
         vl.reconstruction = ByteBuffer(numVisible, 0);
     }
