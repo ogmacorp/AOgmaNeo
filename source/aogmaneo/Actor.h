@@ -50,6 +50,8 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
+    FloatBuffer hiddenActivations;
+
     ByteBuffer hiddenCs; // Hidden states
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
@@ -64,7 +66,8 @@ private:
 
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs
+        const Array<const ByteBuffer*> &inputCs,
+        unsigned long* state
     );
 
     void learn(
@@ -74,8 +77,7 @@ private:
         const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
-        bool mimic,
-        unsigned long* state
+        bool mimic
     );
 
 public:
@@ -84,6 +86,7 @@ public:
     float gamma; // Discount factor
     int minSteps;
     int historyIters;
+    float expScale;
 
     // Defaults
     Actor()
@@ -92,7 +95,8 @@ public:
     beta(0.01f),
     gamma(0.99f),
     minSteps(8),
-    historyIters(8)
+    historyIters(8),
+    expScale(4.0f)
     {}
 
     // Initialized randomly

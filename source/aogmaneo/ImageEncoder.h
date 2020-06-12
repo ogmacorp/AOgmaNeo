@@ -49,7 +49,11 @@ private:
 
     Int3 hiddenSize; // Size of hidden/output layer
 
+    Array<FloatInt> hiddenActivations;
+
     ByteBuffer hiddenCs; // Hidden states
+
+    FloatBuffer hiddenResources; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
