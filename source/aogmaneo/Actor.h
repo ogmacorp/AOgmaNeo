@@ -65,7 +65,8 @@ private:
 
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs
+        const Array<const ByteBuffer*> &inputCs,
+        unsigned long* state
     );
 
     void learn(
@@ -88,8 +89,8 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.01f),
-    beta(0.01f),
+    alpha(0.02f),
+    beta(0.02f),
     gamma(0.99f),
     minSteps(8),
     historyIters(8)
