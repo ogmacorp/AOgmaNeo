@@ -39,7 +39,7 @@ private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
     FloatBuffer hiddenActivations;
-    
+
     ByteBuffer hiddenCs; // Hidden state
 
     // Visible layers and descs
@@ -66,7 +66,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.1f),
+    alpha(0.5f),
     expScale(4.0f)
     {}
 

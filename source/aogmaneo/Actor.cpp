@@ -35,7 +35,7 @@ void Actor::forward(
 
     // --- Action ---
 
-    float maxActivation = 0;
+    float maxActivation = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
