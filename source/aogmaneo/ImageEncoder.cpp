@@ -65,7 +65,7 @@ void ImageEncoder::forward(
                 }
         }
 
-        hiddenActivations[hiddenIndex].f = sum;
+        hiddenActivations[hiddenIndex].a = sum;
         hiddenActivations[hiddenIndex].i = hiddenIndex;
 
         if (sum > maxActivation) {
@@ -79,7 +79,7 @@ void ImageEncoder::forward(
     if (learnEnabled) {
         int startIndex = address3(Int3(pos.x, pos.y, 0), hiddenSize);
 
-        quicksort<FloatInt>(hiddenActivations, startIndex, startIndex + hiddenSize.z);
+        quicksort<IntInt>(hiddenActivations, startIndex, startIndex + hiddenSize.z);
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = hiddenActivations[address3(Int3(pos.x, pos.y, hc), hiddenSize)].i;
@@ -121,7 +121,7 @@ void ImageEncoder::forward(
 
                             unsigned char weight = vl.weights[start + vc];
 
-                            vl.weights[start + vc] = min(255.0f, max(0.0f, vl.weights[start + vc] + alpha * (input - weight)));
+                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, vl.weights[start + vc] + 255.0f * strength * (input - weight))));
                         }
                     }
             }
@@ -220,7 +220,7 @@ void ImageEncoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 0xff - rand() % 8;
+            vl.weights[i] = 255 - rand() % 16;
 
         vl.reconstruction = ByteBuffer(numVisible, 0);
     }

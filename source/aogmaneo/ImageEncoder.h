@@ -36,20 +36,20 @@ public:
     };
 
 private:
-    struct FloatInt {
-        float f;
+    struct IntInt {
+        int a;
         int i;
 
         bool operator<(
-            const FloatInt &other
+            const IntInt &other
         ) const {
-            return f < other.f;
+            return a < other.a;
         }
     };
 
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<FloatInt> hiddenActivations;
+    Array<IntInt> hiddenActivations;
 
     ByteBuffer hiddenCs; // Hidden states
 
@@ -80,8 +80,8 @@ public:
     // Defaults
     ImageEncoder()
     :
-    alpha(0.01f),
-    gamma(0.04f)
+    alpha(0.05f),
+    gamma(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization

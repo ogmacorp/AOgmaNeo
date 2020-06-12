@@ -141,7 +141,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            int delta = roundftoi(alpha * 255.0f * ((vc == targetC ? 1.0f : 0.0f) - expf(expScale * (vl.reconstruction[visibleIndex] / 255.0f - 1.0f))));
+            int delta = roundftoi(alpha * 255.0f * ((vc == targetC ? 1.0f : 0.0f) - expf(expScale * (vl.reconstruction[visibleIndex] / 255.0f * 2.0f - 1.0f))));
  
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -200,9 +200,9 @@ void SparseCoder::initRandom(
         char range = 16;
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % range;
+            vl.weights[i] = 127 - rand() % range;
 
-        vl.reconstruction = FloatBuffer(numVisible, 0);
+        vl.reconstruction = FloatBuffer(numVisible, 0.0f);
     }
 
     // Hidden Cs
