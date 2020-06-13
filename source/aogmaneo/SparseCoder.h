@@ -45,6 +45,8 @@ private:
     ByteBuffer hiddenCs; // Hidden states
     ByteBuffer hiddenCsTemp; // Temporary hidden states
 
+    FloatBuffer hiddenResources; // Resources that decay when a unit is used in learning
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -68,13 +70,13 @@ private:
     );
 
 public:
-    float alpha; // Learning rate
+    float alpha; // Learning rate (resource decay)
     int explainIters;
     
     // Defaults
     SparseCoder()
     :
-    alpha(0.05f),
+    alpha(0.01f),
     explainIters(4)
     {}
 

@@ -165,7 +165,7 @@ void SparseCoder::learn(
 
                     float weight = vl.weights[wi];
 
-                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, weight + alpha * ((vc == inC ? 255.0f : 0.0f) - weight))));
+                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenResources[hiddenIndex] * ((vc == inC ? 255.0f : 0.0f) - weight))));
                 }
             }
     }
@@ -192,9 +192,11 @@ void SparseCoder::learn(
 
                 float weight = laterals[wi];
 
-                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + alpha * ((ohc == inC ? 255.0f : 0.0f) - weight))));
+                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenResources[hiddenIndex] * ((ohc == inC ? 255.0f : 0.0f) - weight))));
             }
         }
+
+    hiddenResources[hiddenIndex] -= alpha * hiddenResources[hiddenIndex];
 }
 
 void SparseCoder::initRandom(
@@ -236,6 +238,8 @@ void SparseCoder::initRandom(
 
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
+
+    hiddenResources = FloatBuffer(numHidden, 0.5f);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
