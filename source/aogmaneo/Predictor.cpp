@@ -32,7 +32,7 @@ void Predictor::forward(
             count += vl.weights.count(hiddenIndex) / vld.size.z;
         }
 
-        sum /= count;
+        sum /= max(1, count);
 
         hiddenActivations[hiddenIndex] = sum;
 

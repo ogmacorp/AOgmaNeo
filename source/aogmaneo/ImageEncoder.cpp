@@ -187,7 +187,7 @@ void ImageEncoder::reconstruct(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = sum / count;
+        vl.reconstruction[visibleIndex] = sum / max(1, count);
     }
 }
 
