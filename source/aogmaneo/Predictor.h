@@ -55,8 +55,7 @@ private:
 
     void learn(
         const Int2 &pos,
-        const ByteBuffer* hiddenTargetCs,
-        unsigned long* state
+        const ByteBuffer* hiddenTargetCs
     );
 
 public:

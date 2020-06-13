@@ -54,19 +54,16 @@ private:
     void learn(
         const Int2 &pos,
         const ByteBuffer* inputCs,
-        int vli,
-        unsigned long* state
+        int vli
     );
 
 public:
     float alpha; // Learning rate
-    float expScale;
     
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f),
-    expScale(4.0f)
+    alpha(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization

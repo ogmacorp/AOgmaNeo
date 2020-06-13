@@ -73,8 +73,7 @@ void Predictor::forward(
 
 void Predictor::learn(
     const Int2 &pos,
-    const ByteBuffer* hiddenTargetCs,
-    unsigned long* state
+    const ByteBuffer* hiddenTargetCs
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -192,12 +191,7 @@ void Predictor::learn(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
     // Learn kernel
-    unsigned long baseState = rand();
-
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned long state = baseState + i;
-
-        learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCs, &state);
-    }
+    for (int i = 0; i < numHiddenColumns; i++)
+        learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCs);
 }
