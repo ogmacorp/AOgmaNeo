@@ -96,11 +96,11 @@ void SparseCoder::inhibit(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x,  hiddenSize.y));
+                int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x,  hiddenSize.y));
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                unsigned char inC = hiddenCsTemp[visibleColumnIndex];
+                unsigned char inC = hiddenCsTemp[otherHiddenColumnIndex];
 
                 unsigned char weight = laterals[inC + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 
