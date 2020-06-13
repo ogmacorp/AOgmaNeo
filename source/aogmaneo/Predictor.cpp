@@ -79,10 +79,12 @@ void Predictor::learn(
 
     int targetC = (*hiddenTargetCs)[hiddenColumnIndex];
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+    if (hiddenCs[hiddenColumnIndex] != targetC) {
+        int hiddenIndexTarget = address3(Int3(pos.x, pos.y, targetC), hiddenSize);
+        int hiddenIndexMax = address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-        int delta = roundftoi(alpha * ((hc == targetC ? 255.0f : 0.0f) - hiddenActivations[hiddenIndex]));
+        int deltaTarget = roundftoi(alpha * (255.0f - hiddenActivations[hiddenIndexTarget]));
+        int deltaMax = roundftoi(alpha * (0.0f - hiddenActivations[hiddenIndexMax]));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -111,14 +113,21 @@ void Predictor::learn(
 
                     unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                    int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    {
+                        int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget));
 
-                    unsigned char weight = vl.weights[wi];
-                    
-                    if (delta > 0)
-                        vl.weights[wi] = min<int>(255 - delta, weight) + delta;
-                    else
-                        vl.weights[wi] = max<int>(-delta, weight) + delta;
+                        unsigned char weight = vl.weights[wi];
+                        
+                        vl.weights[wi] = min<int>(255 - deltaTarget, weight) + deltaTarget;
+                    }
+
+                    {
+                        int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
+
+                        unsigned char weight = vl.weights[wi];
+  
+                        vl.weights[wi] = max<int>(-deltaMax, weight) + deltaMax;
+                    }
                 }
         }
     }
