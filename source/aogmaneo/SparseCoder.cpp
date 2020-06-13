@@ -98,6 +98,9 @@ void SparseCoder::inhibit(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x,  hiddenSize.y));
 
+                if (otherHiddenColumnIndex == hiddenColumnIndex) // No self-inhibition
+                    continue;
+
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 unsigned char inC = hiddenCsTemp[otherHiddenColumnIndex];
@@ -225,10 +228,8 @@ void SparseCoder::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
 
         // Initialize to random values
-        char range = 16;
-
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % range;
+            vl.weights[i] = rand() % 255;
 
         vl.reconstruction = FloatBuffer(numVisible, 0);
     }
