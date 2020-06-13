@@ -83,7 +83,7 @@ void Predictor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        int delta = roundftoi(alpha * 255.0f * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(expScale * (hiddenActivations[hiddenIndex] / 255.0f * 2.0f - 1.0f))));
+        int delta = roundftoi(alpha * ((hc == targetC ? 255.0f : 0.0f) - hiddenActivations[hiddenIndex]));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];

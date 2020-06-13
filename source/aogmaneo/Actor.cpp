@@ -35,7 +35,7 @@ void Actor::forward(
 
     // --- Action ---
 
-    float maxActivation = 0.0f;
+    float total = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -78,18 +78,8 @@ void Actor::forward(
                 }
         }
 
-        hiddenActivations[hiddenIndex] = (static_cast<float>(sum) / static_cast<float>(count)) / 255.0f * expScale;
+        hiddenActivations[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(count);
 
-        maxActivation = max(maxActivation, hiddenActivations[hiddenIndex]);
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
-        
         total += hiddenActivations[hiddenIndex];
     }
 
@@ -160,8 +150,6 @@ void Actor::learn(
 
     unsigned char targetC = (*hiddenTargetCsPrev)[hiddenColumnIndex];
 
-    float maxActivation = 0.0f;
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
@@ -202,25 +190,7 @@ void Actor::learn(
                 }
         }
 
-        hiddenActivations[hiddenIndex] = (static_cast<float>(sum) / static_cast<float>(count)) / 255.0f * expScale;
-
-        maxActivation = max(maxActivation, hiddenActivations[hiddenIndex]);
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
-        
-        total += hiddenActivations[hiddenIndex];
-    }
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-        int delta = roundftoi((mimic ? beta : (tdErrorAction > 0.0f ? beta : -beta)) * 255.0f * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex] / max(0.0001f, total)));
+        int delta = roundftoi((mimic ? beta : (tdErrorAction > 0.0f ? beta : -beta)) * ((hc == targetC ? 255.0f : 0.0f) - static_cast<float>(sum) / static_cast<float>(count)));
         
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
