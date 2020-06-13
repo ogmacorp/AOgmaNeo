@@ -37,12 +37,19 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    int lRadius; // Lateral radius
+
+    FloatBuffer hiddenStimuli;
+    FloatBuffer hiddenActivations;
 
     ByteBuffer hiddenCs; // Hidden states
+    ByteBuffer hiddenCsTemp; // Temporary hidden states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
+
+    ByteBuffer laterals; // Lateral weights
     
     // --- Kernels ---
     
@@ -51,24 +58,30 @@ private:
         const Array<const ByteBuffer*> &inputCs
     );
 
+    void inhibit(
+        const Int2 &pos
+    );
+
     void learn(
         const Int2 &pos,
-        const ByteBuffer* inputCs,
-        int vli
+        const Array<const ByteBuffer*> &inputCs
     );
 
 public:
     float alpha; // Learning rate
+    int explainIters;
     
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f)
+    alpha(0.1f),
+    explainIters(8)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        int lRadius, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
