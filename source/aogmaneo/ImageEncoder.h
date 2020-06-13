@@ -9,7 +9,6 @@
 #pragma once
 
 #include "Helpers.h"
-#include "SparseMatrix.h"
 
 namespace aon {
 // Visible layer descriptor
@@ -31,30 +30,30 @@ class ImageEncoder {
 public:
     // Visible layer
     struct VisibleLayer {
-        SparseMatrix weights;
+        ByteBuffer weights; // Byte weight matrix
 
-        FloatBuffer reconstruction;
-    };
-
-    struct FloatInt {
-        float f;
-        int i;
-
-        bool operator<(
-            const FloatInt &other
-        ) const {
-            return f < other.f;
-        }
+        ByteBuffer reconstruction;
     };
 
 private:
+    struct IntInt {
+        int a;
+        int i;
+
+        bool operator<(
+            const IntInt &other
+        ) const {
+            return a < other.a;
+        }
+    };
+
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<FloatInt> hiddenActivations; // Activations temporary buffer
+    Array<IntInt> hiddenActivations;
 
     ByteBuffer hiddenCs; // Hidden states
 
-    FloatBuffer hiddenResources; // Resources left to hidden units (exponential decaying)
+    FloatBuffer hiddenResources; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -64,7 +63,7 @@ private:
     
     void forward(
         const Int2 &pos,
-        const Array<const FloatBuffer*> &inputCs,
+        const Array<const ByteBuffer*> &inputCs,
         bool learnEnabled
     );
 
@@ -82,7 +81,7 @@ public:
     ImageEncoder()
     :
     alpha(0.01f),
-    gamma(1.0f)
+    gamma(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -93,7 +92,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const FloatBuffer*> &inputs, // Input states
+        const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -101,7 +100,7 @@ public:
         const ByteBuffer* reconCs
     );
 
-    const FloatBuffer &getReconstruction(
+    const ByteBuffer &getReconstruction(
         int i
     ) const {
         return visibleLayers[i].reconstruction;
