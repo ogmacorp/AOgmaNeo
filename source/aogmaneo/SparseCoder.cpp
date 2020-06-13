@@ -60,7 +60,7 @@ void SparseCoder::forward(
                 }
         }
 
-        hiddenActivations[hiddenIndex] = hiddenStimuli[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(count);
+        hiddenActivations[hiddenIndex] = hiddenStimuli[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -111,7 +111,7 @@ void SparseCoder::inhibit(
                 count++;
             }
 
-        float inhibition = static_cast<float>(sum) / static_cast<float>(count);
+        float inhibition = static_cast<float>(sum) / static_cast<float>(max(1, count));
 
         hiddenActivations[hiddenIndex] += hiddenStimuli[hiddenIndex] - inhibition;
 
