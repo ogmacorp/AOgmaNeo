@@ -12,6 +12,7 @@
 #include "SparseMatrix.h"
 
 namespace aon {
+// A reinforcement learning layer
 class Actor {
 public:
     // Visible layer descriptor
@@ -31,7 +32,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         SparseMatrix valueWeights; // Value function weights
-        ByteBuffer actionWeights; // Action function weights
+        SparseMatrix actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
@@ -50,7 +51,7 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenActivations; // Temporary buffer
 
     ByteBuffer hiddenCs; // Hidden states
 
@@ -91,7 +92,7 @@ public:
     Actor()
     :
     alpha(0.02f),
-    beta(0.1f),
+    beta(0.02f),
     gamma(0.99f),
     minSteps(8),
     historyIters(8)
