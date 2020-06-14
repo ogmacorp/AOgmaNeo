@@ -58,7 +58,7 @@ void ImageEncoder::forward(
 
                         unsigned char weight = vl.weights[start + vc];
 
-                        float delta = (static_cast<float>(input) - static_cast<float>(weight)) / 255.0f;
+                        float delta = static_cast<float>(input) - static_cast<float>(weight);
 
                         sum += -delta * delta;
                     }
