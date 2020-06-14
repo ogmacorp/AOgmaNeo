@@ -232,7 +232,7 @@ void ImageEncoder::initRandom(
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
 
-    hiddenResources = FloatBuffer(numHidden, 1.0f);
+    hiddenResources = FloatBuffer(numHidden, 0.5f);
 }
 
 void ImageEncoder::step(
