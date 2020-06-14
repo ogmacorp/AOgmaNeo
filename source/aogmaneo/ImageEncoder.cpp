@@ -23,8 +23,7 @@ void ImageEncoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        int sum = 0;
-        int total = 0;
+        float sum = 0.0f;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -59,19 +58,18 @@ void ImageEncoder::forward(
 
                         unsigned char weight = vl.weights[start + vc];
 
-                        sum += input * weight;
-                        total += weight;
+                        float delta = (static_cast<float>(input) - static_cast<float>(weight)) / 255.0f;
+
+                        sum += -delta * delta;
                     }
                 }
         }
 
-        float activation = static_cast<float>(sum) / static_cast<float>(max(1, total));
-
-        hiddenActivations[hiddenIndex].a = activation;
+        hiddenActivations[hiddenIndex].a = sum;
         hiddenActivations[hiddenIndex].i = hiddenIndex;
 
-        if (activation > maxActivation) {
-            maxActivation = activation;
+        if (sum > maxActivation) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
