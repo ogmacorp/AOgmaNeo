@@ -62,7 +62,7 @@ template <typename T>
 T abs(
     T x
 ) {
-    if (x > 0)
+    if (x >= 0)
         return x;
 
     return  -x;
@@ -492,20 +492,13 @@ void quicksort(Array<T> &arr, int low = 0, int high = -1) {
 
 // --- Learning helpers ---
 
-inline unsigned char deltaMin1(unsigned char weight, float delta) {
+inline int deltaMin1(float delta) {
     if (delta == 0.0f)
-        return weight;
-
-    int deltai;
+        return 0;
 
     if (abs(delta) < 1.0f)
-        deltai = delta > 0.0f ? 1 : -1;
-    else
-        deltai = roundftoi(delta);
+        return delta > 0.0f ? 1 : -1;
 
-    if (deltai > 0)
-        return min<unsigned char>(255 - deltai, weight) + deltai;
-
-    return max<unsigned char>(-deltai, weight) + deltai;
+    return roundftoi(delta);
 }
 } // namespace aon

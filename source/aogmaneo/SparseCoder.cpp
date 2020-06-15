@@ -163,9 +163,9 @@ void SparseCoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                    unsigned char weight = vl.weights[wi];
+                    float weight = vl.weights[wi];
 
-                    vl.weights[wi] = deltaMin1(weight, hiddenResources[hiddenIndex] * ((vc == inC ? 255.0f : 0.0f) - weight));
+                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, weight + deltaMin1(hiddenResources[hiddenIndex] * ((vc == inC ? 255.0f : 0.0f) - weight)))));
                 }
             }
     }
@@ -190,9 +190,9 @@ void SparseCoder::learn(
             for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
                 int wi = ohc + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                unsigned char weight = laterals[wi];
+                float weight = laterals[wi];
 
-                laterals[wi] = deltaMin1(weight, hiddenResources[hiddenIndex] * ((ohc == inC ? 255.0f : 0.0f) - weight));
+                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + deltaMin1(hiddenResources[hiddenIndex] * ((ohc == inC ? 255.0f : 0.0f) - weight)))));
             }
         }
 
