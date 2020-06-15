@@ -83,8 +83,8 @@ void Predictor::learn(
         int hiddenIndexTarget = address3(Int3(pos.x, pos.y, targetC), hiddenSize);
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-        int deltaTarget = deltaMin1(alpha * (255.0f - hiddenActivations[hiddenIndexTarget]));
-        int deltaMax = deltaMin1(alpha * (0.0f - hiddenActivations[hiddenIndexMax]));
+        int deltaTarget = roundftoi(alpha * (255.0f - hiddenActivations[hiddenIndexTarget]));
+        int deltaMax = roundftoi(alpha * (0.0f - hiddenActivations[hiddenIndexMax]));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];

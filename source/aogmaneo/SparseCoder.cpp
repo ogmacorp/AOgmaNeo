@@ -165,7 +165,7 @@ void SparseCoder::learn(
 
                     float weight = vl.weights[wi];
 
-                    vl.weights[wi] = min(255.0f, max(0.0f, weight + deltaMin1(hiddenResources[hiddenIndex] * ((vc == inC ? 255.0f : 0.0f) - weight))));
+                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenResources[hiddenIndex] * ((vc == inC ? 255.0f : 0.0f) - weight))));
                 }
             }
     }
@@ -192,7 +192,7 @@ void SparseCoder::learn(
 
                 float weight = laterals[wi];
 
-                laterals[wi] = min(255.0f, max(0.0f, weight + deltaMin1(hiddenResources[hiddenIndex] * ((ohc == inC ? 255.0f : 0.0f) - weight))));
+                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenResources[hiddenIndex] * ((ohc == inC ? 255.0f : 0.0f) - weight))));
             }
         }
 
