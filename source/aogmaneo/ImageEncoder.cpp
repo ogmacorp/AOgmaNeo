@@ -18,12 +18,12 @@ void ImageEncoder::forward(
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
-    int maxActivation = -999999;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        int sum = 0;
+        float sum = 0.0f;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -58,7 +58,7 @@ void ImageEncoder::forward(
 
                         unsigned char weight = vl.weights[start + vc];
 
-                        int delta = static_cast<int>(input) - static_cast<int>(weight);
+                        float delta = (static_cast<float>(input) - static_cast<float>(weight)) / 255.0f;
 
                         sum += -delta * delta;
                     }
@@ -79,15 +79,15 @@ void ImageEncoder::forward(
     if (learnEnabled) {
         int startIndex = address3(Int3(pos.x, pos.y, 0), hiddenSize);
 
-        quicksort<IntInt>(hiddenActivations, startIndex, startIndex + hiddenSize.z);
+        quicksort<FloatInt>(hiddenActivations, startIndex, startIndex + hiddenSize.z);
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = hiddenActivations[address3(Int3(pos.x, pos.y, hc), hiddenSize)].i;
 
-            float dist = static_cast<float>(hiddenSize.z - 1 - hc) / static_cast<float>(hiddenSize.z);
+            float dist = static_cast<float>(hiddenSize.z - 1 - hc) / static_cast<float>(hiddenSize.z - 1);
 
             float strength = hiddenResources[hiddenIndex] * expf(-gamma * dist * dist / max(0.0001f, hiddenResources[hiddenIndex]));
-
+            
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -230,7 +230,7 @@ void ImageEncoder::initRandom(
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
 
-    hiddenResources = FloatBuffer(numHidden, 1.0f);
+    hiddenResources = FloatBuffer(numHidden, 0.5f);
 }
 
 void ImageEncoder::step(
