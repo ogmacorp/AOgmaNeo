@@ -64,7 +64,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.05f)
+    alpha(0.1f)
     {}
 
     // Create with random initialization
