@@ -36,12 +36,12 @@ public:
     };
 
 private:
-    struct FloatInt {
-        float a;
+    struct IntInt {
+        int a;
         int i;
 
         bool operator<(
-            const FloatInt &other
+            const IntInt &other
         ) const {
             return a < other.a;
         }
@@ -49,7 +49,7 @@ private:
 
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<FloatInt> hiddenActivations;
+    Array<IntInt> hiddenActivations;
 
     ByteBuffer hiddenCs; // Hidden states
 
