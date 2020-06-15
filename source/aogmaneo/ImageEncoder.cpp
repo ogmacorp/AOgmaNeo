@@ -119,9 +119,9 @@ void ImageEncoder::forward(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                            unsigned char weight = vl.weights[start + vc];
+                            float weight = vl.weights[start + vc];
 
-                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, vl.weights[start + vc] + strength * (static_cast<float>(input) - static_cast<float>(weight)))));
+                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, weight + deltaMin1(strength * (static_cast<float>(input) - weight)))));
                         }
                     }
             }
@@ -230,7 +230,7 @@ void ImageEncoder::initRandom(
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
 
-    hiddenResources = FloatBuffer(numHidden, 0.5f);
+    hiddenResources = FloatBuffer(numHidden, 1.0f);
 }
 
 void ImageEncoder::step(

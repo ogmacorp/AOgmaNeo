@@ -59,6 +59,16 @@ T max(
 }
 
 template <typename T>
+T abs(
+    T x
+) {
+    if (x >= 0)
+        return x;
+
+    return  -x;
+}
+
+template <typename T>
 void swap(T &left, T &right) {
     T temp = left;
     left = right;
@@ -478,5 +488,17 @@ void quicksort(Array<T> &arr, int low = 0, int high = -1) {
             stack[top] = high;
         }
     }
+}
+
+// --- Learning helpers ---
+
+inline int deltaMin1(float delta) {
+    if (delta == 0.0f)
+        return 0;
+
+    if (abs(delta) < 1.0f)
+        return delta > 0.0f ? 1 : -1;
+
+    return roundftoi(delta);
 }
 } // namespace aon
