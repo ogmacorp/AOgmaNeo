@@ -18,12 +18,12 @@ void ImageEncoder::forward(
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
-    int maxActivation = -999999;
+    int maxActivation = 1; // Flag value
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        int sum = 0.0f;
+        int sum = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -68,7 +68,7 @@ void ImageEncoder::forward(
         hiddenActivations[hiddenIndex].a = sum;
         hiddenActivations[hiddenIndex].i = hiddenIndex;
 
-        if (sum > maxActivation) {
+        if (sum > maxActivation || maxActivation == 1) {
             maxActivation = sum;
             maxIndex = hc;
         }
@@ -230,7 +230,7 @@ void ImageEncoder::initRandom(
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
 
-    hiddenResources = FloatBuffer(numHidden, 0.5f);
+    hiddenResources = FloatBuffer(numHidden, 1.0f);
 }
 
 void ImageEncoder::step(
