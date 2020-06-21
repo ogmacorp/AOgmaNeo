@@ -57,18 +57,20 @@ void SparseCoder::forward(
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                     for (int z = 0; z < vld.size.z; z++) {
-                        unsigned char weight0 = vl.weights[0 + 2 * (z + start)];
-                        unsigned char weight1 = vl.weights[1 + 2 * (z + start)];
-                    
-                        total += weight0 + weight1;
+                        if (vl.mask[z + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))]) {
+                            unsigned char weight0 = vl.weights[0 + 2 * (z + start)];
+                            unsigned char weight1 = vl.weights[1 + 2 * (z + start)];
+                        
+                            total += weight0 + weight1;
 
-                        if (z == inC)
-                            sum += weight0;
-                        else
-                            sum += weight1;
-                    }
-                    
-                    count += vld.size.z;
+                            if (z == inC)
+                                sum += weight0;
+                            else
+                                sum += weight1;
+
+                            count++;
+                        }
+                    }  
                 }
         }
 
@@ -197,10 +199,14 @@ void SparseCoder::initRandom(
         int area = diam * diam;
 
         vl.weights.resize(numHidden * area * vld.size.z * 2);
+        vl.mask.resize(numHiddenColumns * area * vld.size.z);
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 256;
+            vl.weights[i] = 255;
+
+        for (int i = 0; i < vl.mask.size(); i++)
+            vl.mask[i] = randf() < 0.5f ? 1 : 0;
     }
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);

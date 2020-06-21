@@ -31,6 +31,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         ByteBuffer weights; // Weight matrix
+        ByteBuffer mask; // Mask matrix
     };
 
 private:
@@ -63,7 +64,7 @@ public:
     :
     alpha(0.1f),
     beta(0.2f),
-    minVigilance(0.4f)
+    minVigilance(0.9f)
     {}
 
     // Create a sparse coding layer with random initialization
