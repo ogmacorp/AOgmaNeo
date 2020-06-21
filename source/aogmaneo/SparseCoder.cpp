@@ -91,7 +91,7 @@ void SparseCoder::forward(
             }
             else {
                 // Reset
-                hiddenActivations[hiddenIndexMax] = 0.0f;
+                hiddenActivations[hiddenIndexMax] = -1.0f;
 
                 maxActivation = 0.0f;
 
@@ -141,13 +141,18 @@ void SparseCoder::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
+                    for (int z = 0; z < vld.size.z; z++) {
+                        if (z == inC)
+                            continue;
+                            
+                        int wi = z + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
 
-                    unsigned char weight = vl.weights[wi];
+                        unsigned char weight = vl.weights[wi];
 
-                    int delta = roundftoi(beta * -vl.weights[wi]);
+                        int delta = roundftoi(beta * -vl.weights[wi]);
 
-                    vl.weights[wi] = max<int>(-delta, weight) + delta;
+                        vl.weights[wi] = max<int>(-delta, weight) + delta;
+                    }
                 }
         }
     }
