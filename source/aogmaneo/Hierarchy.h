@@ -28,7 +28,6 @@ public:
         Int3 hiddenSize; // Size of hidden layer
 
         int ffRadius; // Feed forward radius
-        int lRadius; // Lateral radius
         int pRadius; // Prediction radius
         int aRadius; // Actor radius
 
@@ -41,7 +40,6 @@ public:
         :
         hiddenSize(4, 4, 16),
         ffRadius(2),
-        lRadius(2),
         pRadius(2),
         aRadius(2),
         ticksPerUpdate(2),
