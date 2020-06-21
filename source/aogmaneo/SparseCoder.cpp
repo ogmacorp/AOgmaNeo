@@ -18,7 +18,7 @@ void SparseCoder::forward(
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
-    float maxActivation = 0.0f;
+    float maxActivation = -1.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -53,24 +53,27 @@ void SparseCoder::forward(
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
-                    
-                    for (int z = 0; z < vld.size.z; z++) {
-                        unsigned char weight = vl.weights[z + start];
-                    
-                        total += weight;
-                    }
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    unsigned char weight = vl.weights[inC + start];
+                    for (int z = 0; z < vld.size.z; z++) {
+                        unsigned char weight0 = vl.weights[0 + 2 * (z + start)];
+                        unsigned char weight1 = vl.weights[1 + 2 * (z + start)];
                     
-                    sum += weight;
-                    count++;
+                        total += weight0 + weight1;
+
+                        if (z == inC)
+                            sum += weight0;
+                        else
+                            sum += weight1;
+                    }
+                    
+                    count += vld.size.z;
                 }
         }
 
-        hiddenActivations[hiddenIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255);
-        hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
+        hiddenActivations[hiddenIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
+        hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
         if (hiddenActivations[hiddenIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenIndex];
@@ -84,7 +87,7 @@ void SparseCoder::forward(
     // Vigilance checking cycle
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
-
+        
         if (hiddenMatches[hiddenIndexMax] < minVigilance) {
             if (hc == hiddenSize.z - 1) {
                 maxIndex = originalMaxIndex;
@@ -95,14 +98,14 @@ void SparseCoder::forward(
                 // Reset
                 hiddenActivations[hiddenIndexMax] = -1.0f;
 
-                maxActivation = 0.0f;
+                maxActivation = -1.0f;
 
-                for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+                for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
+                    int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
 
                     if (hiddenActivations[hiddenIndex] > maxActivation) {
                         maxActivation = hiddenActivations[hiddenIndex];
-                        maxIndex = hc;
+                        maxIndex = ohc;
                     }
                 }
             }
@@ -146,16 +149,22 @@ void SparseCoder::forward(
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
 
                     for (int z = 0; z < vld.size.z; z++) {
-                        if (z == inC)
-                            continue;
+                        int wi0 = 0 + 2 * (z + start);
+                        int wi1 = 1 + 2 * (z + start);
 
-                        int wi = z + start;
+                        unsigned char weight0 = vl.weights[wi0];
+                        unsigned char weight1 = vl.weights[wi1];
 
-                        unsigned char weight = vl.weights[wi];
+                        if (z == inC) {
+                            int delta1 = roundftoi(beta * -weight1);
 
-                        int delta = roundftoi(beta * -vl.weights[wi]);
+                            vl.weights[wi1] = max<int>(-delta1, weight1) + delta1;
+                        }
+                        else {
+                            int delta0 = roundftoi(beta * -weight0);
 
-                        vl.weights[wi] = max<int>(-delta, weight) + delta;
+                            vl.weights[wi0] = max<int>(-delta0, weight0) + delta0;
+                        }
                     }
                 }
         }
@@ -187,7 +196,7 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.weights.resize(numHidden * area * vld.size.z * 2);
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
@@ -207,8 +216,9 @@ void SparseCoder::step(
     bool learnEnabled // Whether to learn
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    
+
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
+    for (int i = 0; i < numHiddenColumns; i++) {
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, learnEnabled);
+    }
 }

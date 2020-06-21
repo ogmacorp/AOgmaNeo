@@ -61,9 +61,9 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f),
-    beta(0.05f),
-    minVigilance(0.7f)
+    alpha(1.0f),
+    beta(0.1f),
+    minVigilance(0.4f)
     {}
 
     // Create a sparse coding layer with random initialization
