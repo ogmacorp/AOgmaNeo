@@ -52,15 +52,17 @@ void SparseCoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
+                    int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    
                     for (int z = 0; z < vld.size.z; z++) {
-                        unsigned char weight = vl.weights[z + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        unsigned char weight = vl.weights[z + start];
                     
                         total += weight;
                     }
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    unsigned char weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    unsigned char weight = vl.weights[inC + start];
                     
                     sum += weight;
                     count++;
@@ -141,11 +143,13 @@ void SparseCoder::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
+                    int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
+
                     for (int z = 0; z < vld.size.z; z++) {
                         if (z == inC)
                             continue;
-                            
-                        int wi = z + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
+
+                        int wi = z + start;
 
                         unsigned char weight = vl.weights[wi];
 
