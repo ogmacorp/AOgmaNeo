@@ -23,6 +23,9 @@ void SparseCoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
+        if (hiddenCommits[hiddenIndex] == 0)
+            continue;
+
         int sum = 0;
         int total = 0;
         int count = 0;
@@ -84,42 +87,61 @@ void SparseCoder::forward(
     }
 
     int originalMaxIndex = maxIndex;
-    bool passed = true;
+    bool passed = false;
 
     // Vigilance checking cycle
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
         
+        if (hiddenCommits[hiddenIndexMax] == 0)
+            continue;
+
         if (hiddenMatches[hiddenIndexMax] < minVigilance) {
-            if (hc == hiddenSize.z - 1) {
-                maxIndex = originalMaxIndex;
-                passed = false;
-                break;
-            }
-            else {
-                // Reset
-                hiddenActivations[hiddenIndexMax] = -1.0f;
+            // Reset
+            hiddenActivations[hiddenIndexMax] = -1.0f;
 
-                maxActivation = -1.0f;
+            maxActivation = -1.0f;
 
-                for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
-                    int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
+            for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
+                int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
 
-                    if (hiddenActivations[hiddenIndex] > maxActivation) {
-                        maxActivation = hiddenActivations[hiddenIndex];
-                        maxIndex = ohc;
-                    }
+                if (hiddenActivations[hiddenIndex] > maxActivation) {
+                    maxActivation = hiddenActivations[hiddenIndex];
+                    maxIndex = ohc;
                 }
             }
         }
-        else
+        else {
+            passed = true;
             break;
+        }
+    }
+
+    if (!passed) {
+        maxIndex = -1;
+
+        // Search for uncommitted node
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+            if (hiddenCommits[hiddenIndex] == 0) {
+                maxIndex = hc;
+                break;
+            }
+        }
+
+        if (maxIndex == -1)
+            maxIndex = originalMaxIndex;
+        else
+            passed = true;
     }
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled && passed) {
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+
+        float rate = hiddenCommits[hiddenIndexMax] == 0 ? 1.0f : beta;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -158,18 +180,20 @@ void SparseCoder::forward(
                         unsigned char weight1 = vl.weights[wi1];
 
                         if (z == inC) {
-                            int delta1 = roundftoi(beta * -weight1);
+                            int delta1 = roundftoi(rate * -weight1);
 
                             vl.weights[wi1] = max<int>(-delta1, weight1) + delta1;
                         }
                         else {
-                            int delta0 = roundftoi(beta * -weight0);
+                            int delta0 = roundftoi(rate * -weight0);
 
                             vl.weights[wi0] = max<int>(-delta0, weight0) + delta0;
                         }
                     }
                 }
         }
+
+        hiddenCommits[hiddenIndexMax] = 1;
     }
 }
 
@@ -208,6 +232,8 @@ void SparseCoder::initRandom(
         for (int i = 0; i < vl.mask.size(); i++)
             vl.mask[i] = randf() < 0.5f ? 1 : 0;
     }
+
+    hiddenCommits = ByteBuffer(numHidden, 0);
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
     hiddenMatches = FloatBuffer(numHidden, 0.0f);

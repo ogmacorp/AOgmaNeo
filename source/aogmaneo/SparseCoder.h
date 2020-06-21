@@ -37,6 +37,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    ByteBuffer hiddenCommits;
     FloatBuffer hiddenActivations;
     FloatBuffer hiddenMatches;
 
@@ -63,7 +64,7 @@ public:
     SparseCoder()
     :
     alpha(1.0f),
-    beta(0.5f),
+    beta(0.1f),
     minVigilance(0.85f)
     {}
 
