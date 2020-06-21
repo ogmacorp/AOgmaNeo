@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-
+#include <iostream>
 using namespace aon;
 
 void SparseCoder::forward(
@@ -83,12 +83,14 @@ void SparseCoder::forward(
 
     int originalMaxIndex = maxIndex;
     bool passed = true;
+    int resets = 0;
 
     // Vigilance checking cycle
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
         
         if (hiddenMatches[hiddenIndexMax] < minVigilance) {
+            resets++;
             if (hc == hiddenSize.z - 1) {
                 maxIndex = originalMaxIndex;
                 passed = false;
@@ -114,6 +116,7 @@ void SparseCoder::forward(
             break;
     }
 
+    std::cout << resets << std::endl;
     hiddenCs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled && passed) {
