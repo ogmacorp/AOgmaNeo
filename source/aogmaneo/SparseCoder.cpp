@@ -132,8 +132,6 @@ void SparseCoder::learn(
 
     int hiddenIndex = address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-    float match = hiddenActivations[hiddenIndex] / (explainIters + 1); // +1 for added in stimulus
-
     // For each visible layer
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
