@@ -84,6 +84,11 @@ void Predictor::learn(
 
         int delta = roundftoi(beta * 255.0f * (0.5f + (hc == targetC ? targetRange : -targetRange) - hiddenActivations[hiddenIndex]));
   
+        if (hc == targetC)
+            delta = max(0, delta);
+        else
+            delta = min(0, delta);
+            
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
