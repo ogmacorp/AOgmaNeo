@@ -60,8 +60,8 @@ private:
     // Per-layer values
     ByteBuffer updates;
 
-    ByteBuffer ticks;
-    ByteBuffer ticksPerUpdate;
+    IntBuffer ticks;
+    IntBuffer ticksPerUpdate;
 
     // Input dimensions
     Array<Int3> inputSizes;
