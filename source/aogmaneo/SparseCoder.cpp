@@ -20,11 +20,8 @@ void SparseCoder::forward(
     int maxIndex = 0;
     float maxActivation = -1.0f;
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
+    for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-        if (hiddenCommits[hiddenIndex] == 0)
-            continue;
 
         int sum = 0;
         int total = 0;
@@ -88,14 +85,12 @@ void SparseCoder::forward(
 
     int originalMaxIndex = maxIndex;
     bool passed = false;
+    bool commit = false;
 
     // Vigilance checking cycle
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
+    for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
         
-        if (hiddenCommits[hiddenIndexMax] == 0)
-            continue;
-
         if (hiddenMatches[hiddenIndexMax] < minVigilance) {
             // Reset
             hiddenActivations[hiddenIndexMax] = -1.0f;
@@ -118,22 +113,13 @@ void SparseCoder::forward(
     }
 
     if (!passed) {
-        maxIndex = -1;
-
-        // Search for uncommitted node
-        for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-            if (hiddenCommits[hiddenIndex] == 0) {
-                maxIndex = hc;
-                break;
-            }
-        }
-
-        if (maxIndex == -1)
-            maxIndex = originalMaxIndex;
-        else
+        if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
+            maxIndex = hiddenCommits[hiddenColumnIndex];
+            commit = true;
             passed = true;
+        }
+        else
+            maxIndex = originalMaxIndex;
     }
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
@@ -141,7 +127,7 @@ void SparseCoder::forward(
     if (learnEnabled && passed) {
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
-        float rate = hiddenCommits[hiddenIndexMax] == 0 ? 1.0f : beta;
+        float rate = commit ? 1.0f : beta;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -193,7 +179,8 @@ void SparseCoder::forward(
                 }
         }
 
-        hiddenCommits[hiddenIndexMax] = 1;
+        if (commit && hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
+            hiddenCommits[hiddenColumnIndex]++;
     }
 }
 
@@ -233,7 +220,7 @@ void SparseCoder::initRandom(
             vl.mask[i] = randf() < 0.5f ? 1 : 0;
     }
 
-    hiddenCommits = ByteBuffer(numHidden, 0);
+    hiddenCommits = ByteBuffer(numHiddenColumns, 0);
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
     hiddenMatches = FloatBuffer(numHidden, 0.0f);
@@ -302,7 +289,7 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&minVigilance), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
-    hiddenCommits.resize(numHidden);
+    hiddenCommits.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
