@@ -22,10 +22,8 @@ void Predictor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        if (!hiddenCommitsMask[hiddenIndex])
-            continue;
-
         int sum = 0;
+        int count = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -58,8 +56,11 @@ void Predictor::forward(
                     unsigned char weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
                     sum += weight;
+                    count++;
                 }
         }
+
+        hiddenActivations[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -78,87 +79,47 @@ void Predictor::learn(
 
     int targetC = (*hiddenTargetCs)[hiddenColumnIndex];
 
-    if (hiddenCs[hiddenColumnIndex] != targetC) {
-        for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-            if (hc == targetC) {
-                if (!hiddenCommitsMask[hiddenIndex]) {
-                    // Commit
-                    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                        VisibleLayer &vl = visibleLayers[vli];
-                        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+        int delta = roundftoi(beta * 255.0f * (0.5f + (hc == targetC ? targetRange : -targetRange) - hiddenActivations[hiddenIndex]));
+  
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-                        int diam = vld.radius * 2 + 1;
+            int diam = vld.radius * 2 + 1;
 
-                        // Projection
-                        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-                        Int2 visibleCenter = project(pos, hToV);
+            Int2 visibleCenter = project(pos, hToV);
 
-                        // Lower corner
-                        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-                        // Bounds of receptive field, clamped to input size
-                        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                                unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
+                    unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                                vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] = 255;
-                            }
-                    }
+                    int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                    hiddenCommitsMask[hiddenIndex] = 1;
+                    unsigned char weight = vl.weights[wi];
+                    
+                    if (delta > 0)
+                        vl.weights[wi] = min<int>(255 - delta, weight) + delta;
+                    else
+                        vl.weights[wi] = max<int>(-delta, weight) + delta;
                 }
-            }
-            else {
-                if (hiddenCommitsMask[hiddenIndex]) {
-                    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                        VisibleLayer &vl = visibleLayers[vli];
-                        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-                        int diam = vld.radius * 2 + 1;
-
-                        // Projection
-                        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-
-                        Int2 visibleCenter = project(pos, hToV);
-
-                        // Lower corner
-                        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
-
-                        // Bounds of receptive field, clamped to input size
-                        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
-
-                        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
-
-                                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                                unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
-
-                                int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
-
-                                unsigned char weight = vl.weights[wi];
-        
-                                int delta = roundftoi(beta * -weight);
-
-                                vl.weights[wi] = max<int>(-delta, weight) + delta;
-                            }
-                    }
-                }
-            }
         }
     }
 }
@@ -189,13 +150,16 @@ void Predictor::initRandom(
 
         vl.weights.resize(numHidden * area * vld.size.z);
 
+        // Initialize to random values
+        char range = 16;
+
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 0;
+            vl.weights[i] = rand() % (2 * range) + 127 - range;
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
     }
 
-    hiddenCommitsMask = ByteBuffer(numHidden, 0);
+    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
@@ -238,8 +202,7 @@ void Predictor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
-
-    writer.write(reinterpret_cast<const void*>(&hiddenCommitsMask[0]), hiddenCommitsMask.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&targetRange), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     
@@ -272,14 +235,13 @@ void Predictor::read(
     int numHidden =  numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
-
-    hiddenCommitsMask.resize(numHidden);
-
-    reader.read(reinterpret_cast<void*>(&hiddenCommitsMask[0]), hiddenCommitsMask.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&targetRange), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+
+    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
