@@ -494,17 +494,21 @@ void quicksort(Array<T> &arr, int low = 0, int high = -1) {
 
 class StreamWriter {
 public:
+    virtual ~StreamWriter() {}
+
     virtual void write(
         const void* data,
         int len
-    );
+    ) = 0;
 };
 
 class StreamReader {
 public:
+    virtual ~StreamReader() {}
+
     virtual void read(
         void* data,
         int len
-    );
+    ) = 0;
 };
 } // namespace aon
