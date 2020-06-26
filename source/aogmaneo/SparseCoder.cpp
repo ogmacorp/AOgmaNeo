@@ -302,7 +302,7 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&minVigilance), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
-    hiddenCommits.resize(numHiddenColumns);
+    hiddenCommits.resize(numHidden);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
