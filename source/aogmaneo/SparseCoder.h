@@ -64,7 +64,7 @@ public:
     SparseCoder()
     :
     alpha(0.1f),
-    beta(0.1f),
+    beta(0.5f),
     minVigilance(0.85f)
     {}
 
