@@ -83,6 +83,15 @@ public:
         const ByteBuffer* hiddenTargetCs
     );
 
+    // Serialization
+    void write(
+        StreamWriter &writer
+    ) const;
+
+    void read(
+        StreamReader &reader
+    );
+
     // Get number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
