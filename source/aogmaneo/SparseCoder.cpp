@@ -250,7 +250,6 @@ void SparseCoder::step(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
+    for (int i = 0; i < numHiddenColumns; i++)
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, learnEnabled);
-    }
 }
