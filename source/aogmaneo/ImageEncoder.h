@@ -11,23 +11,23 @@
 #include "Helpers.h"
 
 namespace aon {
-// Visible layer descriptor
-struct ImageEncoderVisibleLayerDesc {
-    Int3 size; // Size of input
-
-    int radius; // Radius onto input
-
-    // Defaults
-    ImageEncoderVisibleLayerDesc()
-    :
-    size(4, 4, 16),
-    radius(2)
-    {}
-};
-
 // Image coder
 class ImageEncoder {
 public:
+    // Visible layer descriptor
+    struct VisibleLayerDesc {
+        Int3 size; // Size of input
+
+        int radius; // Radius onto input
+
+        // Defaults
+        VisibleLayerDesc()
+        :
+        size(4, 4, 16),
+        radius(2)
+        {}
+    };
+
     // Visible layer
     struct VisibleLayer {
         ByteBuffer weights; // Byte weight matrix
@@ -57,7 +57,7 @@ private:
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
-    Array<ImageEncoderVisibleLayerDesc> visibleLayerDescs;
+    Array<VisibleLayerDesc> visibleLayerDescs;
     
     // --- Kernels ---
     
@@ -87,7 +87,7 @@ public:
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        const Array<ImageEncoderVisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
+        const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
     // Activate the sparse coder (perform sparse coding)
@@ -106,6 +106,15 @@ public:
         return visibleLayers[i].reconstruction;
     }
 
+    // Serialization
+    void write(
+        StreamWriter &writer
+    ) const;
+
+    void read(
+        StreamReader &reader
+    );
+
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
@@ -119,7 +128,7 @@ public:
     }
 
     // Get a visible layer descriptor
-    const ImageEncoderVisibleLayerDesc &getVisibleLayerDesc(
+    const VisibleLayerDesc &getVisibleLayerDesc(
         int i // Index of visible layer
     ) const {
         return visibleLayerDescs[i];

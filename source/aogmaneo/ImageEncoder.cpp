@@ -28,7 +28,7 @@ void ImageEncoder::forward(
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
-            const ImageEncoderVisibleLayerDesc &vld = visibleLayerDescs[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
             int diam = vld.radius * 2 + 1;
 
@@ -91,7 +91,7 @@ void ImageEncoder::forward(
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
-                const ImageEncoderVisibleLayerDesc &vld = visibleLayerDescs[vli];
+                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
                 int diam = vld.radius * 2 + 1;
 
@@ -137,7 +137,7 @@ void ImageEncoder::reconstruct(
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
-    ImageEncoderVisibleLayerDesc &vld = visibleLayerDescs[vli];
+    VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
     int diam = vld.radius * 2 + 1;
 
@@ -193,7 +193,7 @@ void ImageEncoder::reconstruct(
 
 void ImageEncoder::initRandom(
     const Int3 &hiddenSize,
-    const Array<ImageEncoderVisibleLayerDesc> &visibleLayerDescs
+    const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
     this->visibleLayerDescs = visibleLayerDescs;
 
@@ -208,7 +208,7 @@ void ImageEncoder::initRandom(
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
-        const ImageEncoderVisibleLayerDesc &vld = this->visibleLayerDescs[vli];
+        const VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
 
         int numVisibleColumns = vld.size.x * vld.size.y;
         int numVisible = numVisibleColumns * vld.size.z;
@@ -248,12 +248,70 @@ void ImageEncoder::reconstruct(
     const ByteBuffer* reconCs
 ) {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        const ImageEncoderVisibleLayerDesc &vld = visibleLayerDescs[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         int numVisibleColumns = vld.size.x * vld.size.y;
 
         #pragma omp parallel for
         for (int i = 0; i < numVisibleColumns; i++)
             reconstruct(Int2(i / vld.size.y, i % vld.size.y), reconCs, vli);
+    }
+}
+
+void ImageEncoder::write(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
+
+    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
+
+    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenResources[0]), hiddenResources.size() * sizeof(float));
+    
+    int numVisibleLayers = visibleLayers.size();
+
+    writer.write(reinterpret_cast<const void*>(&numVisibleLayers), sizeof(int));
+    
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
+
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+    }
+}
+
+void ImageEncoder::read(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
+
+    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+    int numHidden =  numHiddenColumns * hiddenSize.z;
+
+    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
+
+    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenResources[0]), hiddenResources.size() * sizeof(float));
+
+    hiddenActivations.resize(numHidden);
+
+    int numVisibleLayers = visibleLayers.size();
+
+    reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
+
+    visibleLayers.resize(numVisibleLayers);
+    visibleLayerDescs.resize(numVisibleLayers);
+    
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
+
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
     }
 }
