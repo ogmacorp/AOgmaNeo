@@ -269,6 +269,8 @@ void Predictor::read(
 
         reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
 
+        vl.weights.resize(weightsSize);
+
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
 
         vl.inputCsPrev.resize(numVisibleColumns);
