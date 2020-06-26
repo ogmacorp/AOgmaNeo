@@ -32,7 +32,6 @@ set(SOURCES
     "${SOURCE_PATH}/aogmaneo/ImageEncoder.cpp"
     "${SOURCE_PATH}/aogmaneo/Predictor.cpp"
     "${SOURCE_PATH}/aogmaneo/SparseCoder.cpp"
-    "${SOURCE_PATH}/aogmaneo/SparseMatrix.cpp"
 )
 
 set(HEADERS
@@ -44,7 +43,6 @@ set(HEADERS
     "${SOURCE_PATH}/aogmaneo/Predictor.h"
     "${SOURCE_PATH}/aogmaneo/Ptr.h"
     "${SOURCE_PATH}/aogmaneo/SparseCoder.h"
-	"${SOURCE_PATH}/aogmaneo/SparseMatrix.h"
 )
 
 find_package(OpenMP REQUIRED)
