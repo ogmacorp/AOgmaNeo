@@ -343,6 +343,7 @@ void Hierarchy::read(
     StreamReader &reader
 ) {
     int numLayers;
+
     reader.read(reinterpret_cast<void*>(&numLayers), sizeof(int));
 
     int numInputs;
@@ -356,13 +357,11 @@ void Hierarchy::read(
     scLayers.resize(numLayers);
     pLayers.resize(numLayers);
 
-    ticks.resize(numLayers);
-
     histories.resize(numLayers);
     
-    ticksPerUpdate.resize(numLayers);
-
     updates.resize(numLayers);
+    ticks.resize(numLayers);
+    ticksPerUpdate.resize(numLayers);
 
     reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
@@ -421,7 +420,7 @@ void Hierarchy::read(
     for (int v = 0; v < aLayers.size(); v++) {
         char exists;
 
-        reader.read(reinterpret_cast<void*>(&exists), sizeof(char));
+        reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
 
         if (exists) {
             aLayers[v].make();
