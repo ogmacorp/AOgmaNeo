@@ -59,13 +59,13 @@ private:
     );
 
 public:
-    float beta; // Learning rate
+    float alpha; // Learning rate
     float targetRange; // Range of target outputs, must be in [0, 0.5]
 
     // Defaults
     Predictor()
     :
-    beta(0.5f),
+    alpha(0.5f),
     targetRange(0.1f)
     {}
 
