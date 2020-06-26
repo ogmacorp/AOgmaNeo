@@ -43,7 +43,7 @@ public:
         pRadius(2),
         aRadius(2),
         ticksPerUpdate(2),
-        temporalHorizon(4),
+        temporalHorizon(2),
         historyCapacity(32)
         {}
     };
