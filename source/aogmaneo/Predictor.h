@@ -38,10 +38,9 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
-    FloatBuffer hiddenActivations;
-
+    ByteBuffer hiddenCommitsMask; // Mask of commits
     ByteBuffer hiddenCs; // Hidden state
-
+    
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -59,12 +58,12 @@ private:
     );
 
 public:
-    float alpha; // Learning rate
+    float beta; // Learning rate
 
     // Defaults
     Predictor()
     :
-    alpha(0.05f)
+    beta(0.1f)
     {}
 
     // Create with random initialization
