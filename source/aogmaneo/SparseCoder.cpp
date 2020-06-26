@@ -253,3 +253,66 @@ void SparseCoder::step(
     for (int i = 0; i < numHiddenColumns; i++)
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, learnEnabled);
 }
+
+void SparseCoder::write(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
+
+    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&minVigilance), sizeof(float));
+
+    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
+    
+    int numVisibleLayers = visibleLayers.size();
+
+    writer.write(reinterpret_cast<const void*>(&numVisibleLayers), sizeof(int));
+    
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
+
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.mask[0]), vl.mask.size() * sizeof(unsigned char));
+    }
+}
+
+void SparseCoder::read(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
+
+    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+    int numHidden =  numHiddenColumns * hiddenSize.z;
+
+    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&minVigilance), sizeof(float));
+
+    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
+
+    hiddenActivations = FloatBuffer(numHidden, 0.0f);
+    hiddenMatches = FloatBuffer(numHidden, 0.0f);
+
+    int numVisibleLayers = visibleLayers.size();
+
+    reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
+
+    visibleLayers.resize(numVisibleLayers);
+    visibleLayerDescs.resize(numVisibleLayers);
+    
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
+
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.mask[0]), vl.mask.size() * sizeof(unsigned char));
+    }
+}

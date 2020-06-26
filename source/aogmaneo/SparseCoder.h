@@ -80,6 +80,15 @@ public:
         bool learnEnabled // Whether to learn
     );
 
+    // Serialization
+    void write(
+        StreamWriter &writer
+    ) const;
+
+    void read(
+        StreamReader &reader
+    );
+
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
