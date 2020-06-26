@@ -60,13 +60,13 @@ private:
 
 public:
     float beta; // Learning rate
-    float targetRange;
+    float targetRange; // Range of target outputs, must be in [0, 0.5]
 
     // Defaults
     Predictor()
     :
     beta(0.1f),
-    targetRange(0.25f)
+    targetRange(0.1f)
     {}
 
     // Create with random initialization
