@@ -30,47 +30,60 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Weight matrix
-        ByteBuffer mask; // Mask matrix
+        ByteBuffer weights; // Binary weight matrix
+
+        FloatBuffer reconstruction; // Temporary buffer
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    int lRadius; // Lateral radius
 
-    ByteBuffer hiddenCommits;
+    FloatBuffer hiddenStimuli;
     FloatBuffer hiddenActivations;
-    FloatBuffer hiddenMatches;
 
     ByteBuffer hiddenCs; // Hidden states
+    ByteBuffer hiddenCsTemp; // Temporary hidden states
+
+    FloatBuffer hiddenResources; // Resources that decay when a unit is used in learning
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
+
+    ByteBuffer laterals; // Lateral weights
     
     // --- Kernels ---
     
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
-        bool learnEnabled
+        const Array<const ByteBuffer*> &inputCs
+    );
+
+    void inhibit(
+        const Int2 &pos
+    );
+
+    void learn(
+        const Int2 &pos,
+        const Array<const ByteBuffer*> &inputCs
     );
 
 public:
-    float alpha; // Activation parameter
-    float beta; // Learning rate
-    float minVigilance; // Vigilance parameter
+    float alpha; // Learning rate (resource decay)
+    int explainIters;
     
     // Defaults
     SparseCoder()
     :
     alpha(0.1f),
-    beta(0.5f),
-    minVigilance(0.85f)
+    explainIters(8)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        int lRadius, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
