@@ -276,6 +276,14 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
+        int weightsSize = vl.weights.size();
+
+        writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
+
+        int maskSize = vl.mask.size();
+
+        writer.write(reinterpret_cast<const void*>(&maskSize), sizeof(int));
+
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
         writer.write(reinterpret_cast<const void*>(&vl.mask[0]), vl.mask.size() * sizeof(unsigned char));
     }
@@ -292,6 +300,9 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minVigilance), sizeof(float));
+
+    hiddenCs.resize(numHiddenColumns);
+    hiddenCommits.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
@@ -311,6 +322,17 @@ void SparseCoder::read(
         VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
+
+        int weightsSize;
+
+        reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
+
+        int maskSize;
+
+        reader.read(reinterpret_cast<void*>(&maskSize), sizeof(int));
+
+        vl.weights.resize(weightsSize);
+        vl.mask.resize(maskSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
         reader.read(reinterpret_cast<void*>(&vl.mask[0]), vl.mask.size() * sizeof(unsigned char));

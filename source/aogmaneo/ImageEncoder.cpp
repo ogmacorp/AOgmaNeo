@@ -279,6 +279,10 @@ void ImageEncoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
+        int weightsSize = vl.weights.size();
+
+        writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
+
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
     }
 }
@@ -293,6 +297,9 @@ void ImageEncoder::read(
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
+
+    hiddenCs.resize(numHiddenColumns);
+    hiddenResources.resize(numHidden);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenResources[0]), hiddenResources.size() * sizeof(float));
@@ -311,6 +318,12 @@ void ImageEncoder::read(
         VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
+
+        int weightsSize;
+
+        reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
+
+        vl.weights.resize(weightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
     }

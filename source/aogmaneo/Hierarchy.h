@@ -58,10 +58,10 @@ private:
     Array<Array<CircleBuffer<ByteBuffer>>> histories;
 
     // Per-layer values
-    Array<char> updates;
+    ByteBuffer updates;
 
-    Array<int> ticks;
-    Array<int> ticksPerUpdate;
+    ByteBuffer ticks;
+    ByteBuffer ticksPerUpdate;
 
     // Input dimensions
     Array<Int3> inputSizes;
@@ -95,6 +95,15 @@ public:
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
         bool mimic = false // For imitation learning
+    );
+
+    // Serialization
+    void write(
+        StreamWriter &writer
+    ) const;
+
+    void read(
+        StreamReader &reader
     );
 
     // Get the number of layers (scLayers)

@@ -474,6 +474,14 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
+        int valueWeightsSize = vl.valueWeights.size();
+
+        writer.write(reinterpret_cast<const void*>(&valueWeightsSize), sizeof(int));
+
+        int actionWeightsSize = vl.actionWeights.size();
+
+        writer.write(reinterpret_cast<const void*>(&actionWeightsSize), sizeof(int));
+
         writer.write(reinterpret_cast<const void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
     }
@@ -506,11 +514,16 @@ void Actor::read(
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
 
+    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
+
+    hiddenCs.resize(numHiddenColumns);
+    hiddenValues.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
@@ -527,6 +540,17 @@ void Actor::read(
         VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
+
+        int valueWeightsSize;
+
+        reader.read(reinterpret_cast<void*>(&valueWeightsSize), sizeof(int));
+
+        int actionWeightsSize;
+
+        reader.read(reinterpret_cast<void*>(&actionWeightsSize), sizeof(int));
+
+        vl.valueWeights.resize(valueWeightsSize);
+        vl.actionWeights.resize(actionWeightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
@@ -550,8 +574,15 @@ void Actor::read(
 
         s.inputCs.resize(numVisibleLayers);
 
-        for (int vli = 0; vli < visibleLayers.size(); vli++)
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+            int numVisibleColumns = vld.size.x * vld.size.y;
+
+            s.inputCs[vli].resize(numVisibleColumns);
+
             reader.read(reinterpret_cast<void*>(&s.inputCs[vli][0]), s.inputCs[vli].size() * sizeof(unsigned char));
+        }
 
         reader.read(reinterpret_cast<void*>(&s.hiddenTargetCsPrev[0]), s.hiddenTargetCsPrev.size() * sizeof(unsigned char));
         reader.read(reinterpret_cast<void*>(&s.hiddenValuesPrev[0]), s.hiddenValuesPrev.size() * sizeof(float));
