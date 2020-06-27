@@ -587,6 +587,9 @@ void Actor::read(
             reader.read(reinterpret_cast<void*>(&s.inputCs[vli][0]), s.inputCs[vli].size() * sizeof(unsigned char));
         }
 
+        s.hiddenTargetCsPrev.resize(numHiddenColumns);
+        s.hiddenValuesPrev.resize(numHiddenColumns);
+
         reader.read(reinterpret_cast<void*>(&s.hiddenTargetCsPrev[0]), s.hiddenTargetCsPrev.size() * sizeof(unsigned char));
         reader.read(reinterpret_cast<void*>(&s.hiddenValuesPrev[0]), s.hiddenValuesPrev.size() * sizeof(float));
 
