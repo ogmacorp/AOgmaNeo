@@ -20,19 +20,6 @@ enum InputType {
     action = 2
 };
 
-// State of hierarchy
-struct State {
-    Array<ByteBuffer> hiddenCs;
-    Array<ByteBuffer> hiddenCsPrev;
-    Array<Array<Array<ByteBuffer>>> predInputCsPrev;
-    Array<Array<ByteBuffer>> predHiddenCs;
-
-    Array<Array<CircleBuffer<ByteBuffer>>> histories;
-
-    Array<char> updates;
-    Array<int> ticks;
-};
-
 // A SPH
 class Hierarchy {
 public:
@@ -45,10 +32,8 @@ public:
         int aRadius; // Actor radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-
         int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
-        // History capacity of actors
         int historyCapacity;
 
         LayerDesc()
@@ -58,10 +43,11 @@ public:
         pRadius(2),
         aRadius(2),
         ticksPerUpdate(2),
-        temporalHorizon(4),
+        temporalHorizon(2),
         historyCapacity(32)
         {}
     };
+
 private:
     // Layers
     Array<SparseCoder> scLayers;
@@ -72,10 +58,10 @@ private:
     Array<Array<CircleBuffer<ByteBuffer>>> histories;
 
     // Per-layer values
-    Array<char> updates;
+    ByteBuffer updates;
 
-    Array<int> ticks;
-    Array<int> ticksPerUpdate;
+    IntBuffer ticks;
+    IntBuffer ticksPerUpdate;
 
     // Input dimensions
     Array<Int3> inputSizes;
@@ -107,18 +93,17 @@ public:
     void step(
         const Array<const ByteBuffer*> &inputCs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f, // Optional reward for actor layers
-        bool mimic = false
+        float reward = 0.0f, // Reinforcement signal
+        bool mimic = false // For imitation learning
     );
 
-    // State get
-    void getState(
-        State &state
+    // Serialization
+    void write(
+        StreamWriter &writer
     ) const;
 
-    // State set
-    void setState(
-        const State &state
+    void read(
+        StreamReader &reader
     );
 
     // Get the number of layers (scLayers)
@@ -200,4 +185,4 @@ public:
         return aLayers;
     }
 };
-} // namespace ogmaneo
+} // namespace aon

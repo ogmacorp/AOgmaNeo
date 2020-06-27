@@ -9,7 +9,6 @@
 #pragma once
 
 #include "Helpers.h"
-#include "SparseMatrix.h"
 
 namespace aon {
 // Sparse coder
@@ -31,16 +30,15 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SparseMatrix weights; // Weight matrix
+        ByteBuffer weights; // Binary weight matrix
 
-        FloatBuffer visibleActivations; // Temporary
+        FloatBuffer reconstruction; // Temporary buffer
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     ByteBuffer hiddenCs; // Hidden states
-    ByteBuffer hiddenCsPrev; // Previous hidden states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -60,12 +58,14 @@ private:
     );
 
 public:
-    float alpha; // Learning rate decay
-
+    float alpha; // Learning rate
+    float targetRange; // Range of target outputs, must be in [0, 0.5]
+    
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f)
+    alpha(0.1f),
+    targetRange(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -78,6 +78,15 @@ public:
     void step(
         const Array<const ByteBuffer*> &inputCs, // Input states
         bool learnEnabled // Whether to learn
+    );
+
+    // Serialization
+    void write(
+        StreamWriter &writer
+    ) const;
+
+    void read(
+        StreamReader &reader
     );
 
     // Get the number of visible layers
@@ -104,16 +113,9 @@ public:
         return hiddenCs;
     }
 
-    // Get the previous tick hidden states
-    const ByteBuffer &getHiddenCsPrev() const {
-        return hiddenCsPrev;
-    }
-
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
     }
-
-    friend class Hierarchy;
 };
 } // namespace aon

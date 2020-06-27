@@ -9,7 +9,6 @@
 #pragma once
 
 #include "Helpers.h"
-#include "SparseMatrix.h"
 
 namespace aon {
 // A prediction layer (predicts x_(t+1))
@@ -31,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SparseMatrix weights; // Weight matrix
+        ByteBuffer weights;
 
         ByteBuffer inputCsPrev; // Previous timestep (prev) input states
     };
@@ -39,7 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
-    FloatBuffer hiddenActivations; // Activations
+    FloatBuffer hiddenActivations;
 
     ByteBuffer hiddenCs; // Hidden state
 
@@ -61,18 +60,20 @@ private:
 
 public:
     float alpha; // Learning rate
+    float targetRange; // Range of target outputs, must be in [0, 0.5]
 
     // Defaults
     Predictor()
     :
-    alpha(0.1f)
+    alpha(0.5f),
+    targetRange(0.1f)
     {}
 
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
-        const Array<VisibleLayerDesc> &visibleLayerDescs // First visible layer must be from current hidden state, second must be feed back state, rest can be whatever
-    ); 
+        const Array<VisibleLayerDesc> &visibleLayerDescs
+    );
 
     // Activate the predictor (predict values)
     void activate(
@@ -82,6 +83,15 @@ public:
     // Learning predictions (update weights)
     void learn(
         const ByteBuffer* hiddenTargetCs
+    );
+
+    // Serialization
+    void write(
+        StreamWriter &writer
+    ) const;
+
+    void read(
+        StreamReader &reader
     );
 
     // Get number of visible layers
@@ -112,7 +122,5 @@ public:
     const Int3 &getHiddenSize() const {
         return hiddenSize;
     }
-
-    friend class Hierarchy;
 };
 } // Namespace aon

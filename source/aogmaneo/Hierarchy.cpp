@@ -10,10 +10,53 @@
 
 using namespace aon;
 
+const Hierarchy &Hierarchy::operator=(
+    const Hierarchy &other // Hierarchy to assign from
+) {
+    // Layers
+    scLayers = other.scLayers;
+
+    updates = other.updates;
+    ticks = other.ticks;
+    ticksPerUpdate = other.ticksPerUpdate;
+    inputSizes = other.inputSizes;
+    histories = other.histories;
+
+    pLayers.resize(other.pLayers.size());
+    
+    for (int l = 0; l < scLayers.size(); l++) {
+        pLayers[l].resize(other.pLayers[l].size());
+
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            if (other.pLayers[l][v] != nullptr) {
+                pLayers[l][v].make();
+
+                (*pLayers[l][v]) = (*other.pLayers[l][v]);
+            }
+            else
+                pLayers[l][v] = nullptr;
+        }
+    }
+
+    aLayers.resize(inputSizes.size());
+
+    for (int v = 0; v < aLayers.size(); v++) {
+        if (other.aLayers[v] != nullptr) {
+            aLayers[v].make();
+
+            (*aLayers[v]) = (*other.aLayers[v]);
+        }
+        else
+            aLayers[v] = nullptr;
+    }
+
+    return *this;
+}
+
 void Hierarchy::initRandom(
-    const Array<Int3> &inputSizes,
-    const Array<InputType> &inputTypes,
-    const Array<LayerDesc> &layerDescs
+    const Array<Int3> &inputSizes, // Sizes of input layers
+    const Array<InputType> &inputTypes, // Types of input layers (same size as inputSizes)
+    const Array<LayerDesc> &layerDescs // Descriptors for layers
 ) {
     // Create layers
     scLayers.resize(layerDescs.size());
@@ -56,18 +99,17 @@ void Hierarchy::initRandom(
             // Initialize history buffers
             histories[l].resize(inputSizes.size());
 
-			for (int i = 0; i < histories[l].size(); i++) {
+            for (int i = 0; i < histories[l].size(); i++) {
                 int inSize = inputSizes[i].x * inputSizes[i].y;
 
                 histories[l][i].resize(layerDescs[l].temporalHorizon);
-				
+                
                 for (int t = 0; t < histories[l][i].size(); t++)
-				    histories[l][i][t] = ByteBuffer(inSize, 0);
-			}
+                    histories[l][i][t] = ByteBuffer(inSize, 0);
+            }
 
             // Predictors
             pLayers[l].resize(inputSizes.size());
-            aLayers.resize(inputSizes.size());
 
             // Predictor visible layer descriptors
             Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
@@ -78,6 +120,9 @@ void Hierarchy::initRandom(
             if (l < scLayers.size() - 1)
                 pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
 
+            // Actors
+            aLayers.resize(inputSizes.size());
+
             // Actor visible layer descriptors
             Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
@@ -87,7 +132,7 @@ void Hierarchy::initRandom(
             if (l < scLayers.size() - 1)
                 aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
 
-            // Create actors
+            // Create predictors
             for (int p = 0; p < pLayers[l].size(); p++) {
                 if (inputTypes[p] == InputType::prediction) {
                     pLayers[l][p].make();
@@ -115,7 +160,7 @@ void Hierarchy::initRandom(
 
             histories[l][0].resize(layerDescs[l].temporalHorizon);
 
-			for (int t = 0; t < histories[l][0].size(); t++)
+            for (int t = 0; t < histories[l][0].size(); t++)
                 histories[l][0][t] = ByteBuffer(inSize, 0);
 
             pLayers[l].resize(layerDescs[l].ticksPerUpdate);
@@ -136,60 +181,18 @@ void Hierarchy::initRandom(
                 pLayers[l][p]->initRandom(layerDescs[l - 1].hiddenSize, pVisibleLayerDescs);
             }
         }
-		
+        
         // Create the sparse coding layer
         scLayers[l].initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
     }
 }
 
-const Hierarchy &Hierarchy::operator=(
-    const Hierarchy &other
-) {
-    // Layers
-    scLayers = other.scLayers;
-
-    updates = other.updates;
-    ticks = other.ticks;
-    ticksPerUpdate = other.ticksPerUpdate;
-    inputSizes = other.inputSizes;
-    histories = other.histories;
-
-    pLayers.resize(other.pLayers.size());
-    
-    for (int l = 0; l < scLayers.size(); l++) {
-        pLayers[l].resize(other.pLayers[l].size());
-
-        for (int v = 0; v < pLayers[l].size(); v++) {
-            if (other.pLayers[l][v] != nullptr) {
-                pLayers[l][v].make();
-
-                (*pLayers[l][v]) = (*other.pLayers[l][v]);
-            }
-            else
-                pLayers[l][v] = nullptr;
-        }
-    }
-
-    aLayers.resize(inputSizes.size());
-    
-    for (int v = 0; v < aLayers.size(); v++) {
-        if (other.aLayers[v] != nullptr) {
-            aLayers[v].make();
-
-            (*aLayers[v]) = (*other.aLayers[v]);
-        }
-        else
-            aLayers[v] = nullptr;
-    }
-
-    return *this;
-}
-
+// Simulation step/tick
 void Hierarchy::step(
-    const Array<const ByteBuffer*> &inputCs,
-    bool learnEnabled,
-    float reward,
-    bool mimic
+    const Array<const ByteBuffer*> &inputCs, // Inputs to remember
+    bool learnEnabled, // Whether learning is enabled
+    float reward, // Reinforcement signal
+    bool mimic // For imitation learning
 ) {
     // First tick is always 0
     ticks[0] = 0;
@@ -198,7 +201,6 @@ void Hierarchy::step(
     for (int i = 0; i < inputSizes.size(); i++) {
         histories[0][i].pushFront();
 
-        // Copy
         histories[0][i][0] = *inputCs[i];
     }
 
@@ -234,7 +236,6 @@ void Hierarchy::step(
 
                 histories[lNext][0].pushFront();
 
-                // Copy
                 histories[lNext][0][0] = scLayers[l].getHiddenCs();
 
                 ticks[lNext]++;
@@ -274,59 +275,156 @@ void Hierarchy::step(
     }
 }
 
-void Hierarchy::getState(
-    State &state
+void Hierarchy::write(
+    StreamWriter &writer
 ) const {
     int numLayers = scLayers.size();
 
-    state.hiddenCs.resize(numLayers);
-    state.hiddenCsPrev.resize(numLayers);
-    state.histories.resize(numLayers);
-    state.predHiddenCs.resize(numLayers);
-    state.predInputCsPrev.resize(numLayers);
+    writer.write(reinterpret_cast<const void*>(&numLayers), sizeof(int));
+
+    int numInputs = inputSizes.size();
+
+    writer.write(reinterpret_cast<const void*>(&numInputs), sizeof(int));
+
+    writer.write(reinterpret_cast<const void*>(&inputSizes[0]), numInputs * sizeof(Int3));
+
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
     for (int l = 0; l < numLayers; l++) {
-        state.hiddenCs[l] = scLayers[l].getHiddenCs();
-        state.hiddenCsPrev[l] = scLayers[l].getHiddenCsPrev();
+        int numInputs = histories[l].size();
 
-        state.predHiddenCs[l].resize(pLayers[l].size());
-        state.predInputCsPrev[l].resize(pLayers[l].size());
+        writer.write(reinterpret_cast<const void*>(&numInputs), sizeof(int));
 
-        for (int j = 0; j < pLayers[l].size(); j++) {
-            state.predHiddenCs[l][j] = pLayers[l][j]->getHiddenCs();
+        for (int i = 0; i < histories[l].size(); i++) {
+            int historySize = histories[l][i].size();
 
-            state.predInputCsPrev[l][j].resize(pLayers[l][j]->getNumVisibleLayers());
+            writer.write(reinterpret_cast<const void*>(&historySize), sizeof(int));
 
-            for (int v = 0; v < pLayers[l][j]->getNumVisibleLayers(); v++) {
-                state.predInputCsPrev[l][j][v] = pLayers[l][j]->getVisibleLayer(v).inputCsPrev;
+            int historyStart = histories[l][i].start;
+
+            writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
+
+            for (int t = 0; t < histories[l][i].size(); t++) {
+                int bufferSize = histories[l][i][t].size();
+
+                writer.write(reinterpret_cast<const void*>(&bufferSize), sizeof(int));
+
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
             }
+        }
+
+        scLayers[l].write(writer);
+
+        // Predictors
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            unsigned char exists = pLayers[l][v] != nullptr;
+
+            writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
+
+            if (exists)
+                pLayers[l][v]->write(writer);
         }
     }
 
-    state.histories = histories;
-    state.ticks = ticks;
-    state.updates = updates;
+    // Actors
+    for (int v = 0; v < aLayers.size(); v++) {
+        unsigned char exists = aLayers[v] != nullptr;
+
+        writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
+
+        if (exists)
+            aLayers[v]->write(writer);
+    }
 }
 
-void Hierarchy::setState(
-    const State &state
+void Hierarchy::read(
+    StreamReader &reader
 ) {
-    int numLayers = scLayers.size();
+    int numLayers;
 
+    reader.read(reinterpret_cast<void*>(&numLayers), sizeof(int));
+
+    int numInputs;
+
+    reader.read(reinterpret_cast<void*>(&numInputs), sizeof(int));
+
+    inputSizes.resize(numInputs);
+
+    reader.read(reinterpret_cast<void*>(&inputSizes[0]), numInputs * sizeof(Int3));
+
+    scLayers.resize(numLayers);
+    pLayers.resize(numLayers);
+
+    histories.resize(numLayers);
+    
+    updates.resize(numLayers);
+    ticks.resize(numLayers);
+    ticksPerUpdate.resize(numLayers);
+
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
+    
     for (int l = 0; l < numLayers; l++) {
-        scLayers[l].hiddenCs = state.hiddenCs[l];
-        scLayers[l].hiddenCsPrev = state.hiddenCsPrev[l];
+        int numInputs;
+        
+        reader.read(reinterpret_cast<void*>(&numInputs), sizeof(int));
 
-        for (int j = 0; j < pLayers[l].size(); j++) {
-            pLayers[l][j]->hiddenCs = state.predHiddenCs[l][j];
+        histories[l].resize(numInputs);
 
-            for (int v = 0; v < pLayers[l][j]->getNumVisibleLayers(); v++) {
-                pLayers[l][j]->visibleLayers[v].inputCsPrev = state.predInputCsPrev[l][j][v];
+        for (int i = 0; i < histories[l].size(); i++) {
+            int historySize;
+
+            reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
+
+            int historyStart;
+            
+            reader.read(reinterpret_cast<void*>(&historyStart), sizeof(int));
+
+            histories[l][i].resize(historySize);
+            histories[l][i].start = historyStart;
+
+            for (int t = 0; t < histories[l][i].size(); t++) {
+                int bufferSize;
+
+                reader.read(reinterpret_cast<void*>(&bufferSize), sizeof(int));
+
+                histories[l][i][t].resize(bufferSize);
+
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
+            }
+        }
+
+        scLayers[l].read(reader);
+        
+        pLayers[l].resize(l == 0 ? inputSizes.size() : ticksPerUpdate[l]);
+
+        // Predictors
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            char exists;
+
+            reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
+
+            if (exists) {
+                pLayers[l][v].make();
+                pLayers[l][v]->read(reader);
             }
         }
     }
 
-    histories = state.histories;
-    ticks = state.ticks;
-    updates = state.updates;
+    // Actors
+    aLayers.resize(inputSizes.size());
+
+    for (int v = 0; v < aLayers.size(); v++) {
+        char exists;
+
+        reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
+
+        if (exists) {
+            aLayers[v].make();
+            aLayers[v]->read(reader);
+        }
+    }
 }
