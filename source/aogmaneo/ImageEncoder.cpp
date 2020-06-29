@@ -121,7 +121,7 @@ void ImageEncoder::forward(
 
                             unsigned char weight = vl.weights[start + vc];
 
-                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, vl.weights[start + vc] + strength * (static_cast<float>(input) - static_cast<float>(weight)))));
+                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, weight + strength * (static_cast<float>(input) - static_cast<float>(weight)))));
                         }
                     }
             }
