@@ -124,7 +124,9 @@ void SparseCoder::learn(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
+        sum /= max(1, count);
+
+        vl.reconstruction[visibleIndex] = sum;
 
         if (sum > maxActivation) {
             maxActivation = sum;
