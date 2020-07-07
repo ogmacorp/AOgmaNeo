@@ -84,15 +84,13 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
-    float temperature; // Randomness
 
     // Defaults
     Actor()
     :
-    alpha(0.01f),
-    beta(0.01f),
-    gamma(0.99f),
-    temperature(0.1f)
+    alpha(0.1f),
+    beta(0.1f),
+    gamma(0.99f)
     {}
 
     // Initialized randomly
