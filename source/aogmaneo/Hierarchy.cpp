@@ -142,7 +142,7 @@ void Hierarchy::initRandom(
                 else if (inputTypes[p] == InputType::action) {
                     aLayers[p].make();
 
-                    aLayers[p]->initRandom(inputSizes[p], layerDescs[l].historyCapacity, aVisibleLayerDescs);
+                    aLayers[p]->initRandom(inputSizes[p], layerDescs[l].historyCapacity, layerDescs[l].supportSize, aVisibleLayerDescs);
                 }
             }
         }

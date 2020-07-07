@@ -39,8 +39,6 @@ public:
         Array<ByteBuffer> inputCs;
         ByteBuffer hiddenTargetCsPrev;
 
-        FloatBuffer hiddenValues;
-        
         float reward;
     };
 
@@ -49,12 +47,13 @@ private:
 
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
+    int supportSize;
 
-    FloatBuffer hiddenActivations; // Temporary buffer
+    FloatBuffer hiddenProbs;
+    FloatBuffer hiddenProbsTemp;
+    FloatBuffer hiddenTargetProbs;
 
     ByteBuffer hiddenCs; // Hidden states
-
-    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -74,7 +73,6 @@ private:
         const Int2 &pos,
         const Array<const ByteBuffer*> &inputCs,
         const ByteBuffer* hiddenTargetCsPrev,
-        const FloatBuffer* hiddenValues,
         float q,
         float g,
         bool mimic
@@ -88,8 +86,8 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.1f),
-    beta(0.1f),
+    alpha(0.01f),
+    beta(0.01f),
     gamma(0.99f)
     {}
 
@@ -97,6 +95,7 @@ public:
     void initRandom(
         const Int3 &hiddenSize,
         int historyCapacity,
+        int supportSize,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
