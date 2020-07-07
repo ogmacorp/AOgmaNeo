@@ -114,7 +114,7 @@ void Actor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
+        hiddenActivations[hiddenIndex] = expf((hiddenActivations[hiddenIndex] - maxActivation) / temperature);
         
         total += hiddenActivations[hiddenIndex];
     }
@@ -273,7 +273,7 @@ void Actor::learn(
 
     sum /= max(1, count);
 
-    float deltaAction = beta * (tdErrorAction / temperature - sum);
+    float deltaAction = beta * (tdErrorAction - sum);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];

@@ -92,7 +92,7 @@ public:
     alpha(0.01f),
     beta(0.01f),
     gamma(0.99f),
-    temperature(0.01f)
+    temperature(0.1f)
     {}
 
     // Initialized randomly
