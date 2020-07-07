@@ -141,9 +141,9 @@ void Actor::forward(
 
 void Actor::learn(
     const Int2 &pos,
-    const Array<const ByteBuffer*> &inputCsPrev,
+    const Array<const ByteBuffer*> &inputCs,
     const ByteBuffer* hiddenTargetCsPrev,
-    const FloatBuffer* hiddenValuesPrev,
+    const FloatBuffer* hiddenValues,
     float q,
     float g,
     bool mimic
@@ -152,7 +152,7 @@ void Actor::learn(
 
     // --- Value Prev ---
 
-    float newValue = q + g * hiddenValues[hiddenColumnIndex];
+    float newValue = q + g * this->hiddenValues[hiddenColumnIndex];
 
     float value = 0.0f;
     int count = 0;
@@ -182,7 +182,7 @@ void Actor::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+                unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                 float weight = vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                 
@@ -222,7 +222,7 @@ void Actor::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+                unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                 vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
             }
@@ -230,7 +230,7 @@ void Actor::learn(
 
     // --- Action ---
 
-    float tdErrorAction = newValue - (*hiddenValuesPrev)[hiddenColumnIndex];
+    float tdErrorAction = newValue - (*hiddenValues)[hiddenColumnIndex];
 
     int targetC = (*hiddenTargetCsPrev)[hiddenColumnIndex];
 
@@ -266,7 +266,7 @@ void Actor::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+                    unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                     float weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
@@ -321,7 +321,7 @@ void Actor::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+                    unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                     vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
                 }
@@ -386,7 +386,7 @@ void Actor::initRandom(
 
         historySamples[i].hiddenTargetCsPrev = ByteBuffer(numHiddenColumns);
 
-        historySamples[i].hiddenValuesPrev = FloatBuffer(numHiddenColumns);
+        historySamples[i].hiddenValues = FloatBuffer(numHiddenColumns);
     }
 }
 
@@ -426,33 +426,29 @@ void Actor::step(
         s.hiddenTargetCsPrev = *hiddenTargetCsPrev;
 
         // Copy hidden values
-        s.hiddenValuesPrev = hiddenValues;
+        s.hiddenValues = hiddenValues;
 
         s.reward = reward;
     }
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > minSteps + 1) {
-        for (int it = 0; it < historyIters; it++) {
-            int historyIndex = rand() % (historySize - 1 - minSteps) + minSteps;
+    if (learnEnabled && historySize == historySamples.size()) {
+        const HistorySample &sPrev = historySamples[historySize - 1];
+        const HistorySample &s = historySamples[historySize - 2];
 
-            const HistorySample &sPrev = historySamples[historyIndex + 1];
-            const HistorySample &s = historySamples[historyIndex];
+        // Compute (partial) values, rest is completed in the kernel
+        float q = 0.0f;
+        float g = 1.0f;
 
-            // Compute (partial) values, rest is completed in the kernel
-            float q = 0.0f;
-            float g = 1.0f;
+        for (int t = historySize - 2; t >= 0; t--) {
+            q += historySamples[t].reward * g;
 
-            for (int t = historyIndex; t >= 0; t--) {
-                q += historySamples[t].reward * g;
-
-                g *= gamma;
-            }
-
-            #pragma omp parallel for
-            for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
+            g *= gamma;
         }
+
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValues, q, g, mimic);
     }
 }
 
@@ -464,8 +460,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
@@ -509,7 +503,7 @@ void Actor::write(
             writer.write(reinterpret_cast<const void*>(&s.inputCs[vli][0]), s.inputCs[vli].size() * sizeof(unsigned char));
 
         writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCsPrev[0]), s.hiddenTargetCsPrev.size() * sizeof(unsigned char));
-        writer.write(reinterpret_cast<const void*>(&s.hiddenValuesPrev[0]), s.hiddenValuesPrev.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&s.hiddenValues[0]), s.hiddenValues.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
     }
@@ -526,8 +520,6 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
-    reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
     hiddenCs.resize(numHiddenColumns);
     hiddenValues.resize(numHiddenColumns);
@@ -594,10 +586,10 @@ void Actor::read(
         }
 
         s.hiddenTargetCsPrev.resize(numHiddenColumns);
-        s.hiddenValuesPrev.resize(numHiddenColumns);
+        s.hiddenValues.resize(numHiddenColumns);
 
         reader.read(reinterpret_cast<void*>(&s.hiddenTargetCsPrev[0]), s.hiddenTargetCsPrev.size() * sizeof(unsigned char));
-        reader.read(reinterpret_cast<void*>(&s.hiddenValuesPrev[0]), s.hiddenValuesPrev.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&s.hiddenValues[0]), s.hiddenValues.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
