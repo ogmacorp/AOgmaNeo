@@ -86,7 +86,7 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.01f),
+    alpha(0.1f),
     beta(0.01f),
     gamma(0.99f)
     {}
@@ -139,6 +139,10 @@ public:
     // Get hidden state/output/actions
     const ByteBuffer &getHiddenCs() const {
         return hiddenCs;
+    }
+
+    const FloatBuffer &getHiddenProbs() const {
+        return hiddenProbs;
     }
 
     // Get the hidden size
