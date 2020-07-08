@@ -57,8 +57,10 @@ void Predictor::forward(
                     count++;
                 }
         }
+        
+        sum /= max(1, count);
 
-        hiddenActivations[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
+        hiddenActivations[hiddenIndex] = sum;
 
         if (sum > maxActivation) {
             maxActivation = sum;
