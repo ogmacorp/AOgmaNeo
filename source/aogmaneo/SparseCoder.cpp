@@ -241,7 +241,7 @@ void SparseCoder::initRandom(
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
-    hiddenResources = FloatBuffer(numHidden, 1.0f);
+    hiddenResources = FloatBuffer(numHidden, 0.5f);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
