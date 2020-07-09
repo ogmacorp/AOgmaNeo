@@ -66,7 +66,7 @@ public:
     Predictor()
     :
     alpha(0.5f),
-    targetRange(0.2f)
+    targetRange(0.1f)
     {}
 
     // Create with random initialization
