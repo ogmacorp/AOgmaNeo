@@ -58,21 +58,24 @@ void SparseCoder::forward(
 
                     for (int z = 0; z < vld.size.z; z++) {
                         if (vl.mask[z + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))]) {
-                            unsigned char weight = vl.weights[z + start];
+                            unsigned char weight0 = vl.weights[0 + 2 * (z + start)];
+                            unsigned char weight1 = vl.weights[1 + 2 * (z + start)];
                         
-                            total += weight;
+                            total += weight0 + weight1;
 
-                            if (z == inC) {
-                                sum += weight;
-                                count += 255;
-                            }
+                            if (z == inC)
+                                sum += weight0;
+                            else
+                                sum += weight1;
+
+                            count++;
                         }
                     }  
                 }
         }
 
         hiddenActivations[hiddenIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
-        hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
+        hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
         if (hiddenActivations[hiddenIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenIndex];
@@ -83,15 +86,12 @@ void SparseCoder::forward(
     int originalMaxIndex = maxIndex;
     bool passed = false;
     bool commit = false;
-    int numResets = 0;
 
     // Vigilance checking cycle
     for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
         
         if (hiddenMatches[hiddenIndexMax] < minVigilance) {
-            numResets++;
-
             // Reset
             hiddenActivations[hiddenIndexMax] = -1.0f;
 
@@ -159,16 +159,22 @@ void SparseCoder::forward(
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
 
                     for (int z = 0; z < vld.size.z; z++) {
-                        if (z == inC)
-                            continue;
+                        int wi0 = 0 + 2 * (z + start);
+                        int wi1 = 1 + 2 * (z + start);
 
-                        int wi = z + start;
+                        unsigned char weight0 = vl.weights[wi0];
+                        unsigned char weight1 = vl.weights[wi1];
 
-                        unsigned char weight = vl.weights[wi];
+                        if (z == inC) {
+                            int delta1 = roundftoi(rate * -weight1);
 
-                        int delta = roundftoi(rate * -weight);
+                            vl.weights[wi1] = max<int>(-delta1, weight1) + delta1;
+                        }
+                        else {
+                            int delta0 = roundftoi(rate * -weight0);
 
-                        vl.weights[wi] = max<int>(-delta, weight) + delta;
+                            vl.weights[wi0] = max<int>(-delta0, weight0) + delta0;
+                        }
                     }
                 }
         }
@@ -203,7 +209,7 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.weights.resize(numHidden * area * vld.size.z * 2);
         vl.mask.resize(numHiddenColumns * area * vld.size.z);
 
         // Initialize to random values
