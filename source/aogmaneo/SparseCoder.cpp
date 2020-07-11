@@ -139,72 +139,68 @@ void SparseCoder::forwardClump(
     hiddenCs[hiddenColumnIndex] = maxIndex;
 
     // If passed, reduce clump inputs (and learn if that is enabled)
-    if (passed) {
-        int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+    int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
-        float rate = commit ? 1.0f : beta;
+    float rate = commit ? 1.0f : beta;
 
-        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-            VisibleLayer &vl = visibleLayers[vli];
-            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-            int diam = vld.radius * 2 + 1;
+        int diam = vld.radius * 2 + 1;
 
-            // Projection
-            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(clumpTilingSize.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(clumpTilingSize.y));
+        // Projection
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(clumpTilingSize.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(clumpTilingSize.y));
 
-            Int2 visibleCenter = project(clumpPos, hToV);
+        Int2 visibleCenter = project(clumpPos, hToV);
 
-            // Lower corner
-            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+        // Lower corner
+        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-            // Bounds of receptive field, clamped to input size
-            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+        // Bounds of receptive field, clamped to input size
+        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
-
-                    int wStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
-                    int cStart = vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+                int wStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
+                int cStart = vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+                
+                for (int z = 0; z < vld.size.z; z++) {
+                    int cii = z + cStart;
                     
-                    for (int z = 0; z < vld.size.z; z++) {
-                        int cii = z + cStart;
+                    int wi0 = 0 + 2 * (z + wStart);
+                    int wi1 = 1 + 2 * (z + wStart);
+
+                    unsigned char weight0 = vl.weights[wi0];
+                    unsigned char weight1 = vl.weights[wi1];
+
+                    // Reconstruct
+                    int recon = min<int>(weight0, 255 - weight1);
+
+                    vl.clumpInputs[cii] = min<int>(vl.clumpInputs[cii], 255 - recon);
+
+                    // Learning
+                    if (learnEnabled && passed) {
+                        int delta0 = roundftoi(rate * (min<int>(vl.clumpInputs[cii], weight0) - weight0));
                         
-                        int wi0 = 0 + 2 * (z + wStart);
-                        int wi1 = 1 + 2 * (z + wStart);
+                        vl.weights[wi0] = max<int>(-delta0, weight0) + delta0;
 
-                        unsigned char weight0 = vl.weights[wi0];
-                        unsigned char weight1 = vl.weights[wi1];
+                        int delta1 = roundftoi(rate * (min<int>(255 - vl.clumpInputs[cii], weight1) - weight1));
 
-                        // Reconstruct
-                        int recon = min<int>(weight0, 255 - weight1);
-
-                        vl.clumpInputs[cii] = max<int>(0, static_cast<int>(vl.clumpInputs[cii]) - recon);
-
-                        // Learning
-                        if (learnEnabled) {
-                            int delta0 = roundftoi(rate * (min<int>(vl.clumpInputs[cii], weight0) - weight0));
-
-                            vl.weights[wi0] = max<int>(-delta0, weight0) + delta0;
-
-                            int delta1 = roundftoi(rate * (min<int>(255 - vl.clumpInputs[cii], weight1) - weight1));
-
-                            vl.weights[wi1] = max<int>(-delta1, weight1) + delta1;
-                        }
+                        vl.weights[wi1] = max<int>(-delta1, weight1) + delta1;
                     }
                 }
-        }
-
-        if (commit && hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
-            hiddenCommits[hiddenColumnIndex]++;
+            }
     }
+
+    if (learnEnabled && passed && commit && hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
+        hiddenCommits[hiddenColumnIndex]++;
 }
 
 void SparseCoder::initRandom(
@@ -244,7 +240,7 @@ void SparseCoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 255;
 
-        vl.clumpInputs.resize(numClumps * area * vld.size.z * 2, 0);
+        vl.clumpInputs.resize(numClumps * area * vld.size.z, 0);
     }
 
     hiddenCommits = ByteBuffer(numHiddenColumns, 0);
