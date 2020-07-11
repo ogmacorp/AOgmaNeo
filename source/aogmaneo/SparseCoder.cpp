@@ -19,6 +19,40 @@ void SparseCoder::forwardClump(
 
     int columnsPerClump = clumpSize.x * clumpSize.y;
 
+    // Set inputs
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        int diam = vld.radius * 2 + 1;
+
+        // Projection
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(clumpTilingSize.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(clumpTilingSize.y));
+
+        Int2 visibleCenter = project(clumpPos, hToV);
+
+        // Lower corner
+        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+        // Bounds of receptive field, clamped to input size
+        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                int cii = offset.y + diam * (offset.x + diam * clumpIndex);
+                
+                unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+
+                vl.clumpInputs[cii] = 255;
+            }
+    }
+
     for (int it = 0; it < columnsPerClump; it++) {
         Int2 pos(clumpPos.x * clumpSize.x + it % clumpSize.x, clumpPos.y * clumpSize.y + it / clumpSize.x);
 
@@ -27,7 +61,7 @@ void SparseCoder::forwardClump(
         int maxIndex = 0;
         float maxActivation = -1.0f;
 
-        for (int hc = 0; hc < hiddenSize.z; hc++) {
+        for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
             int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
             int sum = 0;
@@ -64,10 +98,6 @@ void SparseCoder::forwardClump(
                         
                         unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                        // If first iteration, set input
-                        if (it == 0)
-                            vl.clumpInputs[cii] = 255;
-
                         for (int z = 0; z < vld.size.z; z++) {
                             unsigned char clumpInput = (z == inC ? vl.clumpInputs[cii] : 0);
                             
@@ -96,39 +126,37 @@ void SparseCoder::forwardClump(
         bool commit = false;
 
         // Vigilance checking cycle
-        if (maxActivation > 0.0f) {
-            for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
-                int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
-                
-                if (hiddenMatches[hiddenIndexMax] < minVigilance) {
-                    // Reset
-                    hiddenActivations[hiddenIndexMax] = -1.0f;
+        for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
+            int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+            
+            if (hiddenMatches[hiddenIndexMax] < minVigilance) {
+                // Reset
+                hiddenActivations[hiddenIndexMax] = -1.0f;
 
-                    maxActivation = -1.0f;
+                maxActivation = -1.0f;
 
-                    for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
-                        int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
+                for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
+                    int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
 
-                        if (hiddenActivations[hiddenIndex] > maxActivation) {
-                            maxActivation = hiddenActivations[hiddenIndex];
-                            maxIndex = ohc;
-                        }
+                    if (hiddenActivations[hiddenIndex] > maxActivation) {
+                        maxActivation = hiddenActivations[hiddenIndex];
+                        maxIndex = ohc;
                     }
                 }
-                else {
-                    passed = true;
-                    break;
-                }
             }
+            else {
+                passed = true;
+                break;
+            }
+        }
 
-            if (!passed) {
-                if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
-                    maxIndex = hiddenCommits[hiddenColumnIndex];
-                    commit = true;
-                }
-                else
-                    maxIndex = originalMaxIndex;
+        if (!passed) {
+            if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
+                maxIndex = hiddenCommits[hiddenColumnIndex];
+                commit = true;
             }
+            else
+                maxIndex = originalMaxIndex;
         }
 
         hiddenCs[hiddenColumnIndex] = maxIndex;
@@ -174,7 +202,7 @@ void SparseCoder::forwardClump(
                         unsigned char weight = vl.weights[wi];
 
                         // Learning
-                        if (learnEnabled && (passed || commit)) {
+                        if (learnEnabled && maxActivation > 0.0f && (passed || commit)) {
                             int delta = roundftoi(rate * (min<int>(z == inC ? vl.clumpInputs[cii] : 0, weight) - weight));
                             
                             vl.weights[wi] = max<int>(-delta, weight) + delta;
@@ -182,7 +210,7 @@ void SparseCoder::forwardClump(
                     }
 
                     // Reconstruct for next clump member column
-                    vl.clumpInputs[cii] = min<int>(vl.clumpInputs[cii], 255 - vl.weights[inC + wStart]);
+                    vl.clumpInputs[cii] = max<int>(0, vl.clumpInputs[cii] - vl.weights[inC + wStart]);
                 }
         }
 
