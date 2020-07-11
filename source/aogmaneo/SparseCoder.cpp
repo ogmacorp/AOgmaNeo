@@ -18,7 +18,7 @@ void SparseCoder::forwardClump(
 ) {
     int clumpIndex = address2(clumpPos, Int2(clumpTilingSize.x, clumpTilingSize.y));
 
-    Int2 pos(clumpPos.x * clumpSize.x + it / clumpSize.x, clumpPos.x * clumpSize.x + it % clumpSize.x);
+    Int2 pos(clumpPos.x * clumpSize.x + it / clumpSize.x, clumpPos.y * clumpSize.y + it % clumpSize.x);
 
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -39,10 +39,10 @@ void SparseCoder::forwardClump(
             int diam = vld.radius * 2 + 1;
  
             // Projection
-            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(clumpTilingSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(clumpTilingSize.y));
 
-            Int2 visibleCenter = project(pos, hToV);
+            Int2 visibleCenter = project(clumpPos, hToV);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -57,26 +57,27 @@ void SparseCoder::forwardClump(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
-
+                    int wStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    int cStart = vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+                    
                     // If first iteration, set input
                     if (it == 0) {
                         unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                         for (int z = 0; z < vld.size.z; z++) {
-                            int cii = z + vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+                            int cii = z + cStart;
 
                             vl.clumpInputs[cii] = (z == inC ? 255 : 0);
                         }
                     }
 
                     for (int z = 0; z < vld.size.z; z++) {
-                        int cii = z + vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+                        int cii = z + cStart;
                         
                         unsigned char clumpInput = vl.clumpInputs[cii];
                         
-                        unsigned char weight0 = vl.weights[0 + 2 * (z + start)];
-                        unsigned char weight1 = vl.weights[1 + 2 * (z + start)];
+                        unsigned char weight0 = vl.weights[0 + 2 * (z + wStart)];
+                        unsigned char weight1 = vl.weights[1 + 2 * (z + wStart)];
                     
                         total += weight0 + weight1;
 
@@ -150,10 +151,10 @@ void SparseCoder::forwardClump(
             int diam = vld.radius * 2 + 1;
 
             // Projection
-            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(clumpTilingSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(clumpTilingSize.y));
 
-            Int2 visibleCenter = project(pos, hToV);
+            Int2 visibleCenter = project(clumpPos, hToV);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -170,19 +171,20 @@ void SparseCoder::forwardClump(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
-
+                    int wStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
+                    int cStart = vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+                    
                     for (int z = 0; z < vld.size.z; z++) {
-                        int cii = z + vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+                        int cii = z + cStart;
                         
-                        int wi0 = 0 + 2 * (z + start);
-                        int wi1 = 1 + 2 * (z + start);
+                        int wi0 = 0 + 2 * (z + wStart);
+                        int wi1 = 1 + 2 * (z + wStart);
 
                         unsigned char weight0 = vl.weights[wi0];
                         unsigned char weight1 = vl.weights[wi1];
 
                         // Reconstruct
-                        int recon = max<int>(weight0, 255 - weight1);
+                        int recon = min<int>(weight0, 255 - weight1);
 
                         vl.clumpInputs[cii] = max<int>(0, static_cast<int>(vl.clumpInputs[cii]) - recon);
 
