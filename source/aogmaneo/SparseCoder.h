@@ -59,7 +59,6 @@ private:
     void forwardClump(
         const Int2 &clumpPos,
         const Array<const ByteBuffer*> &inputCs,
-        int it,
         bool learnEnabled
     );
 
@@ -72,8 +71,8 @@ public:
     SparseCoder()
     :
     alpha(0.1f),
-    beta(0.5f),
-    minVigilance(0.9f)
+    beta(1.0f),
+    minVigilance(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
