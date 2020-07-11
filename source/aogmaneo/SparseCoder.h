@@ -31,46 +31,55 @@ public:
     // Visible layer
     struct VisibleLayer {
         ByteBuffer weights; // Weight matrix
-        ByteBuffer mask; // Mask matrix
+
+        ByteBuffer clumpInputs;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    Int2 clumpSize;
+    Int2 clumpTilingSize;
 
     ByteBuffer hiddenCommits;
     FloatBuffer hiddenActivations;
     FloatBuffer hiddenMatches;
 
     ByteBuffer hiddenCs; // Hidden states
+    ByteBuffer clumpCs; // Clump states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
+
+    // Clump weights
+    ByteBuffer clumpWeights;
     
     // --- Kernels ---
     
-    void forward(
-        const Int2 &pos,
+    void forwardClump(
+        const Int2 &clumpPos,
         const Array<const ByteBuffer*> &inputCs,
+        int it,
         bool learnEnabled
     );
 
 public:
     float alpha; // Activation parameter
     float beta; // Learning rate
-    float minVigilance; // Vigilance parameter
+    float minVigilance;
     
     // Defaults
     SparseCoder()
     :
     alpha(0.1f),
-    beta(1.0f),
+    beta(0.5f),
     minVigilance(0.8f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        const Int2 &clumpSize, // Size of column clump (shared RF)
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 

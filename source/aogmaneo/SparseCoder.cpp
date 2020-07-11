@@ -10,11 +10,16 @@
 
 using namespace aon;
 
-void SparseCoder::forward(
-    const Int2 &pos,
+void SparseCoder::forwardClump(
+    const Int2 &clumpPos,
     const Array<const ByteBuffer*> &inputCs,
+    int it,
     bool learnEnabled
 ) {
+    int clumpIndex = address2(clumpPos, Int2(clumpTilingSize.x, clumpTilingSize.y));
+
+    Int2 pos(clumpPos.x * clumpSize.x + it / clumpSize.x, clumpPos.x * clumpSize.x + it % clumpSize.x);
+
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
@@ -54,22 +59,30 @@ void SparseCoder::forward(
 
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                    unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+                    // If first iteration, set input
+                    if (it == 0) {
+                        unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+
+                        for (int z = 0; z < vld.size.z; z++) {
+                            int cii = z + vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+
+                            vl.clumpInputs[cii] = (z == inC ? 255 : 0);
+                        }
+                    }
 
                     for (int z = 0; z < vld.size.z; z++) {
-                        if (vl.mask[z + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))]) {
-                            unsigned char weight0 = vl.weights[0 + 2 * (z + start)];
-                            unsigned char weight1 = vl.weights[1 + 2 * (z + start)];
+                        int cii = z + vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
                         
-                            total += weight0 + weight1;
+                        unsigned char clumpInput = vl.clumpInputs[cii];
+                        
+                        unsigned char weight0 = vl.weights[0 + 2 * (z + start)];
+                        unsigned char weight1 = vl.weights[1 + 2 * (z + start)];
+                    
+                        total += weight0 + weight1;
 
-                            if (z == inC)
-                                sum += weight0;
-                            else
-                                sum += weight1;
+                        sum += min<int>(clumpInput, weight0) + min<int>(255 - clumpInput, weight1);
 
-                            count++;
-                        }
+                        count++;
                     }  
                 }
         }
@@ -124,7 +137,8 @@ void SparseCoder::forward(
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
 
-    if (learnEnabled && passed) {
+    // If passed, reduce clump inputs (and learn if that is enabled)
+    if (passed) {
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
         float rate = commit ? 1.0f : beta;
@@ -159,21 +173,28 @@ void SparseCoder::forward(
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
 
                     for (int z = 0; z < vld.size.z; z++) {
+                        int cii = z + vld.size.z * (offset.y + diam * (offset.x + diam * clumpIndex));
+                        
                         int wi0 = 0 + 2 * (z + start);
                         int wi1 = 1 + 2 * (z + start);
 
                         unsigned char weight0 = vl.weights[wi0];
                         unsigned char weight1 = vl.weights[wi1];
 
-                        if (z == inC) {
-                            int delta1 = roundftoi(rate * -weight1);
+                        // Reconstruct
+                        unsigned char recon = min<int>(weight0, 255 - weight1);
 
-                            vl.weights[wi1] = max<int>(-delta1, weight1) + delta1;
-                        }
-                        else {
-                            int delta0 = roundftoi(rate * -weight0);
+                        vl.clumpInputs[cii] = min<int>(vl.clumpInputs[cii], 255 - recon);
+
+                        // Learning
+                        if (learnEnabled) {
+                            int delta0 = roundftoi(rate * (min<int>(vl.clumpInputs[cii], weight0) - weight0));
 
                             vl.weights[wi0] = max<int>(-delta0, weight0) + delta0;
+
+                            int delta1 = roundftoi(rate * (min<int>(255 - vl.clumpInputs[cii], weight1) - weight1));
+
+                            vl.weights[wi1] = max<int>(-delta1, weight1) + delta1;
                         }
                     }
                 }
@@ -186,11 +207,17 @@ void SparseCoder::forward(
 
 void SparseCoder::initRandom(
     const Int3 &hiddenSize,
+    const Int2 &clumpSize, 
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
     this->visibleLayerDescs = visibleLayerDescs;
 
     this->hiddenSize = hiddenSize;
+    this->clumpSize = clumpSize;
+
+    clumpTilingSize = Int2(hiddenSize.x / clumpSize.x, hiddenSize.y / clumpSize.y);
+
+    int numClumps = clumpTilingSize.x * clumpTilingSize.y;
 
     visibleLayers.resize(visibleLayerDescs.size());
 
@@ -210,14 +237,12 @@ void SparseCoder::initRandom(
         int area = diam * diam;
 
         vl.weights.resize(numHidden * area * vld.size.z * 2);
-        vl.mask.resize(numHiddenColumns * area * vld.size.z);
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 255;
 
-        for (int i = 0; i < vl.mask.size(); i++)
-            vl.mask[i] = randf() < 0.5f ? 1 : 0;
+        vl.clumpInputs.resize(numClumps * area * vld.size.z * 2, 0);
     }
 
     hiddenCommits = ByteBuffer(numHiddenColumns, 0);
@@ -234,17 +259,23 @@ void SparseCoder::step(
     const Array<const ByteBuffer*> &inputCs, // Input states
     bool learnEnabled // Whether to learn
 ) {
-    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+    int numClumps = clumpTilingSize.x * clumpTilingSize.y;
 
-    #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, learnEnabled);
+    int columnsPerClump = clumpSize.x * clumpSize.y;
+
+    for (int it = 0; it < columnsPerClump; it++) {
+        #pragma omp parallel for
+        for (int i = 0; i < numClumps; i++)
+            forwardClump(Int2(i / clumpTilingSize.y, i % clumpTilingSize.y), inputCs, it, learnEnabled);
+    }
 }
 
 void SparseCoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
+    writer.write(reinterpret_cast<const void*>(&clumpSize), sizeof(Int2));
+    writer.write(reinterpret_cast<const void*>(&clumpTilingSize), sizeof(Int2));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
@@ -267,12 +298,12 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
-        int maskSize = vl.mask.size();
+        int clumpInputSize = vl.clumpInputs.size();
 
-        writer.write(reinterpret_cast<const void*>(&maskSize), sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&clumpInputSize), sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
-        writer.write(reinterpret_cast<const void*>(&vl.mask[0]), vl.mask.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.clumpInputs[0]), vl.clumpInputs.size() * sizeof(unsigned char));
     }
 }
 
@@ -280,6 +311,8 @@ void SparseCoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
+    reader.read(reinterpret_cast<void*>(&clumpSize), sizeof(Int2));
+    reader.read(reinterpret_cast<void*>(&clumpTilingSize), sizeof(Int2));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHidden =  numHiddenColumns * hiddenSize.z;
@@ -314,14 +347,14 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
 
-        int maskSize;
+        int clumpInputSize;
 
-        reader.read(reinterpret_cast<void*>(&maskSize), sizeof(int));
+        reader.read(reinterpret_cast<void*>(&clumpInputSize), sizeof(int));
 
         vl.weights.resize(weightsSize);
-        vl.mask.resize(maskSize);
+        vl.clumpInputs.resize(clumpInputSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
-        reader.read(reinterpret_cast<void*>(&vl.mask[0]), vl.mask.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.clumpInputs[0]), vl.clumpInputs.size() * sizeof(unsigned char));
     }
 }
