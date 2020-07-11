@@ -229,11 +229,8 @@ void SparseCoder::initRandom(
 
         vl.weights.resize(numHidden * area * vld.size.z);
 
-        // Initialize to random values
-        char range = 16;
-        
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % range;
+            vl.weights[i] = 255 - rand() % 16;
 
         vl.reconstruction = FloatBuffer(numVisible, 0);
     }
@@ -241,7 +238,7 @@ void SparseCoder::initRandom(
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
-    hiddenResources = FloatBuffer(numHidden, 0.5f);
+    hiddenResources = FloatBuffer(numHidden, 1.0f);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
@@ -252,11 +249,8 @@ void SparseCoder::initRandom(
 
     laterals.resize(numHidden * area * hiddenSize.z);
 
-    // Initialize to random values
-    char range = 16;
-
     for (int i = 0; i < laterals.size(); i++)
-        laterals[i] = rand() % range;
+        laterals[i] = rand() % 16;
 }
 
 // Activate the sparse coder (perform sparse coding)
