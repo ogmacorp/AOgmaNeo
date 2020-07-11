@@ -27,7 +27,7 @@ void SparseCoder::forwardClump(
         int maxIndex = 0;
         float maxActivation = -1.0f;
 
-        for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
             int sum = 0;
@@ -96,37 +96,39 @@ void SparseCoder::forwardClump(
         bool commit = false;
 
         // Vigilance checking cycle
-        for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
-            int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
-            
-            if (hiddenMatches[hiddenIndexMax] < minVigilance) {
-                // Reset
-                hiddenActivations[hiddenIndexMax] = -1.0f;
+        if (maxActivation > 0.0f) {
+            for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
+                int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+                
+                if (hiddenMatches[hiddenIndexMax] < minVigilance) {
+                    // Reset
+                    hiddenActivations[hiddenIndexMax] = -1.0f;
 
-                maxActivation = -1.0f;
+                    maxActivation = -1.0f;
 
-                for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
-                    int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
+                    for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
+                        int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
 
-                    if (hiddenActivations[hiddenIndex] > maxActivation) {
-                        maxActivation = hiddenActivations[hiddenIndex];
-                        maxIndex = ohc;
+                        if (hiddenActivations[hiddenIndex] > maxActivation) {
+                            maxActivation = hiddenActivations[hiddenIndex];
+                            maxIndex = ohc;
+                        }
                     }
                 }
+                else {
+                    passed = true;
+                    break;
+                }
             }
-            else {
-                passed = true;
-                break;
-            }
-        }
 
-        if (!passed) {
-            if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
-                maxIndex = hiddenCommits[hiddenColumnIndex];
-                commit = true;
+            if (!passed) {
+                if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
+                    maxIndex = hiddenCommits[hiddenColumnIndex];
+                    commit = true;
+                }
+                else
+                    maxIndex = originalMaxIndex;
             }
-            else
-                maxIndex = originalMaxIndex;
         }
 
         hiddenCs[hiddenColumnIndex] = maxIndex;
@@ -177,10 +179,10 @@ void SparseCoder::forwardClump(
                             
                             vl.weights[wi] = max<int>(-delta, weight) + delta;
                         }
-
-                        // Reconstruct for next clump member column
-                        vl.clumpInputs[cii] = min<int>(vl.clumpInputs[cii], 255 - weight);
                     }
+
+                    // Reconstruct for next clump member column
+                    vl.clumpInputs[cii] = min<int>(vl.clumpInputs[cii], 255 - vl.weights[inC + wStart]);
                 }
         }
 
