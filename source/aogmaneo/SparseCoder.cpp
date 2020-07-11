@@ -121,6 +121,8 @@ void SparseCoder::forwardClump(
             }
         }
 
+        bool hasInput = maxActivation > 0.0f;
+
         int originalMaxIndex = maxIndex;
         bool passed = false;
         bool commit = false;
@@ -151,7 +153,7 @@ void SparseCoder::forwardClump(
         }
 
         if (!passed) {
-            if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
+            if ((hiddenCommits[hiddenColumnIndex] == 0 || hasInput) && hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
                 maxIndex = hiddenCommits[hiddenColumnIndex];
                 commit = true;
             }
@@ -202,7 +204,7 @@ void SparseCoder::forwardClump(
                         unsigned char weight = vl.weights[wi];
 
                         // Learning
-                        if (learnEnabled && maxActivation > 0.0f && (passed || commit)) {
+                        if (learnEnabled && hasInput && (passed || commit)) {
                             int delta = roundftoi(rate * (min<int>(z == inC ? vl.clumpInputs[cii] : 0, weight) - weight));
                             
                             vl.weights[wi] = max<int>(-delta, weight) + delta;
