@@ -182,9 +182,9 @@ void SparseCoder::forwardClump(
                         unsigned char weight1 = vl.weights[wi1];
 
                         // Reconstruct
-                        unsigned char recon = min<int>(weight0, 255 - weight1);
+                        int recon = max<int>(weight0, 255 - weight1);
 
-                        vl.clumpInputs[cii] = min<int>(vl.clumpInputs[cii], 255 - recon);
+                        vl.clumpInputs[cii] = max<int>(0, static_cast<int>(vl.clumpInputs[cii]) - recon);
 
                         // Learning
                         if (learnEnabled) {
