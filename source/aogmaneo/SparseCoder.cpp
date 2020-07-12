@@ -155,6 +155,8 @@ void SparseCoder::forwardClump(
                 }
             }
 
+            originalMaxIndex = maxIndex;
+
             // Vigilance checking cycle
             for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
                 int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
