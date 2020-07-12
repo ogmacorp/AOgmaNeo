@@ -114,7 +114,7 @@ void Actor::forward(
                         for (int z = 0; z < vld.size.z; z++) {
                             int wi = z + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                            if (z == inC && hc == targetCPrev)
+                            if (z == inC && hc == targetCPrev && inC != vl.inputCsPrevPrev[visibleColumnIndex])
                                 vl.traces[wi] = 1.0f;
                             else
                                 vl.traces[wi] *= traceDecay;
@@ -160,6 +160,7 @@ void Actor::initRandom(
         }
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
+        vl.inputCsPrevPrev = ByteBuffer(numVisibleColumns, 0);
     }
 
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
@@ -183,6 +184,7 @@ void Actor::step(
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
+        vl.inputCsPrevPrev = vl.inputCsPrev;
         vl.inputCsPrev = *inputCs[vli];
     }
 }
@@ -217,6 +219,7 @@ void Actor::write(
         writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.inputCsPrevPrev[0]), vl.inputCsPrevPrev.size() * sizeof(unsigned char));
     }
 }
 
@@ -264,7 +267,9 @@ void Actor::read(
         reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
 
         vl.inputCsPrev.resize(numVisibleColumns);
+        vl.inputCsPrevPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.inputCsPrevPrev[0]), vl.inputCsPrevPrev.size() * sizeof(unsigned char));
     }
 }
