@@ -165,7 +165,7 @@ void SparseCoder::forwardClump(
                     // Reset
                     hiddenActivations[hiddenIndexMax] = -1.0f;
 
-                    float maxActivation = -1.0f;
+                    maxActivation = -1.0f;
 
                     for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
                         int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
