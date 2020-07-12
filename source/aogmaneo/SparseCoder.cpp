@@ -167,6 +167,7 @@ void SparseCoder::forwardClump(
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
         float rate = commit ? 1.0f : beta;
+        bool doLearn = learnEnabled && hasInput && (passed || commit);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -198,13 +199,12 @@ void SparseCoder::forwardClump(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    for (int z = 0; z < vld.size.z; z++) {
-                        int wi = z + wStart;
+                    if (doLearn) {
+                        for (int z = 0; z < vld.size.z; z++) {
+                            int wi = z + wStart;
 
-                        unsigned char weight = vl.weights[wi];
+                            unsigned char weight = vl.weights[wi];
 
-                        // Learning
-                        if (learnEnabled && hasInput && (passed || commit)) {
                             int delta = roundftoi(rate * (min<int>(z == inC ? vl.clumpInputs[cii] : 0, weight) - weight));
                             
                             vl.weights[wi] = max<int>(-delta, weight) + delta;
