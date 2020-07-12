@@ -59,9 +59,9 @@ void SparseCoder::forwardClump(
         int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
         int maxIndex = 0;
+        int maxCount = 0;
         float maxActivation = -1.0f;
 
-        #pragma omp parallel for
         for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
             int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
@@ -116,9 +116,11 @@ void SparseCoder::forwardClump(
                 maxActivation = hiddenActivations[hiddenIndex];
                 maxIndex = hc;
             }
+
+            maxCount = max(maxCount, count);
         }
 
-        bool hasInput = maxActivation > 0.0f;
+        bool hasInput = maxCount > 0;
 
         int originalMaxIndex = maxIndex;
         bool passed = false;
@@ -150,7 +152,7 @@ void SparseCoder::forwardClump(
         }
 
         if (!passed) {
-            if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
+            if ((hiddenCommits[hiddenColumnIndex] == 0 || hasInput) && hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
                 maxIndex = hiddenCommits[hiddenColumnIndex];
                 commit = true;
             }
