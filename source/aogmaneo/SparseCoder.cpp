@@ -184,7 +184,7 @@ void SparseCoder::forwardClump(
         }
 
         if (!passed) {
-            if ((hiddenCommits[hiddenColumnIndex] == 0 || hasInput) && hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
+            if (hasInput && hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
                 maxIndex = hiddenCommits[hiddenColumnIndex];
                 commit = true;
             }
