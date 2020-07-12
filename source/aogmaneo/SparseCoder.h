@@ -127,5 +127,13 @@ public:
     const Int3 &getHiddenSize() const {
         return hiddenSize;
     }
+
+    const Int2 &getClumpSize() const {
+        return clumpSize;
+    }
+
+    const Int2 &getClumpTilingSize() const {
+        return clumpTilingSize;
+    }
 };
 } // namespace aon
