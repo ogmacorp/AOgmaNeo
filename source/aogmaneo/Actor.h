@@ -30,32 +30,18 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
-    };
+        FloatBuffer weights; // Weights
+        FloatBuffer traces; // Eligibility traces
 
-    // History sample for delayed updates
-    struct HistorySample {
-        Array<ByteBuffer> inputCs;
-        ByteBuffer hiddenTargetCsPrev;
-
-        float reward;
+        ByteBuffer inputCsPrev; // Previous timestep (prev) input states
     };
 
 private:
     Int3 hiddenSize; // Hidden/output/action size
 
-    // Current history size - fixed after initialization. Determines length of wait before updating
-    int historySize;
-    int supportSize;
-
-    FloatBuffer hiddenProbs;
-    FloatBuffer hiddenProbsTemp;
-    FloatBuffer hiddenTargetProbs;
-
     ByteBuffer hiddenCs; // Hidden states
 
-    CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
+    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -66,36 +52,27 @@ private:
     void forward(
         const Int2 &pos,
         const Array<const ByteBuffer*> &inputCs,
-        unsigned long* state
-    );
-
-    void learn(
-        const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
         const ByteBuffer* hiddenTargetCsPrev,
-        float q,
-        float g,
-        bool mimic
+        float reward,
+        bool learnEnabled
     );
 
 public:
     float alpha; // Value learning rate
-    float beta; // Action learning rate
     float gamma; // Discount factor
+    float traceDecay;
 
     // Defaults
     Actor()
     :
     alpha(0.1f),
-    beta(0.01f),
-    gamma(0.99f)
+    gamma(0.99f),
+    traceDecay(0.97f)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
-        int historyCapacity,
-        int supportSize,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
@@ -104,8 +81,7 @@ public:
         const Array<const ByteBuffer*> &inputCs,
         const ByteBuffer* hiddenTargetCsPrev,
         float reward,
-        bool learnEnabled,
-        bool mimic
+        bool learnEnabled
     );
 
     // Serialization
@@ -139,10 +115,6 @@ public:
     // Get hidden state/output/actions
     const ByteBuffer &getHiddenCs() const {
         return hiddenCs;
-    }
-
-    const FloatBuffer &getHiddenProbs() const {
-        return hiddenProbs;
     }
 
     // Get the hidden size

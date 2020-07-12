@@ -19,36 +19,6 @@ void SparseCoder::forwardClump(
 
     int columnsPerClump = clumpSize.x * clumpSize.y;
 
-    // Set inputs
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-        int diam = vld.radius * 2 + 1;
-
-        // Projection
-        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(clumpTilingSize.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(clumpTilingSize.y));
-
-        Int2 visibleCenter = project(clumpPos, hToV);
-
-        // Lower corner
-        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
-
-        // Bounds of receptive field, clamped to input size
-        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
-
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                int cii = offset.y + diam * (offset.x + diam * clumpIndex);
-
-                vl.clumpInputs[cii] = 255;
-            }
-    }
-
     // Iterate
     for (int it = 0; it < columnsPerClump; it++) {
         Int2 pos(clumpPos.x * clumpSize.x + it % clumpSize.x, clumpPos.y * clumpSize.y + it / clumpSize.x);
@@ -80,6 +50,9 @@ void SparseCoder::forwardClump(
 
                     int cii = offset.y + diam * (offset.x + diam * clumpIndex);
                     
+                    if (it == 0)
+                        vl.clumpInputs[cii] = 255;
+
                     count += vl.clumpInputs[cii];
                 }
         }
@@ -141,7 +114,7 @@ void SparseCoder::forwardClump(
                 }
 
                 hiddenActivations[hiddenIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
-                hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
+                hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(count);
             }
 
             float maxActivation = -1.0f;
