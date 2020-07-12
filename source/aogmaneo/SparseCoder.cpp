@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-
+#include <iostream>
 using namespace aon;
 
 void SparseCoder::forwardClump(
@@ -61,6 +61,7 @@ void SparseCoder::forwardClump(
         int maxIndex = 0;
         float maxActivation = -1.0f;
 
+        #pragma omp parallel for
         for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
             int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
@@ -93,21 +94,17 @@ void SparseCoder::forwardClump(
 
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                        int wStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                        int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
                         int cii = offset.y + diam * (offset.x + diam * clumpIndex);
                         
                         unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+                        unsigned char commitC = vl.commitCs[wi];
 
-                        for (int z = 0; z < vld.size.z; z++) {
-                            unsigned char clumpInput = (z == inC ? vl.clumpInputs[cii] : 0);
-                            
-                            unsigned char weight = vl.weights[z + wStart];
+                        if (inC == commitC)
+                            sum += min<int>(vl.clumpInputs[cii], vl.weights[wi]);
+
+                        total += vl.weights[wi];
                         
-                            total += weight;
-
-                            sum += min<int>(clumpInput, weight);
-                        }
-
                         count += vl.clumpInputs[cii];
                     }
             }
@@ -166,8 +163,7 @@ void SparseCoder::forwardClump(
         // If passed, reduce clump inputs (and learn if that is enabled)
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
-        float rate = commit ? 1.0f : beta;
-        bool doLearn = learnEnabled && hasInput && (passed || commit);
+        bool doLearn = learnEnabled && hasInput && passed;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -194,25 +190,26 @@ void SparseCoder::forwardClump(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
+                    int wi = offset.y + diam * (offset.x + diam * hiddenIndexMax);
                     int cii = offset.y + diam * (offset.x + diam * clumpIndex);
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    if (doLearn) {
-                        for (int z = 0; z < vld.size.z; z++) {
-                            int wi = z + wStart;
+                    if (commit) {
+                        vl.commitCs[wi] = inC;
+                        vl.weights[wi] = 255;
+                    }
+                    else if (doLearn && vl.commitCs[wi] == inC) {
+                        unsigned char weight = vl.weights[wi];
 
-                            unsigned char weight = vl.weights[wi];
-
-                            int delta = roundftoi(rate * (min<int>(z == inC ? vl.clumpInputs[cii] : 0, weight) - weight));
-                            
-                            vl.weights[wi] = max<int>(-delta, weight) + delta;
-                        }
+                        int delta = roundftoi(beta * (min<int>(vl.clumpInputs[cii], weight) - weight));
+                        
+                        vl.weights[wi] = max<int>(-delta, weight) + delta;
                     }
 
                     // Reconstruct for next clump member column
-                    vl.clumpInputs[cii] = max<int>(0, vl.clumpInputs[cii] - vl.weights[inC + wStart]);
+                    if (vl.commitCs[wi] == inC)
+                        vl.clumpInputs[cii] = max<int>(0, vl.clumpInputs[cii] - vl.weights[wi]);
                 }
         }
 
@@ -252,11 +249,9 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.weights.resize(numHidden * area, 0);
 
-        // Initialize to random values
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255;
+        vl.commitCs.resize(numHidden * area, 0);
 
         vl.clumpInputs.resize(numClumps * area, 0);
     }
@@ -315,6 +310,7 @@ void SparseCoder::write(
         writer.write(reinterpret_cast<const void*>(&clumpInputSize), sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.commitCs[0]), vl.commitCs.size() * sizeof(unsigned char));
         writer.write(reinterpret_cast<const void*>(&vl.clumpInputs[0]), vl.clumpInputs.size() * sizeof(unsigned char));
     }
 }
@@ -364,9 +360,11 @@ void SparseCoder::read(
         reader.read(reinterpret_cast<void*>(&clumpInputSize), sizeof(int));
 
         vl.weights.resize(weightsSize);
+        vl.commitCs.resize(weightsSize);
         vl.clumpInputs.resize(clumpInputSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.commitCs[0]), vl.commitCs.size() * sizeof(unsigned char));
         reader.read(reinterpret_cast<void*>(&vl.clumpInputs[0]), vl.clumpInputs.size() * sizeof(unsigned char));
     }
 }

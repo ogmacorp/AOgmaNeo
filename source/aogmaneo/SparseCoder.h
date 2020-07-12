@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         ByteBuffer weights; // Weight matrix
 
+        ByteBuffer commitCs;
+
         ByteBuffer clumpInputs;
     };
 
