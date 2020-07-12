@@ -53,6 +53,7 @@ void SparseCoder::forwardClump(
             }
     }
 
+    // Iterate
     for (int it = 0; it < columnsPerClump; it++) {
         Int2 pos(clumpPos.x * clumpSize.x + it % clumpSize.x, clumpPos.y * clumpSize.y + it / clumpSize.x);
 
@@ -127,27 +128,29 @@ void SparseCoder::forwardClump(
         bool commit = false;
 
         // Vigilance checking cycle
-        for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
-            int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
-            
-            if (hiddenMatches[hiddenIndexMax] < minVigilance) {
-                // Reset
-                hiddenActivations[hiddenIndexMax] = -1.0f;
+        if (hasInput) {
+            for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
+                int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+                
+                if (hiddenMatches[hiddenIndexMax] < minVigilance) {
+                    // Reset
+                    hiddenActivations[hiddenIndexMax] = -1.0f;
 
-                maxActivation = -1.0f;
+                    maxActivation = -1.0f;
 
-                for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
-                    int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
+                    for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
+                        int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
 
-                    if (hiddenActivations[hiddenIndex] > maxActivation) {
-                        maxActivation = hiddenActivations[hiddenIndex];
-                        maxIndex = ohc;
+                        if (hiddenActivations[hiddenIndex] > maxActivation) {
+                            maxActivation = hiddenActivations[hiddenIndex];
+                            maxIndex = ohc;
+                        }
                     }
                 }
-            }
-            else {
-                passed = true;
-                break;
+                else {
+                    passed = true;
+                    break;
+                }
             }
         }
 
@@ -216,7 +219,7 @@ void SparseCoder::forwardClump(
                 }
         }
 
-        if (doFastCommit && hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
+        if (doFastCommit)
             hiddenCommits[hiddenColumnIndex]++;
     }
 }
