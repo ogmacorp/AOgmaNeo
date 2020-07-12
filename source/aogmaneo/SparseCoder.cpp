@@ -273,7 +273,6 @@ void SparseCoder::initRandom(
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
 }
 
-// Activate the sparse coder (perform sparse coding)
 void SparseCoder::step(
     const Array<const ByteBuffer*> &inputCs, // Input states
     bool learnEnabled // Whether to learn
