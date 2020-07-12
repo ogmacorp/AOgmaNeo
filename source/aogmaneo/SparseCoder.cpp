@@ -165,6 +165,7 @@ void SparseCoder::forwardClump(
         // If passed, reduce clump inputs (and learn if that is enabled)
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
+        bool doFastCommit = learnEnabled && commit;
         bool doSlowLearn = learnEnabled && hasInput && passed;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -197,7 +198,7 @@ void SparseCoder::forwardClump(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    if (learnEnabled && commit) {
+                    if (doFastCommit) {
                         vl.commitCs[wi] = inC;
                         vl.weights[wi] = 255;
                     }
@@ -215,7 +216,7 @@ void SparseCoder::forwardClump(
                 }
         }
 
-        if (learnEnabled && commit && hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
+        if (doFastCommit && hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
             hiddenCommits[hiddenColumnIndex]++;
     }
 }
