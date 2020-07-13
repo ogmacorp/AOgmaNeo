@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-
+#include <iostream>
 using namespace aon;
 
 void SparseCoder::forwardClump(
@@ -63,6 +63,7 @@ void SparseCoder::forwardClump(
 
         int maxIndex = 0;
         int originalMaxIndex = 0;
+        int resets = 0;
 
         bool passed = false;
         bool commit = false;
@@ -134,7 +135,9 @@ void SparseCoder::forwardClump(
             for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
                 int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
                 
-                if (hiddenMatches[hiddenIndexMax] < minVigilance) {
+                if (hiddenMatches[hiddenIndexMax] < hiddenVigilances[hiddenColumnIndex]) {
+                    resets++;
+                    
                     // Reset
                     hiddenActivations[hiddenIndexMax] = -1.0f;
 
@@ -173,6 +176,9 @@ void SparseCoder::forwardClump(
         bool doFastCommit = learnEnabled && commit;
         bool doSlowLearn = learnEnabled && hasInput && passed;
 
+        if (learnEnabled && !commit)
+            hiddenVigilances[hiddenColumnIndex] = min(1.0f, max(0.0f, hiddenVigilances[hiddenColumnIndex] + gamma * (targetResets - resets)));
+        
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -280,6 +286,8 @@ void SparseCoder::initRandom(
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
+
+    hiddenVigilances = FloatBuffer(numHiddenColumns, 0.0f);
 }
 
 void SparseCoder::step(
@@ -302,10 +310,12 @@ void SparseCoder::write(
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&minVigilance), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&targetResets), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     writer.write(reinterpret_cast<const void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenVigilances[0]), hiddenVigilances.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -343,13 +353,16 @@ void SparseCoder::read(
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&minVigilance), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&targetResets), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
+    hiddenVigilances.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenVigilances[0]), hiddenVigilances.size() * sizeof(float));
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
     hiddenMatches = FloatBuffer(numHidden, 0.0f);

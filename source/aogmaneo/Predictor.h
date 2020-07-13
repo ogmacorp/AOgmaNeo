@@ -33,6 +33,7 @@ public:
         ByteBuffer weights;
 
         ByteBuffer inputCsPrev; // Previous timestep (prev) input states
+        ByteBuffer inputCsPrevPrev; // 2 timesteps ago
     };
 
 private:

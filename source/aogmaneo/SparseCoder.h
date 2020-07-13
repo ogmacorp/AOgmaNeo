@@ -49,6 +49,8 @@ private:
     ByteBuffer hiddenCs; // Hidden states
     ByteBuffer clumpCs; // Clump states
 
+    FloatBuffer hiddenVigilances;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -66,15 +68,17 @@ private:
 
 public:
     float alpha; // Activation parameter
-    float beta; // Learning rate
-    float minVigilance;
+    float beta; // Weight learning rate
+    float targetResets; // Vigilance target resets
+    float gamma; // Learning rate for vigilance
     
     // Defaults
     SparseCoder()
     :
-    alpha(0.5f),
+    alpha(0.1f),
     beta(0.5f),
-    minVigilance(0.6f)
+    targetResets(6.0f),
+    gamma(0.001f)
     {}
 
     // Create a sparse coding layer with random initialization
