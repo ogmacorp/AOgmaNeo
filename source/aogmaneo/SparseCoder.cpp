@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-
+#include <iostream>
 using namespace aon;
 
 void SparseCoder::forwardClump(
@@ -48,7 +48,7 @@ void SparseCoder::forwardClump(
                 
                 vl.clumpInputs[cii] = 255;
 
-                count += vld.size.z;
+                count += vld.size.z * 255;
             }
     }
 
@@ -225,7 +225,7 @@ void SparseCoder::forwardClump(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi1 = vc + wi1Start;
 
-                            vl.weights1[wi1] = (vc == inC ? 0 : 255);
+                            vl.weights1[wi1] = (vc == inC ? 255 - vl.clumpInputs[cii] : 255);
                         }
                     }
                     else if (doSlowLearn) {
