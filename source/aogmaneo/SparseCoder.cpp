@@ -145,7 +145,7 @@ void SparseCoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                        vl.weights[wi] += alpha * (target - vl.weights[wi]);
+                        vl.weights[wi] += alpha * min(0.0f, target - vl.weights[wi]);
                     }
                 }
         }
