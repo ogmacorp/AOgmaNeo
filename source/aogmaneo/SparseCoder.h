@@ -30,7 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Weight matrix
+        ByteBuffer weights0; // Weight matrix
+        ByteBuffer weights1;
 
         ByteBuffer commitCs;
 
