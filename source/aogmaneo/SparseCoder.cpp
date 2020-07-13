@@ -229,7 +229,7 @@ void SparseCoder::forwardClump(
 
                     // Reconstruct for next clump member column
                     if (vl.commitCs[wi] == inC)
-                        vl.clumpInputs[cii] = max<int>(0, vl.clumpInputs[cii] - vl.weights[wi]);
+                        vl.clumpInputs[cii] = max<int>(0, static_cast<int>(vl.clumpInputs[cii]) - static_cast<int>(vl.weights[wi]));
                 }
         }
     }
