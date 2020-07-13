@@ -207,12 +207,21 @@ void SparseCoder::forwardClump(
                         vl.commitCs[wi] = inC;
                         vl.weights[wi] = 255;
                     }
-                    else if (doSlowLearn && vl.commitCs[wi] == inC) {
-                        unsigned char weight = vl.weights[wi];
+                    else if (doSlowLearn) {
+                        if (vl.commitCs[wi] == inC) {
+                            unsigned char weight = vl.weights[wi];
 
-                        int delta = roundftoi(beta * (min<int>(vl.clumpInputs[cii], weight) - weight));
-                        
-                        vl.weights[wi] = max<int>(-delta, weight) + delta;
+                            int delta = roundftoi(beta * (min<int>(vl.clumpInputs[cii], weight) - weight));
+                            
+                            vl.weights[wi] = max<int>(-delta, weight) + delta;
+                        }
+                        else {
+                            unsigned char weight = vl.weights[wi];
+
+                            int delta = roundftoi(beta * -weight);
+                            
+                            vl.weights[wi] = max<int>(-delta, weight) + delta;
+                        }
                     }
 
                     // Reconstruct for next clump member column

@@ -30,17 +30,18 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        ByteBuffer weights;
+
+        ByteBuffer commitCs;
 
         ByteBuffer inputCsPrev; // Previous timestep (prev) input states
-        ByteBuffer inputCsPrevPrev; // 2 timesteps ago
     };
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
-    FloatBuffer hiddenActivations;
-
+    ByteBuffer hiddenCommits;
+    
     ByteBuffer hiddenCs; // Hidden state
 
     // Visible layers and descs
@@ -65,7 +66,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(2.0f)
+    alpha(0.5f)
     {}
 
     // Create with random initialization
