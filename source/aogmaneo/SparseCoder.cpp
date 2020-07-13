@@ -104,10 +104,7 @@ void SparseCoder::forwardClump(
                             int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
                             int cii = offset.y + diam * (offset.x + diam * clumpIndex);
                             
-                            unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
-                            unsigned char commitC = vl.commitCs[wi];
-
-                            if (inC == commitC)
+                            if ((*inputCs[vli])[visibleColumnIndex] == vl.commitCs[wi])
                                 sum += min<int>(vl.clumpInputs[cii], vl.weights[wi]);
 
                             total += vl.weights[wi];
@@ -160,8 +157,9 @@ void SparseCoder::forwardClump(
         }
 
         if (!passed) {
-            if (hasInput && hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
+            if (learnEnabled && hasInput && hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
                 maxIndex = hiddenCommits[hiddenColumnIndex];
+                hiddenCommits[hiddenColumnIndex]++;
                 commit = true;
             }
             else
@@ -173,7 +171,6 @@ void SparseCoder::forwardClump(
         // If passed, reduce clump inputs (and learn if that is enabled)
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
-        bool doFastCommit = learnEnabled && commit;
         bool doSlowLearn = learnEnabled && hasInput && passed;
 
         if (learnEnabled && !commit)
@@ -209,7 +206,7 @@ void SparseCoder::forwardClump(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    if (doFastCommit) {
+                    if (commit) {
                         vl.commitCs[wi] = inC;
                         vl.weights[wi] = 255;
                     }
@@ -235,9 +232,6 @@ void SparseCoder::forwardClump(
                         vl.clumpInputs[cii] = max<int>(0, vl.clumpInputs[cii] - vl.weights[wi]);
                 }
         }
-
-        if (doFastCommit)
-            hiddenCommits[hiddenColumnIndex]++;
     }
 }
 
