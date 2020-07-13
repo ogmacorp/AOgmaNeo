@@ -56,12 +56,12 @@ void Predictor::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    int startWi = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
 
-                    for (int vc = 0; vc < vld.size.z; vc++)
-                        total += vl.weights[vc + startWi];
+                    if (inC == vl.commitCs[wi])   
+                        sum += vl.weights[wi];
 
-                    sum += vl.weights[inC + startWi];
+                    total += vl.weights[wi];
                 }
         }
 
