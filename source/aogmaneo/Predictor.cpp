@@ -157,11 +157,8 @@ void Predictor::initRandom(
 
         vl.weights.resize(numHidden * area * vld.size.z);
 
-        // Initialize to random values
-        char range = 16;
-
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % (2 * range) + 127 - range;
+            vl.weights[i] = 127;
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
         vl.inputCsPrevPrev = ByteBuffer(numVisibleColumns, 0);
