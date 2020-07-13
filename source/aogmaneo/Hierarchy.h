@@ -35,6 +35,9 @@ public:
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
+        int historyCapacity;
+        int supportSize;
+
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
@@ -43,7 +46,9 @@ public:
         pRadius(2),
         aRadius(2),
         ticksPerUpdate(2),
-        temporalHorizon(4)
+        temporalHorizon(2),
+        historyCapacity(32),
+        supportSize(64)
         {}
     };
 
@@ -92,7 +97,8 @@ public:
     void step(
         const Array<const ByteBuffer*> &inputCs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f // Reinforcement signal
+        float reward = 0.0f, // Reinforcement signal
+        bool mimic = false // For imitation learning
     );
 
     // Serialization
