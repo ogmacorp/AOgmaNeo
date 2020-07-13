@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-#include <iostream>
+
 using namespace aon;
 
 void SparseCoder::forwardClump(
@@ -62,8 +62,8 @@ void SparseCoder::forwardClump(
         int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
         int maxIndex = 0;
-        
-        int originalMaxIndex = maxIndex;
+        int originalMaxIndex = 0;
+
         bool passed = false;
         bool commit = false;
 
