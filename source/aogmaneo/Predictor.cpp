@@ -17,7 +17,7 @@ void Predictor::forward(
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
-    float maxActivation = 0.0f;
+    int maxActivation = 0;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -26,7 +26,6 @@ void Predictor::forward(
             continue;
 
         int sum = 0;
-        int total = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -56,25 +55,15 @@ void Predictor::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
-
-                    if (inC == vl.commitCs[wi])   
-                        sum += vl.weights[wi];
-
-                    total += vl.weights[wi];
+                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
         }
 
-        float activation = static_cast<float>(sum) / static_cast<float>(max(1, total));
-
-        if (activation > maxActivation) {
-            maxActivation = activation;
+        if (sum > maxActivation) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
-
-    if (maxIndex == -1)
-        maxIndex = 0; // Default
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
 }
@@ -125,18 +114,18 @@ void Predictor::learn(
 
                 unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                int wi = offset.y + diam * (offset.x + diam * hiddenIndexTarget);
+                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget));
 
-                if (commit) {
-                    vl.commitCs[wi] = inC;
-                    vl.weights[wi] = 255;
-                }
-                else if (vl.commitCs[wi] != inC) {
+                if (commit)
+                    vl.weights[inC + wiStart] = 255;
+                else {
+                    int wi = inC + wiStart;
+
                     unsigned char weight = vl.weights[wi];
 
-                    int delta = roundftoi(alpha * -weight);
+                    int delta = roundftoi(alpha * (255 - weight));
                     
-                    vl.weights[wi] = max<int>(-delta, weight) + delta;
+                    vl.weights[wi] = min<int>(255 - delta, weight) + delta;
                 }
             }
     }
@@ -166,8 +155,7 @@ void Predictor::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area, 0);
-        vl.commitCs.resize(numHidden * area, 0);
+        vl.weights.resize(numHidden * area * vld.size.z, 0);
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
     }
