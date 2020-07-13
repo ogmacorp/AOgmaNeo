@@ -77,7 +77,7 @@ public:
     :
     alpha(0.1f),
     beta(0.5f),
-    targetResets(6.0f),
+    targetResets(3.0f),
     gamma(0.001f)
     {}
 
