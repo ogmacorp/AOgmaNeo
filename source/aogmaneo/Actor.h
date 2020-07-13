@@ -86,8 +86,8 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.5f),
-    beta(0.01f),
+    alpha(0.2f),
+    beta(0.02f),
     gamma(0.99f)
     {}
 
