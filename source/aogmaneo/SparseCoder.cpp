@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-#include <iostream>
+
 using namespace aon;
 
 void SparseCoder::forwardClump(
@@ -142,7 +142,7 @@ void SparseCoder::forwardClump(
         // Vigilance checking cycle
         for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
             int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
-            
+
             if (hiddenMatches[hiddenIndexMax] < hiddenVigilances[hiddenColumnIndex]) {
                 resets++;
                 
@@ -308,7 +308,7 @@ void SparseCoder::initRandom(
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
 
-    hiddenVigilances = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenVigilances = FloatBuffer(numHiddenColumns, 1.0f);
 }
 
 void SparseCoder::step(
