@@ -39,7 +39,7 @@ public:
         Array<ByteBuffer> inputCs;
         ByteBuffer hiddenTargetCsPrev;
 
-        FloatBuffer hiddenValues;
+        FloatBuffer hiddenValuesPrev;
         
         float reward;
     };
@@ -72,9 +72,9 @@ private:
 
     void learn(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
+        const Array<const ByteBuffer*> &inputCsPrev,
         const ByteBuffer* hiddenTargetCsPrev,
-        const FloatBuffer* hiddenValues,
+        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic
@@ -84,13 +84,17 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
+    int minSteps;
+    int historyIters;
 
     // Defaults
     Actor()
     :
-    alpha(0.1f),
-    beta(0.1f),
-    gamma(0.99f)
+    alpha(0.02f),
+    beta(0.02f),
+    gamma(0.99f),
+    minSteps(8),
+    historyIters(8)
     {}
 
     // Initialized randomly
