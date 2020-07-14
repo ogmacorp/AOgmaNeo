@@ -39,7 +39,8 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     ByteBuffer hiddenCs; // Hidden states
-
+    ByteBuffer hiddenCsPrev; // Previous hidden states
+    
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -63,7 +64,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f)
+    alpha(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization

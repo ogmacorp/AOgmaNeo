@@ -109,7 +109,8 @@ void Predictor::learn(
 
                     unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                    vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += delta;
+                    if (inC != vl.inputCsPrevPrev[visibleColumnIndex])
+                        vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += delta;
                 }
         }
     }
@@ -146,6 +147,7 @@ void Predictor::initRandom(
             vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
+        vl.inputCsPrevPrev = ByteBuffer(numVisibleColumns, 0);
     }
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
@@ -169,6 +171,7 @@ void Predictor::activate(
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
+        vl.inputCsPrevPrev = vl.inputCsPrev;
         vl.inputCsPrev = *inputCs[vli];
     }
 }
@@ -211,6 +214,7 @@ void Predictor::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.inputCsPrevPrev[0]), vl.inputCsPrevPrev.size() * sizeof(unsigned char));
     }
 }
 
@@ -254,7 +258,9 @@ void Predictor::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         vl.inputCsPrev.resize(numVisibleColumns);
+        vl.inputCsPrevPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.inputCsPrevPrev[0]), vl.inputCsPrevPrev.size() * sizeof(unsigned char));
     }
 }
