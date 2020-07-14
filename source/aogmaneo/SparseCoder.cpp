@@ -17,7 +17,7 @@ void SparseCoder::forward(
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
-    float maxActivation = 0.0f;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -51,7 +51,7 @@ void SparseCoder::forward(
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
-
+  
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
         }
@@ -95,15 +95,17 @@ void SparseCoder::learn(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
     
-    int targetC = (*inputCs)[visibleColumnIndex];
+    unsigned char targetC = (*inputCs)[visibleColumnIndex];
 
     int maxIndex = 0;
-    float maxActivation = 0.0f;
+    float maxActivation = -999999.0f;
 
+    // Find current max
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
-        
+
         float sum = 0.0f;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -118,18 +120,25 @@ void SparseCoder::learn(
                     Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
                     sum += vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    count++;
                 }
             }
+
+        sum /= max(1, count);
+
+        vl.reconstruction[visibleIndex] = sum;
 
         if (sum > maxActivation) {
             maxActivation = sum;
             maxIndex = vc;
         }
     }
-    
+
     if (maxIndex != targetC) {
         for (int vc = 0; vc < vld.size.z; vc++) {
-            float target = (vc == targetC ? 1.0f : 0.0f);
+            int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
+
+            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(vl.reconstruction[visibleIndex]));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -144,8 +153,8 @@ void SparseCoder::learn(
                         Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
-
-                        vl.weights[wi] += alpha * min(0.0f, target - vl.weights[wi]);
+                    
+                        vl.weights[wi] += delta;
                     }
                 }
         }
@@ -181,7 +190,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(-1.0f, 0.0f);
 
         vl.reconstruction = FloatBuffer(numVisible, 0.0f);
     }
