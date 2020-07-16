@@ -142,7 +142,6 @@ void Actor::forward(
 void Actor::learn(
     const Int2 &pos,
     const Array<const ByteBuffer*> &inputCsPrev,
-    const Array<const ByteBuffer*> &inputCsPrevPrev,
     const ByteBuffer* hiddenTargetCsPrev,
     const FloatBuffer* hiddenValuesPrev,
     float q,
@@ -225,8 +224,7 @@ void Actor::learn(
 
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                if (inC != (*inputCsPrevPrev[vli])[visibleColumnIndex])
-                    vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+                vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
             }
     }
 
@@ -323,8 +321,7 @@ void Actor::learn(
 
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                    if (inC != (*inputCsPrevPrev[vli])[visibleColumnIndex])
-                        vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
+                    vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
                 }
         }
     }
@@ -354,11 +351,8 @@ void Actor::initRandom(
         int area = diam * diam;
 
         // Create weight matrix for this visible layer and initialize randomly
-        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z);
+        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z, 0.0f);
         vl.actionWeights.resize(numHidden * area * vld.size.z);
-
-        for (int i = 0; i < vl.valueWeights.size(); i++)
-            vl.valueWeights[i] = randf(-0.01f, 0.01f);
 
         for (int i = 0; i < vl.actionWeights.size(); i++)
             vl.actionWeights[i] = randf(-0.01f, 0.01f);
@@ -433,11 +427,10 @@ void Actor::step(
     }
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > minSteps + 2) {
+    if (learnEnabled && historySize > minSteps + 1) {
         for (int it = 0; it < historyIters; it++) {
-            int historyIndex = rand() % (historySize - 2 - minSteps) + minSteps;
+            int historyIndex = rand() % (historySize - 1 - minSteps) + minSteps;
 
-            const HistorySample &sPrevPrev = historySamples[historyIndex + 2];
             const HistorySample &sPrev = historySamples[historyIndex + 1];
             const HistorySample &s = historySamples[historyIndex];
 
@@ -453,7 +446,7 @@ void Actor::step(
 
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), constGet(sPrevPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
         }
     }
 }

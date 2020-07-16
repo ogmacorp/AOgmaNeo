@@ -33,7 +33,6 @@ public:
         FloatBuffer weights;
 
         ByteBuffer inputCsPrev; // Previous timestep (prev) input states
-        ByteBuffer inputCsPrevPrev; // 2 timesteps ago
     };
 
 private:
@@ -65,7 +64,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(2.0f)
+    alpha(1.0f)
     {}
 
     // Create with random initialization

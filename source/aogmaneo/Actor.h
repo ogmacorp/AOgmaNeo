@@ -73,7 +73,6 @@ private:
     void learn(
         const Int2 &pos,
         const Array<const ByteBuffer*> &inputCsPrev,
-        const Array<const ByteBuffer*> &inputCsPrevPrev,
         const ByteBuffer* hiddenTargetCsPrev,
         const FloatBuffer* hiddenValuesPrev,
         float q,
