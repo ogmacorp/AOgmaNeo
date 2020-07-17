@@ -86,7 +86,7 @@ void ImageEncoder::forward(
 
             float dist = static_cast<float>(hiddenSize.z - 1 - hc) / static_cast<float>(hiddenSize.z - 1);
 
-            float strength = hiddenResources[hiddenIndex] * expf(-gamma * dist * dist / max(0.0001f, hiddenResources[hiddenIndex]));
+            float strength = hiddenResources[hiddenIndex] * expf(-gamma * dist / max(0.0001f, hiddenResources[hiddenIndex]));
             
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
