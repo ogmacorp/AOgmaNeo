@@ -30,19 +30,28 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights; // Weights
-        FloatBuffer traces; // Eligibility traces
+        FloatBuffer weights; // Action function weights
+    };
 
-        ByteBuffer inputCsPrev; // Previous timestep (prev) input states
-        ByteBuffer inputCsPrevPrev; // 2 timesteps ago
+    // History sample for delayed updates
+    struct HistorySample {
+        Array<ByteBuffer> inputCs;
+        ByteBuffer hiddenTargetCsPrev;
+        
+        float reward;
     };
 
 private:
     Int3 hiddenSize; // Hidden/output/action size
 
+    // Current history size - fixed after initialization. Determines length of wait before updating
+    int historySize;
+
     ByteBuffer hiddenCs; // Hidden states
 
-    FloatBuffer hiddenValues; // Hidden value function output buffer
+    FloatBuffer hiddenValues;
+
+    CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -52,28 +61,32 @@ private:
 
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
+        const Array<const ByteBuffer*> &inputCs
+    );
+
+    void learn(
+        const Int2 &pos,
+        const Array<const ByteBuffer*> &inputCsPrev,
         const ByteBuffer* hiddenTargetCsPrev,
-        float reward,
-        bool learnEnabled
+        float q,
+        float g
     );
 
 public:
-    float alpha; // Value learning rate
+    float alpha; // Q learning rate
     float gamma; // Discount factor
-    float traceDecay;
 
     // Defaults
     Actor()
     :
     alpha(0.1f),
-    gamma(0.99f),
-    traceDecay(0.97f)
+    gamma(0.99f)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
+        int historyCapacity,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
