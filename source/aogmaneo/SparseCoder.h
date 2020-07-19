@@ -32,14 +32,15 @@ public:
     struct VisibleLayer {
         FloatBuffer weights; // Binary weight matrix
 
-        FloatBuffer reconstruction; // Temporary buffer
+        FloatBuffer reconstruction;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     ByteBuffer hiddenCs; // Hidden states
-
+    ByteBuffer hiddenCsPrev; // Previous hidden states
+    
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -63,7 +64,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f)
+    alpha(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
