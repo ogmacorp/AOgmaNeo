@@ -33,12 +33,11 @@ public:
         ByteBuffer weights;
 
         ByteBuffer inputCsPrev; // Previous timestep (prev) input states
+        ByteBuffer inputCsPrevPrev; // 2 timesteps ago
     };
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
-
-    FloatBuffer hiddenActivations;
 
     ByteBuffer hiddenCs; // Hidden state
 
@@ -59,16 +58,6 @@ private:
     );
 
 public:
-    float alpha; // Learning rate
-    float targetRange; // Range of target outputs, must be in [0, 0.5]
-
-    // Defaults
-    Predictor()
-    :
-    alpha(0.5f),
-    targetRange(0.1f)
-    {}
-
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
