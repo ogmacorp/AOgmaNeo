@@ -30,13 +30,16 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights; // Action function weights
+        FloatBuffer valueWeights; // Value function weights
+        FloatBuffer actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
     struct HistorySample {
         Array<ByteBuffer> inputCs;
         ByteBuffer hiddenTargetCsPrev;
+
+        FloatBuffer hiddenValuesPrev;
         
         float reward;
     };
@@ -47,9 +50,11 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
+    FloatBuffer hiddenActivations; // Temporary buffer
+
     ByteBuffer hiddenCs; // Hidden states
 
-    FloatBuffer hiddenValues;
+    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -61,26 +66,35 @@ private:
 
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs
+        const Array<const ByteBuffer*> &inputCs,
+        unsigned long* state
     );
 
     void learn(
         const Int2 &pos,
         const Array<const ByteBuffer*> &inputCsPrev,
         const ByteBuffer* hiddenTargetCsPrev,
+        const FloatBuffer* hiddenValuesPrev,
         float q,
-        float g
+        float g,
+        bool mimic
     );
 
 public:
-    float alpha; // Q learning rate
+    float alpha; // Value learning rate
+    float beta; // Action learning rate
     float gamma; // Discount factor
+    int minSteps;
+    int historyIters;
 
     // Defaults
     Actor()
     :
-    alpha(0.1f),
-    gamma(0.99f)
+    alpha(0.02f),
+    beta(0.02f),
+    gamma(0.99f),
+    minSteps(8),
+    historyIters(8)
     {}
 
     // Initialized randomly
@@ -95,7 +109,8 @@ public:
         const Array<const ByteBuffer*> &inputCs,
         const ByteBuffer* hiddenTargetCsPrev,
         float reward,
-        bool learnEnabled
+        bool learnEnabled,
+        bool mimic
     );
 
     // Serialization
