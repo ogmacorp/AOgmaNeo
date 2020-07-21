@@ -137,7 +137,7 @@ void SparseCoder::backward(
 
     sum /= max(1, count);
 
-    vl.reconstruction[visibleIndexTarget] = sigmoid(sum);
+    vl.reconstruction[visibleIndexTarget] = sum;
 }
 
 void SparseCoder::learn(
