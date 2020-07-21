@@ -59,7 +59,7 @@ void SparseCoder::forward(
                     if (it == 0)
                         sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))]);
                     else
-                        sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] - vl.reconstruction[visibleIndex]);
+                        sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] * (1.0f - vl.reconstruction[visibleIndex]));
 
                     count++;
                 }
@@ -137,7 +137,7 @@ void SparseCoder::backward(
 
     sum /= max(1, count);
 
-    vl.reconstruction[visibleIndexTarget] = sum;
+    vl.reconstruction[visibleIndexTarget] = sigmoid(sum);
 }
 
 void SparseCoder::learn(
@@ -209,7 +209,7 @@ void SparseCoder::learn(
         }
     }
 
-    if (maxIndex != targetC) {
+    //if (maxIndex != targetC) {
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
@@ -236,7 +236,7 @@ void SparseCoder::learn(
                     }
                 }
         }
-    }
+    //}
 }
 
 void SparseCoder::initRandom(
