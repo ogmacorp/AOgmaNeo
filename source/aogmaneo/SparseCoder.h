@@ -45,8 +45,6 @@ private:
     ByteBuffer hiddenCs; // Hidden states
     ByteBuffer hiddenCsTemp; // Temporary hidden states
 
-    FloatBuffer hiddenResources; // Resources that decay when a unit is used in learning
-
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;

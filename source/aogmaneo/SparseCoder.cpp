@@ -165,7 +165,7 @@ void SparseCoder::learn(
 
                     float weight = vl.weights[wi];
 
-                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenResources[hiddenIndex] * ((vc == inC ? 255.0f : 0.0f) - weight))));
+                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, weight + alpha * ((vc == inC ? 255.0f : 0.0f) - weight))));
                 }
             }
     }
@@ -192,11 +192,9 @@ void SparseCoder::learn(
 
                 float weight = laterals[wi];
 
-                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenResources[hiddenIndex] * ((ohc == inC ? 255.0f : 0.0f) - weight))));
+                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + alpha * ((ohc == inC ? 255.0f : 0.0f) - weight))));
             }
         }
-
-    hiddenResources[hiddenIndex] -= alpha * hiddenResources[hiddenIndex];
 }
 
 void SparseCoder::initRandom(
@@ -230,15 +228,13 @@ void SparseCoder::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 16;
+            vl.weights[i] = rand() % 256;
 
         vl.reconstruction = FloatBuffer(numVisible, 0);
     }
 
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
-
-    hiddenResources = FloatBuffer(numHidden, 1.0f);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
@@ -290,8 +286,6 @@ void SparseCoder::write(
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenResources[0]), hiddenResources.size() * sizeof(float));
-
     int numVisibleLayers = visibleLayers.size();
 
     writer.write(reinterpret_cast<const void*>(&numVisibleLayers), sizeof(int));
@@ -335,10 +329,6 @@ void SparseCoder::read(
 
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
-
-    hiddenResources.resize(numHidden);
-
-    reader.read(reinterpret_cast<void*>(&hiddenResources[0]), hiddenResources.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
