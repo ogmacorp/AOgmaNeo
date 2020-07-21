@@ -56,7 +56,11 @@ void SparseCoder::forward(
 
                     int visibleIndex = address3(Int3(ix, iy, inC), vld.size);
   
-                    sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] - vl.reconstruction[visibleIndex]);
+                    if (it == 0)
+                        sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))]);
+                    else
+                        sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] - vl.reconstruction[visibleIndex]);
+
                     count++;
                 }
         }
