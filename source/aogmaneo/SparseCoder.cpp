@@ -168,9 +168,6 @@ void SparseCoder::learn(
     
     unsigned char targetC = (*inputCs)[visibleColumnIndex];
 
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
