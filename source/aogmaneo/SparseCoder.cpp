@@ -140,7 +140,7 @@ void SparseCoder::forwardClump(
 
                     maxActivation = -1.0f;
 
-                    for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
+                    for (int ohc = 0; ohc < hiddenCommits[hiddenColumnIndex]; ohc++) {
                         int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
 
                         if (hiddenActivations[hiddenIndex] > maxActivation) {
