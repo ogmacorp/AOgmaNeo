@@ -57,7 +57,7 @@ void SparseCoder::forward(
                     if (it == 0)
                         sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     else
-                        sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] * (1.0f - vl.reconstruction[visibleColumnIndex]);
+                        sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] - vl.reconstruction[visibleColumnIndex]);
 
                     count++;
                 }
@@ -133,7 +133,7 @@ void SparseCoder::backward(
 
     sum /= max(1, count);
 
-    vl.reconstruction[visibleColumnIndex] = sigmoid(sum);
+    vl.reconstruction[visibleColumnIndex] = sum;
 }
 
 void SparseCoder::learn(
