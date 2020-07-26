@@ -55,8 +55,10 @@ void Predictor::forward(
 
                     unsigned char weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
-                    sum += weight;
-                    count++;
+                    if (inC != 0) { // Not null
+                        sum += weight;
+                        count++;
+                    }
                 }
         }
 
@@ -116,14 +118,16 @@ void Predictor::learn(
 
                     unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                    int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    if (inC != 0) { // Not null
+                        int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                    unsigned char weight = vl.weights[wi];
-                    
-                    if (delta > 0)
-                        vl.weights[wi] = min<int>(255 - delta, weight) + delta;
-                    else
-                        vl.weights[wi] = max<int>(-delta, weight) + delta;
+                        unsigned char weight = vl.weights[wi];
+                        
+                        if (delta > 0)
+                            vl.weights[wi] = min<int>(255 - delta, weight) + delta;
+                        else
+                            vl.weights[wi] = max<int>(-delta, weight) + delta;
+                    }
                 }
         }
     }
@@ -155,11 +159,8 @@ void Predictor::initRandom(
 
         vl.weights.resize(numHidden * area * vld.size.z);
 
-        // Initialize to random values
-        char range = 16;
-
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % (2 * range) + 127 - range;
+            vl.weights[i] = 119 + rand() % 16;
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
     }

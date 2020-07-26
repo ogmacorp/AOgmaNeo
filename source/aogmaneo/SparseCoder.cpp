@@ -21,7 +21,7 @@ void SparseCoder::forwardClump(
 
     // Iterate
     for (int it = 0; it < columnsPerClump; it++) {
-        Int2 pos(clumpPos.x * clumpSize.x + it % clumpSize.x, clumpPos.y * clumpSize.y + it / clumpSize.x);
+        Int2 pos(clumpPos.x * clumpSize.x + it / clumpSize.y, clumpPos.y * clumpSize.y + it % clumpSize.y);
 
         int count = 0;
 
@@ -57,9 +57,14 @@ void SparseCoder::forwardClump(
                 }
         }
 
+        int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
+
         bool hasInput = count > 0;
 
-        int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
+        if (!hasInput) {
+            hiddenCs[hiddenColumnIndex] = 0; // Null input
+            continue;
+        }
 
         int maxIndex = 0;
         int originalMaxIndex = 0;
@@ -68,96 +73,94 @@ void SparseCoder::forwardClump(
         bool passed = false;
         bool commit = false;
 
-        if (hasInput) {
-            #pragma omp parallel for
-            for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
-                int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+        #pragma omp parallel for
+        for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
+            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-                int sum = 0;
-                int total = 0;
+            int sum = 0;
+            int total = 0;
 
-                for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                    VisibleLayer &vl = visibleLayers[vli];
-                    const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+            for (int vli = 0; vli < visibleLayers.size(); vli++) {
+                VisibleLayer &vl = visibleLayers[vli];
+                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-                    int diam = vld.radius * 2 + 1;
-        
-                    // Projection
-                    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(clumpTilingSize.x),
-                        static_cast<float>(vld.size.y) / static_cast<float>(clumpTilingSize.y));
+                int diam = vld.radius * 2 + 1;
+    
+                // Projection
+                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(clumpTilingSize.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(clumpTilingSize.y));
 
-                    Int2 visibleCenter = project(clumpPos, hToV);
+                Int2 visibleCenter = project(clumpPos, hToV);
 
-                    // Lower corner
-                    Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+                // Lower corner
+                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-                    // Bounds of receptive field, clamped to input size
-                    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                    Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+                // Bounds of receptive field, clamped to input size
+                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                            int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                            Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                            int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
-                            int cii = offset.y + diam * (offset.x + diam * clumpIndex);
-                            
-                            if ((*inputCs[vli])[visibleColumnIndex] == vl.commitCs[wi])
-                                sum += min<int>(vl.clumpInputs[cii], vl.weights[wi]);
+                        int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
+                        int cii = offset.y + diam * (offset.x + diam * clumpIndex);
+                        
+                        if ((*inputCs[vli])[visibleColumnIndex] == vl.commitCs[wi])
+                            sum += min<int>(vl.clumpInputs[cii], vl.weights[wi]);
 
-                            total += vl.weights[wi];
-                        }
-                }
-
-                hiddenActivations[hiddenIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
-                hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(count);
+                        total += vl.weights[wi];
+                    }
             }
 
-            float maxActivation = -1.0f;
+            hiddenActivations[hiddenIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
+            hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(count);
+        }
 
-            for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
-                int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+        float maxActivation = -1.0f;
 
-                if (hiddenActivations[hiddenIndex] > maxActivation) {
-                    maxActivation = hiddenActivations[hiddenIndex];
-                    maxIndex = hc;
-                }
+        for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
+            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+            if (hiddenActivations[hiddenIndex] > maxActivation) {
+                maxActivation = hiddenActivations[hiddenIndex];
+                maxIndex = hc;
             }
+        }
 
-            originalMaxIndex = maxIndex;
+        originalMaxIndex = maxIndex;
 
-            // Vigilance checking cycle
-            for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
-                int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+        // Vigilance checking cycle
+        for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
+            int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+            
+            if (hiddenMatches[hiddenIndexMax] < minVigilance) {
+                resets++;
                 
-                if (hiddenMatches[hiddenIndexMax] < minVigilance) {
-                    resets++;
-                    
-                    // Reset
-                    hiddenActivations[hiddenIndexMax] = -1.0f;
+                // Reset
+                hiddenActivations[hiddenIndexMax] = -1.0f;
 
-                    maxActivation = -1.0f;
+                maxActivation = -1.0f;
 
-                    for (int ohc = 0; ohc < hiddenCommits[hiddenColumnIndex]; ohc++) {
-                        int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
+                for (int ohc = 0; ohc < hiddenCommits[hiddenColumnIndex]; ohc++) {
+                    int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
 
-                        if (hiddenActivations[hiddenIndex] > maxActivation) {
-                            maxActivation = hiddenActivations[hiddenIndex];
-                            maxIndex = ohc;
-                        }
+                    if (hiddenActivations[hiddenIndex] > maxActivation) {
+                        maxActivation = hiddenActivations[hiddenIndex];
+                        maxIndex = ohc;
                     }
                 }
-                else {
-                    passed = true;
-                    break;
-                }
+            }
+            else {
+                passed = true;
+                break;
             }
         }
 
         if (!passed) {
-            if (learnEnabled && hasInput && hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
+            if (learnEnabled && hiddenCommits[hiddenColumnIndex] < hiddenSize.z) {
                 maxIndex = hiddenCommits[hiddenColumnIndex];
                 hiddenCommits[hiddenColumnIndex]++;
                 commit = true;
@@ -171,7 +174,7 @@ void SparseCoder::forwardClump(
         // If passed, reduce clump inputs (and learn if that is enabled)
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
-        bool doSlowLearn = learnEnabled && hasInput && passed;
+        bool doSlowLearn = learnEnabled && passed;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -270,7 +273,7 @@ void SparseCoder::initRandom(
         vl.clumpInputs.resize(numClumps * area, 0);
     }
 
-    hiddenCommits = ByteBuffer(numHiddenColumns, 0);
+    hiddenCommits = ByteBuffer(numHiddenColumns, 1); // 1 because 0 is null (no input) which is always committed
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
     hiddenMatches = FloatBuffer(numHidden, 0.0f);
