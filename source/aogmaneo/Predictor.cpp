@@ -50,9 +50,7 @@ void Predictor::forward(
             }
     }
 
-    if (count == 0) // No input, set to null
-        hiddenCs[hiddenColumnIndex] = 0;
-    else { // Has input, find full result
+    if (count != 0) { // Has input, find new result
         int maxIndex = 0;
         int maxActivation = 0;
 
