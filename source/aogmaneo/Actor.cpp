@@ -51,8 +51,10 @@ void Actor::forward(
 
                 float weight = vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                 
-                value += weight;
-                count++;
+                if (inC != 0) { // Not null
+                    value += weight;
+                    count++;
+                }
             }
     }
 
@@ -98,7 +100,8 @@ void Actor::forward(
 
                     float weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
-                    sum += weight;
+                    if (inC != 0) // Not null
+                        sum += weight;
                 }
         }
 
@@ -186,8 +189,10 @@ void Actor::learn(
 
                 float weight = vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                 
-                value += weight;
-                count++;
+                if (inC != 0) { // Not null
+                    value += weight;
+                    count++;
+                }
             }
     }
 
@@ -224,7 +229,8 @@ void Actor::learn(
 
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+                if (inC != 0) // Not null
+                    vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
             }
     }
 
@@ -270,7 +276,8 @@ void Actor::learn(
 
                     float weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     
-                    sum += weight;
+                    if (inC != 0) // Not null
+                        sum += weight;
                 }
         }
 
@@ -321,7 +328,8 @@ void Actor::learn(
 
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                    vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
+                    if (inC != 0) // Not null
+                        vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
                 }
         }
     }
