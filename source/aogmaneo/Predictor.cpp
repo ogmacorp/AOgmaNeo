@@ -79,10 +79,16 @@ void Predictor::learn(
 
     int targetC = (*hiddenTargetCs)[hiddenColumnIndex];
 
-    if (targetC != hiddenCs[hiddenColumnIndex]) {
-        int hiddenIndexTarget = address3(Int3(pos.x, pos.y, targetC), hiddenSize);
-        int hiddenIndexMax = address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
+        int delta = roundftoi(alpha * 255.0f * (0.5f + (hc == targetC ? targetRange : -targetRange) - hiddenActivations[hiddenIndex]));
+  
+        if (hc == targetC)
+            delta = max(0, delta);
+        else
+            delta = min(0, delta);
+            
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -106,17 +112,18 @@ void Predictor::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    if (vl.inputCsPrev[visibleColumnIndex] != vl.inputCsPrevPrev[visibleColumnIndex]) {
-                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                        unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
+                    unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                        int wiTarget = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget));
-                        int wiMax = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax));
+                    int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                        vl.weights[wiTarget] = min<int>(255 - 1, vl.weights[wiTarget]) + 1;
-                        vl.weights[wiMax] = max<int>(1, vl.weights[wiMax]) - 1;
-                    }
+                    unsigned char weight = vl.weights[wi];
+                    
+                    if (delta > 0)
+                        vl.weights[wi] = min<int>(255 - delta, weight) + delta;
+                    else
+                        vl.weights[wi] = max<int>(-delta, weight) + delta;
                 }
         }
     }
@@ -148,11 +155,13 @@ void Predictor::initRandom(
 
         vl.weights.resize(numHidden * area * vld.size.z);
 
+        // Initialize to random values
+        char range = 16;
+
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 125 + rand() % 4;
+            vl.weights[i] = rand() % (2 * range) + 127 - range;
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
-        vl.inputCsPrevPrev = ByteBuffer(numVisibleColumns, 0);
     }
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
@@ -176,7 +185,6 @@ void Predictor::activate(
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
-        vl.inputCsPrevPrev = vl.inputCsPrev;
         vl.inputCsPrev = *inputCs[vli];
     }
 }
@@ -198,6 +206,9 @@ void Predictor::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
+    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&targetRange), sizeof(float));
+
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     
     int numVisibleLayers = visibleLayers.size();
@@ -217,7 +228,6 @@ void Predictor::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(unsigned char));
-        writer.write(reinterpret_cast<const void*>(&vl.inputCsPrevPrev[0]), vl.inputCsPrevPrev.size() * sizeof(unsigned char));
     }
 }
 
@@ -228,6 +238,9 @@ void Predictor::read(
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHidden =  numHiddenColumns * hiddenSize.z;
+
+    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&targetRange), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
 
@@ -259,9 +272,7 @@ void Predictor::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
 
         vl.inputCsPrev.resize(numVisibleColumns);
-        vl.inputCsPrevPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(unsigned char));
-        reader.read(reinterpret_cast<void*>(&vl.inputCsPrevPrev[0]), vl.inputCsPrevPrev.size() * sizeof(unsigned char));
     }
 }
