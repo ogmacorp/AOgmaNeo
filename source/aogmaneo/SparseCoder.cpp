@@ -59,10 +59,8 @@ void SparseCoder::forwardClump(
 
         int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-        bool hasInput = count > 0;
-
-        if (!hasInput) {
-            hiddenCs[hiddenColumnIndex] = 0; // Null input
+        if (count == 0) { // No input
+            hiddenCs[hiddenColumnIndex] = 0; // Set null
             continue;
         }
 
