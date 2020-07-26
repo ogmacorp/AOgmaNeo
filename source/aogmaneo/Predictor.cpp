@@ -149,7 +149,7 @@ void Predictor::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127;
+            vl.weights[i] = 125 + rand() % 4;
 
         vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
         vl.inputCsPrevPrev = ByteBuffer(numVisibleColumns, 0);
