@@ -70,7 +70,10 @@ void Predictor::forward(
         }
     }
 
-    hiddenCs[hiddenColumnIndex] = maxIndex;
+    if (maxActivation == 0)
+        hiddenCs[hiddenColumnIndex] = 0;
+    else
+        hiddenCs[hiddenColumnIndex] = maxIndex;
 }
 
 void Predictor::learn(
