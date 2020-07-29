@@ -41,9 +41,9 @@ public:
         :
         hiddenSize(4, 4, 32),
         clumpSize(4, 4),
-        ffRadius(4),
-        pRadius(4),
-        aRadius(4),
+        ffRadius(2),
+        pRadius(2),
+        aRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2),
         historyCapacity(32)
