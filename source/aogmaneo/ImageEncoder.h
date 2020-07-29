@@ -80,7 +80,7 @@ public:
     // Defaults
     ImageEncoder()
     :
-    alpha(0.01f),
+    alpha(0.05f),
     gamma(0.5f)
     {}
 
