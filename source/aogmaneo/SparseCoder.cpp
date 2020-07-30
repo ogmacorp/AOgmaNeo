@@ -66,6 +66,7 @@ void SparseCoder::forwardClump(
 
         int maxIndex = 1;
         int originalMaxIndex = 1;
+        float itMinVigilance = (1.0f - static_cast<float>(it) / static_cast<float>(columnsPerClump - 1)) * (1.0f - minVigilance) + minVigilance;
         int resets = 0;
 
         bool passed = false;
@@ -134,7 +135,7 @@ void SparseCoder::forwardClump(
         for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
             int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
             
-            if (hiddenMatches[hiddenIndexMax] < minVigilance) {
+            if (hiddenMatches[hiddenIndexMax] < itMinVigilance) {
                 resets++;
                 
                 // Reset
