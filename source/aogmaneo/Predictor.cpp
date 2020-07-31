@@ -87,10 +87,8 @@ void Predictor::forward(
 
                         unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                        unsigned char weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                        
                         if (inC != 0) // Not null
-                            sum += weight;
+                            sum += vl.weights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     }
             }
 
@@ -152,7 +150,7 @@ void Predictor::learn(
                     unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
                     if (inC != 0) { // Not null
-                        int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                        int wi = inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
                         unsigned char weight = vl.weights[wi];
                         
@@ -179,7 +177,7 @@ void Predictor::initRandom(
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHidden =  numHiddenColumns * hiddenSize.z;
-
+    
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -190,7 +188,7 @@ void Predictor::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.weights.resize(numHidden * area * (vld.size.z - 1)); // -1 to not store
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 127;

@@ -49,10 +49,8 @@ void Actor::forward(
 
                 unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                float weight = vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
-                
                 if (inC != 0) { // Not null
-                    value += weight;
+                    value += vl.valueWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                     count++;
                 }
             }
@@ -98,10 +96,8 @@ void Actor::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    float weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    
                     if (inC != 0) // Not null
-                        sum += weight;
+                        sum += vl.actionWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
         }
 
@@ -187,10 +183,8 @@ void Actor::learn(
 
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                float weight = vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
-                
                 if (inC != 0) { // Not null
-                    value += weight;
+                    value += vl.valueWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                     count++;
                 }
             }
@@ -230,7 +224,7 @@ void Actor::learn(
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                 if (inC != 0) // Not null
-                    vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+                    vl.valueWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
             }
     }
 
@@ -274,10 +268,8 @@ void Actor::learn(
 
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                    float weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    
                     if (inC != 0) // Not null
-                        sum += weight;
+                        sum += vl.actionWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
         }
 
@@ -299,7 +291,7 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        float deltaAction = (mimic ? beta : beta * (sigmoid(tdErrorAction) * 2.0f - 1.0f)) * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex] / max(0.0001f, total));
+        float deltaAction = (mimic ? beta : (tdErrorAction > 0.0f ? beta : -beta)) * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex] / max(0.0001f, total));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -329,7 +321,7 @@ void Actor::learn(
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                     if (inC != 0) // Not null
-                        vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
+                        vl.actionWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
                 }
         }
     }
@@ -359,8 +351,8 @@ void Actor::initRandom(
         int area = diam * diam;
 
         // Create weight matrix for this visible layer and initialize randomly
-        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z, 0.0f);
-        vl.actionWeights.resize(numHidden * area * vld.size.z);
+        vl.valueWeights.resize(numHiddenColumns * area * (vld.size.z - 1), 0.0f);
+        vl.actionWeights.resize(numHidden * area * (vld.size.z - 1));
 
         for (int i = 0; i < vl.actionWeights.size(); i++)
             vl.actionWeights[i] = randf(-0.01f, 0.01f);

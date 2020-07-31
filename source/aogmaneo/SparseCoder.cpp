@@ -73,8 +73,8 @@ void SparseCoder::forwardClump(
         bool commit = false;
 
         #pragma omp parallel for
-        for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
-            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+        for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null
+            int hiddenIndex = address3(Int3(pos.x, pos.y, hc - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
 
             int sum = 0;
             int total = 0;
@@ -121,7 +121,7 @@ void SparseCoder::forwardClump(
         float maxActivation = -1.0f;
 
         for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
-            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+            int hiddenIndex = address3(Int3(pos.x, pos.y, hc - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
 
             if (hiddenActivations[hiddenIndex] > maxActivation) {
                 maxActivation = hiddenActivations[hiddenIndex];
@@ -133,7 +133,7 @@ void SparseCoder::forwardClump(
 
         // Vigilance checking cycle
         for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
-            int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+            int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
             
             if (hiddenMatches[hiddenIndexMax] < itMinVigilance) {
                 resets++;
@@ -144,7 +144,7 @@ void SparseCoder::forwardClump(
                 maxActivation = -1.0f;
 
                 for (int ohc = 1; ohc < hiddenCommits[hiddenColumnIndex]; ohc++) { // Start at one since we can skip the null input
-                    int hiddenIndex = address3(Int3(pos.x, pos.y, ohc), hiddenSize);
+                    int hiddenIndex = address3(Int3(pos.x, pos.y, ohc - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
 
                     if (hiddenActivations[hiddenIndex] > maxActivation) {
                         maxActivation = hiddenActivations[hiddenIndex];
@@ -171,7 +171,7 @@ void SparseCoder::forwardClump(
         hiddenCs[hiddenColumnIndex] = maxIndex;
 
         // If passed, reduce clump inputs (and learn if that is enabled)
-        int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
+        int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
 
         bool doSlowLearn = learnEnabled && passed;
 
@@ -253,6 +253,7 @@ void SparseCoder::initRandom(
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHidden =  numHiddenColumns * hiddenSize.z;
+    int numNonNullHidden =  numHiddenColumns * (hiddenSize.z - 1);
 
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -265,17 +266,17 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area, 0);
+        vl.weights.resize(numNonNullHidden * area, 0);
 
-        vl.commitCs.resize(numHidden * area, 0);
+        vl.commitCs.resize(numNonNullHidden * area, 0);
 
         vl.clumpInputs.resize(numClumps * area, 0);
     }
 
     hiddenCommits = ByteBuffer(numHiddenColumns, 1); // 1 because 0 is null (no input) which is always committed
 
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
-    hiddenMatches = FloatBuffer(numHidden, 0.0f);
+    hiddenActivations = FloatBuffer(numNonNullHidden, 0.0f);
+    hiddenMatches = FloatBuffer(numNonNullHidden, 0.0f);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
@@ -339,6 +340,7 @@ void SparseCoder::read(
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHidden =  numHiddenColumns * hiddenSize.z;
+    int numNonNullHidden =  numHiddenColumns * (hiddenSize.z - 1);
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
@@ -350,8 +352,8 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
 
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
-    hiddenMatches = FloatBuffer(numHidden, 0.0f);
+    hiddenActivations = FloatBuffer(numNonNullHidden, 0.0f);
+    hiddenMatches = FloatBuffer(numNonNullHidden, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
