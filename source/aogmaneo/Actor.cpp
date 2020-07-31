@@ -50,7 +50,7 @@ void Actor::forward(
                 unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                 if (inC != 0) { // Not null
-                    value += vl.valueWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
+                    value += vl.valueWeights[inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                     count++;
                 }
             }
@@ -97,7 +97,7 @@ void Actor::forward(
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                     if (inC != 0) // Not null
-                        sum += vl.actionWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        sum += vl.actionWeights[inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
         }
 
@@ -184,7 +184,7 @@ void Actor::learn(
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                 if (inC != 0) { // Not null
-                    value += vl.valueWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
+                    value += vl.valueWeights[inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                     count++;
                 }
             }
@@ -224,7 +224,7 @@ void Actor::learn(
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                 if (inC != 0) // Not null
-                    vl.valueWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+                    vl.valueWeights[inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
             }
     }
 
@@ -269,7 +269,7 @@ void Actor::learn(
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                     if (inC != 0) // Not null
-                        sum += vl.actionWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        sum += vl.actionWeights[inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
         }
 
@@ -321,7 +321,7 @@ void Actor::learn(
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                     if (inC != 0) // Not null
-                        vl.actionWeights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
+                        vl.actionWeights[inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
                 }
         }
     }

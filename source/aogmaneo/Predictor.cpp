@@ -88,7 +88,7 @@ void Predictor::forward(
                         unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                         if (inC != 0) // Not null
-                            sum += vl.weights[inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                            sum += vl.weights[inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     }
             }
 
@@ -150,7 +150,7 @@ void Predictor::learn(
                     unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
                     if (inC != 0) { // Not null
-                        int wi = inC + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                        int wi = inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
                         unsigned char weight = vl.weights[wi];
                         
