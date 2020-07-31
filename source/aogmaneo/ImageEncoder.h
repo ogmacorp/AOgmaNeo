@@ -23,7 +23,7 @@ public:
         // Defaults
         VisibleLayerDesc()
         :
-        size(4, 4, 16),
+        size(4, 4, 3),
         radius(2)
         {}
     };
@@ -36,24 +36,13 @@ public:
     };
 
 private:
-    struct IntInt {
-        int a;
-        int i;
-
-        bool operator<(
-            const IntInt &other
-        ) const {
-            return a < other.a;
-        }
-    };
-
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<IntInt> hiddenActivations;
+    ByteBuffer hiddenCommits;
+    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenMatches;
 
     ByteBuffer hiddenCs; // Hidden states
-
-    FloatBuffer hiddenResources; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -63,7 +52,7 @@ private:
     
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
+        const Array<const ByteBuffer*> &inputs,
         bool learnEnabled
     );
 
@@ -75,13 +64,15 @@ private:
 
 public:
     float alpha;
-    float gamma;
+    float beta;
+    float minVigilance;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.01f),
-    gamma(0.5f)
+    alpha(0.1f),
+    beta(0.5f),
+    minVigilance(0.9f)
     {}
 
     // Create a sparse coding layer with random initialization
