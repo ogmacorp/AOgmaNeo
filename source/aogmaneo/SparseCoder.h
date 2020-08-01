@@ -45,6 +45,7 @@ private:
     ByteBuffer hiddenCommits;
     FloatBuffer hiddenActivations;
     FloatBuffer hiddenMatches;
+    FloatBuffer hiddenVigilances;
 
     ByteBuffer hiddenCs; // Hidden states
     ByteBuffer clumpCs; // Clump states
@@ -67,20 +68,21 @@ private:
 public:
     float alpha; // Activation parameter
     float beta; // Weight learning rate
-    float minVigilance; // Vigilance check minimum
+    float sigma; // Vigilance change parameter
 
     // Defaults
     SparseCoder()
     :
     alpha(0.1f),
     beta(0.5f),
-    minVigilance(0.5f)
+    sigma(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
         const Int2 &clumpSize, // Size of column clump (shared RF)
+        float initVigilance, // Initial vigilance parameter
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 

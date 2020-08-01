@@ -183,7 +183,7 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        scLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].clumpSize, scVisibleLayerDescs);
+        scLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].clumpSize, layerDescs[l].initVigilance, scVisibleLayerDescs);
     }
 }
 

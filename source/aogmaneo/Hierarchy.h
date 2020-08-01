@@ -37,6 +37,8 @@ public:
 
         int historyCapacity;
 
+        float initVigilance;
+
         LayerDesc()
         :
         hiddenSize(4, 4, 32),
@@ -46,7 +48,8 @@ public:
         aRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2),
-        historyCapacity(32)
+        historyCapacity(32),
+        initVigilance(0.5f)
         {}
     };
 
