@@ -282,6 +282,7 @@ void ImageEncoder::reconstruct(
 
 void ImageEncoder::initRandom(
     const Int3 &hiddenSize,
+    float initVigilance,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
     this->visibleLayerDescs = visibleLayerDescs;
@@ -314,6 +315,8 @@ void ImageEncoder::initRandom(
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
     hiddenMatches = FloatBuffer(numHidden, 0.0f);
+
+    hiddenVigilances = FloatBuffer(numHiddenColumns, initVigilance);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
