@@ -66,7 +66,7 @@ void SparseCoder::forwardClump(
 
         int maxIndex = 1;
         int originalMaxIndex = 1;
-        float itMinVigilance = (static_cast<float>(it) / static_cast<float>(columnsPerClump - 1)) * (1.0f - minVigilance) + minVigilance;
+        float itMinVigilance = (1.0f - static_cast<float>(it) / static_cast<float>(columnsPerClump - 1)) * (1.0f - minVigilance) + minVigilance;
 
         bool passed = false;
         bool commit = false;
