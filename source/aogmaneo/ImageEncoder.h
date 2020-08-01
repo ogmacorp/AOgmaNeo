@@ -41,6 +41,7 @@ private:
     ByteBuffer hiddenCommits;
     FloatBuffer hiddenActivations;
     FloatBuffer hiddenMatches;
+    FloatBuffer hiddenVigilances;
 
     ByteBuffer hiddenCs; // Hidden states
 
@@ -65,14 +66,14 @@ private:
 public:
     float alpha;
     float beta;
-    float minVigilance;
+    float sigma; // Vigilance change parameter
 
     // Defaults
     ImageEncoder()
     :
     alpha(0.1f),
     beta(0.5f),
-    minVigilance(0.9f)
+    sigma(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization

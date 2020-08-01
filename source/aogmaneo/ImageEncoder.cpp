@@ -120,7 +120,7 @@ void ImageEncoder::forward(
     for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
         
-        if (hiddenMatches[hiddenIndexMax] < minVigilance) {
+        if (hiddenMatches[hiddenIndexMax] < hiddenVigilances[hiddenColumnIndex]) {
             resets++;
             
             // Reset
@@ -159,6 +159,13 @@ void ImageEncoder::forward(
     int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
 
     bool doSlowLearn = learnEnabled && passed;
+
+    if (learnEnabled) {
+        if (passed)
+            hiddenVigilances[hiddenColumnIndex] = min(1.0f, (1.0f + sigma) * hiddenVigilances[hiddenColumnIndex]);
+        else
+            hiddenVigilances[hiddenColumnIndex] = (1.0f - sigma) * hiddenVigilances[hiddenColumnIndex];
+    }
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -344,10 +351,11 @@ void ImageEncoder::write(
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&minVigilance), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&sigma), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     writer.write(reinterpret_cast<const void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenVigilances[0]), hiddenVigilances.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -377,13 +385,15 @@ void ImageEncoder::read(
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&minVigilance), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&sigma), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
+    hiddenVigilances.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenVigilances[0]), hiddenVigilances.size() * sizeof(float));
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
     hiddenMatches = FloatBuffer(numHidden, 0.0f);
