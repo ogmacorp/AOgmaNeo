@@ -33,34 +33,27 @@ public:
         ByteBuffer weights; // Weight matrix
 
         ByteBuffer commitCs;
-
-        ByteBuffer clumpInputs;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    Int2 clumpSize;
-    Int2 clumpTilingSize;
 
     ByteBuffer hiddenCommits;
+    ByteBuffer hiddenMaskSeeds;
     FloatBuffer hiddenActivations;
     FloatBuffer hiddenMatches;
     FloatBuffer hiddenVigilances;
 
     ByteBuffer hiddenCs; // Hidden states
-    ByteBuffer clumpCs; // Clump states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-
-    // Clump weights
-    ByteBuffer clumpWeights;
     
     // --- Kernels ---
     
-    void forwardClump(
-        const Int2 &clumpPos,
+    void forward(
+        const Int2 &pos,
         const Array<const ByteBuffer*> &inputCs,
         bool learnEnabled
     );
@@ -81,7 +74,6 @@ public:
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        const Int2 &clumpSize, // Size of column clump (shared RF)
         float initVigilance, // Initial vigilance parameter
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
@@ -128,14 +120,6 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
-    }
-
-    const Int2 &getClumpSize() const {
-        return clumpSize;
-    }
-
-    const Int2 &getClumpTilingSize() const {
-        return clumpTilingSize;
     }
 };
 } // namespace aon
