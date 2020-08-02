@@ -26,7 +26,6 @@ public:
     // Describes a layer for construction
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        Int2 clumpSize; // Size of clumps
 
         int ffRadius; // Feed forward radius
         int pRadius; // Prediction radius
@@ -42,7 +41,6 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 32),
-        clumpSize(4, 4),
         ffRadius(2),
         pRadius(2),
         aRadius(2),

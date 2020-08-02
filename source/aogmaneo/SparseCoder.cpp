@@ -64,6 +64,9 @@ void SparseCoder::forward(
         int sum = 0;
         int total = 0;
 
+        // Reset state
+        state = hiddenMaskSeeds[hiddenColumnIndex];
+
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -91,7 +94,7 @@ void SparseCoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
                     
-                    if ((*inputCs[vli])[visibleColumnIndex] == vl.commitCs[wi])
+                    if (rand(&state) < 0.5f && (*inputCs[vli])[visibleColumnIndex] == vl.commitCs[wi])
                         sum += vl.weights[wi];
 
                     total += vl.weights[wi];
