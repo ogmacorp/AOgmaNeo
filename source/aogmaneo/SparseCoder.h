@@ -48,14 +48,10 @@ private:
     FloatBuffer hiddenVigilances;
 
     ByteBuffer hiddenCs; // Hidden states
-    ByteBuffer clumpCs; // Clump states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-
-    // Clump weights
-    ByteBuffer clumpWeights;
     
     // --- Kernels ---
     
