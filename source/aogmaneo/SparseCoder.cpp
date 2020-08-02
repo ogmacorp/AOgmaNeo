@@ -58,6 +58,8 @@ void SparseCoder::forward(
     bool passed = false;
     bool commit = false;
 
+    float maxActivation = -1.0f;
+
     for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
 
@@ -94,21 +96,17 @@ void SparseCoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
                     
-                    if (rand(&state) < 0.5f && (*inputCs[vli])[visibleColumnIndex] == vl.commitCs[wi])
-                        sum += vl.weights[wi];
+                    if (rand(&state) < 0.5f) {
+                        if ((*inputCs[vli])[visibleColumnIndex] == vl.commitCs[wi])
+                            sum += vl.weights[wi];
 
-                    total += vl.weights[wi];
+                        total += vl.weights[wi];
+                    }
                 }
         }
 
         hiddenActivations[hiddenIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
         hiddenMatches[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(count) / 255.0f;
-    }
-
-    float maxActivation = -1.0f;
-
-    for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
 
         if (hiddenActivations[hiddenIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenIndex];
@@ -155,10 +153,9 @@ void SparseCoder::forward(
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
 
-    // If passed, reduce clump inputs (and learn if that is enabled)
-    int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
-
     if (learnEnabled) {
+        int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
+
         if (passed)
             hiddenVigilances[hiddenColumnIndex] = min(1.0f, (1.0f + sigma) * hiddenVigilances[hiddenColumnIndex]);
         else
