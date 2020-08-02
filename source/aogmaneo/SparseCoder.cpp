@@ -96,7 +96,7 @@ void SparseCoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenIndex);
                     
-                    if (rand(&state) < 0.5f) {
+                    if (randf(&state) < 0.5f) {
                         if ((*inputCs[vli])[visibleColumnIndex] == vl.commitCs[wi])
                             sum += vl.weights[wi];
 
