@@ -195,7 +195,7 @@ void Actor::learn(
 
     float tdErrorValue = newValue - value;
     
-    float deltaValue = alpha * tdErrorValue;
+    float deltaValue = alpha * (sigmoid(tdErrorValue) * 2.0f - 1.0f);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
