@@ -16,7 +16,7 @@ void Predictor::forward(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int maxIndex = 0;
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -58,9 +58,11 @@ void Predictor::forward(
                 }
         }
 
-        hiddenActivations[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
+        sum /= max(1, count);
 
-        if (sum > maxActivation) {
+        hiddenActivations[hiddenIndex] = sum;
+
+        if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
@@ -76,6 +78,9 @@ void Predictor::learn(
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int targetC = (*hiddenTargetCs)[hiddenColumnIndex];
+
+    if (hiddenCs[hiddenColumnIndex] == targetC)
+        return;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
