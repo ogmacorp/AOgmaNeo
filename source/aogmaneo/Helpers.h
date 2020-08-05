@@ -252,14 +252,14 @@ inline int address3(
     const Int3 &pos, // Position
     const Int3 &dims // Dimensions to ravel with
 ) {
-    return pos.z + pos.y * dims.z + pos.x * dims.z * dims.y;
+    return pos.z + dims.z * (pos.y + dims.y * pos.x);
 }
 
 inline int address4(
     const Int4 &pos, // Position
     const Int4 &dims // Dimensions to ravel with
 ) {
-    return pos.w + pos.z * dims.w + pos.y * dims.w * dims.z + pos.x * dims.w * dims.z * dims.y;
+    return pos.w + dims.w * (pos.z + dims.z * (pos.y + dims.y * pos.x));
 }
 
 // --- Getters ---

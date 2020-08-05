@@ -86,7 +86,7 @@ void ImageEncoder::forward(
 
             float dist = static_cast<float>(hiddenSize.z - 1 - hc) / static_cast<float>(hiddenSize.z - 1);
 
-            float strength = hiddenResources[hiddenIndex] * expf(-gamma * dist * dist / max(0.0001f, hiddenResources[hiddenIndex]));
+            float strength = hiddenResources[hiddenIndex] * expf(-gamma * dist / max(0.0001f, hiddenResources[hiddenIndex]));
             
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -121,7 +121,7 @@ void ImageEncoder::forward(
 
                             unsigned char weight = vl.weights[start + vc];
 
-                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, vl.weights[start + vc] + strength * (static_cast<float>(input) - static_cast<float>(weight)))));
+                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, weight + strength * (static_cast<float>(input) - static_cast<float>(weight)))));
                         }
                     }
             }
