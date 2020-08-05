@@ -129,8 +129,8 @@ void SparseCoder::forwardClump(
 
         originalMaxIndex = maxIndex;
 
-        float remainderRatio = static_cast<float>(hiddenSize.z - hiddenCommits[hiddenColumnIndex]) / static_cast<float>(hiddenSize.z);
-
+        float remainderRatio = static_cast<float>(hiddenSize.z - hiddenCommits[hiddenColumnIndex]) / static_cast<float>(hiddenSize.z - 1);
+        
         float actualVigilance = vigilance * remainderRatio;
 
         // Vigilance checking cycle
