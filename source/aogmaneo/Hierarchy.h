@@ -186,5 +186,11 @@ public:
     const Array<Ptr<Actor>> &getALayers() const {
         return aLayers;
     }
+
+    const Array<CircleBuffer<ByteBuffer>> &getHistories(
+        int l
+    ) const {
+        return histories[l];
+    }
 };
 } // namespace aon
