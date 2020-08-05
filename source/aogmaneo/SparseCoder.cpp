@@ -229,8 +229,6 @@ void SparseCoder::initRandom(
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 256;
-
-        vl.reconstruction = FloatBuffer(numVisible, 0);
     }
 
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);

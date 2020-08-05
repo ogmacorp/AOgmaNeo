@@ -31,8 +31,6 @@ public:
     // Visible layer
     struct VisibleLayer {
         ByteBuffer weights; // Binary weight matrix
-
-        FloatBuffer reconstruction; // Temporary buffer
     };
 
 private:
