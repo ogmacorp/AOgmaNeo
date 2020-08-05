@@ -41,7 +41,6 @@ private:
     ByteBuffer hiddenCommits;
     FloatBuffer hiddenActivations;
     FloatBuffer hiddenMatches;
-    FloatBuffer hiddenVigilances;
 
     ByteBuffer hiddenCs; // Hidden states
 
@@ -66,20 +65,19 @@ private:
 public:
     float alpha;
     float beta;
-    float sigma; // Vigilance change parameter
+    float vigilance; // Vigilance parameter
 
     // Defaults
     ImageEncoder()
     :
     alpha(0.1f),
     beta(0.5f),
-    sigma(0.01f)
+    vigilance(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        float initVigilance, // Initial vigilance for columns
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
