@@ -39,8 +39,6 @@ public:
         Array<ByteBuffer> inputCs;
         ByteBuffer hiddenTargetCsPrev;
 
-        FloatBuffer hiddenValuesPrev;
-        
         float reward;
     };
 
@@ -49,12 +47,14 @@ private:
 
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
+    int supportSize;
 
-    FloatBuffer hiddenActivations; // Temporary buffer
+    FloatBuffer hiddenProbs;
+    FloatBuffer hiddenProbsTemp;
+    FloatBuffer hiddenTargetProbs;
+    FloatBuffer hiddenActivations;
 
     ByteBuffer hiddenCs; // Hidden states
-
-    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -72,9 +72,8 @@ private:
 
     void learn(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCsPrev,
+        const Array<const ByteBuffer*> &inputCs,
         const ByteBuffer* hiddenTargetCsPrev,
-        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic
@@ -84,23 +83,20 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
-    int minSteps;
-    int historyIters;
 
     // Defaults
     Actor()
     :
-    alpha(0.02f),
-    beta(0.02f),
-    gamma(0.99f),
-    minSteps(8),
-    historyIters(8)
+    alpha(0.1f),
+    beta(0.1f),
+    gamma(0.99f)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
         int historyCapacity,
+        int supportSize,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
@@ -144,6 +140,10 @@ public:
     // Get hidden state/output/actions
     const ByteBuffer &getHiddenCs() const {
         return hiddenCs;
+    }
+
+    const FloatBuffer &getHiddenProbs() const {
+        return hiddenProbs;
     }
 
     // Get the hidden size
