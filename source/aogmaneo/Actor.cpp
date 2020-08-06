@@ -55,7 +55,7 @@ void Actor::forward(
                     if (inC != 0) {
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                        float weight = vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        float weight = vl.valueWeights[inC - 1 + (vld.size.z - 1) * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                         
                         sum += weight;
                         count++;
@@ -397,7 +397,7 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        float deltaAction = (mimic ? beta : (tdError > 0.0f ? beta : -beta)) * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex] / max(0.0001f, total));
+        float deltaAction = (tdError > 0.0f || mimic ? beta : -beta) * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex] / max(0.0001f, total));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
