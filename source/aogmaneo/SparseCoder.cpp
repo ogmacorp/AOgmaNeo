@@ -230,7 +230,7 @@ void SparseCoder::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 16;
+            vl.weights[i] = rand() % 256;
     }
 
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);
@@ -244,10 +244,7 @@ void SparseCoder::initRandom(
     int diam = lRadius * 2 + 1;
     int area = diam * diam;
 
-    laterals.resize(numHidden * area * hiddenSize.z);
-
-    for (int i = 0; i < laterals.size(); i++)
-        laterals[i] = rand() % 16;
+    laterals.resize(numHidden * area * hiddenSize.z, 0);
 }
 
 // Activate the sparse coder (perform sparse coding)
