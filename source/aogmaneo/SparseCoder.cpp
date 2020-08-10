@@ -55,9 +55,9 @@ void SparseCoder::forward(
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                     if (it == 0)
-                        sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        sum += sigmoid(vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))]);
                     else
-                        sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] * (1.0f - vl.reconstruction[visibleColumnIndex]);
+                        sum += sigmoid(vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))]) * (1.0f - vl.reconstruction[visibleColumnIndex]);
 
                     count++;
                 }
