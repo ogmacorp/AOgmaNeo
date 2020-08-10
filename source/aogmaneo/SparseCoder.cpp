@@ -53,9 +53,7 @@ void SparseCoder::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    unsigned char weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    
-                    sum += weight;
+                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     count++;
                 }
         }
