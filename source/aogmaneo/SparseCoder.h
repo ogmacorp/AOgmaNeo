@@ -42,7 +42,6 @@ private:
 
     ByteBuffer hiddenCs; // Hidden states
     ByteBuffer hiddenCsTemp; // Temporary hidden states
-    FloatBuffer hiddenRates; // Learning rates
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -74,7 +73,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f),
+    alpha(0.05f),
     gamma(0.6f),
     explainIters(6)
     {}
