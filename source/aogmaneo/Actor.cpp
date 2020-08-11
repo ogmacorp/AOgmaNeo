@@ -45,13 +45,11 @@ void Actor::forward(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                 unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                float weight = vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
-                
-                value += weight;
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                value += vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                 count++;
             }
     }
@@ -92,13 +90,11 @@ void Actor::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    float weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    
-                    sum += weight;
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    sum += vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
         }
 
@@ -180,13 +176,11 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                float weight = vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
-                
-                value += weight;
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                value += vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
                 count++;
             }
     }
@@ -220,9 +214,9 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
             }
@@ -264,17 +258,15 @@ void Actor::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                    float weight = vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    
-                    sum += weight;
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    sum += vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
         }
 
-        hiddenActivations[hiddenIndex] = sum / static_cast<float>(max(1, count));
+        hiddenActivations[hiddenIndex] = sum / max(1, count);
 
         maxActivation = max(maxActivation, hiddenActivations[hiddenIndex]);
     }
@@ -317,9 +309,9 @@ void Actor::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
                 }
