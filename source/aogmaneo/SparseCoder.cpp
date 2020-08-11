@@ -103,9 +103,7 @@ void SparseCoder::inhibit(
 
                 unsigned char inC = hiddenCsTemp[otherHiddenColumnIndex];
 
-                unsigned char weight = laterals[inC + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                
-                sum += weight;
+                sum += laterals[inC + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 count++;
             }
 
