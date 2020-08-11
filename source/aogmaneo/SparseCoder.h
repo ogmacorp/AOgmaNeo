@@ -76,7 +76,7 @@ public:
     :
     alpha(0.01f),
     gamma(0.6f),
-    explainIters(8)
+    explainIters(6)
     {}
 
     // Create a sparse coding layer with random initialization

@@ -15,7 +15,10 @@ void SparseCoder::forward(
     const Array<const ByteBuffer*> &inputCs
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
-    
+
+    int maxIndex = 0;
+    int maxActivation = 0;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
@@ -55,8 +58,15 @@ void SparseCoder::forward(
                 }
         }
 
-        hiddenStimuli[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
+        hiddenActivations[hiddenIndex] = hiddenStimuli[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
+
+        if (sum > maxActivation) {
+            maxActivation = sum;
+            maxIndex = hc;
+        }
     }
+
+    hiddenCs[hiddenColumnIndex] = maxIndex;
 }
 
 void SparseCoder::inhibit(
