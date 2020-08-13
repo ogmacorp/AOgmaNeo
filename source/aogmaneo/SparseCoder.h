@@ -23,63 +23,60 @@ public:
         // Defaults
         VisibleLayerDesc()
         :
-        size(4, 4, 16),
+        size(4, 4, 32),
         radius(2)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        ByteBuffer weights; // Weight matrix
 
-        FloatBuffer reconstruction;
+        ByteBuffer commitCs;
+
+        ByteBuffer clumpInputs;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    Int2 clumpSize;
+    Int2 clumpTilingSize;
+
+    ByteBuffer hiddenCommits;
+    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenMatches;
 
     ByteBuffer hiddenCs; // Hidden states
-    
-    FloatBuffer hiddenActivations;
-    
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
     
     // --- Kernels ---
     
-    void forward(
-        const Int2 &pos,
+    void forwardClump(
+        const Int2 &clumpPos,
         const Array<const ByteBuffer*> &inputCs,
-        int it
-    );
-
-    void backward(
-        const Int2 &pos,
-        const ByteBuffer* inputCs,
-        int vli
-    );
-
-    void learn(
-        const Int2 &pos,
-        const ByteBuffer* inputCs,
-        int vli
+        bool learnEnabled
     );
 
 public:
-    float alpha; // Learning rate
-    int explainIters; // Explaining-away iterations
+    float alpha; // Activation parameter
+    float beta; // Weight learning rate
+    float vigilance; // Vigilance parameter
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.5f),
-    explainIters(5)
+    alpha(1.0f),
+    beta(0.5f),
+    vigilance(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        const Int2 &clumpSize, // Size of column clump (shared RF)
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
@@ -125,6 +122,14 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
+    }
+
+    const Int2 &getClumpSize() const {
+        return clumpSize;
+    }
+
+    const Int2 &getClumpTilingSize() const {
+        return clumpTilingSize;
     }
 };
 } // namespace aon

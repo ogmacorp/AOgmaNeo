@@ -183,16 +183,16 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        scLayers[l].initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
+        scLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].clumpSize, scVisibleLayerDescs);
     }
 }
 
 // Simulation step/tick
 void Hierarchy::step(
-    const Array<const ByteBuffer*> &inputCs, // Inputs to remember
-    bool learnEnabled, // Whether learning is enabled
-    float reward, // Reinforcement signal
-    bool mimic // For imitation learning
+    const Array<const ByteBuffer*> &inputCs,
+    bool learnEnabled,
+    float reward,
+    bool mimic
 ) {
     // First tick is always 0
     ticks[0] = 0;
