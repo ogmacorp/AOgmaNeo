@@ -116,15 +116,11 @@ void ImageEncoder::forward(
 
     originalMaxIndex = maxIndex;
 
-    float remainderRatio = static_cast<float>(hiddenSize.z - hiddenCommits[hiddenColumnIndex]) / static_cast<float>(hiddenSize.z - 1);
-        
-    float actualVigilance = vigilance * remainderRatio;
-
     // Vigilance checking cycle
     for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
         int hiddenIndexMax = address3(Int3(pos.x, pos.y, maxIndex), hiddenSize);
         
-        if (hiddenMatches[hiddenIndexMax] < actualVigilance) {
+        if (hiddenMatches[hiddenIndexMax] < vigilance) {
             resets++;
             
             // Reset
