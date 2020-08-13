@@ -18,12 +18,6 @@ const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628
 
 float expf(float x);
 
-inline float floorf(
-    float x
-) {
-    return static_cast<int>(x);
-}
-
 inline float ceilf(
     float x
 ) {
