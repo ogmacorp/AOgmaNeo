@@ -40,18 +40,22 @@ float aon::expf(
     return 1.0f / res;
 }
 
+// Quake method
 float aon::sqrt(
     float x
 ) {
-    union {
-        int i;
+    const float xhalf = 0.5f*x;
+    
+    union
+    {
         float x;
+        int i;
     } u;
 
     u.x = x;
-    u.i = (1 << 29) + (u.i >> 1) - (1 << 22); 
+    u.i = 0x5f3759df - (u.i >> 1);
 
-    return u.x;
+    return x * u.x * (1.5f - xhalf * u.x * u.x);
 } 
 
 unsigned long aon::globalState = 1234;
