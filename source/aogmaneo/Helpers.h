@@ -16,7 +16,13 @@ namespace aon {
 const int expIters = 10;
 const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
 
-float expf(float x);
+float expf(
+    float x
+);
+
+float sqrt(
+    float x
+);
 
 inline float ceilf(
     float x
@@ -69,13 +75,18 @@ T abs(
 }
 
 template <typename T>
-void swap(T &left, T &right) {
+void swap(
+    T &left,
+    T &right
+) {
     T temp = left;
     left = right;
     right = temp;
 }
 
-inline void setNumThreads(int numThreads) {
+inline void setNumThreads(
+    int numThreads
+) {
     omp_set_num_threads(numThreads);
 }
 
@@ -190,11 +201,15 @@ struct CircleBuffer {
         return data[(start + data.size() - 1) % data.size()];
     }
 
-    T &operator[](int index) {
+    T &operator[](
+        int index
+    ) {
         return data[(start + index) % data.size()];
     }
 
-    const T &operator[](int index) const {
+    const T &operator[](
+        int index
+    ) const {
         return data[(start + index) % data.size()];
     }
 
@@ -432,7 +447,11 @@ unsigned char countBits(
 // --- Sorting ---
 
 template <typename T>
-int partition(Array<T> &arr, int low, int high) {
+int partition(
+    Array<T> &arr,
+    int low,
+    int high
+) {
     T pivotVal = arr[high];
 
     int i = low;
@@ -451,7 +470,11 @@ int partition(Array<T> &arr, int low, int high) {
 
 // In-place
 template <typename T>
-void quicksort(Array<T> &arr, int low = 0, int high = -1) {
+void quicksort(
+    Array<T> &arr,
+    int low = 0,
+    int high = -1
+) {
     if (arr.size() <= 1)
         return;
 

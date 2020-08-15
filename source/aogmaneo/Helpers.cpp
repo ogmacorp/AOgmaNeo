@@ -10,7 +10,9 @@
 
 using namespace aon;
 
-float aon::expf(float x) {
+float aon::expf(
+    float x
+) {
     if (x > 0.0f) {
         float res = 1.0f;
 
@@ -38,16 +40,38 @@ float aon::expf(float x) {
     return 1.0f / res;
 }
 
+float aon::sqrt(
+    float x
+) {
+    union {
+        int i;
+        float x;
+    } u;
+
+    u.x = x;
+    u.i = (1 << 29) + (u.i >> 1) - (1 << 22); 
+
+    return u.x;
+} 
+
 unsigned long aon::globalState = 1234;
 
-unsigned int aon::rand(unsigned long* state) {
+unsigned int aon::rand(
+    unsigned long* state
+) {
     return MWC64X(state);
 }
 
-float aon::randf(unsigned long* state) {
+float aon::randf(
+    unsigned long* state
+) {
     return (rand(state) % 100000) / 99999.0f;
 }
 
-float aon::randf(float low, float high, unsigned long* state) {
+float aon::randf(
+    float low,
+    float high,
+    unsigned long* state
+) {
     return low + (high - low) * randf(state);
 }
