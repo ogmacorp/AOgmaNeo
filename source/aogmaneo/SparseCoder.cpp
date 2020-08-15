@@ -124,7 +124,9 @@ void SparseCoder::learn(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = sum * sqrt(2.0f / max(1, count));
+        sum *= sqrt(2.0f / max(1, count));
+
+        vl.reconstruction[visibleIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;

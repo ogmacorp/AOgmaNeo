@@ -58,7 +58,9 @@ void Predictor::forward(
                 }
         }
 
-        hiddenActivations[hiddenIndex] = sum * sqrt(2.0f / max(1, count));
+        sum *= sqrt(2.0f / max(1, count));
+
+        hiddenActivations[hiddenIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
