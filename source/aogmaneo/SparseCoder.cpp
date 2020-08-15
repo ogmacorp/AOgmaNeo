@@ -124,7 +124,7 @@ void SparseCoder::learn(
                 }
             }
 
-        sum *= sqrt(2.0f / max(1, count));
+        sum *= sqrt(1.0f / max(1, count));
 
         vl.reconstruction[visibleIndex] = sum;
 
