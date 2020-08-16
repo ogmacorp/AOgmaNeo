@@ -20,7 +20,7 @@ float expf(
     float x
 );
 
-float sqrt(
+float sqrtf(
     float x
 );
 

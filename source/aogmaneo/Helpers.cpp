@@ -41,7 +41,7 @@ float aon::expf(
 }
 
 // Quake method
-float aon::sqrt(
+float aon::sqrtf(
     float x
 ) {
     const float xhalf = 0.5f*x;
