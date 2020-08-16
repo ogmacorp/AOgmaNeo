@@ -74,7 +74,7 @@ public:
     SparseCoder()
     :
     alpha(0.02f),
-    gamma(0.6f),
+    gamma(1.0f),
     explainIters(6)
     {}
 
