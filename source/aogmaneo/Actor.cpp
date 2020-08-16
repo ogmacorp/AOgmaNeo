@@ -138,6 +138,7 @@ void Actor::forward(
 void Actor::learn(
     const Int2 &pos,
     const Array<const ByteBuffer*> &inputCsPrev,
+    const Array<const ByteBuffer*> &inputCsPrevPrev,
     const ByteBuffer* hiddenTargetCsPrev,
     const FloatBuffer* hiddenValuesPrev,
     float q,
@@ -216,9 +217,11 @@ void Actor::learn(
 
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                if (inC != (*inputCsPrevPrev[vli])[visibleColumnIndex]) {
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+                    vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+                }
             }
     }
 
@@ -311,9 +314,11 @@ void Actor::learn(
 
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    if (inC != (*inputCsPrevPrev[vli])[visibleColumnIndex]) {
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
+                        vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
+                    }
                 }
         }
     }
@@ -420,14 +425,15 @@ void Actor::step(
 
     // Learn (if have sufficient samples)
     if (learnEnabled && historySize == historySamples.size()) {
-        const HistorySample &sPrev = historySamples[historySize - 1];
-        const HistorySample &s = historySamples[historySize - 2];
+        const HistorySample &sPrevPrev = historySamples[historySize - 1];
+        const HistorySample &sPrev = historySamples[historySize - 2];
+        const HistorySample &s = historySamples[historySize - 3];
 
         // Compute (partial) values, rest is completed in the kernel
         float q = 0.0f;
         float g = 1.0f;
 
-        for (int t = historySize - 2; t >= 0; t--) {
+        for (int t = historySize - 3; t >= 0; t--) {
             q += historySamples[t].reward * g;
 
             g *= gamma;
@@ -435,7 +441,7 @@ void Actor::step(
 
         #pragma omp parallel for
         for (int i = 0; i < numHiddenColumns; i++)
-            learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
+            learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), constGet(sPrevPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
     }
 }
 
