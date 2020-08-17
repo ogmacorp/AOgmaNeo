@@ -68,7 +68,7 @@ void SparseCoder::forward(
         if (it == 0)
             hiddenActivations[hiddenIndex] = sum;
         else
-            hiddenActivations[hiddenIndex] += sum;
+            hiddenActivations[hiddenIndex] = gamma * hiddenActivations[hiddenIndex] + sum;
 
         if (hiddenActivations[hiddenIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenIndex];
@@ -316,6 +316,8 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&explainIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     
@@ -346,6 +348,8 @@ void SparseCoder::read(
     int numHidden =  numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
 
     hiddenCs.resize(numHiddenColumns);
 
