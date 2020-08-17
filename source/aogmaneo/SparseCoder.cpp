@@ -193,7 +193,7 @@ void SparseCoder::learn(
 
         sum /= max(1, count);
 
-        float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - sigmoid(sum));
+        float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - (sum > 0.0f ? 1.0f : 0.0f));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
