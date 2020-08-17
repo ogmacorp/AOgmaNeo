@@ -138,7 +138,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - (vl.reconstruction[visibleIndex] > 0.0f ? 1.0f : 0.0f));
+            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - min(1.0f, max(0.0f, vl.reconstruction[visibleIndex])));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
