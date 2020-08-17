@@ -55,9 +55,9 @@ void SparseCoder::forward(
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                     if (it == 0)
-                        sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))]);
+                        sum += expf(vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))]);
                     else
-                        sum += max(0.0f, vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))]) * (1.0f - vl.reconstruction[visibleColumnIndex]);
+                        sum += expf(vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))]) * (1.0f - vl.reconstruction[visibleColumnIndex]);
 
                     count++;
                 }
@@ -133,7 +133,7 @@ void SparseCoder::backward(
 
     sum /= max(1, count);
 
-    vl.reconstruction[visibleColumnIndex] = sigmoid(sum);
+    vl.reconstruction[visibleColumnIndex] = expf(min(0.0f, sum));
 }
 
 void SparseCoder::learn(
@@ -193,7 +193,7 @@ void SparseCoder::learn(
 
         sum /= max(1, count);
 
-        float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - (sum > 0.0f ? 1.0f : 0.0f));
+        float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(sum));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -201,16 +201,18 @@ void SparseCoder::learn(
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+                if (hiddenCs[hiddenColumnIndex] != hiddenCsPrev[hiddenColumnIndex]) {
+                    int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-                Int2 visibleCenter = project(hiddenPos, hToV);
+                    Int2 visibleCenter = project(hiddenPos, hToV);
 
-                if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
+                    if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                        Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
-                
-                    vl.weights[wi] += delta;
+                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    
+                        vl.weights[wi] += delta;
+                    }
                 }
             }
     }
@@ -245,13 +247,14 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(-1.0f, 0.0f);
 
         vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
+    hiddenCsPrev = ByteBuffer(numHiddenColumns, 0);
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
 }
@@ -292,6 +295,8 @@ void SparseCoder::step(
                 learn(Int2(i / vld.size.y, i % vld.size.y), inputCs[vli], vli);
         }
     }
+
+    hiddenCsPrev = hiddenCs;
 }
 
 void SparseCoder::write(
@@ -304,6 +309,7 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&explainIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCsPrev[0]), hiddenCsPrev.size() * sizeof(unsigned char));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -336,8 +342,10 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
 
     hiddenCs.resize(numHiddenColumns);
+    hiddenCsPrev.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCsPrev[0]), hiddenCsPrev.size() * sizeof(unsigned char));
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
