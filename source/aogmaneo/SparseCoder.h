@@ -41,8 +41,6 @@ private:
     ByteBuffer hiddenCs; // Hidden states
     ByteBuffer hiddenCsPrev; // Previous hidden states
     
-    FloatBuffer hiddenActivations;
-    
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -51,14 +49,7 @@ private:
     
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
-        int it
-    );
-
-    void backward(
-        const Int2 &pos,
-        const ByteBuffer* inputCs,
-        int vli
+        const Array<const ByteBuffer*> &inputCs
     );
 
     void learn(
@@ -69,15 +60,11 @@ private:
 
 public:
     float alpha; // Learning rate
-    float gamma; // Activation decay
-    int explainIters; // Explaining-away iterations
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.5f),
-    gamma(0.8f),
-    explainIters(5)
+    alpha(0.3f)
     {}
 
     // Create a sparse coding layer with random initialization
