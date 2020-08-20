@@ -111,10 +111,12 @@ void Actor::forward(
 
                         unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                        for (int z = 0; z < vld.size.z; z++) {
-                            int wi = z + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                            if (z == inC && hc == targetCPrev)
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wiStart;
+
+                            if (vc == inC && hc == targetCPrev)
                                 vl.traces[wi] = 1.0f;
                             else
                                 vl.traces[wi] *= traceDecay;
