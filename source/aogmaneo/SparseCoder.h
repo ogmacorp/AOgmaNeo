@@ -39,7 +39,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     ByteBuffer hiddenCs; // Hidden states
-    ByteBuffer hiddenCsPrev; // Previous hidden states
     
     FloatBuffer hiddenActivations;
     
@@ -77,7 +76,7 @@ public:
     :
     alpha(0.5f),
     gamma(0.8f),
-    explainIters(5)
+    explainIters(6)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -123,11 +122,6 @@ public:
     // Get the hidden states
     const ByteBuffer &getHiddenCs() const {
         return hiddenCs;
-    }
-
-    // Get the previous hidden states
-    const ByteBuffer &getHiddenCsPrev() const {
-        return hiddenCsPrev;
     }
 
     // Get the hidden size
