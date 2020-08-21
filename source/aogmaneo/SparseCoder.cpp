@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-
+#include <iostream>
 using namespace aon;
 
 void SparseCoder::forward(
@@ -23,7 +23,6 @@ void SparseCoder::forward(
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         int sum = 0;
-        int count = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -54,11 +53,10 @@ void SparseCoder::forward(
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    count++;
                 }
         }
 
-        hiddenStimuli[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
+        hiddenStimuli[hiddenIndex] = sum;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -75,13 +73,12 @@ void SparseCoder::inhibit(
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
-    float maxActivation = -999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         int sum = 0;
-        int count = 0;
 
         int diam = lRadius * 2 + 1;
 
@@ -104,12 +101,9 @@ void SparseCoder::inhibit(
                 unsigned char inC = hiddenCsTemp[otherHiddenColumnIndex];
 
                 sum += laterals[inC + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                count++;
             }
 
-        float inhibition = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
-
-        float activation = hiddenStimuli[hiddenIndex] - inhibition;
+        int activation = hiddenStimuli[hiddenIndex] - sum;
 
         if (activation > maxActivation) {
             maxActivation = activation;
@@ -188,7 +182,7 @@ void SparseCoder::learn(
 
                 float weight = laterals[wi];
 
-                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + beta * 255.0f * ((ohc == inC ? 1.0f : 0.0f) - 1.0f / hiddenSize.z))));
+                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + beta * ((ohc == inC ? 255.0f : 0.0f) - weight))));
             }
         }
 }
@@ -227,7 +221,7 @@ void SparseCoder::initRandom(
             vl.weights[i] = 255 - rand() % 16;
     }
 
-    hiddenStimuli = FloatBuffer(numHidden, 0.0f);
+    hiddenStimuli = IntBuffer(numHidden, 0);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
@@ -319,7 +313,7 @@ void SparseCoder::read(
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
 
-    hiddenStimuli = FloatBuffer(numHidden, 0.0f);
+    hiddenStimuli = IntBuffer(numHidden, 0);
 
     int numVisibleLayers = visibleLayers.size();
 

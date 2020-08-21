@@ -37,7 +37,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
     int lRadius; // Lateral radius
 
-    FloatBuffer hiddenStimuli;
+    IntBuffer hiddenStimuli;
 
     ByteBuffer hiddenCs; // Hidden states
     ByteBuffer hiddenCsTemp; // Temporary hidden states
@@ -72,8 +72,8 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.02f),
-    beta(0.02f),
+    alpha(0.05f),
+    beta(0.5f),
     explainIters(8)
     {}
 
