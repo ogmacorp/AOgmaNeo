@@ -432,7 +432,11 @@ unsigned char countBits(
 // --- Sorting ---
 
 template <typename T>
-int partition(Array<T> &arr, int low, int high) {
+int partition(
+    Array<T> &arr,
+    int low,
+    int high
+) {
     T pivotVal = arr[high];
 
     int i = low;
@@ -451,7 +455,11 @@ int partition(Array<T> &arr, int low, int high) {
 
 // In-place
 template <typename T>
-void quicksort(Array<T> &arr, int low = 0, int high = -1) {
+void quicksort(
+    Array<T> &arr,
+    int low = 0,
+    int high = -1
+) {
     if (arr.size() <= 1)
         return;
 
