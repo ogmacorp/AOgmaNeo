@@ -203,7 +203,7 @@ void SparseCoder::forwardClump(
 
                     if (commit) {
                         vl.commitCs[wi] = inC;
-                        vl.weights[wi] = 255;
+                        vl.weights[wi] = vl.clumpInputs[cii];
                     }
                     else if (doSlowLearn) {
                         if (vl.commitCs[wi] == inC) {
