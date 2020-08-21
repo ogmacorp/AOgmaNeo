@@ -68,14 +68,12 @@ private:
 
 public:
     float alpha; // Learning rate
-    float gamma; // Activation decay
     int explainIters; // Explaining-away iterations
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f),
-    gamma(0.8f),
+    alpha(0.2f),
     explainIters(6)
     {}
 
