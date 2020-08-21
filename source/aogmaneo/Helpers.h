@@ -18,12 +18,6 @@ const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628
 
 float expf(float x);
 
-inline float floorf(
-    float x
-) {
-    return static_cast<int>(x);
-}
-
 inline float ceilf(
     float x
 ) {
@@ -438,7 +432,11 @@ unsigned char countBits(
 // --- Sorting ---
 
 template <typename T>
-int partition(Array<T> &arr, int low, int high) {
+int partition(
+    Array<T> &arr,
+    int low,
+    int high
+) {
     T pivotVal = arr[high];
 
     int i = low;
@@ -457,7 +455,11 @@ int partition(Array<T> &arr, int low, int high) {
 
 // In-place
 template <typename T>
-void quicksort(Array<T> &arr, int low = 0, int high = -1) {
+void quicksort(
+    Array<T> &arr,
+    int low = 0,
+    int high = -1
+) {
     if (arr.size() <= 1)
         return;
 
