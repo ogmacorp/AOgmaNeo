@@ -38,7 +38,6 @@ private:
     int lRadius; // Lateral radius
 
     FloatBuffer hiddenStimuli;
-    FloatBuffer hiddenActivations;
 
     ByteBuffer hiddenCs; // Hidden states
     ByteBuffer hiddenCsTemp; // Temporary hidden states
@@ -73,8 +72,8 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f),
-    beta(0.05f),
+    alpha(0.02f),
+    beta(0.02f),
     explainIters(8)
     {}
 

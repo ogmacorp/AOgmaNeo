@@ -58,7 +58,7 @@ void SparseCoder::forward(
                 }
         }
 
-        hiddenActivations[hiddenIndex] = hiddenStimuli[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
+        hiddenStimuli[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -109,10 +109,10 @@ void SparseCoder::inhibit(
 
         float inhibition = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
-        hiddenActivations[hiddenIndex] += hiddenStimuli[hiddenIndex] - inhibition;
+        float activation = hiddenStimuli[hiddenIndex] * (1.0f - inhibition);
 
-        if (hiddenActivations[hiddenIndex] > maxActivation) {
-            maxActivation = hiddenActivations[hiddenIndex];
+        if (activation > maxActivation) {
+            maxActivation = activation;
             maxIndex = hc;
         }
     }
@@ -228,7 +228,6 @@ void SparseCoder::initRandom(
     }
 
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
@@ -321,7 +320,6 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
 
     hiddenStimuli = FloatBuffer(numHidden, 0.0f);
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
