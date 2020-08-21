@@ -109,7 +109,7 @@ void SparseCoder::inhibit(
 
         float inhibition = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
-        float activation = hiddenStimuli[hiddenIndex] * (1.0f - inhibition);
+        float activation = hiddenStimuli[hiddenIndex] - inhibition;
 
         if (activation > maxActivation) {
             maxActivation = activation;
