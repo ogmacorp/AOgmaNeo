@@ -39,7 +39,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     ByteBuffer hiddenCs; // Hidden states
-    ByteBuffer hiddenCsPrev; // Previous hidden states
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -110,11 +109,6 @@ public:
     // Get the hidden states
     const ByteBuffer &getHiddenCs() const {
         return hiddenCs;
-    }
-
-    // Get the previous hidden states
-    const ByteBuffer &getHiddenCsPrev() const {
-        return hiddenCsPrev;
     }
 
     // Get the hidden size

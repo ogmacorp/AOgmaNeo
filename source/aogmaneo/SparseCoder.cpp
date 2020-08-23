@@ -145,18 +145,16 @@ void SparseCoder::learn(
 
                     int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                    if (hiddenCs[hiddenColumnIndex] != hiddenCsPrev[hiddenColumnIndex]) {
-                        int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+                    int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-                        Int2 visibleCenter = project(hiddenPos, hToV);
+                    Int2 visibleCenter = project(hiddenPos, hToV);
 
-                        if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                            Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
+                    if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                        Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                            int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
-                        
-                            vl.weights[wi] += delta;
-                        }
+                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    
+                        vl.weights[wi] += delta;
                     }
                 }
         }
@@ -199,7 +197,6 @@ void SparseCoder::initRandom(
 
     // Hidden Cs
     hiddenCs = ByteBuffer(numHiddenColumns, 0);
-    hiddenCsPrev = ByteBuffer(numHiddenColumns, 0);
 }
 
 // Activate the sparse coder (perform sparse coding)
@@ -224,8 +221,6 @@ void SparseCoder::step(
                 learn(Int2(i / vld.size.y, i % vld.size.y), inputCs[vli], vli);
         }
     }
-
-    hiddenCsPrev = hiddenCs;
 }
 
 void SparseCoder::write(
@@ -236,7 +231,6 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
-    writer.write(reinterpret_cast<const void*>(&hiddenCsPrev[0]), hiddenCsPrev.size() * sizeof(unsigned char));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -267,10 +261,8 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
-    hiddenCsPrev.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
-    reader.read(reinterpret_cast<void*>(&hiddenCsPrev[0]), hiddenCsPrev.size() * sizeof(unsigned char));
 
     int numVisibleLayers = visibleLayers.size();
 
