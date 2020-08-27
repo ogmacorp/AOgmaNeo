@@ -84,13 +84,17 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
+    int minSteps;
+    int historyIters;
 
     // Defaults
     Actor()
     :
     alpha(0.01f),
-    beta(0.1f),
-    gamma(0.99f)
+    beta(0.01f),
+    gamma(0.99f),
+    minSteps(8),
+    historyIters(8)
     {}
 
     // Initialized randomly
