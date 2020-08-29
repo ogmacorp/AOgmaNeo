@@ -94,7 +94,7 @@ public:
         const Array<const ByteBuffer*> &inputCs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // For imitation learning
+        bool mimic = false // Whether to treat Actors like Predictors
     );
 
     // Serialization
