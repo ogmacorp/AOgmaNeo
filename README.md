@@ -12,22 +12,18 @@
 
 ## Introduction 
 
-Welcome to the [Ogma](https://ogmacorp.com) AOgmaNeo library, C++ library that contains an implementation of Sparse Predictive Hierarchies for microcontroller devices.
+Welcome to the [Ogma](https://ogmacorp.com) AOgmaNeo library, C++ library that contains an implementation of Sparse Predictive Hierarchies aimed at desktop, embedded, and microcontroller devices.
 
 This version of OgmaNeo (AOgmaNeo) is based on [OgmaNeo2](https://github.com/ogmacorp/OgmaNeo2), but stripped down in order to be able to run on an Arduino or similar microcontroller.
-You can however also run it on a regular processor. That said, it is preferrable to use [regular OgmaNeo2](https://github.com/ogmacorp/OgmaNeo2) for regular processors to benefit from multithreading.
 
 For an introduction to how the algorithm works, see [the presentation](https://github.com/ogmacorp/OgmaNeo2/blob/master/SPH_Presentation.pdf) (from the OgmaNeo2 repository).
 For a more in-depth look, check out [the whitepaper](https://github.com/ogmacorp/OgmaNeo2/blob/master/OgmaNeo2_Whitepaper_DRAFT.pdf)  (from the OgmaNeo2 repository).
 
 ## Installation
 
-Copy the source files to your Arduino sketch folder. Usage is similar to OgmaNeo2, except that you need to use the Array class instead of STL vectors.
+Same as [OgmaNeo2](https://github.com/ogmacorp/OgmaNeo2) on desktop.
 
-## Memory Limits
-
-AOgmaNeo will likely be limited by the amount of memory your microcontroller has. We used a fairly large microcontroller for testing, the Teensy 4.0. Speed is not so much an issue. Try to get at least 1MB of RAM.
-Future versions of this software may provide options for alternative memory (e.g. MicroSD card or extended PSRAM chip, such as on the Teensy 4.1).
+For Arduino, you will need to modify the source to fit your particular device. We have tested it on a Teensy 4.0 (using TeensyDuino) and on and Arduino Uno (very memory limited, 2kB).
 
 ## Contributions
 
