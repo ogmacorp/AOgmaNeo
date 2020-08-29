@@ -44,7 +44,7 @@ float aon::expf(
 float aon::sqrtf(
     float x
 ) {
-    const float xhalf = 0.5f*x;
+    const float xhalf = 0.5f * x;
     
     union
     {
