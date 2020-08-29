@@ -10,17 +10,12 @@
 
 #include "Ptr.h"
 #include "Array.h"
-#include <omp.h>
 
 namespace aon {
 const int expIters = 10;
 const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
 
 float expf(
-    float x
-);
-
-float sqrtf(
     float x
 );
 
@@ -84,15 +79,12 @@ void swap(
     right = temp;
 }
 
-inline void setNumThreads(
+// OpenMP stuff
+void setNumThreads(
     int numThreads
-) {
-    omp_set_num_threads(numThreads);
-}
+);
 
-inline int getNumThreads() {
-    return omp_get_num_threads();
-}
+int getNumThreads();
 
 // Vector types
 template <typename T> 

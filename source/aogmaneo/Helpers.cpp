@@ -8,6 +8,10 @@
 
 #include "Helpers.h"
 
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 using namespace aon;
 
 float aon::expf(
@@ -40,23 +44,17 @@ float aon::expf(
     return 1.0f / res;
 }
 
-// Quake method
-float aon::sqrtf(
-    float x
+#ifdef USE_OMP
+void aon::setNumThreads(
+    int numThreads
 ) {
-    const float xhalf = 0.5f * x;
-    
-    union
-    {
-        float x;
-        int i;
-    } u;
+    omp_set_num_threads(numThreads);
+}
 
-    u.x = x;
-    u.i = 0x5f3759df - (u.i >> 1);
-
-    return x * u.x * (1.5f - xhalf * u.x * u.x);
-} 
+int aon::getNumThreads() {
+    return omp_get_num_threads();
+}
+#endif
 
 unsigned long aon::globalState = 1234;
 
