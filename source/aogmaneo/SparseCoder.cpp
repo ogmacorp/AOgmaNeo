@@ -196,10 +196,8 @@ void SparseCoder::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
 
         // Initialize to random values
-        char range = 16;
-
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % range;
+            vl.weights[i] = 255 - rand() % 16;
 
         vl.reconstruction = FloatBuffer(numVisible, 0);
     }
