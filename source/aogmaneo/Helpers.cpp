@@ -54,6 +54,14 @@ void aon::setNumThreads(
 int aon::getNumThreads() {
     return omp_get_num_threads();
 }
+#else
+void aon::setNumThreads(
+    int numThreads
+) {}
+
+int aon::getNumThreads() {
+    return 0;
+}
 #endif
 
 unsigned long aon::globalState = 1234;

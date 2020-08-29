@@ -79,7 +79,7 @@ void swap(
     right = temp;
 }
 
-// OpenMP stuff
+// OpenMP stuff, does nothing if USE_OMP is not set
 void setNumThreads(
     int numThreads
 );
