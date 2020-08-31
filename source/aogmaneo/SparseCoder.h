@@ -59,11 +59,13 @@ private:
 
 public:
     float alpha; // Learning rate
-    
+    float targetRange; // Range of target to create overflow
+
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f)
+    alpha(0.1f),
+    targetRange(0.25f)
     {}
 
     // Create a sparse coding layer with random initialization

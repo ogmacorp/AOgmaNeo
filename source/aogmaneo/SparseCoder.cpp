@@ -140,8 +140,13 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            int delta = roundftoi(alpha * 255.0f * ((vc == targetC ? 1.0f : 0.0f) - (vl.reconstruction[visibleIndex] * 3.0f - 1.0f)));
+            int delta = roundftoi(alpha * 255.0f * ((vc == targetC ? 1.0f : 1.0f - targetRange) - vl.reconstruction[visibleIndex]));
  
+            if (vc == targetC)
+                delta = max(0, delta);
+            else
+                delta = min(0, delta);
+
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     Int2 hiddenPos = Int2(ix, iy);
