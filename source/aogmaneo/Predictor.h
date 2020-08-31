@@ -65,7 +65,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.02f),
+    alpha(0.1f),
     expScale(32.0f)
     {}
 
