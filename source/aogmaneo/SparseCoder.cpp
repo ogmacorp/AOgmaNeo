@@ -140,7 +140,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            int delta = roundftoi(alpha * 255.0f * ((vc == targetC ? 1.0f : 0.0f) - sigmoid(expScale * (vl.reconstruction[visibleIndex] - 0.5f))));
+            int delta = roundftoi(alpha * 255.0f * ((vc == targetC ? 1.0f : 0.0f) - (vl.reconstruction[visibleIndex] * 3.0f - 1.0f)));
  
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -197,7 +197,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 120 + rand() % 16;
+            vl.weights[i] = 255 - rand() % 16;
 
         vl.reconstruction = FloatBuffer(numVisible, 0);
     }
@@ -236,7 +236,6 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&expScale), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     
@@ -267,7 +266,6 @@ void SparseCoder::read(
     int numHidden =  numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&expScale), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
 
