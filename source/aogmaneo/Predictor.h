@@ -23,7 +23,7 @@ public:
         // Defaults
         VisibleLayerDesc()
         :
-        size(4, 4, 16),
+        size(4, 4, 32),
         radius(2)
         {}
     };
@@ -60,13 +60,13 @@ private:
 
 public:
     float alpha; // Learning rate
-    float expScale;
+    float targetRange; // Range of target outputs, must be in [0, 0.5]
 
     // Defaults
     Predictor()
     :
-    alpha(0.1f),
-    expScale(16.0f)
+    alpha(0.5f),
+    targetRange(0.05f)
     {}
 
     // Create with random initialization

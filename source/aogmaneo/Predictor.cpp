@@ -101,11 +101,19 @@ void Predictor::learn(
 
     int targetC = (*hiddenTargetCs)[hiddenColumnIndex];
 
+    if (hiddenCs[hiddenColumnIndex] == targetC)
+        return;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        int delta = roundftoi(alpha * 255.0f * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(expScale * (hiddenActivations[hiddenIndex] - 0.5f))));
-
+        int delta = roundftoi(alpha * 255.0f * (0.5f + (hc == targetC ? targetRange : -targetRange) - hiddenActivations[hiddenIndex]));
+  
+        if (hc == targetC)
+            delta = max(0, delta);
+        else
+            delta = min(0, delta);
+            
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -221,7 +229,7 @@ void Predictor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&expScale), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&targetRange), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
     
@@ -254,7 +262,7 @@ void Predictor::read(
     int numHidden =  numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&expScale), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&targetRange), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
 
