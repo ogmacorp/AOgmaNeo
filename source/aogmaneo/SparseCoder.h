@@ -73,8 +73,8 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f),
-    beta(0.05f),
+    alpha(0.05f),
+    beta(0.1f),
     explainIters(8)
     {}
 
