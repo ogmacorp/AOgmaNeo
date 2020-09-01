@@ -66,7 +66,7 @@ void ImageEncoder::forward(
         hiddenActivations[hiddenIndex].a = sum;
         hiddenActivations[hiddenIndex].i = hiddenIndex;
 
-        if (sum > maxActivation || maxActivation == 1) {
+        if (sum > maxActivation || maxActivation == 1.0f) {
             maxActivation = sum;
             maxIndex = hc;
         }
