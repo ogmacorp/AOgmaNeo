@@ -12,18 +12,18 @@ using namespace aon;
 
 void ImageEncoder::forward(
     const Int2 &pos,
-    const Array<const ByteBuffer*> &inputs,
+    const Array<const FloatBuffer*> &inputs,
     bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
-    int maxActivation = 1; // Flag value
+    float maxActivation = 1.0f; // Flag value
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        int sum = 0;
+        float sum = 0.0f;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -54,11 +54,9 @@ void ImageEncoder::forward(
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
+                        int input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                        unsigned char weight = vl.weights[start + vc];
-
-                        int delta = static_cast<int>(input) - static_cast<int>(weight);
+                        float delta = input - vl.weights[start + vc];
 
                         sum += -delta * delta;
                     }
@@ -79,7 +77,7 @@ void ImageEncoder::forward(
     if (learnEnabled) {
         int startIndex = address3(Int3(pos.x, pos.y, 0), hiddenSize);
 
-        quicksort<IntInt>(hiddenActivations, startIndex, startIndex + hiddenSize.z);
+        quicksort<FloatInt>(hiddenActivations, startIndex, startIndex + hiddenSize.z);
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = hiddenActivations[address3(Int3(pos.x, pos.y, hc), hiddenSize)].i;
@@ -117,11 +115,9 @@ void ImageEncoder::forward(
                         int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
                         for (int vc = 0; vc < vld.size.z; vc++) {
-                            unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
+                            float input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                            unsigned char weight = vl.weights[start + vc];
-
-                            vl.weights[start + vc] = roundftoi(min(255.0f, max(0.0f, weight + strength * (static_cast<float>(input) - static_cast<float>(weight)))));
+                            vl.weights[start + vc] += strength * (input - vl.weights[start + vc]);
                         }
                     }
             }
@@ -133,7 +129,7 @@ void ImageEncoder::forward(
 
 void ImageEncoder::reconstruct(
     const Int2 &pos,
-    const ByteBuffer* reconCs,
+    const IntBuffer* reconCs,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -165,7 +161,7 @@ void ImageEncoder::reconstruct(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-        int sum = 0;
+        float sum = 0.0f;
         int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -180,9 +176,7 @@ void ImageEncoder::reconstruct(
                 if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                    unsigned char weight = vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-
-                    sum += weight;
+                    sum += vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     count++;
                 }
             }
@@ -220,21 +214,21 @@ void ImageEncoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 256;
+            vl.weights[i] = randf(0.0f, 1.0f);
 
-        vl.reconstruction = ByteBuffer(numVisible, 0);
+        vl.reconstruction = FloatBuffer(numVisible, 0);
     }
 
     hiddenActivations.resize(numHidden);
 
     // Hidden Cs
-    hiddenCs = ByteBuffer(numHiddenColumns, 0);
+    hiddenCs = IntBuffer(numHiddenColumns, 0);
 
     hiddenResources = FloatBuffer(numHidden, 1.0f);
 }
 
 void ImageEncoder::step(
-    const Array<const ByteBuffer*> &inputs,
+    const Array<const FloatBuffer*> &inputs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -245,7 +239,7 @@ void ImageEncoder::step(
 }
 
 void ImageEncoder::reconstruct(
-    const ByteBuffer* reconCs
+    const IntBuffer* reconCs
 ) {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -266,7 +260,7 @@ void ImageEncoder::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenResources[0]), hiddenResources.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
@@ -283,7 +277,7 @@ void ImageEncoder::write(
 
         writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
 }
 
@@ -301,7 +295,7 @@ void ImageEncoder::read(
     hiddenCs.resize(numHiddenColumns);
     hiddenResources.resize(numHidden);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenResources[0]), hiddenResources.size() * sizeof(float));
 
     hiddenActivations.resize(numHidden);
@@ -325,6 +319,6 @@ void ImageEncoder::read(
 
         vl.weights.resize(weightsSize);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
 }

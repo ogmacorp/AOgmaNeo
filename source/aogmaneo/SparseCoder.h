@@ -38,7 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    ByteBuffer hiddenCs; // Hidden states
+    IntBuffer hiddenCs; // Hidden states
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -48,12 +48,12 @@ private:
     
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs
+        const Array<const IntBuffer*> &inputCs
     );
 
     void learn(
         const Int2 &pos,
-        const ByteBuffer* inputCs,
+        const IntBuffer* inputCs,
         int vli
     );
 
@@ -74,7 +74,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const ByteBuffer*> &inputCs, // Input states
+        const Array<const IntBuffer*> &inputCs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -107,7 +107,7 @@ public:
     }
 
     // Get the hidden states
-    const ByteBuffer &getHiddenCs() const {
+    const IntBuffer &getHiddenCs() const {
         return hiddenCs;
     }
 

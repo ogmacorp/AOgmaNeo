@@ -55,10 +55,10 @@ private:
     Array<Ptr<Actor>> aLayers;
 
     // Histories
-    Array<Array<CircleBuffer<ByteBuffer>>> histories;
+    Array<Array<CircleBuffer<IntBuffer>>> histories;
 
     // Per-layer values
-    ByteBuffer updates;
+    IntBuffer updates;
 
     IntBuffer ticks;
     IntBuffer ticksPerUpdate;
@@ -91,7 +91,7 @@ public:
 
     // Simulation step/tick
     void step(
-        const Array<const ByteBuffer*> &inputCs, // Inputs to remember
+        const Array<const IntBuffer*> &inputCs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
         bool mimic = false // Whether to treat Actors like Predictors
@@ -112,7 +112,7 @@ public:
     }
 
     // Retrieve predictions
-    const ByteBuffer &getPredictionCs(
+    const IntBuffer &getPredictionCs(
         int i // Index of input layer to get predictions for
     ) const {
         if (aLayers[i] != nullptr) // If is an action layer
@@ -185,7 +185,7 @@ public:
         return aLayers;
     }
 
-    const Array<CircleBuffer<ByteBuffer>> &getHistories(
+    const Array<CircleBuffer<IntBuffer>> &getHistories(
         int l
     ) const {
         return histories[l];

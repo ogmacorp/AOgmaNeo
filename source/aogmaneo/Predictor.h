@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        ByteBuffer inputCsPrev; // Previous timestep (prev) input states
+        IntBuffer inputCsPrev; // Previous timestep (prev) input states
     };
 
 private:
@@ -40,7 +40,7 @@ private:
 
     FloatBuffer hiddenActivations;
 
-    ByteBuffer hiddenCs; // Hidden state
+    IntBuffer hiddenCs; // Hidden state
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -50,12 +50,12 @@ private:
 
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs
+        const Array<const IntBuffer*> &inputCs
     );
 
     void learn(
         const Int2 &pos,
-        const ByteBuffer* hiddenTargetCs
+        const IntBuffer* hiddenTargetCs
     );
 
 public:
@@ -75,12 +75,12 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const ByteBuffer*> &inputCs // Hidden/output/prediction size
+        const Array<const IntBuffer*> &inputCs // Hidden/output/prediction size
     );
 
     // Learning predictions (update weights)
     void learn(
-        const ByteBuffer* hiddenTargetCs
+        const IntBuffer* hiddenTargetCs
     );
 
     // Serialization
@@ -112,7 +112,7 @@ public:
     }
 
     // Get the hidden activations (predictions)
-    const ByteBuffer &getHiddenCs() const {
+    const IntBuffer &getHiddenCs() const {
         return hiddenCs;
     }
 

@@ -12,7 +12,7 @@ using namespace aon;
 
 void SparseCoder::forward(
     const Int2 &pos,
-    const Array<const ByteBuffer*> &inputCs
+    const Array<const IntBuffer*> &inputCs
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -50,7 +50,7 @@ void SparseCoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+                    int inC = (*inputCs[vli])[visibleColumnIndex];
 
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
@@ -67,7 +67,7 @@ void SparseCoder::forward(
 
 void SparseCoder::learn(
     const Int2 &pos,
-    const ByteBuffer* inputCs,
+    const IntBuffer* inputCs,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -131,7 +131,7 @@ void SparseCoder::learn(
         }
     }
 
-    unsigned char targetC = (*inputCs)[visibleColumnIndex];
+    int targetC = (*inputCs)[visibleColumnIndex];
 
     if (maxIndex != targetC) {
         for (int vc = 0; vc < vld.size.z; vc++) {
@@ -196,12 +196,12 @@ void SparseCoder::initRandom(
     }
 
     // Hidden Cs
-    hiddenCs = ByteBuffer(numHiddenColumns, 0);
+    hiddenCs = IntBuffer(numHiddenColumns, 0);
 }
 
 // Activate the sparse coder (perform sparse coding)
 void SparseCoder::step(
-    const Array<const ByteBuffer*> &inputCs, // Input states
+    const Array<const IntBuffer*> &inputCs, // Input states
     bool learnEnabled // Whether to learn
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -230,7 +230,7 @@ void SparseCoder::write(
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -262,7 +262,7 @@ void SparseCoder::read(
 
     hiddenCs.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 

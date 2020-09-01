@@ -12,7 +12,7 @@ using namespace aon;
 
 void Predictor::forward(
     const Int2 &pos,
-    const Array<const ByteBuffer*> &inputCs
+    const Array<const IntBuffer*> &inputCs
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -51,7 +51,7 @@ void Predictor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+                    int inC = (*inputCs[vli])[visibleColumnIndex];
    
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     count++;
@@ -73,7 +73,7 @@ void Predictor::forward(
 
 void Predictor::learn(
     const Int2 &pos,
-    const ByteBuffer* hiddenTargetCs
+    const IntBuffer* hiddenTargetCs
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -109,7 +109,7 @@ void Predictor::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
+                    int inC = vl.inputCsPrev[visibleColumnIndex];
 
                     vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += delta;
                 }
@@ -147,18 +147,18 @@ void Predictor::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(-0.01f, 0.01f);
 
-        vl.inputCsPrev = ByteBuffer(numVisibleColumns, 0);
+        vl.inputCsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
     // Hidden Cs
-    hiddenCs = ByteBuffer(numHiddenColumns, 0);
+    hiddenCs = IntBuffer(numHiddenColumns, 0);
 }
 
 // Activate the predictor (predict values)
 void Predictor::activate(
-    const Array<const ByteBuffer*> &inputCs // Hidden/output/prediction size
+    const Array<const IntBuffer*> &inputCs // Hidden/output/prediction size
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
@@ -177,7 +177,7 @@ void Predictor::activate(
 
 // Learning predictions (update weights)
 void Predictor::learn(
-    const ByteBuffer* hiddenTargetCs
+    const IntBuffer* hiddenTargetCs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
@@ -194,7 +194,7 @@ void Predictor::write(
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -212,7 +212,7 @@ void Predictor::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
-        writer.write(reinterpret_cast<const void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(int));
     }
 }
 
@@ -228,7 +228,7 @@ void Predictor::read(
 
     hiddenCs.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
@@ -257,6 +257,6 @@ void Predictor::read(
 
         vl.inputCsPrev.resize(numVisibleColumns);
 
-        reader.read(reinterpret_cast<void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(int));
     }
 }
