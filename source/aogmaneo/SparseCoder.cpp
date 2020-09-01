@@ -197,7 +197,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 192 + rand() % 16;
+            vl.weights[i] = 255 - rand() % 16;
 
         vl.reconstruction = FloatBuffer(numVisible, 0);
     }
