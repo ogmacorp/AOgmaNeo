@@ -54,7 +54,7 @@ void ImageEncoder::forward(
                     int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        int input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
+                        float input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
                         float delta = input - vl.weights[start + vc];
 
