@@ -302,7 +302,7 @@ void SparseCoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lateralsSize), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&laterals[0]),laterals.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&laterals[0]), laterals.size() * sizeof(unsigned char));
 }
 
 void SparseCoder::read(
