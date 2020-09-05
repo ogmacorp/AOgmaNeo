@@ -37,7 +37,7 @@ set(SOURCES
 set(HEADERS
     "${SOURCE_PATH}/aogmaneo/Actor.h"
     "${SOURCE_PATH}/aogmaneo/Array.h"
-	"${SOURCE_PATH}/aogmaneo/Helpers.h"
+    "${SOURCE_PATH}/aogmaneo/Helpers.h"
     "${SOURCE_PATH}/aogmaneo/Hierarchy.h"
     "${SOURCE_PATH}/aogmaneo/ImageEncoder.h"
     "${SOURCE_PATH}/aogmaneo/Predictor.h"
