@@ -58,7 +58,7 @@ void ImageEncoder::forward(
 
                         float delta = input - vl.weights[start + vc];
 
-                        sum += -delta * delta;
+                        sum += -abs(delta);
                     }
                 }
         }
@@ -313,6 +313,9 @@ void ImageEncoder::read(
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
+        int numVisibleColumns = vld.size.x * vld.size.y;
+        int numVisible = numVisibleColumns * vld.size.z;
+
         int weightsSize;
 
         reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
@@ -320,5 +323,7 @@ void ImageEncoder::read(
         vl.weights.resize(weightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+
+        vl.reconstruction = FloatBuffer(numVisible, 0.0f);
     }
 }
