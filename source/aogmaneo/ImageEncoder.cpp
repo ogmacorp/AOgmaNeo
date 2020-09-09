@@ -326,5 +326,7 @@ void ImageEncoder::read(
         vl.weights.resize(weightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+
+        vl.reconstruction = ByteBuffer(numVisible, 0);
     }
 }
