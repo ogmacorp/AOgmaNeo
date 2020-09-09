@@ -319,6 +319,9 @@ void ImageEncoder::read(
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
+        int numVisibleColumns = vld.size.x * vld.size.y;
+        int numVisible = numVisibleColumns * vld.size.z;
+
         int weightsSize;
 
         reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
