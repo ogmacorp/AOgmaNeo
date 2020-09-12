@@ -15,28 +15,13 @@ const Hierarchy &Hierarchy::operator=(
 ) {
     // Layers
     scLayers = other.scLayers;
+    pLayers = other.pLayers;
 
     updates = other.updates;
     ticks = other.ticks;
     ticksPerUpdate = other.ticksPerUpdate;
     inputSizes = other.inputSizes;
     histories = other.histories;
-
-    pLayers.resize(other.pLayers.size());
-    
-    for (int l = 0; l < scLayers.size(); l++) {
-        pLayers[l].resize(other.pLayers[l].size());
-
-        for (int v = 0; v < pLayers[l].size(); v++) {
-            if (other.pLayers[l][v] != nullptr) {
-                pLayers[l][v].make();
-
-                (*pLayers[l][v]) = (*other.pLayers[l][v]);
-            }
-            else
-                pLayers[l][v] = nullptr;
-        }
-    }
 
     aLayers.resize(inputSizes.size());
 

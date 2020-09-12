@@ -118,7 +118,7 @@ public:
         if (aLayers[i] != nullptr) // If is an action layer
             return aLayers[i]->getHiddenCs();
 
-        return pLayers[0][i]->getHiddenCs();
+        return pLayers[0][i][0].getHiddenCs();
     }
 
     // Whether this layer received on update this timestep
@@ -162,14 +162,14 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Ptr<Predictor>> &getPLayers(
+    Array<Array<Predictor>> &getPLayers(
         int l // Layer index
     ) {
         return pLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Ptr<Predictor>> &getPLayers(
+    const Array<Array<Predictor>> &getPLayers(
         int l // Layer index
     ) const {
         return pLayers[l];
