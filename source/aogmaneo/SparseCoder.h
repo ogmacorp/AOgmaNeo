@@ -54,6 +54,7 @@ private:
     void learn(
         const Int2 &pos,
         const IntBuffer* inputCs,
+        const IntBuffer* predictionCs,
         int vli
     );
 
@@ -75,6 +76,7 @@ public:
     // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCs, // Input states
+        const Array<const IntBuffer*> &predictionCs, // Prediction states
         bool learnEnabled // Whether to learn
     );
 

@@ -68,6 +68,7 @@ void SparseCoder::forward(
 void SparseCoder::learn(
     const Int2 &pos,
     const IntBuffer* inputCs,
+    const IntBuffer* predictionCs,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -95,49 +96,35 @@ void SparseCoder::learn(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
-    int maxIndex = 0;
-    float maxActivation = -999999.0f;
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
-
-        float sum = 0.0f;
-        int count = 0;
-
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                Int2 hiddenPos = Int2(ix, iy);
-
-                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
-
-                Int2 visibleCenter = project(hiddenPos, hToV);
-
-                if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
-
-                    sum += vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    count++;
-                }
-            }
-
-        sum /= max(1, count);
-
-        vl.reconstruction[visibleIndex] = sum;
-
-        if (sum > maxActivation) {
-            maxActivation = sum;
-            maxIndex = vc;
-        }
-    }
-
     int targetC = (*inputCs)[visibleColumnIndex];
 
-    if (maxIndex != targetC) {
+    if ((*predictionCs)[visibleColumnIndex] != targetC) {
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
-            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(vl.reconstruction[visibleIndex]));
+            float sum = 0.0f;
+            int count = 0;
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    Int2 hiddenPos = Int2(ix, iy);
+
+                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                    int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+
+                    Int2 visibleCenter = project(hiddenPos, hToV);
+
+                    if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                        Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
+
+                        sum += vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        count++;
+                    }
+                }
+
+            sum /= max(1, count);
+
+            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(sum));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -202,6 +189,7 @@ void SparseCoder::initRandom(
 // Activate the sparse coder (perform sparse coding)
 void SparseCoder::step(
     const Array<const IntBuffer*> &inputCs, // Input states
+    const Array<const IntBuffer*> &predictionCs, // Prediction states
     bool learnEnabled // Whether to learn
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -218,7 +206,7 @@ void SparseCoder::step(
         
             #pragma omp parallel for
             for (int i = 0; i < numVisibleColumns; i++)
-                learn(Int2(i / vld.size.y, i % vld.size.y), inputCs[vli], vli);
+                learn(Int2(i / vld.size.y, i % vld.size.y), inputCs[vli], predictionCs[vli], vli);
         }
     }
 }

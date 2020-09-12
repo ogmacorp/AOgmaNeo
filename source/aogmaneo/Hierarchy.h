@@ -51,7 +51,7 @@ public:
 private:
     // Layers
     Array<SparseCoder> scLayers;
-    Array<Array<Ptr<Predictor>>> pLayers;
+    Array<Array<Array<Predictor>>> pLayers;
     Array<Ptr<Actor>> aLayers;
 
     // Histories
