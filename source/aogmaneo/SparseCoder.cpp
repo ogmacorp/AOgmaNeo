@@ -124,7 +124,7 @@ void SparseCoder::learn(
 
             sum /= max(1, count);
 
-            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(sum));
+            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - sigmoid(sum));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -177,9 +177,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 0.0f);
-
-        vl.reconstruction = FloatBuffer(numVisible, 0.0f);
+            vl.weights[i] = randf(0.0f, 1.0f);
     }
 
     // Hidden Cs
@@ -275,7 +273,5 @@ void SparseCoder::read(
         vl.weights.resize(weightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-
-        vl.reconstruction = FloatBuffer(numVisible, 0.0f);
     }
 }

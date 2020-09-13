@@ -31,8 +31,6 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-
-        FloatBuffer reconstruction;
     };
 
 private:
