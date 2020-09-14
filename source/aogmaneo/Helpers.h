@@ -23,9 +23,9 @@ inline float ceilf(
     float x
 ) {
     if (x > 0.0f)
-        return (x - static_cast<int>(x)) > 0 ? static_cast<int>(x + 1) : static_cast<int>(x);
+        return (x - static_cast<int>(x)) > 0.0f ? static_cast<int>(x + 1) : static_cast<int>(x);
 
-    return (x - static_cast<int>(x)) < 0 ? static_cast<int>(x - 1) : static_cast<int>(x);
+    return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
 inline int roundftoi(

@@ -86,8 +86,8 @@ void SparseCoder::learn(
                 
     Int2 hiddenCenter = project(pos, vToH);
 
-    Int2 reverseRadii(ceilf(vToH.x * vld.radius) + 1, ceilf(vToH.y * vld.radius) + 1);
-    
+    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
+
     // Lower corner
     Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
 
@@ -97,7 +97,7 @@ void SparseCoder::learn(
 
     int maxIndex = 0;
     float maxActivation = -999999.0f;
-
+    int overshoot = 0;
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleIndex = address3(Int3(pos.x, pos.y, vc), vld.size);
 
@@ -118,6 +118,9 @@ void SparseCoder::learn(
 
                     sum += vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     count++;
+                }
+                else {
+                    overshoot++;
                 }
             }
 
