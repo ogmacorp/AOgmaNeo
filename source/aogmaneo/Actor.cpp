@@ -47,10 +47,12 @@ void Actor::forward(
 
                 unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                if (inC != 0) {
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                value += vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
-                count++;
+                    value += vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
+                    count++;
+                }
             }
     }
 
@@ -92,9 +94,11 @@ void Actor::forward(
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    if (inC != 0) {
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    sum += vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        sum += vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    }
                 }
         }
 
@@ -178,10 +182,12 @@ void Actor::learn(
 
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                if (inC != 0) {
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                value += vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
-                count++;
+                    value += vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
+                    count++;
+                }
             }
     }
 
@@ -216,9 +222,11 @@ void Actor::learn(
 
                 unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                if (inC != 0) {
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+                    vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+                }
             }
     }
 
@@ -260,9 +268,11 @@ void Actor::learn(
 
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    if (inC != 0) {
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    sum += vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        sum += vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    }
                 }
         }
 
@@ -311,9 +321,11 @@ void Actor::learn(
 
                     unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    if (inC != 0) {
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
+                        vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))] += deltaAction;
+                    }
                 }
         }
     }

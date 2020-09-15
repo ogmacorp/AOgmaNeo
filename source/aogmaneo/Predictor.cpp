@@ -16,32 +16,6 @@ void Predictor::forward(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    // Pre-count
-    int count = 0;
-
-    // For each visible layer
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-        int diam = vld.radius * 2 + 1;
-
-        // Projection
-        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-
-        Int2 visibleCenter = project(pos, hToV);
-
-        // Lower corner
-        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
-
-        // Bounds of receptive field, clamped to input size
-        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
-
-        count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-    }
-
     int maxIndex = 0;
     int maxActivation = 0;
 
@@ -49,6 +23,7 @@ void Predictor::forward(
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         int sum = 0;
+        int count = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -75,10 +50,14 @@ void Predictor::forward(
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
                     unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+                    
+                    if (inC != 0) {
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                        sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
 
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                        count++;
+                    }
                 }
         }
 
@@ -139,16 +118,18 @@ void Predictor::learn(
 
                     unsigned char inC = vl.inputCsPrev[visibleColumnIndex];
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    if (inC != 0) {
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                        int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
-                    unsigned char weight = vl.weights[wi];
-                    
-                    if (delta > 0)
-                        vl.weights[wi] = min<int>(255 - delta, weight) + delta;
-                    else
-                        vl.weights[wi] = max<int>(-delta, weight) + delta;
+                        unsigned char weight = vl.weights[wi];
+                        
+                        if (delta > 0)
+                            vl.weights[wi] = min<int>(255 - delta, weight) + delta;
+                        else
+                            vl.weights[wi] = max<int>(-delta, weight) + delta;
+                    }
                 }
         }
     }
