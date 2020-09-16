@@ -12,7 +12,7 @@ using namespace aon;
 
 void Actor::forward(
     const Int2 &pos,
-    const Array<const ByteBuffer*> &inputCs,
+    const Array<const IntBuffer*> &inputCs,
     unsigned long* state
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
@@ -45,7 +45,7 @@ void Actor::forward(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+                int inC = (*inputCs[vli])[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -90,7 +90,7 @@ void Actor::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    unsigned char inC = (*inputCs[vli])[visibleColumnIndex];
+                    int inC = (*inputCs[vli])[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -137,8 +137,8 @@ void Actor::forward(
 
 void Actor::learn(
     const Int2 &pos,
-    const Array<const ByteBuffer*> &inputCsPrev,
-    const ByteBuffer* hiddenTargetCsPrev,
+    const Array<const IntBuffer*> &inputCsPrev,
+    const IntBuffer* hiddenTargetCsPrev,
     const FloatBuffer* hiddenValuesPrev,
     float q,
     float g,
@@ -176,7 +176,7 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+                int inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -214,7 +214,7 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+                int inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -258,7 +258,7 @@ void Actor::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+                    int inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -309,7 +309,7 @@ void Actor::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    unsigned char inC = (*inputCsPrev[vli])[visibleColumnIndex];
+                    int inC = (*inputCsPrev[vli])[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -352,7 +352,7 @@ void Actor::initRandom(
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
-    hiddenCs = ByteBuffer(numHiddenColumns, 0);
+    hiddenCs = IntBuffer(numHiddenColumns, 0);
 
     hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
 
@@ -368,18 +368,18 @@ void Actor::initRandom(
 
             int numVisibleColumns = vld.size.x * vld.size.y;
 
-            historySamples[i].inputCs[vli] = ByteBuffer(numVisibleColumns);
+            historySamples[i].inputCs[vli] = IntBuffer(numVisibleColumns);
         }
 
-        historySamples[i].hiddenTargetCsPrev = ByteBuffer(numHiddenColumns);
+        historySamples[i].hiddenTargetCsPrev = IntBuffer(numHiddenColumns);
 
         historySamples[i].hiddenValuesPrev = FloatBuffer(numHiddenColumns);
     }
 }
 
 void Actor::step(
-    const Array<const ByteBuffer*> &inputCs,
-    const ByteBuffer* hiddenTargetCsPrev,
+    const Array<const IntBuffer*> &inputCs,
+    const IntBuffer* hiddenTargetCsPrev,
     float reward,
     bool learnEnabled,
     bool mimic
@@ -454,7 +454,7 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
@@ -493,9 +493,9 @@ void Actor::write(
         const HistorySample &s = historySamples[t];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++)
-            writer.write(reinterpret_cast<const void*>(&s.inputCs[vli][0]), s.inputCs[vli].size() * sizeof(unsigned char));
+            writer.write(reinterpret_cast<const void*>(&s.inputCs[vli][0]), s.inputCs[vli].size() * sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCsPrev[0]), s.hiddenTargetCsPrev.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCsPrev[0]), s.hiddenTargetCsPrev.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&s.hiddenValuesPrev[0]), s.hiddenValuesPrev.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
@@ -519,7 +519,7 @@ void Actor::read(
     hiddenCs.resize(numHiddenColumns);
     hiddenValues.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
@@ -577,13 +577,13 @@ void Actor::read(
 
             s.inputCs[vli].resize(numVisibleColumns);
 
-            reader.read(reinterpret_cast<void*>(&s.inputCs[vli][0]), s.inputCs[vli].size() * sizeof(unsigned char));
+            reader.read(reinterpret_cast<void*>(&s.inputCs[vli][0]), s.inputCs[vli].size() * sizeof(int));
         }
 
         s.hiddenTargetCsPrev.resize(numHiddenColumns);
         s.hiddenValuesPrev.resize(numHiddenColumns);
 
-        reader.read(reinterpret_cast<void*>(&s.hiddenTargetCsPrev[0]), s.hiddenTargetCsPrev.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&s.hiddenTargetCsPrev[0]), s.hiddenTargetCsPrev.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&s.hiddenValuesPrev[0]), s.hiddenValuesPrev.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));

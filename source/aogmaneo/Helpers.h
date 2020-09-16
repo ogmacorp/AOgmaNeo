@@ -23,9 +23,9 @@ inline float ceilf(
     float x
 ) {
     if (x > 0.0f)
-        return (x - static_cast<int>(x)) > 0 ? static_cast<int>(x + 1) : static_cast<int>(x);
+        return (x - static_cast<int>(x)) > 0.0f ? static_cast<int>(x + 1) : static_cast<int>(x);
 
-    return (x - static_cast<int>(x)) < 0 ? static_cast<int>(x - 1) : static_cast<int>(x);
+    return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
 inline int roundftoi(
@@ -145,12 +145,6 @@ typedef Vec4<float> Float4;
 
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
-typedef Array<unsigned char> ByteBuffer;
-
-typedef unsigned char ColSize8;
-typedef unsigned short ColSize16;
-typedef unsigned int ColSize32;
-typedef unsigned long ColSize64;
 
 // --- Circular Buffer ---
 
@@ -362,79 +356,6 @@ float randf(
     float high,
     unsigned long* state = &globalState
 );
-
-template <typename T>
-T randBits(
-    unsigned long* state = &globalState
-) {
-    unsigned char numBytes = sizeof(T);
-
-    T out = 0;
-
-    for (unsigned char i = 0; i < numBytes; i++) {
-        unsigned char b = rand(state) % 256;
-
-        out = out | b;
-
-        if (i < numBytes - 1)
-            out <<= 8;
-    }
-
-    return out;
-}
-
-template <typename T>
-T randBits(
-    float ratio,
-    unsigned long* state = &globalState
-) {
-    unsigned char numBits = sizeof(T) * 8;
-
-    T out = 0;
-
-    for (unsigned char i = 0; i < numBits; i++) {
-        out = out | (randf(state) < ratio ? 1 : 0);
-
-        if (i < numBits - 1)
-            out <<= 1;
-    }
-
-    return out;
-}
-
-// --- Weight mutation ---
-
-template <typename T>
-T increase(
-    T weight,
-    unsigned char index
-) {
-    return weight | (1 << index);
-}
-
-template <typename T>
-T decrease(
-    T weight,
-    unsigned char index
-) {
-    return weight & ~(1 << index);
-}
-
-template <typename T>
-unsigned char countBits(
-    T value
-) {
-    unsigned char numBits = sizeof(T) * 8;
-
-    unsigned char c = 0;
-
-    for (unsigned char i = 0; i < numBits; i++) {
-        c += 1 & value;
-        value >>= 1;
-    }
-
-    return c;
-}
 
 // --- Sorting ---
 

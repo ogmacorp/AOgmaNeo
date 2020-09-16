@@ -36,8 +36,8 @@ public:
 
     // History sample for delayed updates
     struct HistorySample {
-        Array<ByteBuffer> inputCs;
-        ByteBuffer hiddenTargetCsPrev;
+        Array<IntBuffer> inputCs;
+        IntBuffer hiddenTargetCsPrev;
 
         FloatBuffer hiddenValuesPrev;
         
@@ -52,7 +52,7 @@ private:
 
     FloatBuffer hiddenActivations; // Temporary buffer
 
-    ByteBuffer hiddenCs; // Hidden states
+    IntBuffer hiddenCs; // Hidden states
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
 
@@ -66,14 +66,14 @@ private:
 
     void forward(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
+        const Array<const IntBuffer*> &inputCs,
         unsigned long* state
     );
 
     void learn(
         const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCsPrev,
-        const ByteBuffer* hiddenTargetCsPrev,
+        const Array<const IntBuffer*> &inputCsPrev,
+        const IntBuffer* hiddenTargetCsPrev,
         const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
@@ -106,8 +106,8 @@ public:
 
     // Step (get actions and update)
     void step(
-        const Array<const ByteBuffer*> &inputCs,
-        const ByteBuffer* hiddenTargetCsPrev,
+        const Array<const IntBuffer*> &inputCs,
+        const IntBuffer* hiddenTargetCsPrev,
         float reward,
         bool learnEnabled,
         bool mimic
@@ -142,7 +142,7 @@ public:
     }
 
     // Get hidden state/output/actions
-    const ByteBuffer &getHiddenCs() const {
+    const IntBuffer &getHiddenCs() const {
         return hiddenCs;
     }
 
