@@ -388,7 +388,7 @@ void quicksort(
     int low = 0,
     int high = -1
 ) {
-    if (arr.size() <= 1)
+    if (high - low <= 1)
         return;
 
     if (high == -1)
