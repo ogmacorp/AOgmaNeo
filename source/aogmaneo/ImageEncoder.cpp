@@ -58,7 +58,7 @@ void ImageEncoder::forward(
 
                         float delta = input - vl.weights[start + vc];
 
-                        sum += -abs(delta);
+                        sum += -delta * delta;
                     }
                 }
         }
