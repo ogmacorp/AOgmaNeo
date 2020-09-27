@@ -70,7 +70,14 @@ private:
         unsigned long* state
     );
 
-    void learn(
+    void learnValue(
+        const Int2 &pos,
+        const Array<const IntBuffer*> &inputCsPrev,
+        float q,
+        float g
+    );
+
+    void learnAction(
         const Int2 &pos,
         const Array<const IntBuffer*> &inputCsPrev,
         const IntBuffer* hiddenTargetCsPrev,
@@ -84,16 +91,14 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
-    int minSteps;
     int historyIters;
 
     // Defaults
     Actor()
     :
     alpha(0.01f),
-    beta(0.01f),
+    beta(0.1f),
     gamma(0.99f),
-    minSteps(4),
     historyIters(8)
     {}
 

@@ -135,18 +135,13 @@ void Actor::forward(
     hiddenCs[hiddenColumnIndex] = selectIndex;
 }
 
-void Actor::learn(
+void Actor::learnValue(
     const Int2 &pos,
     const Array<const IntBuffer*> &inputCsPrev,
-    const IntBuffer* hiddenTargetCsPrev,
-    const FloatBuffer* hiddenValuesPrev,
     float q,
-    float g,
-    bool mimic
+    float g
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
-
-    // --- Value Prev ---
 
     float newValue = q + g * hiddenValues[hiddenColumnIndex];
 
@@ -221,8 +216,20 @@ void Actor::learn(
                 vl.valueWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
             }
     }
+}
 
-    // --- Action ---
+void Actor::learnAction(
+    const Int2 &pos,
+    const Array<const IntBuffer*> &inputCsPrev,
+    const IntBuffer* hiddenTargetCsPrev,
+    const FloatBuffer* hiddenValuesPrev,
+    float q,
+    float g,
+    bool mimic
+) {
+    int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
+
+    float newValue = q + g * hiddenValues[hiddenColumnIndex];
 
     float tdErrorAction = newValue - (*hiddenValuesPrev)[hiddenColumnIndex];
 
@@ -234,6 +241,7 @@ void Actor::learn(
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         float sum = 0.0f;
+        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -263,6 +271,7 @@ void Actor::learn(
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     sum += vl.actionWeights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    count++;
                 }
         }
 
@@ -419,11 +428,10 @@ void Actor::step(
     }
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > minSteps + 1) {
+    if (learnEnabled && historySize == historySamples.size()) {
         for (int it = 0; it < historyIters; it++) {
-            int historyIndex = rand() % (historySize - 1 - minSteps) + minSteps;
+            int historyIndex = rand() % (historySize - 1) + 1;
 
-            const HistorySample &sPrev = historySamples[historyIndex + 1];
             const HistorySample &s = historySamples[historyIndex];
 
             // Compute (partial) values, rest is completed in the kernel
@@ -438,8 +446,25 @@ void Actor::step(
 
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
+                learnValue(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(s.inputCs), q, g);
         }
+
+        const HistorySample &sPrev = historySamples[historySize - 1];
+        const HistorySample &s = historySamples[historySize - 2];
+
+        // Compute (partial) values, rest is completed in the kernel
+        float q = 0.0f;
+        float g = 1.0f;
+
+        for (int t = historySize - 2; t >= 0; t--) {
+            q += historySamples[t].reward * g;
+
+            g *= gamma;
+        }
+
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            learnAction(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCs), &s.hiddenTargetCsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
     }
 }
 
@@ -451,7 +476,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
@@ -513,7 +537,6 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
     hiddenCs.resize(numHiddenColumns);
