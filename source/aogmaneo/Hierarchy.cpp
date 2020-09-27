@@ -142,7 +142,7 @@ void Hierarchy::initRandom(
                 else if (inputTypes[p] == InputType::action) {
                     aLayers[p].make();
 
-                    aLayers[p]->initRandom(inputSizes[p], layerDescs[l].historyCapacity, aVisibleLayerDescs);
+                    aLayers[p]->initRandom(inputSizes[p], aVisibleLayerDescs);
                 }
             }
         }
@@ -191,8 +191,7 @@ void Hierarchy::initRandom(
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCs,
     bool learnEnabled,
-    float reward,
-    bool mimic
+    float reward
 ) {
     // First tick is always 0
     ticks[0] = 0;
@@ -268,7 +267,7 @@ void Hierarchy::step(
                 // Step actors
                 for (int p = 0; p < aLayers.size(); p++) {
                     if (aLayers[p] != nullptr)
-                        aLayers[p]->step(feedBackCs, &histories[l][p][0], reward, learnEnabled, mimic);
+                        aLayers[p]->step(feedBackCs, &histories[l][p][0], reward, learnEnabled);
                 }
             }
         }
