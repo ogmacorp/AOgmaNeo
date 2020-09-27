@@ -67,7 +67,7 @@ public:
     :
     alpha(0.1f),
     gamma(0.99f),
-    traceDecay(0.95f)
+    traceDecay(0.98f)
     {}
 
     // Initialized randomly
