@@ -56,15 +56,13 @@ private:
     );
 
 public:
-    float alpha; // Value learning rate
-    float gamma; // Discount factor
+    float alpha;
     float traceDecay;
 
     // Defaults
     Actor()
     :
     alpha(0.01f),
-    gamma(0.99f),
     traceDecay(0.98f)
     {}
 

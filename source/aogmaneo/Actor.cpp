@@ -234,7 +234,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
@@ -267,7 +266,6 @@ void Actor::read(
     int numHidden = numHiddenColumns * hiddenSize.z;
     
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
