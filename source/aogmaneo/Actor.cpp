@@ -121,7 +121,7 @@ void Actor::learn(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float delta = alpha * (*hiddenErrors)[hiddenColumnIndex];
+    float delta = alpha * (sigmoid((*hiddenErrors)[hiddenColumnIndex]) * 2.0f - 1.0f);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
