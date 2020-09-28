@@ -156,7 +156,7 @@ void Actor::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] += delta * vl.tracesBackup[wi];
+                        vl.weights[wi] += delta * vl.traces[wi];
                     }
                 }
         }
@@ -194,8 +194,6 @@ void Actor::initRandom(
             vl.weights[i] = randf(-0.01f, 0.01f);
             vl.traces[i] = 0.0f;
         }
-
-        vl.tracesBackup = vl.traces;
     }
 
     hiddenCs = IntBuffer(numHiddenColumns, 0);
@@ -209,14 +207,6 @@ void Actor::activate(
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
-}
-
-void Actor::backup() {
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-
-        vl.tracesBackup = vl.traces;
-    }
 }
 
 void Actor::learn(
@@ -256,7 +246,6 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.tracesBackup[0]), vl.tracesBackup.size() * sizeof(float));
     }
 }
 
@@ -297,10 +286,8 @@ void Actor::read(
 
         vl.weights.resize(weightsSize);
         vl.traces.resize(weightsSize);
-        vl.tracesBackup.resize(weightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.tracesBackup[0]), vl.tracesBackup.size() * sizeof(float));
     }
 }

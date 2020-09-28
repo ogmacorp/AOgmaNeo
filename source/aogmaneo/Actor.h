@@ -32,7 +32,6 @@ public:
     struct VisibleLayer {
         FloatBuffer weights; // Weights
         FloatBuffer traces; // Eligibility traces
-        FloatBuffer tracesBackup; // Backed up traces
     };
 
 private:
@@ -78,8 +77,6 @@ public:
     void activate(
         const Array<const IntBuffer*> &inputCs
     );
-
-    void backup();
 
     void learn(
         const FloatBuffer* hiddenErrors

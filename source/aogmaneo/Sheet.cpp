@@ -48,7 +48,17 @@ void Sheet::step(
     int subSteps,
     bool learnEnabled
 ) {
-    actor.backup();
+    if (learnEnabled) {
+        actorHiddenErrors.fill(0.0f);
+
+        for (int i = 0; i < predictors.size(); i++) {
+            predictors[i].generateErrors(targetCs[i], &actorHiddenErrors, 0);
+
+            predictors[i].learn(targetCs[i]);
+        }
+
+        actor.learn(&actorHiddenErrors);
+    }
 
     Array<const IntBuffer*> actorInputCs(inputCs.size() + 1);
 
@@ -67,20 +77,8 @@ void Sheet::step(
     Array<const IntBuffer*> predictorInputCs(1);
     predictorInputCs[0] = &actor.getHiddenCs();
 
-    actorHiddenErrors.fill(0.0f);
-
-    for (int i = 0; i < predictors.size(); i++) {
-        if (learnEnabled) {
-            predictors[i].generateErrors(targetCs[i], &actorHiddenErrors, 0);
-
-            predictors[i].learn(targetCs[i]);
-        }
-
+    for (int i = 0; i < predictors.size(); i++)
         predictors[i].activate(predictorInputCs);
-    }
-
-    if (learnEnabled)
-        actor.learn(&actorHiddenErrors);
 }
 
 void Sheet::write(
