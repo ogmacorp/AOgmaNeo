@@ -71,9 +71,9 @@ void Actor::activate(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        hiddenActivations[hiddenIndex] = expf((hiddenActivations[hiddenIndex] - maxActivation) / temperature);
+        hiddenProbabilities[hiddenIndex] = expf((hiddenActivations[hiddenIndex] - maxActivation) / temperature);
         
-        total += hiddenActivations[hiddenIndex];
+        total += hiddenProbabilities[hiddenIndex];
     }
 
     float cusp = randf(state) * total;
@@ -84,7 +84,7 @@ void Actor::activate(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        sumSoFar += hiddenActivations[hiddenIndex];
+        sumSoFar += hiddenProbabilities[hiddenIndex];
 
         if (sumSoFar >= cusp) {
             selectIndex = hc;
@@ -95,7 +95,7 @@ void Actor::activate(
     
     hiddenCs[hiddenColumnIndex] = selectIndex;
 
-    hiddenValues[hiddenColumnIndex] = maxActivation;
+    hiddenValues[hiddenColumnIndex] = hiddenActivations[address3(Int3(pos.x, pos.y, selectIndex), hiddenSize)];
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -148,7 +148,7 @@ void Actor::learn(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float reward = -abs((*hiddenErrors)[hiddenColumnIndex]);
+    float reward = sigmoid((*hiddenErrors)[hiddenColumnIndex]) * 2.0f - 1.0f;
 
     float delta = alpha * (reward + gamma * hiddenValues[hiddenColumnIndex] - hiddenValuesPrev[hiddenColumnIndex]);
 
@@ -242,6 +242,7 @@ void Actor::initRandom(
     hiddenCs = IntBuffer(numHiddenColumns, 0);
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
+    hiddenProbabilities = FloatBuffer(numHidden, 0.0f);
 
     hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
     hiddenValuesPrev = FloatBuffer(numHiddenColumns, 0.0f);
@@ -330,6 +331,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hiddenValuesPrev[0]), hiddenValuesPrev.size() * sizeof(float));
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
+    hiddenProbabilities = FloatBuffer(numHidden, 0.0f);
     
     int numVisibleLayers = visibleLayers.size();
 

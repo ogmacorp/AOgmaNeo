@@ -41,6 +41,7 @@ private:
     IntBuffer hiddenCs; // Hidden states
     IntBuffer hiddenCsPrev; // Hidden states
     FloatBuffer hiddenActivations;
+    FloatBuffer hiddenProbabilities;
 
     FloatBuffer hiddenValues;
     FloatBuffer hiddenValuesPrev;
@@ -72,7 +73,7 @@ public:
     Actor()
     :
     temperature(0.1f),
-    alpha(0.01f),
+    alpha(0.1f),
     gamma(0.99f),
     traceDecay(0.98f)
     {}
