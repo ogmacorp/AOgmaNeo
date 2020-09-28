@@ -31,7 +31,7 @@ private:
     Actor actor;
     Array<Predictor> predictors;
     IntBuffer actorHiddenCsPrev;
-    FloatBuffer actorHiddenRewards;
+    FloatBuffer actorHiddenErrors;
 
 public:
     // Create a randomly initialized hierarchy

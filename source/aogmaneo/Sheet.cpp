@@ -39,7 +39,7 @@ void Sheet::initRandom(
     }
 
     actorHiddenCsPrev = IntBuffer(actorSize.x * actorSize.y, 0);
-    actorHiddenRewards = FloatBuffer(actorHiddenCsPrev.size(), 0.0f);
+    actorHiddenErrors = FloatBuffer(actorHiddenCsPrev.size(), 0.0f);
 }
 
 void Sheet::step(
@@ -67,11 +67,11 @@ void Sheet::step(
     Array<const IntBuffer*> predictorInputCs(1);
     predictorInputCs[0] = &actor.getHiddenCs();
 
-    actorHiddenRewards.fill(0.0f);
+    actorHiddenErrors.fill(0.0f);
 
     for (int i = 0; i < predictors.size(); i++) {
         if (learnEnabled) {
-            predictors[i].generateRewards(targetCs[i], &actorHiddenRewards, 0);
+            predictors[i].generateErrors(targetCs[i], &actorHiddenErrors, 0);
 
             predictors[i].learn(targetCs[i]);
         }
@@ -80,7 +80,7 @@ void Sheet::step(
     }
 
     if (learnEnabled)
-        actor.learn(&actorHiddenRewards);
+        actor.learn(&actorHiddenErrors);
 }
 
 void Sheet::write(
@@ -113,7 +113,7 @@ void Sheet::read(
         predictors[i].read(reader);
 
     actorHiddenCsPrev.resize(actor.getHiddenCs().size());
-    actorHiddenRewards = FloatBuffer(actor.getHiddenCs().size(), 0.0f);
+    actorHiddenErrors = FloatBuffer(actor.getHiddenCs().size(), 0.0f);
 
     reader.read(reinterpret_cast<void*>(&actorHiddenCsPrev[0]), actorHiddenCsPrev.size() * sizeof(int));
 }
