@@ -86,100 +86,34 @@ void Sheet::step(
 void Sheet::write(
     StreamWriter &writer
 ) const {
-    int numPredictors;
+    int numPredictors = predictors.size();
 
     writer.write(reinterpret_cast<const void*>(&numPredictors), sizeof(int));
+
     actor.write(writer);
     
-    
+    for (int i = 0; i < predictors.size(); i++)
+        predictors[i].write(writer);
+
+    writer.write(reinterpret_cast<const void*>(&actorHiddenCsPrev[0]), actorHiddenCsPrev.size() * sizeof(int));
 }
 
 void Sheet::read(
     StreamReader &reader
 ) {
-    int numLayers;
+    int numPredictors;
 
-    reader.read(reinterpret_cast<void*>(&numLayers), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&numPredictors), sizeof(int));
 
-    int numInputs;
+    actor.read(reader);
 
-    reader.read(reinterpret_cast<void*>(&numInputs), sizeof(int));
+    predictors.resize(numPredictors);
 
-    inputSizes.resize(numInputs);
+    for (int i = 0; i < predictors.size(); i++)
+        predictors[i].read(reader);
 
-    reader.read(reinterpret_cast<void*>(&inputSizes[0]), numInputs * sizeof(Int3));
+    actorHiddenCsPrev.resize(actor.getHiddenCs().size());
+    actorHiddenRewards = FloatBuffer(actor.getHiddenCs().size(), 0.0f);
 
-    scLayers.resize(numLayers);
-    pLayers.resize(numLayers);
-
-    histories.resize(numLayers);
-    
-    updates.resize(numLayers);
-    ticks.resize(numLayers);
-    ticksPerUpdate.resize(numLayers);
-
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
-    
-    for (int l = 0; l < numLayers; l++) {
-        int numInputs;
-        
-        reader.read(reinterpret_cast<void*>(&numInputs), sizeof(int));
-
-        histories[l].resize(numInputs);
-
-        for (int i = 0; i < histories[l].size(); i++) {
-            int historySize;
-
-            reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
-
-            int historyStart;
-            
-            reader.read(reinterpret_cast<void*>(&historyStart), sizeof(int));
-
-            histories[l][i].resize(historySize);
-            histories[l][i].start = historyStart;
-
-            for (int t = 0; t < histories[l][i].size(); t++) {
-                int bufferSize;
-
-                reader.read(reinterpret_cast<void*>(&bufferSize), sizeof(int));
-
-                histories[l][i][t].resize(bufferSize);
-
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
-            }
-        }
-
-        scLayers[l].read(reader);
-        
-        pLayers[l].resize(l == 0 ? inputSizes.size() : ticksPerUpdate[l]);
-
-        // Predictors
-        for (int v = 0; v < pLayers[l].size(); v++) {
-            char exists;
-
-            reader.read(reinterpret_cast<void*>(&exists), sizeof(int));
-
-            if (exists) {
-                pLayers[l][v].make();
-                pLayers[l][v]->read(reader);
-            }
-        }
-    }
-
-    // Actors
-    aLayers.resize(inputSizes.size());
-
-    for (int v = 0; v < aLayers.size(); v++) {
-        char exists;
-
-        reader.read(reinterpret_cast<void*>(&exists), sizeof(int));
-
-        if (exists) {
-            aLayers[v].make();
-            aLayers[v]->read(reader);
-        }
-    }
+    reader.read(reinterpret_cast<void*>(&actorHiddenCsPrev[0]), actorHiddenCsPrev.size() * sizeof(int));
 }
