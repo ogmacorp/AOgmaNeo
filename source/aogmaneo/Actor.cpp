@@ -95,8 +95,6 @@ void Actor::activate(
     
     hiddenCs[hiddenColumnIndex] = selectIndex;
 
-    hiddenValues[hiddenColumnIndex] = hiddenActivations[address3(Int3(pos.x, pos.y, selectIndex), hiddenSize)];
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
@@ -132,7 +130,7 @@ void Actor::activate(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inC && hc == hiddenCs[hiddenColumnIndex])
+                        if (vc == inC && hc == selectIndex)
                             vl.traces[wi] = 1.0f;
                         else
                             vl.traces[wi] *= traceDecay;
@@ -150,9 +148,14 @@ void Actor::learn(
 
     float reward = sigmoid((*hiddenErrors)[hiddenColumnIndex]) * 2.0f - 1.0f;
 
-    float delta = alpha * (reward + gamma * hiddenValues[hiddenColumnIndex] - hiddenValuesPrev[hiddenColumnIndex]);
+    float maxActivation = hiddenActivations[address3(Int3(pos.x, pos.y, 0), hiddenSize)];
 
-    hiddenValuesPrev[hiddenColumnIndex] = hiddenValues[hiddenColumnIndex];
+    for (int hc = 1; hc < hiddenSize.z; hc++)
+        maxActivation = max(maxActivation, hiddenActivations[address3(Int3(pos.x, pos.y, 0), hiddenSize)]);
+
+    float delta = alpha * (reward + gamma * maxActivation - hiddenValuesPrev[hiddenColumnIndex]);
+
+    hiddenValuesPrev[hiddenColumnIndex] = hiddenActivations[address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize)];
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -244,7 +247,6 @@ void Actor::initRandom(
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
     hiddenProbabilities = FloatBuffer(numHidden, 0.0f);
 
-    hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
     hiddenValuesPrev = FloatBuffer(numHiddenColumns, 0.0f);
 }
 
@@ -286,7 +288,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenValuesPrev[0]), hiddenValuesPrev.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
@@ -323,11 +324,9 @@ void Actor::read(
 
     hiddenCs.resize(numHiddenColumns);
     hiddenCsPrev.resize(numHiddenColumns);
-    hiddenValues.resize(numHiddenColumns);
     hiddenValuesPrev.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenValuesPrev[0]), hiddenValuesPrev.size() * sizeof(float));
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
