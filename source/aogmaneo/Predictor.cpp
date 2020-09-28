@@ -160,9 +160,6 @@ void Predictor::generateErrors(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
-    int maxIndex = 0;
-    float maxActivation = -999999.0f;
-
     int inC = vl.inputCsPrev[visibleColumnIndex];
 
     int visibleIndex = address3(Int3(pos.x, pos.y, inC), vld.size);
@@ -175,18 +172,21 @@ void Predictor::generateErrors(
             Int2 hiddenPos = Int2(ix, iy);
 
             int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-            int hiddenIndexTarget = address3(Int3(hiddenPos.x, hiddenPos.y, (*hiddenTargetCs)[hiddenColumnIndex]), hiddenSize);
-            int hiddenIndexMax = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-            Int2 visibleCenter = project(hiddenPos, hToV);
+            if (hiddenCs[hiddenColumnIndex] != (*hiddenTargetCs)[hiddenColumnIndex]) {
+                int hiddenIndexTarget = address3(Int3(hiddenPos.x, hiddenPos.y, (*hiddenTargetCs)[hiddenColumnIndex]), hiddenSize);
+                int hiddenIndexMax = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-            if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
+                Int2 visibleCenter = project(hiddenPos, hToV);
 
-                sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget))];
-                sum -= vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax))];
+                if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                count++;
+                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget))];
+                    sum -= vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax))];
+
+                    count++;
+                }
             }
         }
 

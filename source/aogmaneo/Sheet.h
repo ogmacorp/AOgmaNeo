@@ -20,14 +20,11 @@ public:
         int radius;
     };
 
-private:
-    // Layers
     Actor actor;
     Array<Predictor> predictors;
     IntBuffer actorHiddenCsPrev;
     FloatBuffer actorHiddenErrors;
 
-public:
     // Create a randomly initialized hierarchy
     void initRandom(
         const Array<IODesc> &inputDescs,
