@@ -146,7 +146,7 @@ void Actor::learn(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float reward = sigmoid((*hiddenErrors)[hiddenColumnIndex]) * 2.0f - 1.0f;
+    float reward = (*hiddenErrors)[hiddenColumnIndex];
 
     float value = hiddenActivations[address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize)];
 
