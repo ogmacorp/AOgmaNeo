@@ -11,9 +11,9 @@
 using namespace aon;
 
 void Sheet::initRandom(
-    const Array<InputDesc> &inputDescs,
+    const Array<IODesc> &inputDescs,
     int recurrentRadius,
-    const Array<OutputDesc> &outputDescs,
+    const Array<IODesc> &outputDescs,
     Int3 actorSize
 ) {
     Array<Actor::VisibleLayerDesc> aVlds(inputDescs.size() + 1);

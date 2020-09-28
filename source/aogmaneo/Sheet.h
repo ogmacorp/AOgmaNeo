@@ -14,13 +14,7 @@
 namespace aon {
 class Sheet {
 public:
-    struct InputDesc {
-        Int3 size;
-
-        int radius;
-    };
-
-    struct OutputDesc {
+    struct IODesc {
         Int3 size;
 
         int radius;
@@ -36,9 +30,9 @@ private:
 public:
     // Create a randomly initialized hierarchy
     void initRandom(
-        const Array<InputDesc> &inputDescs,
+        const Array<IODesc> &inputDescs,
         int recurrentRadius,
-        const Array<OutputDesc> &outputDescs,
+        const Array<IODesc> &outputDescs,
         Int3 actorSize
     );
 
