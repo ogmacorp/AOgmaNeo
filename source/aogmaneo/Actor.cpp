@@ -151,7 +151,7 @@ void Actor::learn(
     float maxActivation = hiddenActivations[address3(Int3(pos.x, pos.y, 0), hiddenSize)];
 
     for (int hc = 1; hc < hiddenSize.z; hc++)
-        maxActivation = max(maxActivation, hiddenActivations[address3(Int3(pos.x, pos.y, 0), hiddenSize)]);
+        maxActivation = max(maxActivation, hiddenActivations[address3(Int3(pos.x, pos.y, hc), hiddenSize)]);
 
     float delta = alpha * (reward + gamma * maxActivation - hiddenValuesPrev[hiddenColumnIndex]);
 
