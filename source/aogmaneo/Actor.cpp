@@ -235,6 +235,8 @@ void Actor::initRandom(
                 vl.traces[i] = 0.0f;
             }
         }
+
+        vl.tracesBackup = vl.traces;
     }
 
     hiddenCs = IntBuffer(numHiddenColumns, 0);

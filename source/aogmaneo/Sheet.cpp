@@ -57,6 +57,7 @@ void Sheet::step(
             predictors[i].learn(targetCs[i]);
         }
 
+        actor.learn(&actorHiddenErrors);
     }
 
     Array<const IntBuffer*> actorInputCs(inputCs.size() + 1);
@@ -68,8 +69,6 @@ void Sheet::step(
 
     // Sub steps
     for (int ss = 0; ss < subSteps; ss++) {
-        actor.learn(&actorHiddenErrors);
-
         actor.activate(actorInputCs);
 
         actorHiddenCsPrev = actor.getHiddenCs();
