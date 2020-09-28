@@ -129,10 +129,10 @@ void Predictor::learn(
     }
 }
 
-void Predictor::generateRewards(
+void Predictor::generateErrors(
     const Int2 &pos,
     const IntBuffer* hiddenTargetCs,
-    FloatBuffer* visibleRewards,
+    FloatBuffer* visibleErrors,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -192,7 +192,7 @@ void Predictor::generateRewards(
 
     sum /= max(1, count);
 
-    (*visibleRewards)[visibleColumnIndex] += sum;
+    (*visibleErrors)[visibleColumnIndex] += sum;
 }
 
 void Predictor::initRandom(
@@ -263,9 +263,9 @@ void Predictor::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCs);
 }
 
-void Predictor::generateRewards(
+void Predictor::generateErrors(
     const IntBuffer* hiddenTargetCs,
-    FloatBuffer* visibleRewards,
+    FloatBuffer* visibleErrors,
     int vli
 ) {
     const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -274,7 +274,7 @@ void Predictor::generateRewards(
 
     #pragma omp parallel for
     for (int i = 0; i < numVisibleColumns; i++)
-        generateRewards(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCs, visibleRewards, vli);
+        generateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCs, visibleErrors, vli);
 }
 
 void Predictor::write(

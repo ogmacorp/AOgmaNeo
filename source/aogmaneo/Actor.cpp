@@ -117,11 +117,11 @@ void Actor::activate(
 
 void Actor::learn(
     const Int2 &pos,
-    const FloatBuffer* hiddenRewards
+    const FloatBuffer* hiddenErrors
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float delta = alpha * (*hiddenRewards)[hiddenColumnIndex];
+    float delta = alpha * (*hiddenErrors)[hiddenColumnIndex];
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -220,13 +220,13 @@ void Actor::backup() {
 }
 
 void Actor::learn(
-    const FloatBuffer* hiddenRewards
+    const FloatBuffer* hiddenErrors
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenRewards);
+        learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenErrors);
 }
 
 void Actor::write(

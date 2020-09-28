@@ -53,7 +53,7 @@ private:
 
     void learn(
         const Int2 &pos,
-        const FloatBuffer* hiddenRewards
+        const FloatBuffer* hiddenErrors
     );
 
 public:
@@ -82,7 +82,7 @@ public:
     void backup();
 
     void learn(
-        const FloatBuffer* hiddenRewards
+        const FloatBuffer* hiddenErrors
     );
 
     // Serialization

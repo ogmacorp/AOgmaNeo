@@ -58,10 +58,10 @@ private:
         const IntBuffer* hiddenTargetCs
     );
 
-    void generateRewards(
+    void generateErrors(
         const Int2 &pos,
         const IntBuffer* hiddenTargetCs,
-        FloatBuffer* visibleRewards,
+        FloatBuffer* visibleErrors,
         int vli
     );
 
@@ -91,9 +91,9 @@ public:
     );
 
     // Generate rewards from errors
-    void generateRewards(
+    void generateErrors(
         const IntBuffer* hiddenTargetCs,
-        FloatBuffer* visibleRewards,
+        FloatBuffer* visibleErrors,
         int vli
     );
 
