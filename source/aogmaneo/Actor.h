@@ -32,8 +32,7 @@ public:
     struct VisibleLayer {
         FloatBuffer weights; // Weights
         FloatBuffer traces; // Eligibility traces
-
-        IntBuffer inputCsPrev; // Previous timestep (prev) input states
+        FloatBuffer tracesBackup; // Backed up traces
     };
 
 private:
@@ -41,20 +40,20 @@ private:
 
     IntBuffer hiddenCs; // Hidden states
 
-    FloatBuffer hiddenValues; // Hidden value function output buffer
-
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
 
-    void forward(
+    void activate(
         const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs,
-        const IntBuffer* hiddenTargetCsPrev,
-        float reward,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCs
+    );
+
+    void learn(
+        const Int2 &pos,
+        const FloatBuffer* hiddenRewards
     );
 
 public:
@@ -65,7 +64,7 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.1f),
+    alpha(0.01f),
     gamma(0.99f),
     traceDecay(0.98f)
     {}
@@ -76,12 +75,14 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
-    // Step (get actions and update)
-    void step(
-        const Array<const IntBuffer*> &inputCs,
-        const IntBuffer* hiddenTargetCsPrev,
-        float reward,
-        bool learnEnabled
+    void activate(
+        const Array<const IntBuffer*> &inputCs
+    );
+
+    void backup();
+
+    void learn(
+        const FloatBuffer* hiddenRewards
     );
 
     // Serialization

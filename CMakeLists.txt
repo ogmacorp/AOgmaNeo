@@ -30,10 +30,9 @@ set(SOURCE_PATH "${PROJECT_SOURCE_DIR}/source")
 set(SOURCES
     "${SOURCE_PATH}/aogmaneo/Actor.cpp"
     "${SOURCE_PATH}/aogmaneo/Helpers.cpp"
-    "${SOURCE_PATH}/aogmaneo/Hierarchy.cpp"
+    "${SOURCE_PATH}/aogmaneo/Sheet.cpp"
     "${SOURCE_PATH}/aogmaneo/ImageEncoder.cpp"
     "${SOURCE_PATH}/aogmaneo/Predictor.cpp"
-    "${SOURCE_PATH}/aogmaneo/SparseCoder.cpp"
 )
 
 find_package(OpenMP REQUIRED)

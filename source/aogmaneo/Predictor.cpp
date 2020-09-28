@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-void Predictor::forward(
+void Predictor::activate(
     const Int2 &pos,
     const Array<const IntBuffer*> &inputCs
 ) {
@@ -129,6 +129,72 @@ void Predictor::learn(
     }
 }
 
+void Predictor::generateRewards(
+    const Int2 &pos,
+    const IntBuffer* hiddenTargetCs,
+    FloatBuffer* visibleRewards,
+    int vli
+) {
+    VisibleLayer &vl = visibleLayers[vli];
+    VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+    int diam = vld.radius * 2 + 1;
+
+    int visibleColumnIndex = address2(pos, Int2(vld.size.x, vld.size.y));
+
+    // Projection
+    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
+        static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
+
+    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+                
+    Int2 hiddenCenter = project(pos, vToH);
+
+    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
+
+    // Lower corner
+    Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
+
+    // Bounds of receptive field, clamped to input size
+    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+    Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
+
+    int maxIndex = 0;
+    float maxActivation = -999999.0f;
+
+    int inC = vl.inputCsPrev[visibleColumnIndex];
+
+    int visibleIndex = address3(Int3(pos.x, pos.y, inC), vld.size);
+
+    float sum = 0.0f;
+    int count = 0;
+
+    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+            Int2 hiddenPos = Int2(ix, iy);
+
+            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+            int hiddenIndexTarget = address3(Int3(hiddenPos.x, hiddenPos.y, (*hiddenTargetCs)[hiddenColumnIndex]), hiddenSize);
+            int hiddenIndexMax = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+
+            Int2 visibleCenter = project(hiddenPos, hToV);
+
+            if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
+
+                sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget))];
+                sum -= vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax))];
+
+                count++;
+            }
+        }
+
+    sum /= max(1, count);
+
+    (*visibleRewards)[visibleColumnIndex] += sum;
+}
+
 void Predictor::initRandom(
     const Int3 &hiddenSize, // Hidden/output/prediction size
     const Array<VisibleLayerDesc> &visibleLayerDescs
@@ -168,7 +234,6 @@ void Predictor::initRandom(
     hiddenCs = IntBuffer(numHiddenColumns, 0);
 }
 
-// Activate the predictor (predict values)
 void Predictor::activate(
     const Array<const IntBuffer*> &inputCs // Hidden/output/prediction size
 ) {
@@ -177,7 +242,7 @@ void Predictor::activate(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
 
     // Copy to prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -187,7 +252,6 @@ void Predictor::activate(
     }
 }
 
-// Learning predictions (update weights)
 void Predictor::learn(
     const IntBuffer* hiddenTargetCs
 ) {
@@ -197,6 +261,20 @@ void Predictor::learn(
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCs);
+}
+
+void Predictor::generateRewards(
+    const IntBuffer* hiddenTargetCs,
+    FloatBuffer* visibleRewards,
+    int vli
+) {
+    const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+    int numVisibleColumns = vld.size.x * vld.size.y;
+
+    #pragma omp parallel for
+    for (int i = 0; i < numVisibleColumns; i++)
+        generateRewards(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCs, visibleRewards, vli);
 }
 
 void Predictor::write(

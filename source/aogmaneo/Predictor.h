@@ -48,7 +48,7 @@ private:
 
     // --- Kernels ---
 
-    void forward(
+    void activate(
         const Int2 &pos,
         const Array<const IntBuffer*> &inputCs
     );
@@ -58,13 +58,20 @@ private:
         const IntBuffer* hiddenTargetCs
     );
 
+    void generateRewards(
+        const Int2 &pos,
+        const IntBuffer* hiddenTargetCs,
+        FloatBuffer* visibleRewards,
+        int vli
+    );
+
 public:
     float alpha; // Learning rate
 
     // Defaults
     Predictor()
     :
-    alpha(0.5f)
+    alpha(0.1f)
     {}
 
     // Create with random initialization
@@ -75,12 +82,19 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCs // Hidden/output/prediction size
+        const Array<const IntBuffer*> &inputCs
     );
 
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCs
+    );
+
+    // Generate rewards from errors
+    void generateRewards(
+        const IntBuffer* hiddenTargetCs,
+        FloatBuffer* visibleRewards,
+        int vli
     );
 
     // Serialization
