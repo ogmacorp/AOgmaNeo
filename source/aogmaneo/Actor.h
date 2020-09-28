@@ -32,12 +32,18 @@ public:
     struct VisibleLayer {
         FloatBuffer weights; // Weights
         FloatBuffer traces; // Eligibility traces
+        FloatBuffer tracesBackup;
     };
 
 private:
     Int3 hiddenSize; // Hidden/output/action size
 
     IntBuffer hiddenCs; // Hidden states
+    IntBuffer hiddenCsPrev; // Hidden states
+    FloatBuffer hiddenActivations;
+
+    FloatBuffer hiddenValues;
+    FloatBuffer hiddenValuesPrev;
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -47,7 +53,8 @@ private:
 
     void activate(
         const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs
+        const Array<const IntBuffer*> &inputCs,
+        unsigned long* state
     );
 
     void learn(
@@ -56,8 +63,8 @@ private:
     );
 
 public:
-    float alpha; // Value learning rate
-    float gamma; // Discount factor
+    float alpha;
+    float gamma;
     float traceDecay;
 
     // Defaults
