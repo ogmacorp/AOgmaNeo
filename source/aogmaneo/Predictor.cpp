@@ -60,7 +60,7 @@ void Predictor::activate(
 
         sum /= max(1, count);
 
-        hiddenActivations[hiddenIndex] = sum;
+        hiddenActivations[hiddenIndex] = sigmoid(sum);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -82,7 +82,7 @@ void Predictor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        float delta = alpha * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(hiddenActivations[hiddenIndex]));
+        float delta = alpha * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -161,20 +161,20 @@ void Predictor::generateErrors(
 
             int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-            if (hiddenCs[hiddenColumnIndex] != (*hiddenTargetCs)[hiddenColumnIndex]) {
-                int hiddenIndexTarget = address3(Int3(hiddenPos.x, hiddenPos.y, (*hiddenTargetCs)[hiddenColumnIndex]), hiddenSize);
-                int hiddenIndexMax = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+            Int2 visibleCenter = project(hiddenPos, hToV);
 
-                Int2 visibleCenter = project(hiddenPos, hToV);
+            if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
+                for (int hc = 0; hc < hiddenSize.z; hc++) {
+                    int hiddenIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hc), hiddenSize);
 
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexTarget))];
-                    sum -= vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexMax))];
+                    float weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
 
-                    count++;
+                    sum += ((hc == (*hiddenTargetCs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex]) * weight;
                 }
+
+                count++;
             }
         }
 
