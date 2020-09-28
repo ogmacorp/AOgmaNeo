@@ -148,14 +148,11 @@ void Actor::learn(
 
     float reward = sigmoid((*hiddenErrors)[hiddenColumnIndex]) * 2.0f - 1.0f;
 
-    float maxActivation = hiddenActivations[address3(Int3(pos.x, pos.y, 0), hiddenSize)];
+    float value = hiddenActivations[address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize)];
 
-    for (int hc = 1; hc < hiddenSize.z; hc++)
-        maxActivation = max(maxActivation, hiddenActivations[address3(Int3(pos.x, pos.y, hc), hiddenSize)]);
+    float delta = alpha * (reward + gamma * value - hiddenValuesPrev[hiddenColumnIndex]);
 
-    float delta = alpha * (reward + gamma * maxActivation - hiddenValuesPrev[hiddenColumnIndex]);
-
-    hiddenValuesPrev[hiddenColumnIndex] = hiddenActivations[address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize)];
+    hiddenValuesPrev[hiddenColumnIndex] = value;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -255,8 +252,6 @@ void Actor::activate(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    hiddenCsPrev = hiddenCs;
-
     unsigned int baseState = rand();
 
     #pragma omp parallel for
@@ -323,7 +318,6 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
-    hiddenCsPrev.resize(numHiddenColumns);
     hiddenValuesPrev.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
