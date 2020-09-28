@@ -148,7 +148,7 @@ void Actor::learn(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float reward = (*hiddenErrors)[hiddenColumnIndex];
+    float reward = -abs((*hiddenErrors)[hiddenColumnIndex]);
 
     float delta = alpha * (reward + gamma * hiddenValues[hiddenColumnIndex] - hiddenValuesPrev[hiddenColumnIndex]);
 
