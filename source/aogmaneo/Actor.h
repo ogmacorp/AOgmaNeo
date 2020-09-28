@@ -63,6 +63,7 @@ private:
     );
 
 public:
+    float temperature;
     float alpha;
     float gamma;
     float traceDecay;
@@ -70,7 +71,8 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.1f),
+    temperature(0.1f),
+    alpha(0.01f),
     gamma(0.99f),
     traceDecay(0.98f)
     {}

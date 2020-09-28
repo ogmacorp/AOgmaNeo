@@ -71,7 +71,7 @@ void Actor::activate(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
+        hiddenActivations[hiddenIndex] = expf((hiddenActivations[hiddenIndex] - maxActivation) / temperature);
         
         total += hiddenActivations[hiddenIndex];
     }
@@ -148,7 +148,7 @@ void Actor::learn(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float reward = -abs((*hiddenErrors)[hiddenColumnIndex]);
+    float reward = (*hiddenErrors)[hiddenColumnIndex];
 
     float delta = alpha * (reward + gamma * hiddenValues[hiddenColumnIndex] - hiddenValuesPrev[hiddenColumnIndex]);
 
@@ -279,6 +279,7 @@ void Actor::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
+    writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
@@ -314,6 +315,7 @@ void Actor::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHidden = numHiddenColumns * hiddenSize.z;
     
+    reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
