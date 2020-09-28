@@ -188,21 +188,8 @@ void Actor::initRandom(
         int area = diam * diam;
 
         // If last one (recurrent), init conservatively
-        vl.weights.resize(numHidden * area * vld.size.z);
-        vl.traces.resize(vl.weights.size());
-
-        if (vld.recurrent) {
-            for (int i = 0; i < vl.weights.size(); i++) {
-                vl.weights[i] = randf(-0.001f, 0.001f);
-                vl.traces[i] = 0.0f;
-            }
-        }
-        else {
-            for (int i = 0; i < vl.weights.size(); i++) {
-                vl.weights[i] = randf(-1.0f, 1.0f);
-                vl.traces[i] = 0.0f;
-            }
-        }
+        vl.weights.resize(numHidden * area * vld.size.z, 0.0f);
+        vl.traces.resize(vl.weights.size(), 0.0f);
     }
 
     hiddenCs = IntBuffer(numHiddenColumns, 0);
