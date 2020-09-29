@@ -72,8 +72,8 @@ public:
     :
     temperature(0.01f),
     alpha(0.01f),
-    gamma(0.99f),
-    traceDecay(0.98f)
+    gamma(0.97f),
+    traceDecay(0.94f)
     {}
 
     // Initialized randomly
