@@ -60,12 +60,30 @@ void Predictor::activate(
 
         sum /= max(1, count);
 
-        hiddenActivations[hiddenIndex] = sigmoid(sum);
+        hiddenActivations[hiddenIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
+
+        total += hiddenActivations[hiddenIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenIndex] *= scale;
     }
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
