@@ -35,7 +35,6 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
         FloatBuffer traces;
-        FloatBuffer tracesBackup;
     };
 
 private:
