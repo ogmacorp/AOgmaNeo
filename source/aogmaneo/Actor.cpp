@@ -301,6 +301,7 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.tracesBackup[0]), vl.tracesBackup.size() * sizeof(float));
     }
 }
 
@@ -347,8 +348,10 @@ void Actor::read(
 
         vl.weights.resize(weightsSize);
         vl.traces.resize(weightsSize);
+        vl.tracesBackup.resize(weightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.tracesBackup[0]), vl.tracesBackup.size() * sizeof(float));
     }
 }

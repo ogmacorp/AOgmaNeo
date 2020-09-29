@@ -70,8 +70,8 @@ public:
     // Defaults
     Actor()
     :
-    temperature(1.0f),
-    alpha(0.1f),
+    temperature(0.01f),
+    alpha(0.01f),
     gamma(0.99f),
     traceDecay(0.98f)
     {}
