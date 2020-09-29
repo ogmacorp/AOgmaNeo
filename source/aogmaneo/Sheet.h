@@ -19,10 +19,13 @@ public:
 
         int radius;
 
+        bool recurrent;
+
         InputDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        recurrent(false)
         {}
     };
 

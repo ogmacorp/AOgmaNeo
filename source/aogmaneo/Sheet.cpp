@@ -21,10 +21,12 @@ void Sheet::initRandom(
     for (int i = 0; i < inputDescs.size(); i++) {
         aVlds[i].size = inputDescs[i].size;
         aVlds[i].radius = inputDescs[i].radius;
+        aVlds[i].recurrent = inputDescs[i].recurrent;
     }
 
     aVlds[inputDescs.size()].size = actorSize;
     aVlds[inputDescs.size()].radius = recurrentRadius;
+    aVlds[inputDescs.size()].recurrent = true;
 
     actor.initRandom(actorSize, aVlds);
 

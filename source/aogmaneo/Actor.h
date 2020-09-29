@@ -20,25 +20,28 @@ public:
 
         int radius; // Radius onto input
 
+        unsigned char recurrent;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        recurrent(false)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights; // Weights
-        FloatBuffer traces; // Eligibility traces
+        FloatBuffer weights;
+        FloatBuffer traces;
+        FloatBuffer tracesBackup;
     };
 
 private:
     Int3 hiddenSize; // Hidden/output/action size
 
     IntBuffer hiddenCs; // Hidden states
-    FloatBuffer hiddenActivations;
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -48,8 +51,7 @@ private:
 
     void activate(
         const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs,
-        unsigned long* state
+        const Array<const IntBuffer*> &inputCs
     );
 
     void learn(

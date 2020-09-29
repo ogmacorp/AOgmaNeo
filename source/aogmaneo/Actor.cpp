@@ -12,11 +12,11 @@ using namespace aon;
 
 void Actor::activate(
     const Int2 &pos,
-    const Array<const IntBuffer*> &inputCs,
-    unsigned long* state
+    const Array<const IntBuffer*> &inputCs
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -61,40 +61,15 @@ void Actor::activate(
 
         sum /= max(1, count);
 
-        hiddenActivations[hiddenIndex] = sum;
-
-        maxActivation = max(maxActivation, sum);
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
-        
-        total += hiddenActivations[hiddenIndex];
-    }
-
-    float cusp = randf(state) * total;
-
-    int selectIndex = 0;
-    float sumSoFar = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-        sumSoFar += hiddenActivations[hiddenIndex];
-
-        if (sumSoFar >= cusp) {
-            selectIndex = hc;
-
-            break;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
+            maxIndex = hc;
         }
     }
     
-    hiddenCs[hiddenColumnIndex] = selectIndex;
+    hiddenCs[hiddenColumnIndex] = maxIndex;
 
+    // Update traces
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
@@ -123,14 +98,14 @@ void Actor::activate(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
-
                     int inC = (*inputCs[vli])[visibleColumnIndex];
+
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inC && hc == selectIndex)
+                        if (vc == inC && hc == maxIndex)
                             vl.traces[wi] = 1.0f;
                         else
                             vl.traces[wi] *= traceDecay;
@@ -181,7 +156,8 @@ void Actor::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] += delta * vl.traces[wi];
+                        vl.weights[wi] += delta * vl.tracesBackup[wi];
+                        vl.tracesBackup[wi] = vl.traces[wi];
                     }
                 }
         }
@@ -213,13 +189,26 @@ void Actor::initRandom(
         int area = diam * diam;
 
         // If last one (recurrent), init conservatively
-        vl.weights.resize(numHidden * area * vld.size.z, 0.0f);
-        vl.traces.resize(vl.weights.size(), 0.0f);
+        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.traces.resize(vl.weights.size());
+
+        if (vld.recurrent) {
+            for (int i = 0; i < vl.weights.size(); i++) {
+                vl.weights[i] = randf(-0.001f, 0.001f);
+                vl.traces[i] = 0.0f;
+            }
+        }
+        else {
+            for (int i = 0; i < vl.weights.size(); i++) {
+                vl.weights[i] = randf(-1.0f, 1.0f);
+                vl.traces[i] = 0.0f;
+            }
+        }
+
+        vl.tracesBackup = vl.traces;
     }
 
     hiddenCs = IntBuffer(numHiddenColumns, 0);
-
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 }
 
 void Actor::activate(
@@ -227,14 +216,9 @@ void Actor::activate(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    unsigned int baseState = rand();
-
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned long state = baseState + i * 12345;
-
-        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, &state);
-    }
+    for (int i = 0; i < numHiddenColumns; i++)
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
 }
 
 void Actor::learn(
@@ -273,6 +257,7 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.tracesBackup[0]), vl.tracesBackup.size() * sizeof(float));
     }
 }
 
@@ -290,8 +275,6 @@ void Actor::read(
     hiddenCs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
-
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -314,8 +297,10 @@ void Actor::read(
 
         vl.weights.resize(weightsSize);
         vl.traces.resize(weightsSize);
+        vl.tracesBackup.resize(weightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.tracesBackup[0]), vl.tracesBackup.size() * sizeof(float));
     }
 }
