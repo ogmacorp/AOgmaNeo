@@ -66,7 +66,7 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.1f),
+    alpha(0.5f),
     traceDecay(0.98f)
     {}
 
