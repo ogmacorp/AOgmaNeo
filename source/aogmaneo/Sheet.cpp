@@ -11,10 +11,10 @@
 using namespace aon;
 
 void Sheet::initRandom(
-    const Array<IODesc> &inputDescs,
+    const Array<InputDesc> &inputDescs,
     int recurrentRadius,
-    const Array<IODesc> &outputDescs,
-    Int3 actorSize
+    const Array<OutputDesc> &outputDescs,
+    const Int3 &actorSize
 ) {
     Array<Actor::VisibleLayerDesc> aVlds(inputDescs.size() + 1);
 
