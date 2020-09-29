@@ -14,7 +14,7 @@ void Sheet::initRandom(
     const Array<InputDesc> &inputDescs,
     int recurrentRadius,
     const Array<OutputDesc> &outputDescs,
-    Int3 actorSize
+    const Int3 &actorSize
 ) {
     Array<Actor::VisibleLayerDesc> aVlds(inputDescs.size() + 1);
 

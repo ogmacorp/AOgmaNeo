@@ -48,7 +48,7 @@ public:
         const Array<InputDesc> &inputDescs,
         int recurrentRadius,
         const Array<OutputDesc> &outputDescs,
-        Int3 actorSize
+        const Int3 &actorSize
     );
 
     void step(
