@@ -38,6 +38,7 @@ private:
     Int3 hiddenSize; // Hidden/output/action size
 
     IntBuffer hiddenCs; // Hidden states
+    FloatBuffer hiddenActivations;
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -47,7 +48,8 @@ private:
 
     void activate(
         const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs
+        const Array<const IntBuffer*> &inputCs,
+        unsigned long* state
     );
 
     void learn(
@@ -62,7 +64,7 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.01f),
+    alpha(0.1f),
     traceDecay(0.98f)
     {}
 

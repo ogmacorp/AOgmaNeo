@@ -12,11 +12,11 @@ using namespace aon;
 
 void Actor::activate(
     const Int2 &pos,
-    const Array<const IntBuffer*> &inputCs
+    const Array<const IntBuffer*> &inputCs,
+    unsigned long* state
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -61,15 +61,40 @@ void Actor::activate(
 
         sum /= max(1, count);
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
+        hiddenActivations[hiddenIndex] = sum;
+
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenIndex] = expf(hiddenActivations[hiddenIndex] - maxActivation);
+        
+        total += hiddenActivations[hiddenIndex];
+    }
+
+    float cusp = randf(state) * total;
+
+    int selectIndex = 0;
+    float sumSoFar = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+        sumSoFar += hiddenActivations[hiddenIndex];
+
+        if (sumSoFar >= cusp) {
+            selectIndex = hc;
+
+            break;
         }
     }
     
-    hiddenCs[hiddenColumnIndex] = maxIndex;
+    hiddenCs[hiddenColumnIndex] = selectIndex;
 
-    // Update traces
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
@@ -98,14 +123,14 @@ void Actor::activate(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inC = (*inputCs[vli])[visibleColumnIndex];
-
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+
+                    int inC = (*inputCs[vli])[visibleColumnIndex];
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inC && hc == maxIndex)
+                        if (vc == inC && hc == selectIndex)
                             vl.traces[wi] = 1.0f;
                         else
                             vl.traces[wi] *= traceDecay;
@@ -193,6 +218,8 @@ void Actor::initRandom(
     }
 
     hiddenCs = IntBuffer(numHiddenColumns, 0);
+
+    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 }
 
 void Actor::activate(
@@ -200,9 +227,14 @@ void Actor::activate(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
+    unsigned int baseState = rand();
+
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
+    for (int i = 0; i < numHiddenColumns; i++) {
+        unsigned long state = baseState + i * 12345;
+
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, &state);
+    }
 }
 
 void Actor::learn(
@@ -258,6 +290,8 @@ void Actor::read(
     hiddenCs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+
+    hiddenActivations = FloatBuffer(numHidden, 0.0f);
     
     int numVisibleLayers = visibleLayers.size();
 
