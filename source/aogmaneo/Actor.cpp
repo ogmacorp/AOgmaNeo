@@ -12,8 +12,7 @@ using namespace aon;
 
 void Actor::activate(
     const Int2 &pos,
-    const Array<const IntBuffer*> &inputCs,
-    unsigned long* state
+    const Array<const IntBuffer*> &inputCs
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -229,14 +228,9 @@ void Actor::activate(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    unsigned int baseState = rand();
-
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned long state = baseState + i * 12345;
-
-        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, &state);
-    }
+    for (int i = 0; i < numHiddenColumns; i++)
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs);
 }
 
 void Actor::learn(

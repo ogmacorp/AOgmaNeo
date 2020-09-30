@@ -55,8 +55,7 @@ private:
 
     void activate(
         const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs,
-        unsigned long* state
+        const Array<const IntBuffer*> &inputCs
     );
 
     void learn(
