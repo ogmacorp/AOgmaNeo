@@ -17,6 +17,7 @@ void Actor::activate(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int maxIndex = 0;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -63,37 +64,13 @@ void Actor::activate(
 
         hiddenActivations[hiddenIndex] = sum;
 
-        maxActivation = max(maxActivation, sum);
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-        hiddenProbabilities[hiddenIndex] = expf((hiddenActivations[hiddenIndex] - maxActivation) / temperature);
-        
-        total += hiddenProbabilities[hiddenIndex];
-    }
-
-    float cusp = randf(state) * total;
-
-    int selectIndex = 0;
-    float sumSoFar = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
-
-        sumSoFar += hiddenProbabilities[hiddenIndex];
-
-        if (sumSoFar >= cusp) {
-            selectIndex = hc;
-
-            break;
+        if (sum > maxActivation) {
+            maxActivation = sum;
+            maxIndex = hc;
         }
     }
     
-    hiddenCs[hiddenColumnIndex] = selectIndex;
+    hiddenCs[hiddenColumnIndex] = maxIndex;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -130,7 +107,7 @@ void Actor::activate(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inC && hc == selectIndex)
+                        if (vc == inC && hc == maxIndex)
                             vl.traces[wi] = 1.0f;
                         else
                             vl.traces[wi] *= traceDecay;
@@ -223,17 +200,9 @@ void Actor::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
         vl.traces.resize(vl.weights.size());
 
-        if (vli != visibleLayers.size() - 1) {
-            for (int i = 0; i < vl.weights.size(); i++) {
-                vl.weights[i] = randf(-1.0f, 1.0f);
-                vl.traces[i] = 0.0f;
-            }
-        }
-        else {
-            for (int i = 0; i < vl.weights.size(); i++) {
-                vl.weights[i] = randf(-0.01f, 0.01f);
-                vl.traces[i] = 0.0f;
-            }
+        for (int i = 0; i < vl.weights.size(); i++) {
+            vl.weights[i] = randf(-0.01f, 0.01f);
+            vl.traces[i] = 0.0f;
         }
 
         vl.tracesBackup = vl.traces;
@@ -277,7 +246,6 @@ void Actor::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
@@ -313,7 +281,6 @@ void Actor::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHidden = numHiddenColumns * hiddenSize.z;
     
-    reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
