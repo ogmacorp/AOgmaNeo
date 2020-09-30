@@ -229,14 +229,14 @@ inline Int2 project(
     const Int2 &pos, // Position
     const Float2 &toScalars // Ratio of sizes
 ) {
-    return Int2(pos.x * toScalars.x + 0.5f, pos.y * toScalars.y + 0.5f);
+    return Int2((pos.x + 0.5f) * toScalars.x, (pos.y + 0.5f) * toScalars.y);
 }
 
 inline Int2 projectf(
     const Float2 &pos, // Position
     const Float2 &toScalars // Ratio of sizes
 ) {
-    return Int2(pos.x * toScalars.x + 0.5f, pos.y * toScalars.y + 0.5f);
+    return Int2((pos.x + 0.5f) * toScalars.x, (pos.y + 0.5f) * toScalars.y);
 }
 
 // --- Addressing ---
