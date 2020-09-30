@@ -81,6 +81,47 @@ void Sheet::step(
         predictors[i].activate(predictorInputCs);
 }
 
+void Sheet::step(
+    const Array<const IntBuffer*> &inputCs,
+    const Array<const IntBuffer*> &targetCs,
+    Array<IntBuffer> &intermediates,
+    bool learnEnabled
+) {
+    if (learnEnabled) {
+        actorHiddenErrors.fill(0.0f);
+
+        for (int i = 0; i < predictors.size(); i++) {
+            predictors[i].generateErrors(targetCs[i], &actorHiddenErrors, 0);
+
+            predictors[i].learn(targetCs[i]);
+        }
+    }
+
+    Array<const IntBuffer*> actorInputCs(inputCs.size() + 1);
+
+    for (int i = 0; i < inputCs.size(); i++)
+        actorInputCs[i] = inputCs[i];
+
+    actorInputCs[inputCs.size()] = &actorHiddenCsPrev;
+
+    // Sub steps
+    for (int ss = 0; ss < intermediates.size(); ss++) {
+        actor.activate(actorInputCs);
+
+        actorHiddenCsPrev = actor.getHiddenCs();
+
+        intermediates[ss] = actor.getHiddenCs();
+    }
+    
+    actor.learn(&actorHiddenErrors);
+
+    Array<const IntBuffer*> predictorInputCs(1);
+    predictorInputCs[0] = &actor.getHiddenCs();
+
+    for (int i = 0; i < predictors.size(); i++)
+        predictors[i].activate(predictorInputCs);
+}
+
 void Sheet::write(
     StreamWriter &writer
 ) const {

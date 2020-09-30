@@ -58,6 +58,13 @@ public:
         bool learnEnabled
     );
 
+    void step(
+        const Array<const IntBuffer*> &inputCs,
+        const Array<const IntBuffer*> &targetCs,
+        Array<IntBuffer> &intermediates,
+        bool learnEnabled
+    );
+
     // Serialization
     void write(
         StreamWriter &writer
