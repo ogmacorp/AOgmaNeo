@@ -89,6 +89,8 @@ public:
         const FloatBuffer* hiddenErrors
     );
 
+    void clearTraces();
+
     // Serialization
     void write(
         StreamWriter &writer

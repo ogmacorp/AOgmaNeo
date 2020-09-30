@@ -242,6 +242,11 @@ void Actor::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenErrors);
 }
 
+void Actor::clearTraces() {
+    for (int vli = 0; vli < visibleLayers.size(); vli++)
+        visibleLayers[vli].traces.fill(0.0f);
+}
+
 void Actor::write(
     StreamWriter &writer
 ) const {
