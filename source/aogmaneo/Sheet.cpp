@@ -48,7 +48,8 @@ void Sheet::step(
     const Array<const IntBuffer*> &inputCs,
     const Array<const IntBuffer*> &targetCs,
     int subSteps,
-    bool learnEnabled
+    bool learnEnabled,
+    bool clearState
 ) {
     if (learnEnabled) {
         actorHiddenErrors.fill(0.0f);
@@ -66,6 +67,11 @@ void Sheet::step(
         actorInputCs[i] = inputCs[i];
 
     actorInputCs[inputCs.size()] = &actorHiddenCsPrev;
+
+    if (clearState) {
+        actorHiddenCsPrev.fill(0);
+        actor.clearTraces();
+    }
 
     // Sub steps
     for (int ss = 0; ss < subSteps; ss++) {
@@ -87,7 +93,8 @@ void Sheet::step(
     const Array<const IntBuffer*> &inputCs,
     const Array<const IntBuffer*> &targetCs,
     Array<IntBuffer> &intermediates,
-    bool learnEnabled
+    bool learnEnabled,
+    bool clearState
 ) {
     if (learnEnabled) {
         actorHiddenErrors.fill(0.0f);
@@ -105,6 +112,11 @@ void Sheet::step(
         actorInputCs[i] = inputCs[i];
 
     actorInputCs[inputCs.size()] = &actorHiddenCsPrev;
+
+    if (clearState) {
+        actorHiddenCsPrev.fill(0);
+        actor.clearTraces();
+    }
 
     // Sub steps
     for (int ss = 0; ss < intermediates.size(); ss++) {

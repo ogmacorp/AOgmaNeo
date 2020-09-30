@@ -58,14 +58,16 @@ public:
         const Array<const IntBuffer*> &inputCs,
         const Array<const IntBuffer*> &targetCs,
         int subSteps,
-        bool learnEnabled
+        bool learnEnabled,
+        bool clearState
     );
 
     void step(
         const Array<const IntBuffer*> &inputCs,
         const Array<const IntBuffer*> &targetCs,
         Array<IntBuffer> &intermediates,
-        bool learnEnabled
+        bool learnEnabled,
+        bool clearState
     );
 
     // Serialization
