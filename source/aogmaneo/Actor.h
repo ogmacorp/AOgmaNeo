@@ -73,8 +73,8 @@ public:
     Actor()
     :
     alpha(0.01f),
-    gamma(0.99f),
-    traceDecay(0.98f)
+    gamma(0.95f),
+    traceDecay(0.9f)
     {}
 
     // Initialized randomly
