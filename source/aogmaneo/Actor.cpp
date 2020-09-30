@@ -218,7 +218,6 @@ void Actor::initRandom(
     hiddenCs = IntBuffer(numHiddenColumns, 0);
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
-    hiddenProbabilities = FloatBuffer(numHidden, 0.0f);
 
     hiddenValuesPrev = FloatBuffer(numHiddenColumns, 0.0f);
 }
@@ -294,7 +293,6 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hiddenValuesPrev[0]), hiddenValuesPrev.size() * sizeof(float));
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
-    hiddenProbabilities = FloatBuffer(numHidden, 0.0f);
     
     int numVisibleLayers = visibleLayers.size();
 

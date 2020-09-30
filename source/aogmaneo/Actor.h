@@ -43,7 +43,6 @@ private:
 
     IntBuffer hiddenCs; // Hidden states
     FloatBuffer hiddenActivations;
-    FloatBuffer hiddenProbabilities;
 
     FloatBuffer hiddenValuesPrev;
 
