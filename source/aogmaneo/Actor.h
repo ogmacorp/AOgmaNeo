@@ -42,9 +42,6 @@ private:
     Int3 hiddenSize; // Hidden/output/action size
 
     IntBuffer hiddenCs; // Hidden states
-    FloatBuffer hiddenActivations;
-
-    FloatBuffer hiddenValuesPrev;
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -71,7 +68,6 @@ public:
     Actor()
     :
     alpha(0.01f),
-    gamma(0.97f),
     traceDecay(0.95f)
     {}
 
