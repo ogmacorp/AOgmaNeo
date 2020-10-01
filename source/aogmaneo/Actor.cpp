@@ -105,7 +105,7 @@ void Actor::activate(
                         int wi = vc + wiStart;
 
                         if (vc == inC && hc == maxIndex)
-                            vl.traces[wi] = (hc == maxIndex ? vl.traces[wi] + 1.0f : 0.0f);
+                            vl.traces[wi] = 1.0f;
                         else
                             vl.traces[wi] *= traceDecay;
                     }
