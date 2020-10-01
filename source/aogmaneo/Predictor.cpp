@@ -229,7 +229,7 @@ void Predictor::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.01f);
+            vl.weights[i] = randf(-0.001f, 0.001f);
 
         vl.inputCsPrev = IntBuffer(numVisibleColumns, 0);
     }
