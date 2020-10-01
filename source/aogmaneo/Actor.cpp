@@ -266,9 +266,11 @@ void Actor::learn(
                 }
         }
 
-        hiddenActivations[hiddenIndex] = sum / max(1, count);
+        sum /= max(1, count);
 
-        maxActivation = max(maxActivation, hiddenActivations[hiddenIndex]);
+        hiddenActivations[hiddenIndex] = sum;
+
+        maxActivation = max(maxActivation, sum);
     }
 
     float total = 0.0f;
