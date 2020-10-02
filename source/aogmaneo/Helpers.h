@@ -8,6 +8,8 @@
 
 #pragma once
 
+#define USE_OMP
+
 #include "Ptr.h"
 #include "Array.h"
 

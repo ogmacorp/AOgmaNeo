@@ -20,8 +20,6 @@ endif()
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-add_compile_definitions(USE_OMP)
-
 include_directories("${PROJECT_SOURCE_DIR}/source")
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
