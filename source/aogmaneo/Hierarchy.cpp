@@ -61,6 +61,7 @@ void Hierarchy::initRandom(
     // Create layers
     scLayers.resize(layerDescs.size());
     pLayers.resize(layerDescs.size());
+    errors.resize(layerDescs.size());
 
     ticks.resize(layerDescs.size(), 0);
 
@@ -184,6 +185,8 @@ void Hierarchy::initRandom(
         
         // Create the sparse coding layer
         scLayers[l].initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
+
+        errors[l] = FloatBuffer(layerDescs[l].hiddenSize.x * layerDescs[l].hiddenSize.y, 0.0f);
     }
 }
 
@@ -227,8 +230,17 @@ void Hierarchy::step(
                     layerInputCs[index++] = &histories[l][i][t];
             }
 
+            // Clear hidden errors
+            errors[l].fill(0.0f);
+
+            // Accumulate
+            for (int p = 0; p < pLayers[l].size(); p++) {
+                if (pLayers[l][p] != nullptr)
+                    pLayers[l][p]->generateErrors(l == 0 ? &histories[l][p][0] : &histories[l][0][p], &errors[l], 0);
+            }
+
             // Activate sparse coder
-            scLayers[l].step(layerInputCs, learnEnabled);
+            scLayers[l].step(layerInputCs, &errors[l], learnEnabled);
 
             // Add to next layer's history
             if (l < scLayers.size() - 1) {
@@ -356,6 +368,7 @@ void Hierarchy::read(
 
     scLayers.resize(numLayers);
     pLayers.resize(numLayers);
+    errors.resize(numLayers);
 
     histories.resize(numLayers);
     
@@ -412,6 +425,8 @@ void Hierarchy::read(
                 pLayers[l][v]->read(reader);
             }
         }
+
+        errors[l] = FloatBuffer(scLayers[l].getHiddenCs().size(), 0.0f);
     }
 
     // Actors

@@ -53,6 +53,7 @@ private:
     Array<SparseCoder> scLayers;
     Array<Array<Ptr<Predictor>>> pLayers;
     Array<Ptr<Actor>> aLayers;
+    Array<FloatBuffer> errors;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
