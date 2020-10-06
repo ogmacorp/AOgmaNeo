@@ -55,13 +55,11 @@ private:
 
 public:
     float alpha; // Weight rate
-    float beta; // Bias rate
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f),
-    beta(0.001f)
+    alpha(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
