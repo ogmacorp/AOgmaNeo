@@ -54,8 +54,9 @@ void Predictor::activate(
                     int inC = (*inputCs[vli])[visibleColumnIndex];
    
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    count++;
                 }
+
+            count += (iterUpperBound.x -  iterLowerBound.x) * (iterUpperBound.y - iterLowerBound.y);
         }
 
         sum /= max(1, count);

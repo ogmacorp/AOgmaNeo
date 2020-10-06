@@ -16,7 +16,7 @@ void Actor::activate(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int maxIndex = 0;
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -52,16 +52,15 @@ void Actor::activate(
 
                     int inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    float weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
-                    
-                    sum += weight;
-                    count++;
+                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
+
+            count += (iterUpperBound.x -  iterLowerBound.x) * (iterUpperBound.y - iterLowerBound.y);
         }
 
         sum /= max(1, count);
 
-        if (sum > maxActivation) {
+        if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
