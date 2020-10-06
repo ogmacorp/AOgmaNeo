@@ -15,9 +15,8 @@
 namespace aon {
 // Type of hierarchy input layer
 enum InputType {
-    none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 0,
+    action = 1
 };
 
 // A SPH
@@ -51,7 +50,7 @@ public:
 private:
     // Layers
     Array<SparseCoder> scLayers;
-    Array<Array<Ptr<Predictor>>> pLayers;
+    Array<Array<Predictor>> pLayers;
     Array<Ptr<Actor>> aLayers;
     Array<FloatBuffer> errors;
 
@@ -119,7 +118,7 @@ public:
         if (aLayers[i] != nullptr) // If is an action layer
             return aLayers[i]->getHiddenCs();
 
-        return pLayers[0][i]->getHiddenCs();
+        return pLayers[0][i].getHiddenCs();
     }
 
     // Whether this layer received on update this timestep
@@ -163,14 +162,14 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Ptr<Predictor>> &getPLayers(
+    Array<Predictor> &getPLayers(
         int l // Layer index
     ) {
         return pLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Ptr<Predictor>> &getPLayers(
+    const Array<Predictor> &getPLayers(
         int l // Layer index
     ) const {
         return pLayers[l];
