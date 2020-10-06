@@ -119,7 +119,9 @@ void Actor::learn(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float reward = (*hiddenErrors)[hiddenColumnIndex];
+    float reward = (*hiddenErrors)[hiddenColumnIndex] - hiddenBaselines[hiddenColumnIndex];
+
+    hiddenBaselines[hiddenColumnIndex] += beta * reward;
 
     float delta = alpha * reward;
 
@@ -206,6 +208,8 @@ void Actor::initRandom(
     }
 
     hiddenCs = IntBuffer(numHiddenColumns, 0);
+
+    hiddenBaselines = FloatBuffer(numHiddenColumns, 0.0f);
 }
 
 void Actor::activate(
@@ -239,10 +243,11 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenBaselines[0]), hiddenBaselines.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -272,12 +277,14 @@ void Actor::read(
     int numHidden = numHiddenColumns * hiddenSize.z;
     
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
+    hiddenBaselines.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenBaselines[0]), hiddenBaselines.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
