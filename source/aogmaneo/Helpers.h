@@ -22,9 +22,9 @@ inline float ceilf(
     float x
 ) {
     if (x > 0.0f)
-        return (x - static_cast<int>(x)) > 0 ? static_cast<int>(x + 1) : static_cast<int>(x);
+        return (x - static_cast<int>(x)) > 0.0f ? static_cast<int>(x + 1) : static_cast<int>(x);
 
-    return (x - static_cast<int>(x)) < 0 ? static_cast<int>(x - 1) : static_cast<int>(x);
+    return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
 inline int roundftoi(
@@ -228,14 +228,14 @@ inline Int2 project(
     const Int2 &pos, // Position
     const Float2 &toScalars // Ratio of sizes
 ) {
-    return Int2(pos.x * toScalars.x + 0.5f, pos.y * toScalars.y + 0.5f);
+    return Int2((pos.x + 0.5f) * toScalars.x, (pos.y + 0.5f) * toScalars.y);
 }
 
 inline Int2 projectf(
     const Float2 &pos, // Position
     const Float2 &toScalars // Ratio of sizes
 ) {
-    return Int2(pos.x * toScalars.x + 0.5f, pos.y * toScalars.y + 0.5f);
+    return Int2((pos.x + 0.5f) * toScalars.x, (pos.y + 0.5f) * toScalars.y);
 }
 
 // --- Addressing ---
@@ -355,45 +355,6 @@ float randf(
     float high,
     unsigned long* state = &globalState
 );
-
-template <typename T>
-T randBits(
-    unsigned long* state = &globalState
-) {
-    unsigned char numBytes = sizeof(T);
-
-    T out = 0;
-
-    for (unsigned char i = 0; i < numBytes; i++) {
-        unsigned char b = rand(state) % 256;
-
-        out = out | b;
-
-        if (i < numBytes - 1)
-            out <<= 8;
-    }
-
-    return out;
-}
-
-template <typename T>
-T randBits(
-    float ratio,
-    unsigned long* state = &globalState
-) {
-    unsigned char numBits = sizeof(T) * 8;
-
-    T out = 0;
-
-    for (unsigned char i = 0; i < numBits; i++) {
-        out = out | (randf(state) < ratio ? 1 : 0);
-
-        if (i < numBits - 1)
-            out <<= 1;
-    }
-
-    return out;
-}
 
 // --- Weight mutation ---
 
