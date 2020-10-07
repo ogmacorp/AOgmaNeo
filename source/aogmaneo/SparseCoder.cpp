@@ -54,6 +54,12 @@ void SparseCoder::forward(
                     vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexPrev))] += delta;
                 }
         }
+
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+
+            hiddenBiases[hiddenIndex] += beta * (1.0f / hiddenSize.z - (hc == hiddenCs[hiddenColumnIndex] ? 1.0f : 0.0f));
+        }
     }
 
     int maxIndex = 0;
@@ -62,7 +68,7 @@ void SparseCoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        float sum = hiddenBiases[hiddenIndex];
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -103,7 +109,6 @@ void SparseCoder::forward(
     }
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
-
 }
 
 void SparseCoder::initRandom(
@@ -142,6 +147,8 @@ void SparseCoder::initRandom(
 
     // Hidden Cs
     hiddenCs = IntBuffer(numHiddenColumns, 0);
+
+    hiddenBiases = FloatBuffer(numHidden, 0.0f);
 }
 
 // Activate the sparse coder (perform sparse coding)
@@ -172,6 +179,7 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -204,8 +212,10 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
+    hiddenBiases.resize(numHidden);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
