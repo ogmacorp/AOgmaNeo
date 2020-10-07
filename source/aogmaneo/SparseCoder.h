@@ -39,7 +39,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCs; // Hidden states
-    FloatBuffer hiddenBiases;
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -55,14 +54,12 @@ private:
     );
 
 public:
-    float alpha; // Weight rate
-    float beta; // Bias rate
+    float alpha; // Learning rate
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f),
-    beta(0.1f)
+    alpha(0.001f)
     {}
 
     // Create a sparse coding layer with random initialization
