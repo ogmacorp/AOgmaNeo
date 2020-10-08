@@ -105,7 +105,6 @@ void SparseCoder::forward(
     }
 
     hiddenCs[hiddenColumnIndex] = maxIndex;
-
 }
 
 void SparseCoder::initRandom(
