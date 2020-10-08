@@ -21,7 +21,7 @@ void SparseCoder::forward(
     if (learnEnabled) {
         int hiddenIndexPrev = address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = alpha * (*hiddenErrors)[hiddenColumnIndex];
+        float delta = alpha * (sigmoid((*hiddenErrors)[hiddenColumnIndex]) * 2.0f - 1.0f);
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
