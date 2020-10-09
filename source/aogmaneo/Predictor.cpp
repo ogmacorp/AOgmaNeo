@@ -190,7 +190,7 @@ void Predictor::generateErrors(
 
                     float weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
 
-                    sum += ((hc == (*hiddenTargetCs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex]) * weight;
+                    sum += ((hc == (*hiddenTargetCs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex]) * (sigmoid(weight) * 2.0f - 1.0f);
                 }
 
                 count++;
