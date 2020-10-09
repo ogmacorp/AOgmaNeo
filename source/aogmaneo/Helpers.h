@@ -19,6 +19,10 @@ float expf(
     float x
 );
 
+float sqrtf(
+    float x
+);
+
 inline float ceilf(
     float x
 ) {
