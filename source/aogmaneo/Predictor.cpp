@@ -56,7 +56,7 @@ void Predictor::activate(
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
 
-            count += (iterUpperBound.x -  iterLowerBound.x) * (iterUpperBound.y - iterLowerBound.y);
+            count += (iterUpperBound.x - iterLowerBound.x) * (iterUpperBound.y - iterLowerBound.y);
         }
 
         sum /= max(1, count);
@@ -230,7 +230,7 @@ void Predictor::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.001f, 0.001f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCsPrev = IntBuffer(numVisibleColumns, 0);
     }

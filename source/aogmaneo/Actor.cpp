@@ -103,8 +103,8 @@ void Actor::activate(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inC)
-                            vl.traces[wi] = (hc == maxIndex ? 1.0f : 0.0f); 
+                        if (vc == inC && hc == maxIndex)
+                            vl.traces[wi] = 1.0f; 
                         else
                             vl.traces[wi] *= traceDecay;
                     }
@@ -121,7 +121,7 @@ void Actor::learn(
 
     float reward = (*hiddenErrors)[hiddenColumnIndex];
 
-    float delta = alpha * max(0.0f, reward);
+    float delta = alpha * reward;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -156,7 +156,7 @@ void Actor::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] += delta * (vl.traces[wi] - vl.weights[wi]);
+                        vl.weights[wi] += delta * vl.traces[wi];
                     }
                 }
         }
