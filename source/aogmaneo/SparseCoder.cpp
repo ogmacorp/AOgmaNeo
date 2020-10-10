@@ -50,7 +50,7 @@ void SparseCoder::forward(
 
                     int inC = vl.inputCsPrev[visibleColumnIndex];
 
-                    vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexPrev))] += delta;
+                    vl.weights0[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexPrev))] += delta;
                 }
         }
     }
@@ -90,7 +90,9 @@ void SparseCoder::forward(
 
                     int inC = (*inputCs[vli])[visibleColumnIndex];
 
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    int wi = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+
+                    sum += vl.weights0[wi] + vl.weights1[wi];
                 }
         }
 
@@ -153,7 +155,7 @@ void SparseCoder::learn(
                 if (inBounds(pos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(pos.x - visibleCenter.x + vld.radius, pos.y - visibleCenter.y + vld.radius);
 
-                    sum += vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    sum += vl.weights1[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                     count++;
                 }
             }
@@ -191,7 +193,7 @@ void SparseCoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
                     
-                        vl.weights[wi] += delta;
+                        vl.weights1[wi] += delta;
                     }
                 }
         }
@@ -223,11 +225,14 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.weights0.resize(numHidden * area * vld.size.z);
+        vl.weights1.resize(vl.weights0.size());
 
         // Initialize to random values
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.01f);
+        for (int i = 0; i < vl.weights0.size(); i++) {
+            vl.weights0[i] = randf(-0.01f, 0.01f);
+            vl.weights1[i] = randf(-0.01f, 0.01f);
+        }
 
         vl.inputCsPrev = IntBuffer(numVisibleColumns, 0);
 
@@ -289,11 +294,12 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int weightsSize = vl.weights.size();
+        int weightsSize = vl.weights0.size();
 
         writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(int));
     }
@@ -334,9 +340,11 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
 
-        vl.weights.resize(weightsSize);
+        vl.weights0.resize(weightsSize);
+        vl.weights1.resize(weightsSize);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(float));
 
         vl.inputCsPrev.resize(numVisibleColumns);
 
