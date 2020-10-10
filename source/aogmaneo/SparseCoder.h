@@ -33,6 +33,8 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCsPrev;
+
+        FloatBuffer reconstruction;
     };
 
 private:
@@ -51,6 +53,12 @@ private:
         const Array<const IntBuffer*> &inputCs,
         const FloatBuffer* hiddenErrors,
         bool learnEnabled
+    );
+
+    void learn(
+        const Int2 &pos,
+        const IntBuffer* inputCs,
+        int vli
     );
 
 public:
