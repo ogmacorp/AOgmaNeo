@@ -57,7 +57,6 @@ private:
 
     void learn(
         const Int2 &pos,
-        const IntBuffer* inputCs,
         int vli
     );
 

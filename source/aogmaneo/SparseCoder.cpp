@@ -105,7 +105,6 @@ void SparseCoder::forward(
 
 void SparseCoder::learn(
     const Int2 &pos,
-    const IntBuffer* inputCs,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -169,7 +168,7 @@ void SparseCoder::learn(
         }
     }
 
-    int targetC = (*inputCs)[visibleColumnIndex];
+    int targetC = vl.inputCsPrev[visibleColumnIndex];
 
     if (maxIndex != targetC) {
         for (int vc = 0; vc < vld.size.z; vc++) {
@@ -245,10 +244,6 @@ void SparseCoder::step(
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    
-    #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, hiddenErrors, learnEnabled);
 
     if (learnEnabled) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -258,9 +253,13 @@ void SparseCoder::step(
         
             #pragma omp parallel for
             for (int i = 0; i < numVisibleColumns; i++)
-                learn(Int2(i / vld.size.y, i % vld.size.y), inputCs[vli], vli);
+                learn(Int2(i / vld.size.y, i % vld.size.y), vli);
         }
     }
+    
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++)
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, hiddenErrors, learnEnabled);
 
     // Update prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
