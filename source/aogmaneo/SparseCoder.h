@@ -62,12 +62,14 @@ private:
     );
 
 public:
-    float alpha; // Learning rate
+    float alpha; // Error learning rate
+    float beta; // Recon learning rate
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f)
+    alpha(0.01f),
+    beta(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
