@@ -21,7 +21,7 @@ void SparseCoder::forward(
     if (learnEnabled) {
         int hiddenIndexPrev = address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
 
-        float error = (*hiddenErrors)[hiddenColumnIndex];
+        float error = sigmoid((*hiddenErrors)[hiddenColumnIndex]) * 2.0f - 1.0f;
         float activation = sigmoid(hiddenActivations[hiddenColumnIndex]);
 
         float delta = alpha * error * activation * (1.0f - activation);
