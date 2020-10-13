@@ -58,20 +58,13 @@ private:
         const IntBuffer* hiddenTargetCs
     );
 
-    void generateErrors(
-        const Int2 &pos,
-        const IntBuffer* hiddenTargetCs,
-        FloatBuffer* visibleErrors,
-        int vli
-    );
-
 public:
     float alpha; // Learning rate
 
     // Defaults
     Predictor()
     :
-    alpha(1.0f)
+    alpha(0.5f)
     {}
 
     // Create with random initialization
@@ -88,12 +81,6 @@ public:
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCs
-    );
-
-    void generateErrors(
-        const IntBuffer* hiddenTargetCs,
-        FloatBuffer* visibleErrors,
-        int vli
     );
 
     // Serialization

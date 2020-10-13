@@ -135,12 +135,5 @@ public:
     int size() const {
         return s;
     }
-
-    void fill(
-        T value
-    ) {
-        for (int i = 0; i < s; i++)
-            p[i] = value;
-    }
 };
 } // namespace aon
