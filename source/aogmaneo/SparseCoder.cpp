@@ -16,7 +16,7 @@ void SparseCoder::forward(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int maxIndex = 0;
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -24,7 +24,6 @@ void SparseCoder::forward(
 
         float sum = 0.0f;
 
-        // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -56,7 +55,7 @@ void SparseCoder::forward(
                 }
         }
 
-        if (sum > maxActivation) {
+        if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
