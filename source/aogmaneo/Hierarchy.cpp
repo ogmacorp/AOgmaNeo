@@ -23,16 +23,25 @@ const Hierarchy &Hierarchy::operator=(
     inputSizes = other.inputSizes;
     histories = other.histories;
 
+    ipLayers.resize(inputSizes.size());
     aLayers.resize(inputSizes.size());
 
-    for (int v = 0; v < aLayers.size(); v++) {
-        if (other.aLayers[v] != nullptr) {
-            aLayers[v].make();
+    for (int i = 0; i < inputSizes.size(); i++) {
+        if (other.ipLayers[i] != nullptr) {
+            ipLayers[i].make();
 
-            (*aLayers[v]) = (*other.aLayers[v]);
+            (*ipLayers[i]) = (*other.ipLayers[i]);
         }
         else
-            aLayers[v] = nullptr;
+            ipLayers[i] = nullptr;
+
+        if (other.aLayers[i] != nullptr) {
+            aLayers[i].make();
+
+            (*aLayers[i]) = (*other.aLayers[i]);
+        }
+        else
+            aLayers[i] = nullptr;
     }
 
     return *this;
@@ -46,7 +55,6 @@ void Hierarchy::initRandom(
     // Create layers
     scLayers.resize(layerDescs.size());
     pLayers.resize(layerDescs.size());
-    errors.resize(layerDescs.size());
 
     ticks.resize(layerDescs.size(), 0);
 
@@ -94,38 +102,47 @@ void Hierarchy::initRandom(
                     histories[l][i][t] = IntBuffer(inSize, 0);
             }
 
-            // Predictors
-            pLayers[l].resize(inputSizes.size());
-
             // Predictor visible layer descriptors
             Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
             pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
 
-            if (l < scLayers.size() - 1)
-                pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
+            if (l < scLayers.size() - 1) {
+                pVisibleLayerDescs[1].size = layerDescs[l + 1].hiddenSize;
+                pVisibleLayerDescs[1].radius = layerDescs[l].pRadius;
+            }
 
-            // Actors
+            pLayers[l].initRandom(layerDescs[l].hiddenSize, pVisibleLayerDescs);
+
+            // Actors and input predictor layers
+            ipLayers.resize(inputSizes.size());
             aLayers.resize(inputSizes.size());
 
             // Actor visible layer descriptors
-            Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+            Array<Predictor::VisibleLayerDesc> ipVisibleLayerDescs(1);
+
+            ipVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+            ipVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
+
+            // Actor visible layer descriptors
+            Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(1);
 
             aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             aVisibleLayerDescs[0].radius = layerDescs[l].aRadius;
 
-            if (l < scLayers.size() - 1)
-                aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
-
             // Create predictors
-            for (int p = 0; p < pLayers[l].size(); p++) {
-                pLayers[l][p].initRandom(inputSizes[p], pVisibleLayerDescs);
+            for (int i = 0; i < inputSizes.size(); i++) {
+                if (inputTypes[i] == InputType::prediction) {
+                    ipLayers[i].make();
 
-                if (inputTypes[p] == InputType::action) {
-                    aLayers[p].make();
+                    ipLayers[i]->initRandom(inputSizes[i], ipVisibleLayerDescs);
+                }
 
-                    aLayers[p]->initRandom(inputSizes[p], layerDescs[l].historyCapacity, aVisibleLayerDescs);
+                if (inputTypes[i] == InputType::action) {
+                    aLayers[i].make();
+
+                    aLayers[i]->initRandom(inputSizes[i], layerDescs[l].historyCapacity, aVisibleLayerDescs);
                 }
             }
         }
@@ -146,26 +163,22 @@ void Hierarchy::initRandom(
             for (int t = 0; t < histories[l][0].size(); t++)
                 histories[l][0][t] = IntBuffer(inSize, 0);
 
-            pLayers[l].resize(layerDescs[l].ticksPerUpdate);
-
             // Predictor visible layer descriptors
             Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
             pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
 
-            if (l < scLayers.size() - 1)
-                pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
+            if (l < scLayers.size() - 1) {
+                pVisibleLayerDescs[1].size = layerDescs[l + 1].hiddenSize;
+                pVisibleLayerDescs[1].radius = layerDescs[l].pRadius;
+            }
 
-            // Create actors
-            for (int p = 0; p < pLayers[l].size(); p++)
-                pLayers[l][p].initRandom(layerDescs[l - 1].hiddenSize, pVisibleLayerDescs);
+            pLayers[l].initRandom(layerDescs[l].hiddenSize, pVisibleLayerDescs);
         }
         
         // Create the sparse coding layer
         scLayers[l].initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
-
-        errors[l] = FloatBuffer(layerDescs[l].hiddenSize.x * layerDescs[l].hiddenSize.y, 0.0f);
     }
 }
 
@@ -209,15 +222,8 @@ void Hierarchy::step(
                     layerInputCs[index++] = &histories[l][i][t];
             }
 
-            // Clear hidden errors
-            errors[l].fill(0.0f);
-
-            // Accumulate
-            for (int p = 0; p < pLayers[l].size(); p++)
-                pLayers[l][p].generateErrors(l == 0 ? &histories[l][p][0] : &histories[l][0][p], &errors[l], 0);
-
             // Activate sparse coder
-            scLayers[l].step(layerInputCs, &errors[l], learnEnabled);
+            scLayers[l].step(layerInputCs, &pLayers[l].getHiddenCs(), learnEnabled);
 
             // Add to next layer's history
             if (l < scLayers.size() - 1) {
@@ -241,21 +247,24 @@ void Hierarchy::step(
             feedBackCs[0] = &scLayers[l].getHiddenCs();
 
             if (l < scLayers.size() - 1)
-                feedBackCs[1] = &pLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCs();
+                feedBackCs[1] = &pLayers[l + 1].getHiddenCs();
 
-            // Step actor layers
-            for (int p = 0; p < pLayers[l].size(); p++) {
-                if (learnEnabled)
-                    pLayers[l][p].learn(l == 0 ? &histories[l][p][0] : &histories[l][0][p]);
+            if (learnEnabled)
+                pLayers[l].learn(&scLayers[l].getHiddenCs());
 
-                pLayers[l][p].activate(feedBackCs);
-            }
+            pLayers[l].activate(feedBackCs);
 
             if (l == 0) {
-                // Step actors
-                for (int p = 0; p < aLayers.size(); p++) {
-                    if (aLayers[p] != nullptr)
-                        aLayers[p]->step(feedBackCs, &histories[l][p][0], reward, learnEnabled, mimic);
+                for (int i = 0; i < inputSizes.size(); i++) {
+                    if (ipLayers[i] != nullptr) {
+                        if (learnEnabled)
+                            ipLayers[i]->learn(&histories[l][i][0]);
+
+                        ipLayers[i]->activate(feedBackCs);
+                    }
+
+                    if (aLayers[i] != nullptr)
+                        aLayers[i]->step(feedBackCs, &histories[l][i][0], reward, learnEnabled, mimic);
                 }
             }
         }
@@ -303,20 +312,28 @@ void Hierarchy::write(
         }
 
         scLayers[l].write(writer);
-
-        // Predictors
-        for (int v = 0; v < pLayers[l].size(); v++)
-            pLayers[l][v].write(writer);
+        pLayers[l].write(writer);
     }
 
     // Actors
-    for (int v = 0; v < aLayers.size(); v++) {
-        int exists = aLayers[v] != nullptr;
+    for (int i = 0; i < inputSizes.size(); i++) {
+        {
+            unsigned char exists = ipLayers[i] != nullptr;
 
-        writer.write(reinterpret_cast<const void*>(&exists), sizeof(int));
+            writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
 
-        if (exists)
-            aLayers[v]->write(writer);
+            if (exists)
+                ipLayers[i]->write(writer);
+        }
+
+        {
+            unsigned char exists = aLayers[i] != nullptr;
+
+            writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
+
+            if (exists)
+                aLayers[i]->write(writer);
+        }
     }
 }
 
@@ -337,7 +354,6 @@ void Hierarchy::read(
 
     scLayers.resize(numLayers);
     pLayers.resize(numLayers);
-    errors.resize(numLayers);
 
     histories.resize(numLayers);
     
@@ -380,27 +396,33 @@ void Hierarchy::read(
         }
 
         scLayers[l].read(reader);
-        
-        pLayers[l].resize(l == 0 ? inputSizes.size() : ticksPerUpdate[l]);
-
-        // Predictors
-        for (int v = 0; v < pLayers[l].size(); v++)
-                pLayers[l][v].read(reader);
-
-        errors[l] = FloatBuffer(scLayers[l].getHiddenCs().size(), 0.0f);
+        pLayers[l].read(reader);
     }
 
     // Actors
     aLayers.resize(inputSizes.size());
 
-    for (int v = 0; v < aLayers.size(); v++) {
-        char exists;
+    for (int i = 0; i < aLayers.size(); i++) {
+        {
+            unsigned char exists;
 
-        reader.read(reinterpret_cast<void*>(&exists), sizeof(int));
+            reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
 
-        if (exists) {
-            aLayers[v].make();
-            aLayers[v]->read(reader);
+            if (exists) {
+                ipLayers[i].make();
+                ipLayers[i]->read(reader);
+            }
+        }
+
+        {
+            unsigned char exists;
+
+            reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
+
+            if (exists) {
+                aLayers[i].make();
+                aLayers[i]->read(reader);
+            }
         }
     }
 }

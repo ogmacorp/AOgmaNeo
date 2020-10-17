@@ -31,12 +31,12 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-
-        IntBuffer inputCsPrev;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+
+    FloatBuffer hiddenActivations;
 
     IntBuffer hiddenCs; // Hidden states
     
@@ -49,7 +49,7 @@ private:
     void forward(
         const Int2 &pos,
         const Array<const IntBuffer*> &inputCs,
-        const FloatBuffer* hiddenErrors,
+        const IntBuffer* hiddenPredictions,
         bool learnEnabled
     );
 
@@ -71,7 +71,7 @@ public:
     // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCs, // Input states
-        const FloatBuffer* hiddenErrors,
+        const IntBuffer* hiddenPredictions,
         bool learnEnabled // Whether to learn
     );
 

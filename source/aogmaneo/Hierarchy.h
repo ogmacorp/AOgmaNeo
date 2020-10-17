@@ -50,9 +50,9 @@ public:
 private:
     // Layers
     Array<SparseCoder> scLayers;
-    Array<Array<Predictor>> pLayers;
+    Array<Predictor> pLayers;
     Array<Ptr<Actor>> aLayers;
-    Array<FloatBuffer> errors;
+    Array<Ptr<Predictor>> ipLayers;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
