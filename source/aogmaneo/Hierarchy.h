@@ -27,11 +27,9 @@ public:
         Int3 hiddenSize; // Size of hidden layer
 
         int ffRadius; // Feed forward radius
+        int rRadius; // Recurrent radius
         int pRadius; // Prediction radius
         int aRadius; // Actor radius
-
-        int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
         int historyCapacity;
 
@@ -39,10 +37,9 @@ public:
         :
         hiddenSize(4, 4, 16),
         ffRadius(2),
+        rRadius(2),
         pRadius(2),
         aRadius(2),
-        ticksPerUpdate(2),
-        temporalHorizon(2),
         historyCapacity(32)
         {}
     };
@@ -53,15 +50,6 @@ private:
     Array<Predictor> pLayers;
     Array<Ptr<Actor>> aLayers;
     Array<Ptr<Predictor>> ipLayers;
-
-    // Histories
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
-
-    // Per-layer values
-    IntBuffer updates;
-
-    IntBuffer ticks;
-    IntBuffer ticksPerUpdate;
 
     // Input dimensions
     Array<Int3> inputSizes;
@@ -121,27 +109,6 @@ public:
         return ipLayers[i]->getHiddenCs();
     }
 
-    // Whether this layer received on update this timestep
-    bool getUpdate(
-        int l // Layer index
-    ) const {
-        return updates[l];
-    }
-
-    // Get current layer ticks, relative to previous layer
-    int getTicks(
-        int l // Layer Index
-    ) const {
-        return ticks[l];
-    }
-
-    // Get layer ticks per update, relative to previous layer
-    int getTicksPerUpdate(
-        int l // Layer Index
-    ) const {
-        return ticksPerUpdate[l];
-    }
-
     // Get input sizes
     const Array<Int3> &getInputSizes() const {
         return inputSizes;
@@ -193,12 +160,6 @@ public:
     // Retrieve predictor layer(s), const version
     const Array<Ptr<Actor>> &getALayers() const {
         return aLayers;
-    }
-
-    const Array<CircleBuffer<IntBuffer>> &getHistories(
-        int l
-    ) const {
-        return histories[l];
     }
 };
 } // namespace aon

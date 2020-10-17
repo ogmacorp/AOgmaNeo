@@ -159,6 +159,7 @@ void SparseCoder::initRandom(
 
     // Hidden Cs
     hiddenCs = IntBuffer(numHiddenColumns, 0);
+    hiddenCsPrev = IntBuffer(numHiddenColumns, 0);
 }
 
 void SparseCoder::step(
@@ -171,6 +172,8 @@ void SparseCoder::step(
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, hiddenPredictions, learnEnabled);
+
+    hiddenCsPrev = hiddenCs;
 }
 
 void SparseCoder::write(
@@ -181,6 +184,7 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenCsPrev[0]), hiddenCsPrev.size() * sizeof(int));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -211,8 +215,10 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
     hiddenCs.resize(numHiddenColumns);
+    hiddenCsPrev.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCsPrev[0]), hiddenCsPrev.size() * sizeof(int));
     
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
 

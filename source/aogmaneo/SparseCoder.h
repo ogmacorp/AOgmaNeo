@@ -39,6 +39,7 @@ private:
     FloatBuffer hiddenActivations;
 
     IntBuffer hiddenCs; // Hidden states
+    IntBuffer hiddenCsPrev; // Previous hidden states
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -106,6 +107,11 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCs() const {
         return hiddenCs;
+    }
+
+    // Get the hidden states
+    const IntBuffer &getHiddenCsPrev() const {
+        return hiddenCsPrev;
     }
 
     // Get the hidden size
