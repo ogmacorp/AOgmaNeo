@@ -158,7 +158,7 @@ void SparseCoder::initRandom(
 
         if (vld.recurrent) {
             for (int i = 0; i < vl.weights.size(); i++)
-                vl.weights[i] = randf(-0.01f, 0.01f);
+                vl.weights[i] = randf(-0.001f, 0.001f);
         }
         else {
             for (int i = 0; i < vl.weights.size(); i++)
