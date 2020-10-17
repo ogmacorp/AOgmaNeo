@@ -22,6 +22,7 @@ const Hierarchy &Hierarchy::operator=(
     ticksPerUpdate = other.ticksPerUpdate;
     inputSizes = other.inputSizes;
     histories = other.histories;
+    errors = other.errors;
 
     aLayers.resize(inputSizes.size());
 
