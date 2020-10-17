@@ -15,8 +15,9 @@
 namespace aon {
 // Type of hierarchy input layer
 enum InputType {
-    prediction = 0,
-    action = 1
+    none = 0,
+    prediction = 1,
+    action = 2
 };
 
 // A SPH
