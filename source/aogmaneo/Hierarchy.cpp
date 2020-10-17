@@ -71,6 +71,7 @@ void Hierarchy::initRandom(
 
             scVisibleLayerDescs[inputSizes.size()].size = layerDescs[l].hiddenSize;
             scVisibleLayerDescs[inputSizes.size()].radius = layerDescs[l].rRadius;
+            scVisibleLayerDescs[inputSizes.size()].recurrent = true;
 
             // Predictor visible layer descriptors
             Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
@@ -124,6 +125,7 @@ void Hierarchy::initRandom(
 
             scVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
             scVisibleLayerDescs[1].radius = layerDescs[l].rRadius;
+            scVisibleLayerDescs[1].recurrent = true;
 
             // Predictor visible layer descriptors
             Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);

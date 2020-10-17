@@ -25,6 +25,7 @@ void SparseCoder::forward(
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         float sum = 0.0f;
+        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -54,8 +55,13 @@ void SparseCoder::forward(
                     int inC = (*inputCs[vli])[visibleColumnIndex];
 
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    count++;
                 }
         }
+
+        sum /= max(1, count);
+
+        hiddenActivations[hiddenIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -87,7 +93,7 @@ void SparseCoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-            float delta = alpha * (hiddenActivations[hiddenIndex] - (*hiddenPredictions)[hiddenColumnIndex]);
+            float delta = alpha * ((*hiddenPredictions)[hiddenColumnIndex] - hiddenActivations[hiddenIndex]);
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -150,9 +156,14 @@ void SparseCoder::initRandom(
 
         vl.weights.resize(numHidden * area * vld.size.z);
 
-        // Initialize to random values
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+        if (vld.recurrent) {
+            for (int i = 0; i < vl.weights.size(); i++)
+                vl.weights[i] = randf(-0.01f, 0.01f);
+        }
+        else {
+            for (int i = 0; i < vl.weights.size(); i++)
+                vl.weights[i] = randf(-1.0f, 1.0f);
+        }
     }
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
