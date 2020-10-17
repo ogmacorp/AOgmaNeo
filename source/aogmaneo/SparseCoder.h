@@ -49,7 +49,7 @@ private:
     void forward(
         const Int2 &pos,
         const Array<const IntBuffer*> &inputCs,
-        const IntBuffer* hiddenPredictions,
+        const FloatBuffer* hiddenPredictions,
         bool learnEnabled
     );
 
@@ -59,7 +59,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.001f)
+    alpha(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -71,7 +71,7 @@ public:
     // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCs, // Input states
-        const IntBuffer* hiddenPredictions,
+        const FloatBuffer* hiddenPredictions,
         bool learnEnabled // Whether to learn
     );
 

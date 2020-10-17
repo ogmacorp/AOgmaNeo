@@ -13,7 +13,7 @@ using namespace aon;
 void SparseCoder::forward(
     const Int2 &pos,
     const Array<const IntBuffer*> &inputCs,
-    const IntBuffer* hiddenPredictions,
+    const FloatBuffer* hiddenPredictions,
     bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
@@ -84,12 +84,10 @@ void SparseCoder::forward(
     hiddenCs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        int predC = (*hiddenPredictions)[hiddenColumnIndex];
-
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-            float delta = alpha * ((hc == predC ? 1.0f : 0.0f) - hiddenActivations[hiddenIndex]);
+            float delta = alpha * (hiddenActivations[hiddenIndex] - (*hiddenPredictions)[hiddenColumnIndex]);
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -165,7 +163,7 @@ void SparseCoder::initRandom(
 
 void SparseCoder::step(
     const Array<const IntBuffer*> &inputCs,
-    const IntBuffer* hiddenPredictions,
+    const FloatBuffer* hiddenPredictions,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;

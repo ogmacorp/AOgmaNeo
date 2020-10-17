@@ -176,6 +176,16 @@ public:
     }
 
     // Retrieve predictor layer(s)
+    Array<Ptr<Predictor>> &getIPLayers() {
+        return ipLayers;
+    }
+
+    // Retrieve predictor layer(s), const version
+    const Array<Ptr<Predictor>> &getIPLayers() const {
+        return ipLayers;
+    }
+
+    // Retrieve predictor layer(s)
     Array<Ptr<Actor>> &getALayers() {
         return aLayers;
     }

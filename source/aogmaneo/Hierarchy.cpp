@@ -223,7 +223,7 @@ void Hierarchy::step(
             }
 
             // Activate sparse coder
-            scLayers[l].step(layerInputCs, &pLayers[l].getHiddenCs(), learnEnabled);
+            scLayers[l].step(layerInputCs, &pLayers[l].getHiddenActivations(), learnEnabled);
 
             // Add to next layer's history
             if (l < scLayers.size() - 1) {
