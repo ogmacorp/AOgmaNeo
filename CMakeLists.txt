@@ -20,6 +20,8 @@ endif()
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+add_compile_definitions(USE_OMP)
+
 include_directories("${PROJECT_SOURCE_DIR}/source")
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
@@ -34,24 +36,13 @@ set(SOURCES
     "${SOURCE_PATH}/aogmaneo/SparseCoder.cpp"
 )
 
-set(HEADERS
-    "${SOURCE_PATH}/aogmaneo/Actor.h"
-    "${SOURCE_PATH}/aogmaneo/Array.h"
-	"${SOURCE_PATH}/aogmaneo/Helpers.h"
-    "${SOURCE_PATH}/aogmaneo/Hierarchy.h"
-    "${SOURCE_PATH}/aogmaneo/ImageEncoder.h"
-    "${SOURCE_PATH}/aogmaneo/Predictor.h"
-    "${SOURCE_PATH}/aogmaneo/Ptr.h"
-    "${SOURCE_PATH}/aogmaneo/SparseCoder.h"
-)
-
 find_package(OpenMP REQUIRED)
  
 include_directories(${OpenMP_CXX_INCLUDE_DIRS})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}") # This links -fopenmp
 
-add_library(AOgmaNeo ${SOURCES} ${HEADERS})
+add_library(AOgmaNeo ${SOURCES})
 
 target_link_libraries(AOgmaNeo ${OpenMP_CXX_LIBRARIES})
 

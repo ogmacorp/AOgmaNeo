@@ -8,9 +8,15 @@
 
 #include "Helpers.h"
 
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 using namespace aon;
 
-float aon::expf(float x) {
+float aon::expf(
+    float x
+) {
     if (x > 0.0f) {
         float res = 1.0f;
 
@@ -38,16 +44,44 @@ float aon::expf(float x) {
     return 1.0f / res;
 }
 
+#ifdef USE_OMP
+void aon::setNumThreads(
+    int numThreads
+) {
+    omp_set_num_threads(numThreads);
+}
+
+int aon::getNumThreads() {
+    return omp_get_num_threads();
+}
+#else
+void aon::setNumThreads(
+    int numThreads
+) {}
+
+int aon::getNumThreads() {
+    return 0;
+}
+#endif
+
 unsigned long aon::globalState = 1234;
 
-unsigned int aon::rand(unsigned long* state) {
+unsigned int aon::rand(
+    unsigned long* state
+) {
     return MWC64X(state);
 }
 
-float aon::randf(unsigned long* state) {
+float aon::randf(
+    unsigned long* state
+) {
     return (rand(state) % 100000) / 99999.0f;
 }
 
-float aon::randf(float low, float high, unsigned long* state) {
+float aon::randf(
+    float low,
+    float high,
+    unsigned long* state
+) {
     return low + (high - low) * randf(state);
 }
