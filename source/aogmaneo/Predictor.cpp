@@ -290,6 +290,7 @@ void Predictor::write(
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
+    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
     
     int numVisibleLayers = visibleLayers.size();
@@ -322,11 +323,11 @@ void Predictor::read(
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
+    hiddenActivations.resize(numHidden);
     hiddenCs.resize(numHiddenColumns);
 
+    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
-
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
