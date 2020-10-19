@@ -32,8 +32,6 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        IntBuffer inputCsPrev;
-
         FloatBuffer reconstruction;
     };
 
