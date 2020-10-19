@@ -319,9 +319,9 @@ void Hierarchy::write(
 
         // Predictors
         for (int v = 0; v < pLayers[l].size(); v++) {
-            int exists = pLayers[l][v] != nullptr;
+            unsigned char exists = pLayers[l][v] != nullptr;
 
-            writer.write(reinterpret_cast<const void*>(&exists), sizeof(int));
+            writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
 
             if (exists)
                 pLayers[l][v]->write(writer);
@@ -330,9 +330,9 @@ void Hierarchy::write(
 
     // Actors
     for (int v = 0; v < aLayers.size(); v++) {
-        int exists = aLayers[v] != nullptr;
+        unsigned char exists = aLayers[v] != nullptr;
 
-        writer.write(reinterpret_cast<const void*>(&exists), sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
 
         if (exists)
             aLayers[v]->write(writer);
@@ -403,9 +403,9 @@ void Hierarchy::read(
 
         // Predictors
         for (int v = 0; v < pLayers[l].size(); v++) {
-            char exists;
+            unsigned char exists;
 
-            reader.read(reinterpret_cast<void*>(&exists), sizeof(int));
+            reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
 
             if (exists) {
                 pLayers[l][v].make();
@@ -418,9 +418,9 @@ void Hierarchy::read(
     aLayers.resize(inputSizes.size());
 
     for (int v = 0; v < aLayers.size(); v++) {
-        char exists;
+        unsigned char exists;
 
-        reader.read(reinterpret_cast<void*>(&exists), sizeof(int));
+        reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
 
         if (exists) {
             aLayers[v].make();
