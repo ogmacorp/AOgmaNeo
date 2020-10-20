@@ -161,8 +161,8 @@ void SparseCoder::learn(
 }
 
 void SparseCoder::initRandom(
-    const Int3 &hiddenSize, // Hidden/output size
-    const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
+    const Int3 &hiddenSize,
+    const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
     this->visibleLayerDescs = visibleLayerDescs;
 
@@ -198,10 +198,9 @@ void SparseCoder::initRandom(
     hiddenCs = IntBuffer(numHiddenColumns, 0);
 }
 
-// Activate the sparse coder (perform sparse coding)
 void SparseCoder::step(
-    const Array<const IntBuffer*> &inputCs, // Input states
-    bool learnEnabled // Whether to learn
+    const Array<const IntBuffer*> &inputCs,
+    bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     

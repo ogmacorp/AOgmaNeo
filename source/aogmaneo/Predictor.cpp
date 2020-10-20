@@ -130,7 +130,7 @@ void Predictor::learn(
 }
 
 void Predictor::initRandom(
-    const Int3 &hiddenSize, // Hidden/output/prediction size
+    const Int3 &hiddenSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
     this->visibleLayerDescs = visibleLayerDescs; 
@@ -168,9 +168,8 @@ void Predictor::initRandom(
     hiddenCs = IntBuffer(numHiddenColumns, 0);
 }
 
-// Activate the predictor (predict values)
 void Predictor::activate(
-    const Array<const IntBuffer*> &inputCs // Hidden/output/prediction size
+    const Array<const IntBuffer*> &inputCs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
@@ -187,7 +186,6 @@ void Predictor::activate(
     }
 }
 
-// Learning predictions (update weights)
 void Predictor::learn(
     const IntBuffer* hiddenTargetCs
 ) {

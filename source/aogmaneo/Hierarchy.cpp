@@ -189,7 +189,6 @@ void Hierarchy::initRandom(
     }
 }
 
-// Simulation step/tick
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCs,
     bool learnEnabled,
