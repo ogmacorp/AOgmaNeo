@@ -40,9 +40,8 @@ const Hierarchy &Hierarchy::operator=(
 }
 
 void Hierarchy::initRandom(
-    const Array<Int3> &inputSizes, // Sizes of input layers
-    const Array<InputType> &inputTypes, // Types of input layers (same size as inputSizes)
-    const Array<LayerDesc> &layerDescs // Descriptors for layers
+    const Array<IODesc> &ioDescs,
+    const Array<LayerDesc> &layerDescs
 ) {
     // Create layers
     scLayers.resize(layerDescs.size());
@@ -59,7 +58,10 @@ void Hierarchy::initRandom(
     updates.resize(layerDescs.size(), false);
 
     // Cache input sizes
-    this->inputSizes = inputSizes;
+    inputSizes.resize(ioDescs.size());
+
+    for (int i = 0; i < ioDescs.size(); i++)
+        inputSizes[i] = ioDescs[i].size;
 
     // Determine ticks per update, first layer is always 1
     for (int l = 0; l < layerDescs.size(); l++)
@@ -123,7 +125,7 @@ void Hierarchy::initRandom(
             for (int p = 0; p < pLayers[l].size(); p++) {
                 pLayers[l][p].initRandom(inputSizes[p], pVisibleLayerDescs);
 
-                if (inputTypes[p] == InputType::action) {
+                if (ioDescs[p].type == IOType::action) {
                     aLayers[p].make();
 
                     aLayers[p]->initRandom(inputSizes[p], layerDescs[l].historyCapacity, aVisibleLayerDescs);

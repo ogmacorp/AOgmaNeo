@@ -14,14 +14,36 @@
 
 namespace aon {
 // Type of hierarchy input layer
-enum InputType {
-    prediction = 0,
-    action = 1
+enum IOType {
+    none = 0,
+    prediction = 1,
+    action = 2
 };
 
 // A SPH
 class Hierarchy {
 public:
+    struct IODesc {
+        Int3 size;
+
+        IOType type;
+
+        IODesc()
+        :
+        size(4, 4, 16),
+        type(none)
+        {}
+
+        IODesc(
+            const Int3 &size,
+            IOType type
+        )
+        :
+        size(size),
+        type(type)
+        {}
+    };
+
     // Describes a layer for construction
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
@@ -84,8 +106,7 @@ public:
     
     // Create a randomly initialized hierarchy
     void initRandom(
-        const Array<Int3> &inputSizes, // Sizes of input layers
-        const Array<InputType> &inputTypes, // Types of input layers (same size as inputSizes)
+        const Array<IODesc> &ioDescs, // Input-output descriptors
         const Array<LayerDesc> &layerDescs // Descriptors for layers
     );
 
