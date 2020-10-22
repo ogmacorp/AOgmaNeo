@@ -10,13 +10,14 @@
 
 #include "Ptr.h"
 #include "Array.h"
-#include <omp.h>
 
 namespace aon {
 const int expIters = 10;
 const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
 
-float expf(float x);
+float expf(
+    float x
+);
 
 inline float ceilf(
     float x
@@ -69,19 +70,21 @@ T abs(
 }
 
 template <typename T>
-void swap(T &left, T &right) {
+void swap(
+    T &left,
+    T &right
+) {
     T temp = left;
     left = right;
     right = temp;
 }
 
-inline void setNumThreads(int numThreads) {
-    omp_set_num_threads(numThreads);
-}
+// OpenMP stuff, does nothing if USE_OMP is not set
+void setNumThreads(
+    int numThreads
+);
 
-inline int getNumThreads() {
-    return omp_get_num_threads();
-}
+int getNumThreads();
 
 // Vector types
 template <typename T> 
@@ -140,14 +143,9 @@ typedef Vec2<float> Float2;
 typedef Vec3<float> Float3;
 typedef Vec4<float> Float4;
 
+typedef Array<unsigned char> ByteBuffer;
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
-typedef Array<unsigned char> ByteBuffer;
-
-typedef unsigned char ColSize8;
-typedef unsigned short ColSize16;
-typedef unsigned int ColSize32;
-typedef unsigned long ColSize64;
 
 // --- Circular Buffer ---
 
@@ -190,11 +188,15 @@ struct CircleBuffer {
         return data[(start + data.size() - 1) % data.size()];
     }
 
-    T &operator[](int index) {
+    T &operator[](
+        int index
+    ) {
         return data[(start + index) % data.size()];
     }
 
-    const T &operator[](int index) const {
+    const T &operator[](
+        int index
+    ) const {
         return data[(start + index) % data.size()];
     }
 
@@ -356,40 +358,6 @@ float randf(
     unsigned long* state = &globalState
 );
 
-// --- Weight mutation ---
-
-template <typename T>
-T increase(
-    T weight,
-    unsigned char index
-) {
-    return weight | (1 << index);
-}
-
-template <typename T>
-T decrease(
-    T weight,
-    unsigned char index
-) {
-    return weight & ~(1 << index);
-}
-
-template <typename T>
-unsigned char countBits(
-    T value
-) {
-    unsigned char numBits = sizeof(T) * 8;
-
-    unsigned char c = 0;
-
-    for (unsigned char i = 0; i < numBits; i++) {
-        c += 1 & value;
-        value >>= 1;
-    }
-
-    return c;
-}
-
 // --- Sorting ---
 
 template <typename T>
@@ -421,7 +389,7 @@ void quicksort(
     int low = 0,
     int high = -1
 ) {
-    if (arr.size() <= 1)
+    if (high - low <= 1)
         return;
 
     if (high == -1)
