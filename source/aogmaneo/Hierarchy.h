@@ -15,9 +15,8 @@
 namespace aon {
 // Type of hierarchy input layer
 enum IOType {
-    none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 0,
+    action = 1
 };
 
 // A SPH
@@ -31,7 +30,7 @@ public:
         IODesc()
         :
         size(4, 4, 16),
-        type(none)
+        type(IOType::prediction)
         {}
 
         IODesc(
