@@ -54,9 +54,8 @@ const Hierarchy &Hierarchy::operator=(
 }
 
 void Hierarchy::initRandom(
-    const Array<Int3> &inputSizes, // Sizes of input layers
-    const Array<InputType> &inputTypes, // Types of input layers (same size as inputSizes)
-    const Array<LayerDesc> &layerDescs // Descriptors for layers
+    const Array<IODesc> &ioDescs,
+    const Array<LayerDesc> &layerDescs
 ) {
     // Create layers
     scLayers.resize(layerDescs.size());
@@ -72,7 +71,10 @@ void Hierarchy::initRandom(
     updates.resize(layerDescs.size(), false);
 
     // Cache input sizes
-    this->inputSizes = inputSizes;
+    inputSizes.resize(ioDescs.size());
+
+    for (int i = 0; i < inputSizes.size(); i++)
+        inputSizes[i] = ioDescs[i].size;
 
     // Determine ticks per update, first layer is always 1
     for (int l = 0; l < layerDescs.size(); l++)
@@ -134,12 +136,12 @@ void Hierarchy::initRandom(
 
             // Create predictors
             for (int p = 0; p < pLayers[l].size(); p++) {
-                if (inputTypes[p] == InputType::prediction) {
+                if (ioDescs[p].type == IOType::prediction) {
                     pLayers[l][p].make();
 
                     pLayers[l][p]->initRandom(inputSizes[p], pVisibleLayerDescs);
                 }
-                else if (inputTypes[p] == InputType::action) {
+                else if (ioDescs[p].type == IOType::action) {
                     aLayers[p].make();
 
                     aLayers[p]->initRandom(inputSizes[p], layerDescs[l].historyCapacity, aVisibleLayerDescs);
@@ -403,7 +405,7 @@ void Hierarchy::read(
 
         // Predictors
         for (int v = 0; v < pLayers[l].size(); v++) {
-            char exists;
+            unsigned char exists;
 
             reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
 
@@ -418,7 +420,7 @@ void Hierarchy::read(
     aLayers.resize(inputSizes.size());
 
     for (int v = 0; v < aLayers.size(); v++) {
-        char exists;
+        unsigned char exists;
 
         reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
 
