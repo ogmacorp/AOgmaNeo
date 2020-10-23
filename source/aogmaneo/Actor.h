@@ -150,5 +150,13 @@ public:
     const Int3 &getHiddenSize() const {
         return hiddenSize;
     }
+
+    int getHistoryCapacity() const {
+        return historySamples.size();
+    }
+
+    int getHistorySize() const {
+        return historySize;
+    }
 };
 } // namespace aon
