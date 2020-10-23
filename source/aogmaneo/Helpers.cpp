@@ -77,7 +77,7 @@ unsigned int aon::rand(
 float aon::randf(
     unsigned int* state
 ) {
-    return rand(state) / (randMax - 1);
+    return static_cast<float>(rand(state)) / static_cast<float>(randMax - 1);
 }
 
 float aon::randf(
