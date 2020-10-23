@@ -51,7 +51,7 @@ private:
 
     Array<FloatInt> hiddenActivations;
 
-    IntBuffer hiddenCs; // Hidden states
+    IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenResources; // Resources
 
@@ -62,14 +62,14 @@ private:
     // --- Kernels ---
     
     void forward(
-        const Int2 &pos,
-        const Array<const FloatBuffer*> &inputCs,
+        const Int2 &columnPos,
+        const Array<const FloatBuffer*> &inputCIs,
         bool learnEnabled
     );
 
     void reconstruct(
-        const Int2 &pos,
-        const IntBuffer* reconCs,
+        const Int2 &columnPos,
+        const IntBuffer* reconCIs,
         int vli
     );
 
@@ -97,7 +97,7 @@ public:
     );
 
     void reconstruct(
-        const IntBuffer* reconCs
+        const IntBuffer* reconCIs
     );
 
     const FloatBuffer &getReconstruction(
@@ -135,8 +135,8 @@ public:
     }
 
     // Get the hidden states
-    const IntBuffer &getHiddenCs() const {
-        return hiddenCs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size

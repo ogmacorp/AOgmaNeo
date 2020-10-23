@@ -64,24 +64,26 @@ int aon::getNumThreads() {
 }
 #endif
 
-unsigned long aon::globalState = 1234;
+unsigned int aon::globalState = 1234;
 
 unsigned int aon::rand(
-    unsigned long* state
+    unsigned int* state
 ) {
-    return MWC64X(state);
+    *state = (*state * 1103515245 + 12345) % (1u << 31);
+
+    return *state & randMax;
 }
 
 float aon::randf(
-    unsigned long* state
+    unsigned int* state
 ) {
-    return (rand(state) % 100000) / 99999.0f;
+    return rand(state) / (randMax - 1);
 }
 
 float aon::randf(
     float low,
     float high,
-    unsigned long* state
+    unsigned int* state
 ) {
     return low + (high - low) * randf(state);
 }

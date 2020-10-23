@@ -331,30 +331,22 @@ inline float sigmoid(
 
 // From http://cas.ee.ic.ac.uk/people/dt10/research/rngs-gpu-mwc64x.html
 
-extern unsigned long globalState;
+extern unsigned int globalState;
 
-inline unsigned int MWC64X(
-    unsigned long* state
-) {
-    unsigned int c = (*state) >> 32, x = (*state) & 0xffffffff;
-
-    *state = x * ((unsigned long)4294883355u) + c;
-
-    return x ^ c;
-}
+const unsigned int randMax = 0x3fffffff;
 
 unsigned int rand(
-    unsigned long* state = &globalState
+    unsigned int* state = &globalState
 );
 
 float randf(
-    unsigned long* state = &globalState
+    unsigned int* state = &globalState
 );
 
 float randf(
     float low,
     float high,
-    unsigned long* state = &globalState
+    unsigned int* state = &globalState
 );
 
 // --- Sorting ---

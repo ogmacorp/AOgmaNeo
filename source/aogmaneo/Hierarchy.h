@@ -111,7 +111,7 @@ public:
 
     // Simulation step/tick
     void step(
-        const Array<const IntBuffer*> &inputCs, // Inputs to remember
+        const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
         bool mimic = false // Whether to treat Actors like Predictors
@@ -132,13 +132,13 @@ public:
     }
 
     // Retrieve predictions
-    const IntBuffer &getPredictionCs(
+    const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
         if (aLayers[i] != nullptr) // If is an action layer
-            return aLayers[i]->getHiddenCs();
+            return aLayers[i]->getHiddenCIs();
 
-        return pLayers[0][i]->getHiddenCs();
+        return pLayers[0][i]->getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
