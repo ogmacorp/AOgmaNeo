@@ -21,6 +21,7 @@ endif(AOGMANEO_INCLUDE_DIR)
 find_path(AOGMANEO_INCLUDE_DIR aogmaneo/Hierarchy.h)
 
 set(AOGMANEO_NAMES aogmaneo AOgmaNeo AOGMANEO)
+
 find_library(AOGMANEO_LIBRARY NAMES ${AOGMANEO_NAMES})
 
 # Per-recommendation
