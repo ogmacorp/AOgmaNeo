@@ -12,7 +12,7 @@
 # AOGMANEO_LIBRARY, the name of the library to link against
 # AOGMANEO_FOUND, if false, do not try to link to OgmaNeo
 # AOGMANEO_INCLUDE_DIR, where to find OgmaNeo headers
-#
+
 if(AOGMANEO_INCLUDE_DIR)
     # Already in cache, be silent
     set(AOGMANEO_FIND_QUIETLY TRUE)
