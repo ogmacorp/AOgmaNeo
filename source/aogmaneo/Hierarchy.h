@@ -26,46 +26,74 @@ public:
     struct IODesc {
         Int3 size;
 
+        int ffRadius; // Feed forward radius
+        int pRadius; // Prediction radius
+        int aRadius; // Actor radius
+
+        int historyCapacity; // Actor history capacity
+
         IOType type;
 
         IODesc()
         :
         size(4, 4, 16),
-        type(none)
+        type(none),
+        ffRadius(2),
+        pRadius(2),
+        aRadius(2),
+        historyCapacity(32)
         {}
 
         IODesc(
             const Int3 &size,
-            IOType type
+            IOType type,
+            int ffRadius,
+            int pRadius,
+            int aRadius,
+            int historyCapacity
         )
         :
         size(size),
-        type(type)
+        type(type),
+        ffRadius(ffRadius),
+        pRadius(pRadius),
+        aRadius(aRadius),
+        historyCapacity(historyCapacity)
         {}
     };
 
-    // Describes a layer for construction
+    // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
 
         int ffRadius; // Feed forward radius
         int pRadius; // Prediction radius
-        int aRadius; // Actor radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
-
-        int historyCapacity;
+        int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
         ffRadius(2),
         pRadius(2),
-        aRadius(2),
         ticksPerUpdate(2),
-        temporalHorizon(2),
-        historyCapacity(32)
+        temporalHorizon(2)
+        {}
+
+        LayerDesc(
+            const Int3 &hiddenSize,
+            int ffRadius,
+            int pRadius,
+            int ticksPerUpdate,
+            int temporalHorizon
+        )
+        :
+        hiddenSize(hiddenSize),
+        ffRadius(ffRadius),
+        pRadius(pRadius),
+        ticksPerUpdate(ticksPerUpdate),
+        temporalHorizon(temporalHorizon)
         {}
     };
 

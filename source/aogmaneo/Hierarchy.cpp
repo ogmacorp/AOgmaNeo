@@ -94,7 +94,7 @@ void Hierarchy::initRandom(
                     int index = t + layerDescs[l].temporalHorizon * i;
 
                     scVisibleLayerDescs[index].size = inputSizes[i];
-                    scVisibleLayerDescs[index].radius = layerDescs[l].ffRadius;
+                    scVisibleLayerDescs[index].radius = ioDescs[i].ffRadius;
                 }
             }
             
@@ -110,41 +110,38 @@ void Hierarchy::initRandom(
                     histories[l][i][t] = IntBuffer(inSize, 0);
             }
 
-            // Predictors
             pLayers[l].resize(inputSizes.size());
-
-            // Predictor visible layer descriptors
-            Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
-
-            pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-            pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
-
-            if (l < scLayers.size() - 1)
-                pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
-
-            // Actors
             aLayers.resize(inputSizes.size());
-
-            // Actor visible layer descriptors
-            Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
-
-            aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-            aVisibleLayerDescs[0].radius = layerDescs[l].aRadius;
-
-            if (l < scLayers.size() - 1)
-                aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
 
             // Create predictors
             for (int i = 0; i < pLayers[l].size(); i++) {
                 if (ioDescs[i].type == IOType::prediction) {
+                    // Predictor visible layer descriptors
+                    Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+
+                    pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+                    pVisibleLayerDescs[0].radius = ioDescs[i].pRadius;
+
+                    if (l < scLayers.size() - 1)
+                        pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
+
                     pLayers[l][i].make();
 
                     pLayers[l][i]->initRandom(inputSizes[i], pVisibleLayerDescs);
                 }
                 else if (ioDescs[i].type == IOType::action) {
+                    // Actor visible layer descriptors
+                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+
+                    aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+                    aVisibleLayerDescs[0].radius = ioDescs[i].aRadius;
+
+                    if (l < scLayers.size() - 1)
+                        aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
+
                     aLayers[i].make();
 
-                    aLayers[i]->initRandom(inputSizes[i], layerDescs[l].historyCapacity, aVisibleLayerDescs);
+                    aLayers[i]->initRandom(inputSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
                 }
             }
         }
