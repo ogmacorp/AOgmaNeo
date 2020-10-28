@@ -12,14 +12,14 @@ using namespace aon;
 
 void SparseCoder::forward(
     const Int2 &pos,
-    const Array<const IntBuffer*> &inputCs,
+    const Array<const IntBuffer*> &inputCIs,
     const FloatBuffer* hiddenErrors,
     bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
     if (learnEnabled) {
-        int hiddenIndexPrev = address3(Int3(pos.x, pos.y, hiddenCs[hiddenColumnIndex]), hiddenSize);
+        int hiddenIndexPrev = address3(Int3(pos.x, pos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
         float delta = alpha * (*hiddenErrors)[hiddenColumnIndex];
 
@@ -48,7 +48,7 @@ void SparseCoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inC = vl.inputCsPrev[visibleColumnIndex];
+                    int inC = vl.inputCIsPrev[visibleColumnIndex];
 
                     vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexPrev))] += delta;
                 }
@@ -88,7 +88,7 @@ void SparseCoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inC = (*inputCs[vli])[visibleColumnIndex];
+                    int inC = (*inputCIs[vli])[visibleColumnIndex];
 
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
@@ -100,7 +100,7 @@ void SparseCoder::forward(
         }
     }
 
-    hiddenCs[hiddenColumnIndex] = maxIndex;
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
 void SparseCoder::initRandom(
@@ -134,15 +134,15 @@ void SparseCoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(0.0f, 1.0f);
 
-        vl.inputCsPrev = IntBuffer(numVisibleColumns, 0);
+        vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    // Hidden Cs
-    hiddenCs = IntBuffer(numHiddenColumns, 0);
+    // Hidden CIs
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
 void SparseCoder::step(
-    const Array<const IntBuffer*> &inputCs,
+    const Array<const IntBuffer*> &inputCIs,
     const FloatBuffer* hiddenErrors,
     bool learnEnabled
 ) {
@@ -150,13 +150,13 @@ void SparseCoder::step(
     
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCs, hiddenErrors, learnEnabled);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenErrors, learnEnabled);
 
     // Update prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
-        vl.inputCsPrev = *inputCs[vli];
+        vl.inputCIsPrev = *inputCIs[vli];
     }
 }
 
@@ -167,7 +167,7 @@ void SparseCoder::write(
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -185,7 +185,7 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
-        writer.write(reinterpret_cast<const void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
 }
 
@@ -199,9 +199,9 @@ void SparseCoder::read(
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
-    hiddenCs.resize(numHiddenColumns);
+    hiddenCIs.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCs[0]), hiddenCs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -227,8 +227,8 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
-        vl.inputCsPrev.resize(numVisibleColumns);
+        vl.inputCIsPrev.resize(numVisibleColumns);
 
-        reader.read(reinterpret_cast<void*>(&vl.inputCsPrev[0]), vl.inputCsPrev.size() * sizeof(int));
+        reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
 }
