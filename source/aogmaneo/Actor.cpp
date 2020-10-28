@@ -13,7 +13,7 @@ using namespace aon;
 void Actor::forward(
     const Int2 &pos,
     const Array<const IntBuffer*> &inputCIs,
-    unsigned long* state
+    unsigned int* state
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -393,7 +393,7 @@ void Actor::step(
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned long state = baseState + i * 12345;
+        unsigned int state = baseState + i * 12345;
 
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &state);
     }

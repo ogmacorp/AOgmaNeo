@@ -44,23 +44,6 @@ float aon::expf(
     return 1.0f / res;
 }
 
-// Quake method
-float aon::sqrtf(
-    float x
-) {
-    const float xHalf = 0.5f * x;
- 
-    union {
-        float x;
-        int i;
-    } u;
-
-    u.x = x;
-    u.i = 0x5f3759df - (u.i >> 1);
-
-    return x * u.x * (1.5f - xHalf * u.x * u.x);
-}
-
 #ifdef USE_OMP
 void aon::setNumThreads(
     int numThreads
@@ -81,24 +64,26 @@ int aon::getNumThreads() {
 }
 #endif
 
-unsigned long aon::globalState = 1234;
+unsigned int aon::globalState = 1234;
 
 unsigned int aon::rand(
-    unsigned long* state
+    unsigned int* state
 ) {
-    return MWC64X(state);
+    *state = (*state * 1103515245 + 12345) % (1u << 31);
+
+    return *state & randMax;
 }
 
 float aon::randf(
-    unsigned long* state
+    unsigned int* state
 ) {
-    return (rand(state) % 100000) / 99999.0f;
+    return static_cast<float>(rand(state)) / static_cast<float>(randMax - 1);
 }
 
 float aon::randf(
     float low,
     float high,
-    unsigned long* state
+    unsigned int* state
 ) {
     return low + (high - low) * randf(state);
 }
