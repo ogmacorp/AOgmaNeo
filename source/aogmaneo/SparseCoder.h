@@ -47,7 +47,7 @@ private:
     // --- Kernels ---
     
     void forward(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         const FloatBuffer* hiddenErrors,
         bool learnEnabled

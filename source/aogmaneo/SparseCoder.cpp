@@ -11,15 +11,15 @@
 using namespace aon;
 
 void SparseCoder::forward(
-    const Int2 &pos,
+    const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs,
     const FloatBuffer* hiddenErrors,
     bool learnEnabled
 ) {
-    int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     if (learnEnabled) {
-        int hiddenIndexPrev = address3(Int3(pos.x, pos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+        int hiddenCellIndexPrev = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
         float delta = alpha * (*hiddenErrors)[hiddenColumnIndex];
 
@@ -33,7 +33,7 @@ void SparseCoder::forward(
             Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-            Int2 visibleCenter = project(pos, hToV);
+            Int2 visibleCenter = project(columnPos, hToV);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -50,7 +50,7 @@ void SparseCoder::forward(
 
                     int inC = vl.inputCIsPrev[visibleColumnIndex];
 
-                    vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndexPrev))] += delta;
+                    vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexPrev))] += delta;
                 }
         }
     }
@@ -59,7 +59,7 @@ void SparseCoder::forward(
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         float sum = 0.0f;
 
@@ -73,7 +73,7 @@ void SparseCoder::forward(
             Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-            Int2 visibleCenter = project(pos, hToV);
+            Int2 visibleCenter = project(columnPos, hToV);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -90,7 +90,7 @@ void SparseCoder::forward(
 
                     int inC = (*inputCIs[vli])[visibleColumnIndex];
 
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
 

@@ -99,8 +99,9 @@ public:
 private:
     // Layers
     Array<SparseCoder> scLayers;
-    Array<Array<Ptr<Predictor>>> pLayers;
+    Array<Array<Array<Predictor>>> pLayers;
     Array<Ptr<Actor>> aLayers;
+    Array<FloatBuffer> errors;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -165,7 +166,7 @@ public:
         if (aLayers[i] != nullptr) // If is an action layer
             return aLayers[i]->getHiddenCIs();
 
-        return pLayers[0][i]->getHiddenCIs();
+        return pLayers[0][i][0].getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -209,14 +210,14 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Ptr<Predictor>> &getPLayers(
+    Array<Array<Predictor>> &getPLayers(
         int l // Layer index
     ) {
         return pLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Ptr<Predictor>> &getPLayers(
+    const Array<Array<Predictor>> &getPLayers(
         int l // Layer index
     ) const {
         return pLayers[l];

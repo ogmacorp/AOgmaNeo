@@ -49,14 +49,21 @@ private:
     // --- Kernels ---
 
     void forward(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
     );
+
+    void generateErrors(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs,
+        FloatBuffer* visibleErrors,
+        int vli
+    ); 
 
 public:
     float alpha; // Learning rate
@@ -81,6 +88,12 @@ public:
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
+    );
+
+    void generateErrors(
+        const IntBuffer* hiddenTargetCIs,
+        FloatBuffer* visibleErrors,
+        int vli
     );
 
     // Serialization
