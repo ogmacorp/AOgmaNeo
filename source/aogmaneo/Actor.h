@@ -36,8 +36,8 @@ public:
 
     // History sample for delayed updates
     struct HistorySample {
-        Array<IntBuffer> inputCs;
-        IntBuffer hiddenTargetCsPrev;
+        Array<IntBuffer> inputCIs;
+        IntBuffer hiddenTargetCIsPrev;
 
         FloatBuffer hiddenValuesPrev;
         
@@ -52,7 +52,7 @@ private:
 
     FloatBuffer hiddenActivations; // Temporary buffer
 
-    IntBuffer hiddenCs; // Hidden states
+    IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
 
@@ -65,15 +65,15 @@ private:
     // --- Kernels ---
 
     void forward(
-        const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs,
-        unsigned long* state
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
-        const Int2 &pos,
-        const Array<const IntBuffer*> &inputCsPrev,
-        const IntBuffer* hiddenTargetCsPrev,
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIsPrev,
+        const IntBuffer* hiddenTargetCIsPrev,
         const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
@@ -106,8 +106,8 @@ public:
 
     // Step (get actions and update)
     void step(
-        const Array<const IntBuffer*> &inputCs,
-        const IntBuffer* hiddenTargetCsPrev,
+        const Array<const IntBuffer*> &inputCIs,
+        const IntBuffer* hiddenTargetCIsPrev,
         float reward,
         bool learnEnabled,
         bool mimic
@@ -142,13 +142,21 @@ public:
     }
 
     // Get hidden state/output/actions
-    const IntBuffer &getHiddenCs() const {
-        return hiddenCs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
+    }
+
+    int getHistoryCapacity() const {
+        return historySamples.size();
+    }
+
+    int getHistorySize() const {
+        return historySize;
     }
 };
 } // namespace aon

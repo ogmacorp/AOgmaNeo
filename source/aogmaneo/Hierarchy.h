@@ -25,55 +25,82 @@ public:
     struct IODesc {
         Int3 size;
 
+        int ffRadius; // Feed forward radius
+        int pRadius; // Prediction radius
+        int aRadius; // Actor radius
+
+        int historyCapacity; // Actor history capacity
+
         IOType type;
 
         IODesc()
         :
         size(4, 4, 16),
-        type(IOType::prediction)
+        type(prediction),
+        ffRadius(2),
+        pRadius(2),
+        aRadius(2),
+        historyCapacity(32)
         {}
 
         IODesc(
             const Int3 &size,
-            IOType type
+            IOType type,
+            int ffRadius,
+            int pRadius,
+            int aRadius,
+            int historyCapacity
         )
         :
         size(size),
-        type(type)
+        type(type),
+        ffRadius(ffRadius),
+        pRadius(pRadius),
+        aRadius(aRadius),
+        historyCapacity(historyCapacity)
         {}
     };
 
-    // Describes a layer for construction
+    // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
 
         int ffRadius; // Feed forward radius
         int pRadius; // Prediction radius
-        int aRadius; // Actor radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
-
-        int historyCapacity;
+        int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
         ffRadius(2),
         pRadius(2),
-        aRadius(2),
         ticksPerUpdate(2),
-        temporalHorizon(2),
-        historyCapacity(32)
+        temporalHorizon(2)
+        {}
+
+        LayerDesc(
+            const Int3 &hiddenSize,
+            int ffRadius,
+            int pRadius,
+            int ticksPerUpdate,
+            int temporalHorizon
+        )
+        :
+        hiddenSize(hiddenSize),
+        ffRadius(ffRadius),
+        pRadius(pRadius),
+        ticksPerUpdate(ticksPerUpdate),
+        temporalHorizon(temporalHorizon)
         {}
     };
 
 private:
     // Layers
     Array<SparseCoder> scLayers;
-    Array<Array<Predictor>> pLayers;
+    Array<Array<Ptr<Predictor>>> pLayers;
     Array<Ptr<Actor>> aLayers;
-    Array<FloatBuffer> errors;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -111,7 +138,7 @@ public:
 
     // Simulation step/tick
     void step(
-        const Array<const IntBuffer*> &inputCs, // Inputs to remember
+        const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
         bool mimic = false // Whether to treat Actors like Predictors
@@ -132,13 +159,13 @@ public:
     }
 
     // Retrieve predictions
-    const IntBuffer &getPredictionCs(
+    const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
         if (aLayers[i] != nullptr) // If is an action layer
-            return aLayers[i]->getHiddenCs();
+            return aLayers[i]->getHiddenCIs();
 
-        return pLayers[0][i].getHiddenCs();
+        return pLayers[0][i]->getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -182,14 +209,14 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Predictor> &getPLayers(
+    Array<Ptr<Predictor>> &getPLayers(
         int l // Layer index
     ) {
         return pLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Predictor> &getPLayers(
+    const Array<Ptr<Predictor>> &getPLayers(
         int l // Layer index
     ) const {
         return pLayers[l];
