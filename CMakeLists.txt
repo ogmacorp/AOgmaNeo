@@ -40,9 +40,11 @@ find_package(OpenMP REQUIRED)
  
 include_directories(${OpenMP_CXX_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -fPIC") # This also links -fopenmp
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}") # This also links -fopenmp
 
 add_library(AOgmaNeo ${SOURCES})
+
+set_target_properties(AOgmaNeo PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 target_link_libraries(AOgmaNeo ${OpenMP_CXX_LIBRARIES})
 
