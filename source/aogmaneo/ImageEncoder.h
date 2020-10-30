@@ -62,13 +62,13 @@ private:
     // --- Kernels ---
     
     void forward(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const Array<const FloatBuffer*> &inputCIs,
         bool learnEnabled
     );
 
     void reconstruct(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const IntBuffer* reconCIs,
         int vli
     );
