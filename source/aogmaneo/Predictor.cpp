@@ -12,7 +12,8 @@ using namespace aon;
 
 void Predictor::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Array<const IntBuffer*> &inputCIs,
+    const Array<const FloatBuffer*> &inputActivations
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -52,8 +53,9 @@ void Predictor::forward(
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int inC = (*inputCIs[vli])[visibleColumnIndex];
+                    float activation = inputActivations[vli] == nullptr ? 1.0f : (*inputActivations[vli])[visibleColumnIndex];
    
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] * activation;
                     count++;
                 }
         }
@@ -129,7 +131,7 @@ void Predictor::learn(
 
                     int inC = vl.inputCIsPrev[visibleColumnIndex];
 
-                    vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
+                    vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta * vl.inputActivationsPrev[visibleColumnIndex];
                 }
         }
     }
@@ -232,6 +234,7 @@ void Predictor::initRandom(
             vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
+        vl.inputActivationsPrev = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
     hiddenActivations = FloatBuffer(numHidden, 0.0f);
@@ -241,20 +244,26 @@ void Predictor::initRandom(
 }
 
 void Predictor::activate(
-    const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
+    const Array<const IntBuffer*> &inputCIs,
+    const Array<const FloatBuffer*> &inputActivations
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, inputActivations);
 
     // Copy to prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
         vl.inputCIsPrev = *inputCIs[vli];
+
+        if (inputActivations[vli] == nullptr)
+            vl.inputActivationsPrev.fill(1.0f);
+        else
+            vl.inputActivationsPrev = *inputActivations[vli];
     }
 }
 
@@ -310,6 +319,7 @@ void Predictor::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&vl.inputActivationsPrev[0]), vl.inputActivationsPrev.size() * sizeof(float));
     }
 }
 
@@ -355,5 +365,6 @@ void Predictor::read(
         vl.inputCIsPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+        reader.read(reinterpret_cast<void*>(&vl.inputActivationsPrev[0]), vl.inputActivationsPrev.size() * sizeof(float));
     }
 }
