@@ -39,7 +39,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
-    FloatBuffer hiddenActivations;
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -107,11 +106,6 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
-    }
-
-    // Get the hidden states
-    const FloatBuffer &getHiddenActivations() const {
-        return hiddenActivations;
     }
 
     // Get the hidden size
