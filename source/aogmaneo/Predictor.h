@@ -38,8 +38,6 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
-    FloatBuffer hiddenActivations;
-
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
@@ -60,13 +58,11 @@ private:
 
 public:
     float alpha; // Learning rate
-    float expScale;
 
     // Defaults
     Predictor()
     :
-    alpha(0.04f),
-    expScale(64.0f)
+    alpha(0.03f)
     {}
 
     // Create with random initialization
