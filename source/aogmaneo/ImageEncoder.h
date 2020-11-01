@@ -63,7 +63,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
+        const Array<const ByteBuffer*> &inputCIs,
         bool learnEnabled
     );
 
@@ -92,7 +92,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const IntBuffer*> &inputs, // Input states
+        const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 

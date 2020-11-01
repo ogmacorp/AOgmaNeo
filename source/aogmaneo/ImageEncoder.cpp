@@ -12,7 +12,7 @@ using namespace aon;
 
 void ImageEncoder::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputs,
+    const Array<const ByteBuffer*> &inputs,
     bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
@@ -234,7 +234,7 @@ void ImageEncoder::initRandom(
 }
 
 void ImageEncoder::step(
-    const Array<const IntBuffer*> &inputs,
+    const Array<const ByteBuffer*> &inputs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
