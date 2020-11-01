@@ -74,7 +74,7 @@ public:
     SparseCoder()
     :
     alpha(0.02f),
-    explainIters(6)
+    explainIters(5)
     {}
 
     // Create a sparse coding layer with random initialization
