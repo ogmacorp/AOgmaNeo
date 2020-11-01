@@ -459,9 +459,9 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
-    int numVisibleCellsLayers = visibleLayers.size();
+    int numVisibleLayers = visibleLayers.size();
 
-    writer.write(reinterpret_cast<const void*>(&numVisibleCellsLayers), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&numVisibleLayers), sizeof(int));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -526,12 +526,12 @@ void Actor::read(
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
     
-    int numVisibleCellsLayers = visibleLayers.size();
+    int numVisibleLayers = visibleLayers.size();
 
-    reader.read(reinterpret_cast<void*>(&numVisibleCellsLayers), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
 
-    visibleLayers.resize(numVisibleCellsLayers);
-    visibleLayerDescs.resize(numVisibleCellsLayers);
+    visibleLayers.resize(numVisibleLayers);
+    visibleLayerDescs.resize(numVisibleLayers);
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -570,7 +570,7 @@ void Actor::read(
     for (int t = 0; t < historySamples.size(); t++) {
         HistorySample &s = historySamples[t];
 
-        s.inputCIs.resize(numVisibleCellsLayers);
+        s.inputCIs.resize(numVisibleLayers);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
