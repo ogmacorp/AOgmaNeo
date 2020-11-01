@@ -143,6 +143,7 @@ typedef Vec2<float> Float2;
 typedef Vec3<float> Float3;
 typedef Vec4<float> Float4;
 
+typedef Array<unsigned char> ByteBuffer;
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
 

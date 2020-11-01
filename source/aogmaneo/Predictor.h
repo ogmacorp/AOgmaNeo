@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        ByteBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
@@ -48,23 +48,25 @@ private:
 
     // --- Kernels ---
 
-    void activateHidden(
-        const Int2 &pos,
+    void forward(
+        const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
     );
 
 public:
     float alpha; // Learning rate
+    float expScale;
 
     // Defaults
     Predictor()
     :
-    alpha(0.5f)
+    alpha(0.02f),
+    expScale(16.0f)
     {}
 
     // Create with random initialization
