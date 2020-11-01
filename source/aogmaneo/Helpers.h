@@ -334,7 +334,7 @@ inline float sigmoid(
 
 extern unsigned int globalState;
 
-const unsigned int randMax = 0x3fffffff;
+const unsigned int randMax = 0x00003fff;
 
 unsigned int rand(
     unsigned int* state = &globalState
