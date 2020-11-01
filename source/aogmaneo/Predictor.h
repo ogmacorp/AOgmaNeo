@@ -48,7 +48,7 @@ private:
 
     // --- Kernels ---
 
-    void forward(
+    void activateHidden(
         const Int2 &pos,
         const Array<const IntBuffer*> &inputCIs
     );

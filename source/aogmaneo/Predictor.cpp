@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-void Predictor::forward(
+void Predictor::activateHidden(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs
 ) {
@@ -176,7 +176,7 @@ void Predictor::activate(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+        activateHidden(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
 
     // Copy to prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {

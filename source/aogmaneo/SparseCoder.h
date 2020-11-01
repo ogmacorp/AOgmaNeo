@@ -32,13 +32,14 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        FloatBuffer reconstruction;
+        IntBuffer visibleReconCIs;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenReconCIs;
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -46,15 +47,23 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activateHidden(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
 
+    void reconstructVisible(
+        const Int2 &columnPos,
+        int vli
+    );
+
+    void reconstructHidden(
+        const Int2 &columnPos
+    );
+
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
+        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
@@ -63,7 +72,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f)
+    alpha(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization

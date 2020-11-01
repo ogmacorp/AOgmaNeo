@@ -64,7 +64,7 @@ private:
 
     // --- Kernels ---
 
-    void forward(
+    void activateHidden(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         unsigned int* state
