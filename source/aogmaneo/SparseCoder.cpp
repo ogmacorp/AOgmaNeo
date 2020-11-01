@@ -12,7 +12,7 @@ using namespace aon;
 
 void SparseCoder::forward(
     const Int2 &columnPos,
-    const Array<const ByteBuffer*> &inputCIs
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -122,7 +122,7 @@ void SparseCoder::inhibit(
 
 void SparseCoder::learn(
     const Int2 &columnPos,
-    const Array<const ByteBuffer*> &inputCIs
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
