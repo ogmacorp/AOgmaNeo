@@ -23,64 +23,60 @@ public:
         // Defaults
         VisibleLayerDesc()
         :
-        size(4, 4, 16),
+        size(4, 4, 32),
         radius(2)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Binary weight matrix
+        ByteBuffer weights; // Weight matrix
+
+        IntBuffer commitCIs;
+
+        ByteBuffer clumpInputs;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int lRadius; // Lateral radius
+    Int2 clumpSize;
+    Int2 clumpTilingSize;
 
-    FloatBuffer hiddenStimuli;
+    IntBuffer hiddenCommits;
     FloatBuffer hiddenActivations;
+    FloatBuffer hiddenMatches;
 
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenCIsTemp; // Temporary hidden states
-    FloatBuffer hiddenRates; // Learning rates
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-
-    ByteBuffer laterals; // Lateral weights
     
     // --- Kernels ---
     
-    void forward(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void inhibit(
-        const Int2 &columnPos
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+    void forwardClump(
+        const Int2 &clumpPos,
+        const Array<const IntBuffer*> &inputCIs,
+        bool learnEnabled
     );
 
 public:
-    float alpha; // Learning rate decay
-    int explainIters; // Explaining-away iterations
-    
+    float alpha; // Activation parameter
+    float beta; // Weight learning rate
+    float vigilance; // Vigilance parameter
+
     // Defaults
     SparseCoder()
     :
-    alpha(0.03f),
-    explainIters(5)
+    alpha(0.1f),
+    beta(0.5f),
+    vigilance(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int lRadius, // Lateral radius
+        const Int2 &clumpSize, // Size of column clump (shared RF)
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
@@ -126,6 +122,14 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
+    }
+
+    const Int2 &getClumpSize() const {
+        return clumpSize;
+    }
+
+    const Int2 &getClumpTilingSize() const {
+        return clumpTilingSize;
     }
 };
 } // namespace aon
