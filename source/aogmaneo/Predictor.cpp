@@ -16,13 +16,13 @@ void Predictor::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int maxIndex = 0;
-    int maxActivation = 0;
+    int maxIndex = -1;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        int sum = 0;
+        float sum = 0.0f;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -52,11 +52,13 @@ void Predictor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    float weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] / 255.0f;
+
+                    sum -= 1.0f / max(0.001f, weight);
                 }
         }
 
-        if (sum > maxActivation) {
+        if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
@@ -74,9 +76,6 @@ void Predictor::learn(
     int targetC = (*hiddenTargetCIs)[hiddenColumnIndex];
 
     int hiddenCellIndexTarget = address3(Int3(columnPos.x, columnPos.y, targetC), hiddenSize);
-    int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
-
-    int increment = alpha * 255.0f;
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -105,11 +104,15 @@ void Predictor::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiTarget = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
-                int wiMax = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                vl.weights[wiTarget] = min<int>(255 - increment, vl.weights[wiTarget]) + increment;
-                vl.weights[wiMax] = max<int>(increment, vl.weights[wiMax]) - increment;
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int wi = vc + wiStart;
+
+                    float target = (vc == inC ? 255.0f : 0.0f);
+
+                    vl.weights[wi] = min(255.0f, max(0.0f, static_cast<float>(vl.weights[wi]) + alpha * (target - static_cast<float>(vl.weights[wi])))); 
+                }
             }
     }
 }
@@ -141,7 +144,7 @@ void Predictor::initRandom(
         vl.weights.resize(numHidden * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 120 + rand() % 16;
+            vl.weights[i] = rand() % 256;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
