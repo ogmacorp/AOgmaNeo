@@ -8,16 +8,14 @@
 
 #pragma once
 
-#include "SparseCoder.h"
-#include "Predictor.h"
+#include "Layer.h"
 #include "Actor.h"
 
 namespace aon {
 // Type of hierarchy input layer
 enum IOType {
-    none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 0,
+    action = 1
 };
 
 // A SPH
@@ -37,7 +35,7 @@ public:
         IODesc()
         :
         size(4, 4, 16),
-        type(none),
+        type(prediction),
         ffRadius(2),
         pRadius(2),
         aRadius(2),
@@ -103,9 +101,8 @@ public:
 
 private:
     // Layers
-    Array<SparseCoder> scLayers;
-    Array<Array<Ptr<Predictor>>> pLayers;
-    Array<Ptr<Actor>> aLayers;
+    Array<Layer> layers;
+    Array<Ptr<Actor>> actors;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;

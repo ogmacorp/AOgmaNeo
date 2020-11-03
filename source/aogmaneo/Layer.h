@@ -12,7 +12,7 @@
 
 namespace aon {
 // Sparse coder
-class SparseCoder {
+class Layer {
 public:
     // Visible layer descriptor
     struct VisibleLayerDesc {
@@ -28,37 +28,47 @@ public:
         {}
     };
 
-    // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Binary weight matrix
+        FloatBuffer weights;
+
+        FloatBuffer visibleActivations;
+        IntBuffer visibleCIs;
+        IntBuffer visibleRandomCIs;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int lRadius; // Lateral radius
 
-    FloatBuffer hiddenStimuli;
     FloatBuffer hiddenActivations;
-
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenCIsTemp; // Temporary hidden states
-    FloatBuffer hiddenRates; // Learning rates
+    IntBuffer hiddenRandomCIs; // With Boltzmann distribution
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
 
-    ByteBuffer laterals; // Lateral weights
-    
     // --- Kernels ---
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
-    void inhibit(
-        const Int2 &columnPos
+    void backward(
+        const Int2 &columnPos,
+        int vli
+    );
+
+    void reconBackward(
+        const Int2 &columnPos,
+        int vli,
+        unsigned int* state
+    );
+
+    void reconForward(
+        const Int2 &columnPos,
+        unsigned int* state
     );
 
     void learn(
@@ -68,26 +78,30 @@ private:
 
 public:
     float alpha; // Learning rate decay
-    int explainIters; // Explaining-away iterations
+    int gibbsIters; // Gibbs sampling iterations
     
     // Defaults
-    SparseCoder()
+    Layer()
     :
     alpha(0.03f),
-    explainIters(5)
+    gibbsIters(3)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int lRadius, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    // Activate the sparse coder (perform sparse coding)
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        bool learnEnabled // Whether to learn
+    // Activate the layer (RBM update)
+    void activate(
+        const Array<const IntBuffer*> &inputCIs, // Input states, pass nullptr to not hold constant
+        bool generate // Whether to perform Gibbs sampling and prepare for learning
+    );
+
+    // Learn from full configuration, will perform Gibbs sampling
+    void learn(
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Serialization
