@@ -428,6 +428,7 @@ void Layer::initRandom(
 
         vl.visibleActivations = FloatBuffer(numVisibleCells, 0.0f);
 
+        vl.visibleCIs = IntBuffer(numVisibleColumns, 0);
         vl.visibleRandomCIs = IntBuffer(numVisibleColumns, 0);
     }
 
@@ -563,6 +564,7 @@ void Layer::read(
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
         int numVisibleColumns = vld.size.x * vld.size.y;
+        int numVisibleCells = numVisibleColumns * vld.size.z;
 
         int weightsSize;
 
@@ -577,5 +579,7 @@ void Layer::read(
 
         reader.read(reinterpret_cast<void*>(&vl.visibleCIs[0]), vl.visibleCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&vl.visibleRandomCIs[0]), vl.visibleRandomCIs.size() * sizeof(int));
+
+        vl.visibleActivations = FloatBuffer(numVisibleCells, 0.0f);
     }
 }
