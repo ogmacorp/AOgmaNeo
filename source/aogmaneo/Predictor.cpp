@@ -48,11 +48,11 @@ void Predictor::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    int inC = (*inputCIs[vli])[visibleColumnIndex];
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
 
@@ -101,12 +101,12 @@ void Predictor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                int inC = vl.inputCIsPrev[visibleColumnIndex];
+                int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiTarget = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
-                int wiMax = inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+                int wiTarget = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+                int wiMax = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                 vl.weights[wiTarget] = min<int>(255 - increment, vl.weights[wiTarget]) + increment;
                 vl.weights[wiMax] = max<int>(increment, vl.weights[wiMax]) - increment;
@@ -126,7 +126,7 @@ void Predictor::initRandom(
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHidden =  numHiddenColumns * hiddenSize.z;
+    int numHiddenCells =  numHiddenColumns * hiddenSize.z;
     
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -138,7 +138,7 @@ void Predictor::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 120 + rand() % 16;
@@ -190,9 +190,9 @@ void Predictor::write(
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
-    int numVisibleLayers = visibleLayers.size();
+    int numVisibleCellsLayers = visibleLayers.size();
 
-    writer.write(reinterpret_cast<const void*>(&numVisibleLayers), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&numVisibleCellsLayers), sizeof(int));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -216,7 +216,7 @@ void Predictor::read(
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHidden =  numHiddenColumns * hiddenSize.z;
+    int numHiddenCells =  numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
@@ -224,12 +224,12 @@ void Predictor::read(
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
-    int numVisibleLayers = visibleLayers.size();
+    int numVisibleCellsLayers = visibleLayers.size();
 
-    reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&numVisibleCellsLayers), sizeof(int));
 
-    visibleLayers.resize(numVisibleLayers);
-    visibleLayerDescs.resize(numVisibleLayers);
+    visibleLayers.resize(numVisibleCellsLayers);
+    visibleLayerDescs.resize(numVisibleCellsLayers);
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
