@@ -304,7 +304,7 @@ void Hierarchy::step(
 
     Array<const IntBuffer*> feedBackCIs(layers.size() > 1 ? 2 : 1);
 
-    feedBackCIs[0] = &layers[0].getHiddenCIs();
+    feedBackCIs[0] = &hiddenCIs[0];
     
     if (layers.size() > 1)
         feedBackCIs[1] = &feedBackCIsPrev[0];
