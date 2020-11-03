@@ -385,8 +385,6 @@ void Layer::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
                 int inCI = (*inputCIs[vli])[visibleColumnIndex];
                 int inRandomCI = vl.visibleRandomCIs[visibleColumnIndex];
 
@@ -457,6 +455,9 @@ void Layer::activate(
     if (generate) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+            if (inputCIs[vli] != nullptr)
+                continue;
 
             int numVisibleColumns = vld.size.x * vld.size.y;
         
