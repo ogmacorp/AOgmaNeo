@@ -96,6 +96,8 @@ private:
     Array<Array<CircleBuffer<IntBuffer>>> histories;
     Array<Array<CircleBuffer<IntBuffer>>> historiesPrev; // 1-step delay
 
+    Array<IntBuffer> feedBackCIsPrev;
+
     // Per-layer values
     IntBuffer updates;
 
