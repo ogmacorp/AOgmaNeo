@@ -57,7 +57,7 @@ void Hierarchy::initRandom(
     // Default update state is no update
     updates.resize(layerDescs.size(), false);
 
-    feedBackCIsPrev.resize(layerDescs.size());
+    feedBackCIsPrev.resize(layerDescs.size() - 1);
 
     // Cache input sizes
     inputSizes.resize(ioDescs.size());
@@ -175,7 +175,9 @@ void Hierarchy::initRandom(
         layers[l].initRandom(layerDescs[l].hiddenSize, visibleLayerDescs);
 
         hiddenCIs[l] = layers[l].getHiddenCIs();
-        feedBackCIsPrev[l] = layers[l].getHiddenCIs();
+
+        if (l < layers.size() - 1)
+            feedBackCIsPrev[l] = layers[l].getHiddenCIs();
     }
 
     historiesPrev = histories;
@@ -189,6 +191,9 @@ void Hierarchy::step(
 ) {
     // Backup
     historiesPrev = histories;
+
+    for (int l = 0; l < layers.size() - 1; l++)
+        feedBackCIsPrev[l] = hiddenCIs[l];
 
     // First tick is always 0
     ticks[0] = 0;
@@ -297,8 +302,6 @@ void Hierarchy::step(
 
             layers[l].activate(layerInputCIs, true);
 
-            if (l < layers.size() - 1)
-                feedBackCIsPrev[l] = *layerInputCIs[index];
         }
     }
 
@@ -359,7 +362,9 @@ void Hierarchy::write(
         layers[l].write(writer);
 
         writer.write(reinterpret_cast<const void*>(&hiddenCIs[l]), hiddenCIs[l].size() * sizeof(int));
-        writer.write(reinterpret_cast<const void*>(&feedBackCIsPrev[l]), feedBackCIsPrev[l].size() * sizeof(int));
+
+        if (l < numLayers - 1)
+            writer.write(reinterpret_cast<const void*>(&feedBackCIsPrev[l]), feedBackCIsPrev[l].size() * sizeof(int));
     }
 
     // Actors
@@ -394,7 +399,7 @@ void Hierarchy::read(
 
     histories.resize(numLayers);
 
-    feedBackCIsPrev.resize(numLayers);
+    feedBackCIsPrev.resize(numLayers - 1);
     
     updates.resize(numLayers);
     ticks.resize(numLayers);
@@ -437,10 +442,14 @@ void Hierarchy::read(
         layers[l].read(reader);
 
         hiddenCIs[l].resize(layers[l].getHiddenCIs().size());
-        feedBackCIsPrev[l].resize(layers[l].getHiddenCIs().size());
 
         reader.read(reinterpret_cast<void*>(&hiddenCIs[l]), hiddenCIs[l].size() * sizeof(int));
-        reader.read(reinterpret_cast<void*>(&feedBackCIsPrev[l]), feedBackCIsPrev[l].size() * sizeof(int));
+
+        if (l < layers.size() - 1) {
+            feedBackCIsPrev[l].resize(layers[l].getHiddenCIs().size());
+
+            reader.read(reinterpret_cast<void*>(&feedBackCIsPrev[l]), feedBackCIsPrev[l].size() * sizeof(int));
+        }
     }
 
     // Actors
