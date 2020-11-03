@@ -192,9 +192,6 @@ void Hierarchy::step(
     // Backup
     historiesPrev = histories;
 
-    for (int l = 0; l < layers.size() - 1; l++)
-        feedBackCIsPrev[l] = hiddenCIs[l];
-
     // First tick is always 0
     ticks[0] = 0;
 
@@ -297,11 +294,12 @@ void Hierarchy::step(
             if (l < layers.size() - 1) {
                 int predStartIndex = histories[l + 1].size() * histories[l + 1][0].size();
 
-                layerInputCIs[index] = &layers[l + 1].getVisibleLayer(predStartIndex + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]).visibleCIs;
+                feedBackCIsPrev[l] = layers[l + 1].getVisibleLayer(predStartIndex + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]).visibleCIs;
+
+                layerInputCIs[index] = &feedBackCIsPrev[l];
             }
 
             layers[l].activate(layerInputCIs, true);
-
         }
     }
 
