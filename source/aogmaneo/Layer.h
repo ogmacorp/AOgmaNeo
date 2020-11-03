@@ -83,7 +83,7 @@ public:
     // Defaults
     Layer()
     :
-    alpha(0.03f),
+    alpha(1.0f),
     gibbsIters(3)
     {}
 

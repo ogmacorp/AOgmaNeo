@@ -497,6 +497,10 @@ void Layer::learn(
             reconForward(Int2(i / hiddenSize.y, i % hiddenSize.y), &state);
         }
     }
+
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++)
+        learn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
 }
 
 void Layer::write(
