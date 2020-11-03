@@ -91,6 +91,7 @@ private:
     // Layers
     Array<Layer> layers;
     Array<Ptr<Actor>> actors;
+    Array<IntBuffer> hiddenCIs;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -161,6 +162,13 @@ public:
         int predStartIndex = inputSizes.size() * histories[0][0].size();
 
         return layers[0].getVisibleLayer(predStartIndex + i * ticksPerUpdate[0] + 0).visibleCIs;
+    }
+
+    // Get hidden state
+    const IntBuffer &getHiddenCIs(
+        int l // Layer index
+    ) {
+        return hiddenCIs[l];
     }
 
     // Whether this layer received on update this timestep
