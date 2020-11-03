@@ -32,8 +32,7 @@ set(SOURCES
     "${SOURCE_PATH}/aogmaneo/Helpers.cpp"
     "${SOURCE_PATH}/aogmaneo/Hierarchy.cpp"
     "${SOURCE_PATH}/aogmaneo/ImageEncoder.cpp"
-    "${SOURCE_PATH}/aogmaneo/Predictor.cpp"
-    "${SOURCE_PATH}/aogmaneo/SparseCoder.cpp"
+    "${SOURCE_PATH}/aogmaneo/Layer.cpp"
 )
 
 find_package(OpenMP REQUIRED)
