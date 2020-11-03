@@ -282,14 +282,15 @@ void Hierarchy::step(
 
             // Add feedback if available
             if (l < layers.size() - 1) {
-                int predStartIndex = histories[l + 1][0].size();
+                int predStartIndex = histories[l + 1].size() * histories[l + 1][0].size();
 
                 layerInputCIs[index] = &layers[l + 1].getVisibleLayer(predStartIndex + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]).visibleCIs;
             }
 
             layers[l].activate(layerInputCIs, true);
 
-            feedBackCIsPrev[l] = *layerInputCIs[index];
+            if (l < layers.size() - 1)
+                feedBackCIsPrev[l] = *layerInputCIs[index];
         }
     }
 

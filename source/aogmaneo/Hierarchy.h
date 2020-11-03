@@ -24,12 +24,12 @@ public:
     struct IODesc {
         Int3 size;
 
+        IOType type;
+        
         int layerRadius; // Feed forward radius
         int actorRadius; // Actor radius
 
         int historyCapacity; // Actor history capacity
-
-        IOType type;
 
         IODesc()
         :
