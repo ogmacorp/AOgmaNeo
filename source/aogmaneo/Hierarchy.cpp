@@ -21,6 +21,7 @@ const Hierarchy &Hierarchy::operator=(
     ticksPerUpdate = other.ticksPerUpdate;
     inputSizes = other.inputSizes;
     histories = other.histories;
+    feedBackCIsPrev = other.feedBackCIsPrev;
 
     actors.resize(inputSizes.size());
 
