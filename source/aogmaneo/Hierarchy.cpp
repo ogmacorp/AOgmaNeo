@@ -73,7 +73,7 @@ void Hierarchy::initRandom(
 
         // If first layer
         if (l == 0) {
-            visibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon + inputSizes.size() * layerDescs[l].ticksPerUpdate + (l < layerDescs.size() - 1 ? 1 : 0));
+            visibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon + inputSizes.size() * ticksPerUpdate[l] + (l < layerDescs.size() - 1 ? 1 : 0));
 
             int index = 0;
 
@@ -87,7 +87,7 @@ void Hierarchy::initRandom(
             }
             
             for (int i = 0; i < inputSizes.size(); i++) {
-                for (int t = 0; t < layerDescs[l].ticksPerUpdate; t++) {
+                for (int t = 0; t < ticksPerUpdate[l]; t++) {
                     visibleLayerDescs[index].size = inputSizes[i];
                     visibleLayerDescs[index].radius = ioDescs[i].layerRadius;
 
@@ -134,7 +134,7 @@ void Hierarchy::initRandom(
             }
         }
         else {
-            visibleLayerDescs.resize(layerDescs[l].temporalHorizon + layerDescs[l].ticksPerUpdate + (l < layerDescs.size() - 1 ? 1 : 0));
+            visibleLayerDescs.resize(layerDescs[l].temporalHorizon + ticksPerUpdate[l] + (l < layerDescs.size() - 1 ? 1 : 0));
 
             int index = 0;
 
@@ -145,7 +145,7 @@ void Hierarchy::initRandom(
                 index++;
             }
 
-            for (int t = 0; t < layerDescs[l].ticksPerUpdate; t++) {
+            for (int t = 0; t < ticksPerUpdate[l]; t++) {
                 visibleLayerDescs[index].size = layerDescs[l - 1].hiddenSize;
                 visibleLayerDescs[index].radius = layerDescs[l].layerRadius;
 
@@ -252,17 +252,14 @@ void Hierarchy::step(
             }
 
             // Targets
-            for (int i = 0; i < histories[l].size(); i++) {
+            for (int i = 0; i < historiesPrev[l].size(); i++) {
                 for (int t = 0; t < ticksPerUpdate[l]; t++)
                     layerInputCIs[index++] = &histories[l][i][t];
             }
 
             // Add feedback if available
-            if (l < layers.size() - 1) {
-                int predStartIndex = histories[l + 1][0].size();
-
+            if (l < layers.size() - 1)
                 layerInputCIs[index] = &feedBackCIsPrev[l];
-            }
 
             layers[l].activate(layerInputCIs, false);
             layers[l].learn(layerInputCIs);
@@ -272,12 +269,12 @@ void Hierarchy::step(
             // Fill
             index = 0;
 
-            for (int i = 0; i < historiesPrev[l].size(); i++) {
-                for (int t = 0; t < historiesPrev[l][i].size(); t++)
+            for (int i = 0; i < histories[l].size(); i++) {
+                for (int t = 0; t < histories[l][i].size(); t++)
                     layerInputCIs[index++] = &histories[l][i][t];
             }
 
-            // Targets
+            // Blanks
             for (int i = 0; i < histories[l].size(); i++) {
                 for (int t = 0; t < ticksPerUpdate[l]; t++)
                     layerInputCIs[index++] = nullptr;
