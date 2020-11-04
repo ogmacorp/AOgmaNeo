@@ -360,7 +360,7 @@ void Layer::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+    int hiddenTargetCellIndex = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
     int hiddenRandomCellIndex = address3(Int3(columnPos.x, columnPos.y, hiddenRandomCIs[hiddenColumnIndex]), hiddenSize);
 
     // For each visible layer
@@ -392,10 +392,10 @@ void Layer::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int inCI = (*inputCIs[vli])[visibleColumnIndex];
+                int inTargetCI = (*inputCIs[vli])[visibleColumnIndex];
                 int inRandomCI = vl.visibleRandomCIs[visibleColumnIndex];
 
-                vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += alpha;
+                vl.weights[inTargetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenTargetCellIndex))] += alpha;
                 vl.weights[inRandomCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenRandomCellIndex))] -= alpha;
             }
     }
