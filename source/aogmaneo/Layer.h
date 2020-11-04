@@ -84,7 +84,7 @@ public:
     Layer()
     :
     alpha(0.01f),
-    gibbsIters(1)
+    gibbsIters(3)
     {}
 
     // Create a sparse coding layer with random initialization
