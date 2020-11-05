@@ -84,7 +84,7 @@ public:
     // Defaults
     Layer()
     :
-    alpha(0.01f),
+    alpha(0.5f),
     gibbsIters(1)
     {}
 
