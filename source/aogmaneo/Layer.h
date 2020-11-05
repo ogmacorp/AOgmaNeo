@@ -33,7 +33,7 @@ public:
 
         FloatBuffer visibleActivations;
         IntBuffer visibleCIs;
-        IntBuffer visibleRandomCIs;
+        IntBuffer visibleCIsN;
     };
 
 private:
@@ -41,7 +41,8 @@ private:
 
     FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenRandomCIs; // With Boltzmann distribution
+    IntBuffer hiddenCIs0;
+    IntBuffer hiddenCIsN;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -84,7 +85,7 @@ public:
     Layer()
     :
     alpha(0.01f),
-    gibbsIters(3)
+    gibbsIters(1)
     {}
 
     // Create a sparse coding layer with random initialization

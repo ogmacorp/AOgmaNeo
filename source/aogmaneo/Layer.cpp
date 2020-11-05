@@ -101,7 +101,7 @@ void Layer::forward(
         }
     }
     
-    hiddenRandomCIs[hiddenColumnIndex] = selectIndex;
+    hiddenCIsN[hiddenColumnIndex] = hiddenCIs0[hiddenColumnIndex] = selectIndex;
 }
 
 void Layer::backward(
@@ -210,7 +210,7 @@ void Layer::reconBackward(
                 Int2 hiddenPos = Int2(ix, iy);
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenRandomCIs[hiddenColumnIndex]), hiddenSize);
+                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIsN[hiddenColumnIndex]), hiddenSize);
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
@@ -259,7 +259,7 @@ void Layer::reconBackward(
         }
     }
     
-    vl.visibleRandomCIs[visibleColumnIndex] = selectIndex;
+    vl.visibleCIsN[visibleColumnIndex] = selectIndex;
 }
 
 void Layer::reconForward(
@@ -303,7 +303,7 @@ void Layer::reconForward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inCI = vl.visibleRandomCIs[visibleColumnIndex];
+                    int inCI = vl.visibleCIsN[visibleColumnIndex];
 
                     sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     count++;
@@ -347,7 +347,7 @@ void Layer::reconForward(
         }
     }
     
-    hiddenRandomCIs[hiddenColumnIndex] = selectIndex;
+    hiddenCIsN[hiddenColumnIndex] = selectIndex;
 }
 
 void Layer::learn(
@@ -356,8 +356,8 @@ void Layer::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int hiddenTargetCellIndex = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
-    int hiddenRandomCellIndex = address3(Int3(columnPos.x, columnPos.y, hiddenRandomCIs[hiddenColumnIndex]), hiddenSize);
+    int hiddenCellIndex0 = address3(Int3(columnPos.x, columnPos.y, hiddenCIs0[hiddenColumnIndex]), hiddenSize);
+    int hiddenCellIndexN = address3(Int3(columnPos.x, columnPos.y, hiddenCIsN[hiddenColumnIndex]), hiddenSize);
 
     // For each visible layer
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -388,11 +388,11 @@ void Layer::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int inTargetCI = (*inputCIs[vli])[visibleColumnIndex];
-                int inRandomCI = vl.visibleRandomCIs[visibleColumnIndex];
+                int inCI0 = (*inputCIs[vli])[visibleColumnIndex];
+                int inCIN = vl.visibleCIsN[visibleColumnIndex];
 
-                vl.weights[inTargetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenTargetCellIndex))] += alpha;
-                vl.weights[inRandomCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenRandomCellIndex))] -= alpha;
+                vl.weights[inCI0 + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex0))] += alpha;
+                vl.weights[inCIN + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexN))] -= alpha;
             }
     }
 }
@@ -430,14 +430,15 @@ void Layer::initRandom(
         vl.visibleActivations = FloatBuffer(numVisibleCells, 0.0f);
 
         vl.visibleCIs = IntBuffer(numVisibleColumns, 0);
-        vl.visibleRandomCIs = IntBuffer(numVisibleColumns, 0);
+        vl.visibleCIsN = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
-    hiddenRandomCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs0 = IntBuffer(numHiddenColumns, 0);
+    hiddenCIsN = IntBuffer(numHiddenColumns, 0);
 }
 
 void Layer::activate(
@@ -516,7 +517,6 @@ void Layer::write(
     writer.write(reinterpret_cast<const void*>(&gibbsIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenRandomCIs[0]), hiddenRandomCIs.size() * sizeof(int));
 
     int numVisibleCellsLayers = visibleLayers.size();
 
@@ -535,7 +535,6 @@ void Layer::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.visibleCIs[0]), vl.visibleCIs.size() * sizeof(int));
-        writer.write(reinterpret_cast<const void*>(&vl.visibleRandomCIs[0]), vl.visibleRandomCIs.size() * sizeof(int));
     }
 }
 
@@ -551,12 +550,13 @@ void Layer::read(
     reader.read(reinterpret_cast<void*>(&gibbsIters), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
-    hiddenRandomCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenRandomCIs[0]), hiddenRandomCIs.size() * sizeof(int));
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+
+    hiddenCIs0 = IntBuffer(numHiddenColumns, 0);
+    hiddenCIsN = IntBuffer(numHiddenColumns, 0);
 
     int numVisibleCellsLayers = visibleLayers.size();
 
@@ -583,11 +583,11 @@ void Layer::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         vl.visibleCIs.resize(numVisibleColumns);
-        vl.visibleRandomCIs.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.visibleCIs[0]), vl.visibleCIs.size() * sizeof(int));
-        reader.read(reinterpret_cast<void*>(&vl.visibleRandomCIs[0]), vl.visibleRandomCIs.size() * sizeof(int));
 
         vl.visibleActivations = FloatBuffer(numVisibleCells, 0.0f);
+
+        vl.visibleCIsN = IntBuffer(numVisibleColumns, 0);
     }
 }
