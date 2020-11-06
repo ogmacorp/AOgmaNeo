@@ -47,7 +47,7 @@ void SparseCoder::forward(
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -94,7 +94,7 @@ void SparseCoder::inhibit(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x,  hiddenSize.y));
+                int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
 
                 if (otherHiddenColumnIndex == hiddenColumnIndex) // No self-inhibition
                     continue;
@@ -150,7 +150,7 @@ void SparseCoder::learn(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -177,7 +177,7 @@ void SparseCoder::learn(
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-            int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x,  hiddenSize.y));
+            int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -210,7 +210,7 @@ void SparseCoder::initRandom(
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHidden =  numHiddenColumns * hiddenSize.z;
+    int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -223,24 +223,24 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 256;
     }
 
-    hiddenStimuli = FloatBuffer(numHidden, 0.0f);
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
+    hiddenStimuli = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     hiddenCIsTemp = IntBuffer(numHiddenColumns, 0);
-    hiddenRates = FloatBuffer(numHidden, 0.5f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     int diam = lRadius * 2 + 1;
     int area = diam * diam;
 
-    laterals.resize(numHidden * area * hiddenSize.z, 0);
+    laterals.resize(numHiddenCells * area * hiddenSize.z, 0);
 }
 
 // Activate the sparse coder (perform sparse coding)
@@ -312,20 +312,20 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHidden =  numHiddenColumns * hiddenSize.z;
+    int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCIsTemp.resize(numHiddenColumns);
-    hiddenRates.resize(numHidden);
+    hiddenRates.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
-    hiddenStimuli = FloatBuffer(numHidden, 0.0f);
-    hiddenActivations = FloatBuffer(numHidden, 0.0f);
+    hiddenStimuli = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
