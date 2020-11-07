@@ -51,9 +51,9 @@ void Predictor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inC = (*inputCIs[vli])[visibleColumnIndex];
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
    
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     count++;
                 }
         }
@@ -127,9 +127,9 @@ void Predictor::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inC = vl.inputCIsPrev[visibleColumnIndex];
+                    int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-                    vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
+                    vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
                 }
         }
     }
@@ -166,9 +166,9 @@ void Predictor::generateErrors(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
-    int inC = vl.inputCIsPrev[visibleColumnIndex];
+    int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-    int visibleIndex = address3(Int3(columnPos.x, columnPos.y, inC), vld.size);
+    int visibleIndex = address3(Int3(columnPos.x, columnPos.y, inCI), vld.size);
 
     float sum = 0.0f;
     int count = 0;
@@ -187,7 +187,7 @@ void Predictor::generateErrors(
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hc), hiddenSize);
 
-                    float weight = vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    float weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
                     sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]) * weight;
                 }
