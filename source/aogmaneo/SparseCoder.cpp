@@ -50,9 +50,7 @@ void SparseCoder::forward(
 
                     int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexPrev));
-
-                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta));
+                    vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexPrev))] += delta;
                 }
         }
     }
