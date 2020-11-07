@@ -47,7 +47,7 @@ void Predictor::forward(
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -77,12 +77,12 @@ void Predictor::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int targetC = (*hiddenTargetCIs)[hiddenColumnIndex];
+    int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float delta = alpha * ((hc == targetC ? 1.0f : 0.0f) - sigmoid(hiddenActivations[hiddenCellIndex]));
+        float delta = alpha * ((hc == targetCI ? 1.0f : 0.0f) - sigmoid(hiddenActivations[hiddenCellIndex]));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -105,7 +105,7 @@ void Predictor::learn(
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -129,7 +129,7 @@ void Predictor::initRandom(
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHiddenCells =  numHiddenColumns * hiddenSize.z;
+    int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {

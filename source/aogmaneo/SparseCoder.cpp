@@ -45,7 +45,7 @@ void SparseCoder::forward(
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -130,13 +130,13 @@ void SparseCoder::learn(
         }
     }
 
-    int targetC = (*inputCIs)[visibleColumnIndex];
+    int targetCI = (*inputCIs)[visibleColumnIndex];
 
-    if (maxIndex != targetC) {
+    if (maxIndex != targetCI) {
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            float delta = alpha * ((vc == targetC ? 1.0f : 0.0f) - expf(vl.reconstruction[visibleCellIndex]));
+            float delta = alpha * ((vc == targetCI ? 1.0f : 0.0f) - expf(vl.reconstruction[visibleCellIndex]));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -189,7 +189,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.0f);
+            vl.weights[i] = randf(-1.0f, 0.0f);
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
