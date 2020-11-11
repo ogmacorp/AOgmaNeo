@@ -168,8 +168,6 @@ void Predictor::generateErrors(
 
     int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-    int visibleIndex = address3(Int3(columnPos.x, columnPos.y, inCI), vld.size);
-
     float sum = 0.0f;
     int count = 0;
 
@@ -190,9 +188,8 @@ void Predictor::generateErrors(
                     float weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
                     sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]) * weight;
+                    count++;
                 }
-
-                count++;
             }
         }
 

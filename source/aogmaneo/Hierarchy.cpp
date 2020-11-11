@@ -202,15 +202,6 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
-
-            int index = 0;
-
-            for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    layerInputCIs[index++] = &histories[l][i][t];
-            }
-
             // Clear hidden errors
             errors[l].fill(0.0f);
 
@@ -218,6 +209,15 @@ void Hierarchy::step(
             for (int i = 0; i < pLayers[l].size(); i++) {
                 for (int t = 0; t < pLayers[l][i].size(); t++)
                     pLayers[l][i][t].generateErrors(&histories[l][i][t], &errors[l], 0);
+            }
+
+            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
+
+            int index = 0;
+
+            for (int i = 0; i < histories[l].size(); i++) {
+                for (int t = 0; t < histories[l][i].size(); t++)
+                    layerInputCIs[index++] = &histories[l][i][t];
             }
 
             // Activate sparse coder
