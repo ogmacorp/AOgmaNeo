@@ -300,8 +300,8 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
-    writer.write(reinterpret_cast<const void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(int));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -322,7 +322,7 @@ void SparseCoder::write(
         writer.write(reinterpret_cast<const void*>(&clumpInputSize), sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
-        writer.write(reinterpret_cast<const void*>(&vl.commitCIs[0]), vl.commitCIs.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.commitCIs[0]), vl.commitCIs.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&vl.clumpInputs[0]), vl.clumpInputs.size() * sizeof(unsigned char));
     }
 }
@@ -345,8 +345,8 @@ void SparseCoder::read(
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
-    reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(int));
 
     hiddenActivations = FloatBuffer(numNonNullHidden, 0.0f);
     hiddenMatches = FloatBuffer(numNonNullHidden, 0.0f);
@@ -377,7 +377,7 @@ void SparseCoder::read(
         vl.clumpInputs.resize(clumpInputSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
-        reader.read(reinterpret_cast<void*>(&vl.commitCIs[0]), vl.commitCIs.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.commitCIs[0]), vl.commitCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&vl.clumpInputs[0]), vl.clumpInputs.size() * sizeof(unsigned char));
     }
 }
