@@ -90,11 +90,11 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.001f),
+    alpha(0.01f),
     beta(0.01f),
     gamma(0.99f),
     minSteps(4),
-    historyIters(16)
+    historyIters(8)
     {}
 
     // Initialized randomly
