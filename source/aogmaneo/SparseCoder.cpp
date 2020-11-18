@@ -51,9 +51,9 @@ void SparseCoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inC = (*inputCIs[vli])[visibleColumnIndex];
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     count++;
                 }
         }
@@ -101,9 +101,9 @@ void SparseCoder::inhibit(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int inC = hiddenCIsTemp[otherHiddenColumnIndex];
+                int inCI = hiddenCIsTemp[otherHiddenColumnIndex];
 
-                sum += laterals[inC + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                sum += laterals[inCI + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 count++;
             }
 
@@ -154,14 +154,14 @@ void SparseCoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int inC = (*inputCIs[vli])[visibleColumnIndex];
+                int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     float weight = vl.weights[wi];
 
-                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * ((vc == inC ? 255.0f : 0.0f) - weight))));
+                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * ((vc == inCI ? 255.0f : 0.0f) - weight))));
                 }
             }
     }
@@ -181,14 +181,14 @@ void SparseCoder::learn(
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-            int inC = hiddenCIs[otherHiddenColumnIndex];
+            int inCI = hiddenCIs[otherHiddenColumnIndex];
 
             for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
                 int wi = ohc + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                 float weight = laterals[wi];
 
-                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * ((ohc == inC ? 255.0f : 0.0f) - weight))));
+                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * ((ohc == inCI ? 255.0f : 0.0f) - weight))));
             }
         }
 
