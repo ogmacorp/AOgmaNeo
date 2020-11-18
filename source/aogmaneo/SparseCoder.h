@@ -32,6 +32,7 @@ public:
     struct VisibleLayer {
         ByteBuffer weights0;
         ByteBuffer weights1; // Complement
+        ByteBuffer mask; // Mask away units
     };
 
 private:
