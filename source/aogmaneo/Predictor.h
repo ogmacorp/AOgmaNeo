@@ -38,6 +38,8 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
+    FloatBuffer hiddenActivations;
+
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
@@ -57,6 +59,16 @@ private:
     );
 
 public:
+    float alpha; // Learning rate
+    float expScale;
+
+    // Defaults
+    Predictor()
+    :
+    alpha(0.02f),
+    expScale(16.0f)
+    {}
+
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
