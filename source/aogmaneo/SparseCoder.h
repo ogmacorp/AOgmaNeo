@@ -32,7 +32,6 @@ public:
     struct VisibleLayer {
         ByteBuffer weights0;
         ByteBuffer weights1; // Complement
-        ByteBuffer mask; // Mask away units
     };
 
 private:
@@ -64,7 +63,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f),
+    alpha(1.0f),
     beta(0.1f),
     vigilance(0.5f)
     {}

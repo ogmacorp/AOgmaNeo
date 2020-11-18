@@ -58,9 +58,6 @@ void SparseCoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    if (!vl.mask[wi])
-                        continue;
-
                     unsigned char normalizedInput = roundftoi(255.0f * static_cast<float>((*inputCIs[vli])[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1));
 
                     sum += min<int>(normalizedInput, vl.weights0[wi]);
@@ -150,14 +147,11 @@ void SparseCoder::forward(
 
                 int wi = offset.y + diam * (offset.x + diam * hiddenCellIndexMax);
 
-                if (!vl.mask[wi])
-                    continue;
-
                 unsigned char normalizedInput = roundftoi(255.0f * static_cast<float>((*inputCIs[vli])[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1));
 
                 if (commit) {
-                    vl.weights0[wi] = normalizedInput;
-                    vl.weights1[wi] = 255 - normalizedInput;
+                    vl.weights0[wi] = min<int>(vl.weights0[wi], normalizedInput);
+                    vl.weights1[wi] = min<int>(vl.weights1[wi], 255 - normalizedInput);
                 }
                 else if (doSlowLearn) {
                     int delta0 = roundftoi(beta * (min<int>(normalizedInput, vl.weights0[wi]) - vl.weights0[wi]));
@@ -195,12 +189,13 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights0.resize(numHiddenCells * area, 255);
-        vl.weights1.resize(vl.weights0.size(), 255);
-        vl.mask.resize(vl.weights0.size());
+        vl.weights0.resize(numHiddenCells * area);
+        vl.weights1.resize(vl.weights0.size());
         
-        for (int i = 0; i < vl.mask.size(); i++)
-            vl.mask[i] = rand() % 2;
+        for (int i = 0; i < vl.weights0.size(); i++) {
+            vl.weights0[i] = rand() % 256;
+            vl.weights1[i] = rand() % 256;
+        }
     }
 
     hiddenCommits = IntBuffer(numHiddenColumns, 0);
@@ -251,7 +246,6 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(unsigned char));
         writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(unsigned char));
-        writer.write(reinterpret_cast<const void*>(&vl.mask[0]), vl.mask.size() * sizeof(unsigned char));
     }
 }
 
@@ -298,6 +292,5 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(unsigned char));
         reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(unsigned char));
-        reader.read(reinterpret_cast<void*>(&vl.mask[0]), vl.mask.size() * sizeof(unsigned char));
     }
 }
