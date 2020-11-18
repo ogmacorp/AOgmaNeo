@@ -64,7 +64,7 @@ void SparseCoder::forward(
                     sum += min<int>(255 - normalizedInput, vl.weights1[wi]);
 
                     total += vl.weights0[wi] + vl.weights1[wi];
-                    count += 510;
+                    count += 255;
                 }
         }
 
