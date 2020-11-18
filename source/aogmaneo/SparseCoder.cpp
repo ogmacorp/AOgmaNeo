@@ -18,12 +18,12 @@ void SparseCoder::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = 0;
+    float maxActivation = -1.0f;
     int originalMaxIndex = 0;
 
     bool passed = false;
     bool commit = false;
 
-    #pragma omp parallel for
     for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
@@ -73,12 +73,6 @@ void SparseCoder::forward(
 
         hiddenActivations[hiddenCellIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
         hiddenMatches[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
-    }
-
-    float maxActivation = -1.0f;
-
-    for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenCellIndex];
