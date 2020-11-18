@@ -92,7 +92,7 @@ void SparseCoder::forward(
 
             maxActivation = -1.0f;
 
-            for (int ohc = 1; ohc < hiddenCommits[hiddenColumnIndex]; ohc++) {
+            for (int ohc = 0; ohc < hiddenCommits[hiddenColumnIndex]; ohc++) {
                 int otherHiddenIndex = address3(Int3(columnPos.x, columnPos.y, ohc), hiddenSize);
 
                 if (hiddenActivations[otherHiddenIndex] > maxActivation) {
