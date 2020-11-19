@@ -69,7 +69,7 @@ void SparseCoder::forward(
         }
 
         hiddenActivations[hiddenCellIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
-        hiddenMatches[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count));
+        hiddenMatches[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(max(255, count));
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenCellIndex];
