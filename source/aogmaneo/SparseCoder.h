@@ -68,8 +68,8 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(1.0f),
-    beta(0.5f),
+    alpha(0.01f),
+    beta(0.1f),
     vigilance(0.1f)
     {}
 
