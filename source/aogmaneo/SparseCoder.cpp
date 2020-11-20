@@ -18,10 +18,10 @@ void SparseCoder::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    if (learnEnabled) {
+    float error = (*hiddenErrors)[hiddenColumnIndex];
+
+    if (learnEnabled && error > minError) {
         int hiddenCellIndexPrev = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
-        
-        float error = (*hiddenErrors)[hiddenColumnIndex];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -52,20 +52,10 @@ void SparseCoder::forward(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexPrev));
 
-                    if (error > 0.0f) {
-                        for (int vc = 0; vc < vld.size.z; vc++) {
-                            if (vc == inCI)
-                                continue;
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wiStart;
 
-                            int wi = vc + wiStart;
-
-                            vl.weights[wi] -= alpha * vl.weights[wi];
-                        }
-                    }
-                    else {
-                        int wi = inCI + wiStart;
-
-                        vl.weights[wi] -= alpha * vl.weights[wi];
+                        vl.weights[wi] += alpha * ((vc == inCI ? 1.0f : 0.0f) - vl.weights[wi]);
                     }
                 }
         }
@@ -185,6 +175,7 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&minError), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -217,6 +208,7 @@ void SparseCoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&minError), sizeof(float));
 
     hiddenActivations.resize(numHiddenColumns);
     hiddenCIs.resize(numHiddenColumns);
