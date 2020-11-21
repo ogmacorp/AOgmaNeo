@@ -17,8 +17,8 @@ void ImageEncoder::forward(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int maxIndex = 0;
-    float maxActivation = 1.0f; // Flag value
+    int maxIndex = -1;
+    float maxActivation = -999999.0f; // Flag value
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
@@ -66,7 +66,7 @@ void ImageEncoder::forward(
         hiddenActivations[hiddenCellIndex].a = sum;
         hiddenActivations[hiddenCellIndex].i = hiddenCellIndex;
 
-        if (sum > maxActivation || maxActivation == 1.0f) {
+        if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
