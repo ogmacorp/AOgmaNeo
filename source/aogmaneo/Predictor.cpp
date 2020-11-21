@@ -51,9 +51,9 @@ void Predictor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inC = (*inputCIs[vli])[visibleColumnIndex];
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
    
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     count++;
                 }
         }
@@ -109,9 +109,9 @@ void Predictor::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inC = vl.inputCIsPrev[visibleColumnIndex];
+                    int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-                    vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
+                    vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
                 }
         }
     }
