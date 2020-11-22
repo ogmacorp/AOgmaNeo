@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -133,7 +134,9 @@ void SparseCoder::forwardClump(
         for (int hc = 1; hc < hiddenCommits[hiddenColumnIndex]; hc++) { // Start at one since we can skip the null input
             int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, maxIndex - 1), Int3(hiddenSize.x, hiddenSize.y, hiddenSize.z - 1)); // -1 since we don't store the null
 
-            if (hiddenMatches[hiddenCellIndexMax] < vigilance) { 
+            float effectiveVigilance = vigilance * (1.0f - static_cast<float>(maxIndex - 1) / static_cast<float>(hiddenSize.z - 1));
+
+            if (hiddenMatches[hiddenCellIndexMax] < effectiveVigilance) { 
                 // Reset
                 hiddenActivations[hiddenCellIndexMax] = -1.0f;
 
@@ -224,7 +227,7 @@ void SparseCoder::forwardClump(
 
                     // Reconstruct for next clump member column
                     if (vl.commitCIs[wi] == inC)
-                        vl.clumpInputs[cii] = max<int>(0, static_cast<int>(vl.clumpInputs[cii]) - static_cast<int>(vl.weights[wi]));
+                        vl.clumpInputs[cii] = min<int>(static_cast<int>(vl.clumpInputs[cii]), 255 - static_cast<int>(vl.weights[wi]));
                 }
         }
     }
