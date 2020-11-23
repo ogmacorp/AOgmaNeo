@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         ByteBuffer weights; // Binary weight matrix
 
-        ByteBuffer reconstruction;
+        IntBuffer reconstruction;
     };
 
 private:

@@ -223,7 +223,6 @@ void SparseCoder::initRandom(
         const VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
 
         int numVisibleColumns = vld.size.x * vld.size.y;
-        int numVisible = numVisibleColumns * vld.size.z;
 
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
@@ -232,9 +231,9 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 16;
+            vl.weights[i] = rand() % 256;
 
-        vl.reconstruction = ByteBuffer(numVisibleColumns, 0);
+        vl.reconstruction = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenActivations = IntBuffer(numHiddenCells, 0);
@@ -355,6 +354,6 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
 
-        vl.reconstruction = ByteBuffer(numVisibleColumns, 0);
+        vl.reconstruction = IntBuffer(numVisibleColumns, 0);
     }
 }
