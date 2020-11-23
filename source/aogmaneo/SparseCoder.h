@@ -31,34 +31,37 @@ public:
     // Visible layer
     struct VisibleLayer {
         ByteBuffer weights; // Binary weight matrix
+
+        ByteBuffer reconstruction;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int lRadius; // Lateral radius
+    int numPriorities;
 
-    FloatBuffer hiddenStimuli;
-    FloatBuffer hiddenActivations;
-
+    IntBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenCIsTemp; // Temporary hidden states
-    FloatBuffer hiddenRates; // Learning rates
+    IntBuffer hiddenPriorities;
+
+    FloatBuffer hiddenRates; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
 
-    ByteBuffer laterals; // Lateral weights
-    
     // --- Kernels ---
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        int priority
     );
 
-    void inhibit(
-        const Int2 &columnPos
+    void reconstruct(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs,
+        int vli,
+        int priority
     );
 
     void learn(
@@ -67,20 +70,18 @@ private:
     );
 
 public:
-    float alpha; // Learning rate decay
-    int explainIters; // Explaining-away iterations
-    
+    float alpha;
+
     // Defaults
     SparseCoder()
     :
-    alpha(0.02f),
-    explainIters(8)
+    alpha(0.02f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int lRadius, // Lateral radius
+        int numPriorities, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
