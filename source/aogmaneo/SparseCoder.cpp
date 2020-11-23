@@ -58,7 +58,7 @@ void SparseCoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += max<int>(0, static_cast<int>(vl.weights[wi]) - static_cast<int>(vl.reconstruction[visibleColumnIndex]));
+                    sum += min<int>(vl.weights[wi], vl.reconstruction[visibleColumnIndex]);
                 }
         }
 
@@ -116,7 +116,7 @@ void SparseCoder::reconstruct(
 
             int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-            if (hiddenPriorities[hiddenColumnIndex] > priority)
+            if (hiddenPriorities[hiddenColumnIndex] != priority)
                 continue;
 
             int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
@@ -133,7 +133,7 @@ void SparseCoder::reconstruct(
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = sum / max(1, count);
+    vl.reconstruction[visibleColumnIndex] = max<int>(0, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - sum / max(1, count));
 }
 
 void SparseCoder::learn(
@@ -265,7 +265,7 @@ void SparseCoder::step(
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
-        vl.reconstruction.fill(0);
+        vl.reconstruction.fill(255);
     }
     
     for (int p = 0; p < numPriorities; p++) {
