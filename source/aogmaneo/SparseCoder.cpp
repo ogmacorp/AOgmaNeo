@@ -116,7 +116,7 @@ void SparseCoder::reconstruct(
 
             int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-            if (hiddenPriorities[hiddenColumnIndex] <= priority)
+            if (hiddenPriorities[hiddenColumnIndex] > priority)
                 continue;
 
             int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
