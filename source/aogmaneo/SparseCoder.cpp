@@ -195,8 +195,8 @@ void SparseCoder::learn(
                     int wi = vc + wiStart;
                     int wiSecond = vc + wiStartSecond;
 
-                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, vl.weights[wi] + hiddenRates[hiddenCellIndex] * ((vc == inCI ? 255 : 0.0f) - static_cast<float>(vl.weights[wi])))));
-                    vl.weights[wiSecond] = roundftoi(min(255.0f, max(0.0f, vl.weights[wiSecond] + hiddenRates[hiddenSecondCellIndex] * ((vc == inCI ? 255 : 0.0f) - static_cast<float>(vl.weights[wiSecond])))));
+                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, vl.weights[wi] + hiddenRates[hiddenCellIndex] * ((vc == inCI ? 255.0f : 0.0f) - static_cast<float>(vl.weights[wi])))));
+                    vl.weights[wiSecond] = roundftoi(min(255.0f, max(0.0f, vl.weights[wiSecond] + hiddenRates[hiddenSecondCellIndex] * ((vc == inCI ? 255.0f : 0.0f) - static_cast<float>(vl.weights[wiSecond])))));
                 }
             }
     }
