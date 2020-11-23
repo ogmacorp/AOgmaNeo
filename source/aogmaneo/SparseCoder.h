@@ -54,7 +54,8 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
-        int priority
+        int priority,
+        bool learnEnabled
     );
 
     void reconstruct(
@@ -62,11 +63,6 @@ private:
         const Array<const IntBuffer*> &inputCIs,
         int vli,
         int priority
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
