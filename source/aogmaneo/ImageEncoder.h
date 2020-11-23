@@ -11,7 +11,7 @@
 #include "Helpers.h"
 
 namespace aon {
-// Image coder
+// Sparse coder
 class ImageEncoder {
 public:
     // Visible layer descriptor
@@ -23,37 +23,27 @@ public:
         // Defaults
         VisibleLayerDesc()
         :
-        size(4, 4, 16),
+        size(4, 4, 32),
         radius(2)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights; // Byte weight matrix
+        ByteBuffer weights0;
+        ByteBuffer weights1; // Complement
 
-        FloatBuffer reconstruction;
+        ByteBuffer reconstruction;
     };
 
 private:
-    struct FloatInt {
-        float a;
-        int i;
-
-        bool operator<(
-            const FloatInt &other
-        ) const {
-            return a < other.a;
-        }
-    };
-
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<FloatInt> hiddenActivations;
+    IntBuffer hiddenCommits;
+    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenMatches;
 
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenResources; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -63,25 +53,27 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const FloatBuffer*> &inputCIs,
+        const Array<const ByteBuffer*> &inputActs,
         bool learnEnabled
     );
 
     void reconstruct(
-        const Int2 &columnPos,
+        const Int2 &pos,
         const IntBuffer* reconCIs,
         int vli
     );
 
 public:
-    float alpha;
-    float gamma;
+    float alpha; // Activation parameter
+    float beta; // Weight learning rate
+    float vigilance; // Vigilance parameter
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.05f),
-    gamma(2.0f)
+    alpha(0.01f),
+    beta(0.5f),
+    vigilance(0.9f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -92,7 +84,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const FloatBuffer*> &inputs, // Input states
+        const Array<const ByteBuffer*> &inputActs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -100,7 +92,7 @@ public:
         const IntBuffer* reconCIs
     );
 
-    const FloatBuffer &getReconstruction(
+    const ByteBuffer &getReconstruction(
         int i
     ) const {
         return visibleLayers[i].reconstruction;
@@ -145,3 +137,4 @@ public:
     }
 };
 } // namespace aon
+
