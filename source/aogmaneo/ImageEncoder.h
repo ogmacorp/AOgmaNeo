@@ -73,7 +73,7 @@ public:
     :
     alpha(0.01f),
     beta(0.5f),
-    vigilance(0.8f)
+    vigilance(0.85f)
     {}
 
     // Create a sparse coding layer with random initialization
