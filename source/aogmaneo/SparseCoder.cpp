@@ -199,14 +199,14 @@ void SparseCoder::forwardClump(
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndexMax);
                     int cii = offset.y + diam * (offset.x + diam * clumpIndex);
 
-                    unsigned char inC = (*inputCIs[vli])[visibleColumnIndex];
+                    unsigned char inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                     if (commit) {
-                        vl.commitCIs[wi] = inC;
+                        vl.commitCIs[wi] = inCI;
                         vl.weights[wi] = vl.clumpInputs[cii];
                     }
                     else if (doSlowLearn) {
-                        if (vl.commitCIs[wi] == inC) {
+                        if (vl.commitCIs[wi] == inCI) {
                             unsigned char weight = vl.weights[wi];
 
                             int delta = roundftoi(beta * (min<int>(vl.clumpInputs[cii], weight) - weight));
@@ -223,7 +223,7 @@ void SparseCoder::forwardClump(
                     }
 
                     // Reconstruct for next clump member column
-                    if (vl.commitCIs[wi] == inC)
+                    if (vl.commitCIs[wi] == inCI)
                         vl.clumpInputs[cii] = max<int>(0, static_cast<int>(vl.clumpInputs[cii]) - static_cast<int>(vl.weights[wi]));
                 }
         }
@@ -248,8 +248,7 @@ void SparseCoder::initRandom(
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHidden =  numHiddenColumns * hiddenSize.z;
-    int numNonNullHidden =  numHiddenColumns * (hiddenSize.z - 1);
+    int numNonNullHiddenCells =  numHiddenColumns * (hiddenSize.z - 1);
 
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -262,17 +261,17 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numNonNullHidden * area, 0);
+        vl.weights.resize(numNonNullHiddenCells * area, 0);
 
-        vl.commitCIs.resize(numNonNullHidden * area, 0);
+        vl.commitCIs.resize(numNonNullHiddenCells * area, 0);
 
         vl.clumpInputs.resize(numClumps * area, 0);
     }
 
     hiddenCommits = IntBuffer(numHiddenColumns, 1); // 1 because 0 is null (no input) which is always committed
 
-    hiddenActivations = FloatBuffer(numNonNullHidden, 0.0f);
-    hiddenMatches = FloatBuffer(numNonNullHidden, 0.0f);
+    hiddenActivations = FloatBuffer(numNonNullHiddenCells, 0.0f);
+    hiddenMatches = FloatBuffer(numNonNullHiddenCells, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -335,8 +334,7 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&clumpTilingSize), sizeof(Int2));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHidden =  numHiddenColumns * hiddenSize.z;
-    int numNonNullHidden =  numHiddenColumns * (hiddenSize.z - 1);
+    int numNonNullHiddenCells =  numHiddenColumns * (hiddenSize.z - 1);
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
@@ -348,8 +346,8 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(int));
 
-    hiddenActivations = FloatBuffer(numNonNullHidden, 0.0f);
-    hiddenMatches = FloatBuffer(numNonNullHidden, 0.0f);
+    hiddenActivations = FloatBuffer(numNonNullHiddenCells, 0.0f);
+    hiddenMatches = FloatBuffer(numNonNullHiddenCells, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
