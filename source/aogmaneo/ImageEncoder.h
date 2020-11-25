@@ -11,7 +11,7 @@
 #include "Helpers.h"
 
 namespace aon {
-// Sparse coder
+// Image coder
 class ImageEncoder {
 public:
     // Visible layer descriptor
@@ -23,27 +23,37 @@ public:
         // Defaults
         VisibleLayerDesc()
         :
-        size(4, 4, 32),
+        size(4, 4, 16),
         radius(2)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights0;
-        ByteBuffer weights1; // Complement
+        ByteBuffer weights; // Byte weight matrix
 
         ByteBuffer reconstruction;
     };
 
 private:
+    struct IntInt {
+        int a;
+        int i;
+
+        bool operator<(
+            const IntInt &other
+        ) const {
+            return a < other.a;
+        }
+    };
+
     Int3 hiddenSize; // Size of hidden/output layer
 
-    IntBuffer hiddenCommits;
-    FloatBuffer hiddenActivations;
-    FloatBuffer hiddenMatches;
+    Array<IntInt> hiddenActivations;
 
     IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenRates; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -53,27 +63,25 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputActs,
+        const Array<const ByteBuffer*> &inputCIs,
         bool learnEnabled
     );
 
     void reconstruct(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const IntBuffer* reconCIs,
         int vli
     );
 
 public:
-    float alpha; // Activation parameter
-    float beta; // Weight learning rate
-    float vigilance; // Vigilance parameter
+    float alpha;
+    float gamma;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.01f),
-    beta(0.5f),
-    vigilance(0.9f)
+    alpha(0.02f),
+    gamma(1.0f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -84,7 +92,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const ByteBuffer*> &inputActs, // Input states
+        const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -137,4 +145,3 @@ public:
     }
 };
 } // namespace aon
-

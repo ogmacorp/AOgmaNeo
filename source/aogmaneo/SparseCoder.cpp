@@ -21,7 +21,7 @@ void SparseCoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexPrev = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
         
-        float delta = alpha * (*hiddenErrors)[hiddenColumnIndex] * hiddenActivations[hiddenColumnIndex] * (1.0f - hiddenActivations[hiddenColumnIndex]);
+        float delta = alpha * (*hiddenErrors)[hiddenColumnIndex] * (1.0f - hiddenActivations[hiddenColumnIndex] * hiddenActivations[hiddenColumnIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -100,7 +100,7 @@ void SparseCoder::forward(
         }
     }
 
-    hiddenActivations[hiddenColumnIndex] = sigmoid(maxActivation);
+    hiddenActivations[hiddenColumnIndex] = tanh(maxActivation);
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 

@@ -60,7 +60,7 @@ void Predictor::forward(
 
         sum /= max(1, count);
 
-        hiddenActivations[hiddenCellIndex] = sigmoid(sum);
+        hiddenActivations[hiddenCellIndex] = tanh(sum);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -82,7 +82,7 @@ void Predictor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float delta = alpha * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
+        float delta = alpha * ((hc == targetC ? 1.0f : -1.0f) - hiddenActivations[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -169,7 +169,7 @@ void Predictor::generateErrors(
 
                     float weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
-                    sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]) * weight;
+                    sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : -1.0f) - hiddenActivations[hiddenCellIndex]) * weight;
                 }
 
                 count += hiddenSize.z;
