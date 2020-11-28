@@ -38,8 +38,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
-
     IntBuffer hiddenCIs; // Hidden states
     
     // Visible layers and associated descriptors
@@ -61,7 +59,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.2f)
+    alpha(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
