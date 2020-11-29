@@ -169,7 +169,7 @@ void Predictor::generateErrors(
 
                     float weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
-                    sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : -1.0f) - hiddenActivations[hiddenCellIndex]) * weight;
+                    sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : -1.0f) - hiddenActivations[hiddenCellIndex]) * tanh(weight);
                 }
 
                 count += hiddenSize.z;
