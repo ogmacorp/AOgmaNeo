@@ -54,12 +54,9 @@ void SparseCoder::forward(
 
                     if (delta > 0.0f) {
                         for (int vc = 0; vc < vld.size.z; vc++) {
-                            if (vc == inCI)
-                                continue;
-
                             int wi = vc + wiStart;
 
-                            vl.weights[wi] -= delta * vl.weights[wi];
+                            vl.weights[wi] += delta * ((vc == inCI ? 1.0f : 0.0f) - vl.weights[wi]);
                         }
                     }
                     else {
