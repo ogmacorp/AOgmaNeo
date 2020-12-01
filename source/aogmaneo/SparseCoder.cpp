@@ -109,7 +109,7 @@ void SparseCoder::inhibit(
 
         float inhibition = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
-        hiddenActivations[hiddenCellIndex] += max(0.0f, hiddenStimuli[hiddenCellIndex] - inhibition);
+        hiddenActivations[hiddenCellIndex] += hiddenStimuli[hiddenCellIndex] - inhibition;
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenCellIndex];
@@ -188,7 +188,7 @@ void SparseCoder::learn(
 
                 float weight = laterals[wi];
 
-                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * ((ohc == inCI ? 255.0f : 0.0f) - weight))));
+                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * ((ohc == inCI ? 255.0f : 0.0f) - 255.0f / hiddenSize.z))));
             }
         }
 
