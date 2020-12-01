@@ -60,7 +60,7 @@ void ImageEncoder::forward(
 
                         int delta = static_cast<int>(input) - static_cast<int>(weight);
 
-                        sum += -delta * delta;
+                        sum -= delta * delta;
                     }
                 }
         }
