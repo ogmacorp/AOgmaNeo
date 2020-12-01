@@ -88,7 +88,7 @@ void SparseCoder::forward(
 
     if (learnEnabled) {
         for (int dhc = -1; dhc <= 1; dhc++) {
-            if (maxIndex - dhc < 0 || maxIndex + dhc >= hiddenSize.z)
+            if (maxIndex + dhc < 0 || maxIndex + dhc >= hiddenSize.z)
                 continue;
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, maxIndex + dhc), hiddenSize);

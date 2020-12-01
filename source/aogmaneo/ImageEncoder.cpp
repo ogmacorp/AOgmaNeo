@@ -18,7 +18,7 @@ void ImageEncoder::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = -1;
-    int maxActivation = 0;
+    int maxActivation = -9999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -51,12 +51,12 @@ void ImageEncoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int start = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                        unsigned char weight = vl.weights[start + vc];
+                        unsigned char weight = vl.weights[wiStart + vc];
 
                         int delta = static_cast<int>(input) - static_cast<int>(weight);
 
@@ -75,7 +75,7 @@ void ImageEncoder::forward(
 
     if (learnEnabled) {
         for (int dhc = -1; dhc <= 1; dhc++) {
-            if (maxIndex - dhc < 0 || maxIndex + dhc >= hiddenSize.z)
+            if (maxIndex + dhc < 0 || maxIndex + dhc >= hiddenSize.z)
                 continue;
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, maxIndex + dhc), hiddenSize);
