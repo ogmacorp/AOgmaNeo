@@ -186,7 +186,7 @@ void SparseCoder::reconstruct(
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = vl.reconstruction[visibleColumnIndex] - sum / max(1, count);
+    vl.reconstruction[visibleColumnIndex] -= sum / max(1, count);
 }
 
 void SparseCoder::initRandom(
