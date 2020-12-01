@@ -91,7 +91,7 @@ void SparseCoder::forward(
             if (maxIndex - dhc < 0 || maxIndex + dhc >= hiddenSize.z)
                 continue;
 
-            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex] + dhc), hiddenSize);
+            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, maxIndex + dhc), hiddenSize);
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
