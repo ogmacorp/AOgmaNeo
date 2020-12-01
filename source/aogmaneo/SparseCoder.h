@@ -39,7 +39,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
     int numPriorities;
 
-    IntBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden states
     IntBuffer hiddenPriorities;
 
@@ -50,6 +49,12 @@ private:
     Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
+    
+    void resetReconstruction(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        int vli
+    );
     
     void forward(
         const Int2 &columnPos,
