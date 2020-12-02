@@ -120,7 +120,7 @@ void SparseCoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, vl.weights[wi] + hiddenRates[hiddenCellIndex] * (vl.reconstruction[visibleColumnIndex] - (static_cast<float>(vl.weights[wi]) - 127.0f)))));
+                        vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, vl.weights[wi] + hiddenRates[hiddenCellIndex] * (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - (static_cast<float>(vl.weights[wi]) - 127.0f)))));
                     }
             }
 
@@ -179,7 +179,7 @@ void SparseCoder::reconstruct(
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                sum += vl.weights[offset.y + diam * (offset.x + diam * hiddenCellIndex)] - 127;
+                sum += static_cast<int>(vl.weights[offset.y + diam * (offset.x + diam * hiddenCellIndex)]) - 127;
                 count++;
             }
         }
