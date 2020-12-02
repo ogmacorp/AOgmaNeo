@@ -25,7 +25,6 @@ void SparseCoder::resetReconstruction(
 
 void SparseCoder::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
     int priority,
     bool learnEnabled
 ) {
@@ -132,7 +131,6 @@ void SparseCoder::forward(
 
 void SparseCoder::reconstruct(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
     int vli,
     int priority
 ) {
@@ -255,7 +253,7 @@ void SparseCoder::step(
     for (int p = 0; p < numPriorities; p++) {
         #pragma omp parallel for
         for (int i = 0; i < numHiddenColumns; i++)
-            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, p, learnEnabled);
+            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), p, learnEnabled);
 
         if (p < numPriorities - 1) {
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -265,7 +263,7 @@ void SparseCoder::step(
 
                 #pragma omp parallel for
                 for (int i = 0; i < numVisibleColumns; i++)
-                    reconstruct(Int2(i / vld.size.y, i % vld.size.y), inputCIs, vli, p);
+                    reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli, p);
             }
         }
     }

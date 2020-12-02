@@ -58,14 +58,12 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
         int priority,
         bool learnEnabled
     );
 
     void reconstruct(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
         int vli,
         int priority
     );
