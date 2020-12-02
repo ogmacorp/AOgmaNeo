@@ -65,7 +65,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.1f),
+    alpha(0.15f),
     targetRange(0.05f)
     {}
 
