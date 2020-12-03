@@ -46,7 +46,7 @@ void Predictor::forward(
     int maxActivation = 0;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         int sum = 0;
 
@@ -78,11 +78,11 @@ void Predictor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
 
-        hiddenActivations[hiddenIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
+        hiddenActivations[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
         if (sum > maxActivation) {
             maxActivation = sum;
@@ -102,9 +102,9 @@ void Predictor::learn(
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        int delta = roundftoi(alpha * 255.0f * (0.5f + (hc == targetCI ? targetRange : -targetRange) - hiddenActivations[hiddenIndex]));
+        int delta = roundftoi(alpha * 255.0f * (0.5f + (hc == targetCI ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]));
   
         if (hc == targetCI)
             delta = max(0, delta);
@@ -138,9 +138,9 @@ void Predictor::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    unsigned char weight = vl.weights[wi];
+                    int weight = vl.weights[wi];
                     
                     if (delta > 0)
                         vl.weights[wi] = min<int>(255 - delta, weight) + delta;
