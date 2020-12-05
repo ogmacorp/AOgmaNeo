@@ -20,7 +20,7 @@ void SparseCoder::resetReconstruction(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
-    vl.reconstruction[visibleColumnIndex] = roundftoi(static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 127.0f);
+    vl.reconstruction[visibleColumnIndex] = roundftoi(static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 255.0f - 127.0f);
 }
 
 void SparseCoder::forward(
@@ -217,7 +217,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = rand() % 16 + 56;
+            vl.protos[i] = rand() % 16 - 8;
 
         vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
