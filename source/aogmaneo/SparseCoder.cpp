@@ -217,7 +217,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = rand() % 128;
+            vl.protos[i] = rand() % 16 + 56;
 
         vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
