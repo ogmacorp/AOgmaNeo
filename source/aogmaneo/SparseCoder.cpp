@@ -20,7 +20,7 @@ void SparseCoder::resetReconstruction(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
-    vl.reconstruction[visibleColumnIndex] = roundftoi(static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 255.0f);
+    vl.reconstruction[visibleColumnIndex] = roundftoi(static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 127.0f);
 }
 
 void SparseCoder::forward(
@@ -71,7 +71,7 @@ void SparseCoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    int delta = inValue - static_cast<int>(vl.weights[wi]);
+                    int delta = inValue - static_cast<int>(vl.protos[wi]);
 
                     sum -= delta * delta;
                 }
@@ -120,7 +120,7 @@ void SparseCoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, vl.weights[wi] + hiddenRates[hiddenCellIndex] * (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.weights[wi])))));
+                        vl.protos[wi] = roundftoi(min(255.0f, max(0.0f, vl.protos[wi] + hiddenRates[hiddenCellIndex] * (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.protos[wi])))));
                     }
             }
 
@@ -179,12 +179,12 @@ void SparseCoder::reconstruct(
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                sum += vl.weights[offset.y + diam * (offset.x + diam * hiddenCellIndex)];
+                sum += static_cast<int>(vl.protos[offset.y + diam * (offset.x + diam * hiddenCellIndex)]);
                 count++;
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = max(0, vl.reconstruction[visibleColumnIndex] - sum / max(1, count));
+    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - sum / max(1, count)));
 }
 
 void SparseCoder::initRandom(
@@ -213,13 +213,13 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHiddenCells * area);
+        vl.protos.resize(numHiddenCells * area);
 
         // Initialize to random values
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 16 + 120;
+        for (int i = 0; i < vl.protos.size(); i++)
+            vl.protos[i] = rand() % 128;
 
-        vl.reconstruction = IntBuffer(numVisibleColumns, 0);
+        vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
@@ -291,11 +291,11 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int weightsSize = vl.weights.size();
+        int protosSize = vl.protos.size();
 
-        writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&protosSize), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(char));
     }
 }
 
@@ -333,14 +333,14 @@ void SparseCoder::read(
 
         int numVisibleColumns = vld.size.x * vld.size.y;
 
-        int weightsSize;
+        int protosSize;
 
-        reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
+        reader.read(reinterpret_cast<void*>(&protosSize), sizeof(int));
 
-        vl.weights.resize(weightsSize);
+        vl.protos.resize(protosSize);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(char));
 
-        vl.reconstruction = IntBuffer(numVisibleColumns, 0);
+        vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
 }

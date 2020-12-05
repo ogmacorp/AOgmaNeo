@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Binary weight matrix
+        Array<signed char> protos;
 
-        IntBuffer reconstruction;
+        Array<signed char> reconstruction;
     };
 
 private:
