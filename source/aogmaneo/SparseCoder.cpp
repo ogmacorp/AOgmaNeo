@@ -20,7 +20,7 @@ void SparseCoder::resetReconstruction(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
-    vl.reconstruction[visibleColumnIndex] = roundftoi(static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 255.0f - 127.0f);
+    vl.reconstruction[visibleColumnIndex] = roundftoi((static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f) * 63.0f);
 }
 
 void SparseCoder::forward(
@@ -179,7 +179,7 @@ void SparseCoder::reconstruct(
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                sum += static_cast<int>(vl.protos[offset.y + diam * (offset.x + diam * hiddenCellIndex)]);
+                sum += vl.protos[offset.y + diam * (offset.x + diam * hiddenCellIndex)];
                 count++;
             }
         }
