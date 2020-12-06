@@ -30,26 +30,13 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Byte weight matrix
+        ByteBuffer protos;
 
         ByteBuffer reconstruction;
     };
 
 private:
-    struct IntInt {
-        int a;
-        int i;
-
-        bool operator<(
-            const IntInt &other
-        ) const {
-            return a < other.a;
-        }
-    };
-
     Int3 hiddenSize; // Size of hidden/output layer
-
-    Array<IntInt> hiddenActivations;
 
     IntBuffer hiddenCIs; // Hidden states
 
@@ -75,13 +62,11 @@ private:
 
 public:
     float alpha;
-    float gamma;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.02f),
-    gamma(1.0f)
+    alpha(0.03f)
     {}
 
     // Create a sparse coding layer with random initialization
