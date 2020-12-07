@@ -42,7 +42,7 @@ void Predictor::forward(
         count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
     }
 
-    int maxIndex = 0;
+    int maxIndex = -1;
     int maxActivation = 0;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -84,7 +84,7 @@ void Predictor::forward(
 
         hiddenActivations[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
-        if (sum > maxActivation) {
+        if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
