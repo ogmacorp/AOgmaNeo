@@ -219,7 +219,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = rand() % 8 - 4;
+            vl.protos[i] = rand() % 255 - 127;
 
         vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
@@ -231,7 +231,7 @@ void SparseCoder::initRandom(
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
 
-    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
 
 void SparseCoder::step(
