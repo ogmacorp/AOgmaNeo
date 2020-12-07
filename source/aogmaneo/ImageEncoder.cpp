@@ -74,13 +74,12 @@ void ImageEncoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        for (int dhc = -1; dhc <= 1; dhc++) {
-            if (maxIndex + dhc < 0 || maxIndex + dhc >= hiddenSize.z)
-                continue;
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            float dist = static_cast<float>(abs(maxIndex - hc)) / static_cast<float>(hiddenSize.z);
 
-            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, maxIndex + dhc), hiddenSize);
+            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-            float rate = (dhc == 0 ? hiddenRates[hiddenCellIndex] : 0.5f * hiddenRates[hiddenCellIndex]);
+            float rate = hiddenRates[hiddenCellIndex] * expf(-gamma * dist / max(0.0001f, hiddenRates[hiddenCellIndex]));
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
