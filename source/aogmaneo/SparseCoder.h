@@ -70,13 +70,11 @@ private:
 
 public:
     float alpha;
-    float gamma;
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.05f),
-    gamma(2.0f)
+    alpha(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization

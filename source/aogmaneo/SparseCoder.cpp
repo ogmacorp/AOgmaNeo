@@ -86,12 +86,13 @@ void SparseCoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        for (int hc = 0; hc < hiddenSize.z; hc++) {
-            float dist = static_cast<float>(abs(maxIndex - hc)) / static_cast<float>(hiddenSize.z);
+        for (int dhc = -1; dhc <= 1; dhc++) {
+            int hc = maxIndex + dhc;
+
+            if (hc < 0 || hc >= hiddenSize.z)
+                continue;
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-            float rate = hiddenRates[hiddenCellIndex] * expf(-gamma * dist / max(0.0001f, hiddenRates[hiddenCellIndex]));
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -121,11 +122,11 @@ void SparseCoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        vl.protos[wi] = roundftoi(min(127.0f, max(-127.0f, vl.protos[wi] + rate * (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.protos[wi])))));
+                        vl.protos[wi] = roundftoi(min(127.0f, max(-127.0f, vl.protos[wi] + hiddenRates[hiddenCellIndex] * (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.protos[wi])))));
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= alpha * rate;
+            hiddenRates[hiddenCellIndex] -= alpha * hiddenRates[hiddenCellIndex];
         }
     }
 }
