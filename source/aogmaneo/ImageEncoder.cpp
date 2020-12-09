@@ -181,7 +181,7 @@ void ImageEncoder::reconstruct(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = sum / max(1, count);
+        vl.reconstruction[visibleIndex] = roundftoi(static_cast<float>(sum) / static_cast<float>(max(1, count)));
     }
 }
 

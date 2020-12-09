@@ -186,7 +186,7 @@ void SparseCoder::reconstruct(
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - sum / max(1, count)));
+    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - roundftoi(static_cast<float>(sum) / static_cast<float>(max(1, count)))));
 }
 
 void SparseCoder::initRandom(
