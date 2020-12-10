@@ -116,8 +116,8 @@ void Actor::forward(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = vc + wiStart;
 
-                            if (vc == inCI && hc == targetCIPrev)
-                                vl.traces[wi] = 1.0f;
+                            if (vc == inCI)
+                                vl.traces[wi] = (hc == targetCIPrev ? 1.0f : 0.0f);
                             else
                                 vl.traces[wi] *= traceDecay;
 
