@@ -630,15 +630,8 @@ void Actor::readState(
     for (int t = 0; t < historySamples.size(); t++) {
         HistorySample &s = historySamples[t];
 
-        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-            int numVisibleColumns = vld.size.x * vld.size.y;
-
-            s.inputCIs[vli].resize(numVisibleColumns);
-
+        for (int vli = 0; vli < visibleLayers.size(); vli++)
             reader.read(reinterpret_cast<void*>(&s.inputCIs[vli][0]), s.inputCIs[vli].size() * sizeof(int));
-        }
 
         reader.read(reinterpret_cast<void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&s.hiddenValuesPrev[0]), s.hiddenValuesPrev.size() * sizeof(float));
