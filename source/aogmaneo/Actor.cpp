@@ -430,10 +430,6 @@ void Actor::read(
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int valueWeightsSize;
-
-        reader.read(reinterpret_cast<void*>(&valueWeightsSize), sizeof(int));
-
         int weightsSize;
 
         reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
