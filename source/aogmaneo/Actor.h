@@ -48,6 +48,7 @@ private:
     int historySize;
 
     FloatBuffer hiddenActivations; // Temporary buffer
+    FloatBuffer hiddenProbs; // Temporary buffer
 
     IntBuffer hiddenCIs; // Hidden states
 
@@ -88,7 +89,7 @@ public:
     alpha(0.01f),
     gamma(0.99f),
     minSteps(8),
-    historyIters(8)
+    historyIters(16)
     {}
 
     // Initialized randomly
