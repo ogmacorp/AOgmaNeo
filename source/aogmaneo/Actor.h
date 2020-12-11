@@ -49,6 +49,7 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
+    FloatBuffer hiddenActivations;
     FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
@@ -67,11 +68,12 @@ private:
 
     void learn(
         const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
         float q,
         float g,
-        bool mimic
+        float reward
     );
 
 public:
@@ -85,7 +87,7 @@ public:
     :
     alpha(0.01f),
     gamma(0.99f),
-    minSteps(8),
+    minSteps(4),
     historyIters(16)
     {}
 
@@ -101,8 +103,7 @@ public:
         const Array<const IntBuffer*> &inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
-        bool learnEnabled,
-        bool mimic
+        bool learnEnabled
     );
 
     // Serialization
