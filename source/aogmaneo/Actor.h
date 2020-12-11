@@ -30,8 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        FloatBuffer weights;
     };
 
     // History sample for delayed updates
@@ -39,8 +38,6 @@ public:
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
 
-        FloatBuffer hiddenValuesPrev;
-        
         float reward;
     };
 
@@ -74,15 +71,13 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
-        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic
     );
 
 public:
-    float alpha; // Value learning rate
-    float beta; // Action learning rate
+    float alpha; // Learning rate
     float gamma; // Discount factor
     int minSteps;
     int historyIters;
@@ -91,10 +86,9 @@ public:
     Actor()
     :
     alpha(0.01f),
-    beta(0.01f),
     gamma(0.99f),
     minSteps(8),
-    historyIters(16)
+    historyIters(8)
     {}
 
     // Initialized randomly
