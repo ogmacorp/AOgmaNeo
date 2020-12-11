@@ -87,7 +87,7 @@ public:
     :
     alpha(0.01f),
     gamma(0.99f),
-    minSteps(4),
+    minSteps(8),
     historyIters(16)
     {}
 
