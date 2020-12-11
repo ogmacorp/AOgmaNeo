@@ -346,3 +346,15 @@ void SparseCoder::read(
         vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
 }
+
+void SparseCoder::writeState(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+}
+
+void SparseCoder::readState(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+}

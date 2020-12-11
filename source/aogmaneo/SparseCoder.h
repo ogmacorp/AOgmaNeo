@@ -99,6 +99,14 @@ public:
         StreamReader &reader
     );
 
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
+        StreamReader &reader
+    );
+
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
