@@ -17,6 +17,7 @@ void Actor::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -59,52 +60,14 @@ void Actor::forward(
 
         sum /= max(1, count);
 
-        hiddenActivations[hiddenCellIndex] = sum;
-
-        maxActivation = max(maxActivation, sum);
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        hiddenProbs[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
-        
-        total += hiddenProbs[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    float value = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        hiddenProbs[hiddenCellIndex] *= scale;
-
-        value += hiddenActivations[hiddenCellIndex] * hiddenProbs[hiddenCellIndex];
-    }
-
-    float cusp = randf(state);
-
-    int selectIndex = 0;
-    float sumSoFar = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        sumSoFar += hiddenProbs[hiddenCellIndex];
-
-        if (sumSoFar >= cusp) {
-            selectIndex = hc;
-
-            break;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
+            maxIndex = hc;
         }
     }
-    
-    hiddenCIs[hiddenColumnIndex] = selectIndex;
-    hiddenValues[hiddenColumnIndex] = value;
+
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
+    hiddenValues[hiddenColumnIndex] = maxActivation;
 }
 
 void Actor::learn(
@@ -225,9 +188,6 @@ void Actor::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(-0.01f, 0.01f);
     }
-
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenProbs = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -385,9 +345,6 @@ void Actor::read(
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
-
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenProbs = FloatBuffer(numHiddenCells, 0.0f);
     
     int numVisibleCellsLayers = visibleLayers.size();
 
