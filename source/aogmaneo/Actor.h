@@ -88,8 +88,8 @@ public:
     :
     alpha(0.01f),
     gamma(0.99f),
-    offPenalty(0.05f),
-    minSteps(8),
+    offPenalty(0.02f),
+    minSteps(4),
     historyIters(16)
     {}
 
