@@ -79,6 +79,7 @@ private:
 public:
     float alpha; // Learning rate
     float gamma; // Discount factor
+    float offPenalty; // Penalty term for unused actions
     int minSteps;
     int historyIters;
 
@@ -87,6 +88,7 @@ public:
     :
     alpha(0.01f),
     gamma(0.99f),
+    offPenalty(0.05f),
     minSteps(8),
     historyIters(16)
     {}
