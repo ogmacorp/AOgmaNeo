@@ -145,7 +145,8 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f // Reinforcement signal
+        float reward = 0.0f, // Reinforcement signal
+        bool mimic = false // Mimic mode
     );
 
     // Serialization
