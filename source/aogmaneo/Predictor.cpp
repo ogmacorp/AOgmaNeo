@@ -221,7 +221,7 @@ void Predictor::learn(
 }
 
 int Predictor::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -234,7 +234,7 @@ int Predictor::size() const {
 }
 
 int Predictor::stateSize() const {
-    int size = hiddenCIs.size() * sizeof(int);
+    int size = hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -254,6 +254,7 @@ void Predictor::write(
     writer.write(reinterpret_cast<const void*>(&targetRange), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -287,10 +288,10 @@ void Predictor::read(
     reader.read(reinterpret_cast<void*>(&targetRange), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
+    hiddenActivations.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -325,6 +326,7 @@ void Predictor::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -337,6 +339,7 @@ void Predictor::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
