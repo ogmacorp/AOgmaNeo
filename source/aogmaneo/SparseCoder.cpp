@@ -134,7 +134,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            int delta = roundftoi(alpha * 255.0f * (0.5f + (vc == targetCI ? 0.0f : -targetRange) - vl.reconstruction[visibleCellIndex]));
+            int delta = roundftoi(alpha * 255.0f * (0.5f + (vc == targetCI ? targetRange : -targetRange) - vl.reconstruction[visibleCellIndex]));
       
             if (vc == targetCI)
                 delta = max(0, delta);
@@ -199,7 +199,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - rand() % 8;
+            vl.weights[i] = 124 + rand() % 8;
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
@@ -232,6 +232,23 @@ void SparseCoder::step(
     }
 
     hiddenCIsPrev = hiddenCIs;
+}
+
+int SparseCoder::size() const {
+    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenCIsPrev.size() * sizeof(int) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(unsigned char);
+    }
+
+    return size;
+}
+
+int SparseCoder::stateSize() const {
+    return hiddenCIs.size() * sizeof(int) + hiddenCIsPrev.size() * sizeof(int);
 }
 
 void SparseCoder::write(

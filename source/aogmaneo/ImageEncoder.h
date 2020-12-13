@@ -92,6 +92,8 @@ public:
     }
 
     // Serialization
+    int size() const; // Returns size in bytes
+
     void write(
         StreamWriter &writer
     ) const;

@@ -220,6 +220,31 @@ void Predictor::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
 }
 
+int Predictor::size() const {
+    int size = sizeof(Int3) + sizeof(float) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(unsigned char) + vl.inputCIsPrev.size() * sizeof(int);
+    }
+
+    return size;
+}
+
+int Predictor::stateSize() const {
+    int size = hiddenCIs.size() * sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        size += vl.inputCIsPrev.size() * sizeof(int);
+    }
+
+    return size;
+}
+
 void Predictor::write(
     StreamWriter &writer
 ) const {
