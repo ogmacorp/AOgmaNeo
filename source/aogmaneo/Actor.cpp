@@ -445,6 +445,49 @@ void Actor::step(
     }
 }
 
+int Actor::size() const {
+    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + 2 * sizeof(int) + vl.valueWeights.size() * sizeof(float) + vl.actionWeights.size() * sizeof(float);
+    }
+
+    size += 3 * sizeof(int);
+
+    int sampleSize = 0;
+
+    const HistorySample &s = historySamples[0];
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++)
+        sampleSize += s.inputCIs[vli].size() * sizeof(int);
+
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + s.hiddenValuesPrev.size() * sizeof(float) + sizeof(float);
+
+    size += historySamples.size() * sampleSize;
+
+    return size;
+}
+
+int Actor::stateSize() const {
+    int size = hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+
+    int sampleSize = 0;
+
+    const HistorySample &s = historySamples[0];
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++)
+        sampleSize += s.inputCIs[vli].size() * sizeof(int);
+
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + s.hiddenValuesPrev.size() * sizeof(float) + sizeof(float);
+
+    size += historySamples.size() * sampleSize;
+
+    return size;
+}
+
 void Actor::write(
     StreamWriter &writer
 ) const {

@@ -182,7 +182,7 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        scLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].numPriorities, scVisibleLayerDescs);
+        scLayers[l].initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
     }
 }
 
@@ -271,6 +271,68 @@ void Hierarchy::step(
             }
         }
     }
+}
+
+int Hierarchy::size() const {
+    int size = 2 * sizeof(int) + inputSizes.size() * sizeof(Int3) + updates.size() * sizeof(unsigned char) + 2 * ticks.size() * sizeof(int);
+
+    for (int l = 0; l < scLayers.size(); l++) {
+        size += sizeof(int);
+
+        for (int i = 0; i < histories[l].size(); i++) {
+            size += 2 * sizeof(int);
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
+        }
+
+        size += scLayers[l].size();
+
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            size += sizeof(unsigned char);
+
+            if (pLayers[l][v] != nullptr)
+                size += pLayers[l][v]->size();
+        }
+    }
+
+    for (int v = 0; v < aLayers.size(); v++) {
+        size += sizeof(unsigned char);
+
+        if (aLayers[v] != nullptr)
+            size += aLayers[v]->size();
+    }
+
+    return size;
+}
+
+int Hierarchy::stateSize() const {
+    int size = updates.size() * sizeof(unsigned char) + ticks.size() * sizeof(int);
+
+    for (int l = 0; l < scLayers.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            size += sizeof(int);
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                size += histories[l][i][t].size() * sizeof(int);
+        }
+
+        size += scLayers[l].stateSize();
+        
+        // Predictors
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            if (pLayers[l][v] != nullptr)
+                size += pLayers[l][v]->stateSize();
+        }
+    }
+
+    // Actors
+    for (int v = 0; v < aLayers.size(); v++) {
+        if (aLayers[v] != nullptr)
+            size += aLayers[v]->stateSize();
+    }
+
+    return size;
 }
 
 void Hierarchy::write(

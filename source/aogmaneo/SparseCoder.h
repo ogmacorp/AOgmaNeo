@@ -30,57 +30,48 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        Array<signed char> protos;
+        ByteBuffer weights;
 
-        Array<signed char> reconstruction;
+        FloatBuffer reconstruction;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int numPriorities;
 
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenPriorities;
-
-    FloatBuffer hiddenRates; // Resources
-
+    IntBuffer hiddenCIsPrev; // Previous hidden states
+    
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-
+    
     // --- Kernels ---
     
-    void resetReconstruction(
+    void forward(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
         int vli
     );
-    
-    void forward(
-        const Int2 &columnPos,
-        int priority,
-        bool learnEnabled
-    );
-
-    void reconstruct(
-        const Int2 &columnPos,
-        int vli,
-        int priority
-    );
 
 public:
-    float alpha;
+    float alpha; // Learning rate
+    float targetRange; // Range of target outputs, must be in [0, 0.5]
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.05f)
+    alpha(0.1f),
+    targetRange(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int numPriorities, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
@@ -91,6 +82,9 @@ public:
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;

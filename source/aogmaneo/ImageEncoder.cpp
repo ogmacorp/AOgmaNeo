@@ -250,6 +250,19 @@ void ImageEncoder::reconstruct(
     }
 }
 
+int ImageEncoder::size() const {
+    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.protos.size() * sizeof(unsigned char);
+    }
+
+    return size;
+}
+
 void ImageEncoder::write(
     StreamWriter &writer
 ) const {
