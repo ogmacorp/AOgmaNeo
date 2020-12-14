@@ -82,6 +82,8 @@ void ImageEncoder::forward(
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
+            float rate = (dhc == 0 ? 1.0f : 0.5f) * hiddenRates[hiddenCellIndex];
+
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -115,12 +117,12 @@ void ImageEncoder::forward(
 
                             unsigned char weight = vl.protos[wiStart + vc];
 
-                            vl.protos[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * (static_cast<float>(input) - static_cast<float>(weight)))));
+                            vl.protos[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + rate * (static_cast<float>(input) - static_cast<float>(weight)))));
                         }
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= alpha * hiddenRates[hiddenCellIndex];
+            hiddenRates[hiddenCellIndex] -= alpha * rate;
         }
     }
 }
