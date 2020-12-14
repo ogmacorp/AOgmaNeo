@@ -94,7 +94,7 @@ void SparseCoder::forward(
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-            float rate = (dhc == 0 ? alpha : 0.5f * alpha) * hiddenRates[hiddenCellIndex];
+            float rate = (dhc == 0 ? 1.0f : 0.5f) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -128,7 +128,7 @@ void SparseCoder::forward(
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= rate;
+            hiddenRates[hiddenCellIndex] -= alpha * rate;
         }
     }
 }
