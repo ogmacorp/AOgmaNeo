@@ -82,7 +82,7 @@ void ImageEncoder::forward(
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-            float rate = (dhc == 0 ? 1.0f : 0.5f) * hiddenRates[hiddenCellIndex];
+            float rate = (dhc == 0 ? 1.0f : 0.75f) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
