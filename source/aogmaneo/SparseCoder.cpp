@@ -134,7 +134,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            int delta = roundftoi(alpha * 255.0f * (0.5f + (vc == targetCI ? 0 : -targetRange) - vl.reconstruction[visibleCellIndex]));
+            int delta = roundftoi(alpha * 255.0f * (0.5f + (vc == targetCI ? targetRange : -targetRange) - vl.reconstruction[visibleCellIndex]));
       
             if (vc == targetCI)
                 delta = max(0, delta);
@@ -197,7 +197,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - rand() % 8;
+            vl.weights[i] = 127 + rand() % 8;
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
