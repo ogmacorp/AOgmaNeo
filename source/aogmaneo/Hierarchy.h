@@ -76,7 +76,7 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        numPriorities(3),
+        numPriorities(4),
         ffRadius(2),
         pRadius(2),
         ticksPerUpdate(2),
