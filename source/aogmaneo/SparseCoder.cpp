@@ -122,7 +122,7 @@ void SparseCoder::learn(
 
         vl.reconstruction[visibleCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 255.0f;
 
-        if (sum > maxActivation) {
+        if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = vc;
         }
@@ -197,7 +197,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 124 + rand() % 8;
+            vl.weights[i] = 127 + rand() % 8;
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
