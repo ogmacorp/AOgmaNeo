@@ -41,7 +41,7 @@ public:
         ffRadius(2),
         pRadius(2),
         aRadius(2),
-        historyCapacity(64)
+        historyCapacity(32)
         {}
 
         IODesc(
@@ -65,7 +65,7 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        int numPriorities; // Number of encoder priorities
+        int numPriorities;
 
         int ffRadius; // Feed forward radius
         int pRadius; // Prediction radius
@@ -76,7 +76,7 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        numPriorities(3),
+        numPriorities(4),
         ffRadius(2),
         pRadius(2),
         ticksPerUpdate(2),
@@ -149,6 +149,9 @@ public:
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;

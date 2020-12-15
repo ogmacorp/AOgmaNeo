@@ -184,7 +184,7 @@ void Actor::learn(
         maxActivationPrev = max(maxActivationPrev, sum);
     }
 
-    float newValueTarget = max(reward + gamma * maxActivation, q + g * hiddenValues[hiddenColumnIndex]);
+    float newValue= max(reward + gamma * maxActivation, q + g * hiddenValues[hiddenColumnIndex]);
 
     int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
 
@@ -194,7 +194,7 @@ void Actor::learn(
         float delta;
 
         if (hc == targetCI)
-            delta = alpha * (newValueTarget - hiddenActivations[hiddenCellIndex]);
+            delta = alpha * (newValue- hiddenActivations[hiddenCellIndex]);
         else
             delta = alpha * offPenalty * -maxActivationPrev;
 
@@ -345,6 +345,49 @@ void Actor::step(
                 learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(s.inputCIs), constGet(sPrev.inputCIs), &s.hiddenTargetCIsPrev, q, g, s.reward);
         }
     }
+}
+
+int Actor::size() const {
+    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(float);
+    }
+
+    size += 3 * sizeof(int);
+
+    int sampleSize = 0;
+
+    const HistorySample &s = historySamples[0];
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++)
+        sampleSize += s.inputCIs[vli].size() * sizeof(int);
+
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+
+    size += historySamples.size() * sampleSize;
+
+    return size;
+}
+
+int Actor::stateSize() const {
+    int size = hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+
+    int sampleSize = 0;
+
+    const HistorySample &s = historySamples[0];
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++)
+        sampleSize += s.inputCIs[vli].size() * sizeof(int);
+
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+
+    size += historySamples.size() * sampleSize;
+
+    return size;
 }
 
 void Actor::write(

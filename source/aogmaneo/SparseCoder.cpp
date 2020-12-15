@@ -94,6 +94,8 @@ void SparseCoder::forward(
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
+            float rate = (dhc == 0 ? 1.0f : 0.75f) * hiddenRates[hiddenCellIndex];
+
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -122,11 +124,11 @@ void SparseCoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        vl.protos[wi] = roundftoi(min(127.0f, max(-127.0f, vl.protos[wi] + hiddenRates[hiddenCellIndex] * (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.protos[wi])))));
+                        vl.protos[wi] = roundftoi(min(127.0f, max(-127.0f, vl.protos[wi] + rate * (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.protos[wi])))));
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= alpha * hiddenRates[hiddenCellIndex];
+            hiddenRates[hiddenCellIndex] -= alpha * rate;
         }
     }
 }
@@ -269,6 +271,23 @@ void SparseCoder::step(
             }
         }
     }
+}
+
+int SparseCoder::size() const {
+    int size = sizeof(Int3) + sizeof(int) + sizeof(float) + 2 * hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(float) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.protos.size() * sizeof(char);
+    }
+
+    return size;
+}
+
+int SparseCoder::stateSize() const {
+    return hiddenCIs.size() * sizeof(int);
 }
 
 void SparseCoder::write(

@@ -66,7 +66,7 @@ public:
     // Defaults
     ImageEncoder()
     :
-    alpha(0.04f)
+    alpha(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -92,6 +92,8 @@ public:
     }
 
     // Serialization
+    int size() const; // Returns size in bytes
+
     void write(
         StreamWriter &writer
     ) const;

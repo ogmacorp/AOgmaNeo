@@ -88,9 +88,9 @@ public:
     :
     alpha(0.01f),
     gamma(0.99f),
-    offPenalty(0.02f),
+    offPenalty(0.0f),
     minSteps(4),
-    historyIters(16)
+    historyIters(8)
     {}
 
     // Initialized randomly
@@ -109,6 +109,9 @@ public:
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
