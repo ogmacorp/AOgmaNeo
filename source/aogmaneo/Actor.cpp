@@ -12,8 +12,7 @@ using namespace aon;
 
 void Actor::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
-    unsigned int* state
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -368,7 +367,7 @@ void Actor::step(
     for (int i = 0; i < numHiddenColumns; i++) {
         unsigned int state = baseState + i * 12345;
 
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &state);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
     }
 
     historySamples.pushFront();
