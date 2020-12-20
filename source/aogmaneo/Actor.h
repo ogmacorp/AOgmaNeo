@@ -77,17 +77,17 @@ private:
 
 public:
     float alpha; // Learning rate
+    float beta; // Off penalty
     float gamma; // Discount factor
-    float offPenalty; // Penalty term for unused actions
     int minSteps;
     int historyIters;
 
     // Defaults
     Actor()
     :
-    alpha(0.01f),
+    alpha(0.1f),
+    beta(0.001f),
     gamma(0.99f),
-    offPenalty(0.0f),
     minSteps(4),
     historyIters(16)
     {}

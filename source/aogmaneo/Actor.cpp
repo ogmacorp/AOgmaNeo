@@ -12,8 +12,7 @@ using namespace aon;
 
 void Actor::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
-    unsigned int* state
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -184,7 +183,7 @@ void Actor::learn(
         maxActivationPrev = max(maxActivationPrev, sum);
     }
 
-    float newValue= max(reward + gamma * maxActivation, q + g * hiddenValues[hiddenColumnIndex]);
+    float newValue = max(reward + gamma * maxActivation, q + g * hiddenValues[hiddenColumnIndex]);
 
     int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
 
@@ -194,9 +193,9 @@ void Actor::learn(
         float delta;
 
         if (hc == targetCI)
-            delta = alpha * (newValue- hiddenActivations[hiddenCellIndex]);
+            delta = alpha * (newValue - hiddenActivations[hiddenCellIndex]);
         else
-            delta = alpha * offPenalty * -maxActivationPrev;
+            delta = beta * -maxActivationPrev;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -300,7 +299,7 @@ void Actor::step(
     for (int i = 0; i < numHiddenColumns; i++) {
         unsigned int state = baseState + i * 12345;
 
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &state);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
     }
 
     historySamples.pushFront();
@@ -396,8 +395,8 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&offPenalty), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
@@ -452,8 +451,8 @@ void Actor::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
     
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&offPenalty), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
