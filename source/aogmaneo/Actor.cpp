@@ -361,14 +361,9 @@ void Actor::step(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     // Forward kernel
-    unsigned int baseState = rand();
-
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned int state = baseState + i * 12345;
-
+    for (int i = 0; i < numHiddenColumns; i++)
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
-    }
 
     historySamples.pushFront();
 
