@@ -54,11 +54,11 @@ void ImageEncoder::forward(
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
+                        int input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                        unsigned char weight = vl.protos[wiStart + vc];
+                        int weight = vl.protos[wiStart + vc];
 
-                        int delta = static_cast<int>(input) - static_cast<int>(weight);
+                        int delta = input - weight;
 
                         sum -= delta * delta;
                     }
