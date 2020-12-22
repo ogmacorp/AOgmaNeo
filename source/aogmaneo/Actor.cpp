@@ -195,7 +195,7 @@ void Actor::learn(
         if (hc == targetCI)
             delta = alpha * (newValue - hiddenActivations[hiddenCellIndex]);
         else
-            delta = beta * -maxActivationPrev;
+            delta = beta * -hiddenActivations[hiddenCellIndex];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
