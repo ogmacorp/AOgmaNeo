@@ -38,6 +38,8 @@ public:
     struct HistorySample {
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
+
+        FloatBuffer hiddenValuesPrev;
         
         float reward;
     };
@@ -64,13 +66,15 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
+        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic

@@ -39,6 +39,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCIsPrev; // Previous hidden states
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
