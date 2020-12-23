@@ -156,10 +156,7 @@ void SparseCoder::learn(
 
                         int weight = vl.weights[wi];
                         
-                        if (delta > 0)
-                            vl.weights[wi] = min<int>(255 - delta, weight) + delta;
-                        else
-                            vl.weights[wi] = max<int>(-delta, weight) + delta;
+                        vl.weights[wi] = max<int>(-delta, weight) + delta;
                     }
                 }
         }
