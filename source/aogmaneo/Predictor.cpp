@@ -174,7 +174,7 @@ void Predictor::generateErrors(
 
                     int weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
-                    sum += roundftoi(alpha * 127.0f * ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex])) * weight;
+                    sum += roundftoi(127.0f * ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex])) * weight;
                 }
 
                 count += hiddenSize.z;
