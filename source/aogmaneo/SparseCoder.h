@@ -57,13 +57,11 @@ private:
 
 public:
     float alpha; // Learning rate
-    float minError; // Minimum error for learning to occur
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f),
-    minError(0.1f)
+    alpha(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
