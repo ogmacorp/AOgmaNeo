@@ -221,7 +221,7 @@ void SparseCoder::initRandom(
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = rand() % 8 - 4;
 
-        vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
+        vl.reconstruction = Array<char>(numVisibleColumns, 0);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
@@ -360,7 +360,7 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(char));
 
-        vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
+        vl.reconstruction = Array<char>(numVisibleColumns, 0);
     }
 }
 

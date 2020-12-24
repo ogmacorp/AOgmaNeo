@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        Array<signed char> protos;
+        Array<char> protos;
 
-        Array<signed char> reconstruction;
+        Array<char> reconstruction;
     };
 
 private:
