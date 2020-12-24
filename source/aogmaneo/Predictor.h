@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        Array<char> weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
@@ -67,11 +67,13 @@ private:
 
 public:
     float alpha; // Learning rate
+    float targetRange;
 
     // Defaults
     Predictor()
     :
-    alpha(1.0f)
+    alpha(0.2f),
+    targetRange(0.05f)
     {}
 
     // Create with random initialization
@@ -97,11 +99,22 @@ public:
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 

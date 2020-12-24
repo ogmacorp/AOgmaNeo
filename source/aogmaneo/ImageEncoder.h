@@ -30,30 +30,17 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights; // Byte weight matrix
+        ByteBuffer protos;
 
-        FloatBuffer reconstruction;
+        ByteBuffer reconstruction;
     };
 
 private:
-    struct FloatInt {
-        float a;
-        int i;
-
-        bool operator<(
-            const FloatInt &other
-        ) const {
-            return a < other.a;
-        }
-    };
-
     Int3 hiddenSize; // Size of hidden/output layer
-
-    Array<FloatInt> hiddenActivations;
 
     IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenResources; // Resources
+    FloatBuffer hiddenRates; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -63,7 +50,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const FloatBuffer*> &inputCIs,
+        const Array<const ByteBuffer*> &inputCIs,
         bool learnEnabled
     );
 
@@ -75,13 +62,11 @@ private:
 
 public:
     float alpha;
-    float gamma;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.02f),
-    gamma(1.0f)
+    alpha(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -92,7 +77,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const FloatBuffer*> &inputs, // Input states
+        const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -100,13 +85,15 @@ public:
         const IntBuffer* reconCIs
     );
 
-    const FloatBuffer &getReconstruction(
+    const ByteBuffer &getReconstruction(
         int i
     ) const {
         return visibleLayers[i].reconstruction;
     }
 
     // Serialization
+    int size() const; // Returns size in bytes
+
     void write(
         StreamWriter &writer
     ) const;

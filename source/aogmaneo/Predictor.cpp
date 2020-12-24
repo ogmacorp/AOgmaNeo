@@ -17,12 +17,12 @@ void Predictor::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        int sum = 0;
         int count = 0;
 
         // For each visible layer
@@ -58,9 +58,7 @@ void Predictor::forward(
                 }
         }
 
-        sum /= max(1, count);
-
-        hiddenActivations[hiddenCellIndex] = sigmoid(sum);
+        hiddenActivations[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -77,12 +75,12 @@ void Predictor::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int targetC = (*hiddenTargetCIs)[hiddenColumnIndex];
+    int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float delta = alpha * ((hc == targetC ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
+        int delta = roundftoi(alpha * 127.0f * ((hc == targetCI ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -111,7 +109,14 @@ void Predictor::learn(
 
                     int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-                    vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
+                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    int weight = vl.weights[wi];
+                    
+                    if (delta > 0)
+                        vl.weights[wi] = min<int>(127 - delta, weight) + delta;
+                    else
+                        vl.weights[wi] = max<int>(-127 - delta, weight) + delta;
                 }
         }
     }
@@ -150,7 +155,7 @@ void Predictor::generateErrors(
 
     int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-    float sum = 0.0f;
+    int sum = 0;
     int count = 0;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -167,18 +172,16 @@ void Predictor::generateErrors(
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hc), hiddenSize);
 
-                    float weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    int weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
-                    sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]) * weight;
+                    sum += roundftoi(alpha * 127.0f * ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex])) * weight;
                 }
 
                 count += hiddenSize.z;
             }
         }
 
-    sum /= max(1, count);
-
-    (*visibleErrors)[visibleColumnIndex] += sum;
+    (*visibleErrors)[visibleColumnIndex] += static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
 }
 
 void Predictor::initRandom(
@@ -209,7 +212,7 @@ void Predictor::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = rand() % 8 - 4;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -263,15 +266,41 @@ void Predictor::generateErrors(
         generateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli);
 }
 
+int Predictor::size() const {
+    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(char) + vl.inputCIsPrev.size() * sizeof(int);
+    }
+
+    return size;
+}
+
+int Predictor::stateSize() const {
+    int size = hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        size += vl.inputCIsPrev.size() * sizeof(int);
+    }
+
+    return size;
+}
+
 void Predictor::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&targetRange), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -287,7 +316,7 @@ void Predictor::write(
 
         writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(char));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
@@ -302,12 +331,13 @@ void Predictor::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&targetRange), sizeof(float));
 
-    hiddenActivations.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
+    hiddenActivations.resize(numHiddenCells);
 
-    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -330,9 +360,35 @@ void Predictor::read(
 
         vl.weights.resize(weightsSize);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(char));
 
         vl.inputCIsPrev.resize(numVisibleColumns);
+
+        reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+    }
+}
+
+void Predictor::writeState(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+    
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+    }
+}
+
+void Predictor::readState(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }

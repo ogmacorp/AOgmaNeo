@@ -30,15 +30,13 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        ByteBuffer weights;
 
         IntBuffer inputCIsPrev;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-
-    FloatBuffer hiddenActivations;
 
     IntBuffer hiddenCIs; // Hidden states
     
@@ -61,7 +59,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f)
+    alpha(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -78,11 +76,22 @@ public:
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 

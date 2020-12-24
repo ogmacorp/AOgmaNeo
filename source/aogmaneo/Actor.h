@@ -66,8 +66,7 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        unsigned int* state
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
@@ -90,11 +89,11 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.1f),
+    alpha(0.01f),
     beta(0.01f),
     gamma(0.99f),
     minSteps(4),
-    historyIters(8)
+    historyIters(16)
     {}
 
     // Initialized randomly
@@ -114,11 +113,22 @@ public:
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
