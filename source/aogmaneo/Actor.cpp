@@ -103,7 +103,7 @@ void Actor::forward(
             maxIndex = hc;
         }
     }
-
+    
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
