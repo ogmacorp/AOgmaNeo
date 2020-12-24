@@ -20,7 +20,7 @@ void SparseCoder::forward(
 
     float error = (*hiddenErrors)[hiddenColumnIndex];
 
-    if (learnEnabled && error > 0.0f) {
+    if (learnEnabled) {
         int hiddenCellIndexPrev = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -50,13 +50,9 @@ void SparseCoder::forward(
 
                     int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexPrev));
+                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexPrev));
 
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int wi = vc + wiStart;
-
-                        vl.weights[wi] = roundftoi(vl.weights[wi] + alpha * ((vc == inCI ? 255.0f : 0.0f) - static_cast<float>(vl.weights[wi])));
-                    }
+                    vl.weights[wi] = min(255, max(0, roundftoi(vl.weights[wi] + alpha * 255.0f * error)));
                 }
         }
     }
