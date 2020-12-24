@@ -107,7 +107,7 @@ private:
     Array<Array<CircleBuffer<IntBuffer>>> histories;
 
     // Per-layer values
-    IntBuffer updates;
+    ByteBuffer updates;
 
     IntBuffer ticks;
     IntBuffer ticksPerUpdate;
@@ -146,11 +146,22 @@ public:
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
