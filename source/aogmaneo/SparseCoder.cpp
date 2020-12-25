@@ -299,7 +299,7 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0);
+        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 }
 
