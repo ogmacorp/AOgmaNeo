@@ -82,6 +82,11 @@ void Predictor::learn(
 
         int delta = roundftoi(alpha * 127.0f * ((hc == targetCI ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]));
 
+        if (hc == targetCI)
+            delta = max(0, delta);
+        else
+            delta = min(0, delta);
+
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -174,14 +179,21 @@ void Predictor::generateErrors(
 
                     int weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
-                    sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]) * weight;
+                    float error = ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]);
+
+                    if (hc == (*hiddenTargetCIs)[hiddenColumnIndex])
+                        error = max(0.0f, error);
+                    else
+                        error = min(0.0f, error);
+
+                    sum += error * weight;
                 }
 
-                count += hiddenSize.z;
+                count++;
             }
         }
 
-    (*visibleErrors)[visibleColumnIndex] += static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
+    (*visibleErrors)[visibleColumnIndex] += static_cast<float>(sum) / static_cast<float>(max(1, count)) / targetRange / 127.0f;
 }
 
 void Predictor::initRandom(
