@@ -66,7 +66,8 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
@@ -93,7 +94,7 @@ public:
     beta(0.01f),
     gamma(0.99f),
     minSteps(4),
-    historyIters(16)
+    historyIters(8)
     {}
 
     // Initialized randomly
