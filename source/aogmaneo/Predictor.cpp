@@ -155,7 +155,7 @@ void Predictor::generateErrors(
 
     int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-    int sum = 0;
+    float sum = 0.0f;
     int count = 0;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -174,7 +174,7 @@ void Predictor::generateErrors(
 
                     int weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
-                    sum += roundftoi(127.0f * ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex])) * weight;
+                    sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]) * weight;
                 }
 
                 count += hiddenSize.z;
