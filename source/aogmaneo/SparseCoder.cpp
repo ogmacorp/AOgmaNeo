@@ -134,7 +134,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + rand() % 8;
+            vl.weights[i] = 255 - rand() % 8;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
