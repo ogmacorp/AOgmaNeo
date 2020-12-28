@@ -23,7 +23,7 @@ void SparseCoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexPrev = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = alpha * error;
+        float delta = alpha * tanh(error);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
