@@ -188,9 +188,7 @@ void Predictor::generateErrors(
 
                     int weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
-                    float error = ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
-
-                    sum += error * weight;
+                    sum += ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]) * weight;
                 }
 
                 count++;
@@ -228,7 +226,7 @@ void Predictor::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
