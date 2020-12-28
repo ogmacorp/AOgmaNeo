@@ -134,7 +134,7 @@ void SparseCoder::learn(
 
     int targetCI = (*inputCIs)[visibleColumnIndex];
 
-    if (maxIndex != targetCI || targetCI != -1) {
+    if (maxIndex != targetCI && targetCI != -1) {
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
