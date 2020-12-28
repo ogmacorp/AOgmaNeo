@@ -23,6 +23,8 @@ void SparseCoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexPrev = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
+        float delta = alpha * error;
+
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -52,7 +54,7 @@ void SparseCoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexPrev));
 
-                    vl.weights[wi] += alpha * error;
+                    vl.weights[wi] += delta;
                 }
         }
     }
