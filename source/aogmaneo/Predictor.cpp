@@ -101,6 +101,10 @@ void Predictor::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
+    // Missing value handling
+    if (targetCI == -1)
+        return;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 

@@ -51,6 +51,10 @@ void SparseCoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
+                    // Missing value handling
+                    if (inCI == -1)
+                        continue;
+
                     sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
@@ -130,7 +134,7 @@ void SparseCoder::learn(
 
     int targetCI = (*inputCIs)[visibleColumnIndex];
 
-    if (maxIndex != targetCI) {
+    if (maxIndex != targetCI || targetCI != -1) {
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
