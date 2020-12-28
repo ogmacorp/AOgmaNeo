@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        Array<char> weights;
+        FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
@@ -67,13 +67,11 @@ private:
 
 public:
     float alpha; // Learning rate
-    float targetRange;
 
     // Defaults
     Predictor()
     :
-    alpha(0.2f),
-    targetRange(0.2f)
+    alpha(0.1f)
     {}
 
     // Create with random initialization
