@@ -80,7 +80,7 @@ void Predictor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        int delta = roundftoi(alpha * 127.0f * ((hc == targetCI ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]));
+        int delta = roundftoi(alpha * 127.0f * ((hc == targetCI ? targetRange : -targetRange / (hiddenSize.z - 1)) - hiddenActivations[hiddenCellIndex]));
 
         if (hc == targetCI)
             delta = max(0, delta);
@@ -179,7 +179,7 @@ void Predictor::generateErrors(
 
                     int weight = vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
 
-                    float error = ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]);
+                    float error = ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? targetRange : -targetRange / (hiddenSize.z - 1)) - hiddenActivations[hiddenCellIndex]);
 
                     if (hc == (*hiddenTargetCIs)[hiddenColumnIndex])
                         error = max(0.0f, error);
@@ -224,7 +224,7 @@ void Predictor::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 8 - 4;
+            vl.weights[i] = static_cast<int>(rand() % 8) - 4;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }

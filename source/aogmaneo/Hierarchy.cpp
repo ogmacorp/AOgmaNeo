@@ -189,8 +189,7 @@ void Hierarchy::step(
     }
 
     // Set all updates to no update, will be set to true if an update occurred later
-    for (int l = 0; l < updates.size(); l++)
-        updates[l] = false;
+    updates.fill(false);
 
     // Forward
     for (int l = 0; l < scLayers.size(); l++) {
