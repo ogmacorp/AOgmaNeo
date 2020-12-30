@@ -41,7 +41,7 @@ private:
     FloatBuffer hiddenActivations;
 
     IntBuffer hiddenCIs; // Hidden states
-    
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -56,7 +56,7 @@ private:
     );
 
 public:
-    float alpha; // Learning rate
+    float alpha; // Weight learning rate
 
     // Defaults
     SparseCoder()
