@@ -38,6 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden states
 
     // Visible layers and associated descriptors
