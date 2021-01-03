@@ -55,7 +55,7 @@ void SparseCoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + (vc == inCI ? rate  : -rate / (vld.size.z - 1))));
+                        vl.weights[wi] = min(1.0f, vl.weights[wi] + (vc == inCI ? rate : -rate / (vld.size.z - 1)));
                     }
                 }
         }
