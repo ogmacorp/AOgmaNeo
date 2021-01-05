@@ -82,7 +82,7 @@ void SparseCoder::learn(
 
     int targetCI = (*inputCIs)[visibleColumnIndex];
 
-    if (targetCI != -1)
+    if (targetCI == -1)
         return;
 
     // Projection
