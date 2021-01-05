@@ -80,6 +80,11 @@ void SparseCoder::learn(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
+    int targetCI = (*inputCIs)[visibleColumnIndex];
+
+    if (targetCI != -1)
+        return;
+
     // Projection
     Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
         static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
@@ -132,9 +137,7 @@ void SparseCoder::learn(
         }
     }
 
-    int targetCI = (*inputCIs)[visibleColumnIndex];
-
-    if (maxIndex != targetCI && targetCI != -1) {
+    if (maxIndex != targetCI) {
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
