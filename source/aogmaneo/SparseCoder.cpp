@@ -129,7 +129,9 @@ void SparseCoder::learn(
                 }
             }
 
-        vl.reconstruction[visibleCellIndex] = sum / max(1, count);
+        sum /= max(1, count);
+
+        vl.reconstruction[visibleCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
