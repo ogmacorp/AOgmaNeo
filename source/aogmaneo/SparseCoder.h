@@ -54,7 +54,7 @@ private:
     );
 
 public:
-    float alpha; // Weight learning rate
+    float alpha; // Update tolerance
 
     // Defaults
     SparseCoder()
