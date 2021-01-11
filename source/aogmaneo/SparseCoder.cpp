@@ -12,7 +12,7 @@ using namespace aon;
 
 void SparseCoder::resetReconstruction(
     const Int2 &columnPos,
-    const IntBuffer* inputCIs,
+    const ByteBuffer* inputCIs,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -224,9 +224,9 @@ void SparseCoder::initRandom(
         vl.reconstruction = Array<char>(numVisibleColumns, 0);
     }
 
-    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
+    hiddenCIs = ByteBuffer(numHiddenColumns, hiddenSize.z / 2);
 
-    hiddenPriorities = IntBuffer(numHiddenColumns);
+    hiddenPriorities = ByteBuffer(numHiddenColumns);
 
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
@@ -235,7 +235,7 @@ void SparseCoder::initRandom(
 }
 
 void SparseCoder::step(
-    const Array<const IntBuffer*> &inputCIs,
+    const Array<const ByteBuffer*> &inputCIs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;

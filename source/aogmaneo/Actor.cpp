@@ -12,7 +12,7 @@ using namespace aon;
 
 void Actor::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
+    const Array<const ByteBuffer*> &inputCIs,
     unsigned int* state
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
@@ -137,8 +137,8 @@ void Actor::forward(
 
 void Actor::learn(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIsPrev,
-    const IntBuffer* hiddenTargetCIsPrev,
+    const Array<const ByteBuffer*> &inputCIsPrev,
+    const ByteBuffer* hiddenTargetCIsPrev,
     const FloatBuffer* hiddenValuesPrev,
     float q,
     float g,
@@ -354,7 +354,7 @@ void Actor::initRandom(
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = ByteBuffer(numHiddenColumns, 0);
 
     hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
 
@@ -370,18 +370,18 @@ void Actor::initRandom(
 
             int numVisibleColumns = vld.size.x * vld.size.y;
 
-            historySamples[i].inputCIs[vli] = IntBuffer(numVisibleColumns);
+            historySamples[i].inputCIs[vli] = ByteBuffer(numVisibleColumns);
         }
 
-        historySamples[i].hiddenTargetCIsPrev = IntBuffer(numHiddenColumns);
+        historySamples[i].hiddenTargetCIsPrev = ByteBuffer(numHiddenColumns);
 
         historySamples[i].hiddenValuesPrev = FloatBuffer(numHiddenColumns);
     }
 }
 
 void Actor::step(
-    const Array<const IntBuffer*> &inputCIs,
-    const IntBuffer* hiddenTargetCIsPrev,
+    const Array<const ByteBuffer*> &inputCIs,
+    const ByteBuffer* hiddenTargetCIsPrev,
     float reward,
     bool learnEnabled,
     bool mimic

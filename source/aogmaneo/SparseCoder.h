@@ -39,8 +39,8 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
     int numPriorities;
 
-    IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenPriorities;
+    ByteBuffer hiddenCIs; // Hidden states
+    ByteBuffer hiddenPriorities;
 
     FloatBuffer hiddenRates; // Resources
 
@@ -52,7 +52,7 @@ private:
     
     void resetReconstruction(
         const Int2 &columnPos,
-        const IntBuffer* inputCIs,
+        const ByteBuffer* inputCIs,
         int vli
     );
     
@@ -86,7 +86,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
+        const Array<const ByteBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -130,7 +130,7 @@ public:
     }
 
     // Get the hidden states
-    const IntBuffer &getHiddenCIs() const {
+    const ByteBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 
