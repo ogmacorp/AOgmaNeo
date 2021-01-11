@@ -415,6 +415,8 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
     
+    errors.resize(numLayers);
+
     for (int l = 0; l < numLayers; l++) {
         int numInputs;
         
@@ -451,7 +453,7 @@ void Hierarchy::read(
 
         // Predictors
         for (int i = 0; i < pLayers[l].size(); i++) {
-            pLayers[l][i].resize(ticksPerUpdate[l]);
+            pLayers[l][i].resize(l == 0 ? 1 : ticksPerUpdate[l]);
 
             for (int t = 0; t < pLayers[l][i].size(); t++)
                 pLayers[l][i][t].read(reader);
