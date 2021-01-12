@@ -221,7 +221,7 @@ void SparseCoder::initRandom(
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = rand() % 8 - 4;
 
-        vl.reconstruction = Array<char>(numVisibleColumns, 0);
+        vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
 
     hiddenCIs = ByteBuffer(numHiddenColumns, hiddenSize.z / 2);
@@ -278,7 +278,7 @@ int SparseCoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.protos.size() * sizeof(char);
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.protos.size() * sizeof(signed char);
     }
 
     return size;
@@ -314,7 +314,7 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&protosSize), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(char));
+        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(signed char));
     }
 }
 
@@ -358,9 +358,9 @@ void SparseCoder::read(
 
         vl.protos.resize(protosSize);
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(char));
+        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(signed char));
 
-        vl.reconstruction = Array<char>(numVisibleColumns, 0);
+        vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
 }
 
