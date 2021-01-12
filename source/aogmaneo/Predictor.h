@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        Array<char> weights;
+        Array<signed char> weights;
 
         ByteBuffer inputCIsPrev; // Previous timestep (prev) input states
     };

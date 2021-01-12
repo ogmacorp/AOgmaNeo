@@ -43,7 +43,7 @@ void Predictor::forward(
     }
 
     int maxIndex = -1;
-    int maxActivation = 0;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
