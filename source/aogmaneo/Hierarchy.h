@@ -25,14 +25,13 @@ class Hierarchy {
 public:
     struct IODesc {
         Int3 size;
+        IOType type;
 
         int ffRadius; // Feed forward radius
         int pRadius; // Prediction radius
         int aRadius; // Actor radius
 
         int historyCapacity; // Actor history capacity
-
-        IOType type;
 
         IODesc()
         :
