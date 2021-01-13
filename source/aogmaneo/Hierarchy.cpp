@@ -371,7 +371,7 @@ void Hierarchy::write(
 
                 writer.write(reinterpret_cast<const void*>(&bufferSize), sizeof(int));
 
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
             }
         }
 
@@ -453,7 +453,7 @@ void Hierarchy::read(
 
                 histories[l][i][t].resize(bufferSize);
 
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
             }
         }
 
@@ -502,7 +502,7 @@ void Hierarchy::writeState(
             writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
         }
 
         scLayers[l].writeState(writer);
@@ -536,7 +536,7 @@ void Hierarchy::readState(
             histories[l][i].start = historyStart;
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
         }
 
         scLayers[l].readState(reader);
