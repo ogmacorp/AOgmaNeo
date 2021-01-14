@@ -66,7 +66,8 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputCIs
+        const Array<const ByteBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
