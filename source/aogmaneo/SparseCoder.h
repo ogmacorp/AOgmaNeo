@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        Array<signed char> weights;
 
         IntBuffer inputCIsPrev;
     };
@@ -39,7 +39,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
-    
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -54,7 +54,7 @@ private:
     );
 
 public:
-    float alpha; // Learning rate
+    float alpha; // Update tolerance
 
     // Defaults
     SparseCoder()
