@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        Array<signed char> protos;
+        Array<signed char> means;
         ByteBuffer variances;
 
         Array<signed char> reconstruction;
@@ -71,13 +71,11 @@ private:
 
 public:
     float alpha;
-    float gamma;
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f),
-    gamma(0.1f)
+    alpha(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
