@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        FloatBuffer reconstruction;
+
         IntBuffer inputCIsPrev;
     };
 
@@ -39,7 +41,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
-
+    
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -48,12 +50,26 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const Int2 &columnPos,
         const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        int vli
     );
 
 public:
+    float alpha; // Reconstruction learning rate
+    float beta; // Error learning rate
+
+    // Defaults
+    SparseCoder()
+    :
+    alpha(0.01f),
+    beta(0.01f)
+    {}
+
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
