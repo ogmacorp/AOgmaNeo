@@ -107,7 +107,7 @@ void Hierarchy::initRandom(
                 histories[l][i].resize(layerDescs[l].temporalHorizon);
                 
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = IntBuffer(inSize, 0);
+                    histories[l][i][t] = ByteBuffer(inSize, 0);
             }
 
             pLayers[l].resize(inputSizes.size());
@@ -160,7 +160,7 @@ void Hierarchy::initRandom(
             histories[l][0].resize(layerDescs[l].temporalHorizon);
 
             for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = IntBuffer(inSize, 0);
+                histories[l][0][t] = ByteBuffer(inSize, 0);
 
             pLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
@@ -182,12 +182,12 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        scLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].lRadius, scVisibleLayerDescs);
+        scLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].numPriorities, scVisibleLayerDescs);
     }
 }
 
 void Hierarchy::step(
-    const Array<const IntBuffer*> &inputCIs,
+    const Array<const ByteBuffer*> &inputCIs,
     bool learnEnabled,
     float reward,
     bool mimic
@@ -216,7 +216,7 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
+            Array<const ByteBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
 
             int index = 0;
 
@@ -245,7 +245,7 @@ void Hierarchy::step(
     for (int l = scLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
-            Array<const IntBuffer*> feedBackCIs(l < scLayers.size() - 1 ? 2 : 1);
+            Array<const ByteBuffer*> feedBackCIs(l < scLayers.size() - 1 ? 2 : 1);
 
             feedBackCIs[0] = &scLayers[l].getHiddenCIs();
 
@@ -273,6 +273,68 @@ void Hierarchy::step(
     }
 }
 
+int Hierarchy::size() const {
+    int size = 2 * sizeof(int) + inputSizes.size() * sizeof(Int3) + updates.size() * sizeof(unsigned char) + 2 * ticks.size() * sizeof(int);
+
+    for (int l = 0; l < scLayers.size(); l++) {
+        size += sizeof(int);
+
+        for (int i = 0; i < histories[l].size(); i++) {
+            size += 2 * sizeof(int);
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
+        }
+
+        size += scLayers[l].size();
+
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            size += sizeof(unsigned char);
+
+            if (pLayers[l][v] != nullptr)
+                size += pLayers[l][v]->size();
+        }
+    }
+
+    for (int v = 0; v < aLayers.size(); v++) {
+        size += sizeof(unsigned char);
+
+        if (aLayers[v] != nullptr)
+            size += aLayers[v]->size();
+    }
+
+    return size;
+}
+
+int Hierarchy::stateSize() const {
+    int size = updates.size() * sizeof(unsigned char) + ticks.size() * sizeof(int);
+
+    for (int l = 0; l < scLayers.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            size += sizeof(int);
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                size += histories[l][i][t].size() * sizeof(int);
+        }
+
+        size += scLayers[l].stateSize();
+        
+        // Predictors
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            if (pLayers[l][v] != nullptr)
+                size += pLayers[l][v]->stateSize();
+        }
+    }
+
+    // Actors
+    for (int v = 0; v < aLayers.size(); v++) {
+        if (aLayers[v] != nullptr)
+            size += aLayers[v]->stateSize();
+    }
+
+    return size;
+}
+
 void Hierarchy::write(
     StreamWriter &writer
 ) const {
@@ -286,7 +348,7 @@ void Hierarchy::write(
 
     writer.write(reinterpret_cast<const void*>(&inputSizes[0]), numInputs * sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
     writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
@@ -309,7 +371,7 @@ void Hierarchy::write(
 
                 writer.write(reinterpret_cast<const void*>(&bufferSize), sizeof(int));
 
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
             }
         }
 
@@ -361,7 +423,7 @@ void Hierarchy::read(
     ticks.resize(numLayers);
     ticksPerUpdate.resize(numLayers);
 
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
     
@@ -391,7 +453,7 @@ void Hierarchy::read(
 
                 histories[l][i][t].resize(bufferSize);
 
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
             }
         }
 
@@ -424,5 +486,71 @@ void Hierarchy::read(
             aLayers[v].make();
             aLayers[v]->read(reader);
         }
+    }
+}
+
+void Hierarchy::writeState(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
+
+    for (int l = 0; l < scLayers.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            int historyStart = histories[l][i].start;
+
+            writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
+        }
+
+        scLayers[l].writeState(writer);
+
+        // Predictors
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            if (pLayers[l][v] != nullptr)
+                pLayers[l][v]->writeState(writer);
+        }
+    }
+
+    // Actors
+    for (int v = 0; v < aLayers.size(); v++) {
+        if (aLayers[v] != nullptr)
+            aLayers[v]->writeState(writer);
+    }
+}
+
+void Hierarchy::readState(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
+    
+    for (int l = 0; l < scLayers.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            int historyStart;
+            
+            reader.read(reinterpret_cast<void*>(&historyStart), sizeof(int));
+
+            histories[l][i].start = historyStart;
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
+        }
+
+        scLayers[l].readState(reader);
+        
+        // Predictors
+        for (int v = 0; v < pLayers[l].size(); v++) {
+            if (pLayers[l][v] != nullptr)
+                pLayers[l][v]->readState(reader);
+        }
+    }
+
+    // Actors
+    for (int v = 0; v < aLayers.size(); v++) {
+        if (aLayers[v] != nullptr)
+            aLayers[v]->readState(reader);
     }
 }

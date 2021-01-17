@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        Array<signed char> weights;
 
-        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
+        ByteBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
 private:
@@ -40,7 +40,7 @@ private:
 
     FloatBuffer hiddenActivations;
 
-    IntBuffer hiddenCIs; // Hidden state
+    ByteBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -50,23 +50,23 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const ByteBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs
+        const ByteBuffer* hiddenTargetCIs
     );
 
 public:
     float alpha; // Learning rate
-    float targetRange; // Range of target outputs, must be in [0, 0.5]
+    float gamma; // Range of target outputs, must be in [0, 0.5]
 
     // Defaults
     Predictor()
     :
-    alpha(0.05f),
-    targetRange(0.05f)
+    alpha(0.1f),
+    gamma(16.0f)
     {}
 
     // Create with random initialization
@@ -77,20 +77,31 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
+        const Array<const ByteBuffer*> &inputCIs // Hidden/output/prediction size
     );
 
     // Learning predictions (update weights)
     void learn(
-        const IntBuffer* hiddenTargetCIs
+        const ByteBuffer* hiddenTargetCIs
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
@@ -114,7 +125,7 @@ public:
     }
 
     // Get the hidden activations (predictions)
-    const IntBuffer &getHiddenCIs() const {
+    const ByteBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 

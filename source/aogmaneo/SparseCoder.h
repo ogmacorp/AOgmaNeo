@@ -40,8 +40,8 @@ private:
     FloatBuffer hiddenStimuli;
     FloatBuffer hiddenActivations;
 
-    IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenCIsTemp; // Temporary hidden states
+    ByteBuffer hiddenCIs; // Hidden states
+    ByteBuffer hiddenCIsTemp; // Temporary hidden states
     FloatBuffer hiddenRates; // Learning rates
 
     // Visible layers and associated descriptors
@@ -54,7 +54,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const ByteBuffer*> &inputCIs
     );
 
     void inhibit(
@@ -63,18 +63,18 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const ByteBuffer*> &inputCIs
     );
 
 public:
-    float alpha; // Learning rate decay
     int explainIters; // Explaining-away iterations
+    float alpha; // Learning rate decay
     
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f),
-    explainIters(8)
+    explainIters(6),
+    alpha(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -86,16 +86,27 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
+        const Array<const ByteBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
@@ -119,7 +130,7 @@ public:
     }
 
     // Get the hidden states
-    const IntBuffer &getHiddenCIs() const {
+    const ByteBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 

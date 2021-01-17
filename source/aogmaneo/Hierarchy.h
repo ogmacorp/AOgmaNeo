@@ -25,14 +25,13 @@ class Hierarchy {
 public:
     struct IODesc {
         Int3 size;
+        IOType type;
 
         int ffRadius; // Feed forward radius
         int pRadius; // Prediction radius
         int aRadius; // Actor radius
 
         int historyCapacity; // Actor history capacity
-
-        IOType type;
 
         IODesc()
         :
@@ -65,9 +64,9 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
+        int numPriorities;
 
         int ffRadius; // Feed forward radius
-        int lRadius; // Lateral radius
         int pRadius; // Prediction radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
@@ -76,8 +75,8 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
+        numPriorities(3),
         ffRadius(2),
-        lRadius(2),
         pRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
@@ -85,16 +84,16 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
+            int numPriorities,
             int ffRadius,
-            int lRadius,
             int pRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
+        numPriorities(numPriorities),
         ffRadius(ffRadius),
-        lRadius(lRadius),
         pRadius(pRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
@@ -108,13 +107,13 @@ private:
     Array<Ptr<Actor>> aLayers;
 
     // Histories
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
+    Array<Array<CircleBuffer<ByteBuffer>>> histories;
 
     // Per-layer values
-    IntBuffer updates;
+    ByteBuffer updates;
 
-    IntBuffer ticks;
-    IntBuffer ticksPerUpdate;
+    ByteBuffer ticks;
+    ByteBuffer ticksPerUpdate;
 
     // Input dimensions
     Array<Int3> inputSizes;
@@ -143,18 +142,29 @@ public:
 
     // Simulation step/tick
     void step(
-        const Array<const IntBuffer*> &inputCIs, // Inputs to remember
+        const Array<const ByteBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // Whether to treat Actors like Predictors
+        bool mimic = false // Mimic mode
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
@@ -164,7 +174,7 @@ public:
     }
 
     // Retrieve predictions
-    const IntBuffer &getPredictionCIs(
+    const ByteBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
         if (aLayers[i] != nullptr) // If is an action layer
@@ -237,7 +247,7 @@ public:
         return aLayers;
     }
 
-    const Array<CircleBuffer<IntBuffer>> &getHistories(
+    const Array<CircleBuffer<ByteBuffer>> &getHistories(
         int l
     ) const {
         return histories[l];

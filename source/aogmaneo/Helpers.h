@@ -328,6 +328,20 @@ inline float sigmoid(
     return 1.0f / (1.0f + expf(-x));
 }
 
+inline float tanh(
+    float x
+) {
+    if (x < 0.0f) {
+        float z = expf(2.0f * x);
+
+        return (z - 1.0f) / (z + 1.0f);
+    }
+
+    float z = expf(-2.0f * x);
+
+    return -(z - 1.0f) / (z + 1.0f);
+}
+
 // --- RNG ---
 
 // From http://cas.ee.ic.ac.uk/people/dt10/research/rngs-gpu-mwc64x.html

@@ -12,7 +12,7 @@ using namespace aon;
 
 void SparseCoder::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Array<const ByteBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -122,7 +122,7 @@ void SparseCoder::inhibit(
 
 void SparseCoder::learn(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Array<const ByteBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -233,8 +233,8 @@ void SparseCoder::initRandom(
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
-    hiddenCIsTemp = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = ByteBuffer(numHiddenColumns, 0);
+    hiddenCIsTemp = ByteBuffer(numHiddenColumns, 0);
     hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     int diam = lRadius * 2 + 1;
@@ -245,7 +245,7 @@ void SparseCoder::initRandom(
 
 // Activate the sparse coder (perform sparse coding)
 void SparseCoder::step(
-    const Array<const IntBuffer*> &inputCIs, // Input states
+    const Array<const ByteBuffer*> &inputCIs, // Input states
     bool learnEnabled // Whether to learn
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -269,16 +269,35 @@ void SparseCoder::step(
     }
 }
 
+int SparseCoder::size() const {
+    int size = sizeof(Int3) + 2 * sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(unsigned char) + hiddenActivations.size() * sizeof(float) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(unsigned char);
+    }
+
+    size += laterals.size() * sizeof(unsigned char);
+
+    return size;
+}
+
+int SparseCoder::stateSize() const {
+    return hiddenCIs.size() * sizeof(unsigned char);
+}
+
 void SparseCoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&explainIters), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
@@ -314,14 +333,14 @@ void SparseCoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCIsTemp.resize(numHiddenColumns);
     hiddenRates.resize(numHiddenCells);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     hiddenStimuli = FloatBuffer(numHiddenCells, 0.0f);
@@ -356,4 +375,16 @@ void SparseCoder::read(
     laterals.resize(lateralsSize);
 
     reader.read(reinterpret_cast<void*>(&laterals[0]), laterals.size() * sizeof(unsigned char));
+}
+
+void SparseCoder::writeState(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
+}
+
+void SparseCoder::readState(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
 }

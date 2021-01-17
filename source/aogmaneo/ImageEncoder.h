@@ -30,28 +30,15 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Byte weight matrix
+        ByteBuffer protos;
 
         ByteBuffer reconstruction;
     };
 
 private:
-    struct IntInt {
-        int a;
-        int i;
-
-        bool operator<(
-            const IntInt &other
-        ) const {
-            return a < other.a;
-        }
-    };
-
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<IntInt> hiddenActivations;
-
-    IntBuffer hiddenCIs; // Hidden states
+    ByteBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenRates; // Resources
 
@@ -69,19 +56,17 @@ private:
 
     void reconstruct(
         const Int2 &columnPos,
-        const IntBuffer* reconCIs,
+        const ByteBuffer* reconCIs,
         int vli
     );
 
 public:
     float alpha;
-    float gamma;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.02f),
-    gamma(1.0f)
+    alpha(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -97,7 +82,7 @@ public:
     );
 
     void reconstruct(
-        const IntBuffer* reconCIs
+        const ByteBuffer* reconCIs
     );
 
     const ByteBuffer &getReconstruction(
@@ -107,6 +92,8 @@ public:
     }
 
     // Serialization
+    int size() const; // Returns size in bytes
+
     void write(
         StreamWriter &writer
     ) const;
@@ -135,7 +122,7 @@ public:
     }
 
     // Get the hidden states
-    const IntBuffer &getHiddenCIs() const {
+    const ByteBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 
