@@ -73,9 +73,9 @@ void SparseCoder::forward(
 
                     float delta = (inValue - static_cast<int>(vl.means[wi])) / 127.0f;
 
-                    float invVariance = 1.0f / (max<int>(1, vl.variances[wi]) / 255.0f);
+                    float scale = vl.scales[wi] / 255.0f;
 
-                    sum -= invVariance * abs(delta);
+                    sum -= scale * abs(delta);
                 }
         }
 
@@ -127,7 +127,6 @@ void SparseCoder::forward(
                         float delta = (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.means[wi])) / 127.0f;
 
                         vl.means[wi] = roundftoi(min(127.0f, max(-127.0f, vl.means[wi] + hiddenRates[hiddenCellIndex] * 127.0f * delta)));
-                        vl.variances[wi] = roundftoi(min(255.0f, max(0.0f, vl.variances[wi] + hiddenRates[hiddenCellIndex] * (255.0f * delta * delta - vl.variances[wi]))));
                     }
             }
 
@@ -139,7 +138,8 @@ void SparseCoder::forward(
 void SparseCoder::reconstruct(
     const Int2 &columnPos,
     int vli,
-    int priority
+    int priority,
+    bool learnEnabled
 ) {
     VisibleLayer &vl = visibleLayers[vli];
     VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -168,7 +168,7 @@ void SparseCoder::reconstruct(
     
     // Find current max
     float sum = 0.0f;
-    int count = 0;
+    float total = 0.0f;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -188,12 +188,40 @@ void SparseCoder::reconstruct(
 
                 int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                sum += vl.means[wi];
-                count++;
+                float scale = vl.scales[wi] / 255.0f;
+
+                sum += vl.means[wi] * scale;
+                total += scale;
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - roundftoi(sum / max(1, count))));
+    if (learnEnabled) {
+        float delta = static_cast<float>(vl.reconstruction[visibleColumnIndex]) - sum / max(0.0001f, total);
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 hiddenPos = Int2(ix, iy);
+
+                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+
+                if (hiddenPriorities[hiddenColumnIndex] != priority)
+                    continue;
+
+                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+
+                Int2 visibleCenter = project(hiddenPos, hToV);
+
+                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                    int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+
+                    vl.scales[wi] = roundftoi(min(255.0f, max(0.0f, vl.scales[wi] + hiddenRates[hiddenCellIndex] * delta * vl.means[wi] / 127.0f)));
+                }
+            }
+    }
+
+    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - roundftoi(sum / max(0.0001f, total))));
 }
 
 void SparseCoder::initRandom(
@@ -223,12 +251,12 @@ void SparseCoder::initRandom(
         int area = diam * diam;
 
         vl.means.resize(numHiddenCells * area);
-        vl.variances.resize(vl.means.size());
+        vl.scales.resize(vl.means.size());
 
         // Initialize to random values
         for (int i = 0; i < vl.means.size(); i++) {
             vl.means[i] = rand() % 8 - 4;
-            vl.variances[i] = 255;
+            vl.scales[i] = 127;
         }
 
         vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
@@ -241,7 +269,7 @@ void SparseCoder::initRandom(
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void SparseCoder::step(
@@ -267,16 +295,14 @@ void SparseCoder::step(
         for (int i = 0; i < numHiddenColumns; i++)
             forward(Int2(i / hiddenSize.y, i % hiddenSize.y), p, learnEnabled);
 
-        if (p < numPriorities - 1) {
-            for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-                int numVisibleColumns = vld.size.x * vld.size.y;
+            int numVisibleColumns = vld.size.x * vld.size.y;
 
-                #pragma omp parallel for
-                for (int i = 0; i < numVisibleColumns; i++)
-                    reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli, p);
-            }
+            #pragma omp parallel for
+            for (int i = 0; i < numVisibleColumns; i++)
+                reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli, p, learnEnabled);
         }
     }
 }
@@ -288,7 +314,7 @@ int SparseCoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.means.size() * sizeof(signed char) + vl.variances.size() * sizeof(unsigned char);
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.means.size() * sizeof(signed char) + vl.scales.size() * sizeof(unsigned char);
     }
 
     return size;
@@ -325,7 +351,7 @@ void SparseCoder::write(
         writer.write(reinterpret_cast<const void*>(&meansSize), sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.means[0]), vl.means.size() * sizeof(signed char));
-        writer.write(reinterpret_cast<const void*>(&vl.variances[0]), vl.variances.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.scales[0]), vl.scales.size() * sizeof(unsigned char));
     }
 }
 
@@ -368,10 +394,10 @@ void SparseCoder::read(
         reader.read(reinterpret_cast<void*>(&meansSize), sizeof(int));
 
         vl.means.resize(meansSize);
-        vl.variances.resize(meansSize);
+        vl.scales.resize(meansSize);
 
         reader.read(reinterpret_cast<void*>(&vl.means[0]), vl.means.size() * sizeof(signed char));
-        reader.read(reinterpret_cast<void*>(&vl.variances[0]), vl.variances.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.scales[0]), vl.scales.size() * sizeof(unsigned char));
 
         vl.reconstruction = Array<signed char>(numVisibleColumns, 0);
     }
