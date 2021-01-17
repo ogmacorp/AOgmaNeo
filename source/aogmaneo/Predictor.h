@@ -65,8 +65,8 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.1f),
-    gamma(32.0f)
+    alpha(0.2f),
+    gamma(0.05f)
     {}
 
     // Create with random initialization
