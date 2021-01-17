@@ -188,7 +188,7 @@ void SparseCoder::learn(
 
                 float weight = laterals[wi];
 
-                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * ((ohc == inCI ? 255.0f : 0.0f) - weight))));
+                laterals[wi] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * ((ohc == inCI ? 255.0f : 0.0f) - 255.0f / hiddenSize.z))));
             }
         }
 
