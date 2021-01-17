@@ -124,7 +124,7 @@ void SparseCoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        float delta = (vl.reconstruction[visibleColumnIndex] - vl.means[wi]) / 127.0f;
+                        float delta = (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.means[wi])) / 127.0f;
 
                         vl.means[wi] = roundftoi(min(127.0f, max(-127.0f, vl.means[wi] + hiddenRates[hiddenCellIndex] * 127.0f * delta)));
                         vl.variances[wi] = roundftoi(min(255.0f, max(0.0f, vl.variances[wi] + hiddenRates[hiddenCellIndex] * (255.0f * delta * delta - vl.variances[wi]))));
@@ -168,7 +168,7 @@ void SparseCoder::reconstruct(
     
     // Find current max
     float sum = 0.0f;
-    float total = 0.0f;
+    int count = 0;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -188,14 +188,12 @@ void SparseCoder::reconstruct(
 
                 int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                float invVariance = 1.0f / (max<int>(1, vl.variances[wi]) / 255.0f);
-
-                sum += vl.means[wi] * invVariance;
-                total += invVariance;
+                sum += vl.means[wi];
+                count++;
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - roundftoi(sum / max(0.0001f, total))));
+    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - roundftoi(sum / max(1, count))));
 }
 
 void SparseCoder::initRandom(
