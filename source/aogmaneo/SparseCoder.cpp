@@ -290,7 +290,7 @@ int SparseCoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + 2 * vl.means.size() * sizeof(signed char);
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.means.size() * sizeof(signed char) + vl.variances.size() * sizeof(unsigned char);
     }
 
     return size;
