@@ -344,7 +344,6 @@ void Actor::writeState(
 
         writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
     }
-
 }
 
 void Actor::readState(
