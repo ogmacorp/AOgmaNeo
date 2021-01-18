@@ -43,9 +43,6 @@ void Actor::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            float subSum = 0.0f;
-            int subCount = 0;
-
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     if (ix == columnPos.x && iy == columnPos.y) // No self connections
@@ -57,13 +54,8 @@ void Actor::activate(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    subSum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
-                    subCount++;
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
-
-            subSum /= max(1, subCount);
-
-            sum += subSum;
         }
 
         if (sum > maxActivation || maxIndex == -1) {
