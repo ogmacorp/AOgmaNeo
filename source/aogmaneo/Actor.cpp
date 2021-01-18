@@ -242,7 +242,15 @@ int Actor::size() const {
 }
 
 int Actor::stateSize() const {
-    return hiddenCIs.size() * sizeof(int);
+    int size = hiddenCIs.size() * sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        size += vl.traces.size() * sizeof(float);
+    }
+
+    return size;
 }
 
 void Actor::write(
@@ -319,10 +327,23 @@ void Actor::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+    }
+
 }
 
 void Actor::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+    }
 }
