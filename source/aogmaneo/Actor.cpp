@@ -114,7 +114,7 @@ void Actor::learn(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float reward = tanh((*hiddenErrors)[hiddenColumnIndex]);
+    float reward = (*hiddenErrors)[hiddenColumnIndex];
 
     float delta = alpha * reward;
 
