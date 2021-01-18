@@ -43,7 +43,7 @@ public:
 
     Actor actor;
     Array<Predictor> predictors;
-    IntBuffer actorHiddenCsPrev;
+    IntBuffer actorHiddenCIsPrev;
     FloatBuffer actorHiddenErrors;
 
     // Create a randomly initialized hierarchy
@@ -55,16 +55,16 @@ public:
     );
 
     void step(
-        const Array<const IntBuffer*> &inputCs,
-        const Array<const IntBuffer*> &targetCs,
+        const Array<const IntBuffer*> &inputCIs,
+        const Array<const IntBuffer*> &targetCIs,
         int subSteps,
         bool learnEnabled,
         bool clearState
     );
 
     void step(
-        const Array<const IntBuffer*> &inputCs,
-        const Array<const IntBuffer*> &targetCs,
+        const Array<const IntBuffer*> &inputCIs,
+        const Array<const IntBuffer*> &targetCIs,
         Array<IntBuffer> &intermediates,
         bool learnEnabled,
         bool clearState
@@ -80,10 +80,10 @@ public:
     );
 
     // Retrieve predictions
-    const IntBuffer &getPredictionCs(
+    const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
-        return predictors[i].getHiddenCs();
+        return predictors[i].getHiddenCIs();
     }
 };
 } // namespace aon

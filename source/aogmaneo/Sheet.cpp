@@ -40,13 +40,13 @@ void Sheet::initRandom(
         predictors[i].initRandom(outputDescs[i].size, pVlds);
     }
 
-    actorHiddenCsPrev = IntBuffer(actorSize.x * actorSize.y, 0);
-    actorHiddenErrors = FloatBuffer(actorHiddenCsPrev.size(), 0.0f);
+    actorHiddenCIsPrev = IntBuffer(actorSize.x * actorSize.y, 0);
+    actorHiddenErrors = FloatBuffer(actorHiddenCIsPrev.size(), 0.0f);
 }
 
 void Sheet::step(
-    const Array<const IntBuffer*> &inputCs,
-    const Array<const IntBuffer*> &targetCs,
+    const Array<const IntBuffer*> &inputCIs,
+    const Array<const IntBuffer*> &targetCIs,
     int subSteps,
     bool learnEnabled,
     bool clearState
@@ -55,43 +55,43 @@ void Sheet::step(
         actorHiddenErrors.fill(0.0f);
 
         for (int i = 0; i < predictors.size(); i++) {
-            predictors[i].generateErrors(targetCs[i], &actorHiddenErrors, 0);
+            predictors[i].generateErrors(targetCIs[i], &actorHiddenErrors, 0);
 
-            predictors[i].learn(targetCs[i]);
+            predictors[i].learn(targetCIs[i]);
         }
 
         actor.learn(&actorHiddenErrors);
     }
 
-    Array<const IntBuffer*> actorInputCs(inputCs.size() + 1);
+    Array<const IntBuffer*> actorInputCIs(inputCIs.size() + 1);
 
-    for (int i = 0; i < inputCs.size(); i++)
-        actorInputCs[i] = inputCs[i];
+    for (int i = 0; i < inputCIs.size(); i++)
+        actorInputCIs[i] = inputCIs[i];
 
-    actorInputCs[inputCs.size()] = &actorHiddenCsPrev;
+    actorInputCIs[inputCIs.size()] = &actorHiddenCIsPrev;
 
     if (clearState) {
-        actorHiddenCsPrev.fill(0);
+        actorHiddenCIsPrev.fill(0);
         actor.clearTraces();
     }
 
     // Sub steps
     for (int ss = 0; ss < subSteps; ss++) {
-        actor.activate(actorInputCs);
+        actor.activate(actorInputCIs);
 
-        actorHiddenCsPrev = actor.getHiddenCs();
+        actorHiddenCIsPrev = actor.getHiddenCIs();
     }
     
-    Array<const IntBuffer*> predictorInputCs(1);
-    predictorInputCs[0] = &actor.getHiddenCs();
+    Array<const IntBuffer*> predictorInputCIs(1);
+    predictorInputCIs[0] = &actor.getHiddenCIs();
 
     for (int i = 0; i < predictors.size(); i++)
-        predictors[i].activate(predictorInputCs);
+        predictors[i].activate(predictorInputCIs);
 }
 
 void Sheet::step(
-    const Array<const IntBuffer*> &inputCs,
-    const Array<const IntBuffer*> &targetCs,
+    const Array<const IntBuffer*> &inputCIs,
+    const Array<const IntBuffer*> &targetCIs,
     Array<IntBuffer> &intermediates,
     bool learnEnabled,
     bool clearState
@@ -100,40 +100,40 @@ void Sheet::step(
         actorHiddenErrors.fill(0.0f);
 
         for (int i = 0; i < predictors.size(); i++) {
-            predictors[i].generateErrors(targetCs[i], &actorHiddenErrors, 0);
+            predictors[i].generateErrors(targetCIs[i], &actorHiddenErrors, 0);
 
-            predictors[i].learn(targetCs[i]);
+            predictors[i].learn(targetCIs[i]);
         }
 
         actor.learn(&actorHiddenErrors);
     }
 
-    Array<const IntBuffer*> actorInputCs(inputCs.size() + 1);
+    Array<const IntBuffer*> actorInputCIs(inputCIs.size() + 1);
 
-    for (int i = 0; i < inputCs.size(); i++)
-        actorInputCs[i] = inputCs[i];
+    for (int i = 0; i < inputCIs.size(); i++)
+        actorInputCIs[i] = inputCIs[i];
 
-    actorInputCs[inputCs.size()] = &actorHiddenCsPrev;
+    actorInputCIs[inputCIs.size()] = &actorHiddenCIsPrev;
 
     if (clearState) {
-        actorHiddenCsPrev.fill(0);
+        actorHiddenCIsPrev.fill(0);
         actor.clearTraces();
     }
 
     // Sub steps
     for (int ss = 0; ss < intermediates.size(); ss++) {
-        actor.activate(actorInputCs);
+        actor.activate(actorInputCIs);
 
-        actorHiddenCsPrev = actor.getHiddenCs();
+        actorHiddenCIsPrev = actor.getHiddenCIs();
 
-        intermediates[ss] = actor.getHiddenCs();
+        intermediates[ss] = actor.getHiddenCIs();
     }
     
-    Array<const IntBuffer*> predictorInputCs(1);
-    predictorInputCs[0] = &actor.getHiddenCs();
+    Array<const IntBuffer*> predictorInputCIs(1);
+    predictorInputCIs[0] = &actor.getHiddenCIs();
 
     for (int i = 0; i < predictors.size(); i++)
-        predictors[i].activate(predictorInputCs);
+        predictors[i].activate(predictorInputCIs);
 }
 
 void Sheet::write(
@@ -148,7 +148,7 @@ void Sheet::write(
     for (int i = 0; i < predictors.size(); i++)
         predictors[i].write(writer);
 
-    writer.write(reinterpret_cast<const void*>(&actorHiddenCsPrev[0]), actorHiddenCsPrev.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&actorHiddenCIsPrev[0]), actorHiddenCIsPrev.size() * sizeof(int));
 }
 
 void Sheet::read(
@@ -165,8 +165,8 @@ void Sheet::read(
     for (int i = 0; i < predictors.size(); i++)
         predictors[i].read(reader);
 
-    actorHiddenCsPrev.resize(actor.getHiddenCs().size());
-    actorHiddenErrors = FloatBuffer(actor.getHiddenCs().size(), 0.0f);
+    actorHiddenCIsPrev.resize(actor.getHiddenCIs().size());
+    actorHiddenErrors = FloatBuffer(actor.getHiddenCIs().size(), 0.0f);
 
-    reader.read(reinterpret_cast<void*>(&actorHiddenCsPrev[0]), actorHiddenCsPrev.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&actorHiddenCIsPrev[0]), actorHiddenCIsPrev.size() * sizeof(int));
 }
