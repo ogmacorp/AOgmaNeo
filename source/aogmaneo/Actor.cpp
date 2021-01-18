@@ -199,7 +199,7 @@ void Actor::initRandom(
 
         if (vld.recurrent) {
             for (int i = 0; i < vl.weights.size(); i++) {
-                vl.weights[i] = randf(-0.001f, 0.001f);
+                vl.weights[i] = randf(-1.0f, 1.0f);
                 vl.traces[i] = 0.0f;
             }
         }
