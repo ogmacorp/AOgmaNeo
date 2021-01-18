@@ -65,8 +65,8 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.01f),
-    traceDecay(0.98f)
+    alpha(0.1f),
+    traceDecay(0.9f)
     {}
 
     // Initialized randomly
