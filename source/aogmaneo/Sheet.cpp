@@ -136,6 +136,28 @@ void Sheet::step(
         predictors[i].activate(predictorInputCIs);
 }
 
+int Sheet::size() const {
+    int size = sizeof(int) + actor.size();
+
+    for (int i = 0; i < predictors.size(); i++)
+        size += predictors[i].size();
+
+    size += actorHiddenCIsPrev.size() * sizeof(int);
+
+    return size;
+}
+
+int Sheet::stateSize() const {
+    int size = actor.stateSize();
+
+    for (int i = 0; i < predictors.size(); i++)
+        size += predictors[i].stateSize();
+
+    size += actorHiddenCIsPrev.size() * sizeof(int);
+
+    return size;
+}
+
 void Sheet::write(
     StreamWriter &writer
 ) const {
@@ -167,6 +189,28 @@ void Sheet::read(
 
     actorHiddenCIsPrev.resize(actor.getHiddenCIs().size());
     actorHiddenErrors = FloatBuffer(actor.getHiddenCIs().size(), 0.0f);
+
+    reader.read(reinterpret_cast<void*>(&actorHiddenCIsPrev[0]), actorHiddenCIsPrev.size() * sizeof(int));
+}
+
+void Sheet::writeState(
+    StreamWriter &writer
+) const {
+    actor.writeState(writer);
+
+    for (int i = 0; i < predictors.size(); i++)
+        predictors[i].writeState(writer);
+
+    writer.write(reinterpret_cast<const void*>(&actorHiddenCIsPrev[0]), actorHiddenCIsPrev.size() * sizeof(int));
+}
+
+void Sheet::readState(
+    StreamReader &reader
+) {
+    actor.readState(reader);
+
+    for (int i = 0; i < predictors.size(); i++)
+        predictors[i].readState(reader);
 
     reader.read(reinterpret_cast<void*>(&actorHiddenCIsPrev[0]), actorHiddenCIsPrev.size() * sizeof(int));
 }
