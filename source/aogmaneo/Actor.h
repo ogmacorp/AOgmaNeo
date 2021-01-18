@@ -20,43 +20,27 @@ public:
 
         int radius; // Radius onto input
 
+        unsigned char recurrent;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        recurrent(false)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
-    };
-
-    // History sample for delayed updates
-    struct HistorySample {
-        Array<IntBuffer> inputCIs;
-        IntBuffer hiddenTargetCIsPrev;
-
-        FloatBuffer hiddenValuesPrev;
-        
-        float reward;
+        FloatBuffer weights; // Weights
+        FloatBuffer traces; // Eligibility traces
     };
 
 private:
     Int3 hiddenSize; // Hidden/output/action size
 
-    // Current history size - fixed after initialization. Determines length of wait before updating
-    int historySize;
-
-    FloatBuffer hiddenActivations; // Temporary buffer
-
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenValues; // Hidden value function output buffer
-
-    CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -64,72 +48,49 @@ private:
 
     // --- Kernels ---
 
-    void forward(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        unsigned int* state
+    void activate(
+        const Int2 &pos,
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIsPrev,
-        const IntBuffer* hiddenTargetCIsPrev,
-        const FloatBuffer* hiddenValuesPrev,
-        float q,
-        float g,
-        bool mimic
+        const Int2 &pos,
+        const FloatBuffer* hiddenErrors
     );
 
 public:
-    float alpha; // Value learning rate
-    float beta; // Action learning rate
-    float gamma; // Discount factor
-    int minSteps;
-    int historyIters;
+    float alpha;
+    float traceDecay;
 
     // Defaults
     Actor()
     :
-    alpha(0.01f),
-    beta(0.01f),
-    gamma(0.99f),
-    minSteps(4),
-    historyIters(8)
+    alpha(0.001f),
+    traceDecay(0.98f)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
-        int historyCapacity,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
-    // Step (get actions and update)
-    void step(
-        const Array<const IntBuffer*> &inputCIs,
-        const IntBuffer* hiddenTargetCIsPrev,
-        float reward,
-        bool learnEnabled,
-        bool mimic
+    void activate(
+        const Array<const IntBuffer*> &inputCIs
     );
 
-    // Serialization
-    int size() const; // Returns size in bytes
-    int stateSize() const; // Returns size of state in bytes
+    void learn(
+        const FloatBuffer* hiddenErrors
+    );
 
+    void clearTraces();
+
+    // Serialization
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
-        StreamReader &reader
-    );
-
-    void writeState(
-        StreamWriter &writer
-    ) const;
-
-    void readState(
         StreamReader &reader
     );
 
@@ -160,14 +121,6 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
-    }
-
-    int getHistoryCapacity() const {
-        return historySamples.size();
-    }
-
-    int getHistorySize() const {
-        return historySize;
     }
 };
 } // namespace aon

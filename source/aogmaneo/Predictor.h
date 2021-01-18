@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        IntBuffer inputCsPrev; // Previous timestep (prev) input states
+        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
 private:
@@ -40,7 +40,7 @@ private:
 
     FloatBuffer hiddenActivations;
 
-    IntBuffer hiddenCs; // Hidden state
+    IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -48,22 +48,22 @@ private:
 
     // --- Kernels ---
 
-    void activate(
-        const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs
+    void forward(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
-        const Int2 &pos,
-        const IntBuffer* hiddenTargetCs
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs
     );
 
     void generateErrors(
-        const Int2 &pos,
-        const IntBuffer* hiddenTargetCs,
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
         int vli
-    );
+    ); 
 
 public:
     float alpha; // Learning rate
@@ -82,27 +82,37 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCs
+        const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
     );
 
     // Learning predictions (update weights)
     void learn(
-        const IntBuffer* hiddenTargetCs
+        const IntBuffer* hiddenTargetCIs
     );
 
-    // Generate rewards from errors
     void generateErrors(
-        const IntBuffer* hiddenTargetCs,
+        const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
         int vli
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
@@ -126,8 +136,8 @@ public:
     }
 
     // Get the hidden activations (predictions)
-    const IntBuffer &getHiddenCs() const {
-        return hiddenCs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size
