@@ -20,27 +20,43 @@ public:
 
         int radius; // Radius onto input
 
-        unsigned char recurrent;
-
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2),
-        recurrent(false)
+        radius(2)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights; // Weights
-        FloatBuffer traces; // Eligibility traces
+        FloatBuffer valueWeights; // Value function weights
+        FloatBuffer actionWeights; // Action function weights
+    };
+
+    // History sample for delayed updates
+    struct HistorySample {
+        Array<IntBuffer> inputCIs;
+        IntBuffer hiddenTargetCIsPrev;
+
+        FloatBuffer hiddenValuesPrev;
+        
+        float reward;
     };
 
 private:
     Int3 hiddenSize; // Hidden/output/action size
 
-    IntBuffer hiddenCs; // Hidden states
+    // Current history size - fixed after initialization. Determines length of wait before updating
+    int historySize;
+
+    FloatBuffer hiddenActivations; // Temporary buffer
+
+    IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenValues; // Hidden value function output buffer
+
+    CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -48,49 +64,72 @@ private:
 
     // --- Kernels ---
 
-    void activate(
-        const Int2 &pos,
-        const Array<const IntBuffer*> &inputCs
+    void forward(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
-        const Int2 &pos,
-        const FloatBuffer* hiddenErrors
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIsPrev,
+        const IntBuffer* hiddenTargetCIsPrev,
+        const FloatBuffer* hiddenValuesPrev,
+        float q,
+        float g,
+        bool mimic
     );
 
 public:
-    float alpha;
-    float traceDecay;
+    float alpha; // Value learning rate
+    float beta; // Action learning rate
+    float gamma; // Discount factor
+    int minSteps;
+    int historyIters;
 
     // Defaults
     Actor()
     :
-    alpha(0.001f),
-    traceDecay(0.98f)
+    alpha(0.01f),
+    beta(0.01f),
+    gamma(0.99f),
+    minSteps(4),
+    historyIters(8)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
+        int historyCapacity,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
-    void activate(
-        const Array<const IntBuffer*> &inputCs
+    // Step (get actions and update)
+    void step(
+        const Array<const IntBuffer*> &inputCIs,
+        const IntBuffer* hiddenTargetCIsPrev,
+        float reward,
+        bool learnEnabled,
+        bool mimic
     );
-
-    void learn(
-        const FloatBuffer* hiddenErrors
-    );
-
-    void clearTraces();
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
@@ -114,13 +153,21 @@ public:
     }
 
     // Get hidden state/output/actions
-    const IntBuffer &getHiddenCs() const {
-        return hiddenCs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
+    }
+
+    int getHistoryCapacity() const {
+        return historySamples.size();
+    }
+
+    int getHistorySize() const {
+        return historySize;
     }
 };
 } // namespace aon
