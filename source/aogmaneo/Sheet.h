@@ -53,8 +53,7 @@ public:
 
         OutputDesc(
             const Int3 &size,
-            int radius,
-            bool recurrent
+            int radius
         )
         :
         size(size),
