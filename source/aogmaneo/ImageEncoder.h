@@ -30,30 +30,17 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights; // Byte weight matrix
+        ByteBuffer protos;
 
-        FloatBuffer reconstruction;
+        ByteBuffer reconstruction;
     };
 
 private:
-    struct FloatInt {
-        float a;
-        int i;
-
-        bool operator<(
-            const FloatInt &other
-        ) const {
-            return a < other.a;
-        }
-    };
-
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<FloatInt> hiddenActivations;
+    IntBuffer hiddenCIs; // Hidden states
 
-    IntBuffer hiddenCs; // Hidden states
-
-    FloatBuffer hiddenResources; // Resources
+    FloatBuffer hiddenRates; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -62,26 +49,24 @@ private:
     // --- Kernels ---
     
     void forward(
-        const Int2 &pos,
-        const Array<const FloatBuffer*> &inputCs,
+        const Int2 &columnPos,
+        const Array<const ByteBuffer*> &inputCIs,
         bool learnEnabled
     );
 
     void reconstruct(
-        const Int2 &pos,
-        const IntBuffer* reconCs,
+        const Int2 &columnPos,
+        const IntBuffer* reconCIs,
         int vli
     );
 
 public:
     float alpha;
-    float gamma;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.02f),
-    gamma(1.0f)
+    alpha(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -92,21 +77,23 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const FloatBuffer*> &inputs, // Input states
+        const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
     void reconstruct(
-        const IntBuffer* reconCs
+        const IntBuffer* reconCIs
     );
 
-    const FloatBuffer &getReconstruction(
+    const ByteBuffer &getReconstruction(
         int i
     ) const {
         return visibleLayers[i].reconstruction;
     }
 
     // Serialization
+    int size() const; // Returns size in bytes
+
     void write(
         StreamWriter &writer
     ) const;
@@ -135,8 +122,8 @@ public:
     }
 
     // Get the hidden states
-    const IntBuffer &getHiddenCs() const {
-        return hiddenCs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size

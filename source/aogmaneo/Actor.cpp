@@ -175,7 +175,7 @@ void Actor::initRandom(
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHidden = numHiddenColumns * hiddenSize.z;
+    int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -188,7 +188,7 @@ void Actor::initRandom(
         int area = diam * diam;
 
         // If last one (recurrent), init conservatively
-        vl.weights.resize(numHidden * area * vld.size.z);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
         vl.traces.resize(vl.weights.size());
 
         if (vld.recurrent) {
@@ -268,7 +268,6 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHidden = numHiddenColumns * hiddenSize.z;
     
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
