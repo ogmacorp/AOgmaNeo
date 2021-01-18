@@ -98,8 +98,8 @@ void Actor::activate(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inCI && hc == maxIndex)
-                            vl.traces[wi] = 1.0f; 
+                        if (vc == inCI)
+                            vl.traces[wi] = (hc == maxIndex ? 1.0f : 0.0f); 
                         else
                             vl.traces[wi] *= traceDecay;
                     }
