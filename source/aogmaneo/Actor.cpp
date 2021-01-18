@@ -22,7 +22,7 @@ void Actor::activate(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
-        float m = -999999.0f;
+        float sum = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -43,9 +43,6 @@ void Actor::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            float sum = 0.0f;
-            int count = 0;
-
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
@@ -55,16 +52,11 @@ void Actor::activate(
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                     sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
-                    count++;
                 }
-
-            sum /= max(1, count);
-
-            m = max(m, sum);
         }
 
-        if (m > maxActivation || maxIndex == -1) {
-            maxActivation = m;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
