@@ -45,7 +45,7 @@ void Actor::activate(
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    if (ix == columnPos.x && iy == columnPos.y) // No self connections
+                    if (vld.recurrent && ix == columnPos.x && iy == columnPos.y) // No self connections
                         continue;
 
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
