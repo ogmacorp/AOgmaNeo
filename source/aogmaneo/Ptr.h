@@ -51,12 +51,12 @@ public:
     }
 
     Ptr &operator=(
-        typeof(nullptr)
+        T* other
     ) {
         if (p != nullptr)
             delete p;
 
-        p = nullptr;
+        p = other;
 
         return *this;
     }
@@ -109,15 +109,15 @@ public:
     }
 
     bool operator==(
-        typeof(nullptr)
+        T* other
     ) const {
-        return p == nullptr;
+        return p == other;
     }
 
     bool operator!=(
-        typeof(nullptr)
+        T* other
     ) const {
-        return p != nullptr;
+        return p != other;
     }
 };
 } // namespace aon

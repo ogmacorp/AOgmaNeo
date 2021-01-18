@@ -143,6 +143,7 @@ typedef Vec2<float> Float2;
 typedef Vec3<float> Float3;
 typedef Vec4<float> Float4;
 
+typedef Array<unsigned char> ByteBuffer;
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
 
@@ -327,34 +328,40 @@ inline float sigmoid(
     return 1.0f / (1.0f + expf(-x));
 }
 
+inline float tanh(
+    float x
+) {
+    if (x < 0.0f) {
+        float z = expf(2.0f * x);
+
+        return (z - 1.0f) / (z + 1.0f);
+    }
+
+    float z = expf(-2.0f * x);
+
+    return -(z - 1.0f) / (z + 1.0f);
+}
+
 // --- RNG ---
 
 // From http://cas.ee.ic.ac.uk/people/dt10/research/rngs-gpu-mwc64x.html
 
-extern unsigned long globalState;
+extern unsigned int globalState;
 
-inline unsigned int MWC64X(
-    unsigned long* state
-) {
-    unsigned int c = (*state) >> 32, x = (*state) & 0xffffffff;
-
-    *state = x * ((unsigned long)4294883355u) + c;
-
-    return x ^ c;
-}
+const unsigned int randMax = 0x00003fff;
 
 unsigned int rand(
-    unsigned long* state = &globalState
+    unsigned int* state = &globalState
 );
 
 float randf(
-    unsigned long* state = &globalState
+    unsigned int* state = &globalState
 );
 
 float randf(
     float low,
     float high,
-    unsigned long* state = &globalState
+    unsigned int* state = &globalState
 );
 
 // --- Sorting ---
