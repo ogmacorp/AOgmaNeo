@@ -49,12 +49,12 @@ private:
     // --- Kernels ---
 
     void activate(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
-        const Int2 &pos,
+        const Int2 &columnPos,
         const FloatBuffer* hiddenErrors
     );
 
