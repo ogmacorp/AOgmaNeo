@@ -27,6 +27,17 @@ public:
         radius(2),
         recurrent(false)
         {}
+
+        InputDesc(
+            const Int3 &size,
+            int radius,
+            bool recurrent
+        )
+        :
+        size(size),
+        radius(radius),
+        recurrent(recurrent)
+        {}
     };
 
     struct OutputDesc {
@@ -38,6 +49,16 @@ public:
         :
         size(4, 4, 16),
         radius(2)
+        {}
+
+        OutputDesc(
+            const Int3 &size,
+            int radius,
+            bool recurrent
+        )
+        :
+        size(size),
+        radius(radius)
         {}
     };
 
