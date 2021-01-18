@@ -23,7 +23,6 @@ void Actor::activate(
         int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         float sum = 0.0f;
-        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -54,11 +53,7 @@ void Actor::activate(
 
                     sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
                 }
-
-            count += (iterUpperBound.x -  iterLowerBound.x) * (iterUpperBound.y - iterLowerBound.y);
         }
-
-        sum /= max(1, count);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -119,7 +114,7 @@ void Actor::learn(
 ) {
     int hiddenColumnIndex = address2(pos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float reward = (*hiddenErrors)[hiddenColumnIndex];
+    float reward = tanh((*hiddenErrors)[hiddenColumnIndex]);
 
     float delta = alpha * reward;
 
