@@ -20,7 +20,7 @@ void Actor::activate(
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+        int hiddenCellIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         float sum = 0.0f;
 
@@ -51,7 +51,7 @@ void Actor::activate(
 
                     int inC = (*inputCIs[vli])[visibleColumnIndex];
 
-                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex))];
+                    sum += vl.weights[inC + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
 
@@ -64,7 +64,7 @@ void Actor::activate(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+        int hiddenCellIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -91,7 +91,7 @@ void Actor::activate(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     int inC = (*inputCIs[vli])[visibleColumnIndex];
 
@@ -119,7 +119,7 @@ void Actor::learn(
     float delta = alpha * reward;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
+        int hiddenCellIndex = address3(Int3(pos.x, pos.y, hc), hiddenSize);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -146,7 +146,7 @@ void Actor::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenIndex));
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
