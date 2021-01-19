@@ -30,8 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        Array<signed char> means;
-        ByteBuffer scales;
+        Array<signed char> protos;
 
         Array<signed char> reconstruction;
     };
@@ -66,8 +65,7 @@ private:
     void reconstruct(
         const Int2 &columnPos,
         int vli,
-        int priority,
-        bool learnEnabled
+        int priority
     );
 
 public:
