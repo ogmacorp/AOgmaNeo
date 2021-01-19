@@ -75,7 +75,7 @@ void SparseCoder::forward(
 
                     float scale = vl.scales[wi] / 255.0f;
 
-                    sum -= scale * abs(delta);
+                    sum -= abs(delta);
                 }
         }
 
