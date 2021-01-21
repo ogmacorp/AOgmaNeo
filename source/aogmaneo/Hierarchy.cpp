@@ -349,8 +349,8 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&inputSizes[0]), numInputs * sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
-    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(unsigned char));
 
     for (int l = 0; l < numLayers; l++) {
         int numLayerInputs = histories[l].size();
@@ -424,8 +424,8 @@ void Hierarchy::read(
     ticksPerUpdate.resize(numLayers);
 
     reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
-    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(unsigned char));
     
     for (int l = 0; l < numLayers; l++) {
         int numLayerInputs;
