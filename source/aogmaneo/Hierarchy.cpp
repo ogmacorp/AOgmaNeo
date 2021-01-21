@@ -353,9 +353,9 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
     for (int l = 0; l < numLayers; l++) {
-        int numInputs = histories[l].size();
+        int numLayerInputs = histories[l].size();
 
-        writer.write(reinterpret_cast<const void*>(&numInputs), sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&numLayerInputs), sizeof(int));
 
         for (int i = 0; i < histories[l].size(); i++) {
             int historySize = histories[l][i].size();
@@ -428,11 +428,11 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
     
     for (int l = 0; l < numLayers; l++) {
-        int numInputs;
+        int numLayerInputs;
         
-        reader.read(reinterpret_cast<void*>(&numInputs), sizeof(int));
+        reader.read(reinterpret_cast<void*>(&numLayerInputs), sizeof(int));
 
-        histories[l].resize(numInputs);
+        histories[l].resize(numLayerInputs);
 
         for (int i = 0; i < histories[l].size(); i++) {
             int historySize;
