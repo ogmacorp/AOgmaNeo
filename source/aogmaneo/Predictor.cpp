@@ -234,7 +234,7 @@ void Predictor::learn(
 }
 
 int Predictor::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(float) + hiddenCIs.size() * sizeof(unsigned char) + hiddenActivations.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(unsigned char) + hiddenActivations.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
