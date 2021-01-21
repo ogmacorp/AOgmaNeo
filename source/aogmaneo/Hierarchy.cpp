@@ -283,7 +283,7 @@ int Hierarchy::size() const {
             size += 2 * sizeof(int);
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
+                size += sizeof(int) + histories[l][i][t].size() * sizeof(unsigned char);
         }
 
         size += scLayers[l].size();
@@ -314,7 +314,7 @@ int Hierarchy::stateSize() const {
             size += sizeof(int);
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                size += histories[l][i][t].size() * sizeof(int);
+                size += histories[l][i][t].size() * sizeof(unsigned char);
         }
 
         size += scLayers[l].stateSize();
