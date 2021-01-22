@@ -73,7 +73,12 @@ void SparseCoder::forward(
 
                     float delta = (inValue - static_cast<int>(vl.protos[wi])) / 127.0f;
 
-                    sum -= abs(delta);
+                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+
+                    float strength = min(1.0f - distX, 1.0f - distY);
+
+                    sum -= strength * abs(delta);
                 }
         }
 
@@ -165,7 +170,7 @@ void SparseCoder::reconstruct(
     
     // Find current max
     float sum = 0.0f;
-    int count = 0;
+    float total = 0.0f;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -185,12 +190,17 @@ void SparseCoder::reconstruct(
 
                 int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                sum += vl.protos[wi];
-                count++;
+                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+
+                float strength = min(1.0f - distX, 1.0f - distY);
+
+                sum += strength * vl.protos[wi];
+                total += strength;
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - roundftoi(sum / max(1, count))));
+    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - roundftoi(sum / max(0.0001f, total))));
 }
 
 void SparseCoder::initRandom(
