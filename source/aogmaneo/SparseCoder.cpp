@@ -34,12 +34,12 @@ void SparseCoder::forward(
         return;
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        int sum = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -71,14 +71,9 @@ void SparseCoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    float delta = (inValue - static_cast<int>(vl.protos[wi])) / 127.0f;
+                    int delta = inValue - static_cast<int>(vl.protos[wi]);
 
-                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                    float strength = min(1.0f - distX, 1.0f - distY);
-
-                    sum -= strength * abs(delta);
+                    sum -= abs(delta);
                 }
         }
 

@@ -18,12 +18,12 @@ void ImageEncoder::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = -1;
-    float maxActivation = -9999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        int sum = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -53,19 +53,12 @@ void ImageEncoder::forward(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                    float strength = min(1.0f - distX, 1.0f - distY);
-
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                        int weight = vl.protos[wiStart + vc];
+                        int delta = input - static_cast<int>(vl.protos[vc + wiStart]);
 
-                        int delta = input - weight;
-
-                        sum -= strength * abs(delta);
+                        sum -= abs(delta);
                     }
                 }
         }
