@@ -111,7 +111,7 @@ void ImageEncoder::forward(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                            unsigned char weight = vl.protos[wiStart + vc];
+                            unsigned char weight = vl.protos[vc + wiStart];
 
                             vl.protos[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * (static_cast<float>(input) - static_cast<float>(weight)))));
                         }
