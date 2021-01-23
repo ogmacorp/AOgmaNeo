@@ -17,12 +17,12 @@ void SparseCoder::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        int sum = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -129,7 +129,7 @@ void SparseCoder::learn(
                 }
             }
 
-        sum /= max(1, count);
+        sum = sum / max(1, count) / 127.0f;
 
         vl.reconstruction[visibleCellIndex] = sum;
 
@@ -140,10 +140,20 @@ void SparseCoder::learn(
     }
 
     if (maxIndex != targetCI) {
+        float total = 0.0f;
+
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            float delta = alpha * ((vc == targetCI ? 1.0f : 0.0f) - sigmoid(vl.reconstruction[visibleCellIndex]));
+            vl.reconstruction[visibleCellIndex] = expf(temperature * (vl.reconstruction[visibleCellIndex] - maxActivation));
+
+            total += vl.reconstruction[visibleCellIndex];
+        }
+
+        for (int vc = 0; vc < vld.size.z; vc++) {
+            int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
+
+            int delta = roundftoi(alpha * 127.0f * ((vc == targetCI ? 1.0f : 0.0f) - vl.reconstruction[visibleCellIndex] / max(0.0001f, total)));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -158,7 +168,14 @@ void SparseCoder::learn(
                     if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                         Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                        vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
+                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        int weight = vl.weights[wi];
+                        
+                        if (delta > 0)
+                            vl.weights[wi] = min<int>(127 - delta, weight) + delta;
+                        else
+                            vl.weights[wi] = max<int>(-127 - delta, weight) + delta;
                     }
                 }
         }
@@ -194,7 +211,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = rand() % 8 - 4;
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
@@ -233,7 +250,7 @@ int SparseCoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(signed char);
     }
 
     return size;
@@ -266,7 +283,7 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(signed char));
     }
 }
 
@@ -306,7 +323,7 @@ void SparseCoder::read(
 
         vl.weights.resize(weightsSize);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(signed char));
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
