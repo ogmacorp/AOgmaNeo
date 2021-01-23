@@ -141,6 +141,8 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
+            int delta = roundftoi(alpha * 127.0f * ((vc == targetCI ? 1.0f : 0.0f) - sigmoid(vl.reconstruction[visibleCellIndex] * temperature)));
+
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     Int2 hiddenPos = Int2(ix, iy);
@@ -156,10 +158,8 @@ void SparseCoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        float weight = min(1.0f, max(-1.0f, vl.weights[wi] / 127.0f * temperature));
+                        int weight = vl.weights[wi];
 
-                        int delta = roundftoi(alpha * 127.0f * ((vc == targetCI ? 1.0f : -1.0f) - weight));
-                        
                         if (delta > 0)
                             vl.weights[wi] = min<int>(127 - delta, weight) + delta;
                         else
