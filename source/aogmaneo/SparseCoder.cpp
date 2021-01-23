@@ -156,9 +156,9 @@ void SparseCoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        int weight = vl.weights[wi];
+                        float weight = min(1.0f, max(-1.0f, vl.weights[wi] / 127.0f * temperature));
 
-                        int delta = roundftoi(alpha * ((vc == targetCI ? 127.0f : -127.0f) - weight));
+                        int delta = roundftoi(alpha * 127.0f * ((vc == targetCI ? 1.0f : -1.0f) - weight));
                         
                         if (delta > 0)
                             vl.weights[wi] = min<int>(127 - delta, weight) + delta;

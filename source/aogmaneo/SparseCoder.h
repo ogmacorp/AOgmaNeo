@@ -59,11 +59,13 @@ private:
 
 public:
     float alpha; // Learning rate
+    float temperature;
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f)
+    alpha(0.1f),
+    temperature(8.0f)
     {}
 
     // Create a sparse coding layer with random initialization
