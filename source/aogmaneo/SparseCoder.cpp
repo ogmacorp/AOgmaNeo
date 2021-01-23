@@ -109,7 +109,7 @@ void SparseCoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-        float sum = 0.0f;
+        int sum = 0;
         int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -129,12 +129,10 @@ void SparseCoder::learn(
                 }
             }
 
-        sum = sum / max(1, count) / 127.0f;
+        vl.reconstruction[visibleCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
 
-        vl.reconstruction[visibleCellIndex] = sum;
-
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
+        if (vl.reconstruction[visibleCellIndex] > maxActivation || maxIndex == -1) {
+            maxActivation = vl.reconstruction[visibleCellIndex];
             maxIndex = vc;
         }
     }
