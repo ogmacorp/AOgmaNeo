@@ -54,7 +54,7 @@ private:
     );
 
 public:
-    float alpha; // Update tolerance
+    float alpha;
 
     // Defaults
     SparseCoder()
