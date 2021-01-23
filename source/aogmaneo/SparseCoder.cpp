@@ -19,7 +19,13 @@ void SparseCoder::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     if (learnEnabled) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+            hiddenBiases[hiddenCellIndex] += beta * (1.0f / hiddenSize.z - (hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f));
+        }
+
+        int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
         int delta = roundftoi(alpha * 127.0f * (*hiddenErrors)[hiddenColumnIndex]);
 
@@ -50,7 +56,7 @@ void SparseCoder::forward(
 
                     int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                     if (delta > 0)
                         vl.weights[wi] = min<int>(127 - delta, vl.weights[wi] + delta);
@@ -61,12 +67,13 @@ void SparseCoder::forward(
     }
 
     int maxIndex = -1;
-    int maxActivation = -999999;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         int sum = 0;
+        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -96,11 +103,14 @@ void SparseCoder::forward(
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                     sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    count++;
                 }
         }
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
+        float activation = hiddenBiases[hiddenCellIndex] + static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
+
+        if (activation > maxActivation || maxIndex == -1) {
+            maxActivation = activation;
             maxIndex = hc;
         }
     }
@@ -144,6 +154,8 @@ void SparseCoder::initRandom(
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+
+    hiddenBiases = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void SparseCoder::step(
@@ -166,7 +178,7 @@ void SparseCoder::step(
 }
 
 int SparseCoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenBiases.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -198,6 +210,7 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -230,8 +243,10 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
+    hiddenBiases.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
