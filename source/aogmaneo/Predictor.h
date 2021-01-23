@@ -66,7 +66,7 @@ public:
     Predictor()
     :
     alpha(0.1f),
-    gamma(16.0f)
+    gamma(8.0f)
     {}
 
     // Create with random initialization
