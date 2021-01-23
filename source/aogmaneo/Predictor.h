@@ -67,13 +67,13 @@ private:
 
 public:
     float alpha; // Learning rate
-    float targetRange;
+    float temperature; // Range of target outputs, must be in [0, 0.5]
 
     // Defaults
     Predictor()
     :
-    alpha(0.2f),
-    targetRange(0.2f)
+    alpha(0.1f),
+    temperature(8.0f)
     {}
 
     // Create with random initialization
