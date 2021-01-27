@@ -38,9 +38,8 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenBiases;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -52,18 +51,19 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        bool learnEnabled,
+        unsigned int* state
     );
 
 public:
     float alpha;
-    float beta;
+    float temperature;
 
     // Defaults
     SparseCoder()
     :
     alpha(0.1f),
-    beta(0.001f)
+    temperature(8.0f)
     {}
 
     // Create a sparse coding layer with random initialization
