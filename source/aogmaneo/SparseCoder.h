@@ -64,7 +64,7 @@ public:
     SparseCoder()
     :
     alpha(0.1f),
-    beta(0.001f),
+    beta(0.01f),
     temperature(8.0f)
     {}
 
