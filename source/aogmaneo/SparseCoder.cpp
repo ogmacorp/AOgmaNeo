@@ -14,8 +14,7 @@ void SparseCoder::forward(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs,
     const FloatBuffer* hiddenErrors,
-    bool learnEnabled,
-    unsigned int* state
+    bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -63,6 +62,7 @@ void SparseCoder::forward(
         }
     }
 
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -105,7 +105,10 @@ void SparseCoder::forward(
 
         hiddenActivations[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
 
-        maxActivation = max(maxActivation, hiddenActivations[hiddenCellIndex]);
+        if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
+            maxActivation = hiddenActivations[hiddenCellIndex];
+            maxIndex = hc;
+        }
     }
 
     float total = 0.0f;
@@ -126,24 +129,7 @@ void SparseCoder::forward(
         hiddenActivations[hiddenCellIndex] *= scale;
     }
 
-    float cusp = randf(state);
-
-    int selectIndex = 0;
-    float sumSoFar = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        sumSoFar += hiddenActivations[hiddenCellIndex];
-
-        if (sumSoFar >= cusp) {
-            selectIndex = hc;
-
-            break;
-        }
-    }
-
-    hiddenCIs[hiddenColumnIndex] = selectIndex;
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
 void SparseCoder::initRandom(
@@ -192,14 +178,9 @@ void SparseCoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
-    unsigned int baseState = rand();
-
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned int state = baseState + i * 12345;
-
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenErrors, learnEnabled, &state);
-    }
+    for (int i = 0; i < numHiddenColumns; i++)
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenErrors, learnEnabled);
 
     // Update prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {

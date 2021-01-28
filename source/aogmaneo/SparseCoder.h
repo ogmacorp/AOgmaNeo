@@ -51,8 +51,7 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         const FloatBuffer* hiddenErrors,
-        bool learnEnabled,
-        unsigned int* state
+        bool learnEnabled
     );
 
 public:
