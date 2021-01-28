@@ -141,7 +141,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            int delta = roundftoi(alpha * 127.0f * ((vc == targetCI ? 1.0f : 0.0f) - sigmoid(vl.reconstruction[visibleCellIndex] * temperature)));
+            int delta = roundftoi(alpha * 127.0f * ((vc == targetCI ? 1.0f : 0.0f) - sigmoid(temperature * vl.reconstruction[visibleCellIndex])));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {

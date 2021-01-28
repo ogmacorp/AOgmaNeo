@@ -58,7 +58,7 @@ void ImageEncoder::forward(
 
                         int delta = input - static_cast<int>(vl.protos[vc + wiStart]);
 
-                        sum -= abs(delta);
+                        sum -= delta * delta;
                     }
                 }
         }
@@ -223,7 +223,7 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void ImageEncoder::step(
