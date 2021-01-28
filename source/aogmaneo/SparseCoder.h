@@ -39,7 +39,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenActivations;
-    IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -61,7 +61,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f),
+    alpha(0.05f),
     temperature(8.0f)
     {}
 
