@@ -455,7 +455,7 @@ int Actor::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * sizeof(int) + vl.valueWeights.size() * sizeof(float) + vl.actionWeights.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * sizeof(int) + vl.valueWeights.size() * sizeof(float) + vl.actionWeights.size() * sizeof(signed char);
     }
 
     size += 3 * sizeof(int);
@@ -522,7 +522,7 @@ void Actor::write(
         writer.write(reinterpret_cast<const void*>(&actionWeightsSize), sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(signed char));
     }
 
     writer.write(reinterpret_cast<const void*>(&historySize), sizeof(int));
@@ -593,7 +593,7 @@ void Actor::read(
         vl.actionWeights.resize(actionWeightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(signed char));
     }
 
     reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
