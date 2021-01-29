@@ -95,7 +95,7 @@ void Predictor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        hiddenActivations[hiddenCellIndex] = expf(gamma * (hiddenActivations[hiddenCellIndex] - maxActivation));
+        hiddenActivations[hiddenCellIndex] = expf(temperature * (hiddenActivations[hiddenCellIndex] - maxActivation));
 
         total += hiddenActivations[hiddenCellIndex];
     }
@@ -234,25 +234,25 @@ void Predictor::learn(
 }
 
 int Predictor::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(unsigned char) + hiddenActivations.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(signed char) + vl.inputCIsPrev.size() * sizeof(unsigned char);
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(signed char) + vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
 }
 
 int Predictor::stateSize() const {
-    int size = hiddenCIs.size() * sizeof(unsigned char) + hiddenActivations.size() * sizeof(float);
+    int size = hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += vl.inputCIsPrev.size() * sizeof(unsigned char);
+        size += vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
@@ -264,9 +264,9 @@ void Predictor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
@@ -285,7 +285,7 @@ void Predictor::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(signed char));
 
-        writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
 }
 
@@ -298,12 +298,12 @@ void Predictor::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenActivations.resize(numHiddenCells);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
@@ -331,32 +331,32 @@ void Predictor::read(
 
         vl.inputCIsPrev.resize(numVisibleColumns);
 
-        reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
 }
 
 void Predictor::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
 }
 
 void Predictor::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
-        reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
 }
