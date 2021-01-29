@@ -22,7 +22,7 @@ void SparseCoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-            float delta = alpha * (*hiddenErrors)[hiddenColumnIndex] * ((hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
+            float delta = alpha * tanh((*hiddenErrors)[hiddenColumnIndex]) * ((hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -50,6 +50,10 @@ void SparseCoder::forward(
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                         int inCI = vl.inputCIsPrev[visibleColumnIndex];
+
+                        // Missing value handling
+                        if (inCI == -1)
+                            continue;
 
                         int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
@@ -105,6 +109,8 @@ void SparseCoder::forward(
         }
 
         sum /= max(1, count);
+
+        hiddenActivations[hiddenCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
