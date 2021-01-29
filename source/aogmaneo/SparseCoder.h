@@ -38,7 +38,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
     FloatBuffer hiddenBiases;
     IntBuffer hiddenCIs;
 
@@ -63,7 +62,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.1f),
+    alpha(0.02f),
     beta(0.01f),
     temperature(8.0f)
     {}
