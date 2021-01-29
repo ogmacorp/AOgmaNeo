@@ -351,10 +351,7 @@ void Actor::initRandom(
 
         // Create weight matrix for this visible layer and initialize randomly
         vl.valueWeights.resize(numHiddenColumns * area * vld.size.z, 0.0f);
-        vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
-
-        for (int i = 0; i < vl.actionWeights.size(); i++)
-            vl.actionWeights[i] = rand() % 8 - 4;
+        vl.actionWeights.resize(numHiddenCells * area * vld.size.z, 0);
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);

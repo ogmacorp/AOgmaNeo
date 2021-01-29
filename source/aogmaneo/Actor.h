@@ -89,8 +89,8 @@ public:
     // Defaults
     Actor()
     :
-    alpha(0.02f),
-    beta(0.05f),
+    alpha(0.01f),
+    beta(0.1f),
     gamma(0.99f),
     temperature(8.0f)
     {}
