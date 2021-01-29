@@ -31,7 +31,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        Array<signed char> actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
@@ -84,17 +84,15 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
-    int minSteps;
-    int historyIters;
+    float temperature;
 
     // Defaults
     Actor()
     :
-    alpha(0.01f),
-    beta(0.01f),
+    alpha(0.02f),
+    beta(0.1f),
     gamma(0.99f),
-    minSteps(4),
-    historyIters(8)
+    temperature(8.0f)
     {}
 
     // Initialized randomly
