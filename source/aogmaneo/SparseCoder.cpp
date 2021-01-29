@@ -19,48 +19,50 @@ void SparseCoder::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     if (learnEnabled) {
+        int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+
+        int delta = roundftoi(alpha * 127.0f * (*hiddenErrors)[hiddenColumnIndex] * hiddenActivations[hiddenCellIndexMax] * (1.0f - hiddenActivations[hiddenCellIndexMax]));
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+            int diam = vld.radius * 2 + 1;
+
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+            Int2 visibleCenter = project(columnPos, hToV);
+
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    int inCI = vl.inputCIsPrev[visibleColumnIndex];
+
+                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+
+                    if (delta > 0)
+                        vl.weights[wi] = min<int>(127 - delta, vl.weights[wi] + delta);
+                    else
+                        vl.weights[wi] = max<int>(-127 - delta, vl.weights[wi] + delta);
+                }
+        }
+
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-            int delta = roundftoi(alpha * 127.0f * tanh((*hiddenErrors)[hiddenColumnIndex]) * ((hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]));
-
-            hiddenBiases[hiddenCellIndex] += beta * (1.0f / hiddenSize.z - hiddenActivations[hiddenCellIndex]);
-
-            for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                VisibleLayer &vl = visibleLayers[vli];
-                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-                int diam = vld.radius * 2 + 1;
-
-                // Projection
-                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-
-                Int2 visibleCenter = project(columnPos, hToV);
-
-                // Lower corner
-                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
-
-                // Bounds of receptive field, clamped to input size
-                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
-
-                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
-
-                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                        int inCI = vl.inputCIsPrev[visibleColumnIndex];
-
-                        int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                        if (delta > 0)
-                            vl.weights[wi] = min<int>(127 - delta, vl.weights[wi] + delta);
-                        else
-                            vl.weights[wi] = max<int>(-127 - delta, vl.weights[wi] + delta);
-                    }
-            }
+            hiddenBiases[hiddenCellIndex] += beta * (1.0f / hiddenSize.z - (hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f));
         }
     }
 
@@ -105,30 +107,14 @@ void SparseCoder::forward(
                 }
         }
 
-        hiddenActivations[hiddenCellIndex] = hiddenBiases[hiddenCellIndex] + static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
+        float activation = hiddenBiases[hiddenCellIndex] + static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
 
-        if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
-            maxActivation = hiddenActivations[hiddenCellIndex];
+        hiddenActivations[hiddenCellIndex] = sigmoid(temperature * activation);
+
+        if (activation > maxActivation || maxIndex == -1) {
+            maxActivation = activation;
             maxIndex = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenCellIndex] = expf(temperature * (hiddenActivations[hiddenCellIndex] - maxActivation));
-        
-        total += hiddenActivations[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenCellIndex] *= scale;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
