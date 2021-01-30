@@ -98,9 +98,10 @@ void Actor::learn(
     const Array<const IntBuffer*> &inputCIs,
     const Array<const IntBuffer*> &inputCIsPrev,
     const IntBuffer* hiddenTargetCIsPrev,
-    float q,
-    float g,
-    float reward
+    float q1,
+    float g1,
+    float q2,
+    float g2
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -183,7 +184,7 @@ void Actor::learn(
         maxActivationPrev = max(maxActivationPrev, sum);
     }
 
-    float newValue = max(reward + gamma * maxActivation, q + g * hiddenValues[hiddenColumnIndex]);
+    float newValue = max(q1 + g1 * maxActivation, q2 + g2 * hiddenValues[hiddenColumnIndex]);
 
     int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
 
@@ -322,26 +323,36 @@ void Actor::step(
     }
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > minSteps + 1) {
+    if (learnEnabled && historySize > qSteps + 1) {
         for (int it = 0; it < historyIters; it++) {
-            int historyIndex = rand() % (historySize - 1 - minSteps) + minSteps;
+            int historyIndex = rand() % (historySize - 1 - qSteps) + qSteps;
 
             const HistorySample &sPrev = historySamples[historyIndex + 1];
             const HistorySample &s = historySamples[historyIndex];
+            const HistorySample &sNext = historySamples[historyIndex - qSteps];
 
             // Compute (partial) values, rest is completed in the kernel
-            float q = 0.0f;
-            float g = 1.0f;
+            float q1 = 0.0f;
+            float g1 = 1.0f;
+
+            for (int t = historyIndex; t >= historyIndex - qSteps; t--) {
+                q1 += historySamples[t].reward * g1;
+
+                g1 *= gamma;
+            }
+
+            float q2 = 0.0f;
+            float g2 = 1.0f;
 
             for (int t = historyIndex; t >= 0; t--) {
-                q += historySamples[t].reward * g;
+                q2 += historySamples[t].reward * g2;
 
-                g *= gamma;
+                g2 *= gamma;
             }
 
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(s.inputCIs), constGet(sPrev.inputCIs), &s.hiddenTargetCIsPrev, q, g, s.reward);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sNext.inputCIs), constGet(sPrev.inputCIs), &s.hiddenTargetCIsPrev, q1, g1, q2, g2);
         }
     }
 }
@@ -397,7 +408,7 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&qSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -453,7 +464,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&qSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);

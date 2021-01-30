@@ -70,16 +70,17 @@ private:
         const Array<const IntBuffer*> &inputCIs,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
-        float q,
-        float g,
-        float reward
+        float q1,
+        float g1,
+        float q2,
+        float g2
     );
 
 public:
     float alpha; // Learning rate
     float beta; // Off penalty
     float gamma; // Discount factor
-    int minSteps;
+    int qSteps;
     int historyIters;
 
     // Defaults
@@ -88,7 +89,7 @@ public:
     alpha(0.01f),
     beta(0.001f),
     gamma(0.99f),
-    minSteps(4),
+    qSteps(2),
     historyIters(16)
     {}
 
