@@ -51,6 +51,10 @@ void SparseCoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
+                    // Missing value handling
+                    if (inCI == -1)
+                        continue;
+
                     sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
@@ -75,6 +79,11 @@ void SparseCoder::learn(
     int diam = vld.radius * 2 + 1;
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
+
+    int targetCI = (*inputCIs)[visibleColumnIndex];
+
+    if (targetCI == -1)
+        return;
 
     // Projection
     Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
@@ -120,15 +129,15 @@ void SparseCoder::learn(
                 }
             }
 
-        vl.reconstruction[visibleCellIndex] = sum / max(1, count);
+        sum /= max(1, count);
+
+        vl.reconstruction[visibleCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = vc;
         }
     }
-
-    int targetCI = (*inputCIs)[visibleColumnIndex];
 
     if (maxIndex != targetCI) {
         for (int vc = 0; vc < vld.size.z; vc++) {
@@ -168,7 +177,7 @@ void SparseCoder::initRandom(
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-    int numHiddenCells =  numHiddenColumns * hiddenSize.z;
+    int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     // Create layers
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -299,7 +308,7 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0);
+        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 }
 
