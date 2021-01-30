@@ -87,9 +87,9 @@ public:
     Actor()
     :
     alpha(0.01f),
-    beta(0.001f),
+    beta(0.0001f),
     gamma(0.99f),
-    qSteps(2),
+    qSteps(5),
     historyIters(16)
     {}
 
