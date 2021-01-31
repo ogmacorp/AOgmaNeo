@@ -90,7 +90,7 @@ public:
     alpha(0.01f),
     beta(0.0001f),
     gamma(0.99f),
-    actionGap(0.3f),
+    actionGap(0.5f),
     qSteps(4),
     historyIters(8)
     {}
