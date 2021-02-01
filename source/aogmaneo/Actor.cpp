@@ -200,7 +200,7 @@ void Actor::learn(
 
         if (hc == targetCI)
             delta = alpha * (newValue - hiddenActivations[hiddenCellIndex]);
-        else if (hc == maxIndexPrev && maxIndexPrev != targetCI)
+        else if (hc == maxIndexPrev)
             delta = beta * -hiddenActivations[hiddenCellIndex];
         else
             continue;
