@@ -88,7 +88,7 @@ public:
     Actor()
     :
     alpha(0.01f),
-    beta(0.0001f),
+    beta(0.00001f),
     gamma(0.99f),
     actionGap(0.5f),
     qSteps(4),
