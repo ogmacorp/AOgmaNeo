@@ -198,12 +198,9 @@ void Actor::learn(
 
         float delta;
 
-        if (hc == targetCI) {
-            float newValueAL = newValue - actionGap * (maxActivationPrev - hiddenActivations[hiddenCellIndex]);
-
-            delta = alpha * (newValueAL - hiddenActivations[hiddenCellIndex]);
-        }
-        else if (maxIndexPrev != targetCI)
+        if (hc == targetCI)
+            delta = alpha * (newValue - hiddenActivations[hiddenCellIndex]);
+        else if (hc == maxIndexPrev && maxIndexPrev != targetCI)
             delta = beta * -hiddenActivations[hiddenCellIndex];
         else
             continue;
@@ -413,7 +410,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&actionGap), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&qSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
@@ -470,7 +466,6 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&actionGap), sizeof(float));
     reader.read(reinterpret_cast<void*>(&qSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 

@@ -80,7 +80,6 @@ public:
     float alpha; // Learning rate
     float beta; // Off penalty
     float gamma; // Discount factor
-    float actionGap;
     int qSteps;
     int historyIters;
 
@@ -90,7 +89,6 @@ public:
     alpha(0.01f),
     beta(0.0001f),
     gamma(0.99f),
-    actionGap(0.0f),
     qSteps(4),
     historyIters(8)
     {}
