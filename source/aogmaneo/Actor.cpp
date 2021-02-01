@@ -205,6 +205,8 @@ void Actor::learn(
         }
         else if (maxIndexPrev != targetCI)
             delta = beta * -hiddenActivations[hiddenCellIndex];
+        else
+            continue;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
