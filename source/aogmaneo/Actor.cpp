@@ -131,6 +131,7 @@ void Actor::learn(
         count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
     }
 
+    int maxIndexPrev = -1;
     float maxActivation = -999999.0f;
     float maxActivationPrev = -999999.0f;
 
@@ -181,7 +182,11 @@ void Actor::learn(
         hiddenActivations[hiddenCellIndex] = sumPrev;
 
         maxActivation = max(maxActivation, sum);
-        maxActivationPrev = max(maxActivationPrev, sumPrev);
+
+        if (sumPrev > maxActivationPrev || maxIndexPrev == -1) {
+            maxActivationPrev = sumPrev;
+            maxIndexPrev = hc;
+        }
     }
 
     float newValue = max(q1 + g1 * maxActivation, q2 + g2 * hiddenValues[hiddenColumnIndex]);
@@ -198,7 +203,7 @@ void Actor::learn(
 
             delta = alpha * (newValueAL - hiddenActivations[hiddenCellIndex]);
         }
-        else
+        else if (maxIndexPrev != targetCI)
             delta = beta * -hiddenActivations[hiddenCellIndex];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
