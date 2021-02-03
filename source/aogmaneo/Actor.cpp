@@ -136,11 +136,14 @@ void Actor::forward(
     hiddenCIs[hiddenColumnIndex] = selectIndex;
 }
 
-void Actor::learnValue(
+void Actor::learn(
     const Int2 &columnPos,
     const Array<const ByteBuffer*> &inputCIsPrev,
+    const ByteBuffer* hiddenTargetCIsPrev,
+    const FloatBuffer* hiddenValuesPrev,
     float q,
-    float g
+    float g,
+    bool mimic
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -219,22 +222,7 @@ void Actor::learnValue(
                 vl.valueWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
             }
     }
-}
-
-void Actor::learnAction(
-    const Int2 &columnPos,
-    const Array<const ByteBuffer*> &inputCIsPrev,
-    const ByteBuffer* hiddenTargetCIsPrev,
-    const FloatBuffer* hiddenValuesPrev,
-    float q,
-    float g,
-    bool mimic
-) {
-    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
-
     // --- Action ---
-
-    float newValue = q + g * hiddenValues[hiddenColumnIndex];
 
     float tdErrorAction = newValue - (*hiddenValuesPrev)[hiddenColumnIndex];
 
@@ -460,28 +448,7 @@ void Actor::step(
 
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learnValue(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCIs), q, g);
-        }
-
-        if (historySize == historySamples.size()) {
-            int historyIndex = historySize - 2;
-
-            const HistorySample &sPrev = historySamples[historyIndex + 1];
-            const HistorySample &s = historySamples[historyIndex];
-
-            // Compute (partial) values, rest is completed in the kernel
-            float q = 0.0f;
-            float g = 1.0f;
-
-            for (int t = historyIndex; t >= 0; t--) {
-                q += historySamples[t].reward * g;
-
-                g *= gamma;
-            }
-
-            #pragma omp parallel for
-            for (int i = 0; i < numHiddenColumns; i++)
-                learnAction(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCIs), &s.hiddenTargetCIsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCIs), &s.hiddenTargetCIsPrev, &sPrev.hiddenValuesPrev, q, g, mimic);
         }
     }
 }

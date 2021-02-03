@@ -70,14 +70,7 @@ private:
         unsigned int* state
     );
 
-    void learnValue(
-        const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputCIsPrev,
-        float q,
-        float g
-    );
-
-    void learnAction(
+    void learn(
         const Int2 &columnPos,
         const Array<const ByteBuffer*> &inputCIsPrev,
         const ByteBuffer* hiddenTargetCIsPrev,
