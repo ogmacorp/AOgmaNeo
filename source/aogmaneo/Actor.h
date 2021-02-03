@@ -31,16 +31,16 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        Array<signed char> actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
     struct HistorySample {
-        Array<ByteBuffer> inputCIs;
-        ByteBuffer hiddenTargetCIsPrev;
+        Array<IntBuffer> inputCIs;
+        IntBuffer hiddenTargetCIsPrev;
 
         FloatBuffer hiddenValuesPrev;
-        
+
         float reward;
     };
 
@@ -52,7 +52,7 @@ private:
 
     FloatBuffer hiddenActivations; // Temporary buffer
 
-    ByteBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
 
@@ -66,21 +66,21 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputCIs,
+        const Array<const IntBuffer*> &inputCIs,
         unsigned int* state
     );
 
     void learnValue(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputCIsPrev,
+        const Array<const IntBuffer*> &inputCIsPrev,
         float q,
         float g
     );
 
     void learnAction(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputCIsPrev,
-        const ByteBuffer* hiddenTargetCIsPrev,
+        const Array<const IntBuffer*> &inputCIsPrev,
+        const IntBuffer* hiddenTargetCIsPrev,
         const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
@@ -90,7 +90,7 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
-    int minSteps;
+    float temperature;
     int historyIters;
 
     // Defaults
@@ -99,7 +99,7 @@ public:
     alpha(0.01f),
     beta(0.1f),
     gamma(0.99f),
-    minSteps(4),
+    temperature(8.0f),
     historyIters(8)
     {}
 
@@ -112,8 +112,8 @@ public:
 
     // Step (get actions and update)
     void step(
-        const Array<const ByteBuffer*> &inputCIs,
-        const ByteBuffer* hiddenTargetCIsPrev,
+        const Array<const IntBuffer*> &inputCIs,
+        const IntBuffer* hiddenTargetCIsPrev,
         float reward,
         bool learnEnabled,
         bool mimic
@@ -159,7 +159,7 @@ public:
     }
 
     // Get hidden state/output/actions
-    const ByteBuffer &getHiddenCIs() const {
+    const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 
