@@ -42,6 +42,8 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
+    FloatBuffer hiddenBiases;
+
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -60,12 +62,14 @@ private:
 
 public:
     float alpha;
+    float beta;
     float traceDecay;
 
     // Defaults
     Actor()
     :
-    alpha(0.1f),
+    alpha(0.001f),
+    beta(0.01f),
     traceDecay(0.95f)
     {}
 

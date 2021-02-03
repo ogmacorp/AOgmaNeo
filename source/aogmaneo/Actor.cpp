@@ -22,7 +22,7 @@ void Actor::activate(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        float sum = hiddenBiases[hiddenCellIndex];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -166,6 +166,8 @@ void Actor::learn(
                     }
                 }
         }
+
+        hiddenBiases[hiddenCellIndex] += beta * (1.0f / hiddenSize.z - (hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f));
     }
 }
 
@@ -212,6 +214,8 @@ void Actor::initRandom(
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+
+    hiddenBiases = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void Actor::activate(
@@ -240,7 +244,7 @@ void Actor::clearTraces() {
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenBiases.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -273,6 +277,7 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -299,13 +304,16 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+    int numHiddenCells = numHiddenColumns * hiddenSize.z;
     
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
+    hiddenBiases.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
