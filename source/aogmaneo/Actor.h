@@ -39,6 +39,8 @@ public:
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
 
+        FloatBuffer hiddenValuesPrev;
+
         float reward;
     };
 
@@ -68,20 +70,28 @@ private:
         unsigned int* state
     );
 
-    void learn(
+    void learnValue(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIsPrev,
+        float q,
+        float g
+    );
+
+    void learnAction(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
+        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic
     );
-
 public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
     float temperature;
+    int historyIters;
 
     // Defaults
     Actor()
@@ -89,7 +99,8 @@ public:
     alpha(0.01f),
     beta(0.1f),
     gamma(0.99f),
-    temperature(8.0f)
+    temperature(8.0f),
+    historyIters(8)
     {}
 
     // Initialized randomly
