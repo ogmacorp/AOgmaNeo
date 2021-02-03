@@ -20,7 +20,7 @@ void SparseCoder::resetReconstruction(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
-    vl.reconstruction[visibleColumnIndex] = roundftoi((static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) - 0.5f) * 255.0f);
+    vl.reconstruction[visibleColumnIndex] = roundftoi(static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 254.0f - 127.0f);
 }
 
 void SparseCoder::forward(
