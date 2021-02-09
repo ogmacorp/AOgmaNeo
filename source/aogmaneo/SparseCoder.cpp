@@ -12,7 +12,8 @@ using namespace aon;
 
 void SparseCoder::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Array<const IntBuffer*> &inputCIs,
+    bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -66,104 +67,50 @@ void SparseCoder::forward(
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
-}
 
-void SparseCoder::learn(
-    const Int2 &columnPos,
-    const IntBuffer* inputCIs,
-    int vli
-) {
-    VisibleLayer &vl = visibleLayers[vli];
-    VisibleLayerDesc &vld = visibleLayerDescs[vli];
+    if (learnEnabled) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, maxIndex), hiddenSize);
 
-    int diam = vld.radius * 2 + 1;
+        // For each visible layer
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-    int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
+            int diam = vld.radius * 2 + 1;
 
-    int targetCI = (*inputCIs)[visibleColumnIndex];
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-    if (targetCI == -1)
-        return;
+            Int2 visibleCenter = project(columnPos, hToV);
 
-    // Projection
-    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
-        static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-                
-    Int2 hiddenCenter = project(columnPos, vToH);
-
-    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
-
-    // Lower corner
-    Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
-
-    // Bounds of receptive field, clamped to input size
-    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-    Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
-
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
-
-        int sum = 0;
-        int count = 0;
-
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                Int2 hiddenPos = Int2(ix, iy);
-
-                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
-
-                Int2 visibleCenter = project(hiddenPos, hToV);
-
-                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
-
-                    sum += vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
-                    count++;
-                }
-            }
-
-        vl.reconstruction[visibleCellIndex] = static_cast<float>(sum) / static_cast<float>(max(1, count)) / 127.0f;
-
-        if (vl.reconstruction[visibleCellIndex] > maxActivation || maxIndex == -1) {
-            maxActivation = vl.reconstruction[visibleCellIndex];
-            maxIndex = vc;
-        }
-    }
-
-    if (maxIndex != targetCI) {
-        for (int vc = 0; vc < vld.size.z; vc++) {
-            int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
-
-            int delta = roundftoi(alpha * 127.0f * ((vc == targetCI ? 1.0f : 0.0f) - sigmoid(temperature * vl.reconstruction[visibleCellIndex])));
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    Int2 hiddenPos = Int2(ix, iy);
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    Int2 visibleCenter = project(hiddenPos, hToV);
+                    // Missing value handling
+                    if (inCI == -1)
+                        continue;
 
-                    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        unsigned char input = (vc == inCI ? 255 : 0);
 
-                        int weight = vl.weights[wi];
+                        unsigned char weight = vl.weights[vc + wiStart];
 
-                        if (delta > 0)
-                            vl.weights[wi] = min<int>(127 - delta, weight) + delta;
-                        else
-                            vl.weights[wi] = max<int>(-127 - delta, weight) + delta;
+                        vl.weights[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + alpha * min(0.0f, static_cast<float>(input) - static_cast<float>(weight)))));
                     }
                 }
         }
@@ -199,9 +146,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 127;
-
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+            vl.weights[i] = rand() % 256;
     }
 
     // Hidden CIs
@@ -216,19 +161,7 @@ void SparseCoder::step(
     
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
-
-    if (learnEnabled) {
-        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-            int numVisibleColumns = vld.size.x * vld.size.y;
-        
-            #pragma omp parallel for
-            for (int i = 0; i < numVisibleColumns; i++)
-                learn(Int2(i / vld.size.y, i % vld.size.y), inputCIs[vli], vli);
-        }
-    }
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, learnEnabled);
 }
 
 int SparseCoder::size() const {
@@ -312,8 +245,6 @@ void SparseCoder::read(
         vl.weights.resize(weightsSize);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(signed char));
-
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 }
 

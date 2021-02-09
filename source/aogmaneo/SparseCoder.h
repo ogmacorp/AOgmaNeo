@@ -30,9 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        Array<signed char> weights;
-
-        FloatBuffer reconstruction;
+        ByteBuffer weights;
     };
 
 private:
@@ -48,24 +46,17 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
+        const Array<const IntBuffer*> &inputCIs,
+        bool learnEnabled
     );
 
 public:
     float alpha; // Learning rate
-    float temperature;
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.03f),
-    temperature(8.0f)
+    alpha(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
