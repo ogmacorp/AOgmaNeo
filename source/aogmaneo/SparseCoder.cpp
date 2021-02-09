@@ -106,11 +106,14 @@ void SparseCoder::forward(
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        unsigned char input = (vc == inCI ? 255 : 0);
+                        if (vc == inCI)
+                            continue;
 
-                        unsigned char weight = vl.weights[vc + wiStart];
+                        int wi = vc + wiStart;
 
-                        vl.weights[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + alpha * min(0.0f, static_cast<float>(input) - static_cast<float>(weight)))));
+                        unsigned char weight = vl.weights[wi];
+
+                        vl.weights[wi] = roundftoi(max(0.0f, weight + alpha * -static_cast<float>(weight)));
                     }
                 }
         }
@@ -171,7 +174,7 @@ int SparseCoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(signed char);
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(unsigned char);
     }
 
     return size;
@@ -204,7 +207,7 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(signed char));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
     }
 }
 
@@ -244,7 +247,7 @@ void SparseCoder::read(
 
         vl.weights.resize(weightsSize);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(signed char));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
     }
 }
 

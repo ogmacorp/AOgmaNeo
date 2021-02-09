@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        ByteBuffer weights;
 
         ByteBuffer reconstruction;
     };
