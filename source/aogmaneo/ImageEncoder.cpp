@@ -56,7 +56,7 @@ void ImageEncoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                        sum += min(input, static_cast<int>(vl.protos[vc + wiStart]));
+                        sum += min(input, static_cast<int>(vl.weights[vc + wiStart]));
                     }
                 }
         }
@@ -101,11 +101,13 @@ void ImageEncoder::forward(
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wiStart;
+
                         unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                        unsigned char weight = vl.protos[vc + wiStart];
+                        unsigned char weight = vl.weights[wi];
 
-                        vl.protos[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + alpha * min(0.0f, static_cast<float>(input) - static_cast<float>(weight)))));
+                        vl.weights[wi] = roundftoi(max(0.0f, weight + alpha * min(0.0f, static_cast<float>(input) - static_cast<float>(weight))));
                     }
                 }
         }
@@ -166,7 +168,7 @@ void ImageEncoder::reconstruct(
                 if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    sum += strength * vl.protos[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += strength * vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     total += strength;
                 }
             }
@@ -200,11 +202,11 @@ void ImageEncoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.protos.resize(numHiddenCells * area * vld.size.z);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         // Initialize to random values
-        for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = 255 - rand() % 8;
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = 255 - rand() % 8;
 
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
@@ -245,7 +247,7 @@ int ImageEncoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.protos.size() * sizeof(unsigned char);
+        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(unsigned char);
     }
 
     return size;
@@ -270,11 +272,11 @@ void ImageEncoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int protosSize = vl.protos.size();
+        int weightsSize = vl.weights.size();
 
-        writer.write(reinterpret_cast<const void*>(&protosSize), sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
     }
 }
 
@@ -308,13 +310,13 @@ void ImageEncoder::read(
         int numVisibleColumns = vld.size.x * vld.size.y;
         int numVisibleCells = numVisibleColumns * vld.size.z;
 
-        int protosSize;
+        int weightsSize;
 
-        reader.read(reinterpret_cast<void*>(&protosSize), sizeof(int));
+        reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
 
-        vl.protos.resize(protosSize);
+        vl.weights.resize(weightsSize);
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned char));
 
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
