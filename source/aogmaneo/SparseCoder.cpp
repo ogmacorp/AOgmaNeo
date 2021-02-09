@@ -111,9 +111,9 @@ void SparseCoder::forward(
 
                         int wi = vc + wiStart;
 
-                        unsigned char weight = vl.weights[wi];
+                        float weight = vl.weights[wi];
 
-                        vl.weights[wi] = roundftoi(max(0.0f, weight + alpha * -static_cast<float>(weight)));
+                        vl.weights[wi] = roundftoi(max(0.0f, weight - alpha * weight));
                     }
                 }
         }
