@@ -64,7 +64,7 @@ public:
     // Defaults
     ImageEncoder()
     :
-    alpha(0.02f)
+    alpha(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
