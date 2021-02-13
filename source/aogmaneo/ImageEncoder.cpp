@@ -56,7 +56,7 @@ void ImageEncoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                        sum += min(input, static_cast<int>(vl.weights[vc + wiStart]));
+                        sum += input * static_cast<int>(vl.weights[vc + wiStart]);
                     }
                 }
         }
