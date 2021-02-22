@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        ByteBuffer protos;
 
         ByteBuffer reconstruction;
     };
@@ -39,6 +39,8 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenRates; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -64,7 +66,7 @@ public:
     // Defaults
     ImageEncoder()
     :
-    alpha(0.5f)
+    alpha(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -130,3 +132,4 @@ public:
     }
 };
 } // namespace aon
+
