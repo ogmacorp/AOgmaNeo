@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        Array<signed char> weights;
+        FloatBuffer weights;
 
         IntBuffer inputCIsPrev;
     };
@@ -61,8 +61,8 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.05f),
-    beta(0.002f)
+    alpha(1.0f),
+    beta(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
