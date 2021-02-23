@@ -18,7 +18,7 @@ void ImageEncoder::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int maxIndex = -1;
-    int maxActivation = -9999999;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -54,13 +54,11 @@ void ImageEncoder::forward(
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
+                        int input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                        unsigned char weight = vl.protos[wiStart + vc];
+                        int delta = input - static_cast<int>(vl.protos[vc + wiStart]);
 
-                        int delta = static_cast<int>(input) - static_cast<int>(weight);
-
-                        sum -= delta * delta;
+                        sum -= abs(delta);
                     }
                 }
         }
@@ -115,7 +113,7 @@ void ImageEncoder::forward(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             unsigned char input = (*inputs[vli])[address3(Int3(ix, iy, vc), vld.size)];
 
-                            unsigned char weight = vl.protos[wiStart + vc];
+                            unsigned char weight = vl.protos[vc + wiStart];
 
                             vl.protos[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + rate * (static_cast<float>(input) - static_cast<float>(weight)))));
                         }
@@ -161,8 +159,8 @@ void ImageEncoder::reconstruct(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-        int sum = 0;
-        int count = 0;
+        float sum = 0.0f;
+        float total = 0.0f;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -173,17 +171,20 @@ void ImageEncoder::reconstruct(
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
+                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+
+                float strength = min(1.0f - distX, 1.0f - distY);
+
                 if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    unsigned char weight = vl.protos[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
-
-                    sum += weight;
-                    count++;
+                    sum += strength * vl.protos[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    total += strength;
                 }
             }
 
-        vl.reconstruction[visibleIndex] = roundftoi(static_cast<float>(sum) / static_cast<float>(max(1, count)));
+        vl.reconstruction[visibleIndex] = roundftoi(sum / max(0.0001f, total));
     }
 }
 
@@ -224,7 +225,7 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void ImageEncoder::step(
@@ -336,3 +337,4 @@ void ImageEncoder::read(
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
 }
+

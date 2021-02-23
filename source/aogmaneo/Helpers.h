@@ -240,6 +240,12 @@ inline Int2 projectf(
     return Int2((pos.x + 0.5f) * toScalars.x, (pos.y + 0.5f) * toScalars.y);
 }
 
+Int2 minOverhang(
+    const Int2 &pos,
+    const Int2 &size,
+    int radius
+);
+
 // --- Addressing ---
 
 // Row-major
