@@ -21,7 +21,7 @@ void SparseCoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        int delta = roundftoi(alpha * 127.0f * (*hiddenErrors)[hiddenColumnIndex]);
+        int delta = roundftoi(alpha * 127.0f * min(1.0f, max(-1.0f, (*hiddenErrors)[hiddenColumnIndex])));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -50,9 +50,9 @@ void SparseCoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inCI = vl.inputCIsPrev[visibleColumnIndex];
+                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                     if (delta > 0)
                         vl.weights[wi] = min<int>(127 - delta, vl.weights[wi] + delta);
@@ -147,16 +147,15 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHiddenCells * area * vld.size.z);
-
-        // Initialize to random values
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 8 - 4;
+        vl.weights.resize(numHiddenCells * area * vld.size.z, 0);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenBiases = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenBiases.resize(numHiddenCells);
+
+    for (int i = 0; i < numHiddenCells; i++)
+        hiddenBiases[i] = randf(-0.001f, 0.001f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
@@ -212,7 +211,6 @@ void SparseCoder::write(
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -247,7 +245,6 @@ void SparseCoder::read(
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 

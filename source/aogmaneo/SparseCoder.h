@@ -57,14 +57,12 @@ private:
 public:
     float alpha;
     float beta;
-    float temperature;
 
     // Defaults
     SparseCoder()
     :
     alpha(0.05f),
-    beta(0.001f),
-    temperature(8.0f)
+    beta(0.002f)
     {}
 
     // Create a sparse coding layer with random initialization

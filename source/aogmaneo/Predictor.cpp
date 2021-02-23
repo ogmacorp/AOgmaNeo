@@ -153,11 +153,11 @@ void Predictor::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    int inCI = vl.inputCIsPrev[visibleColumnIndex];
+                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     int weight = vl.weights[wi];
                     
@@ -201,7 +201,7 @@ void Predictor::generateErrors(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
-    int inCI = vl.inputCIsPrev[visibleColumnIndex];
+    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
     float sum = 0.0f;
     int count = 0;
@@ -224,7 +224,7 @@ void Predictor::generateErrors(
 
                     float error = ((hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
 
-                    sum += error * vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += error * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
 
                 count++;
