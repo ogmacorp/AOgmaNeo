@@ -38,8 +38,8 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
-    IntBuffer hiddenRefractories;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -56,13 +56,11 @@ private:
 
 public:
     float alpha;
-    int refractoryTicks;
 
     // Defaults
     SparseCoder()
     :
-    alpha(1.0f),
-    refractoryTicks(3)
+    alpha(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
