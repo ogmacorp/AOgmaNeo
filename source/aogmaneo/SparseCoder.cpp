@@ -325,10 +325,6 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int protosSize = vl.protos.size();
-
-        writer.write(reinterpret_cast<const void*>(&protosSize), sizeof(int));
-
         writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(signed char));
     }
 }
@@ -367,11 +363,10 @@ void SparseCoder::read(
 
         int numVisibleColumns = vld.size.x * vld.size.y;
 
-        int protosSize;
+        int diam = vld.radius * 2 + 1;
+        int area = diam * diam;
 
-        reader.read(reinterpret_cast<void*>(&protosSize), sizeof(int));
-
-        vl.protos.resize(protosSize);
+        vl.protos.resize(numHiddenCells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(signed char));
 

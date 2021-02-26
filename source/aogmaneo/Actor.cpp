@@ -529,14 +529,6 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int valueWeightsSize = vl.valueWeights.size();
-
-        writer.write(reinterpret_cast<const void*>(&valueWeightsSize), sizeof(int));
-
-        int actionWeightsSize = vl.actionWeights.size();
-
-        writer.write(reinterpret_cast<const void*>(&actionWeightsSize), sizeof(int));
-
         writer.write(reinterpret_cast<const void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
     }
@@ -599,16 +591,11 @@ void Actor::read(
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int valueWeightsSize;
+        int diam = vld.radius * 2 + 1;
+        int area = diam * diam;
 
-        reader.read(reinterpret_cast<void*>(&valueWeightsSize), sizeof(int));
-
-        int actionWeightsSize;
-
-        reader.read(reinterpret_cast<void*>(&actionWeightsSize), sizeof(int));
-
-        vl.valueWeights.resize(valueWeightsSize);
-        vl.actionWeights.resize(actionWeightsSize);
+        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z);
+        vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));

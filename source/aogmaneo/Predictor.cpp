@@ -285,10 +285,6 @@ void Predictor::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int weightsSize = vl.weights.size();
-
-        writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
-
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(signed char));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
@@ -327,11 +323,10 @@ void Predictor::read(
 
         int numVisibleColumns = vld.size.x * vld.size.y;
 
-        int weightsSize;
+        int diam = vld.radius * 2 + 1;
+        int area = diam * diam;
 
-        reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
-
-        vl.weights.resize(weightsSize);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(signed char));
 
