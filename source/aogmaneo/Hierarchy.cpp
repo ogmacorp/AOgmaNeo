@@ -410,6 +410,7 @@ void Hierarchy::read(
     updates.resize(numLayers);
     ticks.resize(numLayers);
     ticksPerUpdate.resize(numLayers);
+    errors.resize(numLayers);
 
     reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
