@@ -239,7 +239,7 @@ int SparseCoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float);
     }
 
     return size;
@@ -267,10 +267,6 @@ void SparseCoder::write(
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
-
-        int weightsSize = vl.weights.size();
-
-        writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
@@ -306,11 +302,10 @@ void SparseCoder::read(
         int numVisibleColumns = vld.size.x * vld.size.y;
         int numVisibleCells = numVisibleColumns * vld.size.z;
 
-        int weightsSize;
+        int diam = vld.radius * 2 + 1;
+        int area = diam * diam;
 
-        reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
-
-        vl.weights.resize(weightsSize);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
