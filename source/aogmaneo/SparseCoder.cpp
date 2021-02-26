@@ -57,12 +57,6 @@ void SparseCoder::forward(
                     vl.weights[wi] += delta;
                 }
         }
-
-        for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-            hiddenBiases[hiddenCellIndex] += beta * (1.0f / hiddenSize.z - (hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f));
-        }
     }
 
     int maxIndex = -1;
@@ -70,6 +64,12 @@ void SparseCoder::forward(
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        if (hiddenRefractories[hiddenCellIndex] > 0) {
+            hiddenRefractories[hiddenCellIndex]--;
+
+            continue;
+        }
 
         float sum = 0.0f;
         int count = 0;
@@ -108,15 +108,17 @@ void SparseCoder::forward(
                 }
         }
 
-        float activation = hiddenBiases[hiddenCellIndex] + sum / static_cast<float>(max(1, count));
+        sum /= max(1, count);
 
-        if (activation > maxActivation || maxIndex == -1) {
-            maxActivation = activation;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
+
+    hiddenRefractories[address3(Int3(columnPos.x, columnPos.y, maxIndex), hiddenSize)] = refractoryTicks;
 }
 
 void SparseCoder::initRandom(
@@ -149,12 +151,8 @@ void SparseCoder::initRandom(
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenBiases.resize(numHiddenCells);
-
-    for (int i = 0; i < numHiddenCells; i++)
-        hiddenBiases[i] = randf(-0.001f, 0.001f);
-
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenRefractories = IntBuffer(numHiddenCells, 0);
 }
 
 void SparseCoder::step(
@@ -177,13 +175,13 @@ void SparseCoder::step(
 }
 
 int SparseCoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenBiases.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenRefractories.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
@@ -207,10 +205,10 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&refractoryTicks), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenRefractories[0]), hiddenRefractories.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -221,10 +219,6 @@ void SparseCoder::write(
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
-
-        int weightsSize = vl.weights.size();
-
-        writer.write(reinterpret_cast<const void*>(&weightsSize), sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
@@ -241,13 +235,13 @@ void SparseCoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&refractoryTicks), sizeof(int));
 
-    hiddenBiases.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
+    hiddenRefractories.resize(numHiddenCells);
 
-    reader.read(reinterpret_cast<void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenRefractories[0]), hiddenRefractories.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -264,11 +258,10 @@ void SparseCoder::read(
 
         int numVisibleColumns = vld.size.x * vld.size.y;
 
-        int weightsSize;
+        int diam = vld.radius * 2 + 1;
+        int area = diam * diam;
 
-        reader.read(reinterpret_cast<void*>(&weightsSize), sizeof(int));
-
-        vl.weights.resize(weightsSize);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
