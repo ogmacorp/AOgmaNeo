@@ -86,10 +86,12 @@ void Predictor::forward(
                 }
         }
 
-        hiddenActivations[hiddenCellIndex] = sum / static_cast<float>(max(1, count));
+        sum /= max(1, count);
 
-        if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
-            maxActivation = hiddenActivations[hiddenCellIndex];
+        hiddenActivations[hiddenCellIndex] = sum;
+
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
