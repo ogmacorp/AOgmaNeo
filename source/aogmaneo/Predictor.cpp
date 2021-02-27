@@ -159,9 +159,7 @@ void Predictor::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                    vl.weights[wi] += delta;
+                    vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
                 }
         }
     }
@@ -228,7 +226,7 @@ void Predictor::generateErrors(
             }
         }
 
-    (*visibleErrors)[visibleColumnIndex] += sum / static_cast<float>(max(1, count));
+    (*visibleErrors)[visibleColumnIndex] += sum / max(1, count);
 }
 
 void Predictor::initRandom(
