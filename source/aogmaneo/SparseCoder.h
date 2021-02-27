@@ -55,14 +55,6 @@ private:
     );
 
 public:
-    float alpha;
-
-    // Defaults
-    SparseCoder()
-    :
-    alpha(1.0f)
-    {}
-
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
