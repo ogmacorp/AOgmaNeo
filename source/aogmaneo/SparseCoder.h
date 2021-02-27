@@ -41,8 +41,6 @@ private:
     FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
-    FloatBuffer hiddenBiases;
-
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -58,13 +56,11 @@ private:
 
 public:
     float alpha;
-    float beta;
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f),
-    beta(0.001f)
+    alpha(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
