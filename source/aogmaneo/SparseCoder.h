@@ -54,11 +54,13 @@ private:
     );
 
 public:
-    float threshold;
+    float alpha; // Learning rate
+    float beta; // Drift
 
     SparseCoder()
     :
-    threshold(0.1f)
+    alpha(0.001f),
+    beta(0.0001f)
     {}
 
     // Create a sparse coding layer with random initialization
