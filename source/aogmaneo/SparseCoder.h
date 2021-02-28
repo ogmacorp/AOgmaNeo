@@ -58,7 +58,7 @@ public:
 
     SparseCoder()
     :
-    threshold(0.5f)
+    threshold(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
