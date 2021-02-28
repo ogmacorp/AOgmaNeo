@@ -55,6 +55,15 @@ private:
     );
 
 public:
+    float threshold;
+    float alpha;
+
+    SparseCoder()
+    :
+    threshold(0.5f),
+    alpha(0.01f)
+    {}
+
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
