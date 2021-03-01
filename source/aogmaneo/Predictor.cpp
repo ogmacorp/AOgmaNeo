@@ -82,7 +82,7 @@ void Predictor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    sum += vl.predWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
 
@@ -161,7 +161,7 @@ void Predictor::learn(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.predWeights[wi] += delta;
+                    vl.weights[wi] += delta;
                 }
         }
     }
@@ -221,7 +221,7 @@ void Predictor::generateErrors(
 
                     float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex];
 
-                    sum += error * vl.randWeights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += error * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
 
                 count++;
@@ -255,13 +255,10 @@ void Predictor::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.predWeights.resize(numHiddenCells * area * vld.size.z);
-        vl.randWeights.resize(vl.predWeights.size());
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        for (int i = 0; i < vl.predWeights.size(); i++) {
-            vl.predWeights[i] = randf(-0.01f, 0.01f);
-            vl.randWeights[i] = randf(-1.0f, 1.0f);
-        }
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -325,7 +322,7 @@ int Predictor::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.predWeights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
@@ -363,8 +360,7 @@ void Predictor::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.predWeights[0]), vl.predWeights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.randWeights[0]), vl.randWeights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
@@ -404,11 +400,9 @@ void Predictor::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.predWeights.resize(numHiddenCells * area * vld.size.z);
-        vl.randWeights.resize(vl.predWeights.size());
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.predWeights[0]), vl.predWeights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.randWeights[0]), vl.randWeights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         vl.inputCIsPrev.resize(numVisibleColumns);
 
