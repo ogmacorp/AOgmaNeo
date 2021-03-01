@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-#include <iostream>
 
 using namespace aon;
 
