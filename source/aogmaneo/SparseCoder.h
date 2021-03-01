@@ -38,6 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -54,6 +55,13 @@ private:
     );
 
 public:
+    float alpha;
+
+    SparseCoder()
+    :
+    alpha(0.01f)
+    {}
+
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
