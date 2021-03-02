@@ -63,11 +63,13 @@ private:
     );
 
 public:
-    float alpha;
+    float alpha; // Error LR
+    float beta; // Recon LR
 
     SparseCoder()
     :
-    alpha(0.1f)
+    alpha(0.1f),
+    beta(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
