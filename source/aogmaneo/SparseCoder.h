@@ -40,7 +40,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -58,7 +57,6 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* inputCIs,
         int vli
     );
 
@@ -68,7 +66,7 @@ public:
 
     SparseCoder()
     :
-    alpha(0.1f),
+    alpha(0.001f),
     beta(0.1f)
     {}
 
