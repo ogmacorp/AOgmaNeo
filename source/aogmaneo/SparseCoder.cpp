@@ -17,7 +17,7 @@ void SparseCoder::forward(
     bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
-    //
+    
     // Pre-count
     int count = 0;
 
