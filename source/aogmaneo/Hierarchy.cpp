@@ -167,7 +167,7 @@ void Hierarchy::initRandom(
         // Create the sparse coding layer
         scLayers[l].initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
 
-        errors[l].resize(scLayers[l].getHiddenCIs().size(), 0.0f);
+        errors[l] = FloatBuffer(scLayers[l].getHiddenCIs().size(), 0.0f);
     }
 }
 
