@@ -66,7 +66,7 @@ private:
     ); 
 
 public:
-    float alpha; // Fast learning rate
+    float alpha;
 
     // Defaults
     Predictor()
