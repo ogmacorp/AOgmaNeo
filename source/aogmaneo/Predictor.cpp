@@ -240,7 +240,7 @@ int Predictor::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(signed char) + vl.inputCIsPrev.size() * sizeof(int);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(signed char) + vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
