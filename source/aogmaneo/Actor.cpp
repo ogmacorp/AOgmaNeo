@@ -34,6 +34,8 @@ void Actor::forward(
 
         Int2 visibleCenter = project(columnPos, hToV);
 
+        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
         // Lower corner
         Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
@@ -78,6 +80,8 @@ void Actor::forward(
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
             Int2 visibleCenter = project(columnPos, hToV);
+
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -165,6 +169,8 @@ void Actor::learn(
 
         Int2 visibleCenter = project(columnPos, hToV);
 
+        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
         // Lower corner
         Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
@@ -202,6 +208,8 @@ void Actor::learn(
             static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
         Int2 visibleCenter = project(columnPos, hToV);
+
+        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
         // Lower corner
         Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -246,6 +254,8 @@ void Actor::learn(
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
             Int2 visibleCenter = project(columnPos, hToV);
+
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -299,6 +309,8 @@ void Actor::learn(
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
             Int2 visibleCenter = project(columnPos, hToV);
+
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -452,7 +464,7 @@ int Actor::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * sizeof(int) + vl.valueWeights.size() * sizeof(float) + vl.actionWeights.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.valueWeights.size() * sizeof(float) + vl.actionWeights.size() * sizeof(float);
     }
 
     size += 3 * sizeof(int);
@@ -502,23 +514,15 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
-    int numVisibleCells = visibleLayers.size();
+    int numVisibleLayers = visibleLayers.size();
 
-    writer.write(reinterpret_cast<const void*>(&numVisibleCells), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&numVisibleLayers), sizeof(int));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
-
-        int valueWeightsSize = vl.valueWeights.size();
-
-        writer.write(reinterpret_cast<const void*>(&valueWeightsSize), sizeof(int));
-
-        int actionWeightsSize = vl.actionWeights.size();
-
-        writer.write(reinterpret_cast<const void*>(&actionWeightsSize), sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
@@ -569,12 +573,12 @@ void Actor::read(
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
     
-    int numVisibleCells = visibleLayers.size();
+    int numVisibleLayers = visibleLayers.size();
 
-    reader.read(reinterpret_cast<void*>(&numVisibleCells), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
 
-    visibleLayers.resize(numVisibleCells);
-    visibleLayerDescs.resize(numVisibleCells);
+    visibleLayers.resize(numVisibleLayers);
+    visibleLayerDescs.resize(numVisibleLayers);
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -582,16 +586,11 @@ void Actor::read(
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int valueWeightsSize;
+        int diam = vld.radius * 2 + 1;
+        int area = diam * diam;
 
-        reader.read(reinterpret_cast<void*>(&valueWeightsSize), sizeof(int));
-
-        int actionWeightsSize;
-
-        reader.read(reinterpret_cast<void*>(&actionWeightsSize), sizeof(int));
-
-        vl.valueWeights.resize(valueWeightsSize);
-        vl.actionWeights.resize(actionWeightsSize);
+        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z);
+        vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
@@ -613,7 +612,7 @@ void Actor::read(
     for (int t = 0; t < historySamples.size(); t++) {
         HistorySample &s = historySamples[t];
 
-        s.inputCIs.resize(numVisibleCells);
+        s.inputCIs.resize(numVisibleLayers);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -685,3 +684,4 @@ void Actor::readState(
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
 }
+

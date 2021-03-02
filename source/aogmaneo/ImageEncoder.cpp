@@ -38,6 +38,8 @@ void ImageEncoder::forward(
 
             Int2 visibleCenter = project(columnPos, hToV);
 
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
@@ -92,6 +94,8 @@ void ImageEncoder::forward(
                     static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
                 Int2 visibleCenter = project(columnPos, hToV);
+
+                visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
                 // Lower corner
                 Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -169,6 +173,8 @@ void ImageEncoder::reconstruct(
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
+                visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
                 float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
                 float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
 
@@ -223,7 +229,7 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void ImageEncoder::step(
@@ -330,3 +336,4 @@ void ImageEncoder::read(
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
 }
+
