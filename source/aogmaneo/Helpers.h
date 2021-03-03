@@ -136,6 +136,8 @@ struct Vec4 {
 };
 
 // Some basic definitions
+typedef unsigned char Byte;
+typedef signed char SByte;
 typedef Vec2<int> Int2;
 typedef Vec3<int> Int3;
 typedef Vec4<int> Int4;
@@ -143,7 +145,8 @@ typedef Vec2<float> Float2;
 typedef Vec3<float> Float3;
 typedef Vec4<float> Float4;
 
-typedef Array<unsigned char> ByteBuffer;
+typedef Array<Byte> ByteBuffer;
+typedef Array<SByte> SByteBuffer;
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
 
