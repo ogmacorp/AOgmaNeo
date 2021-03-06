@@ -23,7 +23,6 @@ void SparseCoder::forward(
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         float sum = 0.0f;
-        float total2 = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -54,19 +53,13 @@ void SparseCoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    // Missing value handling
+                    if (inCI == -1)
+                        continue;
 
-                    sum += vl.weights[inCI + wiStart];
-
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int wi = vc + wiStart;
-
-                        total2 += vl.weights[wi] * vl.weights[wi];
-                    }
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
-
-        sum /= max(0.0001f, sqrtf(total2));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -90,6 +83,9 @@ void SparseCoder::learn(
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
     int targetCI = (*inputCIs)[visibleColumnIndex];
+
+    if (targetCI == -1)
+        return;
 
     // Projection
     Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),

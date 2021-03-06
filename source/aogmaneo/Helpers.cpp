@@ -69,24 +69,24 @@ Int2 aon::minOverhang(
     const Int2 &size,
     int radius
 ) {
-   Int2 newPos = pos;
+    Int2 newPos = pos;
 
-   bool overhangPX = (newPos.x + radius >= size.x);
-   bool overhangNX = (newPos.x - radius < 0);
-   bool overhangPY = (newPos.y + radius >= size.y);
-   bool overhangNY = (newPos.y - radius < 0);
+    bool overhangPX = (newPos.x + radius >= size.x);
+    bool overhangNX = (newPos.x - radius < 0);
+    bool overhangPY = (newPos.y + radius >= size.y);
+    bool overhangNY = (newPos.y - radius < 0);
 
-   if (overhangPX && !overhangNX)
+    if (overhangPX && !overhangNX)
        newPos.x = size.x - 1 - radius;
-   else if (overhangNX && !overhangPX)
+    else if (overhangNX && !overhangPX)
        newPos.x = radius;
 
-   if (overhangPY && !overhangNY)
+    if (overhangPY && !overhangNY)
        newPos.y = size.y - 1 - radius;
-   else if (overhangNY && !overhangPY)
+    else if (overhangNY && !overhangPY)
        newPos.y = radius;
 
-   return newPos;
+    return newPos;
 }
 
 unsigned int aon::globalState = 123456;
