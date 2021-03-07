@@ -24,21 +24,24 @@ class Hierarchy {
 public:
     struct IODesc {
         Int3 size;
+        IOType type;
 
-        int ffRadius; // Feed forward radius
+        int hRadius; // Feed forward hidden radius
+        int eRadius; // Feed forward error radius
         int pRadius; // Prediction radius
+        int fbRadius; // Feed back radius
         int aRadius; // Actor radius
 
         int historyCapacity; // Actor history capacity
-
-        IOType type;
 
         IODesc()
         :
         size(4, 4, 16),
         type(prediction),
-        ffRadius(2),
+        hRadius(2),
+        eRadius(2),
         pRadius(2),
+        fbRadius(2),
         aRadius(2),
         historyCapacity(32)
         {}
@@ -46,16 +49,20 @@ public:
         IODesc(
             const Int3 &size,
             IOType type,
-            int ffRadius,
+            int hRadius,
+            int eRadius,
             int pRadius,
+            int fbRadius,
             int aRadius,
             int historyCapacity
         )
         :
         size(size),
         type(type),
-        ffRadius(ffRadius),
+        hRadius(hRadius),
+        eRadius(eRadius),
         pRadius(pRadius),
+        fbRadius(fbRadius),
         aRadius(aRadius),
         historyCapacity(historyCapacity)
         {}
@@ -64,9 +71,12 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
+        Int3 errorSize; // Size of error layer
 
-        int ffRadius; // Feed forward radius
+        int hRadius; // Feed forward hidden radius
+        int eRadius; // Feed forward error radius
         int pRadius; // Prediction radius
+        int fbRadius; // Feed back radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -74,30 +84,39 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        ffRadius(2),
+        errorSize(4, 4, 16),
+        hRadius(2),
+        eRadius(2),
         pRadius(2),
+        fbRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int ffRadius,
+            const Int3 &errorSize,
+            int hRadius,
+            int eRadius,
             int pRadius,
+            int fbRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
-        ffRadius(ffRadius),
+        errorSize(errorSize),
+        hRadius(hRadius),
+        eRadius(eRadius),
         pRadius(pRadius),
+        fbRadius(fbRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
     };
 
     struct SCLayerPair {
-        SparseCoder recon;
+        SparseCoder hidden;
         SparseCoder error;
     };
 
