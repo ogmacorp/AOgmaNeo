@@ -117,7 +117,7 @@ void Hierarchy::initRandom(
             for (int i = 0; i < pLayers[l].size(); i++) {
                 if (ioDescs[i].type == IOType::prediction) {
                     // Predictor visible layer descriptors
-                    Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+                    Array<SparseCoder::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
                     pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
                     pVisibleLayerDescs[0].radius = ioDescs[i].pRadius;
@@ -127,7 +127,7 @@ void Hierarchy::initRandom(
 
                     pLayers[l][i].make();
 
-                    pLayers[l][i]->initRandom(inputSizes[i], pVisibleLayerDescs);
+                    pLayers[l][i]->initRandom(inputSizes[i], ioDescs[i].intermediateSize, pVisibleLayerDescs);
                 }
                 else if (ioDescs[i].type == IOType::action) {
                     // Actor visible layer descriptors
@@ -165,7 +165,7 @@ void Hierarchy::initRandom(
             pLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
             // Predictor visible layer descriptors
-            Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+            Array<SparseCoder::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
             pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
@@ -177,7 +177,7 @@ void Hierarchy::initRandom(
             for (int t = 0; t < pLayers[l].size(); t++) {
                 pLayers[l][t].make();
 
-                pLayers[l][t]->initRandom(layerDescs[l - 1].hiddenSize, pVisibleLayerDescs);
+                pLayers[l][t]->initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].intermediateSize, pVisibleLayerDescs);
             }
         }
         
@@ -254,12 +254,8 @@ void Hierarchy::step(
 
             // Step actor layers
             for (int p = 0; p < pLayers[l].size(); p++) {
-                if (pLayers[l][p] != nullptr) {
-                    if (learnEnabled)
-                        pLayers[l][p]->learn(l == 0 ? &histories[l][p][0] : &histories[l][0][p]);
-
-                    pLayers[l][p]->activate(feedBackCIs);
-                }
+                if (pLayers[l][p] != nullptr)
+                    pLayers[l][p]->step(feedBackCIs, l == 0 ? &histories[l][p][0] : &histories[l][0][p], learnEnabled);
             }
 
             if (l == 0) {

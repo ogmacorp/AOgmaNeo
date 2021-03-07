@@ -8,33 +8,11 @@
 
 #pragma once
 
-#include "Helpers.h"
+#include "SparseCoder.h"
 
 namespace aon {
 // A prediction layer (predicts x_(t+1))
 class Predictor {
-public:
-    // Visible layer descriptor
-    struct VisibleLayerDesc {
-        Int3 size; // Size of input
-
-        int radius; // Radius onto input
-
-        // Defaults
-        VisibleLayerDesc()
-        :
-        size(4, 4, 16),
-        radius(2)
-        {}
-    };
-
-    // Visible layer
-    struct VisibleLayer {
-        FloatBuffer weights;
-
-        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-    };
-
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
@@ -42,15 +20,12 @@ private:
 
     IntBuffer hiddenCIs; // Hidden state
 
-    // Visible layers and descs
-    Array<VisibleLayer> visibleLayers;
-    Array<VisibleLayerDesc> visibleLayerDescs;
+    FloatBuffer weights;
 
     // --- Kernels ---
 
     void forward(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Int2 &columnPos
     );
 
     void learn(
@@ -59,28 +34,28 @@ private:
     );
 
 public:
-    float alpha; // Learning rate
+    SparseCoder sc;
+
+    float beta; // Learning rate
 
     // Defaults
     Predictor()
     :
-    alpha(0.5f)
+    beta(0.5f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
-        const Array<VisibleLayerDesc> &visibleLayerDescs
+        const Int3 &hiddenSize,
+        int intermediateSize,
+        const Array<SparseCoder::VisibleLayerDesc> &visibleLayerDescs
     );
 
     // Activate the predictor (predict values)
-    void activate(
-        const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
-    );
-
-    // Learning predictions (update weights)
-    void learn(
-        const IntBuffer* hiddenTargetCIs
+    void step(
+        const Array<const IntBuffer*> &inputCIs, // Hidden/output/prediction size
+        const IntBuffer* hiddenTargetCIs,
+        bool learnEnabled
     );
 
     // Serialization
@@ -102,25 +77,6 @@ public:
     void readState(
         StreamReader &reader
     );
-
-    // Get number of visible layers
-    int getNumVisibleLayers() const {
-        return visibleLayers.size();
-    }
-
-    // Get a visible layer
-    const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
-    ) const {
-        return visibleLayers[i];
-    }
-
-    // Get a visible layer descriptor
-    const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
-    ) const {
-        return visibleLayerDescs[i];
-    }
 
     // Get the hidden activations (predictions)
     const IntBuffer &getHiddenCIs() const {
