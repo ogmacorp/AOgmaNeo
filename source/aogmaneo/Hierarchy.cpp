@@ -165,9 +165,10 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        scLayers[l].initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
+        scLayers[l].recon.initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
+        scLayers[l].error.initRandom(layerDescs[l].hiddenSize, scVisibleLayerDescs);
 
-        errors[l] = FloatBuffer(scLayers[l].getHiddenCIs().size(), 0.0f);
+        errors[l] = FloatBuffer(scLayers[l].error.getHiddenCIs().size(), 0.0f);
     }
 }
 
@@ -220,7 +221,8 @@ void Hierarchy::step(
             }
 
             // Activate sparse coder
-            scLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+            scLayers[l].recon.step(layerInputCIs, learnEnabled);
+            scLayers[l].error.step(layerInputCIs, &errors[l], learnEnabled);
 
             // Add to next layer's history
             if (l < scLayers.size() - 1) {
@@ -228,7 +230,7 @@ void Hierarchy::step(
 
                 histories[lNext][0].pushFront();
 
-                histories[lNext][0][0] = scLayers[l].getHiddenCIs();
+                histories[lNext][0][0] = scLayers[l].recon.getHiddenCIs();
 
                 ticks[lNext]++;
             }
@@ -241,7 +243,7 @@ void Hierarchy::step(
             // Feed back is current layer state and next higher layer prediction
             Array<const IntBuffer*> feedBackCIs(l < scLayers.size() - 1 ? 2 : 1);
 
-            feedBackCIs[0] = &scLayers[l].getHiddenCIs();
+            feedBackCIs[0] = &scLayers[l].error.getHiddenCIs();
 
             if (l < scLayers.size() - 1)
                 feedBackCIs[1] = &pLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
@@ -280,7 +282,7 @@ int Hierarchy::size() const {
                 size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
         }
 
-        size += scLayers[l].size();
+        size += scLayers[l].recon.size() + scLayers[l].error.size();
 
         for (int i = 0; i < pLayers[l].size(); i++) {
             for (int t = 0; t < pLayers[l][i].size(); t++)
@@ -309,7 +311,7 @@ int Hierarchy::stateSize() const {
                 size += histories[l][i][t].size() * sizeof(int);
         }
 
-        size += scLayers[l].stateSize();
+        size += scLayers[l].recon.stateSize() + scLayers[l].error.stateSize();
         
         // Predictors
         for (int i = 0; i < pLayers[l].size(); i++) {
@@ -367,7 +369,8 @@ void Hierarchy::write(
             }
         }
 
-        scLayers[l].write(writer);
+        scLayers[l].recon.write(writer);
+        scLayers[l].error.write(writer);
 
         // Predictors
         for (int i = 0; i < pLayers[l].size(); i++) {
@@ -446,7 +449,8 @@ void Hierarchy::read(
             }
         }
 
-        scLayers[l].read(reader);
+        scLayers[l].recon.read(reader);
+        scLayers[l].error.read(reader);
         
         pLayers[l].resize(l == 0 ? inputSizes.size() : 1);
 
@@ -458,7 +462,7 @@ void Hierarchy::read(
                 pLayers[l][i][t].read(reader);
         }
 
-        errors[l] = FloatBuffer(scLayers[l].getHiddenCIs().size(), 0.0f);
+        errors[l] = FloatBuffer(scLayers[l].error.getHiddenCIs().size(), 0.0f);
     }
 
     // Actors
@@ -492,7 +496,8 @@ void Hierarchy::writeState(
                 writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
         }
 
-        scLayers[l].writeState(writer);
+        scLayers[l].recon.writeState(writer);
+        scLayers[l].error.writeState(writer);
 
         // Predictors
         for (int i = 0; i < pLayers[l].size(); i++) {
@@ -526,7 +531,8 @@ void Hierarchy::readState(
                 reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
         }
 
-        scLayers[l].readState(reader);
+        scLayers[l].recon.readState(reader);
+        scLayers[l].error.readState(reader);
         
         // Predictors
         for (int i = 0; i < pLayers[l].size(); i++) {

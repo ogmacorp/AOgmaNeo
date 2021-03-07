@@ -12,23 +12,24 @@ using namespace aon;
 
 void SparseCoder::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
-    const FloatBuffer* hiddenErrors,
-    bool learnEnabled
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
-    
-    if (learnEnabled) {
-        int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = alpha * (*hiddenErrors)[hiddenColumnIndex];
+    int maxIndex = -1;
+    float maxActivation = -999999.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        float sum = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
             int diam = vld.radius * 2 + 1;
-
+ 
             // Projection
             Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
@@ -50,11 +51,63 @@ void SparseCoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))] += delta;
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
+
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
+            maxIndex = hc;
+        }
+    }
+
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
+}
+
+void SparseCoder::forwardLearn(
+    const Int2 &columnPos,
+    const Array<const IntBuffer*> &inputCIs,
+    const FloatBuffer* hiddenErrors
+) {
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+    
+    int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+
+    float delta = alpha * (*hiddenErrors)[hiddenColumnIndex];
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        int diam = vld.radius * 2 + 1;
+
+        // Projection
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+        Int2 visibleCenter = project(columnPos, hToV);
+
+        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
+        // Lower corner
+        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+        // Bounds of receptive field, clamped to input size
+        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+
+                vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))] += delta;
+            }
     }
 
     int maxIndex = -1;
@@ -180,7 +233,7 @@ void SparseCoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            float delta = beta * ((vc == targetCI ? 1.0f : 0.0f) - sigmoid(vl.reconstruction[visibleCellIndex]));
+            float delta = alpha * ((vc == targetCI ? 1.0f : 0.0f) - sigmoid(vl.reconstruction[visibleCellIndex]));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -244,7 +297,6 @@ void SparseCoder::initRandom(
 
 void SparseCoder::step(
     const Array<const IntBuffer*> &inputCIs,
-    const FloatBuffer* hiddenErrors,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -263,7 +315,33 @@ void SparseCoder::step(
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenErrors, learnEnabled);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+
+    // Update prevs
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        vl.inputCIsPrev = *inputCIs[vli];
+    }
+}
+
+void SparseCoder::step(
+    const Array<const IntBuffer*> &inputCIs,
+    const FloatBuffer* hiddenErrors,
+    bool learnEnabled
+) {
+    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+    
+    if (learnEnabled) {
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            forwardLearn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenErrors);
+    }
+    else {
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+    }
 
     // Update prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -304,7 +382,6 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -333,7 +410,6 @@ void SparseCoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 

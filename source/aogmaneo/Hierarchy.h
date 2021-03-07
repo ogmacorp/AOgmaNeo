@@ -96,9 +96,14 @@ public:
         {}
     };
 
+    struct SCLayerPair {
+        SparseCoder recon;
+        SparseCoder error;
+    };
+
 private:
     // Layers
-    Array<SparseCoder> scLayers;
+    Array<SCLayerPair> scLayers;
     Array<Array<Array<Predictor>>> pLayers;
     Array<Ptr<Actor>> aLayers;
     Array<FloatBuffer> errors;
@@ -207,14 +212,14 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    SparseCoder &getSCLayer(
+    SCLayerPair &getSCLayer(
         int l // Layer index
     ) {
         return scLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const SparseCoder &getSCLayer(
+    const SCLayerPair &getSCLayer(
         int l // Layer index
     ) const {
         return scLayers[l];

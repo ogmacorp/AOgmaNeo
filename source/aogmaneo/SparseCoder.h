@@ -50,9 +50,13 @@ private:
     
     void forward(
         const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void forwardLearn(
+        const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const FloatBuffer* hiddenErrors
     );
 
     void learn(
@@ -61,13 +65,11 @@ private:
     );
 
 public:
-    float alpha; // Error LR
-    float beta; // Recon LR
+    float alpha; // Learning rate
 
     SparseCoder()
     :
-    alpha(0.001f),
-    beta(0.1f)
+    alpha(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -76,7 +78,11 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    // Activate the sparse coder (perform sparse coding)
+    void step(
+        const Array<const IntBuffer*> &inputCIs, // Input states
+        bool learnEnabled // Whether to learn
+    );
+
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         const FloatBuffer* hiddenErrors,
