@@ -108,14 +108,17 @@ void Hierarchy::initRandom(
             // Create predictors
             for (int i = 0; i < inputSizes.size(); i++) {
                 // Predictor visible layer descriptors
-                Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+                Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 3 : 2);
 
                 pVisibleLayerDescs[0].size = layerDescs[l].errorSize;
                 pVisibleLayerDescs[0].radius = ioDescs[i].pRadius;
 
+                pVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+                pVisibleLayerDescs[1].radius = ioDescs[i].fbRadius;
+
                 if (l < scLayers.size() - 1) {
-                    pVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                    pVisibleLayerDescs[1].radius = ioDescs[i].fbRadius;
+                    pVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
+                    pVisibleLayerDescs[2].radius = ioDescs[i].fbRadius;
                 }
 
                 pLayers[l][i].resize(1);
@@ -123,14 +126,17 @@ void Hierarchy::initRandom(
 
                 if (ioDescs[i].type == IOType::action) {
                     // Actor visible layer descriptors
-                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 3 : 2);
 
-                    aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+                    aVisibleLayerDescs[0].size = layerDescs[l].errorSize;
                     aVisibleLayerDescs[0].radius = ioDescs[i].pRadius;
 
+                    aVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+                    aVisibleLayerDescs[1].radius = ioDescs[i].fbRadius;
+
                     if (l < scLayers.size() - 1) {
-                        aVisibleLayerDescs[0].size = layerDescs[l].errorSize;
-                        aVisibleLayerDescs[0].radius = ioDescs[i].fbRadius;
+                        aVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
+                        aVisibleLayerDescs[2].radius = ioDescs[i].fbRadius;
                     }
 
                     aLayers[i].make();
@@ -164,14 +170,17 @@ void Hierarchy::initRandom(
             pLayers[l][0].resize(layerDescs[l].ticksPerUpdate);
 
             // Predictor visible layer descriptors
-            Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+            Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 3 : 2);
 
             pVisibleLayerDescs[0].size = layerDescs[l].errorSize;
             pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
 
+            pVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+            pVisibleLayerDescs[1].radius = layerDescs[l].fbRadius;
+
             if (l < scLayers.size() - 1) {
-                pVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                pVisibleLayerDescs[1].radius = layerDescs[l].fbRadius;
+                pVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
+                pVisibleLayerDescs[2].radius = layerDescs[l].fbRadius;
             }
 
             // Create actors
@@ -255,12 +264,13 @@ void Hierarchy::step(
     for (int l = scLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
-            Array<const IntBuffer*> feedBackCIs(l < scLayers.size() - 1 ? 2 : 1);
+            Array<const IntBuffer*> feedBackCIs(l < scLayers.size() - 1 ? 3 : 2);
 
             feedBackCIs[0] = &scLayers[l].error.getHiddenCIs();
+            feedBackCIs[1] = &scLayers[l].hidden.getHiddenCIs();
 
             if (l < scLayers.size() - 1)
-                feedBackCIs[1] = &pLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
+                feedBackCIs[2] = &pLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
 
             // Step actor layers
             for (int i = 0; i < pLayers[l].size(); i++) {
