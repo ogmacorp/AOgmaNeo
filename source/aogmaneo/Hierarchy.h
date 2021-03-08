@@ -30,7 +30,6 @@ public:
         int eRadius; // Feed forward error radius
         int pRadius; // Prediction radius
         int fbRadius; // Feed back radius
-        int aRadius; // Actor radius
 
         int historyCapacity; // Actor history capacity
 
@@ -42,7 +41,6 @@ public:
         eRadius(2),
         pRadius(2),
         fbRadius(2),
-        aRadius(2),
         historyCapacity(32)
         {}
 
@@ -53,7 +51,6 @@ public:
             int eRadius,
             int pRadius,
             int fbRadius,
-            int aRadius,
             int historyCapacity
         )
         :
@@ -63,7 +60,6 @@ public:
         eRadius(eRadius),
         pRadius(pRadius),
         fbRadius(fbRadius),
-        aRadius(aRadius),
         historyCapacity(historyCapacity)
         {}
     };

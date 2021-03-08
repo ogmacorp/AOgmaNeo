@@ -126,10 +126,12 @@ void Hierarchy::initRandom(
                     Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
                     aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-                    aVisibleLayerDescs[0].radius = ioDescs[i].aRadius;
+                    aVisibleLayerDescs[0].radius = ioDescs[i].pRadius;
 
-                    if (l < scLayers.size() - 1)
-                        aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
+                    if (l < scLayers.size() - 1) {
+                        aVisibleLayerDescs[0].size = layerDescs[l].errorSize;
+                        aVisibleLayerDescs[0].radius = ioDescs[i].fbRadius;
+                    }
 
                     aLayers[i].make();
 
