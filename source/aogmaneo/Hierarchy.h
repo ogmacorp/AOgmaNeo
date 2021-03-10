@@ -15,9 +15,8 @@
 namespace aon {
 // Type of hierarchy input layer
 enum IOType {
-    none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 0,
+    action = 1
 };
 
 // A SPH
@@ -25,43 +24,42 @@ class Hierarchy {
 public:
     struct IODesc {
         Int3 size;
-        int intermediateSize;
-
         IOType type;
 
-        int ffRadius; // Feed forward radius
+        int hRadius; // Feed forward hidden radius
+        int eRadius; // Feed forward error radius
         int pRadius; // Prediction radius
-        int aRadius; // Actor radius
+        int fbRadius; // Feed back radius
 
         int historyCapacity; // Actor history capacity
 
         IODesc()
         :
         size(4, 4, 16),
-        intermediateSize(32),
-        type(none),
-        ffRadius(2),
+        type(prediction),
+        hRadius(2),
+        eRadius(2),
         pRadius(2),
-        aRadius(2),
+        fbRadius(2),
         historyCapacity(128)
         {}
 
         IODesc(
             const Int3 &size,
-            int intermediateSize,
             IOType type,
-            int ffRadius,
+            int hRadius,
+            int eRadius,
             int pRadius,
-            int aRadius,
+            int fbRadius,
             int historyCapacity
         )
         :
         size(size),
-        intermediateSize(intermediateSize),
         type(type),
-        ffRadius(ffRadius),
+        hRadius(hRadius),
+        eRadius(eRadius),
         pRadius(pRadius),
-        aRadius(aRadius),
+        fbRadius(fbRadius),
         historyCapacity(historyCapacity)
         {}
     };
@@ -69,10 +67,12 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        int intermediateSize;
+        Int3 errorSize; // Size of error layer
 
-        int ffRadius; // Feed forward radius
+        int hRadius; // Feed forward hidden radius
+        int eRadius; // Feed forward error radius
         int pRadius; // Prediction radius
+        int fbRadius; // Feed back radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -80,36 +80,48 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        intermediateSize(32),
-        ffRadius(2),
+        errorSize(4, 4, 16),
+        hRadius(2),
+        eRadius(2),
         pRadius(2),
+        fbRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int intermediateSize,
-            int ffRadius,
+            const Int3 &errorSize,
+            int hRadius,
+            int eRadius,
             int pRadius,
+            int fbRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
-        intermediateSize(intermediateSize),
-        ffRadius(ffRadius),
+        errorSize(errorSize),
+        hRadius(hRadius),
+        eRadius(eRadius),
         pRadius(pRadius),
+        fbRadius(fbRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
     };
 
+    struct SCLayerPair {
+        SparseCoder hidden;
+        SparseCoder error;
+    };
+
 private:
     // Layers
-    Array<SparseCoder> scLayers;
-    Array<Array<Ptr<Predictor>>> pLayers;
+    Array<SCLayerPair> scLayers;
+    Array<Array<Array<Predictor>>> pLayers;
     Array<Ptr<Actor>> aLayers;
+    Array<FloatBuffer> errors;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -150,7 +162,7 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // Mimic mode
+        bool mimic = false // Whether to treat Actors like Predictors
     );
 
     // Serialization
@@ -185,7 +197,7 @@ public:
         if (aLayers[i] != nullptr) // If is an action layer
             return aLayers[i]->getHiddenCIs();
 
-        return pLayers[0][i]->getHiddenCIs();
+        return pLayers[0][i][0].getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -215,28 +227,28 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    SparseCoder &getSCLayer(
+    SCLayerPair &getSCLayer(
         int l // Layer index
     ) {
         return scLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const SparseCoder &getSCLayer(
+    const SCLayerPair &getSCLayer(
         int l // Layer index
     ) const {
         return scLayers[l];
     }
 
     // Retrieve predictor layer(s)
-    Array<Ptr<Predictor>> &getPLayers(
+    Array<Array<Predictor>> &getPLayers(
         int l // Layer index
     ) {
         return pLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Ptr<Predictor>> &getPLayers(
+    const Array<Array<Predictor>> &getPLayers(
         int l // Layer index
     ) const {
         return pLayers[l];
