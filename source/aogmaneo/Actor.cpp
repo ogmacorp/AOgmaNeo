@@ -45,7 +45,6 @@ void Actor::forward(
         count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
     }
 
-    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -90,10 +89,7 @@ void Actor::forward(
 
         hiddenActivations[hiddenCellIndex] = sum;
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
-        }
+        maxActivation = max(maxActivation, sum);
     }
 
     float total = 0.0f;
@@ -123,7 +119,7 @@ void Actor::forward(
         }
     }
     
-    hiddenCIs[hiddenColumnIndex] = maxIndex;
+    hiddenCIs[hiddenColumnIndex] = selectIndex;
     hiddenValues[hiddenColumnIndex] = maxActivation;
 }
 
