@@ -299,7 +299,6 @@ int SparseCoder::size() const {
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.protos.size() * sizeof(SByte);
     }

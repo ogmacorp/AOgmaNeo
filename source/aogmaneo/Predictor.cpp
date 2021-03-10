@@ -132,7 +132,7 @@ void Predictor::learn(
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+                    int hiddenCellIndex = hiddenCellsStart + hc;
 
                     int delta = roundftoi(alpha * 127.0f * ((hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]));
 
@@ -223,7 +223,6 @@ int Predictor::size() const {
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
         size += sizeof(VisibleLayerDesc) + sizeof(int) + vl.weights.size() * sizeof(SByte) + vl.inputCIsPrev.size() * sizeof(int);
     }
