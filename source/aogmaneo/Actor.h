@@ -93,7 +93,7 @@ public:
     vlr(0.005f),
     alr(0.005f),
     discount(0.99f),
-    minSteps(4),
+    minSteps(8),
     historyIters(16)
     {}
 
