@@ -61,12 +61,12 @@ private:
     );
 
 public:
-    float alpha;
+    float lr;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.05f)
+    lr(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization

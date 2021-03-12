@@ -8,8 +8,9 @@
 
 #pragma once
 
-#include "SparseCoder.h"
-#include "Predictor.h"
+#include "HiddenEncoder.h"
+#include "ErrorEncoder.h"
+#include "Decoder.h"
 #include "Actor.h"
 
 namespace aon {
@@ -26,10 +27,10 @@ public:
         Int3 size;
         IOType type;
 
-        int hRadius; // Feed forward hidden radius
-        int eRadius; // Feed forward error radius
-        int pRadius; // Prediction radius
-        int fbRadius; // Feed back radius
+        int hRadius; // Hidden encoder radius
+        int eRadius; // Error encoder radius
+        int dRadius; // Decoder radius
+        int bRadius; // Feed back radius
 
         int historyCapacity; // Actor history capacity
 
@@ -39,8 +40,8 @@ public:
         type(prediction),
         hRadius(2),
         eRadius(2),
-        pRadius(2),
-        fbRadius(2),
+        dRadius(2),
+        bRadius(2),
         historyCapacity(128)
         {}
 
@@ -49,8 +50,8 @@ public:
             IOType type,
             int hRadius,
             int eRadius,
-            int pRadius,
-            int fbRadius,
+            int dRadius,
+            int bRadius,
             int historyCapacity
         )
         :
@@ -58,8 +59,8 @@ public:
         type(type),
         hRadius(hRadius),
         eRadius(eRadius),
-        pRadius(pRadius),
-        fbRadius(fbRadius),
+        dRadius(dRadius),
+        bRadius(bRadius),
         historyCapacity(historyCapacity)
         {}
     };
@@ -71,8 +72,8 @@ public:
 
         int hRadius; // Feed forward hidden radius
         int eRadius; // Feed forward error radius
-        int pRadius; // Prediction radius
-        int fbRadius; // Feed back radius
+        int dRadius; // Prediction radius
+        int bRadius; // Feed back radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -83,8 +84,8 @@ public:
         errorSize(4, 4, 16),
         hRadius(2),
         eRadius(2),
-        pRadius(2),
-        fbRadius(2),
+        dRadius(2),
+        bRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
@@ -94,8 +95,8 @@ public:
             const Int3 &errorSize,
             int hRadius,
             int eRadius,
-            int pRadius,
-            int fbRadius,
+            int dRadius,
+            int bRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
@@ -104,22 +105,22 @@ public:
         errorSize(errorSize),
         hRadius(hRadius),
         eRadius(eRadius),
-        pRadius(pRadius),
-        fbRadius(fbRadius),
+        dRadius(dRadius),
+        bRadius(bRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
     };
 
-    struct SCLayerPair {
-        SparseCoder hidden;
-        SparseCoder error;
+    struct EncLayerPair {
+        HiddenEncoder hidden;
+        ErrorEncoder error;
     };
 
 private:
     // Layers
-    Array<SCLayerPair> scLayers;
-    Array<Array<Array<Predictor>>> pLayers;
+    Array<EncLayerPair> encLayers;
+    Array<Array<Array<Decoder>>> dLayers;
     Array<Ptr<Actor>> aLayers;
     Array<FloatBuffer> errors;
 
@@ -162,7 +163,7 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // Whether to treat Actors like Predictors
+        bool mimic = false // Whether to treat Actors like Decoders
     );
 
     // Serialization
@@ -185,9 +186,9 @@ public:
         StreamReader &reader
     );
 
-    // Get the number of layers (scLayers)
+    // Get the number of layers (encLayers)
     int getNumLayers() const {
-        return scLayers.size();
+        return encLayers.size();
     }
 
     // Retrieve predictions
@@ -197,7 +198,7 @@ public:
         if (aLayers[i] != nullptr) // If is an action layer
             return aLayers[i]->getHiddenCIs();
 
-        return pLayers[0][i][0].getHiddenCIs();
+        return dLayers[0][i][0].getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -227,31 +228,31 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    SCLayerPair &getSCLayer(
+    EncLayerPair &getEncLayer(
         int l // Layer index
     ) {
-        return scLayers[l];
+        return encLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const SCLayerPair &getSCLayer(
+    const EncLayerPair &getEncLayer(
         int l // Layer index
     ) const {
-        return scLayers[l];
+        return encLayers[l];
     }
 
     // Retrieve predictor layer(s)
-    Array<Array<Predictor>> &getPLayers(
+    Array<Array<Decoder>> &getDLayers(
         int l // Layer index
     ) {
-        return pLayers[l];
+        return dLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Array<Predictor>> &getPLayers(
+    const Array<Array<Decoder>> &getDLayers(
         int l // Layer index
     ) const {
-        return pLayers[l];
+        return dLayers[l];
     }
 
     // Retrieve predictor layer(s)
