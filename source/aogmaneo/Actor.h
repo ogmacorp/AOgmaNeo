@@ -83,7 +83,7 @@ private:
 public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
-    float gamma; // Discount factor
+    float discount; // Discount factor
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
 
@@ -92,7 +92,7 @@ public:
     :
     vlr(0.005f),
     alr(0.005f),
-    gamma(0.99f),
+    discount(0.99f),
     minSteps(4),
     historyIters(16)
     {}
