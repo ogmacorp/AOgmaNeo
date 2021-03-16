@@ -229,7 +229,7 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = ByteBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void ImageEncoder::step(
