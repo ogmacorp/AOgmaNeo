@@ -68,6 +68,8 @@ void Predictor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
+        hiddenActivations[hiddenCellIndex] /= max(1, count);
+
         if (hiddenActivations[hiddenCellIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenCellIndex];
             maxIndex = hc;
