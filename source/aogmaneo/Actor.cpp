@@ -357,7 +357,11 @@ void Actor::initRandom(
         int area = diam * diam;
 
         // Create weight matrix for this visible layer and initialize randomly
-        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z, 0.0f);
+        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z);
+
+        for (int i = 0; i < vl.valueWeights.size(); i++)
+            vl.valueWeights[i] = randf(-0.01f, 0.01f);
+
         vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.actionWeights.size(); i++)
