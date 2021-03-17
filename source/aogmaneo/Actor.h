@@ -87,8 +87,8 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.005f),
-    decay(0.0001f),
+    lr(0.01f),
+    decay(0.001f),
     discount(0.99f),
     qSteps(5),
     historyIters(16)
