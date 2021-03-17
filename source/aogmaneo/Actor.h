@@ -90,7 +90,7 @@ public:
     lr(0.005f),
     decay(0.0001f),
     discount(0.99f),
-    qSteps(7),
+    qSteps(5),
     historyIters(16)
     {}
 
