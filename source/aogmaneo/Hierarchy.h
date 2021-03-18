@@ -42,7 +42,7 @@ public:
         eRadius(2),
         dRadius(2),
         bRadius(2),
-        historyCapacity(32)
+        historyCapacity(128)
         {}
 
         IODesc(
