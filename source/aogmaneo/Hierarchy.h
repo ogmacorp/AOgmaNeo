@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include "HiddenEncoder.h"
-#include "ErrorEncoder.h"
+#include "Encoder.h"
 #include "Decoder.h"
 #include "Actor.h"
 
@@ -27,8 +26,7 @@ public:
         Int3 size;
         IOType type;
 
-        int hRadius; // Hidden encoder radius
-        int eRadius; // Error encoder radius
+        int eRadius; // Encoder radius
         int dRadius; // Decoder radius
         int bRadius; // Feed back radius
 
@@ -38,7 +36,6 @@ public:
         :
         size(4, 4, 16),
         type(prediction),
-        hRadius(2),
         eRadius(2),
         dRadius(2),
         bRadius(2),
@@ -48,7 +45,6 @@ public:
         IODesc(
             const Int3 &size,
             IOType type,
-            int hRadius,
             int eRadius,
             int dRadius,
             int bRadius,
@@ -57,7 +53,6 @@ public:
         :
         size(size),
         type(type),
-        hRadius(hRadius),
         eRadius(eRadius),
         dRadius(dRadius),
         bRadius(bRadius),
@@ -68,11 +63,10 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        Int3 errorSize; // Size of error layer
+        int errorHistorySize; // Error history size for encoder
 
-        int hRadius; // Feed forward hidden radius
-        int eRadius; // Feed forward error radius
-        int dRadius; // Prediction radius
+        int eRadius; // Encoder radius
+        int dRadius; // Decoder radius
         int bRadius; // Feed back radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
@@ -81,8 +75,7 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        errorSize(4, 4, 16),
-        hRadius(2),
+        errorHistorySize(32),
         eRadius(2),
         dRadius(2),
         bRadius(2),
@@ -92,8 +85,7 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            const Int3 &errorSize,
-            int hRadius,
+            int errorHistorySize,
             int eRadius,
             int dRadius,
             int bRadius,
@@ -102,8 +94,7 @@ public:
         )
         :
         hiddenSize(hiddenSize),
-        errorSize(errorSize),
-        hRadius(hRadius),
+        errorHistorySize(errorHistorySize),
         eRadius(eRadius),
         dRadius(dRadius),
         bRadius(bRadius),
@@ -112,14 +103,9 @@ public:
         {}
     };
 
-    struct EncLayerPair {
-        HiddenEncoder hidden;
-        ErrorEncoder error;
-    };
-
 private:
     // Layers
-    Array<EncLayerPair> encLayers;
+    Array<Encoder> eLayers;
     Array<Array<Array<Decoder>>> dLayers;
     Array<Ptr<Actor>> aLayers;
     Array<FloatBuffer> errors;
@@ -186,9 +172,9 @@ public:
         StreamReader &reader
     );
 
-    // Get the number of layers (encLayers)
+    // Get the number of layers (eLayers)
     int getNumLayers() const {
-        return encLayers.size();
+        return eLayers.size();
     }
 
     // Retrieve predictions
@@ -228,17 +214,17 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    EncLayerPair &getEncLayer(
+    Encoder &getELayer(
         int l // Layer index
     ) {
-        return encLayers[l];
+        return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const EncLayerPair &getEncLayer(
+    const Encoder &getELayer(
         int l // Layer index
     ) const {
-        return encLayers[l];
+        return eLayers[l];
     }
 
     // Retrieve predictor layer(s)
