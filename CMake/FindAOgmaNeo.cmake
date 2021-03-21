@@ -1,6 +1,6 @@
 # --------------------------------------------------------------------------
 # AOgmaNeo
-# Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+# Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 #
 # This copy of OgmaNeo is licensed to you under the terms described
 # in the AOGMANEO_LICENSE.md file included in this distribution.
