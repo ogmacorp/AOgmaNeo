@@ -65,8 +65,8 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.05f),
-    temperature(16.0f)
+    alpha(0.1f),
+    temperature(8.0f)
     {}
 
     // Create with random initialization
