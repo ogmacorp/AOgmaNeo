@@ -69,29 +69,12 @@ void Predictor::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         hiddenActivations[hiddenCellIndex] /= max(1, count);
+        hiddenActivations[hiddenCellIndex] /= 127.0f;
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenCellIndex];
             maxIndex = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] = expf(temperature * (hiddenActivations[hiddenCellIndex] - maxActivation));
-
-        total += hiddenActivations[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] *= scale;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -136,7 +119,12 @@ void Predictor::learn(
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = hiddenCellsStart + hc;
 
-                    int delta = roundftoi(alpha * 127.0f * ((hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]));
+                    int delta = roundftoi(alpha * 127.0f * ((hc == targetCI ? targetRange : -targetRange) - hiddenActivations[hiddenCellIndex]));
+
+                    if (hc == targetCI)
+                        delta = max(0, delta);
+                    else
+                        delta = min(0, delta);
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
@@ -250,7 +238,7 @@ void Predictor::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&targetRange), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
@@ -280,7 +268,7 @@ void Predictor::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&targetRange), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenActivations.resize(numHiddenCells);
