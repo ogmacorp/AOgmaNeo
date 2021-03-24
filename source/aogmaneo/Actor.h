@@ -87,11 +87,11 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.005f),
+    lr(0.01f),
     decay(0.0001f),
     discount(0.99f),
     qSteps(5),
-    historyIters(16)
+    historyIters(8)
     {}
 
     // Initialized randomly
