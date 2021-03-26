@@ -223,7 +223,7 @@ void Actor::learn(
         float delta;
 
         if (hc == targetCI)
-            delta = newValue - targetSumPrev;
+            delta = newValue - targetSumPrev + decay * (1.0f - hiddenActivations[hiddenCellIndex]);
         else
             delta = decay * -hiddenActivations[hiddenCellIndex];
 
