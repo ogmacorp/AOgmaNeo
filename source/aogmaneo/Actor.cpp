@@ -139,6 +139,7 @@ void Actor::learn(
     }
 
     float maxActivation = -999999.0f;
+    float maxActivationPrev = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -189,11 +190,32 @@ void Actor::learn(
         hiddenActivations[hiddenCellIndex] = sumPrev;
 
         maxActivation = max(maxActivation, sum);
+        maxActivationPrev = max(maxActivationPrev, sumPrev);
+    }
+
+    int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
+
+    float targetSumPrev = hiddenActivations[address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize)];
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivationPrev);
+
+        total += hiddenActivations[hiddenCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenCellIndex] *= scale;
     }
 
     float newValue = max(q1 + g1 * maxActivation, q2 + g2 * hiddenValues[hiddenColumnIndex]);
-
-    int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -201,9 +223,11 @@ void Actor::learn(
         float delta;
 
         if (hc == targetCI)
-            delta = lr * (newValue - hiddenActivations[hiddenCellIndex]);
+            delta = newValue - targetSumPrev;
         else
             delta = decay * -hiddenActivations[hiddenCellIndex];
+
+        delta *= lr;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
