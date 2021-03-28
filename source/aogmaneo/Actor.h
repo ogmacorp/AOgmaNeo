@@ -88,7 +88,7 @@ public:
     Actor()
     :
     lr(0.01f),
-    decay(0.1f),
+    decay(0.5f),
     discount(0.99f),
     qSteps(5),
     historyIters(8)
