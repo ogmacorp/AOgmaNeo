@@ -126,14 +126,21 @@ void Predictor::learn(
                     else
                         delta = min(0, delta);
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    for (int dvc = -1; dvc <= 1; dvc++) {
+                        int vc = inCI + dvc;
 
-                    int weight = vl.weights[wi];
-                    
-                    if (delta > 0)
-                        vl.weights[wi] = min<int>(127 - delta, weight) + delta;
-                    else
-                        vl.weights[wi] = max<int>(-127 - delta, weight) + delta;
+                        if (vc < 0 || vc >= vld.size.z)
+                            continue;
+
+                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        int weight = vl.weights[wi];
+                        
+                        if (delta > 0)
+                            vl.weights[wi] = min<int>(127 - delta, weight) + delta;
+                        else
+                            vl.weights[wi] = max<int>(-127 - delta, weight) + delta;
+                    }
                 }
             }
     }
