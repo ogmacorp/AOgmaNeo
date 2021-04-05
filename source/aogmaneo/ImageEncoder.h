@@ -67,7 +67,7 @@ public:
     // Defaults
     ImageEncoder()
     :
-    lr(0.05f),
+    lr(0.04f),
     falloff(0.1f)
     {}
 
