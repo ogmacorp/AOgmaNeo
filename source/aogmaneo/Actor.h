@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -84,13 +84,17 @@ public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
     float discount; // Discount factor
+    int minSteps; // Minimum steps before sample can be used
+    int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
     :
-    vlr(0.01f),
-    alr(0.1f),
-    discount(0.99f)
+    vlr(0.005f),
+    alr(0.005f),
+    discount(0.99f),
+    minSteps(8),
+    historyIters(16)
     {}
 
     // Initialized randomly

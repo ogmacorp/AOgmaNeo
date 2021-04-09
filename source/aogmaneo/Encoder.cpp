@@ -46,22 +46,11 @@ void Encoder::forward(
         count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
     }
 
-    // Max previous error
-    float maxErrorPrev = 0.0f;
-
-    for (int t = 0; t < errorHistorySize; t++) {
-        int historyIndex = address3(Int3(columnPos.x, columnPos.y, t), Int3(hiddenSize.x, hiddenSize.y, errorHistorySize));
-
-        maxErrorPrev = max(maxErrorPrev, hiddenErrorHistories[historyIndex]);
-    }
-
-    float error = (*hiddenErrors)[hiddenColumnIndex];
-
-    if (learnEnabled && abs(error) > maxErrorPrev) {
+    if (learnEnabled) {
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-            float delta = lr * error * ((hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
+            float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * ((hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -96,20 +85,6 @@ void Encoder::forward(
                     }
             }
         }
-    }
-
-    // Shift
-    for (int t = errorHistorySize - 1; t >= 1; t--) {
-        int historyIndex = address3(Int3(columnPos.x, columnPos.y, t), Int3(hiddenSize.x, hiddenSize.y, errorHistorySize));
-
-        hiddenErrorHistories[historyIndex] = hiddenErrorHistories[historyIndex - 1]; // Can just use -1 here
-    }
-
-    // Insert
-    {
-        int historyIndex = address3(Int3(columnPos.x, columnPos.y, 0), Int3(hiddenSize.x, hiddenSize.y, errorHistorySize));
-
-        hiddenErrorHistories[historyIndex] = abs(error);
     }
 
     int maxIndex = -1;
@@ -192,7 +167,6 @@ void Encoder::initRandom(
     this->visibleLayerDescs = visibleLayerDescs;
 
     this->hiddenSize = hiddenSize;
-    this->errorHistorySize = errorHistorySize;
 
     visibleLayers.resize(visibleLayerDescs.size());
 
@@ -221,8 +195,6 @@ void Encoder::initRandom(
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
-
-    hiddenErrorHistories = FloatBuffer(numHiddenColumns * errorHistorySize, 0.0f);
 }
 
 void Encoder::step(
@@ -245,7 +217,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + sizeof(float) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenErrorHistories.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -257,7 +229,7 @@ int Encoder::size() const {
 }
 
 int Encoder::stateSize() const {
-    int size = hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenErrorHistories.size() * sizeof(float);
+    int size = hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -272,13 +244,11 @@ void Encoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
-    writer.write(reinterpret_cast<const void*>(&errorHistorySize), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenErrorHistories[0]), hiddenErrorHistories.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -300,7 +270,6 @@ void Encoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
-    reader.read(reinterpret_cast<void*>(&errorHistorySize), sizeof(int));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
@@ -309,11 +278,9 @@ void Encoder::read(
 
     hiddenActivations.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
-    hiddenErrorHistories.resize(numHiddenColumns * errorHistorySize);
 
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenErrorHistories[0]), hiddenErrorHistories.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -349,7 +316,6 @@ void Encoder::writeState(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenErrorHistories[0]), hiddenErrorHistories.size() * sizeof(float));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -363,7 +329,6 @@ void Encoder::readState(
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenErrorHistories[0]), hiddenErrorHistories.size() * sizeof(float));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
