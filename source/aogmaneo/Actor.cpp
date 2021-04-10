@@ -46,6 +46,7 @@ void Actor::forward(
     }
 
     int maxIndex = -1;
+    float maxActivation0 = -999999.0f;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -92,12 +93,12 @@ void Actor::forward(
 
         sum0 /= max(1, count);
 
-        float activation = min(sum0, m1);
-
-        if (activation > maxActivation || maxIndex == -1) {
-            maxActivation = activation;
+        if (sum0 > maxActivation0 || maxIndex == -1) {
+            maxActivation0 = sum0;
             maxIndex = hc;
         }
+
+        maxActivation = max(maxActivation, min(sum0, m1));
     }
     
     hiddenCIs[hiddenColumnIndex] = maxIndex;
