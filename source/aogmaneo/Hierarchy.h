@@ -32,8 +32,6 @@ public:
         int dRadius; // Decoder radius
         int bRadius; // Feed back radius
 
-        int historyCapacity; // Actor history capacity
-
         IODesc()
         :
         size(4, 4, 16),
@@ -41,8 +39,7 @@ public:
         hRadius(2),
         eRadius(2),
         dRadius(2),
-        bRadius(2),
-        historyCapacity(128)
+        bRadius(2)
         {}
 
         IODesc(
@@ -51,8 +48,7 @@ public:
             int hRadius,
             int eRadius,
             int dRadius,
-            int bRadius,
-            int historyCapacity
+            int bRadius
         )
         :
         size(size),
@@ -60,8 +56,7 @@ public:
         hRadius(hRadius),
         eRadius(eRadius),
         dRadius(dRadius),
-        bRadius(bRadius),
-        historyCapacity(historyCapacity)
+        bRadius(bRadius)
         {}
     };
 

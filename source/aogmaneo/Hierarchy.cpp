@@ -141,7 +141,7 @@ void Hierarchy::initRandom(
 
                     aLayers[i].make();
 
-                    aLayers[i]->initRandom(inputSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
+                    aLayers[i]->initRandom(inputSizes[i], aVisibleLayerDescs);
                 }
             }
         }

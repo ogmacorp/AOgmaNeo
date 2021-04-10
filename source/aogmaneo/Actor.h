@@ -31,14 +31,9 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-    };
+        FloatBuffer traces;
 
-    // History sample for delayed updates
-    struct HistorySample {
-        Array<IntBuffer> inputCIs;
-        IntBuffer hiddenTargetCIsPrev;
-
-        float reward;
+        IntBuffer inputCIsPrev;
     };
 
 private:
@@ -51,8 +46,6 @@ private:
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
 
-    CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
-
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -61,32 +54,28 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIsPrev,
+        const Array<const IntBuffer*> &inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
-        float q,
-        float g
+        float reward,
+        bool learnEnabled
     );
 
 public:
     float lr; // Learning rate
     float discount;
+    float traceDecay;
 
     // Defaults
     Actor()
     :
     lr(0.01f),
-    discount(0.99f)
+    discount(0.99f),
+    traceDecay(0.98f)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
-        int historyCapacity,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
@@ -145,10 +134,6 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
-    }
-
-    int getHistoryCapacity() const {
-        return historySamples.size();
     }
 
     int getHistorySize() const {
