@@ -44,8 +44,6 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenValues; // Hidden value function output buffer
-
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -68,9 +66,9 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.1f),
+    lr(0.01f),
     discount(0.99f),
-    traceDecay(0.97f)
+    traceDecay(0.96f)
     {}
 
     // Initialized randomly

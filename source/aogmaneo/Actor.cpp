@@ -149,8 +149,8 @@ void Actor::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inCIPrev)
-                            vl.traces[wi] = (hc == targetCI ? 1.0f : 0.0f);
+                        if (vc == inCIPrev && hc == targetCI)
+                            vl.traces[wi] += 1.0f;
                         else
                             vl.traces[wi] *= traceDecay;
 
@@ -162,7 +162,6 @@ void Actor::forward(
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
-    hiddenValues[hiddenColumnIndex] = maxActivation;
 }
 
 void Actor::initRandom(
@@ -201,8 +200,6 @@ void Actor::initRandom(
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
-
-    hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
 }
 
 void Actor::step(
@@ -226,7 +223,7 @@ void Actor::step(
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -239,7 +236,7 @@ int Actor::size() const {
 }
 
 int Actor::stateSize() const {
-    return hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+    return hiddenCIs.size() * sizeof(int) + sizeof(int);
 }
 
 void Actor::write(
@@ -252,7 +249,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     int numVisibleCellsLayers = visibleLayers.size();
 
@@ -284,10 +280,8 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
-    hiddenValues.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     int numVisibleCellsLayers = visibleLayers.size();
 
@@ -325,7 +319,6 @@ void Actor::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -340,7 +333,6 @@ void Actor::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
