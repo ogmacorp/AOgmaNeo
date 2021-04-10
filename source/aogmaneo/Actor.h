@@ -75,14 +75,12 @@ private:
 public:
     float lr; // Learning rate
     float discount;
-    int historyIters;
 
     // Defaults
     Actor()
     :
     lr(0.01f),
-    discount(0.99f),
-    historyIters(8)
+    discount(0.99f)
     {}
 
     // Initialized randomly
