@@ -139,12 +139,12 @@ void Actor::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] += delta * vl.traces[wi];
-
-                        if (hc == targetCI && vc == inCIPrev)
-                            vl.traces[wi] = 1.0f;
+                        if (vc == inCIPrev)
+                            vl.traces[wi] = (hc == targetCI ? 1.0f : 0.0f);
                         else
                             vl.traces[wi] *= traceDecay;
+
+                        vl.weights[wi] += delta * vl.traces[wi];
                     }
                 }
         }
