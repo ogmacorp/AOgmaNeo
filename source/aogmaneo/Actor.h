@@ -89,7 +89,7 @@ public:
     Actor()
     :
     lr0(0.01f),
-    lr1(0.1f),
+    lr1(0.01f),
     discount(0.99f),
     qSteps(5),
     historyIters(8)

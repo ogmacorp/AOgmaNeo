@@ -51,7 +51,8 @@ void Actor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        float sum0 = 0.0f;
+        float sum1 = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -84,14 +85,18 @@ void Actor::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += min(vl.weights0[wi], vl.weights1[wi]);
+                    sum0 += vl.weights0[wi];
+                    sum1 += vl.weights1[wi];
                 }
         }
 
-        sum /= max(1, count);
+        sum0 /= max(1, count);
+        sum1 /= max(1, count);
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
+        float activation = min(sum0, sum1);
+
+        if (activation > maxActivation || maxIndex == -1) {
+            maxActivation = activation;
             maxIndex = hc;
         }
     }
@@ -146,7 +151,8 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        float sum0 = 0.0f;
+        float sum1 = 0.0f;
         float sumPrev = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -181,17 +187,19 @@ void Actor::learn(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += min(vl.weights0[inCI + wiStart], vl.weights1[inCI + wiStart]);
+                    sum0 += vl.weights0[inCI + wiStart];
+                    sum1 += vl.weights1[inCI + wiStart];
                     sumPrev += vl.weights0[inCIPrev + wiStart];
                 }
         }
 
-        sum /= max(1, count);
+        sum0 /= max(1, count);
+        sum1 /= max(1, count);
         sumPrev /= max(1, count);
 
         hiddenActivations[hiddenCellIndex] = sumPrev;
 
-        maxActivation = max(maxActivation, sum);
+        maxActivation = max(maxActivation, min(sum0, sum1));
         maxActivationPrev = max(maxActivationPrev, sumPrev);
     }
 
