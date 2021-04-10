@@ -52,7 +52,7 @@ void Actor::forward(
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         float sum0 = 0.0f;
-        float sum1 = 0.0f;
+        float m1 = -999999.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -86,14 +86,13 @@ void Actor::forward(
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum0 += vl.weights0[wi];
-                    sum1 += vl.weights1[wi];
+                    m1 = max(m1, vl.weights1[wi]);
                 }
         }
 
         sum0 /= max(1, count);
-        sum1 /= max(1, count);
 
-        float activation = min(sum0, sum1);
+        float activation = min(sum0, m1);
 
         if (activation > maxActivation || maxIndex == -1) {
             maxActivation = activation;
@@ -152,7 +151,7 @@ void Actor::learn(
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         float sum0 = 0.0f;
-        float sum1 = 0.0f;
+        float m1 = -999999.0f;
         float sumPrev = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -188,18 +187,17 @@ void Actor::learn(
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum0 += vl.weights0[inCI + wiStart];
-                    sum1 += vl.weights1[inCI + wiStart];
+                    m1 = max(m1, vl.weights1[inCI + wiStart]);
                     sumPrev += vl.weights0[inCIPrev + wiStart];
                 }
         }
 
         sum0 /= max(1, count);
-        sum1 /= max(1, count);
         sumPrev /= max(1, count);
 
         hiddenActivations[hiddenCellIndex] = sumPrev;
 
-        maxActivation = max(maxActivation, min(sum0, sum1));
+        maxActivation = max(maxActivation, min(sum0, m1));
         maxActivationPrev = max(maxActivationPrev, sumPrev);
     }
 
