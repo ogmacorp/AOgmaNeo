@@ -47,8 +47,12 @@ void Actor::forward(
         count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
     }
 
+    int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
+
     int maxIndex = -1;
     float maxActivation = -999999.0f;
+
+    float sumPrev = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -84,9 +88,15 @@ void Actor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += vl.weights[wi];
+                    sum += vl.weights[inCI + wiStart];
+
+                    if (hc == targetCI) {
+                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+
+                        sumPrev += vl.weights[inCIPrev + wiStart];
+                    }
                 }
         }
 
@@ -97,10 +107,10 @@ void Actor::forward(
             maxIndex = hc;
         }
     }
-    
-    float delta = lr * (reward + discount * maxActivation - hiddenValues[hiddenColumnIndex]);
 
-    int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
+    sumPrev /= max(1, count);
+    
+    float delta = lr * (reward + discount * maxActivation - sumPrev);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -139,8 +149,8 @@ void Actor::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inCIPrev && hc == targetCI)
-                            vl.traces[wi] = 1.0f;
+                        if (vc == inCIPrev)
+                            vl.traces[wi] = (hc == targetCI ? 1.0f : 0.0f);
                         else
                             vl.traces[wi] *= traceDecay;
 
