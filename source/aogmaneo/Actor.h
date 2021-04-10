@@ -30,7 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        FloatBuffer weights0;
+        FloatBuffer weights1;
     };
 
     // History sample for delayed updates
@@ -78,8 +79,8 @@ private:
     );
 
 public:
-    float lr; // Learning rate
-    float decay;
+    float lr0; // Learning rate
+    float lr1; // Learning rate
     float discount;
     int qSteps;
     int historyIters;
@@ -87,8 +88,8 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.01f),
-    decay(0.1f),
+    lr0(0.01f),
+    lr1(0.1f),
     discount(0.99f),
     qSteps(5),
     historyIters(8)
