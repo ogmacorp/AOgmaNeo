@@ -40,6 +40,7 @@ private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
     FloatBuffer hiddenActivations;
+    FloatBuffer hiddenErrors;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -60,6 +61,11 @@ private:
     );
 
     void generateErrors(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs
+    );
+
+    void propagateErrors(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
@@ -92,6 +98,10 @@ public:
     );
 
     void generateErrors(
+        const IntBuffer* hiddenTargetCIs
+    );
+
+    void propagateErrors(
         const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
         int vli

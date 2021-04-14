@@ -145,33 +145,10 @@ void Decoder::generateErrors(
 
     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-    float sum = 0.0f;
-    int count = 0;
+    int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, inCIPrev), vld.size);
 
-    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-            Int2 hiddenPos = Int2(ix, iy);
-
-            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-
-            Int2 visibleCenter = project(hiddenPos, hToV);
-
-            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
-
-            if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
-
-                for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hc), hiddenSize);
-
-                    float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex];
-
-                    sum += error;// * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
-                }
-
-                count++;
-            }
-        }
+    float sum = vl.weights.multiplyT(visibleCellIndex, hiddenErrors);
+    int count = vl.weights.countT(visibleCellIndex);
 
     (*visibleErrors)[visibleColumnIndex] += sum / max(1, count);
 }
@@ -201,6 +178,7 @@ void Decoder::initRandom(
         int area = diam * diam;
 
         vl.weights.init(vld.size, hiddenSize, vld.radius);
+        vl.weights.initT(); // Want transpose as well here
 
         for (int i = 0; i < vl.weights.values.size(); i++)
             vl.weights.values[i] = randf(-1.0f, 1.0f);
@@ -209,6 +187,7 @@ void Decoder::initRandom(
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenErrors = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -246,6 +225,16 @@ void Decoder::learn(
 }
 
 void Decoder::generateErrors(
+    const IntBuffer* hiddenTargetCIs
+) {
+    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++)
+        generateErrors(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
+}
+
+void Decoder::propagateErrors(
     const IntBuffer* hiddenTargetCIs,
     FloatBuffer* visibleErrors,
     int vli
@@ -257,11 +246,11 @@ void Decoder::generateErrors(
 
     #pragma omp parallel for
     for (int i = 0; i < numVisibleColumns; i++)
-        generateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli);
+        propagateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli);
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) +  sizeof(float) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -305,7 +294,7 @@ void Decoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        vl.weights.write(writer);
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
@@ -322,6 +311,7 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenActivations.resize(numHiddenCells);
+    hiddenErrors.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
@@ -342,12 +332,7 @@ void Decoder::read(
 
         int numVisibleColumns = vld.size.x * vld.size.y;
 
-        int diam = vld.radius * 2 + 1;
-        int area = diam * diam;
-
-        vl.weights.resize(numHiddenCells * area * vld.size.z);
-
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        vl.weights.read(reader);
 
         vl.inputCIsPrev.resize(numVisibleColumns);
 

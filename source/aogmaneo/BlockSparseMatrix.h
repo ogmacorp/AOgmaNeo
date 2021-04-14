@@ -37,6 +37,24 @@ public:
 
     void initT();
 
+    int count(
+        int row
+    ) const;
+
+    int countT(
+        int column
+    ) const;
+
+    float multiply(
+        int row,
+        const FloatBuffer &visibleValues
+    ) const;
+
+    float multiplyT(
+        int column,
+        const FloatBuffer &hiddenValues
+    ) const;
+
     float multiplyCIs(
         int row,
         const IntBuffer &visibleCIs

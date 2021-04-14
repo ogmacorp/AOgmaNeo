@@ -138,6 +138,64 @@ void BlockSparseMatrix::initT() {
     }
 }
 
+int BlockSparseMatrix::count(
+    int row
+) const {
+    int nextRow = row + 1;
+
+    return rowRanges[nextRow] - rowRanges[row];
+}
+
+int BlockSparseMatrix::countT(
+    int column
+) const {
+    int nextColumn = column + 1;
+
+    return columnRanges[nextColumn] - columnRanges[column];
+}
+
+float BlockSparseMatrix::multiply(
+    int row,
+    const FloatBuffer &visibleValues
+) const {
+    float sum = 0.0f;
+
+    int nextRow = row + 1;
+
+    for (int j = rowRanges[row]; j < rowRanges[nextRow]; j++) {
+        int start = j * visibleSize.z;
+
+        for (int k = 0; k < visibleSize.z; k++) {
+            float value = visibleValues[k + columnIndices[j] * visibleSize.z];
+
+            sum += values[k + start] * value;
+        }
+    }
+
+    return sum;
+}
+
+float BlockSparseMatrix::multiplyT(
+    int column,
+    const FloatBuffer &hiddenValues
+) const {
+    float sum = 0.0f;
+
+    int nextColumn = column + 1;
+
+    for (int j = columnRanges[column]; j < columnRanges[nextColumn]; j++) {
+        int start = j * hiddenSize.z;
+
+        for (int k = 0; k < hiddenSize.z; k++) {
+            float value = hiddenValues[k + rowIndices[j] * visibleSize.z];
+
+            sum += values[k + start] * value;
+        }
+    }
+
+    return sum;
+}
+
 float BlockSparseMatrix::multiplyCIs(
     int row,
     const IntBuffer &visibleCIs
