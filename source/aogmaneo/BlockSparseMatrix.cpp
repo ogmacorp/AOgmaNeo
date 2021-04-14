@@ -58,8 +58,6 @@ void BlockSparseMatrix::init(
 
                 for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                        int visibleStartIndex = address2(Int2(ix, iy), Int2(visibleSize.x, visibleSize.y));
-
                         columnIndices[columnIndex++] = address2(Int2(ix, iy), Int2(visibleSize.x, visibleSize.y));
                         
                         nonZeroInRow++;
@@ -89,27 +87,70 @@ void BlockSparseMatrix::init(
     columns = visibleSize.x * visibleSize.y * visibleSize.z;
 }
 
-void BlockSparseMatrix::initT() {
-    columnRanges.resize(columns + 1, 0);
+void BlockSparseMatrix::initT(
+    int radius
+) {
+    //int numHidden = rows;
+    int numVisible = columns;
 
-    rowIndices.resize(values.size() / hiddenSize.z);
+    // Projection
+    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(visibleSize.x),
+        static_cast<float>(hiddenSize.y) / static_cast<float>(visibleSize.y));
 
-    valueIndices.resize(values.size() / visibleSize.z);
+    int reverseRadius = max(ceilf(radius * vToH.x), ceilf(radius * vToH.y));
 
-    // Pattern for T
-    int nextIndex;
+    int diam = reverseRadius * 2 + 1;
 
-    for (int i = 0; i < rows; i = nextIndex) {
-        nextIndex = i + 1;
+    int numBlocksPerVisible = diam * diam;
+    int numValuesPerVisible = numBlocksPerVisible * hiddenSize.z;
 
-        for (int j = rowRanges[i]; j < rowRanges[nextIndex]; j++)
-            columnRanges[columnIndices[j]]++;
-    }
+    int blocksSize = numVisible * numBlocksPerVisible;
+    int valuesSize = numVisible * numValuesPerVisible;
 
-    // Bring row range array in place using exclusive scan
+    valueIndices = IntBuffer(valuesSize, 0);
+
+    columnRanges.resize(numVisible + 1);
+
+    rowIndices.resize(blocksSize);
+    int rowIndex = 0;
+
+    // Initialize weight matrix
+    for (int vx = 0; vx < visibleSize.x; vx++)
+        for (int vy = 0; vy < visibleSize.y; vy++) {
+            Int2 hiddenCenter = project(Int2(vx, vy), vToH);
+
+            // Lower corner
+            Int2 fieldLowerBound(hiddenCenter.x - reverseRadius, hiddenCenter.y - reverseRadius);
+
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadius), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadius));
+
+            for (int vz = 0; vz < visibleSize.z; vz++) {
+                Int3 visiblePosition(vx, vy, vz);
+
+                int nonZeroInColumn = 0;
+
+                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                        rowIndices[rowIndex++] = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
+
+                        valueIndices[rowIndices[rowIndex - 1]] = rowRanges[address3(Int3(ix, iy, 0), hiddenSize)];
+                        
+                        nonZeroInColumn++;
+                    }
+
+                columnRanges[address3(visiblePosition, visibleSize)] = nonZeroInColumn;
+            }
+        }
+
+    // Optionally resize to fit
+    //rowIndices.resize(rowIndex);
+
+    // Convert columnRanges from counts to cumulative counts
     int offset = 0;
 
-    for (int i = 0; i < columns; i++) {
+    for (int i = 0; i < numVisible; i++) {
         int temp = columnRanges[i];
 
         columnRanges[i] = offset;
@@ -117,25 +158,7 @@ void BlockSparseMatrix::initT() {
         offset += temp;
     }
 
-    columnRanges[columns] = offset;
-
-    Array<int> columnOffsets = columnRanges;
-
-    for (int i = 0; i < rows; i = nextIndex) {
-        nextIndex = i + 1;
-
-        for (int j = rowRanges[i]; j < rowRanges[nextIndex]; j++) {
-            int colIndex = columnIndices[j];
-
-            int valueIndexT = columnOffsets[colIndex];
-
-            rowIndices[valueIndexT] = i;
-
-            valueIndices[valueIndexT] = j;
-
-            columnOffsets[colIndex]++;
-        }
-    }
+    columnRanges[numVisible] = offset;
 }
 
 int BlockSparseMatrix::count(
@@ -163,12 +186,13 @@ float BlockSparseMatrix::multiply(
     int nextRow = row + 1;
 
     for (int j = rowRanges[row]; j < rowRanges[nextRow]; j++) {
-        int start = j * visibleSize.z;
+        int start0 = columnIndices[j] * visibleSize.z;
+        int start1 = j * visibleSize.z;
 
         for (int k = 0; k < visibleSize.z; k++) {
-            float value = visibleValues[k + columnIndices[j] * visibleSize.z];
+            float value = visibleValues[k + start0];
 
-            sum += values[k + start] * value;
+            sum += values[k + start1] * value;
         }
     }
 
@@ -184,12 +208,13 @@ float BlockSparseMatrix::multiplyT(
     int nextColumn = column + 1;
 
     for (int j = columnRanges[column]; j < columnRanges[nextColumn]; j++) {
-        int start = j * hiddenSize.z;
+        int start0 = rowIndices[j] * hiddenSize.z;
+        int start1 = valueIndices[j] * hiddenSize.z;
 
         for (int k = 0; k < hiddenSize.z; k++) {
-            float value = hiddenValues[k + rowIndices[j] * visibleSize.z];
+            float value = hiddenValues[k + start0];
 
-            sum += values[k + start] * value;
+            sum += values[k + start1] * value;
         }
     }
 
@@ -219,7 +244,7 @@ float BlockSparseMatrix::multiplyCIsT(
     int nextColumn = column + 1;
 
     for (int j = columnRanges[column]; j < columnRanges[nextColumn]; j++)
-        sum += values[hiddenCIs[valueIndices[rowIndices[j]]] + j * hiddenSize.z];
+        sum += values[hiddenCIs[rowIndices[j]] + valueIndices[j] * hiddenSize.z];
 
     return sum;
 }
@@ -243,7 +268,7 @@ void BlockSparseMatrix::deltaCIsT(
     int nextColumn = column + 1;
 
     for (int j = columnRanges[column]; j < columnRanges[nextColumn]; j++)
-        values[hiddenCIs[valueIndices[rowIndices[j]]] + j * hiddenSize.z] += delta;
+        values[hiddenCIs[rowIndices[j]] + valueIndices[j] * hiddenSize.z] += delta;
 }
 
 int BlockSparseMatrix::size() const {

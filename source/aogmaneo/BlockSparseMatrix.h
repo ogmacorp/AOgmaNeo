@@ -35,7 +35,9 @@ public:
         int radius
     );
 
-    void initT();
+    void initT(
+        int radius
+    );
 
     int count(
         int row

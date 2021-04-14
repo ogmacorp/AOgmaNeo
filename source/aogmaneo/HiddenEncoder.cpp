@@ -125,7 +125,7 @@ void HiddenEncoder::initRandom(
         int numVisibleCells = numVisibleColumns * vld.size.z;
 
         vl.weights.init(vld.size, hiddenSize, vld.radius);
-        vl.weights.initT();
+        vl.weights.initT(vld.radius);
 
         for (int i = 0; i < vl.weights.values.size(); i++)
             vl.weights.values[i] = randf(0.0f, 1.0f);
