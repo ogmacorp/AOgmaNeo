@@ -100,7 +100,7 @@ void BlockSparseMatrix::initT(
     Float2 hToV = Float2(static_cast<float>(visibleSize.x) / static_cast<float>(hiddenSize.x),
         static_cast<float>(visibleSize.y) / static_cast<float>(hiddenSize.y));
 
-    int reverseRadius = max(ceilf(radius * vToH.x), ceilf(radius * vToH.y));
+    int reverseRadius = max(ceilf(vToH.x * (radius * 2 + 1) * 0.5f), ceilf(vToH.y * (radius * 2 + 1) * 0.5f));
 
     int diam = reverseRadius * 2 + 1;
 
