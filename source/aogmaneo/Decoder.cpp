@@ -88,7 +88,8 @@ void Decoder::learn(
 
 void Decoder::generateErrors(
     const Int2 &columnPos,
-    const IntBuffer* hiddenTargetCIs
+    const IntBuffer* hiddenTargetCIs,
+    FloatBuffer* visibleErrors
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -97,49 +98,15 @@ void Decoder::generateErrors(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        hiddenErrors[hiddenCellIndex] = (hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex];
+        float error = (hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex];
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
+
+            vl.weights.reverseCIs(hiddenCellIndex, error, vl.inputCIsPrev, *visibleErrors);
+        }
     }
-}
-
-void Decoder::propagateErrors(
-    const Int2 &columnPos,
-    const IntBuffer* hiddenTargetCIs,
-    FloatBuffer* visibleErrors,
-    int vli
-) {
-    VisibleLayer &vl = visibleLayers[vli];
-    VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-    int diam = vld.radius * 2 + 1;
-
-    int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
-
-    // Projection
-    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
-        static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
-
-    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-                
-    Int2 hiddenCenter = project(columnPos, vToH);
-
-    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
-
-    // Lower corner
-    Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
-
-    // Bounds of receptive field, clamped to input size
-    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-    Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
-
-    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
-
-    int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, inCIPrev), vld.size);
-
-    float sum = vl.weights.multiplyT(visibleCellIndex, hiddenErrors);
-    int count = vl.weights.countT(visibleCellIndex);
-
-    (*visibleErrors)[visibleColumnIndex] += sum / max(1, count);
 }
 
 void Decoder::initRandom(
@@ -164,7 +131,6 @@ void Decoder::initRandom(
         int numVisibleColumns = vld.size.x * vld.size.y;
 
         vl.weights.init(vld.size, hiddenSize, vld.radius);
-        vl.weights.initT(vld.radius); // Want transpose as well here
 
         for (int i = 0; i < vl.weights.values.size(); i++)
             vl.weights.values[i] = randf(-1.0f, 1.0f);
@@ -173,7 +139,6 @@ void Decoder::initRandom(
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenErrors = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -210,7 +175,7 @@ void Decoder::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
 }
 
-void Decoder::propagateErrors(
+void Decoder::generateErrors(
     const IntBuffer* hiddenTargetCIs,
     FloatBuffer* visibleErrors,
     int vli
@@ -219,16 +184,7 @@ void Decoder::propagateErrors(
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        generateErrors(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
-
-    const VisibleLayer &vl = visibleLayers[vli];
-    const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-    int numVisibleColumns = vld.size.x * vld.size.y;
-
-    #pragma omp parallel for
-    for (int i = 0; i < numVisibleColumns; i++)
-        propagateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli);
+        generateErrors(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs, visibleErrors);
 }
 
 int Decoder::size() const {
@@ -293,7 +249,6 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenActivations.resize(numHiddenCells);
-    hiddenErrors.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));

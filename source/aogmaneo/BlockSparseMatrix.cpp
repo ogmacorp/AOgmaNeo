@@ -87,106 +87,12 @@ void BlockSparseMatrix::init(
     columns = visibleSize.x * visibleSize.y * visibleSize.z;
 }
 
-void BlockSparseMatrix::initT(
-    int radius
-) {
-    //int numHidden = rows;
-    int numVisible = columns;
-
-    // Projection
-    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(visibleSize.x),
-        static_cast<float>(hiddenSize.y) / static_cast<float>(visibleSize.y));
-
-    Float2 hToV = Float2(static_cast<float>(visibleSize.x) / static_cast<float>(hiddenSize.x),
-        static_cast<float>(visibleSize.y) / static_cast<float>(hiddenSize.y));
-
-    int reverseRadius = max(ceilf(vToH.x * (radius * 2 + 1) * 0.5f), ceilf(vToH.y * (radius * 2 + 1) * 0.5f));
-
-    int diam = reverseRadius * 2 + 1;
-
-    int numBlocksPerVisible = diam * diam;
-    int numValuesPerVisible = numBlocksPerVisible * hiddenSize.z;
-
-    int blocksSize = numVisible * numBlocksPerVisible;
-
-    valueIndices = IntBuffer(blocksSize, 0);
-
-    columnRanges.resize(numVisible + 1);
-
-    rowIndices.resize(blocksSize);
-    int rowIndex = 0;
-
-    // Initialize weight matrix
-    for (int vx = 0; vx < visibleSize.x; vx++)
-        for (int vy = 0; vy < visibleSize.y; vy++) {
-            Int2 hiddenCenter = project(Int2(vx, vy), vToH);
-
-            // Lower corner
-            Int2 fieldLowerBound(hiddenCenter.x - reverseRadius, hiddenCenter.y - reverseRadius);
-
-            // Bounds of receptive field, clamped to input size
-            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-            Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadius), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadius));
-
-            for (int vz = 0; vz < visibleSize.z; vz++) {
-                Int3 visiblePosition(vx, vy, vz);
-
-                int nonZeroInColumn = 0;
-
-                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                        Int2 hiddenPos = Int2(ix, iy);
-
-                        int hiddenBlockIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-
-                        Int2 visibleCenter = project(hiddenPos, hToV);
-
-                        if (inBounds(Int2(vx, vy), Int2(visibleCenter.x - radius, visibleCenter.y - radius), Int2(visibleCenter.x + radius + 1, visibleCenter.y + radius + 1))) {
-                            rowIndices[rowIndex] = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
-
-                            valueIndices[rowIndex] = rowRanges[address3(Int3(ix, iy, 0), hiddenSize)];
-
-                            rowIndex++;
-                            
-                            nonZeroInColumn++;
-                        }
-                    }
-
-                columnRanges[address3(visiblePosition, visibleSize)] = nonZeroInColumn;
-            }
-        }
-
-    // Optionally resize to fit
-    //rowIndices.resize(rowIndex);
-
-    // Convert columnRanges from counts to cumulative counts
-    int offset = 0;
-
-    for (int i = 0; i < numVisible; i++) {
-        int temp = columnRanges[i];
-
-        columnRanges[i] = offset;
-
-        offset += temp;
-    }
-
-    columnRanges[numVisible] = offset;
-}
-
 int BlockSparseMatrix::count(
     int row
 ) const {
     int nextRow = row + 1;
 
     return rowRanges[nextRow] - rowRanges[row];
-}
-
-int BlockSparseMatrix::countT(
-    int column
-) const {
-    int nextColumn = column + 1;
-
-    return columnRanges[nextColumn] - columnRanges[column];
 }
 
 float BlockSparseMatrix::multiply(
@@ -211,26 +117,20 @@ float BlockSparseMatrix::multiply(
     return sum;
 }
 
-float BlockSparseMatrix::multiplyT(
-    int column,
-    const FloatBuffer &hiddenValues
+void BlockSparseMatrix::reverse(
+    int row,
+    float value,
+    FloatBuffer &accum
 ) const {
-    float sum = 0.0f;
+    int nextRow = row + 1;
 
-    int nextColumn = column + 1;
+    for (int j = rowRanges[row]; j < rowRanges[nextRow]; j++) {
+        int start0 = columnIndices[j] * visibleSize.z;
+        int start1 = j * visibleSize.z;
 
-    for (int j = columnRanges[column]; j < columnRanges[nextColumn]; j++) {
-        int start0 = rowIndices[j] * hiddenSize.z;
-        int start1 = valueIndices[j] * hiddenSize.z;
-
-        for (int k = 0; k < hiddenSize.z; k++) {
-            float value = hiddenValues[k + start0];
-
-            sum += values[k + start1] * value;
-        }
+        for (int k = 0; k < visibleSize.z; k++)
+            accum[k + start0] += values[k + start1] * value;
     }
-
-    return sum;
 }
 
 float BlockSparseMatrix::multiplyCIs(
@@ -247,18 +147,16 @@ float BlockSparseMatrix::multiplyCIs(
     return sum;
 }
 
-float BlockSparseMatrix::multiplyCIsT(
-    int column,
-    const IntBuffer &hiddenCIs
+void BlockSparseMatrix::reverseCIs(
+    int row,
+    float value,
+    const IntBuffer &visibleCIs,
+    FloatBuffer &accum
 ) const {
-    float sum = 0.0f;
+    int nextRow = row + 1;
 
-    int nextColumn = column + 1;
-
-    for (int j = columnRanges[column]; j < columnRanges[nextColumn]; j++)
-        sum += values[hiddenCIs[rowIndices[j]] + valueIndices[j] * hiddenSize.z];
-
-    return sum;
+    for (int j = rowRanges[row]; j < rowRanges[nextRow]; j++)
+        accum[columnIndices[j]] += values[visibleCIs[columnIndices[j]] + j * visibleSize.z] * value;
 }
 
 void BlockSparseMatrix::deltaCIs(
@@ -272,21 +170,9 @@ void BlockSparseMatrix::deltaCIs(
         values[visibleCIs[columnIndices[j]] + j * visibleSize.z] += delta;
 }
 
-void BlockSparseMatrix::deltaCIsT(
-    int column,
-    const IntBuffer &hiddenCIs,
-    float delta
-) {
-    int nextColumn = column + 1;
-
-    for (int j = columnRanges[column]; j < columnRanges[nextColumn]; j++)
-        values[hiddenCIs[rowIndices[j]] + valueIndices[j] * hiddenSize.z] += delta;
-}
-
 int BlockSparseMatrix::size() const {
     return 2 * sizeof(int) + 2 * sizeof(Int3) +
-        values.size() * sizeof(float) + rowRanges.size() * sizeof(int) + columnIndices.size() * sizeof(int) +
-        valueIndices.size() * sizeof(int) + columnRanges.size() * sizeof(int) + rowIndices.size() * sizeof(int);
+        values.size() * sizeof(float) + rowRanges.size() * sizeof(int) + columnIndices.size() * sizeof(int);
 }
 
 void BlockSparseMatrix::write(
@@ -308,18 +194,6 @@ void BlockSparseMatrix::write(
     int columnIndicesSize = columnIndices.size();
     writer.write(reinterpret_cast<const void*>(&columnIndicesSize), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&columnIndices[0]), columnIndices.size() * sizeof(int));
-
-    int valueIndicesSize = valueIndices.size();
-    writer.write(reinterpret_cast<const void*>(&valueIndicesSize), sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&valueIndices[0]), valueIndices.size() * sizeof(int));
-
-    int columnRangesSize = columnRanges.size();
-    writer.write(reinterpret_cast<const void*>(&columnRangesSize), sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&columnRanges[0]), columnRanges.size() * sizeof(int));
-
-    int rowIndicesSize = rowIndices.size();
-    writer.write(reinterpret_cast<const void*>(&rowIndicesSize), sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&rowIndices[0]), rowIndices.size() * sizeof(int));
 }
 
 void BlockSparseMatrix::read(
@@ -344,19 +218,4 @@ void BlockSparseMatrix::read(
     reader.read(reinterpret_cast<void*>(&columnIndicesSize), sizeof(int));
     columnIndices.resize(columnIndicesSize);
     reader.read(reinterpret_cast<void*>(&columnIndices[0]), columnIndices.size() * sizeof(int));
-
-    int valueIndicesSize;
-    reader.read(reinterpret_cast<void*>(&valueIndicesSize), sizeof(int));
-    valueIndices.resize(valueIndicesSize);
-    reader.read(reinterpret_cast<void*>(&valueIndices[0]), valueIndices.size() * sizeof(int));
-
-    int columnRangesSize;
-    reader.read(reinterpret_cast<void*>(&columnRangesSize), sizeof(int));
-    columnRanges.resize(columnRangesSize);
-    reader.read(reinterpret_cast<void*>(&columnRanges[0]), columnRanges.size() * sizeof(int));
-
-    int rowIndicesSize;
-    reader.read(reinterpret_cast<void*>(&rowIndicesSize), sizeof(int));
-    rowIndices.resize(rowIndicesSize);
-    reader.read(reinterpret_cast<void*>(&rowIndices[0]), rowIndices.size() * sizeof(int));
 }

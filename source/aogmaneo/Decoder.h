@@ -40,7 +40,6 @@ private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
     FloatBuffer hiddenActivations;
-    FloatBuffer hiddenErrors;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -62,15 +61,9 @@ private:
 
     void generateErrors(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs
-    );
-
-    void propagateErrors(
-        const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
-    ); 
+        FloatBuffer* visibleErrors
+    );
 
 public:
     float lr; // Learning rate
@@ -97,7 +90,7 @@ public:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void propagateErrors(
+    void generateErrors(
         const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
         int vli

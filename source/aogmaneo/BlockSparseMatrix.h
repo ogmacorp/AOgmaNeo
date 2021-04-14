@@ -21,11 +21,6 @@ private:
     Array<int> rowRanges;
     Array<int> columnIndices;
 
-    // Transpose
-    Array<int> valueIndices;
-    Array<int> columnRanges;
-    Array<int> rowIndices;
-
 public:
     Array<float> values;
 
@@ -35,16 +30,8 @@ public:
         int radius
     );
 
-    void initT(
-        int radius
-    );
-
     int count(
         int row
-    ) const;
-
-    int countT(
-        int column
     ) const;
 
     float multiply(
@@ -52,9 +39,10 @@ public:
         const FloatBuffer &visibleValues
     ) const;
 
-    float multiplyT(
-        int column,
-        const FloatBuffer &hiddenValues
+    void reverse(
+        int row,
+        float value,
+        FloatBuffer &accum
     ) const;
 
     float multiplyCIs(
@@ -62,20 +50,16 @@ public:
         const IntBuffer &visibleCIs
     ) const;
 
-    float multiplyCIsT(
-        int column,
-        const IntBuffer &hiddenCIs
+    void reverseCIs(
+        int row,
+        float value,
+        const IntBuffer &visibleCIs,
+        FloatBuffer &accum
     ) const;
 
     void deltaCIs(
         int row,
         const IntBuffer &visibleCIs,
-        float delta
-    );
-
-    void deltaCIsT(
-        int column,
-        const IntBuffer &hiddenCIs,
         float delta
     );
 
