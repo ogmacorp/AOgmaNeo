@@ -97,6 +97,9 @@ void BlockSparseMatrix::initT(
     Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(visibleSize.x),
         static_cast<float>(hiddenSize.y) / static_cast<float>(visibleSize.y));
 
+    Float2 hToV = Float2(static_cast<float>(visibleSize.x) / static_cast<float>(hiddenSize.x),
+        static_cast<float>(visibleSize.y) / static_cast<float>(hiddenSize.y));
+
     int reverseRadius = max(ceilf(radius * vToH.x), ceilf(radius * vToH.y));
 
     int diam = reverseRadius * 2 + 1;
@@ -132,13 +135,21 @@ void BlockSparseMatrix::initT(
 
                 for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                        rowIndices[rowIndex] = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
+                        Int2 hiddenPos = Int2(ix, iy);
 
-                        valueIndices[rowIndices[rowIndex]] = rowRanges[address3(Int3(ix, iy, 0), hiddenSize)];
+                        int hiddenBlockIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                        rowIndex++;
-                        
-                        nonZeroInColumn++;
+                        Int2 visibleCenter = project(hiddenPos, hToV);
+
+                        if (inBounds(Int2(vx, vy), Int2(visibleCenter.x - radius, visibleCenter.y - radius), Int2(visibleCenter.x + radius + 1, visibleCenter.y + radius + 1))) {
+                            rowIndices[rowIndex] = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
+
+                            valueIndices[rowIndex] = rowRanges[address3(Int3(ix, iy, 0), hiddenSize)];
+
+                            rowIndex++;
+                            
+                            nonZeroInColumn++;
+                        }
                     }
 
                 columnRanges[address3(visiblePosition, visibleSize)] = nonZeroInColumn;
