@@ -105,9 +105,8 @@ void BlockSparseMatrix::initT(
     int numValuesPerVisible = numBlocksPerVisible * hiddenSize.z;
 
     int blocksSize = numVisible * numBlocksPerVisible;
-    int valuesSize = numVisible * numValuesPerVisible;
 
-    valueIndices = IntBuffer(valuesSize, 0);
+    valueIndices = IntBuffer(blocksSize, 0);
 
     columnRanges.resize(numVisible + 1);
 

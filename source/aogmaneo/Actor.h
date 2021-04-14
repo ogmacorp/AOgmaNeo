@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Helpers.h"
+#include "BlockSparseMatrix.h"
 
 namespace aon {
 // A reinforcement learning layer
@@ -30,8 +31,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        BlockSparseMatrix valueWeights;
+        BlockSparseMatrix actionWeights;
     };
 
     // History sample for delayed updates
