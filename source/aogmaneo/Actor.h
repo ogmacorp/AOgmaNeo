@@ -68,7 +68,7 @@ public:
     :
     lr(0.01f),
     discount(0.99f),
-    traceDecay(0.96f)
+    traceDecay(0.98f)
     {}
 
     // Initialized randomly
