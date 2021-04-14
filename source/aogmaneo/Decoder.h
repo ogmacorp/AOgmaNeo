@@ -62,7 +62,8 @@ private:
     void generateErrors(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors
+        FloatBuffer* visibleErrors,
+        int vli
     );
 
 public:

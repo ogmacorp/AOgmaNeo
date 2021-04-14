@@ -89,8 +89,12 @@ void Decoder::learn(
 void Decoder::generateErrors(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs,
-    FloatBuffer* visibleErrors
+    FloatBuffer* visibleErrors,
+    int vli
 ) {
+    VisibleLayer &vl = visibleLayers[vli];
+    const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
@@ -100,12 +104,7 @@ void Decoder::generateErrors(
 
         float error = (hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex];
 
-        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-            VisibleLayer &vl = visibleLayers[vli];
-            const VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
-
-            vl.weights.reverseCIs(hiddenCellIndex, error, vl.inputCIsPrev, *visibleErrors);
-        }
+        vl.weights.reverseCIs(hiddenCellIndex, error, vl.inputCIsPrev, *visibleErrors);
     }
 }
 
@@ -184,7 +183,7 @@ void Decoder::generateErrors(
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        generateErrors(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs, visibleErrors);
+        generateErrors(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs, visibleErrors, vli);
 }
 
 int Decoder::size() const {
