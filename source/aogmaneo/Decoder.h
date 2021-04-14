@@ -97,10 +97,6 @@ public:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs
-    );
-
     void propagateErrors(
         const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,

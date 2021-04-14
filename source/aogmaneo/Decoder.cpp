@@ -114,6 +114,21 @@ void Decoder::learn(
 
 void Decoder::generateErrors(
     const Int2 &columnPos,
+    const IntBuffer* hiddenTargetCIs
+) {
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+
+    int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenErrors[hiddenCellIndex] = (hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex];
+    }
+}
+
+void Decoder::propagateErrors(
+    const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs,
     FloatBuffer* visibleErrors,
     int vli
@@ -224,21 +239,17 @@ void Decoder::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
 }
 
-void Decoder::generateErrors(
-    const IntBuffer* hiddenTargetCIs
+void Decoder::propagateErrors(
+    const IntBuffer* hiddenTargetCIs,
+    FloatBuffer* visibleErrors,
+    int vli
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         generateErrors(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
-}
 
-void Decoder::propagateErrors(
-    const IntBuffer* hiddenTargetCIs,
-    FloatBuffer* visibleErrors,
-    int vli
-) {
     const VisibleLayer &vl = visibleLayers[vli];
     const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 

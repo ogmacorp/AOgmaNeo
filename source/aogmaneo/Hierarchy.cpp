@@ -232,7 +232,7 @@ void Hierarchy::step(
             // Accumulate
             for (int i = 0; i < dLayers[l].size(); i++) {
                 for (int t = 0; t < dLayers[l][i].size(); t++)
-                    dLayers[l][i][t].generateErrors(&histories[l][i][t], &errors[l], 0);
+                    dLayers[l][i][t].propagateErrors(&histories[l][i][t], &errors[l], 0);
             }
 
             Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
