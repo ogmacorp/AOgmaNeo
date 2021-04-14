@@ -18,8 +18,6 @@ private:
     Int3 visibleSize;
     Int3 hiddenSize;
 
-    Array<float> values;
-
     Array<int> rowRanges;
     Array<int> columnIndices;
 
@@ -29,6 +27,8 @@ private:
     Array<int> rowIndices;
 
 public:
+    Array<float> values;
+
     void init(
         const Int3 &visibleSize,
         const Int3 &hiddenSize,
@@ -40,11 +40,34 @@ public:
     float multiplyCIs(
         int row,
         const IntBuffer &visibleCIs
-    );
+    ) const;
 
     float multiplyCIsT(
         int column,
         const IntBuffer &hiddenCIs
+    ) const;
+
+    void deltaCIs(
+        int row,
+        const IntBuffer &visibleCIs,
+        float delta
+    );
+
+    void deltaCIsT(
+        int column,
+        const IntBuffer &hiddenCIs,
+        float delta
+    );
+
+    // Serialization
+    int size() const; // Returns size in bytes
+
+    void write(
+        StreamWriter &writer
+    ) const;
+
+    void read(
+        StreamReader &reader
     );
 };
 }

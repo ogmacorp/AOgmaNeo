@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Helpers.h"
+#include "BlockSparseMatrix.h"
 
 namespace aon {
 // A prediction layer (predicts x_(t+1))
@@ -30,7 +31,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        BlockSparseMatrix weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };

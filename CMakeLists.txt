@@ -29,6 +29,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 set(SOURCE_PATH "${PROJECT_SOURCE_DIR}/source")
 set(SOURCES
     "${SOURCE_PATH}/aogmaneo/Helpers.cpp"
+    "${SOURCE_PATH}/aogmaneo/BlockSparseMatrix.cpp"
     "${SOURCE_PATH}/aogmaneo/HiddenEncoder.cpp"
     "${SOURCE_PATH}/aogmaneo/ErrorEncoder.cpp"
     "${SOURCE_PATH}/aogmaneo/Decoder.cpp"

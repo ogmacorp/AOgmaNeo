@@ -141,7 +141,7 @@ void BlockSparseMatrix::initT() {
 float BlockSparseMatrix::multiplyCIs(
     int row,
     const IntBuffer &visibleCIs
-) {
+) const {
     float sum = 0.0f;
 
     int nextRow = row + 1;
@@ -155,7 +155,7 @@ float BlockSparseMatrix::multiplyCIs(
 float BlockSparseMatrix::multiplyCIsT(
     int column,
     const IntBuffer &hiddenCIs
-) {
+) const {
     float sum = 0.0f;
 
     int nextColumn = column + 1;
@@ -164,4 +164,104 @@ float BlockSparseMatrix::multiplyCIsT(
         sum += values[hiddenCIs[valueIndices[rowIndices[j]]] + j * hiddenSize.z];
 
     return sum;
+}
+
+void BlockSparseMatrix::deltaCIs(
+    int row,
+    const IntBuffer &visibleCIs,
+    float delta
+) {
+    int nextRow = row + 1;
+
+    for (int j = rowRanges[row]; j < rowRanges[nextRow]; j++)
+        values[visibleCIs[columnIndices[j]] + j * visibleSize.z] += delta;
+}
+
+void BlockSparseMatrix::deltaCIsT(
+    int column,
+    const IntBuffer &hiddenCIs,
+    float delta
+) {
+    int nextColumn = column + 1;
+
+    for (int j = columnRanges[column]; j < columnRanges[nextColumn]; j++)
+        values[hiddenCIs[valueIndices[rowIndices[j]]] + j * hiddenSize.z] += delta;
+}
+
+int BlockSparseMatrix::size() const {
+    return 2 * sizeof(int) + 2 * sizeof(Int3) +
+        values.size() * sizeof(float) + rowRanges.size() * sizeof(int) + columnIndices.size() * sizeof(int) +
+        valueIndices.size() * sizeof(int) + columnRanges.size() * sizeof(int) + rowIndices.size() * sizeof(int);
+}
+
+void BlockSparseMatrix::write(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&rows), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&columns), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&visibleSize), sizeof(Int3));
+    writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
+
+    int valuesSize = values.size();
+    writer.write(reinterpret_cast<const void*>(&valuesSize), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&values[0]), values.size() * sizeof(float));
+    
+    int rowRangesSize = rowRanges.size();
+    writer.write(reinterpret_cast<const void*>(&rowRangesSize), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&rowRanges[0]), rowRanges.size() * sizeof(int));
+
+    int columnIndicesSize = columnIndices.size();
+    writer.write(reinterpret_cast<const void*>(&columnIndicesSize), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&columnIndices[0]), columnIndices.size() * sizeof(int));
+
+    int valueIndicesSize = valueIndices.size();
+    writer.write(reinterpret_cast<const void*>(&valueIndicesSize), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&valueIndices[0]), valueIndices.size() * sizeof(int));
+
+    int columnRangesSize = columnRanges.size();
+    writer.write(reinterpret_cast<const void*>(&columnRangesSize), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&columnRanges[0]), columnRanges.size() * sizeof(int));
+
+    int rowIndicesSize = rowIndices.size();
+    writer.write(reinterpret_cast<const void*>(&rowIndicesSize), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&rowIndices[0]), rowIndices.size() * sizeof(int));
+}
+
+void BlockSparseMatrix::read(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&rows), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&columns), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&visibleSize), sizeof(Int3));
+    reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
+
+    int valuesSize;
+    reader.read(reinterpret_cast<void*>(&valuesSize), sizeof(int));
+    values.resize(valuesSize);
+    reader.read(reinterpret_cast<void*>(&values[0]), values.size() * sizeof(float));
+    
+    int rowRangesSize;
+    reader.read(reinterpret_cast<void*>(&rowRangesSize), sizeof(int));
+    rowRanges.resize(rowRangesSize);
+    reader.read(reinterpret_cast<void*>(&rowRanges[0]), rowRanges.size() * sizeof(int));
+
+    int columnIndicesSize;
+    reader.read(reinterpret_cast<void*>(&columnIndicesSize), sizeof(int));
+    columnIndices.resize(columnIndicesSize);
+    reader.read(reinterpret_cast<void*>(&columnIndices[0]), columnIndices.size() * sizeof(int));
+
+    int valueIndicesSize;
+    reader.read(reinterpret_cast<void*>(&valueIndicesSize), sizeof(int));
+    valueIndices.resize(valueIndicesSize);
+    reader.read(reinterpret_cast<void*>(&valueIndices[0]), valueIndices.size() * sizeof(int));
+
+    int columnRangesSize;
+    reader.read(reinterpret_cast<void*>(&columnRangesSize), sizeof(int));
+    columnRanges.resize(columnRangesSize);
+    reader.read(reinterpret_cast<void*>(&columnRanges[0]), columnRanges.size() * sizeof(int));
+
+    int rowIndicesSize;
+    reader.read(reinterpret_cast<void*>(&rowIndicesSize), sizeof(int));
+    rowIndices.resize(rowIndicesSize);
+    reader.read(reinterpret_cast<void*>(&rowIndices[0]), rowIndices.size() * sizeof(int));
 }
