@@ -103,9 +103,6 @@ void ErrorEncoder::initRandom(
         int numVisibleColumns = vld.size.x * vld.size.y;
         int numVisibleCells = numVisibleColumns * vld.size.z;
 
-        int diam = vld.radius * 2 + 1;
-        int area = diam * diam;
-
         vl.weights.init(vld.size, hiddenSize, vld.radius);
 
         for (int i = 0; i < vl.weights.values.size(); i++)

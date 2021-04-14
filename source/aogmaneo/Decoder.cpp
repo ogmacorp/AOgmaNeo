@@ -163,9 +163,6 @@ void Decoder::initRandom(
 
         int numVisibleColumns = vld.size.x * vld.size.y;
 
-        int diam = vld.radius * 2 + 1;
-        int area = diam * diam;
-
         vl.weights.init(vld.size, hiddenSize, vld.radius);
         vl.weights.initT(); // Want transpose as well here
 

@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Helpers.h"
+#include "BlockSparseMatrix.h"
 
 namespace aon {
 // Sparse coder
@@ -30,7 +31,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        BlockSparseMatrix weights;
 
         FloatBuffer reconstruction;
     };
