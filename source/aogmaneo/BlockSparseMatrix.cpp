@@ -133,9 +133,11 @@ void BlockSparseMatrix::initT(
 
                 for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                        rowIndices[rowIndex++] = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
+                        rowIndices[rowIndex] = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
 
-                        valueIndices[rowIndices[rowIndex - 1]] = rowRanges[address3(Int3(ix, iy, 0), hiddenSize)];
+                        valueIndices[rowIndices[rowIndex]] = rowRanges[address3(Int3(ix, iy, 0), hiddenSize)];
+
+                        rowIndex++;
                         
                         nonZeroInColumn++;
                     }
