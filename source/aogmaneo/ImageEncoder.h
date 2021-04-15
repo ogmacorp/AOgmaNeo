@@ -68,7 +68,7 @@ public:
     ImageEncoder()
     :
     lr(0.05f),
-    falloff(0.1f)
+    falloff(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
