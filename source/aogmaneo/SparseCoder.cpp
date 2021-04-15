@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -20,7 +21,7 @@ void SparseCoder::resetReconstruction(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
-    vl.reconstruction[visibleColumnIndex] = roundftoi(static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 254.0f - 127.0f);
+    vl.reconstruction[visibleColumnIndex] = roundftoi((static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f) * 127.0f);
 }
 
 void SparseCoder::forward(
@@ -77,9 +78,10 @@ void SparseCoder::forward(
     }
 
     Byte maxIndex = 0;
-    int maxActivation = -999999;
+    int maxActivation = hiddenSums[0 + hiddenCellsStart];
+    hiddenSums[0 + hiddenCellsStart] = 0;
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
+    for (int hc = 1; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         if (hiddenSums[hiddenCellIndex] > maxActivation) {
