@@ -71,7 +71,7 @@ void SparseCoder::forward(
 
                     int delta = inValue - static_cast<int>(vl.protos[wi]);
 
-                    hiddenSums[hiddenCellIndex] -= abs(delta);
+                    hiddenSums[hiddenCellIndex] -= delta * delta;
                 }
             }
     }
