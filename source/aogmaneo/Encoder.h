@@ -54,12 +54,19 @@ private:
         bool learnEnabled
     );
 
+    void align(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs
+    );
+
 public:
-    float lr; // Learning rate
+    float elr; // Error learning rate
+    float alr; // Alignment learning rate
 
     Encoder()
     :
-    lr(0.1f)
+    elr(0.0f),
+    alr(0.001f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -72,6 +79,7 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         const FloatBuffer* hiddenErrors,
+        const IntBuffer* hiddenTargetCIs,
         bool learnEnabled // Whether to learn
     );
 
