@@ -69,7 +69,7 @@ public:
     Actor()
     :
     lr(0.01f),
-    discount(0.99f),
+    discount(0.98f),
     traceDecay(0.97f)
     {}
 
