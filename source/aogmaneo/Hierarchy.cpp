@@ -212,11 +212,6 @@ void Hierarchy::step(
                     layerInputCIs[index++] = &histories[l][i][t];
             }
 
-            const IntBuffer* hiddenTargetCIs = nullptr;
-
-            if (l < eLayers.size() - 1)
-                hiddenTargetCIs = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
-
             // Activate sparse coder
             eLayers[l].step(layerInputCIs, learnEnabled);
 
