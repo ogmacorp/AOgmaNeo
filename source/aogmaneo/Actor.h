@@ -42,9 +42,9 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    IntBuffer hiddenCIs; // Hidden states
-
+    FloatBuffer hiddenActivations;
     FloatBuffer hiddenValues;
+    IntBuffer hiddenCIs; // Hidden states
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
