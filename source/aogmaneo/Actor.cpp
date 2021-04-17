@@ -15,7 +15,8 @@ void Actor::forward(
     const Array<const IntBuffer*> &inputCIs,
     const IntBuffer* hiddenTargetCIsPrev,
     float reward,
-    bool learnEnabled
+    bool learnEnabled,
+    unsigned int* state
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -102,7 +103,22 @@ void Actor::forward(
         }
     }
 
-    float delta = lr * (reward + discount * maxActivation - valuePrev);
+    float nextValue = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+    
+        float contrib = (hc == maxIndex ? 1.0f - epsilon : epsilon / (hiddenSize.z - 1));
+
+        nextValue += contrib * hiddenValues[hiddenCellIndex];
+    }
+
+    int selectIndex = maxIndex;
+
+    if (randf(state) < epsilon)
+        selectIndex = rand(state) % hiddenSize.z;
+
+    float delta = lr * (reward + discount * nextValue - valuePrev);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -141,8 +157,8 @@ void Actor::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inCIPrev)
-                            vl.traces[wi] = (hc == targetCI ? 1.0f : 0.0f);
+                        if (vc == inCIPrev && hc == targetCI)
+                            vl.traces[wi] += 1.0f;//(hc == targetCI ? 1.0f : 0.0f);
                         else
                             vl.traces[wi] *= traceDecay;
 
@@ -153,7 +169,7 @@ void Actor::forward(
         }
     }
 
-    hiddenCIs[hiddenColumnIndex] = maxIndex;
+    hiddenCIs[hiddenColumnIndex] = selectIndex;
 }
 
 void Actor::initRandom(
@@ -204,9 +220,14 @@ void Actor::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
+    unsigned int baseState = rand();
+
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenTargetCIsPrev, reward, learnEnabled);
+    for (int i = 0; i < numHiddenColumns; i++) {
+        unsigned int state = baseState + i * 12345;
+
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenTargetCIsPrev, reward, learnEnabled, &state);
+    }
 
     // Updates prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {

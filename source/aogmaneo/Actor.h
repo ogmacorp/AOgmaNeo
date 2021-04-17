@@ -57,20 +57,23 @@ private:
         const Array<const IntBuffer*> &inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
-        bool learnEnabled
+        bool learnEnabled,
+        unsigned int* state
     );
 
 public:
     float lr; // Learning rate
     float discount;
     float traceDecay;
+    float epsilon; // Exploration
 
     // Defaults
     Actor()
     :
     lr(0.01f),
-    discount(0.98f),
-    traceDecay(0.97f)
+    discount(0.99f),
+    traceDecay(0.97f),
+    epsilon(0.01f)
     {}
 
     // Initialized randomly
