@@ -49,10 +49,10 @@ void Actor::forward(
 
     int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
 
+    float valuePrev = hiddenValues[address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize)];
+
     int maxIndex = -1;
     float maxActivation = -999999.0f;
-
-    float sumPrev = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -88,19 +88,13 @@ void Actor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                    sum += vl.weights[inCI + wiStart];
-
-                    if (hc == targetCI) {
-                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
-
-                        sumPrev += vl.weights[inCIPrev + wiStart];
-                    }
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
 
         sum /= max(1, count);
+
+        hiddenValues[hiddenCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -108,9 +102,7 @@ void Actor::forward(
         }
     }
 
-    sumPrev /= max(1, count);
-    
-    float delta = lr * (reward + discount * maxActivation - sumPrev);
+    float delta = lr * (reward + discount * maxActivation - valuePrev);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -200,6 +192,8 @@ void Actor::initRandom(
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+
+    hiddenValues = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void Actor::step(
@@ -223,7 +217,7 @@ void Actor::step(
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -236,7 +230,7 @@ int Actor::size() const {
 }
 
 int Actor::stateSize() const {
-    return hiddenCIs.size() * sizeof(int) + sizeof(int);
+    return hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
 }
 
 void Actor::write(
@@ -249,6 +243,7 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     int numVisibleCellsLayers = visibleLayers.size();
 
@@ -280,8 +275,10 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
+    hiddenValues.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     int numVisibleCellsLayers = visibleLayers.size();
 
@@ -319,6 +316,7 @@ void Actor::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -333,6 +331,7 @@ void Actor::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
