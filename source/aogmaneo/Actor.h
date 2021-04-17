@@ -70,10 +70,10 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.01f),
+    lr(0.1f),
     discount(0.99f),
-    traceDecay(0.97f),
-    epsilon(0.01f)
+    traceDecay(0.95f),
+    epsilon(0.05f)
     {}
 
     // Initialized randomly
