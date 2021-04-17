@@ -58,13 +58,6 @@ private:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
-    ); 
-
 public:
     float lr; // Learning rate
 
@@ -88,12 +81,6 @@ public:
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
-    );
-
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
     );
 
     // Serialization

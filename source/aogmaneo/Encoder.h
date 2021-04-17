@@ -32,15 +32,14 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        IntBuffer inputCIsPrev;
+        FloatBuffer reconstruction;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
-    
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -49,37 +48,31 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
     );
 
-    void align(
+    void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
-    float elr; // Error learning rate
-    float alr; // Alignment learning rate
+    float lr; // Learning rate
 
     Encoder()
     :
-    elr(0.0f),
-    alr(0.001f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int errorHistorySize,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
-        const IntBuffer* hiddenTargetCIs,
         bool learnEnabled // Whether to learn
     );
 
@@ -133,3 +126,4 @@ public:
     }
 };
 } // namespace aon
+
