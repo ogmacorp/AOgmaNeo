@@ -108,7 +108,7 @@ void Actor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+        hiddenActivations[hiddenCellIndex] = expf(epsilon * (hiddenActivations[hiddenCellIndex] - maxActivation));
         
         total += hiddenActivations[hiddenCellIndex];
     }
