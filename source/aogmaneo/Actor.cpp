@@ -292,11 +292,15 @@ void Actor::learn(
         
         total += hiddenActivations[hiddenCellIndex];
     }
+
+    float scale = 1.0f / max(0.0001f, total);
     
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float deltaAction = (mimic || tdErrorAction > 0.0f ? alr : -alr) * ((hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex] / max(0.0001f, total));
+        hiddenActivations[hiddenCellIndex] *= scale;
+
+        float deltaAction = (mimic || tdErrorAction > 0.0f ? alr : -alr / hiddenSize.z) * ((hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
