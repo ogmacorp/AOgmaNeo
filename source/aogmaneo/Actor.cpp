@@ -476,7 +476,7 @@ int Actor::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++)
         sampleSize += s.inputCIs[vli].size() * sizeof(int);
 
-    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + s.hiddenValuesPrev.size() * sizeof(float) + sizeof(float);
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
 
     size += historySamples.size() * sampleSize;
 
@@ -493,7 +493,7 @@ int Actor::stateSize() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++)
         sampleSize += s.inputCIs[vli].size() * sizeof(int);
 
-    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + s.hiddenValuesPrev.size() * sizeof(float) + sizeof(float);
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
 
     size += historySamples.size() * sampleSize;
 
