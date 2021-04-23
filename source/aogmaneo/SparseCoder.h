@@ -30,18 +30,18 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer protos;
+        FloatBuffer protos;
 
-        SByteBuffer reconstruction;
+        FloatBuffer reconstruction;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
     int numPriorities;
 
-    IntBuffer hiddenSums;
+    FloatBuffer hiddenSums;
     ByteBuffer hiddenCIs; // Hidden states
-    ByteBuffer hiddenPriorities;
+    IntBuffer hiddenPriorities;
 
     FloatBuffer hiddenRates; // Resources
 

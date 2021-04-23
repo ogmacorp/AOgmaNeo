@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        FloatBuffer protos;
 
         ByteBuffer reconstruction;
     };
@@ -38,7 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    ByteBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenRates; // Resources
 
@@ -56,19 +56,19 @@ private:
 
     void reconstruct(
         const Int2 &columnPos,
-        const ByteBuffer* reconCIs,
+        const IntBuffer* reconCIs,
         int vli
     );
 
 public:
-    float alpha;
-    float gamma;
+    float lr;
+    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    alpha(0.05f),
-    gamma(0.5f)
+    lr(0.05f),
+    falloff(1.0f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -84,7 +84,7 @@ public:
     );
 
     void reconstruct(
-        const ByteBuffer* reconCIs
+        const IntBuffer* reconCIs
     );
 
     const ByteBuffer &getReconstruction(
@@ -124,7 +124,7 @@ public:
     }
 
     // Get the hidden states
-    const ByteBuffer &getHiddenCIs() const {
+    const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 
@@ -134,3 +134,4 @@ public:
     }
 };
 } // namespace aon
+
