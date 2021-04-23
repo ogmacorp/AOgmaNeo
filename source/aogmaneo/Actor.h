@@ -39,8 +39,6 @@ public:
         Array<ByteBuffer> inputCIs;
         ByteBuffer hiddenTargetCIsPrev;
 
-        FloatBuffer hiddenValuesPrev;
-        
         float reward;
     };
 
@@ -74,7 +72,6 @@ private:
         const Int2 &columnPos,
         const Array<const ByteBuffer*> &inputCIsPrev,
         const ByteBuffer* hiddenTargetCIsPrev,
-        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic

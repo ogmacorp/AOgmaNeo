@@ -38,7 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    IntBuffer hiddenCIs; // Hidden states
+    ByteBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenRates; // Resources
 
@@ -56,19 +56,19 @@ private:
 
     void reconstruct(
         const Int2 &columnPos,
-        const IntBuffer* reconCIs,
+        const ByteBuffer* reconCIs,
         int vli
     );
 
 public:
-    float lr;
-    float falloff;
+    float alpha;
+    float gamma;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.05f),
-    falloff(1.0f)
+    alpha(0.1f),
+    gamma(1.0f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -84,7 +84,7 @@ public:
     );
 
     void reconstruct(
-        const IntBuffer* reconCIs
+        const ByteBuffer* reconCIs
     );
 
     const ByteBuffer &getReconstruction(
@@ -124,7 +124,7 @@ public:
     }
 
     // Get the hidden states
-    const IntBuffer &getHiddenCIs() const {
+    const ByteBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 

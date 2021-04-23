@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -21,7 +20,7 @@ void SparseCoder::resetReconstruction(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
-    vl.reconstruction[visibleColumnIndex] = roundftoi((static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f) * 127.0f);
+    vl.reconstruction[visibleColumnIndex] = static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f;
 }
 
 void SparseCoder::forward(
@@ -63,23 +62,23 @@ void SparseCoder::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int inValue = vl.reconstruction[visibleColumnIndex];
+                float inValue = vl.reconstruction[visibleColumnIndex];
 
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = hc + hiddenCellsStart;
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    int delta = inValue - static_cast<int>(vl.protos[wi]);
+                    float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= delta * delta;
+                    hiddenSums[hiddenCellIndex] -= abs(delta);
                 }
             }
     }
 
     Byte maxIndex = 0;
-    int maxActivation = hiddenSums[0 + hiddenCellsStart];
-    hiddenSums[0 + hiddenCellsStart] = 0;
+    float maxActivation = hiddenSums[0 + hiddenCellsStart];
+    hiddenSums[0 + hiddenCellsStart] = 0.0f;
 
     for (int hc = 1; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -89,7 +88,7 @@ void SparseCoder::forward(
             maxIndex = hc;
         }
 
-        hiddenSums[hiddenCellIndex] = 0;
+        hiddenSums[hiddenCellIndex] = 0.0f;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -132,7 +131,7 @@ void SparseCoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        vl.protos[wi] = roundftoi(min(127.0f, max(-127.0f, vl.protos[wi] + strength * (static_cast<float>(vl.reconstruction[visibleColumnIndex]) - static_cast<float>(vl.protos[wi])))));
+                        vl.protos[wi] += strength * (vl.reconstruction[visibleColumnIndex] - vl.protos[wi]);
                     }
             }
 
@@ -205,7 +204,7 @@ void SparseCoder::reconstruct(
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = min(127, max(-127, static_cast<int>(vl.reconstruction[visibleColumnIndex]) - roundftoi(sum / max(0.0001f, total))));
+    vl.reconstruction[visibleColumnIndex] -= sum / max(0.0001f, total);
 }
 
 void SparseCoder::initRandom(
@@ -238,12 +237,12 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = rand() % 8 - 4;
+            vl.protos[i] = randf(-0.01f, 0.01f);
 
-        vl.reconstruction = Array<SByte>(numVisibleColumns, 0);
+        vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
-    hiddenSums = IntBuffer(numHiddenCells, 0);
+    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs = ByteBuffer(numHiddenColumns, hiddenSize.z / 2);
 
@@ -252,7 +251,7 @@ void SparseCoder::initRandom(
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
 
-    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
 
 void SparseCoder::step(
@@ -298,7 +297,7 @@ int SparseCoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(SByte);
+        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(float);
     }
 
     return size;
@@ -331,7 +330,7 @@ void SparseCoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(SByte));
+        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
     }
 }
 
@@ -355,7 +354,7 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(Byte));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
-    hiddenSums = IntBuffer(numHiddenCells, 0);
+    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -377,9 +376,9 @@ void SparseCoder::read(
 
         vl.protos.resize(numHiddenCells * area);
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(SByte));
+        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
-        vl.reconstruction = Array<SByte>(numVisibleColumns, 0);
+        vl.reconstruction = FloatBuffer(numVisibleColumns, 0);
     }
 }
 

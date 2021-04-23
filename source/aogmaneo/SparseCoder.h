@@ -41,7 +41,7 @@ private:
 
     FloatBuffer hiddenSums;
     ByteBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenPriorities;
+    ByteBuffer hiddenPriorities;
 
     FloatBuffer hiddenRates; // Resources
 
@@ -77,7 +77,7 @@ public:
     SparseCoder()
     :
     alpha(0.1f),
-    gamma(0.1f)
+    gamma(1.0f)
     {}
 
     // Create a sparse coding layer with random initialization
