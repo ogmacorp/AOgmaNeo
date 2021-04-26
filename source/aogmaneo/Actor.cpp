@@ -113,7 +113,7 @@ void Actor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
     
-        nextValue += hiddenValues[hiddenCellIndex] * (hc == selectIndex ? 1.0f - epsilon : epsilon / (hiddenSize.z - 1));
+        nextValue += hiddenValues[hiddenCellIndex] * (hc == maxIndex ? 1.0f - epsilon : epsilon / (hiddenSize.z - 1));
     }
 
     float delta = lr * (reward + discount * nextValue - valuePrev);
