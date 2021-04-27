@@ -76,7 +76,7 @@ void SparseCoder::forward(
             }
     }
 
-    Byte maxIndex = 0;
+    int maxIndex = 0;
     float maxActivation = hiddenSums[0 + hiddenCellsStart];
     hiddenSums[0 + hiddenCellsStart] = 0.0f;
 
@@ -292,7 +292,7 @@ void SparseCoder::step(
 }
 
 int SparseCoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(Byte) + hiddenPriorities.size() * sizeof(Byte) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -304,7 +304,7 @@ int SparseCoder::size() const {
 }
 
 int SparseCoder::stateSize() const {
-    return hiddenCIs.size() * sizeof(Byte);
+    return hiddenCIs.size() * sizeof(int);
 }
 
 void SparseCoder::write(
@@ -316,8 +316,8 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
-    writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
@@ -350,8 +350,8 @@ void SparseCoder::read(
     hiddenPriorities.resize(numHiddenColumns);
     hiddenRates.resize(numHiddenCells);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
-    reader.read(reinterpret_cast<void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
@@ -385,11 +385,11 @@ void SparseCoder::read(
 void SparseCoder::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
 
 void SparseCoder::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }

@@ -62,7 +62,7 @@ void Predictor::forward(
             }
     }
 
-    Byte maxIndex = 0;
+    int maxIndex = 0;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -102,7 +102,7 @@ void Predictor::learn(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    Byte targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
+    int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
             
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
