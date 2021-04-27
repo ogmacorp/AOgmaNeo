@@ -12,7 +12,7 @@ using namespace aon;
 
 void Predictor::forward(
     const Int2 &columnPos,
-    const Array<const ByteBuffer*> &inputCIs
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
@@ -97,7 +97,7 @@ void Predictor::forward(
 
 void Predictor::learn(
     const Int2 &columnPos,
-    const ByteBuffer* hiddenTargetCIs
+    const IntBuffer* hiddenTargetCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
@@ -178,18 +178,18 @@ void Predictor::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 8 - 4;
 
-        vl.inputCIsPrev = ByteBuffer(numVisibleColumns, 0);
+        vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
-    hiddenCIs = ByteBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
 // Activate the predictor (predict values)
 void Predictor::activate(
-    const Array<const ByteBuffer*> &inputCIs // Hidden/output/prediction size
+    const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
@@ -208,7 +208,7 @@ void Predictor::activate(
 
 // Learning predictions (update weights)
 void Predictor::learn(
-    const ByteBuffer* hiddenTargetCIs
+    const IntBuffer* hiddenTargetCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     

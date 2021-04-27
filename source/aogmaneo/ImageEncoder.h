@@ -38,7 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    ByteBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenRates; // Resources
 
@@ -56,7 +56,7 @@ private:
 
     void reconstruct(
         const Int2 &columnPos,
-        const ByteBuffer* reconCIs,
+        const IntBuffer* reconCIs,
         int vli
     );
 
@@ -84,7 +84,7 @@ public:
     );
 
     void reconstruct(
-        const ByteBuffer* reconCIs
+        const IntBuffer* reconCIs
     );
 
     const ByteBuffer &getReconstruction(
@@ -124,7 +124,7 @@ public:
     }
 
     // Get the hidden states
-    const ByteBuffer &getHiddenCIs() const {
+    const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 

@@ -107,7 +107,7 @@ void Hierarchy::initRandom(
                 histories[l][i].resize(layerDescs[l].temporalHorizon);
                 
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = ByteBuffer(inSize, 0);
+                    histories[l][i][t] = IntBuffer(inSize, 0);
             }
 
             pLayers[l].resize(inputSizes.size());
@@ -160,7 +160,7 @@ void Hierarchy::initRandom(
             histories[l][0].resize(layerDescs[l].temporalHorizon);
 
             for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = ByteBuffer(inSize, 0);
+                histories[l][0][t] = IntBuffer(inSize, 0);
 
             pLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
@@ -187,7 +187,7 @@ void Hierarchy::initRandom(
 }
 
 void Hierarchy::step(
-    const Array<const ByteBuffer*> &inputCIs,
+    const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
     float reward,
     bool mimic
@@ -216,7 +216,7 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            Array<const ByteBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
+            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
 
             int index = 0;
 
@@ -245,7 +245,7 @@ void Hierarchy::step(
     for (int l = scLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
-            Array<const ByteBuffer*> feedBackCIs(l < scLayers.size() - 1 ? 2 : 1);
+            Array<const IntBuffer*> feedBackCIs(l < scLayers.size() - 1 ? 2 : 1);
 
             feedBackCIs[0] = &scLayers[l].getHiddenCIs();
 
@@ -283,13 +283,13 @@ int Hierarchy::size() const {
             size += 2 * sizeof(int);
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                size += sizeof(int) + histories[l][i][t].size() * sizeof(Byte);
+                size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
         }
 
         size += scLayers[l].size();
 
         for (int v = 0; v < pLayers[l].size(); v++) {
-            size += sizeof(Byte);
+            size += sizeof(int);
 
             if (pLayers[l][v] != nullptr)
                 size += pLayers[l][v]->size();
@@ -297,7 +297,7 @@ int Hierarchy::size() const {
     }
 
     for (int v = 0; v < aLayers.size(); v++) {
-        size += sizeof(Byte);
+        size += sizeof(int);
 
         if (aLayers[v] != nullptr)
             size += aLayers[v]->size();
@@ -307,7 +307,7 @@ int Hierarchy::size() const {
 }
 
 int Hierarchy::stateSize() const {
-    int size = 2 * updates.size() * sizeof(Byte);
+    int size =  updates.size() * sizeof(Byte);
 
     for (int l = 0; l < scLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {

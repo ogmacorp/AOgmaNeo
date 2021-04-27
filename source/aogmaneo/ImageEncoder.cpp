@@ -128,7 +128,7 @@ void ImageEncoder::forward(
 
 void ImageEncoder::reconstruct(
     const Int2 &columnPos,
-    const ByteBuffer* reconCIs,
+    const IntBuffer* reconCIs,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -226,7 +226,7 @@ void ImageEncoder::initRandom(
     }
 
     // Hidden CIs
-    hiddenCIs = ByteBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
@@ -243,7 +243,7 @@ void ImageEncoder::step(
 }
 
 void ImageEncoder::reconstruct(
-    const ByteBuffer* reconCIs
+    const IntBuffer* reconCIs
 ) {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
