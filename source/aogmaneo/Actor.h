@@ -39,8 +39,6 @@ public:
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
 
-        FloatBuffer hiddenValuesPrev;
-        
         float reward;
     };
 
@@ -74,7 +72,6 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
-        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic
@@ -93,8 +90,8 @@ public:
     vlr(0.01f),
     alr(0.01f),
     discount(0.99f),
-    minSteps(8),
-    historyIters(8)
+    minSteps(16),
+    historyIters(16)
     {}
 
     // Initialized randomly

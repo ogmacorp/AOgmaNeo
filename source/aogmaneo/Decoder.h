@@ -30,8 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights0;
-        FloatBuffer weights1;
+        FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
