@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
@@ -64,7 +64,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.1f)
+    alpha(1.0f)
     {}
 
     // Create with random initialization
@@ -78,7 +78,7 @@ public:
         const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
     );
 
-    // Learning predictions (update protos)
+    // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
     );
