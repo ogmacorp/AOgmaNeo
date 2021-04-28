@@ -229,6 +229,7 @@ void SparseCoder::write(
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&groupRadius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
@@ -257,6 +258,7 @@ void SparseCoder::read(
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
     reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenRates.resize(numHiddenCells);
