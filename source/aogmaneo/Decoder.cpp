@@ -80,7 +80,7 @@ void Decoder::forward(
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
-                    float inAct = inputActivations[vli] == nullptr ? 1.0f : (*inputActivations[vli])[visibleColumnIndex];
+                    float inAct = (inputActivations[vli] == nullptr ? 1.0f : (*inputActivations[vli])[visibleColumnIndex]);
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -126,9 +126,6 @@ void Decoder::learn(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
-
-    if (hiddenCIs[hiddenColumnIndex] == targetCI)
-        return;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
