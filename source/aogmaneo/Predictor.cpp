@@ -57,7 +57,7 @@ void Predictor::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= delta * delta;
+                    hiddenSums[hiddenCellIndex] -= abs(delta);
                 }
             }
     }
