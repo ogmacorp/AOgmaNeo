@@ -171,7 +171,7 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        eLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].errorHistorySize, eVisibleLayerDescs);
+        eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
         errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
     }
@@ -246,8 +246,11 @@ void Hierarchy::step(
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
             Array<const IntBuffer*> feedBackCIs(l < eLayers.size() - 1 ? 2 : 1);
+            Array<const FloatBuffer*> feedBackActivations(feedBackCIs.size());
 
             feedBackCIs[0] = &eLayers[l].getHiddenCIs();
+            feedBackActivations[0] = &eLayers[l].getHiddenActivations();
+            feedBackActivations[1] = nullptr;
 
             if (l < eLayers.size() - 1)
                 feedBackCIs[1] = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
@@ -258,7 +261,7 @@ void Hierarchy::step(
                     if (learnEnabled)
                         dLayers[l][i][t].learn(&histories[l][i][t]);
 
-                    dLayers[l][i][t].activate(feedBackCIs);
+                    dLayers[l][i][t].activate(feedBackCIs, feedBackActivations);
                 }
             }
 

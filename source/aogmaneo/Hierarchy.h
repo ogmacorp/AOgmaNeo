@@ -63,7 +63,6 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        int errorHistorySize; // Error history size for encoder
 
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
@@ -75,7 +74,6 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        errorHistorySize(32),
         eRadius(2),
         dRadius(2),
         bRadius(2),
@@ -85,7 +83,6 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int errorHistorySize,
             int eRadius,
             int dRadius,
             int bRadius,
@@ -94,7 +91,6 @@ public:
         )
         :
         hiddenSize(hiddenSize),
-        errorHistorySize(errorHistorySize),
         eRadius(eRadius),
         dRadius(dRadius),
         bRadius(bRadius),

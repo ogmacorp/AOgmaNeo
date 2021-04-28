@@ -65,7 +65,6 @@ public:
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int errorHistorySize,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
@@ -117,6 +116,11 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    // Get the hidden activations
+    const FloatBuffer &getHiddenActivations() const {
+        return hiddenActivations;
     }
 
     // Get the hidden size
