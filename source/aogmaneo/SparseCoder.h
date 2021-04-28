@@ -71,7 +71,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.05f),
+    alpha(0.01f),
     gamma(0.1f),
     groupRadius(2)
     {}

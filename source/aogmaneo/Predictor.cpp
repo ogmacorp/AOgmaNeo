@@ -57,7 +57,7 @@ void Predictor::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= abs(delta);
+                    hiddenSums[hiddenCellIndex] -= delta * delta;
                 }
             }
     }
@@ -149,7 +149,7 @@ void Predictor::initRandom(
         vl.protos.resize(numHiddenCells * area);
 
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = randf(-0.01f, 0.01f);
+            vl.protos[i] = (randf() < 0.5f ? 2.0f : -2.0f) + randf(-0.01f, 0.01f); // Init completely out of range
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
