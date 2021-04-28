@@ -31,17 +31,13 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer protos;
-
-        FloatBuffer reconstruction;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int numPriorities;
 
     FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenPriorities;
 
     FloatBuffer hiddenRates; // Resources
 
@@ -59,31 +55,30 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        int priority,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
     );
 
-    void reconstruct(
+    void learn(
         const Int2 &columnPos,
-        int vli,
-        int priority
+        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
     float alpha;
     float gamma;
+    int groupRadius;
 
     // Defaults
     SparseCoder()
     :
     alpha(0.02f),
-    gamma(0.1f)
+    gamma(0.1f),
+    groupRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int numPriorities, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
