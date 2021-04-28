@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -47,42 +47,41 @@ void ErrorEncoder::forward(
     }
 
     if (learnEnabled) {
-            int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+        int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-            float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * (hiddenActivations[hiddenColumnIndex] > 0.0f ? 1.0f : 0.0f);
+        float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * (hiddenActivations[hiddenColumnIndex] > 0.0f ? 1.0f : 0.0f);
 
-            for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                VisibleLayer &vl = visibleLayers[vli];
-                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-                int diam = vld.radius * 2 + 1;
+            int diam = vld.radius * 2 + 1;
 
-                // Projection
-                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-                Int2 visibleCenter = project(columnPos, hToV);
+            Int2 visibleCenter = project(columnPos, hToV);
 
-                visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
-                // Lower corner
-                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-                // Bounds of receptive field, clamped to input size
-                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                        vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
-                    }
-            }
+                    vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))] += delta;
+                }
         }
     }
 
@@ -129,33 +128,14 @@ void ErrorEncoder::forward(
 
         sum /= max(1, count);
 
-        hiddenActivations[hiddenCellIndex] = sum;
-
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
     }
 
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActivations[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenCellIndex] *= scale;
-    }
-
     hiddenCIs[hiddenColumnIndex] = maxIndex;
+    hiddenActivations[hiddenColumnIndex] = max(0.0f, maxActivation);
 }
 
 void ErrorEncoder::initRandom(
@@ -191,7 +171,7 @@ void ErrorEncoder::initRandom(
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
@@ -274,7 +254,7 @@ void ErrorEncoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
-    hiddenActivations.resize(numHiddenCells);
+    hiddenActivations.resize(numHiddenColumns);
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
