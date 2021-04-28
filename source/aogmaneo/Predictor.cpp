@@ -62,13 +62,15 @@ void Predictor::forward(
             }
     }
 
-    int maxIndex = 0;
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        if (hiddenActivations[hiddenCellIndex] > maxActivation) {
+        hiddenActivations[hiddenCellIndex] /= max(1, count);
+
+        if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
             maxIndex = hc;
         }
