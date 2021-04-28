@@ -49,7 +49,7 @@ void ErrorEncoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * (hiddenActivations[hiddenColumnIndex] > 0.0f ? 1.0f : 0.0f);
+        float delta = lr * tanh((*hiddenErrors)[hiddenColumnIndex]) * (hiddenActivations[hiddenColumnIndex] > 0.0f ? 1.0f : 0.0f);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
