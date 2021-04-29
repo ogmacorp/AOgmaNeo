@@ -246,11 +246,10 @@ void Hierarchy::step(
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
             Array<const IntBuffer*> feedBackCIs(l < eLayers.size() - 1 ? 2 : 1);
-            Array<const FloatBuffer*> feedBackActivations(feedBackCIs.size());
+            Array<const FloatBuffer*> feedBackActivations(feedBackCIs.size(), nullptr);
 
             feedBackCIs[0] = &eLayers[l].getHiddenCIs();
             feedBackActivations[0] = &eLayers[l].getHiddenActivations();
-            feedBackActivations[1] = nullptr;
 
             if (l < eLayers.size() - 1)
                 feedBackCIs[1] = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
