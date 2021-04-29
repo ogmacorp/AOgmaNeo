@@ -59,7 +59,7 @@ public:
 
     ErrorEncoder()
     :
-    lr(0.01f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -116,6 +116,11 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    // Get the hidden activations
+    const FloatBuffer &getHiddenActivations() const {
+        return hiddenActivations;
     }
 
     // Get the hidden size
