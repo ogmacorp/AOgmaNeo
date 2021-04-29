@@ -103,12 +103,13 @@ void SparseCoder::learn(
             }
         }
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int dist = hiddenCIs[hiddenColumnIndex] - hc;
+    for (int dhc = -1; dhc < 1; dhc++) {
+        int hc = hiddenCIs[hiddenColumnIndex] + dhc;
+
+        if (hc < 0 || hc >= hiddenSize.z)
+            continue;
 
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        float strength = expf(-dist * dist * gamma / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -142,11 +143,11 @@ void SparseCoder::learn(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    vl.protos[wi] += strength * (inValue - vl.protos[wi]);
+                    vl.protos[wi] += hiddenRates[hiddenColumnIndex] * (inValue - vl.protos[wi]);
                 }
         }
 
-        hiddenRates[hiddenCellIndex] -= alpha * strength;
+        hiddenRates[hiddenColumnIndex] -= alpha * hiddenRates[hiddenColumnIndex];
     }
 }
 
@@ -185,7 +186,7 @@ void SparseCoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+    hiddenRates = FloatBuffer(numHiddenColumns, 1.0f);
 }
 
 void SparseCoder::step(
@@ -261,7 +262,7 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
-    hiddenRates.resize(numHiddenCells);
+    hiddenRates.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
