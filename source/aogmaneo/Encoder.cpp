@@ -49,7 +49,7 @@ void Encoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = lr * (*hiddenErrors)[hiddenColumnIndex];
+        float delta = tanh((*hiddenErrors)[hiddenColumnIndex]) * hiddenActivations[hiddenColumnIndex];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -80,7 +80,13 @@ void Encoder::forward(
 
                     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))] += delta;
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wiStart;
+
+                        vl.weights[wi] += lr * delta * ((vc == inCIPrev ? 1.0f : 0.0f) - delta * vl.weights[wi]);
+                    }
                 }
         }
     }
@@ -166,7 +172,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
