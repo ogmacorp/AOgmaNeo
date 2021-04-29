@@ -76,9 +76,7 @@ public:
             const Int3 &hiddenSize,
             int ffRadius,
             int rRadius,
-            int fbRadius,
-            int ticksPerUpdate,
-            int temporalHorizon
+            int fbRadius
         )
         :
         hiddenSize(hiddenSize),
