@@ -89,6 +89,8 @@ void SparseCoder::learn(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     // Determine if column is most active in group
+    bool isMax = true;
+
     float sum = hiddenSums[hiddenCellsStart + hiddenCIs[hiddenColumnIndex]];
 
     for (int dcx = -groupRadius; dcx <= groupRadius; dcx++)
@@ -98,10 +100,14 @@ void SparseCoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenSums[otherHiddenColumnIndex * hiddenSize.z + hiddenCIs[otherHiddenColumnIndex]] > sum)
-                    return;
+                if (hiddenSums[otherHiddenColumnIndex * hiddenSize.z + hiddenCIs[otherHiddenColumnIndex]] > sum) {
+                    isMax = false;
+                    goto foundIsMax;
+                }
             }
         }
+
+foundIsMax:
 
     for (int dhc = -1; dhc < 1; dhc++) {
         int hc = hiddenCIs[hiddenColumnIndex] + dhc;
@@ -110,6 +116,8 @@ void SparseCoder::learn(
             continue;
 
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        float rate = (isMax ? hiddenRates[hiddenCellIndex] : hiddenRates[hiddenCellIndex] * gamma);
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -143,11 +151,11 @@ void SparseCoder::learn(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    vl.protos[wi] += hiddenRates[hiddenColumnIndex] * (inValue - vl.protos[wi]);
+                    vl.protos[wi] += rate * (inValue - vl.protos[wi]);
                 }
         }
 
-        hiddenRates[hiddenColumnIndex] -= alpha * hiddenRates[hiddenColumnIndex];
+        hiddenRates[hiddenCellIndex] -= alpha * rate;
     }
 }
 
@@ -186,7 +194,7 @@ void SparseCoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
-    hiddenRates = FloatBuffer(numHiddenColumns, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
 
 void SparseCoder::step(
@@ -262,7 +270,7 @@ void SparseCoder::read(
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
-    hiddenRates.resize(numHiddenColumns);
+    hiddenRates.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));

@@ -72,7 +72,7 @@ public:
     SparseCoder()
     :
     alpha(0.05f),
-    gamma(0.1f),
+    gamma(0.01f),
     groupRadius(2)
     {}
 
