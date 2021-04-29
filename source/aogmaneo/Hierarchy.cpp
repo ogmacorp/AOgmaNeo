@@ -19,6 +19,7 @@ const Hierarchy &Hierarchy::operator=(
 
     inputSizes = other.inputSizes;
     errors = other.errors;
+    hiddenCIsPrev = other.hiddenCIsPrev;
 
     aLayers.resize(inputSizes.size());
 
