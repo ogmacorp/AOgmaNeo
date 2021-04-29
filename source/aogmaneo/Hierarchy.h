@@ -26,9 +26,8 @@ public:
         Int3 size;
         IOType type;
 
-        int eRadius; // Encoder radius
-        int dRadius; // Decoder radius
-        int bRadius; // Feed back radius
+        int ffRadius; // Feed forward radius
+        int fbRadius; // Feed back radius
 
         int historyCapacity; // Actor history capacity
 
@@ -36,26 +35,23 @@ public:
         :
         size(4, 4, 16),
         type(prediction),
-        eRadius(2),
-        dRadius(2),
-        bRadius(2),
+        ffRadius(2),
+        fbRadius(2),
         historyCapacity(128)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
-            int eRadius,
-            int dRadius,
-            int bRadius,
+            int ffRadius,
+            int fbRadius,
             int historyCapacity
         )
         :
         size(size),
         type(type),
-        eRadius(eRadius),
-        dRadius(dRadius),
-        bRadius(bRadius),
+        ffRadius(ffRadius),
+        fbRadius(fbRadius),
         historyCapacity(historyCapacity)
         {}
     };
@@ -64,56 +60,41 @@ public:
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
 
-        int eRadius; // Encoder radius
-        int dRadius; // Decoder radius
-        int bRadius; // Feed back radius
-
-        int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
+        int ffRadius; // Encoder radius
+        int rRadius; // Decoder radius
+        int fbRadius; // Feed back radius
 
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        eRadius(2),
-        dRadius(2),
-        bRadius(2),
-        ticksPerUpdate(2),
-        temporalHorizon(2)
+        ffRadius(2),
+        rRadius(2),
+        fbRadius(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int eRadius,
-            int dRadius,
-            int bRadius,
+            int ffRadius,
+            int rRadius,
+            int fbRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
-        eRadius(eRadius),
-        dRadius(dRadius),
-        bRadius(bRadius),
-        ticksPerUpdate(ticksPerUpdate),
-        temporalHorizon(temporalHorizon)
+        ffRadius(ffRadius),
+        rRadius(rRadius),
+        fbRadius(fbRadius)
         {}
     };
 
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Array<Array<Decoder>>> dLayers;
+    Array<Array<Decoder>> dLayers;
     Array<Ptr<Actor>> aLayers;
     Array<FloatBuffer> errors;
-
-    // Histories
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
-
-    // Per-layer values
-    ByteBuffer updates;
-
-    IntBuffer ticks;
-    IntBuffer ticksPerUpdate;
+    Array<IntBuffer> hiddenCIsPrev;
 
     // Input dimensions
     Array<Int3> inputSizes;
@@ -180,28 +161,7 @@ public:
         if (aLayers[i] != nullptr) // If is an action layer
             return aLayers[i]->getHiddenCIs();
 
-        return dLayers[0][i][0].getHiddenCIs();
-    }
-
-    // Whether this layer received on update this timestep
-    bool getUpdate(
-        int l // Layer index
-    ) const {
-        return updates[l];
-    }
-
-    // Get current layer ticks, relative to previous layer
-    int getTicks(
-        int l // Layer Index
-    ) const {
-        return ticks[l];
-    }
-
-    // Get layer ticks per update, relative to previous layer
-    int getTicksPerUpdate(
-        int l // Layer Index
-    ) const {
-        return ticksPerUpdate[l];
+        return dLayers[0][i].getHiddenCIs();
     }
 
     // Get input sizes
@@ -224,14 +184,14 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Array<Decoder>> &getDLayers(
+    Array<Decoder> &getDLayers(
         int l // Layer index
     ) {
         return dLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Array<Decoder>> &getDLayers(
+    const Array<Decoder> &getDLayers(
         int l // Layer index
     ) const {
         return dLayers[l];
@@ -245,12 +205,6 @@ public:
     // Retrieve predictor layer(s), const version
     const Array<Ptr<Actor>> &getALayers() const {
         return aLayers;
-    }
-
-    const Array<CircleBuffer<IntBuffer>> &getHistories(
-        int l
-    ) const {
-        return histories[l];
     }
 };
 } // namespace aon
