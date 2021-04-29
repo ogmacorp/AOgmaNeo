@@ -176,7 +176,6 @@ void Hierarchy::step(
             }
             else
                 eLayers[l].step(inputCIs, &errors[l], learnEnabled);
-
         }
         else {
             if (eLayers[l].getNumVisibleLayers() > 1) {
