@@ -80,7 +80,7 @@ void Decoder::forward(
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
-                    float inAct = inputActivations[vli] == nullptr ? 1.0f : (*inputActivations[vli])[visibleColumnIndex];
+                    float inAct = (inputActivations[vli] == nullptr ? 1.0f : (*inputActivations[vli])[visibleColumnIndex]);
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
