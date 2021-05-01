@@ -30,7 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        FloatBuffer weights;
+        FloatBuffer deltas;
+        FloatBuffer rates;
     };
 
 private:
@@ -39,19 +41,11 @@ private:
     FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenRates; // Resources
-
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
-    
-    void resetReconstruction(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
-    );
     
     void forward(
         const Int2 &columnPos,
@@ -65,14 +59,12 @@ private:
 
 public:
     float alpha;
-    float gamma;
     int groupRadius;
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.05f),
-    gamma(0.01f),
+    alpha(0.5f),
     groupRadius(2)
     {}
 
