@@ -114,11 +114,11 @@ void Hierarchy::initRandom(
                 dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
                 dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                dVisibleLayerDescs[1].radius = ioDescs[i].bRadius;
+                dVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
 
                 if (l < encLayers.size() - 1) {
                     dVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                    dVisibleLayerDescs[2].radius = ioDescs[i].bRadius;
+                    dVisibleLayerDescs[2].radius = ioDescs[i].dRadius;
                 }
 
                 dLayers[l][i].resize(1);
@@ -132,11 +132,11 @@ void Hierarchy::initRandom(
                     aVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
                     aVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                    aVisibleLayerDescs[1].radius = ioDescs[i].bRadius;
+                    aVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
 
                     if (l < encLayers.size() - 1) {
                         aVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                        aVisibleLayerDescs[2].radius = ioDescs[i].bRadius;
+                        aVisibleLayerDescs[2].radius = ioDescs[i].dRadius;
                     }
 
                     aLayers[i].make();
@@ -176,11 +176,11 @@ void Hierarchy::initRandom(
             dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
 
             dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-            dVisibleLayerDescs[1].radius = layerDescs[l].bRadius;
+            dVisibleLayerDescs[1].radius = layerDescs[l].dRadius;
 
             if (l < encLayers.size() - 1) {
                 dVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                dVisibleLayerDescs[2].radius = layerDescs[l].bRadius;
+                dVisibleLayerDescs[2].radius = layerDescs[l].dRadius;
             }
 
             // Create actors
