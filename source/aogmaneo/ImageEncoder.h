@@ -30,7 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        FloatBuffer protos;
+        FloatBuffer deltas;
+        FloatBuffer rates;
 
         ByteBuffer reconstruction;
     };
@@ -39,8 +41,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenRates; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -62,13 +62,11 @@ private:
 
 public:
     float lr;
-    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.01f),
-    falloff(0.01f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
