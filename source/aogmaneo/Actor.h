@@ -38,6 +38,7 @@ public:
     struct HistorySample {
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
+        FloatBuffer hiddenValuesPrev;
 
         float reward;
     };
@@ -47,8 +48,6 @@ private:
 
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
-
-    FloatBuffer hiddenActivations; // Temporary buffer
 
     IntBuffer hiddenCIs; // Hidden states
 
@@ -64,14 +63,14 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        unsigned int* state
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
+        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic
