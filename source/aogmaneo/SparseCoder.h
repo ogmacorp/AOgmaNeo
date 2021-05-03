@@ -63,7 +63,7 @@ public:
     SparseCoder()
     :
     alpha(0.1f),
-    groupRadius(1)
+    groupRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
