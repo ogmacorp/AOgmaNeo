@@ -116,7 +116,7 @@ void Actor::forward(
         nextValue += hiddenValues[hiddenCellIndex] * (hc == maxIndex ? 1.0f - epsilon : epsilon / (hiddenSize.z - 1));
     }
 
-    float delta = lr * (reward + discount * nextValue - valuePrev);
+    float delta = lr * tanh(reward + discount * nextValue - valuePrev);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -155,8 +155,8 @@ void Actor::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc == inCIPrev)
-                            vl.traces[wi] = (hc == targetCI ? 1.0f : 0.0f);
+                        if (vc == inCIPrev && hc == targetCI)
+                            vl.traces[wi] = vl.traces[wi] * traceDecay + 1.0f;
                         else
                             vl.traces[wi] *= traceDecay;
 
