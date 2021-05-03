@@ -138,7 +138,7 @@ void SparseCoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] = roundftoi(vl.weights[wi] + alpha * ((vc == inCI ? 255.0f : 0.0f) - vl.weights[wi]));
+                    vl.weights[wi] = roundftoi(min(255.0f, max(0.0f, vl.weights[wi] + alpha * ((vc == inCI ? 255.0f : 0.0f) - vl.weights[wi]))));
                 }
             }
     }
@@ -186,16 +186,16 @@ void SparseCoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
+    // Activate / learn
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++)
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+
     if (learnEnabled) {
         #pragma omp parallel for
         for (int i = 0; i < numHiddenColumns; i++)
             learn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
     }
-
-    // Activate / learn
-    #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
 }
 
 int SparseCoder::size() const {
