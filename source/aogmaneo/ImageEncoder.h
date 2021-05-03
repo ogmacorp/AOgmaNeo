@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        ByteBuffer protos;
 
         ByteBuffer reconstruction;
     };
@@ -67,8 +67,8 @@ public:
     // Defaults
     ImageEncoder()
     :
-    alpha(0.02f),
-    gamma(0.1f)
+    alpha(0.05f),
+    gamma(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
