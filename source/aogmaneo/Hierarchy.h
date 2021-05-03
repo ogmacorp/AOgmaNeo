@@ -31,13 +31,16 @@ public:
         int pRadius; // Prediction radius
         int aRadius; // Actor radius
 
+        int historyCapacity;
+
         IODesc()
         :
         size(4, 4, 16),
         type(none),
         ffRadius(2),
         pRadius(2),
-        aRadius(2)
+        aRadius(2),
+        historyCapacity(64)
         {}
 
         IODesc(
@@ -45,14 +48,16 @@ public:
             IOType type,
             int ffRadius,
             int pRadius,
-            int aRadius
+            int aRadius,
+            int historyCapacity
         )
         :
         size(size),
         type(type),
         ffRadius(ffRadius),
         pRadius(pRadius),
-        aRadius(aRadius)
+        aRadius(aRadius),
+        historyCapacity(historyCapacity)
         {}
     };
 
@@ -135,7 +140,8 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f // Reinforcement signal
+        float reward = 0.0f, // Reinforcement signal
+        bool mimic = false
     );
 
     // Serialization
