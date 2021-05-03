@@ -136,12 +136,9 @@ void SparseCoder::learn(
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    if (vc == inCI)
-                        continue;
-
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] = roundftoi(vl.weights[wi] - alpha * vl.weights[wi]);
+                    vl.weights[wi] = roundftoi(vl.weights[wi] + alpha * ((vc == inCI ? 255.0f : 0.0f) - vl.weights[wi]));
                 }
             }
     }
