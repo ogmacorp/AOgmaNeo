@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,16 +30,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
-    };
+        FloatBuffer weights;
+        FloatBuffer traces;
 
-    // History sample for delayed updates
-    struct HistorySample {
-        Array<IntBuffer> inputCIs;
-        IntBuffer hiddenTargetCIsPrev;
-
-        float reward;
+        IntBuffer inputCIsPrev;
     };
 
 private:
@@ -48,13 +42,8 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenActivations; // Temporary buffer
-
+    FloatBuffer hiddenValues;
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenValues; // Hidden value function output buffer
-
-    CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -65,39 +54,30 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
+        const IntBuffer* hiddenTargetCIsPrev,
+        float reward,
+        bool learnEnabled,
         unsigned int* state
     );
 
-    void learn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIsPrev,
-        const IntBuffer* hiddenTargetCIsPrev,
-        float q,
-        float g,
-        bool mimic
-    );
-
 public:
-    float alpha; // Value learning rate
-    float beta; // Action learning rate
-    float gamma; // Discount factor
-    int minSteps;
-    int historyIters;
+    float alpha; // Learning rate
+    float gamma;
+    float traceDecay;
+    float epsilon; // Exploration
 
     // Defaults
     Actor()
     :
-    alpha(0.01f),
-    beta(0.01f),
+    alpha(0.1f),
     gamma(0.99f),
-    minSteps(8),
-    historyIters(8)
+    traceDecay(0.95f),
+    epsilon(0.03f)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
-        int historyCapacity,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
@@ -106,8 +86,7 @@ public:
         const Array<const IntBuffer*> &inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
-        bool learnEnabled,
-        bool mimic
+        bool learnEnabled
     );
 
     // Serialization
@@ -157,10 +136,6 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
-    }
-
-    int getHistoryCapacity() const {
-        return historySamples.size();
     }
 
     int getHistorySize() const {

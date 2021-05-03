@@ -30,15 +30,13 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
-        FloatBuffer deltas;
-        FloatBuffer rates;
+        ByteBuffer weights;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenSums;
+    IntBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden states
 
     // Visible layers and associated descriptors
