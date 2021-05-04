@@ -30,7 +30,6 @@ public:
         int hRadius; // Hidden encoder radius
         int eRadius; // Error encoder radius
         int dRadius; // Decoder radius
-        int bRadius; // Feed back radius
 
         IODesc()
         :
@@ -38,8 +37,7 @@ public:
         type(prediction),
         hRadius(2),
         eRadius(2),
-        dRadius(2),
-        bRadius(2)
+        dRadius(2)
         {}
 
         IODesc(
@@ -47,16 +45,14 @@ public:
             IOType type,
             int hRadius,
             int eRadius,
-            int dRadius,
-            int bRadius
+            int dRadius
         )
         :
         size(size),
         type(type),
         hRadius(hRadius),
         eRadius(eRadius),
-        dRadius(dRadius),
-        bRadius(bRadius)
+        dRadius(dRadius)
         {}
     };
 
@@ -68,7 +64,6 @@ public:
         int hRadius; // Feed forward hidden radius
         int eRadius; // Feed forward error radius
         int dRadius; // Prediction radius
-        int bRadius; // Feed back radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -80,7 +75,6 @@ public:
         hRadius(2),
         eRadius(2),
         dRadius(2),
-        bRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
@@ -91,7 +85,6 @@ public:
             int hRadius,
             int eRadius,
             int dRadius,
-            int bRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
@@ -101,7 +94,6 @@ public:
         hRadius(hRadius),
         eRadius(eRadius),
         dRadius(dRadius),
-        bRadius(bRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
