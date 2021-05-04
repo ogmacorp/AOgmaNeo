@@ -265,6 +265,7 @@ void ImageEncoder::distribute(
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex0 = address3(Int3(0, 0, hc), hiddenSize);
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -277,7 +278,7 @@ void ImageEncoder::distribute(
             int numProtosPerCell = area * vld.size.z;
 
             for (int i = 0; i < numProtosPerCell; i++)
-                vl.protos[hiddenCellIndex * numProtosPerCell + i] = vl.protos[i]; // Copy from first location
+                vl.protos[hiddenCellIndex * numProtosPerCell + i] = vl.protos[hiddenCellIndex0 * numProtosPerCell + i]; // Copy from first location
         }
     }
 }
