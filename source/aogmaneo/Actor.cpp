@@ -209,7 +209,7 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float deltaAction = (mimic ? alr : alr * tanh(tdErrorValue)) * (hc == targetCI ? 1.0f : -1.0f / (hiddenSize.z - 1));
+        float deltaAction = (mimic ? alr : alr * tdErrorValue) * (hc == targetCI ? 1.0f : -1.0f / (hiddenSize.z - 1));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
