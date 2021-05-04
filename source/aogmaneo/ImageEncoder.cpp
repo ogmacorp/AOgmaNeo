@@ -200,12 +200,19 @@ void ImageEncoder::reduce(
 
     Int2 sourceStart(columnPos.x * reduction, columnPos.y * reduction);
 
+    int count = 1;
+
     for (int dx = 0; dx < 2; dx++)
         for (int dy = 0; dy < 2; dy++) {
             if (dx == 0 && dy == 0)
                 continue;
 
             Int2 sourcePos(sourceStart.x + dx * stride, sourceStart.y + dy * stride);
+
+            if (!inBounds0(sourcePos, Int2(hiddenSize.x, hiddenSize.y)))
+                continue;
+
+            count++;
 
             for (int hc = 0; hc < hiddenSize.z; hc++) {
                 int sourceStartCellIndex = address3(Int3(sourceStart.x, sourceStart.y, hc), hiddenSize);
@@ -227,7 +234,7 @@ void ImageEncoder::reduce(
             }
         }
 
-    const float scale = 0.25f;
+    float scale = 1.0f / count;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int sourceStartCellIndex = address3(Int3(sourceStart.x, sourceStart.y, hc), hiddenSize);
