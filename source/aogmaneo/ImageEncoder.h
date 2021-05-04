@@ -92,11 +92,11 @@ public:
         bool learnEnabled // Whether to learn
     );
 
-    void makeShared();
-
     void reconstruct(
         const IntBuffer* reconCIs
     );
+
+    void makeShared();
 
     const ByteBuffer &getReconstruction(
         int i
