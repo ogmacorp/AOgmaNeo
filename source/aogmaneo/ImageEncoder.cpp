@@ -195,7 +195,6 @@ void ImageEncoder::reduce(
     const Int2 &columnPos,
     int step
 ) {
-    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
     int reduction = 1 << step;
     int stride = 1 << (step - 1);
 
@@ -357,7 +356,7 @@ void ImageEncoder::makeShared() {
         sizeY = sizeY >> 1;
     }
 
-    int numSteps = max(numStepsXY.x, numStepsXY.y);
+    int numSteps = max(numStepsXY.x, numStepsXY.y) - 1;
     
     Int2 size(hiddenSize.x / 2, hiddenSize.y / 2);
 
