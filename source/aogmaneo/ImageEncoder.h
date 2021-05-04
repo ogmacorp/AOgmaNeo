@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        FloatBuffer protos;
 
         ByteBuffer reconstruction;
     };
@@ -60,6 +60,15 @@ private:
         int vli
     );
 
+    void reduce(
+        const Int2 &columnPos,
+        int step
+    );
+
+    void distribute(
+        const Int2 &columnPos
+    );
+
 public:
     float lr;
     float falloff;
@@ -82,6 +91,8 @@ public:
         const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
+
+    void makeShared();
 
     void reconstruct(
         const IntBuffer* reconCIs
