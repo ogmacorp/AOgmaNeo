@@ -194,7 +194,7 @@ void Actor::learn(
 
     float tdErrorValue = newValue - value;
     
-    float deltaValue = vlr * tdErrorValue;
+    float deltaValue = alpha * tdErrorValue;
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -297,7 +297,7 @@ void Actor::learn(
 
         hiddenActivations[hiddenCellIndex] *= scale;
 
-        float deltaAction = (mimic || tdErrorValue > 0.0f ? alr : -alr * 0.5f) * ((hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
+        float deltaAction = (mimic || tdErrorValue > 0.0f ? beta : -beta * 0.5f) * ((hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -447,7 +447,7 @@ void Actor::step(
             for (int t = historyIndex; t >= 0; t--) {
                 q += historySamples[t].reward * g;
 
-                g *= discount;
+                g *= gamma;
             }
 
             #pragma omp parallel for
@@ -505,9 +505,9 @@ void Actor::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&vlr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&alr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&beta), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
@@ -558,9 +558,9 @@ void Actor::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
     
-    reader.read(reinterpret_cast<void*>(&vlr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&alr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&beta), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 

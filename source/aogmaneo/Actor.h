@@ -78,18 +78,18 @@ private:
     );
 
 public:
-    float vlr; // Value learning rate
-    float alr; // Action learning rate
-    float discount; // Discount factor
+    float alpha; // Value learning rate
+    float beta; // Action learning rate
+    float gamma; // Discount factor
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
     :
-    vlr(0.01f),
-    alr(0.01f),
-    discount(0.99f),
+    alpha(0.01f),
+    beta(0.01f),
+    gamma(0.99f),
     minSteps(16),
     historyIters(16)
     {}
