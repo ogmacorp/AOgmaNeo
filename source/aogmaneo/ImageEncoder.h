@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        FloatBuffer protos;
 
         ByteBuffer reconstruction;
     };
@@ -60,6 +60,15 @@ private:
         int vli
     );
 
+    void reduce(
+        const Int2 &columnPos,
+        int step
+    );
+
+    void distribute(
+        const Int2 &columnPos
+    );
+
 public:
     float lr;
     float falloff;
@@ -67,8 +76,8 @@ public:
     // Defaults
     ImageEncoder()
     :
-    lr(0.02f),
-    falloff(0.05f)
+    lr(0.05f),
+    falloff(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -86,6 +95,8 @@ public:
     void reconstruct(
         const IntBuffer* reconCIs
     );
+
+    void makeShared();
 
     const ByteBuffer &getReconstruction(
         int i

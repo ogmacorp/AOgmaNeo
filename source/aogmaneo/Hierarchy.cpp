@@ -108,17 +108,14 @@ void Hierarchy::initRandom(
             // Create predictors
             for (int i = 0; i < inputSizes.size(); i++) {
                 // Decoder visible layer descriptors
-                Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < encLayers.size() - 1 ? 3 : 2);
+                Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < encLayers.size() - 1 ? 2 : 1);
 
                 dVisibleLayerDescs[0].size = layerDescs[l].errorSize;
                 dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
-                dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                dVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
-
                 if (l < encLayers.size() - 1) {
-                    dVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                    dVisibleLayerDescs[2].radius = ioDescs[i].dRadius;
+                    dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+                    dVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
                 }
 
                 dLayers[l][i].resize(1);
@@ -126,17 +123,14 @@ void Hierarchy::initRandom(
 
                 if (ioDescs[i].type == IOType::action) {
                     // Actor visible layer descriptors
-                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < encLayers.size() - 1 ? 3 : 2);
+                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < encLayers.size() - 1 ? 2 : 1);
 
                     aVisibleLayerDescs[0].size = layerDescs[l].errorSize;
                     aVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
-                    aVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                    aVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
-
                     if (l < encLayers.size() - 1) {
-                        aVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                        aVisibleLayerDescs[2].radius = ioDescs[i].dRadius;
+                        aVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+                        aVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
                     }
 
                     aLayers[i].make();
@@ -170,17 +164,14 @@ void Hierarchy::initRandom(
             dLayers[l][0].resize(layerDescs[l].ticksPerUpdate);
 
             // Decoder visible layer descriptors
-            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < encLayers.size() - 1 ? 3 : 2);
+            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < encLayers.size() - 1 ? 2 : 1);
 
             dVisibleLayerDescs[0].size = layerDescs[l].errorSize;
             dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
 
-            dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-            dVisibleLayerDescs[1].radius = layerDescs[l].dRadius;
-
             if (l < encLayers.size() - 1) {
-                dVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                dVisibleLayerDescs[2].radius = layerDescs[l].dRadius;
+                dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+                dVisibleLayerDescs[1].radius = layerDescs[l].dRadius;
             }
 
             // Create actors
@@ -200,8 +191,7 @@ void Hierarchy::initRandom(
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
-    float reward,
-    bool mimic
+    float reward
 ) {
     // First tick is always 0
     ticks[0] = 0;
@@ -265,16 +255,12 @@ void Hierarchy::step(
     for (int l = encLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
-            Array<const IntBuffer*> feedBackCIs(l < encLayers.size() - 1 ? 3 : 2);
-            Array<const FloatBuffer*> feedBackActivations(feedBackCIs.size(), nullptr);
+            Array<const IntBuffer*> feedBackCIs(l < encLayers.size() - 1 ? 2 : 1);
 
             feedBackCIs[0] = &encLayers[l].error.getHiddenCIs();
-            feedBackCIs[1] = &encLayers[l].hidden.getHiddenCIs();
-
-            feedBackActivations[0] = &encLayers[l].error.getHiddenActivations();
 
             if (l < encLayers.size() - 1)
-                feedBackCIs[2] = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
+                feedBackCIs[1] = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
 
             // Step actor layers
             for (int i = 0; i < dLayers[l].size(); i++) {
@@ -282,7 +268,7 @@ void Hierarchy::step(
                     if (learnEnabled)
                         dLayers[l][i][t].learn(&histories[l][i][t]);
 
-                    dLayers[l][i][t].activate(feedBackCIs, feedBackActivations);
+                    dLayers[l][i][t].activate(feedBackCIs);
                 }
             }
 
@@ -290,7 +276,7 @@ void Hierarchy::step(
                 // Step actors
                 for (int i = 0; i < aLayers.size(); i++) {
                     if (aLayers[i] != nullptr)
-                        aLayers[i]->step(feedBackCIs, &histories[l][i][0], reward, learnEnabled, mimic);
+                        aLayers[i]->step(feedBackCIs, &histories[l][i][0], reward, learnEnabled);
                 }
             }
         }

@@ -118,11 +118,6 @@ public:
         return hiddenCIs;
     }
 
-    // Get the hidden activations
-    const FloatBuffer &getHiddenActivations() const {
-        return hiddenActivations;
-    }
-
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
