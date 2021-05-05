@@ -39,9 +39,6 @@ public:
 private:
     Int3 hiddenSize; // Hidden/output/action size
 
-    // Current history size - fixed after initialization. Determines length of wait before updating
-    int historySize;
-
     FloatBuffer hiddenValues;
     IntBuffer hiddenCIs; // Hidden states
 
@@ -136,10 +133,6 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
-    }
-
-    int getHistorySize() const {
-        return historySize;
     }
 };
 } // namespace aon
