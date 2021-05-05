@@ -179,7 +179,7 @@ void Actor::learn(
 
     float tdError = newValue - sum;
     
-    float delta = lr * tdError;
+    float delta = lr * tanh(tdError);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
