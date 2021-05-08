@@ -79,6 +79,8 @@ void Predictor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
+        hiddenActivations[hiddenCellIndex] /= max(1, count) * 127.0f;
+
         hiddenActivations[hiddenCellIndex] = expf(temperature * (hiddenActivations[hiddenCellIndex] - maxActivation));
 
         total += hiddenActivations[hiddenCellIndex];
