@@ -33,7 +33,6 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-        FloatBuffer inputActivationsPrev;
     };
 
 private:
@@ -51,29 +50,32 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActivations
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs
+        const IntBuffer* hiddenTargetCIs,
+        float reward
     );
 
     void generateErrors(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
+        float reward,
         FloatBuffer* visibleErrors,
         int vli
     ); 
 
 public:
     float lr; // Learning rate
+    float discount; // Discounting (gamma)
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(0.1f),
+    discount(0.98f)
     {}
 
     // Create with random initialization
@@ -84,17 +86,18 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActivations
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Learning predictions (update weights)
     void learn(
-        const IntBuffer* hiddenTargetCIs
+        const IntBuffer* hiddenTargetCIs,
+        float reward
     );
 
     void generateErrors(
         const IntBuffer* hiddenTargetCIs,
+        float reward,
         FloatBuffer* visibleErrors,
         int vli
     );
