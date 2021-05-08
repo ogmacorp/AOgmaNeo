@@ -62,7 +62,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.2f),
+    alpha(0.01f),
     groupRadius(2)
     {}
 
