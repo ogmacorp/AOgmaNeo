@@ -40,7 +40,7 @@ private:
 
     FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
-    
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -59,7 +59,7 @@ public:
 
     Encoder()
     :
-    lr(0.01f)
+    lr(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -118,14 +118,10 @@ public:
         return hiddenCIs;
     }
 
-    // Get the hidden activations
-    const FloatBuffer &getHiddenActivations() const {
-        return hiddenActivations;
-    }
-
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
     }
 };
 } // namespace aon
+

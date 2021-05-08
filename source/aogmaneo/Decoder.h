@@ -55,27 +55,23 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        float reward
+        const IntBuffer* hiddenTargetCIs
     );
 
     void generateErrors(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
-        float reward,
         FloatBuffer* visibleErrors,
         int vli
     ); 
 
 public:
     float lr; // Learning rate
-    float discount; // Discounting (gamma)
 
     // Defaults
     Decoder()
     :
-    lr(0.1f),
-    discount(0.98f)
+    lr(0.2f)
     {}
 
     // Create with random initialization
@@ -91,13 +87,11 @@ public:
 
     // Learning predictions (update weights)
     void learn(
-        const IntBuffer* hiddenTargetCIs,
-        float reward
+        const IntBuffer* hiddenTargetCIs
     );
 
     void generateErrors(
         const IntBuffer* hiddenTargetCIs,
-        float reward,
         FloatBuffer* visibleErrors,
         int vli
     );
