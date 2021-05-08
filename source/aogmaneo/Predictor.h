@@ -65,7 +65,7 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.4f),
+    alpha(0.1f),
     temperature(16.0f)
     {}
 
