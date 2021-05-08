@@ -58,11 +58,13 @@ private:
     );
 
 public:
+    float alpha;
     int groupRadius;
 
     // Defaults
     SparseCoder()
     :
+    alpha(0.2f),
     groupRadius(2)
     {}
 
