@@ -203,10 +203,8 @@ void Hierarchy::step(
     for (int l = eLayers.size() - 1; l >= 0; l--) {
         // Feed back is current layer state and next higher layer prediction
         Array<const IntBuffer*> feedBackCIs(l < eLayers.size() - 1 ? 2 : 1);
-        Array<const FloatBuffer*> feedBackActivations(feedBackCIs.size(), nullptr);
 
         feedBackCIs[0] = &eLayers[l].getHiddenCIs();
-        feedBackActivations[0] = &eLayers[l].getHiddenActivations();
 
         if (l < eLayers.size() - 1)
             feedBackCIs[1] = &dLayers[l + 1][0].getHiddenCIs();
@@ -217,7 +215,7 @@ void Hierarchy::step(
                 if (learnEnabled)
                     dLayers[l][i].learn(inputCIs[i]);
 
-                dLayers[l][i].activate(feedBackCIs, feedBackActivations);
+                dLayers[l][i].activate(feedBackCIs);
             }
 
             // Step actors
@@ -231,7 +229,7 @@ void Hierarchy::step(
             if (learnEnabled)
                 dLayers[l][0].learn(&eLayers[l].getHiddenCIs());
 
-            dLayers[l][0].activate(feedBackCIs, feedBackActivations);
+            dLayers[l][0].activate(feedBackCIs);
         }
     }
 }
