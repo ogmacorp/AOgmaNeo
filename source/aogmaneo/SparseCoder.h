@@ -39,6 +39,8 @@ private:
     IntBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden states
 
+    IntBuffer hiddenVisits;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -56,13 +58,11 @@ private:
     );
 
 public:
-    float alpha;
     int groupRadius;
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.01f),
     groupRadius(2)
     {}
 
