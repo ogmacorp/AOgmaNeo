@@ -60,6 +60,12 @@ private:
         int vli
     );
 
+    void reconstruct(
+        const Int2 &columnPos,
+        const FloatBuffer* reconActs,
+        int vli
+    );
+
     void reduce(
         const Int2 &columnPos,
         int step
@@ -76,8 +82,8 @@ public:
     // Defaults
     ImageEncoder()
     :
-    lr(0.05f),
-    falloff(0.1f)
+    lr(0.04f),
+    falloff(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -94,6 +100,10 @@ public:
 
     void reconstruct(
         const IntBuffer* reconCIs
+    );
+
+    void reconstruct(
+        const FloatBuffer* reconActs
     );
 
     void makeShared();
