@@ -107,7 +107,7 @@ void Hierarchy::initRandom(
                 histories[l][i].resize(layerDescs[l].temporalHorizon);
                 
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = ByteBuffer(inSize, 0);
+                    histories[l][i][t] = IntBuffer(inSize, 0);
             }
 
             // Predictors
@@ -117,7 +117,7 @@ void Hierarchy::initRandom(
             Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
             pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-            pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
+            pVisibleLayerDescs[0].radius = layerDescs[l].fbRadius;
 
             if (l < scLayers.size() - 1)
                 pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
@@ -163,7 +163,7 @@ void Hierarchy::initRandom(
             histories[l][0].resize(layerDescs[l].temporalHorizon);
 
             for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = ByteBuffer(inSize, 0);
+                histories[l][0][t] = IntBuffer(inSize, 0);
 
             pLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
@@ -171,7 +171,7 @@ void Hierarchy::initRandom(
             Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
             pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-            pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
+            pVisibleLayerDescs[0].radius = layerDescs[l].fbRadius;
 
             if (l < scLayers.size() - 1)
                 pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
@@ -191,7 +191,7 @@ void Hierarchy::initRandom(
 
 // Simulation step/tick
 void Hierarchy::step(
-    const Array<const ByteBuffer*> &inputCs,
+    const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
     float reward,
     bool mimic
@@ -203,7 +203,7 @@ void Hierarchy::step(
     for (int i = 0; i < inputSizes.size(); i++) {
         histories[0][i].pushFront();
 
-        histories[0][i][0] = *inputCs[i];
+        histories[0][i][0] = *inputCIs[i];
     }
 
     // Set all updates to no update, will be set to true if an update occurred later
@@ -220,17 +220,17 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            Array<const ByteBuffer*> layerInputCs(histories[l].size() * histories[l][0].size());
+            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
 
             int index = 0;
 
             for (int i = 0; i < histories[l].size(); i++) {
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    layerInputCs[index++] = &histories[l][i][t];
+                    layerInputCIs[index++] = &histories[l][i][t];
             }
 
             // Activate sparse coder
-            scLayers[l].step(layerInputCs, learnEnabled);
+            scLayers[l].step(layerInputCIs, learnEnabled);
 
             // Add to next layer's history
             if (l < scLayers.size() - 1) {
@@ -238,7 +238,7 @@ void Hierarchy::step(
 
                 histories[lNext][0].pushFront();
 
-                histories[lNext][0][0] = scLayers[l].getHiddenCs();
+                histories[lNext][0][0] = scLayers[l].getHiddenCIs();
 
                 ticks[lNext]++;
             }
@@ -249,12 +249,12 @@ void Hierarchy::step(
     for (int l = scLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
-            Array<const ByteBuffer*> feedBackCs(l < scLayers.size() - 1 ? 2 : 1);
+            Array<const IntBuffer*> feedBackCIs(l < scLayers.size() - 1 ? 2 : 1);
 
-            feedBackCs[0] = &scLayers[l].getHiddenCs();
+            feedBackCIs[0] = &scLayers[l].getHiddenCIs();
 
             if (l < scLayers.size() - 1)
-                feedBackCs[1] = &pLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]]->getHiddenCs();
+                feedBackCIs[1] = &pLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]]->getHiddenCIs();
 
             // Step actor layers
             for (int p = 0; p < pLayers[l].size(); p++) {
@@ -262,7 +262,7 @@ void Hierarchy::step(
                     if (learnEnabled)
                         pLayers[l][p]->learn(l == 0 ? &histories[l][p][0] : &histories[l][0][p]);
 
-                    pLayers[l][p]->activate(feedBackCs);
+                    pLayers[l][p]->activate(feedBackCIs);
                 }
             }
 
@@ -270,7 +270,7 @@ void Hierarchy::step(
                 // Step actors
                 for (int p = 0; p < aLayers.size(); p++) {
                     if (aLayers[p] != nullptr)
-                        aLayers[p]->step(feedBackCs, &histories[l][p][0], reward, learnEnabled, mimic);
+                        aLayers[p]->step(feedBackCIs, &histories[l][p][0], reward, learnEnabled, mimic);
                 }
             }
         }
@@ -290,7 +290,7 @@ void Hierarchy::write(
 
     writer.write(reinterpret_cast<const void*>(&inputSizes[0]), numInputs * sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
     writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
@@ -313,7 +313,7 @@ void Hierarchy::write(
 
                 writer.write(reinterpret_cast<const void*>(&bufferSize), sizeof(int));
 
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
             }
         }
 
@@ -321,9 +321,9 @@ void Hierarchy::write(
 
         // Predictors
         for (int v = 0; v < pLayers[l].size(); v++) {
-            unsigned char exists = pLayers[l][v] != nullptr;
+            Byte exists = pLayers[l][v] != nullptr;
 
-            writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
+            writer.write(reinterpret_cast<const void*>(&exists), sizeof(Byte));
 
             if (exists)
                 pLayers[l][v]->write(writer);
@@ -332,9 +332,9 @@ void Hierarchy::write(
 
     // Actors
     for (int v = 0; v < aLayers.size(); v++) {
-        unsigned char exists = aLayers[v] != nullptr;
+        Byte exists = aLayers[v] != nullptr;
 
-        writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&exists), sizeof(Byte));
 
         if (exists)
             aLayers[v]->write(writer);
@@ -365,7 +365,7 @@ void Hierarchy::read(
     ticks.resize(numLayers);
     ticksPerUpdate.resize(numLayers);
 
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
     
@@ -395,7 +395,7 @@ void Hierarchy::read(
 
                 histories[l][i][t].resize(bufferSize);
 
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(unsigned char));
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
             }
         }
 
@@ -405,9 +405,9 @@ void Hierarchy::read(
 
         // Predictors
         for (int v = 0; v < pLayers[l].size(); v++) {
-            unsigned char exists;
+            Byte exists;
 
-            reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
+            reader.read(reinterpret_cast<void*>(&exists), sizeof(Byte));
 
             if (exists) {
                 pLayers[l][v].make();
@@ -420,9 +420,9 @@ void Hierarchy::read(
     aLayers.resize(inputSizes.size());
 
     for (int v = 0; v < aLayers.size(); v++) {
-        unsigned char exists;
+        Byte exists;
 
-        reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&exists), sizeof(Byte));
 
         if (exists) {
             aLayers[v].make();

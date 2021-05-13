@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -50,7 +50,7 @@ public:
         Int2 clumpSize; // Size of clumps
 
         int ffRadius; // Feed forward radius
-        int pRadius; // Prediction radius
+        int fbRadius; // Feed back radius
         int aRadius; // Actor radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
@@ -63,7 +63,7 @@ public:
         hiddenSize(4, 4, 32),
         clumpSize(4, 4),
         ffRadius(2),
-        pRadius(2),
+        fbRadius(2),
         aRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2),
@@ -78,7 +78,7 @@ private:
     Array<Ptr<Actor>> aLayers;
 
     // Histories
-    Array<Array<CircleBuffer<ByteBuffer>>> histories;
+    Array<Array<CircleBuffer<IntBuffer>>> histories;
 
     // Per-layer values
     ByteBuffer updates;
@@ -113,7 +113,7 @@ public:
 
     // Simulation step/tick
     void step(
-        const Array<const ByteBuffer*> &inputCs, // Inputs to remember
+        const Array<const IntBuffer*> &inputCs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
         bool mimic = false // Whether to treat Actors like Predictors
@@ -134,13 +134,13 @@ public:
     }
 
     // Retrieve predictions
-    const ByteBuffer &getPredictionCs(
+    const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
         if (aLayers[i] != nullptr) // If is an action layer
-            return aLayers[i]->getHiddenCs();
+            return aLayers[i]->getHiddenCIs();
 
-        return pLayers[0][i]->getHiddenCs();
+        return pLayers[0][i]->getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -207,7 +207,7 @@ public:
         return aLayers;
     }
 
-    const Array<CircleBuffer<ByteBuffer>> &getHistories(
+    const Array<CircleBuffer<IntBuffer>> &getHistories(
         int l
     ) const {
         return histories[l];

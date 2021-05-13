@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -36,11 +36,9 @@ public:
 
     // History sample for delayed updates
     struct HistorySample {
-        Array<ByteBuffer> inputCs;
-        ByteBuffer hiddenTargetCsPrev;
+        Array<IntBuffer> inputCIs;
+        IntBuffer hiddenTargetCIsPrev;
 
-        FloatBuffer hiddenValuesPrev;
-        
         float reward;
     };
 
@@ -52,7 +50,7 @@ private:
 
     FloatBuffer hiddenActivations; // Temporary buffer
 
-    ByteBuffer hiddenCs; // Hidden states
+    IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
 
@@ -65,16 +63,15 @@ private:
     // --- Kernels ---
 
     void forward(
-        const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
-        unsigned long* state
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
-        const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCsPrev,
-        const ByteBuffer* hiddenTargetCsPrev,
-        const FloatBuffer* hiddenValuesPrev,
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIsPrev,
+        const IntBuffer* hiddenTargetCIsPrev,
         float q,
         float g,
         bool mimic
@@ -84,8 +81,8 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
-    int minSteps;
-    int historyIters;
+    int minSteps; // Minimum steps before sample can be used
+    int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
@@ -93,8 +90,8 @@ public:
     alpha(0.01f),
     beta(0.01f),
     gamma(0.99f),
-    minSteps(4),
-    historyIters(8)
+    minSteps(16),
+    historyIters(16)
     {}
 
     // Initialized randomly
@@ -106,19 +103,30 @@ public:
 
     // Step (get actions and update)
     void step(
-        const Array<const ByteBuffer*> &inputCs,
-        const ByteBuffer* hiddenTargetCsPrev,
+        const Array<const IntBuffer*> &inputCIs,
+        const IntBuffer* hiddenTargetCIsPrev,
         float reward,
         bool learnEnabled,
         bool mimic
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
@@ -142,13 +150,21 @@ public:
     }
 
     // Get hidden state/output/actions
-    const ByteBuffer &getHiddenCs() const {
-        return hiddenCs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
+    }
+
+    int getHistoryCapacity() const {
+        return historySamples.size();
+    }
+
+    int getHistorySize() const {
+        return historySize;
     }
 };
 } // namespace aon

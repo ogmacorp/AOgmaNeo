@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -64,24 +64,51 @@ int aon::getNumThreads() {
 }
 #endif
 
-unsigned long aon::globalState = 1234;
+Int2 aon::minOverhang(
+    const Int2 &pos,
+    const Int2 &size,
+    int radius
+) {
+   Int2 newPos = pos;
+
+   bool overhangPX = (newPos.x + radius >= size.x);
+   bool overhangNX = (newPos.x - radius < 0);
+   bool overhangPY = (newPos.y + radius >= size.y);
+   bool overhangNY = (newPos.y - radius < 0);
+
+   if (overhangPX && !overhangNX)
+       newPos.x = size.x - 1 - radius;
+   else if (overhangNX && !overhangPX)
+       newPos.x = radius;
+
+   if (overhangPY && !overhangNY)
+       newPos.y = size.y - 1 - radius;
+   else if (overhangNY && !overhangPY)
+       newPos.y = radius;
+
+   return newPos;
+}
+
+unsigned int aon::globalState = 123456;
 
 unsigned int aon::rand(
-    unsigned long* state
+    unsigned int* state
 ) {
-    return MWC64X(state);
+    *state = ((*state) * 1103515245 + 12345) % (1u << 31);
+
+    return (*state >> 16) & randMax;
 }
 
 float aon::randf(
-    unsigned long* state
+    unsigned int* state
 ) {
-    return (rand(state) % 100000) / 99999.0f;
+    return static_cast<float>(rand(state)) / static_cast<float>(randMax - 1);
 }
 
 float aon::randf(
     float low,
     float high,
-    unsigned long* state
+    unsigned int* state
 ) {
     return low + (high - low) * randf(state);
 }

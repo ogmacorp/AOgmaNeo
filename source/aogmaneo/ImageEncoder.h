@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,30 +30,17 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights; // Byte weight matrix
+        ByteBuffer protos;
 
         ByteBuffer reconstruction;
     };
 
 private:
-    struct IntInt {
-        int a;
-        int i;
-
-        bool operator<(
-            const IntInt &other
-        ) const {
-            return a < other.a;
-        }
-    };
-
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<IntInt> hiddenActivations;
+    IntBuffer hiddenCIs; // Hidden states
 
-    ByteBuffer hiddenCs; // Hidden states
-
-    FloatBuffer hiddenResources; // Resources
+    FloatBuffer hiddenRates; // Resources
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -62,14 +49,14 @@ private:
     // --- Kernels ---
     
     void forward(
-        const Int2 &pos,
-        const Array<const ByteBuffer*> &inputCs,
+        const Int2 &columnPos,
+        const Array<const ByteBuffer*> &inputCIs,
         bool learnEnabled
     );
 
     void reconstruct(
-        const Int2 &pos,
-        const ByteBuffer* reconCs,
+        const Int2 &columnPos,
+        const IntBuffer* reconCIs,
         int vli
     );
 
@@ -80,8 +67,8 @@ public:
     // Defaults
     ImageEncoder()
     :
-    alpha(0.02f),
-    gamma(0.5f)
+    alpha(0.05f),
+    gamma(0.2f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -97,7 +84,7 @@ public:
     );
 
     void reconstruct(
-        const ByteBuffer* reconCs
+        const IntBuffer* reconCIs
     );
 
     const ByteBuffer &getReconstruction(
@@ -107,6 +94,8 @@ public:
     }
 
     // Serialization
+    int size() const; // Returns size in bytes
+
     void write(
         StreamWriter &writer
     ) const;
@@ -135,8 +124,8 @@ public:
     }
 
     // Get the hidden states
-    const ByteBuffer &getHiddenCs() const {
-        return hiddenCs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size
@@ -145,3 +134,4 @@ public:
     }
 };
 } // namespace aon
+

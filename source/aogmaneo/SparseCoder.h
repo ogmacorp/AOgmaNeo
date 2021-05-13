@@ -32,9 +32,7 @@ public:
     struct VisibleLayer {
         ByteBuffer weights; // Weight matrix
 
-        ByteBuffer commitCs;
-
-        ByteBuffer clumpInputs;
+        IntBuffer commitCIs;
     };
 
 private:
@@ -42,11 +40,11 @@ private:
     Int2 clumpSize;
     Int2 clumpTilingSize;
 
-    ByteBuffer hiddenCommits;
+    IntBuffer hiddenCommits;
     FloatBuffer hiddenActivations;
     FloatBuffer hiddenMatches;
 
-    ByteBuffer hiddenCs; // Hidden states
+    IntBuffer hiddenCIs; // Hidden states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -56,7 +54,7 @@ private:
     
     void forwardClump(
         const Int2 &clumpPos,
-        const Array<const ByteBuffer*> &inputCs,
+        const Array<const IntBuffer*> &inputCIs,
         bool learnEnabled
     );
 
@@ -70,7 +68,7 @@ public:
     :
     alpha(0.1f),
     beta(0.5f),
-    vigilance(0.1f)
+    vigilance(0.2f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -82,7 +80,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const ByteBuffer*> &inputCs, // Input states
+        const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -115,8 +113,8 @@ public:
     }
 
     // Get the hidden states
-    const ByteBuffer &getHiddenCs() const {
-        return hiddenCs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size
