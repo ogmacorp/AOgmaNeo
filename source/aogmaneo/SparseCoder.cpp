@@ -101,7 +101,7 @@ void SparseCoder::forwardClump(
             }
 
             hiddenActivations[hiddenCellIndex] = static_cast<float>(sum) / (static_cast<float>(total) + alpha * 255.0f);
-            hiddenMatches[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(count);
+            hiddenMatches[hiddenCellIndex] = static_cast<float>(sum) / static_cast<float>(count * 255);
         }
 
         float maxActivation = -1.0f;
@@ -156,8 +156,10 @@ void SparseCoder::forwardClump(
 
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, maxIndex), hiddenSize);
 
-        if (hiddenActivations[hiddenCellIndexMax] > clumpMaxActivation) {
-            clumpMaxActivation = hiddenActivations[hiddenCellIndexMax];
+        float rating = (commit ? 1.0f : 0.0f) + hiddenActivations[hiddenCellIndexMax];
+
+        if (rating > clumpMaxActivation) {
+            clumpMaxActivation = rating;
             clumpMaxIndex = c;
             clumpMaxPassed = passed;
             clumpMaxCommit = commit;
@@ -247,7 +249,7 @@ void SparseCoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHiddenCells * area, 0);
+        vl.weights.resize(numHiddenCells * area, 255);
 
         vl.commitCIs.resize(numHiddenCells * area, 0);
     }
