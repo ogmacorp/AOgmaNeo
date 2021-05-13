@@ -272,6 +272,23 @@ void SparseCoder::step(
         forwardClump(Int2(i / clumpTilingSize.y, i % clumpTilingSize.y), inputCIs, learnEnabled);
 }
 
+int SparseCoder::size() const {
+    int size = sizeof(Int3) + 2 * sizeof(Int2) + 3 * sizeof(float) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte) + vl.commitCIs.size() * sizeof(int);
+    }
+
+    return size;
+}
+
+int SparseCoder::stateSize() const {
+    return hiddenCIs.size() * sizeof(int);
+}
+
 void SparseCoder::write(
     StreamWriter &writer
 ) const {
@@ -346,4 +363,16 @@ void SparseCoder::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
         reader.read(reinterpret_cast<void*>(&vl.commitCIs[0]), vl.commitCIs.size() * sizeof(int));
     }
+}
+
+void SparseCoder::writeState(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+}
+
+void SparseCoder::readState(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }

@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -25,49 +25,74 @@ class Hierarchy {
 public:
     struct IODesc {
         Int3 size;
-
         IOType type;
+
+        int ffRadius; // Feed forward radius
+        int fbRadius; // Feed back radius
+
+        int historyCapacity;
 
         IODesc()
         :
         size(4, 4, 16),
-        type(none)
+        type(none),
+        ffRadius(2),
+        fbRadius(2),
+        historyCapacity(64)
         {}
 
         IODesc(
             const Int3 &size,
-            IOType type
+            IOType type,
+            int ffRadius,
+            int fbRadius,
+            int historyCapacity
         )
         :
         size(size),
-        type(type)
+        type(type),
+        ffRadius(ffRadius),
+        fbRadius(fbRadius),
+        historyCapacity(historyCapacity)
         {}
     };
 
-    // Describes a layer for construction
+    // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        Int2 clumpSize; // Size of clumps
+        Int2 clumpSize; // Size of clumps in hidden layer
 
         int ffRadius; // Feed forward radius
-        int fbRadius; // Feed back radius
-        int aRadius; // Actor radius
+        int fbRadius; // Prediction radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into a the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
-
-        int historyCapacity;
+        int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
         LayerDesc()
         :
-        hiddenSize(4, 4, 32),
+        hiddenSize(4, 4, 16),
         clumpSize(4, 4),
         ffRadius(2),
         fbRadius(2),
-        aRadius(2),
         ticksPerUpdate(2),
-        temporalHorizon(2),
-        historyCapacity(32)
+        temporalHorizon(2)
+        {}
+
+        LayerDesc(
+            const Int3 &hiddenSize,
+            const Int2 &clumpSize,
+            int ffRadius,
+            int fbRadius,
+            int ticksPerUpdate,
+            int temporalHorizon
+        )
+        :
+        hiddenSize(hiddenSize),
+        clumpSize(clumpSize),
+        ffRadius(ffRadius),
+        fbRadius(fbRadius),
+        ticksPerUpdate(ticksPerUpdate),
+        temporalHorizon(temporalHorizon)
         {}
     };
 
@@ -107,24 +132,35 @@ public:
     
     // Create a randomly initialized hierarchy
     void initRandom(
-        const Array<IODesc> &ioDescs, // Descriptors of inputs and outputs
+        const Array<IODesc> &ioDescs, // Input-output descriptors
         const Array<LayerDesc> &layerDescs // Descriptors for layers
     );
 
     // Simulation step/tick
     void step(
-        const Array<const IntBuffer*> &inputCs, // Inputs to remember
+        const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // Whether to treat Actors like Predictors
+        bool mimic = false
     );
 
     // Serialization
+    int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
+
     void write(
         StreamWriter &writer
     ) const;
 
     void read(
+        StreamReader &reader
+    );
+
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
         StreamReader &reader
     );
 
