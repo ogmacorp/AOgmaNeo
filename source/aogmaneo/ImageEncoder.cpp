@@ -60,7 +60,7 @@ void ImageEncoder::forward(
 
                         int delta = input - static_cast<int>(vl.protos[vc + wiStart]);
 
-                        sum -= delta * delta;
+                        sum -= abs(delta);
                     }
                 }
         }
@@ -74,7 +74,7 @@ void ImageEncoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        for (int dhc = -1; dhc < 1; dhc++) {
+        for (int dhc = -1; dhc <= 1; dhc++) {
             int hc = maxIndex + dhc;
 
             if (hc < 0 || hc >= hiddenSize.z)
@@ -229,7 +229,7 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void ImageEncoder::step(

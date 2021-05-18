@@ -71,7 +71,7 @@ void SparseCoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= delta * delta;
+                    hiddenSums[hiddenCellIndex] -= abs(delta);
                 }
             }
     }
@@ -94,7 +94,7 @@ void SparseCoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        for (int dhc = -1; dhc < 1; dhc++) {
+        for (int dhc = -1; dhc <= 1; dhc++) {
             int hc = maxIndex + dhc;
 
             if (hc < 0 || hc >= hiddenSize.z)
@@ -252,7 +252,7 @@ void SparseCoder::initRandom(
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void SparseCoder::step(
