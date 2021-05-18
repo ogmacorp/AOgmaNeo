@@ -20,7 +20,7 @@ void Predictor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] = 0.0f;
+        hiddenSums[hiddenCellIndex] = 0;
     }
 
     int count = 0;
@@ -57,7 +57,7 @@ void Predictor::forward(
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = hc + hiddenCellsStart;
 
-                    hiddenActivations[hiddenCellIndex] += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    hiddenSums[hiddenCellIndex] += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
             }
     }
@@ -68,7 +68,7 @@ void Predictor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] /= max(1, count) * 127.0f;
+        hiddenActivations[hiddenCellIndex] = static_cast<float>(hiddenSums[hiddenCellIndex]) / static_cast<float>(max(1, count)) * 127.0f;
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenCellIndex];
@@ -183,6 +183,7 @@ void Predictor::initRandom(
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
+    hiddenSums = IntBuffer(numHiddenCells, 0);
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
@@ -288,6 +289,8 @@ void Predictor::read(
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+
+    hiddenSums = IntBuffer(numHiddenCells, 0);
 
     int numVisibleLayers = visibleLayers.size();
 
