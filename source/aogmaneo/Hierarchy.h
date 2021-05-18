@@ -28,31 +28,32 @@ public:
         IOType type;
 
         int ffRadius; // Feed forward radius
-        int pRadius; // Prediction radius
-        int aRadius; // Actor radius
+        int fbRadius; // Feed back radius
+
+        int historyCapacity;
 
         IODesc()
         :
         size(4, 4, 16),
         type(none),
         ffRadius(2),
-        pRadius(2),
-        aRadius(2)
+        fbRadius(2),
+        historyCapacity(64)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
             int ffRadius,
-            int pRadius,
-            int aRadius
+            int fbRadius,
+            int historyCapacity
         )
         :
         size(size),
         type(type),
         ffRadius(ffRadius),
-        pRadius(pRadius),
-        aRadius(aRadius)
+        fbRadius(fbRadius),
+        historyCapacity(historyCapacity)
         {}
     };
 
@@ -62,7 +63,7 @@ public:
         int numPriorities;
 
         int ffRadius; // Feed forward radius
-        int pRadius; // Prediction radius
+        int fbRadius; // Prediction radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -70,9 +71,9 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        numPriorities(2),
+        numPriorities(3),
         ffRadius(2),
-        pRadius(2),
+        fbRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
@@ -81,7 +82,7 @@ public:
             const Int3 &hiddenSize,
             int numPriorities,
             int ffRadius,
-            int pRadius,
+            int fbRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
@@ -89,7 +90,7 @@ public:
         hiddenSize(hiddenSize),
         numPriorities(numPriorities),
         ffRadius(ffRadius),
-        pRadius(pRadius),
+        fbRadius(fbRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
@@ -140,7 +141,7 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // Mimicry (imitation learning) mode
+        bool mimic = false
     );
 
     // Serialization

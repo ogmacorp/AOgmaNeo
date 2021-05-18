@@ -120,7 +120,7 @@ void Hierarchy::initRandom(
                     Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
                     pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-                    pVisibleLayerDescs[0].radius = ioDescs[i].pRadius;
+                    pVisibleLayerDescs[0].radius = ioDescs[i].fbRadius;
 
                     if (l < scLayers.size() - 1)
                         pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
@@ -134,14 +134,14 @@ void Hierarchy::initRandom(
                     Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
                     aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-                    aVisibleLayerDescs[0].radius = ioDescs[i].aRadius;
+                    aVisibleLayerDescs[0].radius = ioDescs[i].fbRadius;
 
                     if (l < scLayers.size() - 1)
                         aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
 
                     aLayers[i].make();
 
-                    aLayers[i]->initRandom(inputSizes[i], aVisibleLayerDescs);
+                    aLayers[i]->initRandom(inputSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
                 }
             }
         }
@@ -168,7 +168,7 @@ void Hierarchy::initRandom(
             Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
             pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-            pVisibleLayerDescs[0].radius = layerDescs[l].pRadius;
+            pVisibleLayerDescs[0].radius = layerDescs[l].fbRadius;
 
             if (l < scLayers.size() - 1)
                 pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
@@ -189,7 +189,8 @@ void Hierarchy::initRandom(
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
-    float reward
+    float reward,
+    bool mimic
 ) {
     // First tick is always 0
     ticks[0] = 0;
@@ -265,7 +266,7 @@ void Hierarchy::step(
                 // Step actors
                 for (int p = 0; p < aLayers.size(); p++) {
                     if (aLayers[p] != nullptr)
-                        aLayers[p]->step(feedBackCIs, &histories[l][p][0], reward, learnEnabled);
+                        aLayers[p]->step(feedBackCIs, &histories[l][p][0], reward, learnEnabled, mimic);
                 }
             }
         }
@@ -306,7 +307,7 @@ int Hierarchy::size() const {
 }
 
 int Hierarchy::stateSize() const {
-    int size = 2 * ticks.size() * sizeof(int) + updates.size() * sizeof(Byte);
+    int size = ticks.size() * sizeof(int) + updates.size() * sizeof(Byte);
 
     for (int l = 0; l < scLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
