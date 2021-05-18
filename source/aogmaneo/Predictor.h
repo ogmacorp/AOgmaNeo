@@ -67,7 +67,7 @@ public:
     Predictor()
     :
     alpha(0.1f),
-    temperature(16.0f)
+    temperature(32.0f)
     {}
 
     // Create with random initialization
