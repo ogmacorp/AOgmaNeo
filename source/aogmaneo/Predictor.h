@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -65,8 +65,8 @@ public:
     // Defaults
     Predictor()
     :
-    alpha(0.2f),
-    temperature(8.0f)
+    alpha(0.1f),
+    temperature(32.0f)
     {}
 
     // Create with random initialization
