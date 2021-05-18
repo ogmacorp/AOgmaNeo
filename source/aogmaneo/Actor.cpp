@@ -62,7 +62,6 @@ void Actor::forward(
 
     // --- Action ---
 
-    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -103,13 +102,41 @@ void Actor::forward(
                 }
         }
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
+        sum /= max(1, count);
+
+        hiddenActivations[hiddenCellIndex] = sum;
+
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+        
+        total += hiddenActivations[hiddenCellIndex];
+    }
+
+    float cusp = randf(state) * total;
+
+    int selectIndex = 0;
+    float sumSoFar = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        sumSoFar += hiddenActivations[hiddenCellIndex];
+
+        if (sumSoFar >= cusp) {
+            selectIndex = hc;
+
+            break;
         }
     }
     
-    hiddenCIs[hiddenColumnIndex] = maxIndex;
+    hiddenCIs[hiddenColumnIndex] = selectIndex;
 }
 
 void Actor::learn(
