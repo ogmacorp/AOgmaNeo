@@ -31,7 +31,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        SByteBuffer actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
@@ -48,6 +48,7 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
+    IntBuffer hiddenSums;
     FloatBuffer hiddenActivations; // Temporary buffer
 
     IntBuffer hiddenCIs; // Hidden states
@@ -81,6 +82,7 @@ public:
     float alpha; // Value learning rate
     float beta; // Action learning rate
     float gamma; // Discount factor
+    float temperature; // For scaling bytes
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
 
@@ -88,8 +90,9 @@ public:
     Actor()
     :
     alpha(0.01f),
-    beta(0.01f),
+    beta(0.1f),
     gamma(0.99f),
+    temperature(32.0f),
     minSteps(8),
     historyIters(8)
     {}
