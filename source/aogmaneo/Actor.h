@@ -30,10 +30,16 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
-        FloatBuffer traces;
+        FloatBuffer valueWeights; // Value function weights
+        FloatBuffer actionWeights; // Action function weights
+    };
 
-        IntBuffer inputCIsPrev;
+    // History sample for delayed updates
+    struct HistorySample {
+        Array<IntBuffer> inputCIs;
+        IntBuffer hiddenTargetCIsPrev;
+
+        float reward;
     };
 
 private:
@@ -42,8 +48,13 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenValues;
+    FloatBuffer hiddenActivations; // Temporary buffer
+
     IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenValues; // Hidden value function output buffer
+
+    CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -54,30 +65,39 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
-        const IntBuffer* hiddenTargetCIsPrev,
-        float reward,
-        bool learnEnabled,
         unsigned int* state
     );
 
+    void learn(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIsPrev,
+        const IntBuffer* hiddenTargetCIsPrev,
+        float q,
+        float g,
+        bool mimic
+    );
+
 public:
-    float alpha; // Learning rate
-    float gamma;
-    float traceDecay;
-    float epsilon; // Exploration
+    float alpha; // Value learning rate
+    float beta; // Action learning rate
+    float gamma; // Discount factor
+    int minSteps; // Minimum steps before sample can be used
+    int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
     :
-    alpha(0.1f),
+    alpha(0.01f),
+    beta(0.01f),
     gamma(0.99f),
-    traceDecay(0.95f),
-    epsilon(0.03f)
+    minSteps(16),
+    historyIters(16)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
+        int historyCapacity,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
@@ -86,7 +106,8 @@ public:
         const Array<const IntBuffer*> &inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
-        bool learnEnabled
+        bool learnEnabled,
+        bool mimic
     );
 
     // Serialization
@@ -136,6 +157,10 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
+    }
+
+    int getHistoryCapacity() const {
+        return historySamples.size();
     }
 
     int getHistorySize() const {
