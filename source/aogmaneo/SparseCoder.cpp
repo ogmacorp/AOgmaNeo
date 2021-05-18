@@ -94,12 +94,13 @@ void SparseCoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int dist = maxIndex - hc;
+        for (int dhc = -1; dhc < 1; dhc++) {
+            int hc = maxIndex + dhc;
+
+            if (hc < 0 || hc >= hiddenSize.z)
+                continue;
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-            float strength = expf(-dist * dist * gamma / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -131,11 +132,11 @@ void SparseCoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        vl.protos[wi] += strength * (vl.reconstruction[visibleColumnIndex] - vl.protos[wi]);
+                        vl.protos[wi] += hiddenRates[hiddenCellIndex] * (vl.reconstruction[visibleColumnIndex] - vl.protos[wi]);
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= alpha * strength;
+            hiddenRates[hiddenCellIndex] -= alpha * hiddenRates[hiddenCellIndex];
         }
     }
 }
@@ -314,7 +315,6 @@ void SparseCoder::write(
     writer.write(reinterpret_cast<const void*>(&numPriorities), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&gamma), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
@@ -344,7 +344,6 @@ void SparseCoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&gamma), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenPriorities.resize(numHiddenColumns);
