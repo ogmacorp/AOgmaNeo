@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -328,6 +329,7 @@ void Actor::learn(
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             hiddenActivations[hiddenCellIndex] *= scale;
+            std::cout << hiddenActivations[hiddenCellIndex] << std::endl;
         }
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
