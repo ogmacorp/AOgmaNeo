@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -113,7 +112,7 @@ void Actor::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] = static_cast<float>(hiddenSums[hiddenCellIndex]) / static_cast<float>(max(1, count)) * 127.0f;
+        hiddenActivations[hiddenCellIndex] = static_cast<float>(hiddenSums[hiddenCellIndex]) / (static_cast<float>(max(1, count)) * 127.0f);
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation) {
             maxActivation = hiddenActivations[hiddenCellIndex];
@@ -329,7 +328,6 @@ void Actor::learn(
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             hiddenActivations[hiddenCellIndex] *= scale;
-            std::cout << hiddenActivations[hiddenCellIndex] << std::endl;
         }
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
