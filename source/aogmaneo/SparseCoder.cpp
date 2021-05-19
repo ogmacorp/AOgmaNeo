@@ -194,7 +194,7 @@ void SparseCoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = randf(-1.0f, 1.0f);
+            vl.protos[i] = randf(-0.01f, 0.01f);
 
         vl.inputs = FloatBuffer(numVisibleColumns, 0.0f);
     }
