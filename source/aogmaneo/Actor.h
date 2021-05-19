@@ -39,8 +39,6 @@ public:
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
 
-        FloatBuffer hiddenValuesPrev;
-        
         float reward;
     };
 
@@ -50,11 +48,10 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenActivations; // Temporary buffer
-
     IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
+    FloatBuffer hiddenActivations;
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -74,7 +71,6 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
-        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic
@@ -93,8 +89,8 @@ public:
     vlr(0.01f),
     alr(0.01f),
     discount(0.99f),
-    minSteps(8),
-    historyIters(8)
+    minSteps(16),
+    historyIters(16)
     {}
 
     // Initialized randomly
