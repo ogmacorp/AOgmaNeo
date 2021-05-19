@@ -191,75 +191,6 @@ void ImageEncoder::reconstruct(
     }
 }
 
-void ImageEncoder::reconstruct(
-    const Int2 &columnPos,
-    const FloatBuffer* reconActs,
-    int vli
-) {
-    VisibleLayer &vl = visibleLayers[vli];
-    VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-    int diam = vld.radius * 2 + 1;
-
-    int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
-
-    // Projection
-    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
-        static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
-
-    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-                
-    Int2 hiddenCenter = project(columnPos, vToH);
-
-    Int2 reverseRadii(ceilf(vToH.x * vld.radius) + 1, ceilf(vToH.y * vld.radius) + 1);
-    
-    // Lower corner
-    Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
-
-    // Bounds of receptive field, clamped to input size
-    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-    Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
-    
-    // Find current max
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visibleIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
-
-        float sum = 0.0f;
-        float total = 0.0f;
-
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                Int2 hiddenPos = Int2(ix, iy);
-
-                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-
-                Int2 visibleCenter = project(hiddenPos, hToV);
-
-                visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
-
-                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                float strength = min(1.0f - distX, 1.0f - distY);
-
-                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
-
-                    for (int hc = 0; hc < hiddenSize.z; hc++) {
-                        int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hc), hiddenSize);
-
-                        float act = (*reconActs)[hiddenCellIndex];
-
-                        sum += strength * act * vl.protos[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
-                        total += strength * act;
-                    }
-                }
-            }
-
-        vl.reconstruction[visibleIndex] = roundftoi(sum / max(0.0001f, total) * 255.0f);
-    }
-}
 void ImageEncoder::reduce(
     const Int2 &columnPos,
     int step
@@ -414,20 +345,6 @@ void ImageEncoder::reconstruct(
         #pragma omp parallel for
         for (int i = 0; i < numVisibleColumns; i++)
             reconstruct(Int2(i / vld.size.y, i % vld.size.y), reconCIs, vli);
-    }
-}
-
-void ImageEncoder::reconstruct(
-    const FloatBuffer* reconActs
-) {
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-        int numVisibleColumns = vld.size.x * vld.size.y;
-
-        #pragma omp parallel for
-        for (int i = 0; i < numVisibleColumns; i++)
-            reconstruct(Int2(i / vld.size.y, i % vld.size.y), reconActs, vli);
     }
 }
 

@@ -60,12 +60,6 @@ private:
         int vli
     );
 
-    void reconstruct(
-        const Int2 &columnPos,
-        const FloatBuffer* reconActs,
-        int vli
-    );
-
     void reduce(
         const Int2 &columnPos,
         int step
@@ -100,10 +94,6 @@ public:
 
     void reconstruct(
         const IntBuffer* reconCIs
-    );
-
-    void reconstruct(
-        const FloatBuffer* reconActs
     );
 
     void makeShared();
