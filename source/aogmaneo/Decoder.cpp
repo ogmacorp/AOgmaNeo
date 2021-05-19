@@ -6,11 +6,11 @@
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
-#include "Predictor.h"
+#include "Decoder.h"
 
 using namespace aon;
 
-void Predictor::forward(
+void Decoder::forward(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs
 ) {
@@ -97,7 +97,7 @@ void Predictor::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
-void Predictor::learn(
+void Decoder::learn(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs
 ) {
@@ -136,7 +136,7 @@ void Predictor::learn(
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-                    int delta = roundftoi(alpha * 127.0f * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]));
+                    int delta = roundftoi(lr * 127.0f * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]));
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
@@ -151,7 +151,7 @@ void Predictor::learn(
     }
 }
 
-void Predictor::initRandom(
+void Decoder::initRandom(
     const Int3 &hiddenSize, // Hidden/output/prediction size
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
@@ -191,7 +191,7 @@ void Predictor::initRandom(
 }
 
 // Activate the predictor (predict values)
-void Predictor::activate(
+void Decoder::activate(
     const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -210,7 +210,7 @@ void Predictor::activate(
 }
 
 // Learning predictions (update weights)
-void Predictor::learn(
+void Decoder::learn(
     const IntBuffer* hiddenTargetCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -221,7 +221,7 @@ void Predictor::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
 }
 
-int Predictor::size() const {
+int Decoder::size() const {
     int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -234,7 +234,7 @@ int Predictor::size() const {
     return size;
 }
 
-int Predictor::stateSize() const {
+int Decoder::stateSize() const {
     int size = hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -246,12 +246,12 @@ int Predictor::stateSize() const {
     return size;
 }
 
-void Predictor::write(
+void Decoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -273,7 +273,7 @@ void Predictor::write(
     }
 }
 
-void Predictor::read(
+void Decoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
@@ -281,7 +281,7 @@ void Predictor::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
@@ -320,7 +320,7 @@ void Predictor::read(
     }
 }
 
-void Predictor::writeState(
+void Decoder::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -333,7 +333,7 @@ void Predictor::writeState(
     }
 }
 
-void Predictor::readState(
+void Decoder::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));

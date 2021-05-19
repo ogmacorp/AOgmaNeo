@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "SparseCoder.h"
-#include "Predictor.h"
+#include "Encoder.h"
+#include "Decoder.h"
 #include "Actor.h"
 
 namespace aon {
@@ -27,8 +27,8 @@ public:
         Int3 size;
         IOType type;
 
-        int ffRadius; // Feed forward radius
-        int fbRadius; // Feed back radius
+        int eRadius; // Feed forward radius
+        int dRadius; // Feed back radius
 
         int historyCapacity;
 
@@ -36,23 +36,23 @@ public:
         :
         size(4, 4, 16),
         type(none),
-        ffRadius(2),
-        fbRadius(2),
+        eRadius(2),
+        dRadius(2),
         historyCapacity(64)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
-            int ffRadius,
-            int fbRadius,
+            int eRadius,
+            int dRadius,
             int historyCapacity
         )
         :
         size(size),
         type(type),
-        ffRadius(ffRadius),
-        fbRadius(fbRadius),
+        eRadius(eRadius),
+        dRadius(dRadius),
         historyCapacity(historyCapacity)
         {}
     };
@@ -61,8 +61,8 @@ public:
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
 
-        int ffRadius; // Feed forward radius
-        int fbRadius; // Prediction radius
+        int eRadius; // Feed forward radius
+        int dRadius; // Prediction radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -70,23 +70,23 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        ffRadius(2),
-        fbRadius(2),
+        eRadius(2),
+        dRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int ffRadius,
-            int fbRadius,
+            int eRadius,
+            int dRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
-        ffRadius(ffRadius),
-        fbRadius(fbRadius),
+        eRadius(eRadius),
+        dRadius(dRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
@@ -94,8 +94,8 @@ public:
 
 private:
     // Layers
-    Array<SparseCoder> scLayers;
-    Array<Array<Ptr<Predictor>>> pLayers;
+    Array<Encoder> scLayers;
+    Array<Array<Ptr<Decoder>>> pLayers;
     Array<Ptr<Actor>> aLayers;
 
     // Histories
@@ -202,28 +202,26 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    SparseCoder &getSCLayer(
+    Encoder &getELayer(
         int l // Layer index
     ) {
         return scLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const SparseCoder &getSCLayer(
+    const Encoder &getELayer(
         int l // Layer index
     ) const {
         return scLayers[l];
     }
 
-    // Retrieve predictor layer(s)
-    Array<Ptr<Predictor>> &getPLayers(
+    Array<Ptr<Decoder>> &getDLayers(
         int l // Layer index
     ) {
         return pLayers[l];
     }
 
-    // Retrieve predictor layer(s), const version
-    const Array<Ptr<Predictor>> &getPLayers(
+    const Array<Ptr<Decoder>> &getDLayers(
         int l // Layer index
     ) const {
         return pLayers[l];

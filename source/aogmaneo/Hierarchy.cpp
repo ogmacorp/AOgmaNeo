@@ -83,7 +83,7 @@ void Hierarchy::initRandom(
     // Iterate through layers
     for (int l = 0; l < layerDescs.size(); l++) {
         // Create sparse coder visible layer descriptors
-        Array<SparseCoder::VisibleLayerDesc> scVisibleLayerDescs;
+        Array<Encoder::VisibleLayerDesc> scVisibleLayerDescs;
 
         // If first layer
         if (l == 0) {
@@ -94,7 +94,7 @@ void Hierarchy::initRandom(
                     int index = t + layerDescs[l].temporalHorizon * i;
 
                     scVisibleLayerDescs[index].size = inputSizes[i];
-                    scVisibleLayerDescs[index].radius = ioDescs[i].ffRadius;
+                    scVisibleLayerDescs[index].radius = ioDescs[i].eRadius;
                 }
             }
             
@@ -116,11 +116,11 @@ void Hierarchy::initRandom(
             // Create predictors
             for (int i = 0; i < pLayers[l].size(); i++) {
                 if (ioDescs[i].type == IOType::prediction) {
-                    // Predictor visible layer descriptors
-                    Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+                    // Decoder visible layer descriptors
+                    Array<Decoder::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
                     pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-                    pVisibleLayerDescs[0].radius = ioDescs[i].fbRadius;
+                    pVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
                     if (l < scLayers.size() - 1)
                         pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
@@ -134,7 +134,7 @@ void Hierarchy::initRandom(
                     Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
                     aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-                    aVisibleLayerDescs[0].radius = ioDescs[i].fbRadius;
+                    aVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
                     if (l < scLayers.size() - 1)
                         aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
@@ -150,7 +150,7 @@ void Hierarchy::initRandom(
 
             for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
                 scVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
-                scVisibleLayerDescs[t].radius = layerDescs[l].ffRadius;
+                scVisibleLayerDescs[t].radius = layerDescs[l].eRadius;
             }
 
             histories[l].resize(1);
@@ -164,11 +164,11 @@ void Hierarchy::initRandom(
 
             pLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
-            // Predictor visible layer descriptors
-            Array<Predictor::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
+            // Decoder visible layer descriptors
+            Array<Decoder::VisibleLayerDesc> pVisibleLayerDescs(l < scLayers.size() - 1 ? 2 : 1);
 
             pVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-            pVisibleLayerDescs[0].radius = layerDescs[l].fbRadius;
+            pVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
 
             if (l < scLayers.size() - 1)
                 pVisibleLayerDescs[1] = pVisibleLayerDescs[0];
@@ -319,7 +319,7 @@ int Hierarchy::stateSize() const {
 
         size += scLayers[l].stateSize();
         
-        // Predictors
+        // Decoders
         for (int v = 0; v < pLayers[l].size(); v++) {
             if (pLayers[l][v] != nullptr)
                 size += pLayers[l][v]->stateSize();
@@ -377,7 +377,7 @@ void Hierarchy::write(
 
         scLayers[l].write(writer);
 
-        // Predictors
+        // Decoders
         for (int v = 0; v < pLayers[l].size(); v++) {
             Byte exists = pLayers[l][v] != nullptr;
 
@@ -461,7 +461,7 @@ void Hierarchy::read(
         
         pLayers[l].resize(l == 0 ? inputSizes.size() : ticksPerUpdate[l]);
 
-        // Predictors
+        // Decoders
         for (int v = 0; v < pLayers[l].size(); v++) {
             Byte exists;
 
@@ -507,7 +507,7 @@ void Hierarchy::writeState(
 
         scLayers[l].writeState(writer);
 
-        // Predictors
+        // Decoders
         for (int v = 0; v < pLayers[l].size(); v++) {
             if (pLayers[l][v] != nullptr)
                 pLayers[l][v]->writeState(writer);
@@ -541,7 +541,7 @@ void Hierarchy::readState(
 
         scLayers[l].readState(reader);
         
-        // Predictors
+        // Decoders
         for (int v = 0; v < pLayers[l].size(); v++) {
             if (pLayers[l][v] != nullptr)
                 pLayers[l][v]->readState(reader);

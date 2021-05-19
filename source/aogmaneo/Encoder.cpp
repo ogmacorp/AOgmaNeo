@@ -6,11 +6,11 @@
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
-#include "SparseCoder.h"
+#include "Encoder.h"
 
 using namespace aon;
 
-void SparseCoder::setInputs(
+void Encoder::setInputs(
     const Int2 &columnPos,
     const IntBuffer* inputCIs,
     int vli
@@ -23,7 +23,7 @@ void SparseCoder::setInputs(
     vl.inputs[visibleColumnIndex] = static_cast<float>((*inputCIs)[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f;
 }
 
-void SparseCoder::forward(
+void Encoder::forward(
     const Int2 &columnPos
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
@@ -92,7 +92,7 @@ void SparseCoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
-void SparseCoder::learn(
+void Encoder::learn(
     const Int2 &columnPos
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
@@ -126,7 +126,7 @@ void SparseCoder::learn(
 
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float rate = 1.0f / (1.0f + alpha * hiddenVisits[hiddenCellIndex]);
+        float rate = 1.0f / (1.0f + lr * hiddenVisits[hiddenCellIndex]);
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -166,7 +166,7 @@ void SparseCoder::learn(
     }
 }
 
-void SparseCoder::initRandom(
+void Encoder::initRandom(
     const Int3 &hiddenSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
@@ -206,7 +206,7 @@ void SparseCoder::initRandom(
     hiddenVisits = IntBuffer(numHiddenCells, 0);
 }
 
-void SparseCoder::step(
+void Encoder::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled
 ) {
@@ -235,7 +235,7 @@ void SparseCoder::step(
     }
 }
 
-int SparseCoder::size() const {
+int Encoder::size() const {
     int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenVisits.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -247,16 +247,16 @@ int SparseCoder::size() const {
     return size;
 }
 
-int SparseCoder::stateSize() const {
+int Encoder::stateSize() const {
     return hiddenCIs.size() * sizeof(int);
 }
 
-void SparseCoder::write(
+void Encoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&groupRadius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -276,7 +276,7 @@ void SparseCoder::write(
     }
 }
 
-void SparseCoder::read(
+void Encoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
@@ -284,7 +284,7 @@ void SparseCoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
@@ -321,13 +321,13 @@ void SparseCoder::read(
     }
 }
 
-void SparseCoder::writeState(
+void Encoder::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
 
-void SparseCoder::readState(
+void Encoder::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));

@@ -11,8 +11,8 @@
 #include "Helpers.h"
 
 namespace aon {
-// Sparse coder
-class SparseCoder {
+// A prediction layer (predicts x_(t+1))
+class Decoder {
 public:
     // Visible layer descriptor
     struct VisibleLayerDesc {
@@ -30,60 +30,60 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        SByteBuffer weights;
 
-        FloatBuffer inputs;
+        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
 private:
-    Int3 hiddenSize; // Size of hidden/output layer
+    Int3 hiddenSize; // Size of the output/hidden/prediction
 
-    FloatBuffer hiddenSums;
-    IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenSums;
+    FloatBuffer hiddenActivations;
 
-    IntBuffer hiddenVisits;
+    IntBuffer hiddenCIs; // Hidden state
 
-    // Visible layers and associated descriptors
+    // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
 
-    void setInputs(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
-    );
-
     void forward(
-        const Int2 &columnPos
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
-        const Int2 &columnPos
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs
     );
 
 public:
-    float alpha;
-    int groupRadius;
+    float lr; // Learning rate
+    float temperature; // Range of target outputs, must be in [0, 0.5]
 
     // Defaults
-    SparseCoder()
+    Decoder()
     :
-    alpha(1.0f),
-    groupRadius(2)
+    lr(0.1f),
+    temperature(16.0f)
     {}
 
-    // Create a sparse coding layer with random initialization
+    // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output size
-        const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
+        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
-    // Activate the sparse coder (perform sparse coding)
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        bool learnEnabled // Whether to learn
+    // Activate the predictor (predict values)
+    void activate(
+        const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
+    );
+
+    // Learning predictions (update weights)
+    void learn(
+        const IntBuffer* hiddenTargetCIs
     );
 
     // Serialization
@@ -106,7 +106,7 @@ public:
         StreamReader &reader
     );
 
-    // Get the number of visible layers
+    // Get number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
     }
@@ -125,7 +125,7 @@ public:
         return visibleLayerDescs[i];
     }
 
-    // Get the hidden states
+    // Get the hidden activations (predictions)
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
@@ -135,4 +135,4 @@ public:
         return hiddenSize;
     }
 };
-} // namespace aon
+} // Namespace aon
