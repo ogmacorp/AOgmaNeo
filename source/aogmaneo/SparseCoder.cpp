@@ -115,7 +115,7 @@ void SparseCoder::learn(
             }
         }
 
-    if (numHigher > 2)
+    if (numHigher > 1)
         return;
 
     for (int dhc = -1; dhc <= 1; dhc++) {
@@ -315,7 +315,7 @@ void SparseCoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
-        vl.inputs = FloatBuffer(numVisibleColumns, 0);
+        vl.inputs = FloatBuffer(numVisibleColumns, 0.0f);
     }
 }
 
