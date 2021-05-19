@@ -41,7 +41,7 @@ private:
     FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenRates; // Resources
+    IntBuffer hiddenVisits;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -70,7 +70,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.05f),
+    alpha(0.5f),
     groupRadius(2)
     {}
 

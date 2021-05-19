@@ -92,7 +92,7 @@ public:
     alpha(0.01f),
     beta(0.1f),
     gamma(0.99f),
-    temperature(32.0f),
+    temperature(16.0f),
     minSteps(8),
     historyIters(4)
     {}

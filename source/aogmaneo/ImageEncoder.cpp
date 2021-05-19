@@ -82,6 +82,8 @@ void ImageEncoder::forward(
 
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
+            float rate = 1.0f / (1.0f + alpha * hiddenVisits[hiddenCellIndex]);
+
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -117,12 +119,12 @@ void ImageEncoder::forward(
 
                             Byte weight = vl.protos[vc + wiStart];
 
-                            vl.protos[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + hiddenRates[hiddenCellIndex] * (static_cast<float>(input) - static_cast<float>(weight)))));
+                            vl.protos[wiStart + vc] = roundftoi(min(255.0f, max(0.0f, weight + rate * (static_cast<float>(input) - static_cast<float>(weight)))));
                         }
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= alpha * hiddenRates[hiddenCellIndex];
+            hiddenVisits[hiddenCellIndex] = min(999999, hiddenVisits[hiddenCellIndex] + 1);
         }
     }
 }
@@ -229,7 +231,7 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenVisits = IntBuffer(numHiddenCells, 0);
 }
 
 void ImageEncoder::step(
@@ -258,7 +260,7 @@ void ImageEncoder::reconstruct(
 }
 
 int ImageEncoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenVisits.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -278,7 +280,7 @@ void ImageEncoder::write(
     writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenVisits[0]), hiddenVisits.size() * sizeof(int));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -305,10 +307,10 @@ void ImageEncoder::read(
     reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
-    hiddenRates.resize(numHiddenCells);
+    hiddenVisits.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenVisits[0]), hiddenVisits.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 
