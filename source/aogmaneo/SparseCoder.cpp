@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -29,6 +30,12 @@ void SparseCoder::forward(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenSums[hiddenCellIndex] = 0.0f;
+    }
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -73,7 +80,6 @@ void SparseCoder::forward(
 
     int maxIndex = 0;
     float maxActivation = hiddenSums[0 + hiddenCellsStart];
-    hiddenSums[0 + hiddenCellsStart] = 0.0f;
 
     for (int hc = 1; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -82,8 +88,6 @@ void SparseCoder::forward(
             maxActivation = hiddenSums[hiddenCellIndex];
             maxIndex = hc;
         }
-
-        hiddenSums[hiddenCellIndex] = 0.0f;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -154,6 +158,7 @@ void SparseCoder::learn(
             }
         }
     }
+    std::cout << learnEnabled << std::endl;
 
     if (learnEnabled) {
         for (int dhc = -1; dhc <= 1; dhc++) {
