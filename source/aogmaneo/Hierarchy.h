@@ -60,7 +60,6 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        int numPriorities;
 
         int ffRadius; // Feed forward radius
         int fbRadius; // Prediction radius
@@ -71,7 +70,6 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        numPriorities(3),
         ffRadius(2),
         fbRadius(2),
         ticksPerUpdate(2),
@@ -80,7 +78,6 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int numPriorities,
             int ffRadius,
             int fbRadius,
             int ticksPerUpdate,
@@ -88,7 +85,6 @@ public:
         )
         :
         hiddenSize(hiddenSize),
-        numPriorities(numPriorities),
         ffRadius(ffRadius),
         fbRadius(fbRadius),
         ticksPerUpdate(ticksPerUpdate),

@@ -37,11 +37,9 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int numPriorities;
 
     FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenPriorities;
 
     FloatBuffer hiddenRates; // Resources
 
@@ -51,37 +49,28 @@ private:
 
     // --- Kernels ---
     
-    void resetReconstruction(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
-    );
-    
     void forward(
-        const Int2 &columnPos,
-        int priority,
-        bool learnEnabled
+        const Int2 &columnPos
     );
 
-    void reconstruct(
-        const Int2 &columnPos,
-        int vli,
-        int priority
+    void learn(
+        const Int2 &columnPos
     );
 
 public:
     float alpha;
+    int groupRadius;
 
     // Defaults
     SparseCoder()
     :
-    alpha(0.02f)
+    alpha(0.02f),
+    groupRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int numPriorities, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
