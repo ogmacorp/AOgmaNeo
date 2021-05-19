@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         FloatBuffer protos;
 
-        FloatBuffer reconstruction;
+        FloatBuffer inputs;
     };
 
 private:
@@ -40,6 +40,7 @@ private:
 
     FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
+    ByteBuffer hiddenMaxs;
 
     FloatBuffer hiddenRates; // Resources
 
@@ -48,6 +49,16 @@ private:
     Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
+
+    void setInputs(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        int vli
+    );
+
+    void inhibit(
+        const Int2 &columnPos
+    );
     
     void forward(
         const Int2 &columnPos
