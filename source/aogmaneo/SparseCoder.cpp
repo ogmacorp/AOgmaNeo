@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "SparseCoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -158,7 +157,6 @@ void SparseCoder::learn(
             }
         }
     }
-    std::cout << learnEnabled << std::endl;
 
     if (learnEnabled) {
         for (int dhc = -1; dhc <= 1; dhc++) {
