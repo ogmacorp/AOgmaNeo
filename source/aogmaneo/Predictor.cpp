@@ -187,7 +187,7 @@ void Predictor::initRandom(
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 }
 
 // Activate the predictor (predict values)
