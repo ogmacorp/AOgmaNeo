@@ -40,7 +40,6 @@ private:
 
     FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
-    ByteBuffer hiddenMaxs;
 
     FloatBuffer hiddenRates; // Resources
 
@@ -56,10 +55,6 @@ private:
         int vli
     );
 
-    void inhibit(
-        const Int2 &columnPos
-    );
-    
     void forward(
         const Int2 &columnPos
     );
@@ -75,7 +70,7 @@ public:
     // Defaults
     SparseCoder()
     :
-    alpha(0.02f),
+    alpha(0.05f),
     groupRadius(2)
     {}
 
