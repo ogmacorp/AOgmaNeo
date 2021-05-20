@@ -59,7 +59,7 @@ public:
 
     ErrorEncoder()
     :
-    lr(0.5f)
+    lr(0.2f)
     {}
 
     // Create a sparse coding layer with random initialization
