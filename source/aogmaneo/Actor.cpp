@@ -324,7 +324,7 @@ void Actor::initRandom(
         vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.actionWeights.size(); i++)
-            vl.actionWeights[i] = rand() % 8 - 4;
+            vl.actionWeights[i] = rand() % 256 - 127;
     }
 
     hiddenSums = IntBuffer(numHiddenCells, 0);
