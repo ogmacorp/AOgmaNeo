@@ -76,6 +76,24 @@ void Decoder::forward(
         }
     }
 
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActivations[hiddenCellIndex] = expf(temperature * (hiddenActivations[hiddenCellIndex] - maxActivation));
+
+        total += hiddenActivations[hiddenCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActivations[hiddenCellIndex] *= scale;
+    }
+
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
@@ -118,7 +136,7 @@ void Decoder::learn(
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-                    int delta = roundftoi(lr * 127.0f * ((hc == targetCI) - sigmoid(temperature * hiddenActivations[hiddenCellIndex])));
+                    int delta = roundftoi(lr * 127.0f * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]));
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
