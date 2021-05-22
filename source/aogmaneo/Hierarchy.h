@@ -93,8 +93,8 @@ public:
 
 private:
     // Layers
-    Array<Encoder> scLayers;
-    Array<Array<Ptr<Decoder>>> pLayers;
+    Array<Encoder> eLayers;
+    Array<Array<Ptr<Decoder>>> dLayers;
     Array<Ptr<Actor>> aLayers;
 
     // Histories
@@ -158,9 +158,9 @@ public:
         StreamReader &reader
     );
 
-    // Get the number of layers (scLayers)
+    // Get the number of layers (eLayers)
     int getNumLayers() const {
-        return scLayers.size();
+        return eLayers.size();
     }
 
     // Retrieve predictions
@@ -170,7 +170,7 @@ public:
         if (aLayers[i] != nullptr) // If is an action layer
             return aLayers[i]->getHiddenCIs();
 
-        return pLayers[0][i]->getHiddenCIs();
+        return dLayers[0][i]->getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -203,26 +203,26 @@ public:
     Encoder &getELayer(
         int l // Layer index
     ) {
-        return scLayers[l];
+        return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
     const Encoder &getELayer(
         int l // Layer index
     ) const {
-        return scLayers[l];
+        return eLayers[l];
     }
 
     Array<Ptr<Decoder>> &getDLayers(
         int l // Layer index
     ) {
-        return pLayers[l];
+        return dLayers[l];
     }
 
     const Array<Ptr<Decoder>> &getDLayers(
         int l // Layer index
     ) const {
-        return pLayers[l];
+        return dLayers[l];
     }
 
     // Retrieve predictor layer(s)

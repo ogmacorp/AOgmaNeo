@@ -136,7 +136,7 @@ void Encoder::forward(
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= alpha * hiddenRates[hiddenCellIndex];
+            hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex];
         }
     }
 }
@@ -314,7 +314,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&numPriorities), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&alpha), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
@@ -343,7 +343,7 @@ void Encoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&alpha), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenPriorities.resize(numHiddenColumns);
