@@ -62,7 +62,7 @@ void Decoder::forward(
             }
     }
 
-    int maxIndex = 0;
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -70,7 +70,7 @@ void Decoder::forward(
 
         hiddenActivations[hiddenCellIndex] = static_cast<float>(hiddenSums[hiddenCellIndex]) / (static_cast<float>(max(1, count)) * 127.0f);
 
-        if (hiddenActivations[hiddenCellIndex] > maxActivation) {
+        if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
             maxIndex = hc;
         }
@@ -175,7 +175,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 256 - 127;
+            vl.weights[i] = rand() % 8 - 4;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }

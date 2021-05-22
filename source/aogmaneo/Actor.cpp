@@ -254,7 +254,7 @@ void Actor::learn(
 
     float activation = static_cast<float>(sum) / (static_cast<float>(max(1, count)) * 127.0f);
 
-    int delta = roundftoi(alr * 127.0f * (tanh(temperature * tdErrorValue) - activation));
+    int delta = roundftoi(alr * 127.0f * ((tdErrorValue > 0.0f ? 1.0f : -1.0f) - tanh(activation * temperature)));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -324,7 +324,7 @@ void Actor::initRandom(
         vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.actionWeights.size(); i++)
-            vl.actionWeights[i] = rand() % 256 - 127;
+            vl.actionWeights[i] = rand() % 8 - 4;
     }
 
     hiddenSums = IntBuffer(numHiddenCells, 0);
