@@ -68,7 +68,7 @@ public:
     :
     lr(0.05f),
     discount(0.99f),
-    traceDecay(0.97f),
+    traceDecay(0.96f),
     epsilon(0.03f)
     {}
 
