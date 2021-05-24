@@ -30,25 +30,30 @@ public:
         int eRadius; // Feed forward radius
         int dRadius; // Feed back radius
 
+        int historyCapacity;
+
         IODesc()
         :
         size(4, 4, 16),
         type(none),
         eRadius(2),
-        dRadius(2)
+        dRadius(2),
+        historyCapacity(64)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
             int eRadius,
-            int dRadius
+            int dRadius,
+            int historyCapacity
         )
         :
         size(size),
         type(type),
         eRadius(eRadius),
-        dRadius(dRadius)
+        dRadius(dRadius),
+        historyCapacity(historyCapacity)
         {}
     };
 
@@ -135,7 +140,8 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f // Reinforcement signal
+        float reward = 0.0f, // Reinforcement signal
+        bool mimic = false // Imitation learning
     );
 
     // Serialization

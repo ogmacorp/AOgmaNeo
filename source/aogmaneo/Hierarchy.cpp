@@ -83,18 +83,18 @@ void Hierarchy::initRandom(
     // Iterate through layers
     for (int l = 0; l < layerDescs.size(); l++) {
         // Create sparse coder visible layer descriptors
-        Array<Encoder::VisibleLayerDesc> scVisibleLayerDescs;
+        Array<Encoder::VisibleLayerDesc> eVisibleLayerDescs;
 
         // If first layer
         if (l == 0) {
-            scVisibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon);
+            eVisibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon);
 
             for (int i = 0; i < inputSizes.size(); i++) {
                 for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
                     int index = t + layerDescs[l].temporalHorizon * i;
 
-                    scVisibleLayerDescs[index].size = inputSizes[i];
-                    scVisibleLayerDescs[index].radius = ioDescs[i].eRadius;
+                    eVisibleLayerDescs[index].size = inputSizes[i];
+                    eVisibleLayerDescs[index].radius = ioDescs[i].eRadius;
                 }
             }
             
@@ -141,16 +141,16 @@ void Hierarchy::initRandom(
 
                     aLayers[i].make();
 
-                    aLayers[i]->initRandom(inputSizes[i], aVisibleLayerDescs);
+                    aLayers[i]->initRandom(inputSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
                 }
             }
         }
         else {
-            scVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
+            eVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
 
             for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
-                scVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
-                scVisibleLayerDescs[t].radius = layerDescs[l].eRadius;
+                eVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
+                eVisibleLayerDescs[t].radius = layerDescs[l].eRadius;
             }
 
             histories[l].resize(1);
@@ -182,14 +182,15 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        eLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].numPriorities, scVisibleLayerDescs);
+        eLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].numPriorities, eVisibleLayerDescs);
     }
 }
 
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
-    float reward
+    float reward,
+    bool mimic
 ) {
     // First tick is always 0
     ticks[0] = 0;
@@ -265,7 +266,7 @@ void Hierarchy::step(
                 // Step actors
                 for (int p = 0; p < aLayers.size(); p++) {
                     if (aLayers[p] != nullptr)
-                        aLayers[p]->step(feedBackCIs, &histories[l][p][0], reward, learnEnabled);
+                        aLayers[p]->step(feedBackCIs, &histories[l][p][0], reward, learnEnabled, mimic);
                 }
             }
         }

@@ -13,17 +13,15 @@ using namespace aon;
 void Actor::forward(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs,
-    const IntBuffer* hiddenTargetCIsPrev,
-    float reward,
-    bool learnEnabled,
     unsigned int* state
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    // Pre-count
+    // --- Value ---
+
+    float value = 0.0f;
     int count = 0;
 
-    // For each visible layer
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -45,14 +43,25 @@ void Actor::forward(
         Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-        count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                int inCI = (*inputCIs[vli])[visibleColumnIndex];
+
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                value += vl.valueWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
+                count++;
+            }
     }
 
-    int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
+    value /= max(1, count);
 
-    float valuePrev = hiddenValues[address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize)];
+    hiddenValues[hiddenColumnIndex] = value;
 
-    int maxIndex = -1;
+    // --- Action ---
+
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -89,37 +98,147 @@ void Actor::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += vl.actionWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
 
         sum /= max(1, count);
 
-        hiddenValues[hiddenCellIndex] = sum;
+        hiddenActivations[hiddenCellIndex] = sum;
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+        
+        total += hiddenActivations[hiddenCellIndex];
+    }
+
+    float cusp = randf(state) * total;
+
+    int selectIndex = 0;
+    float sumSoFar = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        sumSoFar += hiddenActivations[hiddenCellIndex];
+
+        if (sumSoFar >= cusp) {
+            selectIndex = hc;
+
+            break;
         }
     }
-
-    int selectIndex = maxIndex;
-
-    if (randf(state) < epsilon)
-        selectIndex = rand(state) % hiddenSize.z;
-
-    float nextValue = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
     
-        nextValue += hiddenValues[hiddenCellIndex] * (hc == maxIndex ? 1.0f - epsilon : epsilon / (hiddenSize.z - 1));
+    hiddenCIs[hiddenColumnIndex] = selectIndex;
+}
+
+void Actor::learn(
+    const Int2 &columnPos,
+    const Array<const IntBuffer*> &inputCIsPrev,
+    const IntBuffer* hiddenTargetCIsPrev,
+    float q,
+    float g,
+    bool mimic
+) {
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+
+    // --- Value Prev ---
+
+    float newValue = q + g * hiddenValues[hiddenColumnIndex];
+
+    float value = 0.0f;
+    int count = 0;
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        int diam = vld.radius * 2 + 1;
+
+        // Projection
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+        Int2 visibleCenter = project(columnPos, hToV);
+
+        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
+        // Lower corner
+        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+        // Bounds of receptive field, clamped to input size
+        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                int inCI = (*inputCIsPrev[vli])[visibleColumnIndex];
+
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                value += vl.valueWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
+                count++;
+            }
     }
 
-    float delta = lr * (reward + discount * nextValue - valuePrev);
+    value /= max(1, count);
+
+    float tdErrorValue = newValue - value;
+    
+    float deltaValue = vlr * tdErrorValue;
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        int diam = vld.radius * 2 + 1;
+
+        // Projection
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+        Int2 visibleCenter = project(columnPos, hToV);
+
+        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
+        // Lower corner
+        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+        // Bounds of receptive field, clamped to input size
+        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                int inCI = (*inputCIsPrev[vli])[visibleColumnIndex];
+
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                vl.valueWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))] += deltaValue;
+            }
+    }
+
+    // --- Action ---
+
+    int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
+
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        float sum = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -146,32 +265,82 @@ void Actor::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+                    int inCI = (*inputCIsPrev[vli])[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    sum += vl.actionWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                }
+        }
 
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int wi = vc + wiStart;
+        sum /= max(1, count);
 
-                        if (vc == inCIPrev && hc == targetCI)
-                            vl.traces[wi] = 1.0f;
-                        else
-                            vl.traces[wi] *= traceDecay;
+        hiddenActivations[hiddenCellIndex] = sum;
 
-                        if (learnEnabled)
-                            vl.weights[wi] += delta * vl.traces[wi];
-                    }
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+
+        total += hiddenActivations[hiddenCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenCellIndex] *= scale;
+    }
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        float deltaAction = (mimic || tdErrorValue > 0.0f ? alr : -0.5f * alr) * ((hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+            int diam = vld.radius * 2 + 1;
+
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+            Int2 visibleCenter = project(columnPos, hToV);
+
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                    int inCI = (*inputCIsPrev[vli])[visibleColumnIndex];
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    vl.actionWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += deltaAction;
                 }
         }
     }
-
-    hiddenCIs[hiddenColumnIndex] = selectIndex;
 }
 
 void Actor::initRandom(
     const Int3 &hiddenSize,
+    int historyCapacity,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
     this->visibleLayerDescs = visibleLayerDescs;
@@ -189,66 +358,150 @@ void Actor::initRandom(
         VisibleLayer &vl = visibleLayers[vli];
         VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
 
-        int numVisibleColumns = vld.size.x * vld.size.y;
-
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
         // Create weight matrix for this visible layer and initialize randomly
-        vl.weights.resize(numHiddenCells * area * vld.size.z);
+        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z);
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.001f, 0.001f);
+        for (int i = 0; i < vl.valueWeights.size(); i++)
+            vl.valueWeights[i] = randf(-0.01f, 0.01f);
 
-        vl.traces = FloatBuffer(vl.weights.size(), 0.0f);
+        vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
 
-        vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
+        for (int i = 0; i < vl.actionWeights.size(); i++)
+            vl.actionWeights[i] = randf(-0.01f, 0.01f);
     }
 
-    hiddenValues = FloatBuffer(numHiddenCells, 0.0f);
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+
+    hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
+
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+
+    // Create (pre-allocated) history samples
+    historySize = 0;
+    historySamples.resize(historyCapacity);
+
+    for (int i = 0; i < historySamples.size(); i++) {
+        historySamples[i].inputCIs.resize(visibleLayers.size());
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
+
+            int numVisibleColumns = vld.size.x * vld.size.y;
+
+            historySamples[i].inputCIs[vli] = IntBuffer(numVisibleColumns);
+        }
+
+        historySamples[i].hiddenTargetCIsPrev = IntBuffer(numHiddenColumns);
+    }
 }
 
 void Actor::step(
     const Array<const IntBuffer*> &inputCIs,
     const IntBuffer* hiddenTargetCIsPrev,
     float reward,
-    bool learnEnabled
+    bool learnEnabled,
+    bool mimic
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
+    // Forward kernel
     unsigned int baseState = rand();
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++) {
         unsigned int state = baseState + i * 12345;
 
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenTargetCIsPrev, reward, learnEnabled, &state);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &state);
     }
 
-    // Updates prevs
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
+    historySamples.pushFront();
 
-        vl.inputCIsPrev = *inputCIs[vli];
+    // If not at cap, increment
+    if (historySize < historySamples.size())
+        historySize++;
+    
+    // Add new sample
+    {
+        HistorySample &s = historySamples[0];
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++)
+            s.inputCIs[vli] = *inputCIs[vli];
+
+        // Copy hidden CIs
+        s.hiddenTargetCIsPrev = *hiddenTargetCIsPrev;
+
+        s.reward = reward;
+    }
+
+    // Learn (if have sufficient samples)
+    if (learnEnabled && historySize > minSteps + 1) {
+        for (int it = 0; it < historyIters; it++) {
+            int historyIndex = rand() % (historySize - 1 - minSteps) + minSteps;
+
+            const HistorySample &sPrev = historySamples[historyIndex + 1];
+            const HistorySample &s = historySamples[historyIndex];
+
+            // Compute (partial) values, rest is completed in the kernel
+            float q = 0.0f;
+            float g = 1.0f;
+
+            for (int t = historyIndex; t >= 0; t--) {
+                q += historySamples[t].reward * g;
+
+                g *= discount;
+            }
+
+            #pragma omp parallel for
+            for (int i = 0; i < numHiddenColumns; i++)
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCIs), &s.hiddenTargetCIsPrev, q, g, mimic);
+        }
     }
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 4 * sizeof(float) + hiddenValues.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.weights.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.valueWeights.size() * sizeof(float) + vl.actionWeights.size() * sizeof(float);
     }
+
+    size += 3 * sizeof(int);
+
+    int sampleSize = 0;
+
+    const HistorySample &s = historySamples[0];
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++)
+        sampleSize += s.inputCIs[vli].size() * sizeof(int);
+
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+
+    size += historySamples.size() * sampleSize;
 
     return size;
 }
 
 int Actor::stateSize() const {
-    return hiddenValues.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+
+    int sampleSize = 0;
+
+    const HistorySample &s = historySamples[0];
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++)
+        sampleSize += s.inputCIs[vli].size() * sizeof(int);
+
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+
+    size += historySamples.size() * sampleSize;
+
+    return size;
 }
 
 void Actor::write(
@@ -256,17 +509,18 @@ void Actor::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&vlr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&alr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&epsilon), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
-    int numVisibleCellsLayers = visibleLayers.size();
+    int numVisibleLayers = visibleLayers.size();
 
-    writer.write(reinterpret_cast<const void*>(&numVisibleCellsLayers), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&numVisibleLayers), sizeof(int));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -274,10 +528,29 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
+    }
 
-        writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&historySize), sizeof(int));
+
+    int numHistorySamples = historySamples.size();
+
+    writer.write(reinterpret_cast<const void*>(&numHistorySamples), sizeof(int));
+
+    int historyStart = historySamples.start;
+
+    writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
+
+    for (int t = 0; t < historySamples.size(); t++) {
+        const HistorySample &s = historySamples[t];
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++)
+            writer.write(reinterpret_cast<const void*>(&s.inputCIs[vli][0]), s.inputCIs[vli].size() * sizeof(int));
+
+        writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
+
+        writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
     }
 }
 
@@ -289,23 +562,26 @@ void Actor::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
     
-    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&vlr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&alr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&epsilon), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
-    hiddenValues.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
+    hiddenValues.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
-    int numVisibleCellsLayers = visibleLayers.size();
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
-    reader.read(reinterpret_cast<void*>(&numVisibleCellsLayers), sizeof(int));
+    int numVisibleLayers = visibleLayers.size();
 
-    visibleLayers.resize(numVisibleCellsLayers);
-    visibleLayerDescs.resize(numVisibleCellsLayers);
+    reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
+
+    visibleLayers.resize(numVisibleLayers);
+    visibleLayerDescs.resize(numVisibleLayers);
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -313,51 +589,97 @@ void Actor::read(
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
-        int numVisibleColumns = vld.size.x * vld.size.y;
-
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        int weightsSize = numHiddenCells * area * vld.size.z;
+        vl.valueWeights.resize(numHiddenColumns * area * vld.size.z);
+        vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
 
-        vl.weights.resize(weightsSize);
-        vl.traces.resize(weightsSize);
+        reader.read(reinterpret_cast<void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
+    }
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
 
-        vl.inputCIsPrev.resize(numVisibleColumns);
+    int numHistorySamples;
 
-        reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&numHistorySamples), sizeof(int));
+
+    int historyStart;
+
+    reader.read(reinterpret_cast<void*>(&historyStart), sizeof(int));
+
+    historySamples.resize(numHistorySamples);
+    historySamples.start = historyStart;
+
+    for (int t = 0; t < historySamples.size(); t++) {
+        HistorySample &s = historySamples[t];
+
+        s.inputCIs.resize(numVisibleLayers);
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+            int numVisibleColumns = vld.size.x * vld.size.y;
+
+            s.inputCIs[vli].resize(numVisibleColumns);
+
+            reader.read(reinterpret_cast<void*>(&s.inputCIs[vli][0]), s.inputCIs[vli].size() * sizeof(int));
+        }
+
+        s.hiddenTargetCIsPrev.resize(numHiddenColumns);
+
+        reader.read(reinterpret_cast<void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
+
+        reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
 }
 
 void Actor::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        const VisibleLayer &vl = visibleLayers[vli];
+    int historyStart = historySamples.start;
 
-        writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+    for (int t = 0; t < historySamples.size(); t++) {
+        const HistorySample &s = historySamples[t];
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++)
+            writer.write(reinterpret_cast<const void*>(&s.inputCIs[vli][0]), s.inputCIs[vli].size() * sizeof(int));
+
+        writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
+
+        writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
     }
 }
 
 void Actor::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
+    int historyStart;
 
-        reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&historyStart), sizeof(int));
 
-        reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+    historySamples.start = historyStart;
+
+    for (int t = 0; t < historySamples.size(); t++) {
+        HistorySample &s = historySamples[t];
+
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+            reader.read(reinterpret_cast<void*>(&s.inputCIs[vli][0]), s.inputCIs[vli].size() * sizeof(int));
+        }
+
+        reader.read(reinterpret_cast<void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
+
+        reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
 }
