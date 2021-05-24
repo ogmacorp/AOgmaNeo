@@ -82,13 +82,13 @@ void Encoder::forward(
             }
     }
 
-    int maxIndex = 0;
-    float maxActivation = hiddenSums[0 + hiddenCellsStart];
+    int maxIndex = -1;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        if (hiddenSums[hiddenCellIndex] > maxActivation) {
+        if (hiddenSums[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenSums[hiddenCellIndex];
             maxIndex = hc;
         }
