@@ -35,6 +35,12 @@ void Encoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenSums[hiddenCellIndex] = 0.0f;
+    }
+
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -78,17 +84,14 @@ void Encoder::forward(
 
     int maxIndex = 0;
     float maxActivation = hiddenSums[0 + hiddenCellsStart];
-    hiddenSums[0 + hiddenCellsStart] = 0.0f;
 
-    for (int hc = 1; hc < hiddenSize.z; hc++) {
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         if (hiddenSums[hiddenCellIndex] > maxActivation) {
             maxActivation = hiddenSums[hiddenCellIndex];
             maxIndex = hc;
         }
-
-        hiddenSums[hiddenCellIndex] = 0.0f;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
