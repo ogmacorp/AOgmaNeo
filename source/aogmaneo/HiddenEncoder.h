@@ -109,6 +109,13 @@ public:
     }
 
     // Get a visible layer
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
+    }
+
+    // Get a visible layer
     const VisibleLayer &getVisibleLayer(
         int i // Index of visible layer
     ) const {

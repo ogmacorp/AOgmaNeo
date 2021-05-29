@@ -183,6 +183,16 @@ public:
         return encLayers.size();
     }
 
+    void setImportance(
+        int i,
+        float importance
+    ) {
+        for (int t = 0; t < histories[0][i].size(); t++) {
+            encLayers[0].hidden.getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+            encLayers[0].error.getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+        }
+    }
+
     // Retrieve predictions
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
