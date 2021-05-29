@@ -33,6 +33,13 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev;
+        
+        float importance;
+
+        VisibleLayer()
+        :
+        importance(1.0f)
+        {}
     };
 
 private:

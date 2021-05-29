@@ -33,6 +33,13 @@ public:
         FloatBuffer weights;
 
         FloatBuffer reconstruction;
+
+        float importance;
+
+        VisibleLayer()
+        :
+        importance(1.0f)
+        {}
     };
 
 private:
