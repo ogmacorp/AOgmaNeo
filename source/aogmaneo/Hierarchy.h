@@ -193,6 +193,12 @@ public:
         }
     }
 
+    float getImportance(
+        int i
+    ) const {
+        return encLayers[0].hidden.getVisibleLayer(i * histories[0][i].size()).importance;
+    }
+
     // Retrieve predictions
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
