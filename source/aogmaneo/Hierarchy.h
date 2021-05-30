@@ -169,6 +169,20 @@ public:
         return eLayers.size();
     }
 
+    void setImportance(
+        int i,
+        float importance
+    ) {
+        for (int t = 0; t < histories[0][i].size(); t++)
+            eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+    }
+
+    float getImportance(
+        int i
+    ) const {
+        return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
+    }
+
     // Retrieve predictions
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
