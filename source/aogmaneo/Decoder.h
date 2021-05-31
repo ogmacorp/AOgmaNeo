@@ -75,7 +75,7 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Learning predictions (update weights)
@@ -106,6 +106,13 @@ public:
     // Get number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
+    }
+
+    // Get a visible layer
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
     }
 
     // Get a visible layer
