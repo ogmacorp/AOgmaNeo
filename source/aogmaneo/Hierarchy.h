@@ -28,7 +28,6 @@ public:
 
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
-        int bRadius; // Feed back radius
 
         int historyCapacity; // Actor history capacity
 
@@ -38,7 +37,6 @@ public:
         type(prediction),
         eRadius(2),
         dRadius(2),
-        bRadius(2),
         historyCapacity(128)
         {}
 
@@ -47,7 +45,6 @@ public:
             IOType type,
             int eRadius,
             int dRadius,
-            int bRadius,
             int historyCapacity
         )
         :
@@ -55,7 +52,6 @@ public:
         type(type),
         eRadius(eRadius),
         dRadius(dRadius),
-        bRadius(bRadius),
         historyCapacity(historyCapacity)
         {}
     };
@@ -66,7 +62,6 @@ public:
 
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
-        int bRadius; // Feed back radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -76,7 +71,6 @@ public:
         hiddenSize(4, 4, 16),
         eRadius(2),
         dRadius(2),
-        bRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
@@ -85,7 +79,6 @@ public:
             const Int3 &hiddenSize,
             int eRadius,
             int dRadius,
-            int bRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
@@ -93,7 +86,6 @@ public:
         hiddenSize(hiddenSize),
         eRadius(eRadius),
         dRadius(dRadius),
-        bRadius(bRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
