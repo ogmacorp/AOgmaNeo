@@ -53,7 +53,7 @@ void Encoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] * vl.importance;
                 }
         }
 
@@ -229,7 +229,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + sizeof(float);
     }
 
     return size;
@@ -259,6 +259,8 @@ void Encoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+
+        writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
@@ -300,6 +302,8 @@ void Encoder::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+
+        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 
