@@ -12,7 +12,7 @@
 
 namespace aon {
 // Sparse coder
-class ErrorEncoder {
+class Encoder {
 public:
     // Visible layer descriptor
     struct VisibleLayerDesc {
@@ -32,8 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        IntBuffer inputCIsPrev;
-        
+        FloatBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -45,7 +45,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -56,17 +55,21 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
     float lr; // Learning rate
 
-    ErrorEncoder()
+    Encoder()
     :
-    lr(0.2f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -77,7 +80,6 @@ public:
 
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
     );
 
@@ -106,6 +108,7 @@ public:
         return visibleLayers.size();
     }
 
+    // Get a visible layer
     VisibleLayer &getVisibleLayer(
         int i // Index of visible layer
     ) {
@@ -137,3 +140,4 @@ public:
     }
 };
 } // namespace aon
+

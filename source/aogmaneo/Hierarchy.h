@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include "HiddenEncoder.h"
-#include "ErrorEncoder.h"
+#include "Encoder.h"
 #include "Decoder.h"
 #include "Actor.h"
 
@@ -27,8 +26,7 @@ public:
         Int3 size;
         IOType type;
 
-        int hRadius; // Hidden encoder radius
-        int eRadius; // Error encoder radius
+        int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
         int historyCapacity; // Actor history capacity
@@ -37,7 +35,6 @@ public:
         :
         size(4, 4, 16),
         type(prediction),
-        hRadius(2),
         eRadius(2),
         dRadius(2),
         historyCapacity(64)
@@ -46,7 +43,6 @@ public:
         IODesc(
             const Int3 &size,
             IOType type,
-            int hRadius,
             int eRadius,
             int dRadius,
             int historyCapacity
@@ -54,7 +50,6 @@ public:
         :
         size(size),
         type(type),
-        hRadius(hRadius),
         eRadius(eRadius),
         dRadius(dRadius),
         historyCapacity(historyCapacity)
@@ -64,11 +59,9 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        Int3 errorSize; // Size of error layer
 
-        int hRadius; // Feed forward hidden radius
-        int eRadius; // Feed forward error radius
-        int dRadius; // Prediction radius
+        int eRadius; // Encoder radius
+        int dRadius; // Decoder radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -76,8 +69,6 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        errorSize(4, 4, 16),
-        hRadius(2),
         eRadius(2),
         dRadius(2),
         ticksPerUpdate(2),
@@ -86,8 +77,6 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            const Int3 &errorSize,
-            int hRadius,
             int eRadius,
             int dRadius,
             int ticksPerUpdate,
@@ -95,8 +84,6 @@ public:
         )
         :
         hiddenSize(hiddenSize),
-        errorSize(errorSize),
-        hRadius(hRadius),
         eRadius(eRadius),
         dRadius(dRadius),
         ticksPerUpdate(ticksPerUpdate),
@@ -104,17 +91,11 @@ public:
         {}
     };
 
-    struct EncLayerPair {
-        HiddenEncoder hidden;
-        ErrorEncoder error;
-    };
-
 private:
     // Layers
-    Array<EncLayerPair> encLayers;
+    Array<Encoder> eLayers;
     Array<Array<Array<Decoder>>> dLayers;
     Array<Ptr<Actor>> aLayers;
-    Array<FloatBuffer> errors;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -178,25 +159,25 @@ public:
         StreamReader &reader
     );
 
-    // Get the number of layers (encLayers)
+    // Get the number of layers (eLayers)
     int getNumLayers() const {
-        return encLayers.size();
+        return eLayers.size();
     }
 
+    // Importance control
     void setImportance(
         int i,
         float importance
     ) {
-        for (int t = 0; t < histories[0][i].size(); t++) {
-            encLayers[0].hidden.getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
-            encLayers[0].error.getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
-        }
+        for (int t = 0; t < histories[0][i].size(); t++)
+            eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
     }
 
+    // Importance control
     float getImportance(
         int i
     ) const {
-        return encLayers[0].hidden.getVisibleLayer(i * histories[0][i].size()).importance;
+        return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
     }
 
     // Retrieve predictions
@@ -236,17 +217,17 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    EncLayerPair &getEncLayer(
+    Encoder &getELayer(
         int l // Layer index
     ) {
-        return encLayers[l];
+        return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const EncLayerPair &getEncLayer(
+    const Encoder &getELayer(
         int l // Layer index
     ) const {
-        return encLayers[l];
+        return eLayers[l];
     }
 
     // Retrieve predictor layer(s)

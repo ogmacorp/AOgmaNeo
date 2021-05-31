@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        ByteBuffer protos;
 
         ByteBuffer reconstruction;
     };
@@ -40,7 +40,7 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenRates; // Resources
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -60,24 +60,13 @@ private:
         int vli
     );
 
-    void reduce(
-        const Int2 &columnPos,
-        int step
-    );
-
-    void distribute(
-        const Int2 &columnPos
-    );
-
 public:
     float lr;
-    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.05f),
-    falloff(0.1f)
+    lr(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -95,8 +84,6 @@ public:
     void reconstruct(
         const IntBuffer* reconCIs
     );
-
-    void makeShared();
 
     const ByteBuffer &getReconstruction(
         int i

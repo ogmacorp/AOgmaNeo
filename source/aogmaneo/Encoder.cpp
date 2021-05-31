@@ -6,11 +6,11 @@
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
-#include "HiddenEncoder.h"
+#include "Encoder.h"
 
 using namespace aon;
 
-void HiddenEncoder::forward(
+void Encoder::forward(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs
 ) {
@@ -45,9 +45,6 @@ void HiddenEncoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            float subSum = 0.0f;
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -56,12 +53,8 @@ void HiddenEncoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    subSum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] * vl.importance;
+                    sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] * vl.importance;
                 }
-
-            subSum /= max(1, subCount);
-
-            sum += subSum;
         }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -73,7 +66,7 @@ void HiddenEncoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
-void HiddenEncoder::learn(
+void Encoder::learn(
     const Int2 &columnPos,
     const IntBuffer* inputCIs,
     int vli
@@ -171,7 +164,7 @@ void HiddenEncoder::learn(
     }
 }
 
-void HiddenEncoder::initRandom(
+void Encoder::initRandom(
     const Int3 &hiddenSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
@@ -207,7 +200,7 @@ void HiddenEncoder::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
-void HiddenEncoder::step(
+void Encoder::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled
 ) {
@@ -230,23 +223,23 @@ void HiddenEncoder::step(
     }
 }
 
-int HiddenEncoder::size() const {
+int Encoder::size() const {
     int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + sizeof(float);
     }
 
     return size;
 }
 
-int HiddenEncoder::stateSize() const {
+int Encoder::stateSize() const {
     return hiddenCIs.size() * sizeof(int);
 }
 
-void HiddenEncoder::write(
+void Encoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
@@ -266,10 +259,12 @@ void HiddenEncoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+
+        writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
-void HiddenEncoder::read(
+void Encoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
@@ -307,17 +302,20 @@ void HiddenEncoder::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+
+        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 
-void HiddenEncoder::writeState(
+void Encoder::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
 
-void HiddenEncoder::readState(
+void Encoder::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
+

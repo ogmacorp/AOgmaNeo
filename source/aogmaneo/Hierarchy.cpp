@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -14,7 +14,7 @@ const Hierarchy &Hierarchy::operator=(
     const Hierarchy &other // Hierarchy to assign from
 ) {
     // Layers
-    encLayers = other.encLayers;
+    eLayers = other.eLayers;
     dLayers = other.dLayers;
 
     updates = other.updates;
@@ -22,7 +22,6 @@ const Hierarchy &Hierarchy::operator=(
     ticksPerUpdate = other.ticksPerUpdate;
     inputSizes = other.inputSizes;
     histories = other.histories;
-    errors = other.errors;
 
     aLayers.resize(inputSizes.size());
 
@@ -44,9 +43,8 @@ void Hierarchy::initRandom(
     const Array<LayerDesc> &layerDescs
 ) {
     // Create layers
-    encLayers.resize(layerDescs.size());
+    eLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
-    errors.resize(layerDescs.size());
 
     ticks.resize(layerDescs.size(), 0);
 
@@ -70,20 +68,15 @@ void Hierarchy::initRandom(
     // Iterate through layers
     for (int l = 0; l < layerDescs.size(); l++) {
         // Create sparse coder visible layer descriptors
-        Array<HiddenEncoder::VisibleLayerDesc> hVisibleLayerDescs;
-        Array<ErrorEncoder::VisibleLayerDesc> eVisibleLayerDescs;
+        Array<Encoder::VisibleLayerDesc> eVisibleLayerDescs;
 
         // If first layer
         if (l == 0) {
-            hVisibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon);
-            eVisibleLayerDescs.resize(hVisibleLayerDescs.size());
+            eVisibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon);
 
             for (int i = 0; i < inputSizes.size(); i++) {
                 for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
                     int index = t + layerDescs[l].temporalHorizon * i;
-
-                    hVisibleLayerDescs[index].size = inputSizes[i];
-                    hVisibleLayerDescs[index].radius = ioDescs[i].hRadius;
 
                     eVisibleLayerDescs[index].size = inputSizes[i];
                     eVisibleLayerDescs[index].radius = ioDescs[i].eRadius;
@@ -108,17 +101,14 @@ void Hierarchy::initRandom(
             // Create predictors
             for (int i = 0; i < inputSizes.size(); i++) {
                 // Decoder visible layer descriptors
-                Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < encLayers.size() - 1 ? 3 : 2);
+                Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < eLayers.size() - 1 ? 2 : 1);
 
-                dVisibleLayerDescs[0].size = layerDescs[l].errorSize;
+                dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
                 dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
-                dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                dVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
-
-                if (l < encLayers.size() - 1) {
-                    dVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                    dVisibleLayerDescs[2].radius = ioDescs[i].dRadius;
+                if (l < eLayers.size() - 1) {
+                    dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+                    dVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
                 }
 
                 dLayers[l][i].resize(1);
@@ -126,17 +116,14 @@ void Hierarchy::initRandom(
 
                 if (ioDescs[i].type == IOType::action) {
                     // Actor visible layer descriptors
-                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < encLayers.size() - 1 ? 3 : 2);
+                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(l < eLayers.size() - 1 ? 2 : 1);
 
-                    aVisibleLayerDescs[0].size = layerDescs[l].errorSize;
+                    aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
                     aVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
-                    aVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                    aVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
-
-                    if (l < encLayers.size() - 1) {
-                        aVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                        aVisibleLayerDescs[2].radius = ioDescs[i].dRadius;
+                    if (l < eLayers.size() - 1) {
+                        aVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+                        aVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
                     }
 
                     aLayers[i].make();
@@ -146,13 +133,9 @@ void Hierarchy::initRandom(
             }
         }
         else {
-            hVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
             eVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
 
             for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
-                hVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
-                hVisibleLayerDescs[t].radius = layerDescs[l].hRadius;
-
                 eVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
                 eVisibleLayerDescs[t].radius = layerDescs[l].eRadius;
             }
@@ -170,17 +153,14 @@ void Hierarchy::initRandom(
             dLayers[l][0].resize(layerDescs[l].ticksPerUpdate);
 
             // Decoder visible layer descriptors
-            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < encLayers.size() - 1 ? 3 : 2);
+            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < eLayers.size() - 1 ? 2 : 1);
 
-            dVisibleLayerDescs[0].size = layerDescs[l].errorSize;
+            dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
 
-            dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-            dVisibleLayerDescs[1].radius = layerDescs[l].dRadius;
-
-            if (l < encLayers.size() - 1) {
-                dVisibleLayerDescs[2].size = layerDescs[l].hiddenSize;
-                dVisibleLayerDescs[2].radius = layerDescs[l].dRadius;
+            if (l < eLayers.size() - 1) {
+                dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
+                dVisibleLayerDescs[1].radius = layerDescs[l].dRadius;
             }
 
             // Create actors
@@ -189,10 +169,7 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        encLayers[l].hidden.initRandom(layerDescs[l].hiddenSize, hVisibleLayerDescs);
-        encLayers[l].error.initRandom(layerDescs[l].errorSize, eVisibleLayerDescs);
-
-        errors[l] = FloatBuffer(encLayers[l].error.getHiddenCIs().size(), 0.0f);
+        eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
     }
 }
 
@@ -217,7 +194,7 @@ void Hierarchy::step(
     updates.fill(false);
 
     // Forward
-    for (int l = 0; l < encLayers.size(); l++) {
+    for (int l = 0; l < eLayers.size(); l++) {
         // If is time for layer to tick
         if (l == 0 || ticks[l] >= ticksPerUpdate[l]) {
             // Reset tick
@@ -225,15 +202,6 @@ void Hierarchy::step(
 
             // Updated
             updates[l] = true;
-
-            // Clear hidden errors
-            errors[l].fill(0.0f);
-
-            // Accumulate
-            for (int i = 0; i < dLayers[l].size(); i++) {
-                for (int t = 0; t < dLayers[l][i].size(); t++)
-                    dLayers[l][i][t].generateErrors(&histories[l][i][t], &errors[l], 0);
-            }
 
             Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
 
@@ -245,16 +213,15 @@ void Hierarchy::step(
             }
 
             // Activate sparse coder
-            encLayers[l].hidden.step(layerInputCIs, learnEnabled);
-            encLayers[l].error.step(layerInputCIs, &errors[l], learnEnabled);
+            eLayers[l].step(layerInputCIs, learnEnabled);
 
             // Add to next layer's history
-            if (l < encLayers.size() - 1) {
+            if (l < eLayers.size() - 1) {
                 int lNext = l + 1;
 
                 histories[lNext][0].pushFront();
 
-                histories[lNext][0][0] = encLayers[l].hidden.getHiddenCIs();
+                histories[lNext][0][0] = eLayers[l].getHiddenCIs();
 
                 ticks[lNext]++;
             }
@@ -262,16 +229,15 @@ void Hierarchy::step(
     }
 
     // Backward
-    for (int l = encLayers.size() - 1; l >= 0; l--) {
+    for (int l = eLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
-            Array<const IntBuffer*> feedBackCIs(l < encLayers.size() - 1 ? 3 : 2);
+            Array<const IntBuffer*> feedBackCIs(l < eLayers.size() - 1 ? 2 : 1);
 
-            feedBackCIs[0] = &encLayers[l].error.getHiddenCIs();
-            feedBackCIs[1] = &encLayers[l].hidden.getHiddenCIs();
+            feedBackCIs[0] = &eLayers[l].getHiddenCIs();
 
-            if (l < encLayers.size() - 1)
-                feedBackCIs[2] = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
+            if (l < eLayers.size() - 1)
+                feedBackCIs[1] = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
 
             // Step actor layers
             for (int i = 0; i < dLayers[l].size(); i++) {
@@ -295,9 +261,9 @@ void Hierarchy::step(
 }
 
 int Hierarchy::size() const {
-    int size = 2 * sizeof(int) + inputSizes.size() * sizeof(Int3) + updates.size() * sizeof(unsigned char) + 2 * ticks.size() * sizeof(int);
+    int size = 2 * sizeof(int) + inputSizes.size() * sizeof(Int3) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int);
 
-    for (int l = 0; l < encLayers.size(); l++) {
+    for (int l = 0; l < eLayers.size(); l++) {
         size += sizeof(int);
 
         for (int i = 0; i < histories[l].size(); i++) {
@@ -307,7 +273,7 @@ int Hierarchy::size() const {
                 size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
         }
 
-        size += encLayers[l].hidden.size() + encLayers[l].error.size();
+        size += eLayers[l].size();
 
         for (int i = 0; i < dLayers[l].size(); i++) {
             for (int t = 0; t < dLayers[l][i].size(); t++)
@@ -316,7 +282,7 @@ int Hierarchy::size() const {
     }
 
     for (int v = 0; v < aLayers.size(); v++) {
-        size += sizeof(unsigned char);
+        size += sizeof(Byte);
 
         if (aLayers[v] != nullptr)
             size += aLayers[v]->size();
@@ -326,9 +292,9 @@ int Hierarchy::size() const {
 }
 
 int Hierarchy::stateSize() const {
-    int size = updates.size() * sizeof(unsigned char) + ticks.size() * sizeof(int);
+    int size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
 
-    for (int l = 0; l < encLayers.size(); l++) {
+    for (int l = 0; l < eLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
             size += sizeof(int);
 
@@ -336,7 +302,7 @@ int Hierarchy::stateSize() const {
                 size += histories[l][i][t].size() * sizeof(int);
         }
 
-        size += encLayers[l].hidden.stateSize() + encLayers[l].error.stateSize();
+        size += eLayers[l].stateSize();
         
         // Decoders
         for (int i = 0; i < dLayers[l].size(); i++) {
@@ -357,7 +323,7 @@ int Hierarchy::stateSize() const {
 void Hierarchy::write(
     StreamWriter &writer
 ) const {
-    int numLayers = encLayers.size();
+    int numLayers = eLayers.size();
 
     writer.write(reinterpret_cast<const void*>(&numLayers), sizeof(int));
 
@@ -367,7 +333,7 @@ void Hierarchy::write(
 
     writer.write(reinterpret_cast<const void*>(&inputSizes[0]), numInputs * sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
     writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
@@ -394,8 +360,7 @@ void Hierarchy::write(
             }
         }
 
-        encLayers[l].hidden.write(writer);
-        encLayers[l].error.write(writer);
+        eLayers[l].write(writer);
 
         // Decoders
         for (int i = 0; i < dLayers[l].size(); i++) {
@@ -406,9 +371,9 @@ void Hierarchy::write(
 
     // Actors
     for (int v = 0; v < aLayers.size(); v++) {
-        unsigned char exists = aLayers[v] != nullptr;
+        Byte exists = aLayers[v] != nullptr;
 
-        writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&exists), sizeof(Byte));
 
         if (exists)
             aLayers[v]->write(writer);
@@ -430,7 +395,7 @@ void Hierarchy::read(
 
     reader.read(reinterpret_cast<void*>(&inputSizes[0]), numInputs * sizeof(Int3));
 
-    encLayers.resize(numLayers);
+    eLayers.resize(numLayers);
     dLayers.resize(numLayers);
 
     histories.resize(numLayers);
@@ -438,9 +403,8 @@ void Hierarchy::read(
     updates.resize(numLayers);
     ticks.resize(numLayers);
     ticksPerUpdate.resize(numLayers);
-    errors.resize(numLayers);
 
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
     
@@ -474,8 +438,7 @@ void Hierarchy::read(
             }
         }
 
-        encLayers[l].hidden.read(reader);
-        encLayers[l].error.read(reader);
+        eLayers[l].read(reader);
         
         dLayers[l].resize(l == 0 ? inputSizes.size() : 1);
 
@@ -486,17 +449,15 @@ void Hierarchy::read(
             for (int t = 0; t < dLayers[l][i].size(); t++)
                 dLayers[l][i][t].read(reader);
         }
-
-        errors[l] = FloatBuffer(encLayers[l].error.getHiddenCIs().size(), 0.0f);
     }
 
     // Actors
     aLayers.resize(inputSizes.size());
 
     for (int v = 0; v < aLayers.size(); v++) {
-        unsigned char exists;
+        Byte exists;
 
-        reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&exists), sizeof(Byte));
 
         if (exists) {
             aLayers[v].make();
@@ -508,10 +469,10 @@ void Hierarchy::read(
 void Hierarchy::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
     writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
 
-    for (int l = 0; l < encLayers.size(); l++) {
+    for (int l = 0; l < eLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
             int historyStart = histories[l][i].start;
 
@@ -521,8 +482,7 @@ void Hierarchy::writeState(
                 writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
         }
 
-        encLayers[l].hidden.writeState(writer);
-        encLayers[l].error.writeState(writer);
+        eLayers[l].writeState(writer);
 
         // Decoders
         for (int i = 0; i < dLayers[l].size(); i++) {
@@ -541,10 +501,10 @@ void Hierarchy::writeState(
 void Hierarchy::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     
-    for (int l = 0; l < encLayers.size(); l++) {
+    for (int l = 0; l < eLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
             int historyStart;
             
@@ -556,8 +516,7 @@ void Hierarchy::readState(
                 reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
         }
 
-        encLayers[l].hidden.readState(reader);
-        encLayers[l].error.readState(reader);
+        eLayers[l].readState(reader);
         
         // Decoders
         for (int i = 0; i < dLayers[l].size(); i++) {
