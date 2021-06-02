@@ -72,7 +72,7 @@ void Hierarchy::initRandom(
             // Create predictors
             for (int i = 0; i < inputSizes.size(); i++) {
                 // Decoder visible layer descriptors
-                Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < eLayers.size() - 1 ? 2 : 1);
+                Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(2);
 
                 dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
                 dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
@@ -107,7 +107,7 @@ void Hierarchy::initRandom(
             dLayers[l][0].resize(layerDescs[l].ticksPerUpdate);
 
             // Decoder visible layer descriptors
-            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < eLayers.size() - 1 ? 2 : 1);
+            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(2);
 
             dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
