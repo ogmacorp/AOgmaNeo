@@ -72,18 +72,13 @@ void Hierarchy::initRandom(
             // Create predictors
             for (int i = 0; i < inputSizes.size(); i++) {
                 // Decoder visible layer descriptors
-                Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(2);
+                Decoder::VisibleLayerDesc dVisibleLayerDesc;
 
-                dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-                dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
-
-                if (l < eLayers.size() - 1) {
-                    dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                    dVisibleLayerDescs[1].radius = ioDescs[i].dRadius;
-                }
+                dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
+                dVisibleLayerDesc.radius = ioDescs[i].dRadius;
 
                 dLayers[l][i].resize(1);
-                dLayers[l][i][0].initRandom(inputSizes[i], dVisibleLayerDescs);
+                dLayers[l][i][0].initRandom(inputSizes[i], dVisibleLayerDesc);
             }
         }
         else {
@@ -107,19 +102,14 @@ void Hierarchy::initRandom(
             dLayers[l][0].resize(layerDescs[l].ticksPerUpdate);
 
             // Decoder visible layer descriptors
-            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(2);
+            Decoder::VisibleLayerDesc dVisibleLayerDesc;
 
-            dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-            dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
-
-            if (l < eLayers.size() - 1) {
-                dVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
-                dVisibleLayerDescs[1].radius = layerDescs[l].dRadius;
-            }
+            dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
+            dVisibleLayerDesc.radius = layerDescs[l].dRadius;
 
             // Create actors
             for (int t = 0; t < dLayers[l][0].size(); t++)
-                dLayers[l][0][t].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDescs);
+                dLayers[l][0][t].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDesc);
         }
         
         // Create the sparse coding layer
