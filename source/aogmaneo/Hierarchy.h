@@ -10,21 +10,13 @@
 
 #include "Encoder.h"
 #include "Decoder.h"
-#include "Actor.h"
 
 namespace aon {
-// Type of hierarchy input layer
-enum IOType {
-    prediction = 0,
-    action = 1
-};
-
 // A SPH
 class Hierarchy {
 public:
     struct IODesc {
         Int3 size;
-        IOType type;
 
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
@@ -34,7 +26,6 @@ public:
         IODesc()
         :
         size(4, 4, 16),
-        type(prediction),
         eRadius(2),
         dRadius(2),
         historyCapacity(64)
@@ -42,14 +33,12 @@ public:
 
         IODesc(
             const Int3 &size,
-            IOType type,
             int eRadius,
             int dRadius,
             int historyCapacity
         )
         :
         size(size),
-        type(type),
         eRadius(eRadius),
         dRadius(dRadius),
         historyCapacity(historyCapacity)
@@ -95,7 +84,6 @@ private:
     // Layers
     Array<Encoder> eLayers;
     Array<Array<Array<Decoder>>> dLayers;
-    Array<Ptr<Actor>> aLayers;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -112,18 +100,6 @@ private:
 public:
     // Default
     Hierarchy() {}
-
-    // Copy
-    Hierarchy(
-        const Hierarchy &other // Hierarchy to copy from
-    ) {
-        *this = other;
-    }
-
-    // Assignment
-    const Hierarchy &operator=(
-        const Hierarchy &other // Hierarchy to assign from
-    );
     
     // Create a randomly initialized hierarchy
     void initRandom(
@@ -134,9 +110,8 @@ public:
     // Simulation step/tick
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
-        bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // Whether to treat Actors like Decoders
+        const IntBuffer* topGoalCIs,
+        bool learnEnabled = true // Whether learning is enabled
     );
 
     // Serialization
@@ -184,9 +159,6 @@ public:
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
-        if (aLayers[i] != nullptr) // If is an action layer
-            return aLayers[i]->getHiddenCIs();
-
         return dLayers[0][i][0].getHiddenCIs();
     }
 
@@ -242,16 +214,6 @@ public:
         int l // Layer index
     ) const {
         return dLayers[l];
-    }
-
-    // Retrieve predictor layer(s)
-    Array<Ptr<Actor>> &getALayers() {
-        return aLayers;
-    }
-
-    // Retrieve predictor layer(s), const version
-    const Array<Ptr<Actor>> &getALayers() const {
-        return aLayers;
     }
 
     const Array<CircleBuffer<IntBuffer>> &getHistories(
