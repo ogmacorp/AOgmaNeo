@@ -31,6 +31,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
+        FloatBuffer weightsPrev;
     };
 
 private:
@@ -51,8 +52,7 @@ private:
     void forward(
         const Int2 &columnPos,
         const IntBuffer* goalCIs,
-        const IntBuffer* inputCIs,
-        bool setState
+        const IntBuffer* inputCIs
     );
 
     void learn(
