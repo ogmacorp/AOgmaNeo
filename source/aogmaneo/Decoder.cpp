@@ -230,6 +230,11 @@ void Decoder::learn(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
+    // Forward kernel
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++)
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &inputCIsPrev);
+
     // Learn kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
