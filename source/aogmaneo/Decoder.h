@@ -51,7 +51,8 @@ private:
     void forward(
         const Int2 &columnPos,
         const IntBuffer* goalCIs,
-        const IntBuffer* inputCIs
+        const IntBuffer* inputCIs,
+        bool setState
     );
 
     void learn(

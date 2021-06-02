@@ -13,7 +13,8 @@ using namespace aon;
 void Decoder::forward(
     const Int2 &columnPos,
     const IntBuffer* goalCIs,
-    const IntBuffer* inputCIs
+    const IntBuffer* inputCIs,
+    bool setState
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -43,7 +44,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = 0.0f;
+        float sum = (hc == hiddenCIs[hiddenColumnIndex] ? 0.001f : 0.0f);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -70,25 +71,27 @@ void Decoder::forward(
         }
     }
 
-    float total = 0.0f;
+    if (setState)
+        hiddenCIs[hiddenColumnIndex] = maxIndex;
+    else {
+        float total = 0.0f;
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+            hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
 
-        total += hiddenActivations[hiddenCellIndex];
+            total += hiddenActivations[hiddenCellIndex];
+        }
+
+        float scale = 1.0f / max(0.0001f, total);
+
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+            hiddenActivations[hiddenCellIndex] *= scale;
+        }
     }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenCellIndex] *= scale;
-    }
-
-    hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
 void Decoder::learn(
@@ -177,7 +180,7 @@ void Decoder::activate(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs, inputCIs);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs, inputCIs, true);
 
     inputCIsPrev = *inputCIs;
 }
@@ -192,7 +195,7 @@ void Decoder::learn(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &inputCIsPrev);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &inputCIsPrev, false);
 
     // Learn kernel
     #pragma omp parallel for
