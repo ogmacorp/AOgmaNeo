@@ -237,7 +237,7 @@ void Decoder::step(
 int Decoder::size() const {
     int size = sizeof(Int3) +  sizeof(float) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int);
 
-    size += sizeof(VisibleLayerDesc) + 2 * visibleLayer.weights.size() * sizeof(float);
+    size += sizeof(VisibleLayerDesc) + visibleLayer.weights.size() * sizeof(float);
 
     size += history.size() * (history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
 
