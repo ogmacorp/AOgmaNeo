@@ -33,6 +33,11 @@ public:
         FloatBuffer weights;
     };
 
+    struct HistorySample {
+        IntBuffer inputCIs;
+        IntBuffer hiddenTargetCIs;
+    };
+
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
@@ -44,7 +49,7 @@ private:
     VisibleLayer visibleLayer;
     VisibleLayerDesc visibleLayerDesc;
 
-    CircleBuffer<IntBuffer> history;
+    CircleBuffer<HistorySample> history;
     int historySize;
 
     // --- Kernels ---
@@ -57,7 +62,6 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
         int t
     );
 
@@ -78,14 +82,11 @@ public:
     );
 
     // Activate the predictor (predict values)
-    void activate(
+    void step(
         const IntBuffer* goalCIs,
-        const IntBuffer* inputCIs
-    );
-
-    // Learning predictions (update weights)
-    void learn(
-        const IntBuffer* hiddenTargetCIs
+        const IntBuffer* inputCIs,
+        const IntBuffer* hiddenTargetCIs,
+        bool learnEnabled
     );
 
     // Serialization
