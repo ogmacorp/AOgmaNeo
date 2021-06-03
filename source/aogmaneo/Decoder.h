@@ -63,16 +63,19 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        int t
+        int t,
+        float strength
     );
 
 public:
     float lr; // Learning rate
+    float decay;
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(1.0f),
+    decay(0.5f)
     {}
 
     // Create with random initialization
