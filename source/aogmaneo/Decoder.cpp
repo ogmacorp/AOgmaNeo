@@ -243,12 +243,11 @@ void Decoder::activate(
 
 // Learning predictions (update weights)
 void Decoder::learn(
-    const IntBuffer* hiddenTargetCIs,
-    const IntBuffer* inputCIs
+    const IntBuffer* hiddenTargetCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    for (int t = 1; t < historySize; t++) {
+    for (int t = historySize - 1; t >= 1; t--) {
         // Learn kernel
         #pragma omp parallel for
         for (int i = 0; i < numHiddenColumns; i++)

@@ -177,7 +177,7 @@ void Hierarchy::step(
             for (int i = 0; i < dLayers[l].size(); i++) {
                 for (int t = 0; t < dLayers[l][i].size(); t++) {
                     if (learnEnabled)
-                        dLayers[l][i][t].learn(&histories[l][i][t], &eLayers[l].getHiddenCIs());
+                        dLayers[l][i][t].learn(&histories[l][i][t]);
 
                     dLayers[l][i][t].activate(l < eLayers.size() - 1 ? &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topGoalCIs, &eLayers[l].getHiddenCIs());
                 }

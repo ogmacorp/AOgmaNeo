@@ -86,8 +86,7 @@ public:
 
     // Learning predictions (update weights)
     void learn(
-        const IntBuffer* hiddenTargetCIs,
-        const IntBuffer* inputCIs
+        const IntBuffer* hiddenTargetCIs
     );
 
     // Serialization
