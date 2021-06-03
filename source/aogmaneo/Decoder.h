@@ -45,7 +45,8 @@ private:
     VisibleLayer visibleLayer;
     VisibleLayerDesc visibleLayerDesc;
 
-    IntBuffer inputCIsPrev;
+    CircleBuffer<IntBuffer> history;
+    int historySize;
 
     // --- Kernels ---
 
@@ -58,7 +59,7 @@ private:
     void learn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
-        const IntBuffer* inputCIs
+        int t
     );
 
 public:
@@ -73,6 +74,7 @@ public:
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
+        int historyCapacity,
         const VisibleLayerDesc &visibleLayerDesc
     );
 

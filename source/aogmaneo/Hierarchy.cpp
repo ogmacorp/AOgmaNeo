@@ -78,7 +78,7 @@ void Hierarchy::initRandom(
                 dVisibleLayerDesc.radius = ioDescs[i].dRadius;
 
                 dLayers[l][i].resize(1);
-                dLayers[l][i][0].initRandom(inputSizes[i], dVisibleLayerDesc);
+                dLayers[l][i][0].initRandom(inputSizes[i], ioDescs[i].historyCapacity, dVisibleLayerDesc);
             }
         }
         else {
@@ -109,7 +109,7 @@ void Hierarchy::initRandom(
 
             // Create actors
             for (int t = 0; t < dLayers[l][0].size(); t++)
-                dLayers[l][0][t].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDesc);
+                dLayers[l][0][t].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
         }
         
         // Create the sparse coding layer
