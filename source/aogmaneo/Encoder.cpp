@@ -114,7 +114,7 @@ void Encoder::inhibit(
 
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) - 1; // -1 for self-connection
 
-    int maxIndex = 0;
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -136,9 +136,9 @@ void Encoder::inhibit(
                 sum += laterals[inCI + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
             }
 
-        hiddenActivations[hiddenCellIndex] = hiddenStimuli[hiddenCellIndex] - sum / max(1, count);
+        hiddenActivations[hiddenCellIndex] += max(0.0f, hiddenStimuli[hiddenCellIndex] - sum / max(1, count));
 
-        if (hiddenActivations[hiddenCellIndex] > maxActivation) {
+        if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
             maxIndex = hc;
         }
@@ -253,7 +253,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf();
+            vl.weights[i] = randf(0.99f, 1.0f);
     }
 
     hiddenStimuli = FloatBuffer(numHiddenCells, 0.0f);
