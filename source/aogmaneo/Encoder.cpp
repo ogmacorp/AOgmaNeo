@@ -51,7 +51,6 @@ void Encoder::forward(
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         float sum = 0.0f;
-        int count = 0;
 
         // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -136,7 +135,7 @@ void Encoder::inhibit(
                 sum += laterals[inCI + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
             }
 
-        hiddenActivations[hiddenCellIndex] += max(0.0f, hiddenStimuli[hiddenCellIndex] - sum / max(1, count));
+        hiddenActivations[hiddenCellIndex] += hiddenStimuli[hiddenCellIndex] - sum / max(1, count);
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
@@ -190,7 +189,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += lr * ((vc == inCI) - vl.weights[wi]);
+                    vl.weights[wi] += hiddenRates[hiddenCellIndexMax] * ((vc == inCI) - vl.weights[wi]);
                 }
             }
     }
@@ -217,9 +216,11 @@ void Encoder::learn(
             for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
                 int wi = ohc + wiStart;
 
-                laterals[wi] += lr * ((ohc == inCI) - laterals[wi]);
+                laterals[wi] += hiddenRates[hiddenCellIndexMax] * ((ohc == inCI) - laterals[wi]);
             }
         }
+
+    hiddenRates[hiddenCellIndexMax] -= lr * hiddenRates[hiddenCellIndexMax];
 }
 
 void Encoder::initRandom(
@@ -262,6 +263,8 @@ void Encoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     hiddenCIsTemp = IntBuffer(numHiddenColumns, 0);
+
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     int diam = lRadius * 2 + 1;
     int area = diam * diam;

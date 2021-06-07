@@ -50,6 +50,8 @@ private:
     IntBuffer hiddenCIs; // Hidden states
     IntBuffer hiddenCIsTemp; // Temporary hidden states
 
+    FloatBuffer hiddenRates;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -80,7 +82,7 @@ public:
     Encoder()
     :
     explainIters(6),
-    lr(0.01f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
