@@ -87,7 +87,8 @@ public:
         const IntBuffer* goalCIs,
         const IntBuffer* inputCIs,
         const IntBuffer* hiddenTargetCIs,
-        bool learnEnabled
+        bool learnEnabled,
+        bool stateUpdate
     );
 
     // Serialization

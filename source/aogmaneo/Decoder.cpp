@@ -209,7 +209,8 @@ void Decoder::step(
     const IntBuffer* goalCIs,
     const IntBuffer* inputCIs,
     const IntBuffer* hiddenTargetCIs,
-    bool learnEnabled
+    bool learnEnabled,
+    bool stateUpdate
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
@@ -218,16 +219,18 @@ void Decoder::step(
     for (int i = 0; i < numHiddenColumns; i++)
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs, inputCIs);
 
-    history.pushFront();
+    if (stateUpdate) {
+        history.pushFront();
 
-    // If not at cap, increment
-    if (historySize < history.size())
-        historySize++;
+        // If not at cap, increment
+        if (historySize < history.size())
+            historySize++;
+    }
     
     history[0].inputCIs = *inputCIs;
     history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
-    if (learnEnabled) {
+    if (learnEnabled && stateUpdate) {
         for (int t = 1; t < historySize; t++) {
             // Learn kernel
             #pragma omp parallel for
