@@ -371,7 +371,7 @@ void Hierarchy::write(
 
     // Actors
     for (int v = 0; v < aLayers.size(); v++) {
-        Byte exists = aLayers[v] != nullptr;
+        Byte exists = (aLayers[v] != nullptr);
 
         writer.write(reinterpret_cast<const void*>(&exists), sizeof(Byte));
 
