@@ -41,7 +41,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float sum = (hc == hiddenCIs[hiddenColumnIndex] ? 0.0001f : 0.0f);
+        float sum = 0.0f;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
