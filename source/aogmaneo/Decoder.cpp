@@ -222,12 +222,12 @@ void Decoder::step(
         // If not at cap, increment
         if (historySize < history.size())
             historySize++;
-    }
     
-    history[0].inputCIs = *inputCIs;
-    history[0].hiddenTargetCIs = *hiddenTargetCIs;
+        history[0].inputCIs = *inputCIs;
+        history[0].hiddenTargetCIs = *hiddenTargetCIs;
+    }
 
-    if (learnEnabled) {
+    if (learnEnabled && stateUpdate) {
         for (int t = 1; t < historySize; t++) {
             // Learn kernel
             #pragma omp parallel for
