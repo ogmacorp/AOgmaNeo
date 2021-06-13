@@ -79,7 +79,6 @@ public:
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
-        int historyCapacity,
         const VisibleLayerDesc &visibleLayerDesc
     );
 

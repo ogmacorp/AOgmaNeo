@@ -21,27 +21,22 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int historyCapacity;
-
         IODesc()
         :
         size(4, 4, 16),
         eRadius(2),
-        dRadius(2),
-        historyCapacity(4)
+        dRadius(2)
         {}
 
         IODesc(
             const Int3 &size,
             int eRadius,
-            int dRadius,
-            int historyCapacity
+            int dRadius
         )
         :
         size(size),
         eRadius(eRadius),
-        dRadius(dRadius),
-        historyCapacity(historyCapacity)
+        dRadius(dRadius)
         {}
     };
 
@@ -52,8 +47,6 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int historyCapacity;
-
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
@@ -62,7 +55,6 @@ public:
         hiddenSize(4, 4, 16),
         eRadius(2),
         dRadius(2),
-        historyCapacity(4),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
@@ -71,7 +63,6 @@ public:
             const Int3 &hiddenSize,
             int eRadius,
             int dRadius,
-            int historyCapacity,
             int ticksPerUpdate,
             int temporalHorizon
         )
@@ -79,7 +70,6 @@ public:
         hiddenSize(hiddenSize),
         eRadius(eRadius),
         dRadius(dRadius),
-        historyCapacity(historyCapacity),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}

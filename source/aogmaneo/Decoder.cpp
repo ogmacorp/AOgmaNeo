@@ -191,7 +191,6 @@ void Decoder::learn(
 
 void Decoder::initRandom(
     const Int3 &hiddenSize,
-    int historyCapacity,
     const VisibleLayerDesc &visibleLayerDesc
 ) {
     this->visibleLayerDesc = visibleLayerDesc; 
