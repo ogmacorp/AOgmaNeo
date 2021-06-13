@@ -206,7 +206,7 @@ void Decoder::initRandom(
     int area = diam * diam;
 
     visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
-    visibleLayer.traces = FloatBuffer(numHiddenCells * visibleLayerDesc.size.z, 0.0f);
+    visibleLayer.traces = FloatBuffer(numHiddenCells * area * visibleLayerDesc.size.z, 0.0f);
 
     for (int i = 0; i < visibleLayer.weights.size(); i++)
         visibleLayer.weights[i] = randf(-0.01f, 0.01f);
