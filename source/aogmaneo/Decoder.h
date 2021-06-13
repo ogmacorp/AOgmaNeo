@@ -31,11 +31,9 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-    };
+        FloatBuffer traces;
 
-    struct HistorySample {
-        IntBuffer inputCIs;
-        IntBuffer hiddenTargetCIs;
+        IntBuffer inputCIsPrev;
     };
 
 private:
@@ -49,9 +47,6 @@ private:
     VisibleLayer visibleLayer;
     VisibleLayerDesc visibleLayerDesc;
 
-    CircleBuffer<HistorySample> history;
-    int historySize;
-
     // --- Kernels ---
 
     void forward(
@@ -60,18 +55,25 @@ private:
         const IntBuffer* inputCIs
     );
 
+    void updateTraces(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs
+    );
+
     void learn(
         const Int2 &columnPos,
-        int t
+        const IntBuffer* inputCIs
     );
 
 public:
     float lr; // Learning rate
+    float traceDecay; // Traces decay multiplier
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(1.0f),
+    traceDecay(0.96f)
     {}
 
     // Create with random initialization
