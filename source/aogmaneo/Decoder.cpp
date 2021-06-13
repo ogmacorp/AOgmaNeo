@@ -108,8 +108,8 @@ void Decoder::updateTraces(
                 for (int vc = 0; vc < visibleLayerDesc.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    if (hc == targetCI && vc == inCI)
-                        visibleLayer.traces[wi] = 1.0f;
+                    if (vc == inCI)
+                        visibleLayer.traces[wi] = (hc == targetCI);
                     else
                         visibleLayer.traces[wi] *= traceDecay;
                 }
