@@ -146,7 +146,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float delta = lr * strength * ((hc == targetCI ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
+        float delta = lr * strength * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
             
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -211,11 +211,6 @@ void Decoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    // Forward kernel
-    #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs, inputCIs);
-
     if (stateUpdate) {
         history.pushFront();
 
@@ -235,6 +230,11 @@ void Decoder::step(
                 learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t);
         }
     }
+
+    // Forward kernel
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++)
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs, inputCIs);
 }
 
 int Decoder::size() const {
