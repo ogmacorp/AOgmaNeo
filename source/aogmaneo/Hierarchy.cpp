@@ -18,6 +18,8 @@ void Hierarchy::initRandom(
     eLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
 
+    hiddenCIsPrev.resize(layerDescs.size());
+
     // Cache input sizes
     inputSizes.resize(ioDescs.size());
 
@@ -31,7 +33,7 @@ void Hierarchy::initRandom(
 
         // If first layer
         if (l == 0) {
-            eVisibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon);
+            eVisibleLayerDescs.resize(inputSizes.size() * layerDescs[l].temporalHorizon + (layerDescs[l].rRadius < 0 ? 0 : 1));
 
             for (int i = 0; i < inputSizes.size(); i++) {
                 for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
@@ -56,7 +58,7 @@ void Hierarchy::initRandom(
             }
         }
         else {
-            eVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
+            eVisibleLayerDescs.resize(layerDescs[l].temporalHorizon + (layerDescs[l].rRadius < 0 ? 0 : 1));
 
             for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
                 eVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
@@ -73,9 +75,16 @@ void Hierarchy::initRandom(
 
             dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
         }
+
+        if (layerDescs[l].rRadius >= 0) {
+            eVisibleLayerDescs[l].size = layerDescs[l].hiddenSize;
+            eVisibleLayerDescs[l].radius = layerDescs[l].rRadius;
+        }
         
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+
+        hiddenCIsPrev[l] = IntBuffer(eLayers[l].getHiddenCIs().size(), 0);
     }
 }
 
@@ -87,21 +96,25 @@ void Hierarchy::step(
 ) {
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
-        Array<const IntBuffer*> layerInputCIs;
+        Array<const IntBuffer*> layerInputCIs(eLayers[l].getNumVisibleLayers());
 
         if (l == 0) {
-            layerInputCIs.resize(inputCIs.size());
-
             for (int i = 0; i < inputCIs.size(); i++)
                 layerInputCIs[i] = inputCIs[i];
+
+            if (layerInputCIs.size() > inputCIs.size())
+                layerInputCIs[inputCIs.size()] = &hiddenCIsPrev[l];
         }
         else {
-            layerInputCIs.resize(1);
-
             layerInputCIs[0] = &eLayers[l - 1].getHiddenCIs();
+
+            if (layerInputCIs.size() > 1)
+                layerInputCIs[1] = &hiddenCIsPrev[l];
         }
-            
+
         eLayers[l].step(layerInputCIs, learnEnabled);
+
+        hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
     }
 
     // Backward

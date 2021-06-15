@@ -92,6 +92,8 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
 
+    Array<IntBuffer> hiddenCIsPrev;
+
     // Input dimensions
     Array<Int3> inputSizes;
 
