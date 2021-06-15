@@ -28,7 +28,7 @@ public:
         size(4, 4, 16),
         eRadius(2),
         dRadius(2),
-        historyCapacity(4)
+        historyCapacity(16)
         {}
 
         IODesc(
@@ -51,6 +51,7 @@ public:
 
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
+        int rRadius; // Recurrent radius
 
         int historyCapacity;
 
@@ -62,7 +63,8 @@ public:
         hiddenSize(4, 4, 16),
         eRadius(2),
         dRadius(2),
-        historyCapacity(4),
+        rRadius(2),
+        historyCapacity(16),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
@@ -88,16 +90,7 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Array<Array<Decoder>>> dLayers;
-
-    // Histories
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
-
-    // Per-layer values
-    ByteBuffer updates;
-
-    IntBuffer ticks;
-    IntBuffer ticksPerUpdate;
+    Array<Array<Decoder>> dLayers;
 
     // Input dimensions
     Array<Int3> inputSizes;
@@ -149,43 +142,21 @@ public:
         int i,
         float importance
     ) {
-        for (int t = 0; t < histories[0][i].size(); t++)
-            eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+        eLayers[0].getVisibleLayer(i).importance = importance;
     }
 
     // Importance control
     float getImportance(
         int i
     ) const {
-        return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
+        return eLayers[0].getVisibleLayer(i).importance;
     }
 
     // Retrieve predictions
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
-        return dLayers[0][i][0].getHiddenCIs();
-    }
-
-    // Whether this layer received on update this timestep
-    bool getUpdate(
-        int l // Layer index
-    ) const {
-        return updates[l];
-    }
-
-    // Get current layer ticks, relative to previous layer
-    int getTicks(
-        int l // Layer Index
-    ) const {
-        return ticks[l];
-    }
-
-    // Get layer ticks per update, relative to previous layer
-    int getTicksPerUpdate(
-        int l // Layer Index
-    ) const {
-        return ticksPerUpdate[l];
+        return dLayers[0][i].getHiddenCIs();
     }
 
     // Get input sizes
@@ -208,23 +179,17 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Array<Decoder>> &getDLayers(
+    Array<Decoder> &getDLayers(
         int l // Layer index
     ) {
         return dLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Array<Decoder>> &getDLayers(
+    const Array<Decoder> &getDLayers(
         int l // Layer index
     ) const {
         return dLayers[l];
-    }
-
-    const Array<CircleBuffer<IntBuffer>> &getHistories(
-        int l
-    ) const {
-        return histories[l];
     }
 };
 } // namespace aon
