@@ -55,35 +55,28 @@ public:
 
         int historyCapacity;
 
-        int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
-
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
         eRadius(2),
         dRadius(2),
         rRadius(2),
-        historyCapacity(16),
-        ticksPerUpdate(2),
-        temporalHorizon(2)
+        historyCapacity(16)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
             int eRadius,
             int dRadius,
-            int historyCapacity,
-            int ticksPerUpdate,
-            int temporalHorizon
+            int rRadius,
+            int historyCapacity
         )
         :
         hiddenSize(hiddenSize),
         eRadius(eRadius),
         dRadius(dRadius),
-        historyCapacity(historyCapacity),
-        ticksPerUpdate(ticksPerUpdate),
-        temporalHorizon(temporalHorizon)
+        rRadius(rRadius),
+        historyCapacity(historyCapacity)
         {}
     };
 
