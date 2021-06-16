@@ -109,7 +109,7 @@ void Decoder::updateTraces(
                     int wi = vc + wiStart;
 
                     if (vc == inCI)
-                        visibleLayer.traces[wi] = (hc == targetCI);
+                        visibleLayer.traces[wi] = (hc == targetCI) - 1.0f / hiddenSize.z;
                     else
                         visibleLayer.traces[wi] *= traceDecay;
                 }
@@ -144,8 +144,6 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float total = 0.0f;
-
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
@@ -160,26 +158,6 @@ void Decoder::learn(
                     int wi = inCI + vc * visibleLayerDesc.size.z + visibleLayerDesc.size.z * wiStart;
 
                     visibleLayer.weights[wi] += lr * visibleLayer.traces[vc + wiStart];
-                    total += visibleLayer.weights[wi];
-                }
-            }
-
-        float scale = 1.0f / max(0.0001f, total);
-
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
-
-                int inCI = (*inputCIs)[visibleColumnIndex];
-
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                for (int vc = 0; vc < visibleLayerDesc.size.z; vc++) {
-                    int wi = inCI + vc * visibleLayerDesc.size.z + visibleLayerDesc.size.z * wiStart;
-
-                    visibleLayer.weights[wi] *= scale;
                 }
             }
     }

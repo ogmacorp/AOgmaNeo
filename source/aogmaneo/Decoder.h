@@ -72,8 +72,8 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.1f),
-    traceDecay(0.7f)
+    lr(0.01f),
+    traceDecay(0.99f)
     {}
 
     // Create with random initialization
