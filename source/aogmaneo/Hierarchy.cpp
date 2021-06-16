@@ -73,6 +73,7 @@ void Hierarchy::initRandom(
         if (layerDescs[l].rRadius >= 0) {
             eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].size = layerDescs[l].hiddenSize;
             eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].radius = layerDescs[l].rRadius;
+            eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].ignoreSelf = true;
         }
         
         // Create the sparse coding layer
