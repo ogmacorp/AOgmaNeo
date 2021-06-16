@@ -21,27 +21,22 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int historyCapacity;
-
         IODesc()
         :
         size(4, 4, 16),
         eRadius(2),
-        dRadius(2),
-        historyCapacity(16)
+        dRadius(2)
         {}
 
         IODesc(
             const Int3 &size,
             int eRadius,
-            int dRadius,
-            int historyCapacity
+            int dRadius
         )
         :
         size(size),
         eRadius(eRadius),
-        dRadius(dRadius),
-        historyCapacity(historyCapacity)
+        dRadius(dRadius)
         {}
     };
 
@@ -53,30 +48,25 @@ public:
         int dRadius; // Decoder radius
         int rRadius; // Recurrent radius
 
-        int historyCapacity;
-
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
         eRadius(2),
         dRadius(2),
-        rRadius(2),
-        historyCapacity(16)
+        rRadius(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
             int eRadius,
             int dRadius,
-            int rRadius,
-            int historyCapacity
+            int rRadius
         )
         :
         hiddenSize(hiddenSize),
         eRadius(eRadius),
         dRadius(dRadius),
-        rRadius(rRadius),
-        historyCapacity(historyCapacity)
+        rRadius(rRadius)
         {}
     };
 

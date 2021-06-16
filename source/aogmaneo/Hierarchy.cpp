@@ -50,7 +50,7 @@ void Hierarchy::initRandom(
                 dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
                 dVisibleLayerDesc.radius = ioDescs[i].dRadius;
 
-                dLayers[l][i].initRandom(inputSizes[i], ioDescs[i].historyCapacity, dVisibleLayerDesc);
+                dLayers[l][i].initRandom(inputSizes[i], dVisibleLayerDesc);
             }
         }
         else {
@@ -67,7 +67,7 @@ void Hierarchy::initRandom(
             dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
             dVisibleLayerDesc.radius = layerDescs[l].dRadius;
 
-            dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
+            dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDesc);
         }
 
         if (layerDescs[l].rRadius >= 0) {
@@ -128,6 +128,8 @@ int Hierarchy::size() const {
 
         for (int i = 0; i < dLayers[l].size(); i++)
             size += dLayers[l][i].size();
+
+        size += hiddenCIsPrev[l].size() * sizeof(int);
     }
 
     return size;
@@ -142,6 +144,8 @@ int Hierarchy::stateSize() const {
         // Decoders
         for (int i = 0; i < dLayers[l].size(); i++)
             size += dLayers[l][i].stateSize();
+
+        size += hiddenCIsPrev[l].size() * sizeof(int);
     }
 
     return size;
