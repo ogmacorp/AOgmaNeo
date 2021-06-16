@@ -53,7 +53,7 @@ void Encoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    if (vld.ignoreSelf && inCI == hc)
+                    if (vld.ignoreSelf && visibleColumnIndex == hiddenColumnIndex)
                         continue;
 
                     sum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] * vl.importance;
