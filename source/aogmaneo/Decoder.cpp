@@ -214,7 +214,7 @@ int Decoder::size() const {
 
     size += sizeof(VisibleLayerDesc) + visibleLayer.weights.size() * sizeof(float);
 
-    size += history.size() * (history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
+    size += 3 * sizeof(int) + history.size() * (history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
 
     return size;
 }
@@ -222,7 +222,7 @@ int Decoder::size() const {
 int Decoder::stateSize() const {
     int size = hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int);
 
-    size += history.size() * (history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
+    size += sizeof(int) + history.size() * (history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
 
     return size;
 }
