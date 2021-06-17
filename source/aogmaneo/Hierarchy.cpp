@@ -80,10 +80,6 @@ void Hierarchy::initRandom(
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
         hiddenCIsPrev[l] = IntBuffer(eLayers[l].getHiddenCIs().size(), 0);
-
-        // Default to small amount of recurrence
-        if (layerDescs[l].rRadius >= 0)
-            eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance = 0.01f;
     }
 }
 
