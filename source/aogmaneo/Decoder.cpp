@@ -183,7 +183,7 @@ void Decoder::initRandom(
     visibleLayer.traces = FloatBuffer(numHiddenCells * area * visibleLayerDesc.size.z, 0.0f);
 
     for (int i = 0; i < visibleLayer.weights.size(); i++)
-        visibleLayer.weights[i] = randf(0.0f, 0.01f);
+        visibleLayer.weights[i] = randf(-0.01f, 0.01f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
