@@ -70,7 +70,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(1.0f),
+    lr(0.01f),
     traceDecay(0.9f)
     {}
 
