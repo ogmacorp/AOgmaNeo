@@ -72,8 +72,8 @@ public:
     Decoder()
     :
     lr(0.01f),
-    discount(0.99f),
-    historyIters(3)
+    discount(0.95f),
+    historyIters(5)
     {}
 
     // Create with random initialization
