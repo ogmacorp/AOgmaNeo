@@ -144,7 +144,9 @@ void Decoder::learn(
     sum /= max(1, count);
     reward /= max(1, count);
 
-    float delta = lr * (reward + discount * maxActivation - sum);
+    reward *= reward; // Greedy
+
+    float delta = lr * ((1.0f - discount) * reward + discount * maxActivation - sum);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -181,7 +183,7 @@ void Decoder::initRandom(
     visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
 
     for (int i = 0; i < visibleLayer.weights.size(); i++)
-        visibleLayer.weights[i] = randf(-0.01f, 0.01f);
+        visibleLayer.weights[i] = randf(-0.01f, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);

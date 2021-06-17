@@ -72,7 +72,7 @@ public:
     Decoder()
     :
     lr(0.01f),
-    discount(0.97f),
+    discount(0.95f),
     historyIters(8)
     {}
 
