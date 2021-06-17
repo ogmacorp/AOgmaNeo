@@ -172,7 +172,7 @@ void Hierarchy::write(
         for (int i = 0; i < dLayers[l].size(); i++)
             dLayers[l][i].write(writer);
 
-        writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[l][0]), hiddenCIsPrev[l].size() * sizeof(int));
     }
 }
 
@@ -207,7 +207,7 @@ void Hierarchy::read(
 
         hiddenCIsPrev[l].resize(eLayers[l].getHiddenCIs().size());
 
-        reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+        reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[l][0]), hiddenCIsPrev[l].size() * sizeof(int));
     }
 }
 
@@ -221,7 +221,7 @@ void Hierarchy::writeState(
         for (int i = 0; i < dLayers[l].size(); i++)
             dLayers[l][i].writeState(writer);
 
-        writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[l][0]), hiddenCIsPrev[l].size() * sizeof(int));
     }
 }
 
@@ -235,6 +235,6 @@ void Hierarchy::readState(
         for (int i = 0; i < dLayers[l].size(); i++)
             dLayers[l][i].readState(reader);
 
-        reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+        reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[l][0]), hiddenCIsPrev[l].size() * sizeof(int));
     }
 }
