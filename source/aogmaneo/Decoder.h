@@ -81,7 +81,7 @@ public:
     :
     lr(0.01f),
     discount(0.97f),
-    genGoalNoise(0.1f),
+    genGoalNoise(0.2f),
     historyIters(16)
     {}
 
