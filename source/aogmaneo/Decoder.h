@@ -31,6 +31,8 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
+
+        IntBuffer genGoalCIs;
     };
 
     struct HistorySample {
@@ -58,6 +60,11 @@ private:
         const IntBuffer* inputCIs
     );
 
+    void generateGoal(
+        const Int2 &columnPos,
+        unsigned int* state
+    );
+
     void learn(
         const Int2 &columnPos,
         int t
@@ -72,7 +79,7 @@ public:
     Decoder()
     :
     lr(0.01f),
-    discount(0.95f),
+    discount(0.97f),
     historyIters(8)
     {}
 
