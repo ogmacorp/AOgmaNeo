@@ -104,8 +104,6 @@ void Decoder::learn(
 
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
-    int hiddenCellIndexTarget = address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize);
-
     float maxActivation = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -131,6 +129,8 @@ void Decoder::learn(
 
         maxActivation = max(maxActivation, sum);
     }
+
+    int hiddenCellIndexTarget = address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize);
 
     float sum = 0.0f;
     float reward = 0.0f;
