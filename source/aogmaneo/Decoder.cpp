@@ -157,7 +157,7 @@ void Decoder::learn(
                 for (int vc = 0; vc < visibleLayerDesc.size.z; vc++) {
                     int wi = inCI + vc * visibleLayerDesc.size.z + visibleLayerDesc.size.z * wiStart;
 
-                    visibleLayer.weights[wi] += lr * visibleLayer.traces[vc + wiStart];
+                    visibleLayer.weights[wi] += lr * (visibleLayer.traces[vc + wiStart] - visibleLayer.weights[wi]);
                 }
             }
     }
