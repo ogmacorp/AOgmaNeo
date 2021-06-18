@@ -80,8 +80,8 @@ public:
     Decoder()
     :
     lr(0.01f),
-    discount(0.9f),
-    genGoalNoise(0.1f),
+    discount(0.95f),
+    genGoalNoise(0.5f),
     historyIters(8)
     {}
 
