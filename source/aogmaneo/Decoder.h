@@ -80,9 +80,9 @@ public:
     Decoder()
     :
     lr(0.01f),
-    discount(0.95f),
-    genGoalNoise(0.5f),
-    historyIters(8)
+    discount(0.98f),
+    genGoalNoise(0.3f),
+    historyIters(16)
     {}
 
     // Create with random initialization

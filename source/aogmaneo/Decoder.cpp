@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Decoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -152,6 +153,8 @@ void Decoder::learn(
 
     sum /= max(1, count);
     reward /= max(1, count);
+
+    reward *= reward; // Greedy
 
     float delta = lr * ((1.0f - discount) * reward + discount * maxActivation - sum);
 
