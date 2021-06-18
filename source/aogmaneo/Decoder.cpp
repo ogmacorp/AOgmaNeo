@@ -72,7 +72,7 @@ void Decoder::generateGoal(
 ) {
     int visibleColumnIndex = address2(columnPos, Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
-    visibleLayer.genGoalCIs[visibleColumnIndex] = rand(state) % visibleLayerDesc.size.z;
+    visibleLayer.genGoalCIs[visibleColumnIndex] = (randf(state) < genGoalNoise ? rand(state) % visibleLayerDesc.size.z : history[0].inputCIs[visibleColumnIndex]);
 }
 
 void Decoder::learn(
@@ -258,7 +258,7 @@ void Decoder::step(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int);
 
     size += sizeof(VisibleLayerDesc) + visibleLayer.weights.size() * sizeof(float);
 
@@ -282,6 +282,7 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&genGoalNoise), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -316,6 +317,7 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&genGoalNoise), sizeof(float));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);

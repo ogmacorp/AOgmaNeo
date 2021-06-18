@@ -73,6 +73,7 @@ private:
 public:
     float lr; // Learning rate
     float discount; // Discount factor
+    float genGoalNoise; // Noise on goal generation
     int historyIters;
 
     // Defaults
@@ -80,6 +81,7 @@ public:
     :
     lr(0.01f),
     discount(0.9f),
+    genGoalNoise(0.1f),
     historyIters(8)
     {}
 
