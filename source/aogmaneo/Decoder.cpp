@@ -153,7 +153,7 @@ void Decoder::learn(
     sum /= max(1, count);
     reward /= max(1, count);
 
-    reward *= reward; // Greedy
+    reward *= reward; // Encourage more exact state matches
 
     float delta = lr * ((1.0f - discount) * reward + discount * maxActivation - sum);
 
