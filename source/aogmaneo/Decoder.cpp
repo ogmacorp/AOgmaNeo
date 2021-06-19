@@ -155,7 +155,7 @@ void Decoder::learn(
 
     reward *= reward; // Encourage more exact state matches
 
-    float delta = lr * ((1.0f - discount) * reward + discount * maxActivation - sum);
+    float delta = lr * (reward + discount * maxActivation - sum);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -192,7 +192,7 @@ void Decoder::initRandom(
     visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
 
     for (int i = 0; i < visibleLayer.weights.size(); i++)
-        visibleLayer.weights[i] = randf(0.0f, 0.01f);
+        visibleLayer.weights[i] = randf(-0.0001f, 0.0f);
 
     visibleLayer.genGoalCIs = IntBuffer(visibleLayerDesc.size.x * visibleLayerDesc.size.y, 0);
 
