@@ -79,8 +79,8 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.02f),
-    discount(0.98f),
+    lr(0.05f),
+    discount(0.9f),
     genGoalNoise(0.2f),
     historyIters(16)
     {}
