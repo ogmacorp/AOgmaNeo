@@ -80,7 +80,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.01f),
+    lr(0.02f),
     discount(0.98f),
     genGoalNoise(0.2f),
     qSteps(5),
