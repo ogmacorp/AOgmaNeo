@@ -167,7 +167,7 @@ void Decoder::learn(
 
         subReward /= max(1, count);
 
-        reward += g * subReward * subReward;
+        reward += g * subReward;
 
         g *= discount;
     }

@@ -81,7 +81,7 @@ public:
     Decoder()
     :
     lr(0.02f),
-    discount(0.98f),
+    discount(0.97f),
     genGoalNoise(0.2f),
     qSteps(5),
     historyIters(16)
