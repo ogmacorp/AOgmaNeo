@@ -132,7 +132,6 @@ void Decoder::learn(
     int hiddenCellIndexTarget = address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize);
 
     float sum = 0.0f;
-    float reward = 0.0f;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -146,17 +145,11 @@ void Decoder::learn(
             int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
             sum += visibleLayer.weights[goalCI + inCIPrev * visibleLayerDesc.size.z + wiStart];
-
-            float g = 1.0f;
-
-            for (int n = 0; n < qSteps; n++) {
-                reward += (history[t - 1 - n].inputCIs[visibleColumnIndex] == goalCI) * g;
-
-                g *= discount;
-            }
         }
 
     sum /= max(1, count);
+
+    float reward = 0.0f;
 
     float g = 1.0f;
 
