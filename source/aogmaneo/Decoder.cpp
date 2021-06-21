@@ -154,21 +154,25 @@ void Decoder::learn(
     float g = 1.0f;
 
     for (int n = 0; n < qSteps; n++) {
+        float subReward = 0.0f;
+
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
                 int goalCI = visibleLayer.genGoalCIs[visibleColumnIndex];
 
-                reward += (history[t - 1 - n].inputCIs[visibleColumnIndex] == goalCI) * g;
+                subReward += (history[t - 1 - n].inputCIs[visibleColumnIndex] == goalCI);
             }
+
+        subReward /= max(1, count);
+
+        reward += g * subReward * subReward;
 
         g *= discount;
     }
 
-    reward /= max(1, count);
-
-    float delta = lr * (reward + g * maxActivation - sum);
+    float delta = lr * ((1.0f - discount) * reward + g * maxActivation - sum);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
