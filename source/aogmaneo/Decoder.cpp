@@ -115,7 +115,7 @@ void Decoder::learn(
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
                 int goalCI = visibleLayer.genGoalCIs[visibleColumnIndex];
-                int inCIPrev = history[t - 1].inputCIs[visibleColumnIndex];
+                int inCIPrev = history[t - qSteps].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -147,15 +147,35 @@ void Decoder::learn(
 
             sum += visibleLayer.weights[goalCI + inCIPrev * visibleLayerDesc.size.z + wiStart];
 
-            reward += (history[t - 1].inputCIs[visibleColumnIndex] == goalCI);
+            float g = 1.0f;
+
+            for (int n = 0; n < qSteps; n++) {
+                reward += (history[t - 1 - n].inputCIs[visibleColumnIndex] == goalCI) * g;
+
+                g *= discount;
+            }
         }
 
     sum /= max(1, count);
+
+    float g = 1.0f;
+
+    for (int n = 0; n < qSteps; n++) {
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+
+                int goalCI = visibleLayer.genGoalCIs[visibleColumnIndex];
+
+                reward += (history[t - 1 - n].inputCIs[visibleColumnIndex] == goalCI) * g;
+            }
+
+        g *= discount;
+    }
+
     reward /= max(1, count);
 
-    reward *= reward; // Encourage more exact state matches
-
-    float delta = lr * (reward + discount * maxActivation - sum);
+    float delta = lr * (reward + g * maxActivation - sum);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -230,9 +250,9 @@ void Decoder::step(
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
     }
 
-    if (learnEnabled && stateUpdate && historySize > 1) {
+    if (learnEnabled && stateUpdate && historySize > qSteps) {
         for (int it = 0; it < historyIters; it++) {
-            int t = rand() % (historySize - 1) + 1;
+            int t = rand() % (historySize - qSteps) + qSteps;
 
             int numVisibleColumns = visibleLayerDesc.size.x * visibleLayerDesc.size.y;
 
@@ -260,7 +280,7 @@ void Decoder::step(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int);
 
     size += sizeof(VisibleLayerDesc) + visibleLayer.weights.size() * sizeof(float);
 
@@ -285,6 +305,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&genGoalNoise), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&qSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -320,6 +341,7 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&genGoalNoise), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&qSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);

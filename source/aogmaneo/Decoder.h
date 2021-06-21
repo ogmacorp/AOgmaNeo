@@ -74,14 +74,16 @@ public:
     float lr; // Learning rate
     float discount; // Discount factor
     float genGoalNoise; // Noise on goal generation
+    int qSteps;
     int historyIters;
 
     // Defaults
     Decoder()
     :
-    lr(0.05f),
-    discount(0.9f),
+    lr(0.01f),
+    discount(0.98f),
     genGoalNoise(0.2f),
+    qSteps(5),
     historyIters(16)
     {}
 
