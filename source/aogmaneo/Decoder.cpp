@@ -168,7 +168,7 @@ void Decoder::learn(
 }
 
 void Decoder::initRandom(
-    const Int3 &hiddenSize, // Hidden/output/prediction size
+    const Int3 &hiddenSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
     this->visibleLayerDescs = visibleLayerDescs; 
@@ -205,7 +205,6 @@ void Decoder::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
-// Activate the predictor (predict values)
 void Decoder::activate(
     const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
 ) {
@@ -224,7 +223,6 @@ void Decoder::activate(
     }
 }
 
-// Learning predictions (update weights)
 void Decoder::learn(
     const IntBuffer* hiddenTargetCIs
 ) {

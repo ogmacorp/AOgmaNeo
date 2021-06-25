@@ -325,4 +325,3 @@ void Encoder::readState(
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
-
