@@ -33,7 +33,6 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-        FloatBuffer inputActivationsPrev;
     };
 
 private:
@@ -51,8 +50,7 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActivations
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
@@ -73,7 +71,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(0.2f)
     {}
 
     // Create with random initialization
@@ -84,8 +82,7 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActivations
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Learning predictions (update weights)
@@ -122,6 +119,13 @@ public:
     // Get number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
+    }
+
+    // Get a visible layer
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
     }
 
     // Get a visible layer

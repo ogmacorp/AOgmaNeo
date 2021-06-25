@@ -33,6 +33,13 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev;
+        
+        float importance;
+
+        VisibleLayer()
+        :
+        importance(1.0f)
+        {}
     };
 
 private:
@@ -40,7 +47,7 @@ private:
 
     FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
-    
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -59,7 +66,7 @@ public:
 
     Encoder()
     :
-    lr(0.1f)
+    lr(0.2f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -99,6 +106,12 @@ public:
         return visibleLayers.size();
     }
 
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
+    }
+
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
         int i // Index of visible layer
@@ -118,14 +131,10 @@ public:
         return hiddenCIs;
     }
 
-    // Get the hidden activations
-    const FloatBuffer &getHiddenActivations() const {
-        return hiddenActivations;
-    }
-
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
     }
 };
 } // namespace aon
+
