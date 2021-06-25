@@ -96,7 +96,7 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Array<Decoder>>> dLayers;
     Array<Ptr<Actor>> aLayers;
-    Array<FloatBuffer> errors;
+    Array<FloatBuffer> targets;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;

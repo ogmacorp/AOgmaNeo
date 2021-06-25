@@ -58,10 +58,10 @@ private:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
+    void generateTargets(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
+        FloatBuffer* visibleTargets,
         int vli
     ); 
 
@@ -90,9 +90,9 @@ public:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
+    void generateTargets(
         const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
+        FloatBuffer* visibleTargets,
         int vli
     );
 

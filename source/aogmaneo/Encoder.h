@@ -33,19 +33,11 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev;
-        
-        float importance;
-
-        VisibleLayer()
-        :
-        importance(1.0f)
-        {}
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -57,7 +49,7 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
+        const FloatBuffer* hiddenTargets,
         bool learnEnabled
     );
 
@@ -66,7 +58,7 @@ public:
 
     Encoder()
     :
-    lr(0.2f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -77,7 +69,7 @@ public:
 
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
+        const FloatBuffer* hiddenTargets,
         bool learnEnabled // Whether to learn
     );
 

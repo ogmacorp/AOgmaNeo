@@ -22,7 +22,7 @@ const Hierarchy &Hierarchy::operator=(
     ticksPerUpdate = other.ticksPerUpdate;
     inputSizes = other.inputSizes;
     histories = other.histories;
-    errors = other.errors;
+    targets = other.targets;
 
     aLayers.resize(inputSizes.size());
 
@@ -46,7 +46,7 @@ void Hierarchy::initRandom(
     // Create layers
     eLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
-    errors.resize(layerDescs.size());
+    targets.resize(layerDescs.size());
 
     ticks.resize(layerDescs.size(), 0);
 
@@ -173,7 +173,7 @@ void Hierarchy::initRandom(
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
-        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
+        targets[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
     }
 }
 
@@ -207,13 +207,13 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            // Clear hidden errors
-            errors[l].fill(0.0f);
+            // Clear hidden targets
+            targets[l].fill(0.0f);
 
             // Accumulate
             for (int i = 0; i < dLayers[l].size(); i++) {
                 for (int t = 0; t < dLayers[l][i].size(); t++)
-                    dLayers[l][i][t].generateErrors(&histories[l][i][t], &errors[l], 0);
+                    dLayers[l][i][t].generateTargets(&histories[l][i][t], &targets[l], 0);
             }
 
             Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
@@ -226,7 +226,7 @@ void Hierarchy::step(
             }
 
             // Activate sparse coder
-            eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+            eLayers[l].step(layerInputCIs, &targets[l], learnEnabled);
 
             // Add to next layer's history
             if (l < eLayers.size() - 1) {
@@ -416,7 +416,7 @@ void Hierarchy::read(
     updates.resize(numLayers);
     ticks.resize(numLayers);
     ticksPerUpdate.resize(numLayers);
-    errors.resize(numLayers);
+    targets.resize(numLayers);
 
     reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
@@ -464,7 +464,7 @@ void Hierarchy::read(
                 dLayers[l][i][t].read(reader);
         }
 
-        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
+        targets[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
     }
 
     // Actors

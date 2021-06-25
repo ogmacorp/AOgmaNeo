@@ -88,12 +88,30 @@ void Decoder::forward(
 
         sum /= max(1, count);
 
-        hiddenActivations[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
+        hiddenActivations[hiddenCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+
+        total += hiddenActivations[hiddenCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+
+        hiddenActivations[hiddenCellIndex] *= scale;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -149,10 +167,10 @@ void Decoder::learn(
     }
 }
 
-void Decoder::generateErrors(
+void Decoder::generateTargets(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs,
-    FloatBuffer* visibleErrors,
+    FloatBuffer* visibleTargets,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -198,19 +216,14 @@ void Decoder::generateErrors(
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hc), hiddenSize);
+                int hiddenCellIndexTarget = address3(Int3(hiddenPos.x, hiddenPos.y, (*hiddenTargetCIs)[hiddenColumnIndex]), hiddenSize);
 
-                    float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivations[hiddenCellIndex];
-
-                    sum += error * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
-                }
-
+                sum += vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget))];
                 count++;
             }
         }
 
-    (*visibleErrors)[visibleColumnIndex] += sum / max(1, count);
+    (*visibleTargets)[visibleColumnIndex] += sum / max(1, count);
 }
 
 void Decoder::initRandom(
@@ -240,7 +253,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 0.01f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -282,9 +295,9 @@ void Decoder::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
 }
 
-void Decoder::generateErrors(
+void Decoder::generateTargets(
     const IntBuffer* hiddenTargetCIs,
-    FloatBuffer* visibleErrors,
+    FloatBuffer* visibleTargets,
     int vli
 ) {
     const VisibleLayer &vl = visibleLayers[vli];
@@ -294,7 +307,7 @@ void Decoder::generateErrors(
 
     #pragma omp parallel for
     for (int i = 0; i < numVisibleColumns; i++)
-        generateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli);
+        generateTargets(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleTargets, vli);
 }
 
 int Decoder::size() const {
