@@ -33,19 +33,12 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev;
-        
-        float importance;
-
-        VisibleLayer()
-        :
-        importance(1.0f)
-        {}
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenBiases;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -66,7 +59,7 @@ public:
 
     Encoder()
     :
-    lr(0.2f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
