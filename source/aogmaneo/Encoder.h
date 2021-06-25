@@ -39,6 +39,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenPerms;
+
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors

@@ -21,9 +21,7 @@ void Encoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = (*hiddenErrors)[hiddenColumnIndex] * hiddenPerms[hiddenCellIndexMax];
-
-        hiddenPerms[hiddenCellIndexMax] -= lr * hiddenPerms[hiddenCellIndexMax];
+        float delta = sigmoid((*hiddenErrors)[hiddenColumnIndex]) * hiddenPerms[hiddenCellIndexMax];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -54,9 +52,17 @@ void Encoder::forward(
 
                     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))] += delta;
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wiStart;
+
+                        vl.weights[wi] += delta * ((vc == inCIPrev) - vl.weights[wi]);
+                    }
                 }
         }
+
+        hiddenPerms[hiddenCellIndexMax] -= lr * hiddenPerms[hiddenCellIndexMax];
     }
 
     int maxIndex = -1;
@@ -109,7 +115,7 @@ void Encoder::forward(
 
         sum /= visibleLayers.size();
 
-        float activation = hiddenPerms[hiddenCellIndex] + (1.0f - hiddenPerms[hiddenCellIndex]) * sigmoid(sum);
+        float activation = hiddenPerms[hiddenCellIndex] + (1.0f - hiddenPerms[hiddenCellIndex]) * sum;
 
         if (activation > maxActivation || maxIndex == -1) {
             maxActivation = activation;
@@ -148,12 +154,12 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.01f);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenPerms = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenPerms = FloatBuffer(numHiddenCells, 0.99f);
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
