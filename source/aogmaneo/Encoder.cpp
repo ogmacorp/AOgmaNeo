@@ -56,12 +56,12 @@ void Encoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    subSum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] * vl.importance;
+                    subSum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
 
             subSum /= max(1, subCount);
 
-            sum += subSum;
+            sum += subSum * vl.importance;
         }
 
         if (sum > maxActivation || maxIndex == -1) {
