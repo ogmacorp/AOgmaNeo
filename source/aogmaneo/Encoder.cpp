@@ -21,7 +21,7 @@ void Encoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = sigmoid((*hiddenErrors)[hiddenColumnIndex]) * hiddenPerms[hiddenCellIndexMax];
+        float delta = max(0.0f, tanh((*hiddenErrors)[hiddenColumnIndex])) * hiddenPerms[hiddenCellIndexMax];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -115,10 +115,8 @@ void Encoder::forward(
 
         sum /= visibleLayers.size();
 
-        float activation = hiddenPerms[hiddenCellIndex] + (1.0f - hiddenPerms[hiddenCellIndex]) * sum;
-
-        if (activation > maxActivation || maxIndex == -1) {
-            maxActivation = activation;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
@@ -159,7 +157,7 @@ void Encoder::initRandom(
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenPerms = FloatBuffer(numHiddenCells, 0.99f);
+    hiddenPerms = FloatBuffer(numHiddenCells, 0.5f);
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
