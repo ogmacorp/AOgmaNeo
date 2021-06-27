@@ -155,7 +155,7 @@ void Decoder::learn(
 
     reward *= reward; // Encourage more exact state matches
 
-    float delta = lr * (reward + discount * maxActivation - sum);
+    float delta = lr * ((1.0f - discount) * reward + discount * tanh(maxActivation) - tanh(sum));
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
