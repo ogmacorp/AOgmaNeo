@@ -53,7 +53,7 @@ void ErrorEncoder::forward(
 
                         int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                        vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta * vl.importance;
+                        vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
                     }
             }
         }
@@ -99,12 +99,12 @@ void ErrorEncoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    subSum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] * vl.importance;
+                    subSum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
 
             subSum /= max(1, subCount);
 
-            sum += subSum;
+            sum += subSum * vl.importance;
         }
 
         sum /= visibleLayers.size();
