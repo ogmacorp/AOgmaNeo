@@ -207,15 +207,6 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            // Clear hidden errors
-            errors[l].fill(0.0f);
-
-            // Accumulate
-            for (int i = 0; i < dLayers[l].size(); i++) {
-                for (int t = 0; t < dLayers[l][i].size(); t++)
-                    dLayers[l][i][t].generateErrors(&histories[l][i][t], &errors[l], 0);
-            }
-
             Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
 
             int index = 0;
@@ -252,6 +243,14 @@ void Hierarchy::step(
             if (l < eLayers.size() - 1)
                 feedBackCIs[1] = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
 
+            // Generate errors
+            errors[l] = eLayers[l + 1].getVisibleLayer(ticksPerUpdate[l + 1] - 1 - ticks[l + 1]).visibleErrors;
+
+            for (int i = 0; i < dLayers[l].size(); i++) {
+                for (int t = 0; t < dLayers[l][i].size(); t++)
+                    dLayers[l][i][t].generateErrors(&histories[l][i][t], &errors[l], 0);
+            }
+
             // Step actor layers
             for (int i = 0; i < dLayers[l].size(); i++) {
                 for (int t = 0; t < dLayers[l][i].size(); t++) {
@@ -261,6 +260,9 @@ void Hierarchy::step(
                     dLayers[l][i][t].activate(feedBackCIs);
                 }
             }
+
+            // Prop errors down
+            eLayers[l].generateErrors(&errors[l]);
 
             if (l == 0) {
                 // Step actors
