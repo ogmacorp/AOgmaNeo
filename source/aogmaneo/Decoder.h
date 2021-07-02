@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
+        IntBuffer inputCIs; // Previous timestep (prev) input states
     };
 
 private:
@@ -49,8 +49,7 @@ private:
     // --- Kernels ---
 
     void forward(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Int2 &columnPos
     );
 
     void learn(
