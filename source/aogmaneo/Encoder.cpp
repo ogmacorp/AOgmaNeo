@@ -21,7 +21,7 @@ void Encoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = lr * tanh((*hiddenErrors)[hiddenColumnIndex]);
+        float delta = lr * (*hiddenErrors)[hiddenColumnIndex];
 
         float total = 0.0f;
 
