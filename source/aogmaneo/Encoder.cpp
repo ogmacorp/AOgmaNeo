@@ -162,7 +162,7 @@ void Encoder::generateErrors(
             }
         }
 
-    vl.visibleErrors[visibleColumnIndex] += sum / max(1, count);
+    vl.visibleErrors[visibleColumnIndex] = sum / max(1, count);
 }
 
 void Encoder::initRandom(
