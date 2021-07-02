@@ -51,10 +51,12 @@ private:
     // --- Kernels ---
     
     void forward(
+        const Int2 &columnPos
+    );
+
+    void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const FloatBuffer* hiddenErrors
     );
 
     void generateErrors(
@@ -77,10 +79,12 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled // Whether to learn
+    void activate(
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const FloatBuffer* hiddenErrors
     );
 
     void generateErrors(
