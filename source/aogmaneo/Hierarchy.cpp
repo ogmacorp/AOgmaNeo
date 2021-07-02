@@ -240,11 +240,13 @@ void Hierarchy::step(
 
             feedBackCIs[0] = &eLayers[l].getHiddenCIs();
 
-            if (l < eLayers.size() - 1)
+            if (l < eLayers.size() - 1) {
                 feedBackCIs[1] = &dLayers[l + 1][0][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
 
-            // Generate errors
-            errors[l] = eLayers[l + 1].getVisibleLayer(ticksPerUpdate[l + 1] - 1 - ticks[l + 1]).visibleErrors;
+                errors[l] = eLayers[l + 1].getVisibleLayer(ticksPerUpdate[l + 1] - 1 - ticks[l + 1]).visibleErrors;
+            }
+            else
+                errors[l].fill(0.0f);
 
             for (int i = 0; i < dLayers[l].size(); i++) {
                 for (int t = 0; t < dLayers[l][i].size(); t++)
