@@ -274,7 +274,7 @@ void Hierarchy::step(
 }
 
 int Hierarchy::size() const {
-    int size = 2 * sizeof(int) + inputSizes.size() * sizeof(Int3) + updates.size() * sizeof(unsigned char) + 2 * ticks.size() * sizeof(int);
+    int size = 2 * sizeof(int) + inputSizes.size() * sizeof(Int3) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int);
 
     for (int l = 0; l < eLayers.size(); l++) {
         size += sizeof(int);
@@ -295,7 +295,7 @@ int Hierarchy::size() const {
     }
 
     for (int v = 0; v < aLayers.size(); v++) {
-        size += sizeof(unsigned char);
+        size += sizeof(Byte);
 
         if (aLayers[v] != nullptr)
             size += aLayers[v]->size();
@@ -305,7 +305,7 @@ int Hierarchy::size() const {
 }
 
 int Hierarchy::stateSize() const {
-    int size = updates.size() * sizeof(unsigned char) + ticks.size() * sizeof(int);
+    int size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
 
     for (int l = 0; l < eLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
@@ -346,7 +346,7 @@ void Hierarchy::write(
 
     writer.write(reinterpret_cast<const void*>(&inputSizes[0]), numInputs * sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
     writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
@@ -384,9 +384,9 @@ void Hierarchy::write(
 
     // Actors
     for (int v = 0; v < aLayers.size(); v++) {
-        unsigned char exists = aLayers[v] != nullptr;
+        Byte exists = aLayers[v] != nullptr;
 
-        writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&exists), sizeof(Byte));
 
         if (exists)
             aLayers[v]->write(writer);
@@ -418,7 +418,7 @@ void Hierarchy::read(
     ticksPerUpdate.resize(numLayers);
     errors.resize(numLayers);
 
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
     
@@ -471,9 +471,9 @@ void Hierarchy::read(
     aLayers.resize(inputSizes.size());
 
     for (int v = 0; v < aLayers.size(); v++) {
-        unsigned char exists;
+        Byte exists;
 
-        reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&exists), sizeof(Byte));
 
         if (exists) {
             aLayers[v].make();
@@ -485,7 +485,7 @@ void Hierarchy::read(
 void Hierarchy::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
     writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
 
     for (int l = 0; l < eLayers.size(); l++) {
@@ -517,7 +517,7 @@ void Hierarchy::writeState(
 void Hierarchy::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(unsigned char));
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     
     for (int l = 0; l < eLayers.size(); l++) {
