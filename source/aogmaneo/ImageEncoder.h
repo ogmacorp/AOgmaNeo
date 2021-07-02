@@ -40,7 +40,7 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenRates; // Resources
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -62,13 +62,11 @@ private:
 
 public:
     float lr;
-    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.02f),
-    falloff(0.2f)
+    lr(0.02f)
     {}
 
     // Create a sparse coding layer with random initialization
