@@ -70,8 +70,8 @@ public:
     lr(0.1f),
     discount(0.99f),
     traceDecay(0.97f),
-    traceTemp(0.5f),
-    epsilon(0.04f)
+    traceTemp(1.0f),
+    epsilon(0.03f)
     {}
 
     // Initialized randomly
