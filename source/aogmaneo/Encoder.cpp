@@ -86,7 +86,8 @@ void Encoder::forward(
                 }
         }
 
-        hiddenActivations[hiddenCellIndex] = hiddenStimuli[hiddenCellIndex] = sum / max(1, count);
+        hiddenStimuli[hiddenCellIndex] = sum / max(1, count);
+        hiddenActivations[hiddenCellIndex] = 0.0f;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
