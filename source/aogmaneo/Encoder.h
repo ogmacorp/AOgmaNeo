@@ -81,7 +81,7 @@ public:
     // Defaults
     Encoder()
     :
-    explainIters(6),
+    explainIters(8),
     lr(0.02f)
     {}
 
