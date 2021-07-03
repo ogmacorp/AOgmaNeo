@@ -29,30 +29,25 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int historyCapacity; // Actor history capacity
-
         IODesc()
         :
         size(4, 4, 16),
         type(prediction),
         eRadius(2),
-        dRadius(2),
-        historyCapacity(64)
+        dRadius(2)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
             int eRadius,
-            int dRadius,
-            int historyCapacity
+            int dRadius
         )
         :
         size(size),
         type(type),
         eRadius(eRadius),
-        dRadius(dRadius),
-        historyCapacity(historyCapacity)
+        dRadius(dRadius)
         {}
     };
 
@@ -140,8 +135,7 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // Whether to treat Actors like Decoders
+        float reward = 0.0f // Reinforcement signal
     );
 
     // Serialization
