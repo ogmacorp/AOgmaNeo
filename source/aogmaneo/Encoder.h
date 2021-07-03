@@ -76,12 +76,14 @@ private:
 
 public:
     int explainIters; // Explaining-away iterations
+    float actRate; // Activation rate
     float lr;
     
     // Defaults
     Encoder()
     :
     explainIters(8),
+    actRate(0.5f),
     lr(0.02f)
     {}
 

@@ -136,7 +136,7 @@ void Encoder::inhibit(
                 sum += laterals[inCI + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
             }
 
-        hiddenActivations[hiddenCellIndex] += hiddenStimuli[hiddenCellIndex] - sum / max(1, count);
+        hiddenActivations[hiddenCellIndex] += actRate * (hiddenStimuli[hiddenCellIndex] - sum / max(1, count) - hiddenActivations[hiddenCellIndex]);
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
@@ -300,7 +300,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(float) + hiddenActivations.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(int) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(float) + hiddenActivations.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -325,6 +325,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&explainIters), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&actRate), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -363,6 +364,7 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&actRate), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
