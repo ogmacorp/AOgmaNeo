@@ -187,24 +187,22 @@ void Encoder::learn(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, columnPos.x + lRadius), min(hiddenSize.y - 1, columnPos.y + lRadius));
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+            int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
+            Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+            int inCI = hiddenCIs[otherHiddenColumnIndex];
 
-                int inCI = hiddenCIs[otherHiddenColumnIndex];
+            int wiStart = hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                int otherHiddenCellIndex = address3(Int3(ix, iy, inCI), hiddenSize);
+            for (int vc = 0; vc < hiddenSize.z; vc++) {
+                int wi = vc + wiStart;
 
-                int wi = inCI + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                laterals[wi] += hiddenRates[otherHiddenCellIndex] * ((hc == hiddenCIs[hiddenColumnIndex]) - laterals[wi]);
+                laterals[wi] += hiddenRates[hiddenCellIndexMax] * ((vc == inCI) - laterals[wi]);
             }
-    }
+        }
 
     hiddenRates[hiddenCellIndexMax] -= lr * hiddenRates[hiddenCellIndexMax];
 }
