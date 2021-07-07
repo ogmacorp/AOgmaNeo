@@ -52,6 +52,8 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
+        int lRadius;
+
         int historyCapacity;
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
@@ -62,6 +64,7 @@ public:
         hiddenSize(4, 4, 16),
         eRadius(2),
         dRadius(2),
+        lRadius(2),
         historyCapacity(4),
         ticksPerUpdate(2),
         temporalHorizon(2)
@@ -71,6 +74,7 @@ public:
             const Int3 &hiddenSize,
             int eRadius,
             int dRadius,
+            int lRadius,
             int historyCapacity,
             int ticksPerUpdate,
             int temporalHorizon
@@ -79,6 +83,7 @@ public:
         hiddenSize(hiddenSize),
         eRadius(eRadius),
         dRadius(dRadius),
+        lRadius(lRadius),
         historyCapacity(historyCapacity),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)

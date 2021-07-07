@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,8 +32,6 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        FloatBuffer reconstruction;
-
         float importance;
 
         VisibleLayer()
@@ -44,12 +42,21 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    int lRadius; // Lateral radius
 
-    IntBuffer hiddenCIs;
+    FloatBuffer hiddenStimuli;
+    FloatBuffer hiddenActivations;
+
+    IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCIsTemp; // Temporary hidden states
+
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
+
+    FloatBuffer laterals; // Lateral weights
     
     // --- Kernels ---
     
@@ -58,26 +65,36 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
+    void inhibit(
+        const Int2 &columnPos
+    );
+
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
+        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
-    float lr; // Learning rate
-
+    int explainIters; // Explaining-away iterations
+    float actRate; // Activation rate
+    float lr;
+    
+    // Defaults
     Encoder()
     :
-    lr(0.1f)
+    explainIters(8),
+    actRate(0.01f),
+    lr(0.03f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        int lRadius, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
+    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
