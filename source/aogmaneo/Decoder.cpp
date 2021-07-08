@@ -72,8 +72,6 @@ void Decoder::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float strength = 1.0f - static_cast<float>(t - 1) / static_cast<float>(history.size() - 1);
-
     int targetCI = history[t - 1].hiddenTargetCIs[hiddenColumnIndex];
 
     // Pre-count
@@ -117,7 +115,7 @@ void Decoder::learn(
 
         sum /= max(1, count);
 
-        float delta = lr * strength * ((hc == targetCI) - min(1.0f, max(0.0f, sum)));
+        float delta = lr * ((hc == targetCI) - min(1.0f, max(0.0f, sum)));
             
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
