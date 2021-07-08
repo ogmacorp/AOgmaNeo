@@ -28,7 +28,7 @@ public:
         size(4, 4, 16),
         eRadius(2),
         dRadius(2),
-        historyCapacity(4)
+        historyCapacity(8)
         {}
 
         IODesc(
@@ -62,7 +62,7 @@ public:
         hiddenSize(4, 4, 16),
         eRadius(2),
         dRadius(2),
-        historyCapacity(4),
+        historyCapacity(8),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
