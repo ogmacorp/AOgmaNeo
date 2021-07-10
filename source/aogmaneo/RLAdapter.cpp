@@ -18,7 +18,7 @@ void RLAdapter::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float valuePrev = hiddenValues[address3(Int3(columnPos.x, columnPos.y, (*hiddenCIs)[hiddenColumnIndex]), hiddenSize)];
+    float valuePrev = hiddenValues[address3(Int3(columnPos.x, columnPos.y, goalCIsPrev[hiddenColumnIndex]), hiddenSize)];
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
@@ -80,7 +80,7 @@ void RLAdapter::forward(
                 for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
                     int wi = ohc + wiStart;
 
-                    traces[wi] = max(traces[wi] * traceDecay, static_cast<float>(hc == (*hiddenCIs)[hiddenColumnIndex] && ohc == hidCIPrev));
+                    traces[wi] = max(traces[wi] * traceDecay, static_cast<float>(hc == goalCIsPrev[hiddenColumnIndex] && ohc == hidCIPrev));
 
                     if (learnEnabled)
                         weights[wi] += delta * traces[wi];
@@ -110,8 +110,9 @@ void RLAdapter::initRandom(
 
     traces = FloatBuffer(weights.size(), 0.0f);
 
-    goalCIs = IntBuffer(numHiddenColumns, 0.0f);
-    hiddenCIsPrev = IntBuffer(numHiddenColumns, 0.0f);
+    goalCIs = IntBuffer(numHiddenColumns, 0);
+    goalCIsPrev = IntBuffer(numHiddenColumns, 0);
+    hiddenCIsPrev = IntBuffer(numHiddenColumns, 0);
 
     hiddenValues = FloatBuffer(numHiddenCells, 0.0f);
 }
@@ -127,6 +128,7 @@ void RLAdapter::step(
     for (int i = 0; i < numHiddenColumns; i++)
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenCIs, reward, learnEnabled);
 
+    goalCIsPrev = goalCIs;
     hiddenCIsPrev = *hiddenCIs;
 }
 
@@ -157,6 +159,7 @@ void RLAdapter::write(
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&goalCIsPrev[0]), goalCIsPrev.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
@@ -178,10 +181,12 @@ void RLAdapter::read(
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
 
     goalCIs.resize(numHiddenColumns);
+    goalCIsPrev.resize(numHiddenColumns);
     hiddenCIsPrev.resize(numHiddenColumns);
     hiddenValues.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&goalCIsPrev[0]), goalCIsPrev.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
@@ -199,6 +204,7 @@ void RLAdapter::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&goalCIsPrev[0]), goalCIsPrev.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
@@ -209,6 +215,7 @@ void RLAdapter::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&goalCIsPrev[0]), goalCIsPrev.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 

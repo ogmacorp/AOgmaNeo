@@ -18,6 +18,7 @@ private:
     int radius;
 
     IntBuffer goalCIs;
+    IntBuffer goalCIsPrev;
     IntBuffer hiddenCIsPrev;
 
     FloatBuffer hiddenValues;
