@@ -133,7 +133,7 @@ void RLAdapter::step(
 }
 
 int RLAdapter::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 3 * sizeof(float) + hiddenCIsPrev.size() * sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 3 * sizeof(float) + 2 * goalCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float);
 
     size += 2 * weights.size() * sizeof(float);
 
@@ -158,7 +158,9 @@ void RLAdapter::write(
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
 
+    writer.write(reinterpret_cast<const void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&weights[0]), weights.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traces[0]), traces.size() * sizeof(float));
@@ -177,9 +179,13 @@ void RLAdapter::read(
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
 
+    goalCIs.resize(numHiddenColumns);
     hiddenCIsPrev.resize(numHiddenColumns);
+    hiddenValues.resize(numHiddenCells);
 
+    reader.read(reinterpret_cast<void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     int diam = radius * 2 + 1;
     int area = diam * diam;
@@ -194,7 +200,9 @@ void RLAdapter::read(
 void RLAdapter::writeState(
     StreamWriter &writer
 ) const {
+    writer.write(reinterpret_cast<const void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&traces[0]), traces.size() * sizeof(float));
 }
@@ -202,7 +210,9 @@ void RLAdapter::writeState(
 void RLAdapter::readState(
     StreamReader &reader
 ) {
+    reader.read(reinterpret_cast<void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     reader.read(reinterpret_cast<void*>(&traces[0]), traces.size() * sizeof(float));
 }
