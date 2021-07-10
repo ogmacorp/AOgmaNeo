@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "RLAdapter.h"
-#include <iostream>
 
 using namespace aon;
 
