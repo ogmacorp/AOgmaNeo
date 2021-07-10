@@ -79,7 +79,6 @@ public:
         const VisibleLayerDesc &visibleLayerDesc
     );
 
-    // Activate the predictor (predict values)
     void step(
         const IntBuffer* goalCIs,
         const IntBuffer* inputCIs,

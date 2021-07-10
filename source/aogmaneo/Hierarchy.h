@@ -144,6 +144,11 @@ public:
         return eLayers.size();
     }
 
+    // Get state of highest layer (less verbose when dealing with goal-driven learning)
+    const IntBuffer &getTopHiddenCIs() const {
+        return eLayers[eLayers.size() - 1].getHiddenCIs();
+    }
+
     // Importance control
     void setImportance(
         int i,
