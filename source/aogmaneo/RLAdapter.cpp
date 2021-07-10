@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "RLAdapter.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -62,9 +63,8 @@ void RLAdapter::forward(
 
     goalCIs[hiddenColumnIndex] = maxIndex;
 
-    float tdError = reward + discount * maxActivation - valuePrev;
-
-    hiddenValues[hiddenColumnIndex] = maxActivation;
+    float delta = lr * (reward + discount * maxActivation - valuePrev);
+    std::cout << maxActivation << std::endl;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
@@ -85,7 +85,7 @@ void RLAdapter::forward(
                     traces[wi] = max(traces[wi] * traceDecay, static_cast<float>(hc == (*hiddenCIs)[hiddenColumnIndex] && ohc == hidCIPrev));
 
                     if (learnEnabled)
-                        weights[wi] += lr * tdError * traces[wi];
+                        weights[wi] += delta * traces[wi];
                 }
             }
     }

@@ -154,6 +154,10 @@ public:
         return eLayers[eLayers.size() - 1].getHiddenSize();
     }
 
+    bool getTopUpdate() const {
+        return updates[updates.size() - 1];
+    }
+
     // Importance control
     void setImportance(
         int i,
