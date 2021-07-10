@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "RLAdapter.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -45,7 +46,7 @@ void RLAdapter::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int hidCI = (*hiddenCIs)[hiddenColumnIndex];
+                int hidCI = (*hiddenCIs)[otherHiddenColumnIndex];
 
                 sum += weights[hidCI + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
             }
@@ -73,7 +74,7 @@ void RLAdapter::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int hidCIPrev = hiddenCIsPrev[hiddenColumnIndex];
+                int hidCIPrev = hiddenCIsPrev[otherHiddenColumnIndex];
                 
                 int wiStart = hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
