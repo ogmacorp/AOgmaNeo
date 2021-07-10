@@ -80,5 +80,13 @@ public:
     void readState(
         StreamReader &reader
     );
+
+    const Int3 &getHiddenSize() const {
+        return hiddenSize;
+    }
+
+    int getRadius() const {
+        return radius;
+    }
 };
 }
