@@ -187,14 +187,14 @@ void Decoder::step(
     
         history[0].inputCIs = *inputCIs;
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
-    }
 
-    if (learnEnabled && stateUpdate) {
-        for (int t = historySize - 1; t >= 1; t--) {
-            // Learn kernel
-            #pragma omp parallel for
-            for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t);
+        if (learnEnabled) {
+            for (int t = historySize - 1; t >= 1; t--) {
+                // Learn kernel
+                #pragma omp parallel for
+                for (int i = 0; i < numHiddenColumns; i++)
+                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t);
+            }
         }
     }
 
