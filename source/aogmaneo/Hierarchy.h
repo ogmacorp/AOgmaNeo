@@ -88,7 +88,7 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Array<Array<Decoder>>> dLayers;
+    Array<Array<Decoder>> dLayers;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -178,7 +178,7 @@ public:
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
-        return dLayers[0][i][0].getHiddenCIs();
+        return dLayers[0][i].getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -222,14 +222,14 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Array<Decoder>> &getDLayers(
+    Array<Decoder> &getDLayers(
         int l // Layer index
     ) {
         return dLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Array<Decoder>> &getDLayers(
+    const Array<Decoder> &getDLayers(
         int l // Layer index
     ) const {
         return dLayers[l];
