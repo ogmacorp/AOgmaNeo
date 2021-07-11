@@ -37,8 +37,8 @@ public:
     RLAdapter()
     :
     lr(0.01f),
-    discount(0.95f),
-    traceDecay(0.9f)
+    discount(0.99f),
+    traceDecay(0.98f)
     {}
 
     // Create with random initialization
