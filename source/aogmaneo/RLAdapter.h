@@ -19,6 +19,7 @@ private:
     IntBuffer goalCIs;
 
     FloatBuffer weights;
+    FloatBuffer traces;
 
     void forward(
         const Int2 &columnPos,
@@ -29,11 +30,15 @@ private:
 
 public:
     float lr; // Learning rate
+    float discount;
+    float traceDecay;
 
     // Defaults
     RLAdapter()
     :
-    lr(0.001f)
+    lr(0.01f),
+    discount(0.99f),
+    traceDecay(0.98f)
     {}
 
     // Create with random initialization
