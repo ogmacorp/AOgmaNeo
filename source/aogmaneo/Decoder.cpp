@@ -72,9 +72,9 @@ void Decoder::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float strength = 1.0f - static_cast<float>(t - 1) / static_cast<float>(history.size() - 1);
+    float strength = 1.0f - static_cast<float>(historySize - 2 - t) / static_cast<float>(history.size() - 1);
 
-    int targetCI = history[t - 1].hiddenTargetCIs[hiddenColumnIndex];
+    int targetCI = history[historySize - 2].hiddenTargetCIs[hiddenColumnIndex];
 
     // Pre-count
     int diam = visibleLayerDesc.radius * 2 + 1;
@@ -105,8 +105,8 @@ void Decoder::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-                int inCI = history[0].inputCIs[visibleColumnIndex];
-                int inCIPrev = history[t].inputCIs[visibleColumnIndex];
+                int inCI = history[t].inputCIs[visibleColumnIndex];
+                int inCIPrev = history[historySize - 1].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -119,19 +119,21 @@ void Decoder::learn(
 
         float delta = lr * strength * ((hc == targetCI) - min(1.0f, max(0.0f, sum)));
             
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+        if (delta != 0.0f) {
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-                int inCI = history[0].inputCIs[visibleColumnIndex];
-                int inCIPrev = history[t].inputCIs[visibleColumnIndex];
+                    int inCI = history[t].inputCIs[visibleColumnIndex];
+                    int inCIPrev = history[historySize - 1].inputCIs[visibleColumnIndex];
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                visibleLayer.weights[inCI + inCIPrev * visibleLayerDesc.size.z + wiStart] += delta;
-            }
+                    visibleLayer.weights[inCI + inCIPrev * visibleLayerDesc.size.z + wiStart] += delta;
+                }
+        }
     }
 }
 
@@ -191,7 +193,7 @@ void Decoder::step(
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
         if (learnEnabled) {
-            for (int t = historySize - 1; t >= 1; t--) {
+            for (int t = 0; t < historySize - 1; t++) {
                 // Learn kernel
                 #pragma omp parallel for
                 for (int i = 0; i < numHiddenColumns; i++)
