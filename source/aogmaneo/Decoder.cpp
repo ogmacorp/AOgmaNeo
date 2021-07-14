@@ -72,7 +72,7 @@ void Decoder::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float strength = 1.0f - static_cast<float>(historySize - 2 - t) / static_cast<float>(history.size() - 1);
+    float strength = static_cast<float>(historySize - 2 - t) / static_cast<float>(history.size() - 1);
 
     int targetCI = history[historySize - 2].hiddenTargetCIs[hiddenColumnIndex];
 
