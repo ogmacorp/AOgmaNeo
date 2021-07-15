@@ -18,7 +18,7 @@ void RLAdapter::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    float valuePrev = hiddenValues[address3(Int3(columnPos.x, columnPos.y, goalCIsPrev[hiddenColumnIndex]), hiddenSize)];
+    float valuePrev = hiddenValues[address3(Int3(columnPos.x, columnPos.y, (*hiddenCIs)[hiddenColumnIndex]), hiddenSize)];
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
