@@ -82,7 +82,7 @@ public:
     :
     lr(0.01f),
     discount(0.99f),
-    qSteps(5),
+    qSteps(7),
     historyIters(16)
     {}
 
