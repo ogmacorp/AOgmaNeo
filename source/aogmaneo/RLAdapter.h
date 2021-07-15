@@ -41,7 +41,7 @@ public:
     // Defaults
     RLAdapter()
     :
-    lr(0.01f),
+    lr(0.001f),
     discount(0.99f),
     traceDecay(0.98f)
     {}
