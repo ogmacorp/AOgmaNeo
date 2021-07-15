@@ -177,8 +177,7 @@ void Hierarchy::initRandom(
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
-    float reward,
-    bool mimic
+    float reward
 ) {
     // First tick is always 0
     ticks[0] = 0;
@@ -253,7 +252,7 @@ void Hierarchy::step(
                 // Step actors
                 for (int i = 0; i < aLayers.size(); i++) {
                     if (aLayers[i] != nullptr)
-                        aLayers[i]->step(feedBackCIs, &histories[l][i][0], reward, learnEnabled, mimic);
+                        aLayers[i]->step(feedBackCIs, &histories[l][i][0], reward, learnEnabled);
                 }
             }
         }
