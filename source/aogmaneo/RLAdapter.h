@@ -15,8 +15,13 @@ namespace aon {
 class RLAdapter {
 private:
     Int3 hiddenSize;
+    int radius;
 
     IntBuffer goalCIs;
+    IntBuffer goalCIsPrev;
+    IntBuffer hiddenCIsPrev;
+
+    FloatBuffer hiddenValues;
 
     FloatBuffer weights;
     FloatBuffer traces;
@@ -43,7 +48,8 @@ public:
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize // Hidden/output/prediction size
+        const Int3 &hiddenSize, // Hidden/output/prediction size
+        int radius
     );
 
     void step(
@@ -78,6 +84,10 @@ public:
 
     const Int3 &getHiddenSize() const {
         return hiddenSize;
+    }
+
+    int getRadius() const {
+        return radius;
     }
 };
 }
