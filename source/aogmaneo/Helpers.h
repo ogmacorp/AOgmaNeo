@@ -352,8 +352,6 @@ inline float tanh(
 
 // --- RNG ---
 
-// From http://cas.ee.ic.ac.uk/people/dt10/research/rngs-gpu-mwc64x.html
-
 extern unsigned int globalState;
 
 const unsigned int randMax = 0x00003fff;
