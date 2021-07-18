@@ -62,6 +62,7 @@ void Actor::forward(
 
     // --- Action ---
 
+    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -106,37 +107,13 @@ void Actor::forward(
 
         hiddenActivations[hiddenCellIndex] = sum;
 
-        maxActivation = max(maxActivation, sum);
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
-        
-        total += hiddenActivations[hiddenCellIndex];
-    }
-
-    float cusp = randf(state) * total;
-
-    int selectIndex = 0;
-    float sumSoFar = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        sumSoFar += hiddenActivations[hiddenCellIndex];
-
-        if (sumSoFar >= cusp) {
-            selectIndex = hc;
-
-            break;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
+            maxIndex = hc;
         }
     }
     
-    hiddenCIs[hiddenColumnIndex] = selectIndex;
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
 void Actor::learn(
@@ -301,7 +278,7 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float deltaAction = (mimic || tdErrorValue > 0.0f ? alr : -0.5f * alr) * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        float deltaAction = (mimic ? alr : alr * tanh(tdErrorValue)) * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
