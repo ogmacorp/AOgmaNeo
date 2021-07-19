@@ -371,7 +371,7 @@ void Hierarchy::write(
 
                 writer.write(reinterpret_cast<const void*>(&bufferSize), sizeof(int));
 
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(Bte));
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(Byte));
             }
         }
 
