@@ -71,7 +71,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.2f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
@@ -119,6 +119,13 @@ public:
     // Get number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
+    }
+
+    // Get a visible layer
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
     }
 
     // Get a visible layer

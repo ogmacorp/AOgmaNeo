@@ -22,7 +22,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-            float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * ((hc == hiddenCIs[hiddenColumnIndex] ? 1.0f : 0.0f) - hiddenActivations[hiddenCellIndex]);
+            float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenActivations[hiddenCellIndex]);
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -95,6 +95,9 @@ void Encoder::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                    if (vld.recurrent && visibleColumnIndex == hiddenColumnIndex)
+                        continue;
+
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
@@ -165,8 +168,12 @@ void Encoder::initRandom(
 
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+        if (vld.recurrent)
+            vl.weights.fill(0.0f);
+        else {
+            for (int i = 0; i < vl.weights.size(); i++)
+                vl.weights[i] = randf(-1.0f, 1.0f);
+        }
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }

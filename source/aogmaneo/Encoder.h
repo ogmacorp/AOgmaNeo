@@ -20,10 +20,13 @@ public:
 
         int radius; // Radius onto input
 
+        Byte recurrent;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
+        recurrent(false),
         radius(2)
         {}
     };
@@ -59,7 +62,7 @@ public:
 
     Encoder()
     :
-    lr(0.1f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
