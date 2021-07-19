@@ -38,6 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -58,7 +59,7 @@ public:
 
     Encoder()
     :
-    lr(0.01f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -96,12 +97,6 @@ public:
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
-    }
-
-    VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
-    ) {
-        return visibleLayers[i];
     }
 
     // Get a visible layer
