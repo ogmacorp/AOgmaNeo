@@ -103,10 +103,6 @@ void Actor::forward(
                 }
         }
 
-        sum /= max(1, count);
-
-        hiddenActivations[hiddenCellIndex] = sum;
-
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
