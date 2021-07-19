@@ -12,7 +12,7 @@ using namespace aon;
 
 void Encoder::resetReconstruction(
     const Int2 &columnPos,
-    const IntBuffer* inputCIs,
+    const ByteBuffer* inputCIs,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -77,7 +77,7 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    float delta = inValue - vl.protos[wi];
+                    float delta = inValue - vl.protos[wi] / 127.0f;
 
                     hiddenSums[hiddenCellIndex] -= delta * delta * scale;
                 }
@@ -137,7 +137,7 @@ void Encoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        vl.protos[wi] += hiddenRates[hiddenCellIndex] * (vl.reconstruction[visibleColumnIndex] - vl.protos[wi]);
+                        vl.protos[wi] = min(127, max(-127, roundftoi(vl.protos[wi] + hiddenRates[hiddenCellIndex] * (vl.reconstruction[visibleColumnIndex] * 127.0f - vl.protos[wi]))));
                     }
             }
 
@@ -205,7 +205,7 @@ void Encoder::reconstruct(
 
                 float strength = min(1.0f - distX, 1.0f - distY);
 
-                sum += strength * vl.protos[wi];
+                sum += strength * vl.protos[wi] / 127.0f;
                 total += strength;
             }
         }
@@ -243,16 +243,16 @@ void Encoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = randf(-0.01f, 0.01f);
+            vl.protos[i] = rand() % 8 - 4;
 
         vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
     hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
 
-    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
+    hiddenCIs = ByteBuffer(numHiddenColumns, hiddenSize.z / 2);
 
-    hiddenPriorities = IntBuffer(numHiddenColumns);
+    hiddenPriorities = ByteBuffer(numHiddenColumns);
 
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
@@ -261,7 +261,7 @@ void Encoder::initRandom(
 }
 
 void Encoder::step(
-    const Array<const IntBuffer*> &inputCIs,
+    const Array<const ByteBuffer*> &inputCIs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -298,19 +298,19 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(Byte) + hiddenPriorities.size() * sizeof(Byte) + hiddenRates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(SByte);
     }
 
     return size;
 }
 
 int Encoder::stateSize() const {
-    return hiddenCIs.size() * sizeof(int);
+    return hiddenCIs.size() * sizeof(Byte);
 }
 
 void Encoder::write(
@@ -321,8 +321,8 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(Byte));
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
@@ -335,7 +335,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(SByte));
     }
 }
 
@@ -354,8 +354,8 @@ void Encoder::read(
     hiddenPriorities.resize(numHiddenColumns);
     hiddenRates.resize(numHiddenCells);
 
-    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(Byte));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
@@ -380,7 +380,7 @@ void Encoder::read(
 
         vl.protos.resize(numHiddenCells * area);
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(SByte));
 
         vl.reconstruction = FloatBuffer(numVisibleColumns, 0);
     }
@@ -389,11 +389,11 @@ void Encoder::read(
 void Encoder::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
 }
 
 void Encoder::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
 }

@@ -107,7 +107,7 @@ void Hierarchy::initRandom(
                 histories[l][i].resize(layerDescs[l].temporalHorizon);
                 
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = IntBuffer(inSize, 0);
+                    histories[l][i][t] = ByteBuffer(inSize, 0);
             }
 
             dLayers[l].resize(inputSizes.size());
@@ -160,7 +160,7 @@ void Hierarchy::initRandom(
             histories[l][0].resize(layerDescs[l].temporalHorizon);
 
             for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = IntBuffer(inSize, 0);
+                histories[l][0][t] = ByteBuffer(inSize, 0);
 
             dLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
@@ -187,7 +187,7 @@ void Hierarchy::initRandom(
 }
 
 void Hierarchy::step(
-    const Array<const IntBuffer*> &inputCIs,
+    const Array<const ByteBuffer*> &inputCIs,
     bool learnEnabled,
     float reward,
     bool mimic
@@ -216,7 +216,7 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
+            Array<const ByteBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
 
             int index = 0;
 
@@ -245,7 +245,7 @@ void Hierarchy::step(
     for (int l = eLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
             // Feed back is current layer state and next higher layer prediction
-            Array<const IntBuffer*> feedBackCIs(l < eLayers.size() - 1 ? 2 : 1);
+            Array<const ByteBuffer*> feedBackCIs(l < eLayers.size() - 1 ? 2 : 1);
 
             feedBackCIs[0] = &eLayers[l].getHiddenCIs();
 
@@ -274,7 +274,7 @@ void Hierarchy::step(
 }
 
 int Hierarchy::size() const {
-    int size = 2 * sizeof(int) + inputSizes.size() * sizeof(Int3) + 2 * ticks.size() * sizeof(int) + updates.size() * sizeof(Byte);
+    int size = 2 * sizeof(int) + inputSizes.size() * sizeof(Int3) + 2 * ticks.size() * sizeof(Byte) + updates.size() * sizeof(Byte);
 
     for (int l = 0; l < eLayers.size(); l++) {
         size += sizeof(int);
@@ -283,7 +283,7 @@ int Hierarchy::size() const {
             size += 2 * sizeof(int);
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
+                size += sizeof(int) + histories[l][i][t].size() * sizeof(Byte);
         }
 
         size += eLayers[l].size();
@@ -307,14 +307,14 @@ int Hierarchy::size() const {
 }
 
 int Hierarchy::stateSize() const {
-    int size = ticks.size() * sizeof(int) + updates.size() * sizeof(Byte);
+    int size = ticks.size() * sizeof(Byte) + updates.size() * sizeof(Byte);
 
     for (int l = 0; l < eLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
             size += sizeof(int);
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                size += histories[l][i][t].size() * sizeof(int);
+                size += histories[l][i][t].size() * sizeof(Byte);
         }
 
         size += eLayers[l].stateSize();
@@ -349,8 +349,8 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&inputSizes[0]), numInputs * sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
-    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(Byte));
 
     for (int l = 0; l < numLayers; l++) {
         int numLayerInputs = histories[l].size();
@@ -371,7 +371,7 @@ void Hierarchy::write(
 
                 writer.write(reinterpret_cast<const void*>(&bufferSize), sizeof(int));
 
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(Bte));
             }
         }
 
@@ -424,8 +424,8 @@ void Hierarchy::read(
     ticksPerUpdate.resize(numLayers);
 
     reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
-    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(Byte));
     
     for (int l = 0; l < numLayers; l++) {
         int numLayerInputs;
@@ -453,7 +453,7 @@ void Hierarchy::read(
 
                 histories[l][i][t].resize(bufferSize);
 
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(Byte));
             }
         }
 
@@ -493,7 +493,7 @@ void Hierarchy::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
-    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(Byte));
 
     for (int l = 0; l < eLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
@@ -502,7 +502,7 @@ void Hierarchy::writeState(
             writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(Byte));
         }
 
         eLayers[l].writeState(writer);
@@ -525,7 +525,7 @@ void Hierarchy::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
-    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(Byte));
     
     for (int l = 0; l < eLayers.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
@@ -536,7 +536,7 @@ void Hierarchy::readState(
             histories[l][i].start = historyStart;
 
             for (int t = 0; t < histories[l][i].size(); t++)
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(Byte));
         }
 
         eLayers[l].readState(reader);
