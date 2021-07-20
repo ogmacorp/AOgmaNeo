@@ -79,7 +79,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi] / 127.0f;
 
-                    hiddenSums[hiddenCellIndex] -= delta * delta * scale;
+                    hiddenSums[hiddenCellIndex] -= abs(delta) * scale;
                 }
             }
     }
