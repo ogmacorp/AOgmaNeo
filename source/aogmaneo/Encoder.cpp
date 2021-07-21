@@ -206,12 +206,12 @@ void Encoder::reconstruct(
 
                 float strength = min(1.0f - distX, 1.0f - distY);
 
-                sum += strength * vl.protos[wi] * halfByteInv;
+                sum += strength * vl.protos[wi];
                 total += strength;
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] -= sum / max(0.0001f, total);
+    vl.reconstruction[visibleColumnIndex] -= sum / max(0.0001f, total) * halfByteInv;
 }
 
 void Encoder::initRandom(
