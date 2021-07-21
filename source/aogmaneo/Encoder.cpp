@@ -79,7 +79,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi] * halfByteInv;
 
-                    hiddenSums[hiddenCellIndex] -= delta * delta * scale;
+                    hiddenSums[hiddenCellIndex] -= abs(delta) * scale;
                 }
             }
     }
@@ -257,7 +257,7 @@ void Encoder::initRandom(
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void Encoder::step(
