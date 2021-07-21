@@ -12,6 +12,9 @@
 #include "Array.h"
 
 namespace aon {
+const float halfByteInv = 1.0f / 127.0f;
+const float byteInv = 1.0f / 255.0f;
+
 const int expIters = 10;
 const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
 
@@ -66,7 +69,7 @@ T abs(
     if (x >= 0)
         return x;
 
-    return  -x;
+    return -x;
 }
 
 template <typename T>

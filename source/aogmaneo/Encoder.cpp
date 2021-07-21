@@ -10,6 +10,7 @@
 
 using namespace aon;
 
+
 void Encoder::resetReconstruction(
     const Int2 &columnPos,
     const ByteBuffer* inputCIs,
@@ -77,7 +78,7 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    float delta = inValue - vl.protos[wi] / 127.0f;
+                    float delta = inValue - vl.protos[wi] * halfByteInv;
 
                     hiddenSums[hiddenCellIndex] -= abs(delta) * scale;
                 }
@@ -205,7 +206,7 @@ void Encoder::reconstruct(
 
                 float strength = min(1.0f - distX, 1.0f - distY);
 
-                sum += strength * vl.protos[wi] / 127.0f;
+                sum += strength * vl.protos[wi] * halfByteInv;
                 total += strength;
             }
         }
