@@ -10,7 +10,6 @@
 
 using namespace aon;
 
-
 void Encoder::resetReconstruction(
     const Int2 &columnPos,
     const ByteBuffer* inputCIs,

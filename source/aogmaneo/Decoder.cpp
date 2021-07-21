@@ -323,4 +323,3 @@ void Decoder::readState(
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(Byte));
     }
 }
-
