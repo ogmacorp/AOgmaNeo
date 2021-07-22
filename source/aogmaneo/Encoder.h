@@ -38,7 +38,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -56,11 +55,13 @@ private:
     );
 
 public:
-    float lr; // Learning rate
+    float hlr; // Learning rate
+    float elr; // Learning rate
 
     Encoder()
     :
-    lr(0.01f)
+    hlr(0.01f),
+    elr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
