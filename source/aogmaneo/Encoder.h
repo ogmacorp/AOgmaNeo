@@ -71,14 +71,12 @@ private:
 
 public:
     int neighborRadius;
-    int learnRadius;
     float lr;
 
     // Defaults
     Encoder()
     :
     neighborRadius(2),
-    learnRadius(1),
     lr(0.1f)
     {}
 

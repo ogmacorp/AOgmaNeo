@@ -116,23 +116,25 @@ void Encoder::learn(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     // Find strength
-    float superStrength = 0.0f;
+    bool hasSuperNeighbor = false;
 
-    for (int dx = -learnRadius; dx <= learnRadius; dx++)
-        for (int dy = -learnRadius; dy <= learnRadius; dy++) {
+    for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++) {
             Int2 neighborPos(columnPos.x + dx, columnPos.y + dy);
 
             if (inBounds0(neighborPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int neighborColumnIndex = address2(neighborPos, Int2(hiddenSize.x, hiddenSize.y));
 
                 if (hiddenSuperWinners[neighborColumnIndex]) {
-                    float dist = min(abs(dx), abs(dy));
-                    float subStrength = 1.0f - dist / static_cast<float>(learnRadius + 1);
+                    hasSuperNeighbor = true;
 
-                    superStrength = max(superStrength, subStrength);
+                    break;
                 }
             }
         }
+
+    if (!hasSuperNeighbor)
+        return;
 
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hiddenCIs[hiddenColumnIndex] + dhc;
@@ -141,8 +143,6 @@ void Encoder::learn(
             continue;
 
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-
-        float strength = superStrength * hiddenRates[hiddenCellIndex];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -177,11 +177,11 @@ void Encoder::learn(
 
                     float delta = inValue - vl.protos[wi] * halfByteInv;
 
-                    vl.protos[wi] = min(127, max(-127, roundftoi(vl.protos[wi] + strength * 127.0f * delta)));
+                    vl.protos[wi] = min(127, max(-127, roundftoi(vl.protos[wi] + hiddenRates[hiddenCellIndex] * 127.0f * delta)));
                 }
         }
 
-        hiddenRates[hiddenCellIndex] -= lr * strength;
+        hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex];
     }
 }
 
@@ -268,7 +268,6 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&neighborRadius), sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&learnRadius), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(Byte));
@@ -297,7 +296,6 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&neighborRadius), sizeof(int));
-    reader.read(reinterpret_cast<void*>(&learnRadius), sizeof(int));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
