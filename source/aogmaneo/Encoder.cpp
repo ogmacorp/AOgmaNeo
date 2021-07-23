@@ -116,7 +116,7 @@ void Encoder::learn(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     // Find strength
-    float strength = 0.0f;
+    float superStrength = 0.0f;
 
     for (int dx = -learnRadius; dx <= learnRadius; dx++)
         for (int dy = -learnRadius; dy <= learnRadius; dy++) {
@@ -129,53 +129,60 @@ void Encoder::learn(
                     float dist = min(abs(dx), abs(dy));
                     float subStrength = 1.0f - static_cast<float>(dist) / static_cast<float>(learnRadius + 1);
 
-                    strength = max(strength, dist);
+                    superStrength = max(superStrength, dist);
                 }
             }
         }
 
-    int hiddenCellIndex = hiddenColumnIndex * hiddenSize.z + hiddenCIs[hiddenColumnIndex];
+    for (int dhc = -1; dhc <= 1; dhc++) {
+        int hc = hiddenCIs[hiddenColumnIndex] + dhc;
 
-    strength *= hiddenRates[hiddenCellIndex];
+        if (hc < 0 || hc >= hiddenSize.z)
+            continue;
 
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        int diam = vld.radius * 2 + 1;
+        float strength = superStrength * hiddenRates[hiddenCellIndex];
 
-        // Projection
-        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        Int2 visibleCenter = project(columnPos, hToV);
+            int diam = vld.radius * 2 + 1;
 
-        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-        // Lower corner
-        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+            Int2 visibleCenter = project(columnPos, hToV);
 
-        // Bounds of receptive field, clamped to input size
-        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                float inValue = static_cast<float>((*inputCIs[vli])[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f;
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                float delta = inValue - vl.protos[wi] * halfByteInv;
+                    float inValue = static_cast<float>((*inputCIs[vli])[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f;
 
-                vl.protos[wi] = min(127, max(-127, roundftoi(vl.protos[wi] + hiddenRates[hiddenCellIndex] * 127.0f * delta)));
-            }
+                    int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+
+                    float delta = inValue - vl.protos[wi] * halfByteInv;
+
+                    vl.protos[wi] = min(127, max(-127, roundftoi(vl.protos[wi] + hiddenRates[hiddenCellIndex] * 127.0f * delta)));
+                }
+        }
+
+        hiddenRates[hiddenCellIndex] -= lr * strength;
     }
-
-    hiddenRates[hiddenCellIndex] -= lr * strength;
 }
 
 void Encoder::initRandom(
