@@ -77,7 +77,7 @@ public:
     // Defaults
     Encoder()
     :
-    neighborRadius(1),
+    neighborRadius(2),
     learnRadius(1),
     lr(0.1f)
     {}

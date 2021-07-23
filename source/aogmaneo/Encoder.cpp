@@ -89,7 +89,7 @@ void Encoder::inhibit(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    float activation = hiddenActivations[hiddenCellsStart + hiddenCIs[hiddenColumnIndex]];
+    float activation = hiddenActivations[hiddenCIs[hiddenColumnIndex] + hiddenSize.z * hiddenColumnIndex];
 
     hiddenSuperWinners[hiddenColumnIndex] = true;
 
@@ -100,7 +100,7 @@ void Encoder::inhibit(
             if (inBounds0(neighborPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int neighborColumnIndex = address2(neighborPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenActivations[neighborColumnIndex * hiddenSize.z + hiddenCIs[neighborColumnIndex]] > activation) {
+                if (hiddenActivations[hiddenCIs[neighborColumnIndex] + hiddenSize.z * neighborColumnIndex] > activation) {
                     hiddenSuperWinners[hiddenColumnIndex] = false;
 
                     return;
