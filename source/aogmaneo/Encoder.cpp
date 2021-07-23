@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -127,12 +128,14 @@ void Encoder::learn(
 
                 if (hiddenSuperWinners[neighborColumnIndex]) {
                     float dist = min(abs(dx), abs(dy));
-                    float subStrength = 1.0f - static_cast<float>(dist) / static_cast<float>(learnRadius + 1);
+                    float subStrength = 1.0f - dist / static_cast<float>(learnRadius + 1);
 
-                    superStrength = max(superStrength, dist);
+                    superStrength = max(superStrength, subStrength);
                 }
             }
         }
+
+    std::cout << superStrength << std::endl;
 
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hiddenCIs[hiddenColumnIndex] + dhc;
