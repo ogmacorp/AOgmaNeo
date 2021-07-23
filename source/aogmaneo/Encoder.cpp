@@ -116,7 +116,7 @@ void Encoder::learn(
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     // Find strength
-    float strength = 1.0f;
+    float strength = 0.0f;
 
     for (int dx = -learnRadius; dx <= learnRadius; dx++)
         for (int dy = -learnRadius; dy <= learnRadius; dy++) {
@@ -129,7 +129,7 @@ void Encoder::learn(
                     float dist = min(abs(dx), abs(dy));
                     float subStrength = 1.0f - static_cast<float>(dist) / static_cast<float>(learnRadius + 1);
 
-                    strength = min(strength, dist);
+                    strength = max(strength, dist);
                 }
             }
         }
