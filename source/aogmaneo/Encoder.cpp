@@ -62,11 +62,6 @@ void Encoder::forward(
                             vl.weights[wi] += delta * ((vc == inCIPrev) - vl.weights[wi]);
                         }
                     }
-                    else {
-                        int wi = inCIPrev + wiStart;
-
-                        vl.weights[wi] += delta * vl.weights[wi];
-                    }
                 }
         }
     }
