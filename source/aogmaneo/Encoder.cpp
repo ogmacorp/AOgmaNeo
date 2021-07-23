@@ -177,7 +177,7 @@ void Encoder::learn(
 
                     float delta = inValue - vl.protos[wi] * halfByteInv;
 
-                    vl.protos[wi] = min(127, max(-127, roundftoi(vl.protos[wi] + hiddenRates[hiddenCellIndex] * 127.0f * delta)));
+                    vl.protos[wi] = min(127, max(-127, roundftoi(vl.protos[wi] + strength * 127.0f * delta)));
                 }
         }
 
