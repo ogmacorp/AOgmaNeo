@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -134,8 +133,6 @@ void Encoder::learn(
                 }
             }
         }
-
-    std::cout << superStrength << std::endl;
 
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hiddenCIs[hiddenColumnIndex] + dhc;
