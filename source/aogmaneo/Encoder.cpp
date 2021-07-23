@@ -22,7 +22,7 @@ void Encoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = tanh((*hiddenErrors)[hiddenColumnIndex]);
+        float delta = lr * tanh((*hiddenErrors)[hiddenColumnIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -59,13 +59,13 @@ void Encoder::forward(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = vc + wiStart;
 
-                            vl.weights[wi] += hlr * delta * ((vc == inCIPrev) - vl.weights[wi]);
+                            vl.weights[wi] += delta * ((vc == inCIPrev) - vl.weights[wi]);
                         }
                     }
 
                     int wi = inCIPrev + wiStart;
 
-                    vl.weights[wi] += elr * delta;
+                    vl.weights[wi] += delta;
                 }
         }
     }
@@ -190,7 +190,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -218,8 +218,7 @@ void Encoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&hlr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&elr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -247,8 +246,7 @@ void Encoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&hlr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&elr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
