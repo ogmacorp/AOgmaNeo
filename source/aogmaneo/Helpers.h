@@ -12,6 +12,9 @@
 #include "Array.h"
 
 namespace aon {
+const float halfByteInv = 1.0f / 127.0f;
+const float byteInv = 1.0f / 255.0f;
+
 const int expIters = 10;
 const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
 
@@ -146,6 +149,7 @@ typedef Vec4<float> Float4;
 typedef unsigned char Byte;
 typedef signed char SByte;
 typedef Array<Byte> ByteBuffer;
+typedef Array<SByte> SByteBuffer;
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
 
