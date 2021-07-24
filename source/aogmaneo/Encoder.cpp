@@ -201,7 +201,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - rand() % 8;
+            vl.weights[i] = rand() % 127;
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
