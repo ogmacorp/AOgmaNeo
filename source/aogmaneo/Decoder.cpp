@@ -77,7 +77,7 @@ void Decoder::forward(
             maxIndex = hc;
         }
 
-        hiddenActivations[hiddenCellIndex] = min(1.0f, max(0.0f, hiddenActivations[hiddenCellIndex] * halfByteInv * scale));
+        hiddenActivations[hiddenCellIndex] = sigmoid(hiddenActivations[hiddenCellIndex] * halfByteInv * scale);
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
