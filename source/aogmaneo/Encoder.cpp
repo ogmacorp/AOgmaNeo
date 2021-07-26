@@ -135,7 +135,7 @@ void Encoder::learn(
 
         sum /= max(1, count);
 
-        vl.reconstruction[visibleCellIndex] = sum * halfByteInv;
+        vl.reconstruction[visibleCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -147,7 +147,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            SByte delta = min(127, max(-127, roundftoi(lr * 127.0f * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex] * scale)))));
+            int delta = min(127, max(-127, roundftoi(lr * 127.0f * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex] * halfByteInv * scale)))));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -166,7 +166,7 @@ void Encoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
+                        vl.weights[wi] = min(127, max(-127, static_cast<int>(vl.weights[wi]) + delta));
                     }
                 }
         }
