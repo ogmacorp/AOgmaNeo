@@ -91,6 +91,9 @@ void Decoder::learn(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
+
+    if (targetCI == hiddenCIs[hiddenColumnIndex])
+        return;
             
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
