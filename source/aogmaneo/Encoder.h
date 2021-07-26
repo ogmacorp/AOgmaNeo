@@ -70,7 +70,7 @@ public:
 
     Encoder()
     :
-    lr(0.02f),
+    lr(0.01f),
     scale(16.0f)
     {}
 
