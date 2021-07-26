@@ -147,7 +147,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            int delta = min(127, max(-127, roundftoi(lr * 127.0f * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex] * halfByteInv * scale)))));
+            int delta = min(127, max(-127, roundftoi(lr * 127.0f * ((vc == targetCI) - expf(vl.reconstruction[visibleCellIndex] * halfByteInv * scale)))));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
