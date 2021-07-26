@@ -32,8 +32,6 @@ public:
     struct VisibleLayer {
         SByteBuffer weights;
 
-        FloatBuffer reconstruction;
-
         float importance;
 
         VisibleLayer()
@@ -71,7 +69,7 @@ public:
     Encoder()
     :
     lr(0.01f),
-    scale(16.0f)
+    scale(2.0f)
     {}
 
     // Create a sparse coding layer with random initialization
