@@ -51,6 +51,7 @@ private:
     IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
+    FloatBuffer hiddenActivations;
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
