@@ -38,6 +38,7 @@ public:
     struct HistorySample {
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
+        FloatBuffer hiddenValuesPrev;
 
         float reward;
     };
@@ -71,6 +72,7 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
+        const FloatBuffer* hiddenValuesPrev,
         float q,
         float g,
         bool mimic
@@ -86,8 +88,8 @@ public:
     // Defaults
     Actor()
     :
-    vlr(0.01f),
-    alr(0.01f),
+    vlr(0.02f),
+    alr(0.1f),
     discount(0.99f),
     minSteps(16),
     historyIters(16)
