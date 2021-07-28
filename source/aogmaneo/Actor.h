@@ -88,8 +88,8 @@ public:
     // Defaults
     Actor()
     :
-    vlr(0.02f),
-    alr(0.1f),
+    vlr(0.01f),
+    alr(0.01f),
     discount(0.99f),
     minSteps(16),
     historyIters(16)

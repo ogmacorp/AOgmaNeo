@@ -206,7 +206,7 @@ void Decoder::initRandom(
 }
 
 void Decoder::activate(
-    const Array<const IntBuffer*> &inputCIs // Hidden/output/prediction size
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
