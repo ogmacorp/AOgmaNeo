@@ -147,7 +147,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            int delta = roundftoi(lr * 127.0f * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex] * halfByteInv * scale)));
+            int delta = roundftoi(lr * 127.0f * ((vc == targetCI) - 1.0f - expf(vl.reconstruction[visibleCellIndex] * halfByteInv * scale)));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -201,7 +201,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 8;
+            vl.weights[i] = -rand() % 8;
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
