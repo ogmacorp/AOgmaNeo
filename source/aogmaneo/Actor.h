@@ -31,7 +31,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        SByteBuffer actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
@@ -79,6 +79,7 @@ private:
 public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
+    float scale; // Action scale
     float discount; // Discount factor
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
@@ -88,6 +89,7 @@ public:
     :
     vlr(0.01f),
     alr(0.01f),
+    scale(8.0f),
     discount(0.99f),
     minSteps(16),
     historyIters(16)
