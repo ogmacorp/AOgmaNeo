@@ -14,15 +14,14 @@ void Encoder::forward(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs,
     const FloatBuffer* hiddenErrors,
-    bool learnEnabled,
-    unsigned int* state
+    bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
     
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = lr * tanh((*hiddenErrors)[hiddenColumnIndex]);
+        float delta = lr * (*hiddenErrors)[hiddenColumnIndex];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -53,15 +52,9 @@ void Encoder::forward(
 
                     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    if (delta > 0.0f) {
-                        for (int vc = 0; vc < vld.size.z; vc++) {
-                            int wi = vc + wiStart;
-
-                            vl.weights[wi] += delta * ((vc == inCIPrev) - vl.weights[wi]);
-                        }
-                    }
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * (delta > 0.0f ? 1.0f - vl.weights[wi] : vl.weights[wi])));
                 }
         }
     }
@@ -114,8 +107,6 @@ void Encoder::forward(
             sum += subSum;
         }
 
-        sum /= visibleLayers.size();
-
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
@@ -153,7 +144,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.99f, 1.0f);
+            vl.weights[i] = randf(0.0f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -168,14 +159,9 @@ void Encoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    unsigned int baseState = rand();
-    
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned int state = baseState + i * 12345;
-
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenErrors, learnEnabled, &state);
-    }
+    for (int i = 0; i < numHiddenColumns; i++)
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, hiddenErrors, learnEnabled);
 
     // Update prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {

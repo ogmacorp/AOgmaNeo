@@ -50,8 +50,7 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         const FloatBuffer* hiddenErrors,
-        bool learnEnabled,
-        unsigned int* state
+        bool learnEnabled
     );
 
 public:
@@ -59,7 +58,7 @@ public:
 
     Encoder()
     :
-    lr(0.001f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
