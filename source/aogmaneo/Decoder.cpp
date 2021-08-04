@@ -77,7 +77,7 @@ void Decoder::forward(
             maxIndex = hc;
         }
 
-        hiddenActivations[hiddenCellIndex] = min(1.0f, max(0.0f, hiddenActivations[hiddenCellIndex] * halfByteInv * scale));
+        hiddenActivations[hiddenCellIndex] = sigmoid(hiddenActivations[hiddenCellIndex] * halfByteInv * scale);
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -91,7 +91,7 @@ void Decoder::learn(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
-            
+
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -159,7 +159,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = -rand() % 8;
+            vl.weights[i] = rand() % 8 - 4;
 
         vl.inputCIsPrev = ByteBuffer(numVisibleColumns, 0);
     }
@@ -167,7 +167,7 @@ void Decoder::initRandom(
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
-    hiddenCIs = ByteBuffer(numHiddenColumns, hiddenSize.z / 2);
+    hiddenCIs = ByteBuffer(numHiddenColumns, 0);
 }
 
 // Activate the predictor (predict values)
@@ -208,7 +208,7 @@ int Decoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(SByte) + vl.inputCIsPrev.size() * sizeof(Byte);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte) + vl.inputCIsPrev.size() * sizeof(Byte);
     }
 
     return size;

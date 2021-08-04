@@ -53,16 +53,14 @@ void Encoder::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                float inValue = static_cast<float>((*inputCIs[vli])[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f;
+                int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = hc + hiddenCellsStart;
 
-                    int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float delta = inValue - vl.protos[wi] * halfByteInv;
-
-                    hiddenActivations[hiddenCellIndex] -= delta * delta * scale;
+                    hiddenActivations[hiddenCellIndex] += vl.weights[wi] * scale;
                 }
             }
     }
@@ -144,6 +142,8 @@ void Encoder::learn(
 
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
+        float strength = (dhc == 0 ? 1.0f : 0.5f) * (hiddenSuperWinners[hiddenColumnIndex] ? 1.0f : 0.5f) * hiddenRates[hiddenCellIndex];
+
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -171,17 +171,19 @@ void Encoder::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    float inValue = static_cast<float>((*inputCIs[vli])[visibleColumnIndex]) / static_cast<float>(vld.size.z - 1) * 2.0f - 1.0f;
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float delta = inValue - vl.protos[wi] * halfByteInv;
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wiStart;
 
-                    vl.protos[wi] = min(127, max(-127, roundftoi(vl.protos[wi] + hiddenRates[hiddenCellIndex] * 127.0f * delta)));
+                        vl.weights[wi] = min(255, max(0, roundftoi(vl.weights[wi] + strength * ((vc == inCI) * 255.0f - vl.weights[wi]))));
+                    }
                 }
         }
 
-        hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex];
+        hiddenRates[hiddenCellIndex] -= lr * strength;
     }
 }
 
@@ -209,11 +211,11 @@ void Encoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.protos.resize(numHiddenCells * area);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         // Initialize to random values
-        for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = rand() % 8 - 4;
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = rand() % 256;
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
@@ -252,7 +254,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(SByte);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte);
     }
 
     return size;
@@ -283,7 +285,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(SByte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
     }
 }
 
@@ -325,9 +327,9 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.protos.resize(numHiddenCells * area);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(SByte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
     }
 }
 
