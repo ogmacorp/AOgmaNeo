@@ -77,7 +77,7 @@ void Decoder::forward(
             maxIndex = hc;
         }
 
-        hiddenActivations[hiddenCellIndex] = min(1.0f, max(-1.0f, hiddenActivations[hiddenCellIndex] * halfByteInv * scale));
+        hiddenActivations[hiddenCellIndex] = sigmoid(hiddenActivations[hiddenCellIndex] * halfByteInv * scale);
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -126,7 +126,7 @@ void Decoder::learn(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights[wi] = min(127, max(-127, roundftoi(vl.weights[wi] + lr * 127.0f * ((hc == targetCI) * 2.0f - 1.0f - hiddenActivations[hiddenCellIndex]))));
+                    vl.weights[wi] = min(127, max(-127, roundftoi(vl.weights[wi] + lr * 127.0f * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]))));
                 }
             }
     }
