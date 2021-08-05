@@ -82,8 +82,8 @@ public:
     :
     lr(0.01f),
     discount(0.99f),
-    qSteps(8),
-    historyIters(16)
+    qSteps(3),
+    historyIters(8)
     {}
 
     // Initialized randomly
