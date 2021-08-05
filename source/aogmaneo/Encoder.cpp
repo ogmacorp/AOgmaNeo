@@ -75,6 +75,8 @@ void Encoder::forward(
             maxActivation = hiddenActivations[hiddenCellIndex];
             maxIndex = hc;
         }
+
+        hiddenActivations[hiddenCellIndex] *= byteInv;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -142,8 +144,6 @@ void Encoder::learn(
 
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float strength = (dhc == 0 ? 1.0f : 0.5f) * (hiddenSuperWinners[hiddenColumnIndex] ? 1.0f : 0.5f) * hiddenRates[hiddenCellIndex];
-
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -178,12 +178,12 @@ void Encoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] = min(255, max(0, roundftoi(vl.weights[wi] + strength * ((vc == inCI) * 255.0f - vl.weights[wi]))));
+                        vl.weights[wi] = min(255, max(0, roundftoi(vl.weights[wi] + hiddenRates[hiddenCellIndex] * hiddenActivations[hiddenCellIndex] * ((vc == inCI) * 255.0f - hiddenActivations[hiddenCellIndex] * vl.weights[wi]))));
                     }
                 }
         }
 
-        hiddenRates[hiddenCellIndex] -= lr * strength;
+        hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex];
     }
 }
 
