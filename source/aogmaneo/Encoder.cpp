@@ -71,7 +71,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] = tanh(hiddenActivations[hiddenCellIndex] * byteInv);
+        hiddenActivations[hiddenCellIndex] *= byteInv;
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
@@ -215,7 +215,7 @@ void Encoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 8;
+            vl.weights[i] = rand() % 256;
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
