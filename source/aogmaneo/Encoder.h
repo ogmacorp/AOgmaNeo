@@ -77,7 +77,7 @@ public:
     Encoder()
     :
     neighborRadius(2),
-    lr(0.05f)
+    lr(0.03f)
     {}
 
     // Create a sparse coding layer with random initialization
