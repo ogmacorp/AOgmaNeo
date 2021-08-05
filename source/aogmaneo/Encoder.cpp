@@ -71,12 +71,12 @@ void Encoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
+        hiddenActivations[hiddenCellIndex] = tanh(hiddenActivations[hiddenCellIndex] * byteInv);
+
         if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
             maxIndex = hc;
         }
-
-        hiddenActivations[hiddenCellIndex] *= byteInv;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
