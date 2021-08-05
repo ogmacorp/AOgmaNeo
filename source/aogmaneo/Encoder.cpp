@@ -223,7 +223,7 @@ void Encoder::initRandom(
 
     hiddenCIs = ByteBuffer(numHiddenColumns, hiddenSize.z / 2);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.1f);
 }
 
 void Encoder::step(
