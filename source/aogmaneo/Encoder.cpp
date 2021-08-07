@@ -18,7 +18,7 @@ void Encoder::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
     
-    if (learnEnabled) {
+    if (learnEnabled && (*hiddenErrors)[hiddenColumnIndex] > 0.0f) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
         float delta = lr * tanh((*hiddenErrors)[hiddenColumnIndex]);
@@ -54,15 +54,11 @@ void Encoder::forward(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    if (delta > 0.0f) {
-                        for (int vc = 0; vc < vld.size.z; vc++) {
-                            int wi = vc + wiStart;
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wiStart;
 
-                            vl.weights[wi] += delta * ((vc == inCIPrev) - vl.weights[wi]);
-                        }
+                        vl.weights[wi] += delta * ((vc == inCIPrev) - vl.weights[wi]);
                     }
-
-                    vl.weights[inCIPrev + wiStart] += delta;
                 }
         }
     }
@@ -152,7 +148,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
