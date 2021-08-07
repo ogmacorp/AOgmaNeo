@@ -21,7 +21,7 @@ void Encoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = lr * (*hiddenErrors)[hiddenColumnIndex];
+        float delta = lr * tanh((*hiddenErrors)[hiddenColumnIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -52,9 +52,17 @@ void Encoder::forward(
 
                     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    vl.weights[wi] += delta;
+                    if (delta > 0.0f) {
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wiStart;
+
+                            vl.weights[wi] += delta * ((vc == inCIPrev) - vl.weights[wi]);
+                        }
+                    }
+
+                    vl.weights[inCIPrev + wiStart] += delta;
                 }
         }
     }
@@ -104,7 +112,7 @@ void Encoder::forward(
 
             subSum /= max(1, subCount);
 
-            sum += subSum;
+            sum += subSum * vl.importance;
         }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -177,7 +185,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
@@ -217,6 +225,8 @@ void Encoder::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+
+        writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
@@ -260,6 +270,8 @@ void Encoder::read(
         vl.inputCIsPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+
+        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 
@@ -286,4 +298,3 @@ void Encoder::readState(
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
 }
-

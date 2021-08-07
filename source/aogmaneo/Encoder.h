@@ -33,6 +33,13 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev;
+
+        float importance;
+
+        VisibleLayer()
+        :
+        importance(1.0f)
+        {}
     };
 
 private:
@@ -58,7 +65,7 @@ public:
 
     Encoder()
     :
-    lr(0.0001f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -96,6 +103,13 @@ public:
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
+    }
+
+    // Get a visible layer
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
     }
 
     // Get a visible layer
