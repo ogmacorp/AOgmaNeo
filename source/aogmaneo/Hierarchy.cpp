@@ -210,9 +210,11 @@ void Hierarchy::step(
             errors[l].fill(0.0f);
 
             // Accumulate
+            float scale = 1.0f / (dLayers[l].size() * dLayers[l][0].size());
+
             for (int i = 0; i < dLayers[l].size(); i++) {
                 for (int t = 0; t < dLayers[l][i].size(); t++)
-                    dLayers[l][i][t].generateErrors(&histories[l][i][t], &errors[l], 0);
+                    dLayers[l][i][t].generateErrors(&histories[l][i][t], &errors[l], 0, scale);
             }
 
             Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());

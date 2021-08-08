@@ -21,7 +21,7 @@ void Encoder::forward(
     if (learnEnabled && (*hiddenErrors)[hiddenColumnIndex] > 0.0f) {
         int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
 
-        float delta = lr * tanh((*hiddenErrors)[hiddenColumnIndex]);
+        float delta = lr * min(1.0f, (*hiddenErrors)[hiddenColumnIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];

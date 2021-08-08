@@ -153,7 +153,8 @@ void Decoder::generateErrors(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs,
     FloatBuffer* visibleErrors,
-    int vli
+    int vli,
+    float scale
 ) {
     VisibleLayer &vl = visibleLayers[vli];
     VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -210,7 +211,7 @@ void Decoder::generateErrors(
             }
         }
 
-    (*visibleErrors)[visibleColumnIndex] += sum / max(1, count);
+    (*visibleErrors)[visibleColumnIndex] += sum / max(1, count) * scale;
 }
 
 void Decoder::initRandom(
@@ -285,7 +286,8 @@ void Decoder::learn(
 void Decoder::generateErrors(
     const IntBuffer* hiddenTargetCIs,
     FloatBuffer* visibleErrors,
-    int vli
+    int vli,
+    float scale
 ) {
     const VisibleLayer &vl = visibleLayers[vli];
     const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -294,7 +296,7 @@ void Decoder::generateErrors(
 
     #pragma omp parallel for
     for (int i = 0; i < numVisibleColumns; i++)
-        generateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli);
+        generateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli, scale);
 }
 
 int Decoder::size() const {

@@ -62,7 +62,8 @@ private:
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
-        int vli
+        int vli,
+        float scale
     ); 
 
 public:
@@ -93,7 +94,8 @@ public:
     void generateErrors(
         const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
-        int vli
+        int vli,
+        float scale
     );
 
     // Serialization
