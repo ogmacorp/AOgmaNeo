@@ -70,8 +70,8 @@ public:
 
     Encoder()
     :
-    lr(0.05f),
-    scale(2.0f)
+    lr(0.03f),
+    scale(8.0f)
     {}
 
     // Create a sparse coding layer with random initialization
