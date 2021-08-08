@@ -88,7 +88,7 @@ void Decoder::forward(
 
         sum /= max(1, count);
 
-        hiddenActivations[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
+        hiddenActivations[hiddenCellIndex] = min(1.0f, max(-1.0f, sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -110,7 +110,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        float delta = lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        float delta = lr * ((hc == targetCI) * 2.0f - 1.0f - hiddenActivations[hiddenCellIndex]);
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
