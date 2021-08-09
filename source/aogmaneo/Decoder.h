@@ -64,7 +64,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.5f)
+    lr(0.4f)
     {}
 
     // Create with random initialization
