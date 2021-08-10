@@ -210,7 +210,7 @@ void Encoder::reconstruct(
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = min(1.0f, max(-1.0f, vl.reconstruction[visibleColumnIndex] - sum / max(0.0001f, total)));
+    vl.reconstruction[visibleColumnIndex] = min(2.0f, max(-2.0f, vl.reconstruction[visibleColumnIndex] - sum / max(0.0001f, total)));
 }
 
 void Encoder::initRandom(
