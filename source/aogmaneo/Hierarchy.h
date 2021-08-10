@@ -156,6 +156,32 @@ public:
         return eLayers.size();
     }
 
+    void setImportance(
+        int i,
+        float importance
+    ) {
+        eLayers[0].getVisibleLayer(i).importance = importance;
+    }
+
+    float getImportance(
+        int i
+    ) const {
+        return eLayers[0].getVisibleLayer(i).importance;
+    }
+
+    void setRecurrence(
+        int l,
+        float recurrence
+    ) {
+        eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance = recurrence;
+    }
+
+    float getRecurrence(
+        int l
+    ) const {
+        return eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance;
+    }
+
     // Retrieve predictions
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
