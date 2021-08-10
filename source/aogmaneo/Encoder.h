@@ -66,10 +66,12 @@ private:
 
 public:
     int lr; // Learning rate
+    int margin;
 
     Encoder()
     :
-    lr(2)
+    lr(2),
+    margin(8)
     {}
 
     // Create a sparse coding layer with random initialization
