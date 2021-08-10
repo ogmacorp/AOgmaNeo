@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -143,6 +144,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
+            std::cout << sigmoid(static_cast<float>(vl.reconstruction[visibleCellIndex]) * halfByteInv * margin) << std::endl;
             int delta = roundftoi(lr * 127.0f * ((vc == targetCI) - sigmoid(static_cast<float>(vl.reconstruction[visibleCellIndex]) * halfByteInv * margin)));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
