@@ -146,7 +146,7 @@ void Encoder::learn(
             int delta = 0;
 
             if (vc == targetCI)
-                delta = (vl.reconstruction[visibleCellIndex] < margin);    
+                delta = (vl.reconstruction[visibleCellIndex] <= margin);    
             else
                 delta = -(vl.reconstruction[visibleCellIndex] > -margin);
 
