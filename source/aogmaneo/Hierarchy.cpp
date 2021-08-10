@@ -141,6 +141,9 @@ void Hierarchy::initRandom(
         errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
 
         hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
+
+        // Default recurrences
+        setRecurrence(l, 0.5f);
     }
 }
 
