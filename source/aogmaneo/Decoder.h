@@ -65,7 +65,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.2f),
+    lr(0.1f),
     margin(1.0f)
     {}
 
