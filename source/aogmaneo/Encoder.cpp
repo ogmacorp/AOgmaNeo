@@ -15,12 +15,13 @@ void Encoder::forward(
     const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
 
@@ -82,6 +83,7 @@ void Encoder::learn(
     int diam = vld.radius * 2 + 1;
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
+    int visibleCellsStart = visibleColumnIndex * vld.size.z;
 
     int targetCI = (*inputCIs)[visibleColumnIndex];
 
@@ -107,7 +109,7 @@ void Encoder::learn(
     float maxActivation = -999999.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
-        int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
+        int visibleCellIndex = vc + visibleCellsStart;
 
         int sum = 0;
 
@@ -139,7 +141,7 @@ void Encoder::learn(
 
     if (maxIndex != targetCI) {
         for (int vc = 0; vc < vld.size.z; vc++) {
-            int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
+            int visibleCellIndex = vc + visibleCellsStart;
 
             int delta = roundftoi(lr * ((vc == targetCI) - vl.reconstruction[visibleCellIndex]));
       

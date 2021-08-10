@@ -52,10 +52,13 @@ void Decoder::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
+                int outerStride = vld.size.z * diam * diam;
+                int wiBase = inCI + vld.size.z * (offset.y + diam * offset.x);
+
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = hc + hiddenCellsStart;
 
-                    hiddenActivations[hiddenCellIndex] += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    hiddenActivations[hiddenCellIndex] += vl.weights[wiBase + hiddenCellIndex * outerStride];
                 }
             }
     }
@@ -115,10 +118,13 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
+                int outerStride = vld.size.z * diam * diam;
+                int wiBase = inCI + vld.size.z * (offset.y + diam * offset.x);
+
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = wiBase + hiddenCellIndex * outerStride;
 
                     vl.weights[wi] = min(127, max(-127, roundftoi(vl.weights[wi] + lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]))));
                 }
