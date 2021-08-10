@@ -69,7 +69,6 @@ void Hierarchy::initRandom(
             if (layerDescs[l].rRadius != -1) {
                 eVisibleLayerDescs[inputSizes.size()].size = layerDescs[l].hiddenSize;
                 eVisibleLayerDescs[inputSizes.size()].radius = layerDescs[l].rRadius;
-                eVisibleLayerDescs[inputSizes.size()].recurrent = true;
             }
             
             dLayers[l].resize(inputSizes.size());
@@ -117,7 +116,6 @@ void Hierarchy::initRandom(
             if (layerDescs[l].rRadius != -1) {
                 eVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
                 eVisibleLayerDescs[1].radius = layerDescs[l].rRadius;
-                eVisibleLayerDescs[1].recurrent = true;
             }
 
             dLayers[l].resize(1);
@@ -138,7 +136,7 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+        eLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].numPriorities, eVisibleLayerDescs);
 
         errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
 
@@ -158,14 +156,6 @@ void Hierarchy::step(
         // Clear hidden errors
         errors[l].fill(0.0f);
 
-        // Accumulate
-        if (l == 0) {
-            for (int i = 0; i < dLayers[l].size(); i++)
-                dLayers[l][i].generateErrors(inputCIs[i], &errors[l], 0);
-        }
-        else
-            dLayers[l][0].generateErrors(&eLayers[l - 1].getHiddenCIs(), &errors[l], 0);
-
         if (l == 0) {
             if (eLayers[l].getNumVisibleLayers() > inputSizes.size()) {
                 Array<const IntBuffer*> layerInputCIs(inputSizes.size() + 1);
@@ -175,10 +165,10 @@ void Hierarchy::step(
 
                 layerInputCIs[inputSizes.size()] = &hiddenCIsPrev[l];
 
-                eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+                eLayers[l].step(layerInputCIs, learnEnabled);
             }
             else
-                eLayers[l].step(inputCIs, &errors[l], learnEnabled);
+                eLayers[l].step(inputCIs, learnEnabled);
         }
         else {
             if (eLayers[l].getNumVisibleLayers() > 1) {
@@ -187,14 +177,14 @@ void Hierarchy::step(
                 layerInputCIs[0] = &eLayers[l - 1].getHiddenCIs();
                 layerInputCIs[1] = &hiddenCIsPrev[l];
 
-                eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+                eLayers[l].step(layerInputCIs, learnEnabled);
             }
             else {
                 Array<const IntBuffer*> layerInputCIs(1);
 
                 layerInputCIs[0] = &eLayers[l - 1].getHiddenCIs();
 
-                eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+                eLayers[l].step(layerInputCIs, learnEnabled);
             }
         }
 
@@ -247,7 +237,7 @@ int Hierarchy::size() const {
     }
 
     for (int v = 0; v < aLayers.size(); v++) {
-        size += sizeof(unsigned char);
+        size += sizeof(Byte);
 
         if (aLayers[v] != nullptr)
             size += aLayers[v]->size();
@@ -301,9 +291,9 @@ void Hierarchy::write(
 
     // Actors
     for (int v = 0; v < aLayers.size(); v++) {
-        unsigned char exists = aLayers[v] != nullptr;
+        Byte exists = aLayers[v] != nullptr;
 
-        writer.write(reinterpret_cast<const void*>(&exists), sizeof(unsigned char));
+        writer.write(reinterpret_cast<const void*>(&exists), sizeof(Byte));
 
         if (exists)
             aLayers[v]->write(writer);
@@ -351,9 +341,9 @@ void Hierarchy::read(
     aLayers.resize(inputSizes.size());
 
     for (int v = 0; v < aLayers.size(); v++) {
-        unsigned char exists;
+        Byte exists;
 
-        reader.read(reinterpret_cast<void*>(&exists), sizeof(unsigned char));
+        reader.read(reinterpret_cast<void*>(&exists), sizeof(Byte));
 
         if (exists) {
             aLayers[v].make();

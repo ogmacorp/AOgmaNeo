@@ -146,6 +146,7 @@ typedef Vec4<float> Float4;
 typedef unsigned char Byte;
 typedef signed char SByte;
 typedef Array<Byte> ByteBuffer;
+typedef Array<SByte> SByteBuffer;
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
 
