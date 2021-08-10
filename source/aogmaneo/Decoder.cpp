@@ -64,7 +64,7 @@ void Decoder::forward(
     }
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -73,8 +73,6 @@ void Decoder::forward(
             maxActivation = hiddenActivations[hiddenCellIndex];
             maxIndex = hc;
         }
-
-        hiddenActivations[hiddenCellIndex] = (hiddenActivations[hiddenCellIndex] > 0);
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -126,7 +124,14 @@ void Decoder::learn(
 
                     int wi = wiBase + hiddenCellIndex * outerStride;
 
-                    vl.weights[wi] = min(127, max(-127, roundftoi(vl.weights[wi] + lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]))));
+                    int delta = 0;
+
+                    if (hc == targetCI)
+                        delta = (hiddenActivations[hiddenCellIndex] <= margin);    
+                    else
+                        delta = -(hiddenActivations[hiddenCellIndex] > -margin);
+
+                    vl.weights[wi] = min(127, max(-127, roundftoi(vl.weights[wi] + lr * delta)));
                 }
             }
     }
@@ -159,7 +164,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 8 - 4;
+            vl.weights[i] = rand() % 9 - 4;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -202,7 +207,7 @@ void Decoder::learn(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -215,7 +220,7 @@ int Decoder::size() const {
 }
 
 int Decoder::stateSize() const {
-    int size = hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(float);
+    int size = hiddenCIs.size() * sizeof(int) + hiddenActivations.size() * sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -232,6 +237,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&margin), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(int));
@@ -261,6 +267,7 @@ void Decoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&margin), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenActivations.resize(numHiddenCells);
@@ -300,7 +307,7 @@ void Decoder::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(int));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -313,7 +320,7 @@ void Decoder::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(int));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];

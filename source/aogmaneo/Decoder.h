@@ -60,11 +60,13 @@ private:
 
 public:
     int lr; // Learning rate
+    int margin;
 
     // Defaults
     Decoder()
     :
-    lr(3)
+    lr(1),
+    margin(16)
     {}
 
     // Create with random initialization
