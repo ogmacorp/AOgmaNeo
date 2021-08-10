@@ -141,7 +141,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            int delta = roundftoi(lr * 127.0f * ((vc == targetCI) - vl.reconstruction[visibleCellIndex]));
+            int delta = roundftoi(lr * ((vc == targetCI) - vl.reconstruction[visibleCellIndex]));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -197,7 +197,7 @@ void Encoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 8;
 
-        vl.reconstruction = ByteBuffer(numVisibleCells, 0);
+        vl.reconstruction = SByteBuffer(numVisibleCells, 0);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -247,7 +247,7 @@ void Encoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&lr), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -275,7 +275,7 @@ void Encoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&lr), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
 
@@ -304,7 +304,7 @@ void Encoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(SByte));
 
-        vl.reconstruction = ByteBuffer(numVisibleCells, 0);
+        vl.reconstruction = SByteBuffer(numVisibleCells, 0);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
