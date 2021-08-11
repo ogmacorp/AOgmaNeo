@@ -67,6 +67,7 @@ void Hierarchy::initRandom(
             if (layerDescs[l].rRadius != -1) {
                 eVisibleLayerDescs[inputSizes.size()].size = layerDescs[l].hiddenSize;
                 eVisibleLayerDescs[inputSizes.size()].radius = layerDescs[l].rRadius;
+                eVisibleLayerDescs[inputSizes.size()].recurrent = true;
             }
             
             dLayers[l].resize(inputSizes.size());
@@ -114,6 +115,7 @@ void Hierarchy::initRandom(
             if (layerDescs[l].rRadius != -1) {
                 eVisibleLayerDescs[1].size = layerDescs[l].hiddenSize;
                 eVisibleLayerDescs[1].radius = layerDescs[l].rRadius;
+                eVisibleLayerDescs[1].recurrent = true;
             }
 
             dLayers[l].resize(1);
