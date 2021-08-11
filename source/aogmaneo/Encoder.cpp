@@ -52,9 +52,6 @@ void Encoder::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    if (vld.recurrent && visibleColumnIndex == hiddenColumnIndex)
-                        continue;
-
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
@@ -150,7 +147,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
 
-            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
+            float delta = lr * ((vc == targetCI) * 2.0f - 1.0f - min(1.0f, max(-1.0f, vl.reconstruction[visibleCellIndex])));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
