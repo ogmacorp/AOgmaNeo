@@ -18,7 +18,6 @@ const Hierarchy &Hierarchy::operator=(
     dLayers = other.dLayers;
 
     inputSizes = other.inputSizes;
-    errors = other.errors;
     hiddenCIsPrev = other.hiddenCIsPrev;
 
     aLayers.resize(inputSizes.size());
@@ -43,7 +42,6 @@ void Hierarchy::initRandom(
     // Create layers
     eLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
-    errors.resize(layerDescs.size());
     hiddenCIsPrev.resize(layerDescs.size());
 
     // Cache input sizes
@@ -138,8 +136,6 @@ void Hierarchy::initRandom(
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
-        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
-
         hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
     }
 }
@@ -153,9 +149,6 @@ void Hierarchy::step(
 ) {
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
-        // Clear hidden errors
-        errors[l].fill(0.0f);
-
         if (l == 0) {
             if (eLayers[l].getNumVisibleLayers() > inputSizes.size()) {
                 Array<const IntBuffer*> layerInputCIs(inputSizes.size() + 1);
@@ -318,7 +311,6 @@ void Hierarchy::read(
     eLayers.resize(numLayers);
     dLayers.resize(numLayers);
 
-    errors.resize(numLayers);
     hiddenCIsPrev.resize(numLayers);
     
     for (int l = 0; l < numLayers; l++) {
@@ -329,8 +321,6 @@ void Hierarchy::read(
         // Decoders
         for (int i = 0; i < dLayers[l].size(); i++)
             dLayers[l][i].read(reader);
-
-        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
 
         hiddenCIsPrev[l].resize(eLayers[l].getHiddenCIs().size());
 
