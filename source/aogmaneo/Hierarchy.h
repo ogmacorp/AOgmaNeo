@@ -95,7 +95,6 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Ptr<Actor>> aLayers;
-    Array<FloatBuffer> errors;
     Array<IntBuffer> hiddenCIsPrev;
 
     // Input dimensions

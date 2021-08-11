@@ -163,7 +163,7 @@ void Encoder::reconstruct(
         static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
 
     Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
                 
     Int2 hiddenCenter = project(columnPos, vToH);
 
@@ -298,7 +298,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
