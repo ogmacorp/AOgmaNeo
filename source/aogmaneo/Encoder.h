@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        FloatBuffer protos;
 
         FloatBuffer reconstruction;
 
@@ -44,40 +44,55 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    int numPriorities;
 
-    IntBuffer hiddenCIs;
+    FloatBuffer hiddenSums;
+    IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenPriorities;
+
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-    
+
     // --- Kernels ---
     
-    void forward(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void learn(
+    void resetReconstruction(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
         int vli
     );
+    
+    void forward(
+        const Int2 &columnPos,
+        int priority,
+        bool learnEnabled
+    );
+
+    void reconstruct(
+        const Int2 &columnPos,
+        int vli,
+        int priority
+    );
 
 public:
-    float lr; // Learning rate
+    float lr;
 
+    // Defaults
     Encoder()
     :
-    lr(0.1f)
+    lr(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        int numPriorities, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
+    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
@@ -140,4 +155,3 @@ public:
     }
 };
 } // namespace aon
-
