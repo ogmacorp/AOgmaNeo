@@ -99,15 +99,12 @@ void Encoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        for (int dhc = -1; dhc <= 1; dhc++) {
-            int hc = maxIndex + dhc;
-
-            if (hc < 0 || hc >= hiddenSize.z)
-                continue;
-
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float strength = hiddenRates[hiddenCellIndex];
+            float dist = maxIndex - hc;
+
+            float strength = expf(-dist * dist * falloff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -245,7 +242,7 @@ void Encoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = randf(-1.0f, 1.0f);
+            vl.protos[i] = randf(-0.01f, 0.01f);
 
         vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
@@ -300,7 +297,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -322,6 +319,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&numPriorities), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&falloff), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
@@ -351,6 +349,7 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenPriorities.resize(numHiddenColumns);
