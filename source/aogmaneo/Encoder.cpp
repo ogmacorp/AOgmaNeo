@@ -79,7 +79,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= delta * delta * scale;
+                    hiddenSums[hiddenCellIndex] -= abs(delta) * scale;
                 }
             }
     }
@@ -106,6 +106,8 @@ void Encoder::forward(
                 continue;
 
             int hiddenCellIndex = hc + hiddenCellsStart;
+
+            float strength = hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -137,11 +139,11 @@ void Encoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        vl.protos[wi] += hiddenRates[hiddenCellIndex] * (vl.reconstruction[visibleColumnIndex] - vl.protos[wi]);
+                        vl.protos[wi] += strength * (vl.reconstruction[visibleColumnIndex] - vl.protos[wi]);
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex];
+            hiddenRates[hiddenCellIndex] -= lr * strength;
         }
     }
 }
@@ -243,7 +245,7 @@ void Encoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = randf(-0.01f, 0.01f);
+            vl.protos[i] = randf(-1.0f, 1.0f);
 
         vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
