@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -104,16 +105,12 @@ void Encoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        hiddenRates[hiddenColumnIndex] = max(hiddenRates[hiddenColumnIndex], -maxActivation);
-
-        float rate = -maxActivation / max(0.0001f, hiddenRates[hiddenColumnIndex]);
-
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             float dist = maxIndex - hc;
 
-            float strength = lr * rate * expf(-dist * dist * falloff / max(0.0001f, rate));
+            float strength = expf(-dist * dist * falloff / max(0.0001f, hiddenRates[hiddenColumnIndex])) * hiddenRates[hiddenColumnIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -149,7 +146,14 @@ void Encoder::forward(
                     }
             }
         }
+
+        if (maxActivation > hiddenErrors[maxIndex + hiddenCellsStart])
+            hiddenRates[hiddenColumnIndex] *= 1.0f - lr;
+        else
+            hiddenRates[hiddenColumnIndex] = min(1.0f, hiddenRates[hiddenColumnIndex] * (1.0f + lr));
     }
+
+    hiddenErrors[maxIndex + hiddenCellsStart] = maxActivation;
 }
 
 void Encoder::reconstruct(
@@ -263,7 +267,8 @@ void Encoder::initRandom(
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
 
-    hiddenRates = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenRates = FloatBuffer(numHiddenColumns, 1.0f);
+    hiddenErrors = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void Encoder::step(
@@ -304,7 +309,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenErrors.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -316,7 +321,7 @@ int Encoder::size() const {
 }
 
 int Encoder::stateSize() const {
-    return hiddenCIs.size() * sizeof(int);
+    return hiddenCIs.size() * sizeof(int) + hiddenErrors.size() * sizeof(float);
 }
 
 void Encoder::write(
@@ -331,6 +336,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenErrors[0]), hiddenErrors.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
 
@@ -361,10 +367,12 @@ void Encoder::read(
     hiddenCIs.resize(numHiddenColumns);
     hiddenPriorities.resize(numHiddenColumns);
     hiddenRates.resize(numHiddenColumns);
+    hiddenErrors.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenErrors[0]), hiddenErrors.size() * sizeof(float));
 
     hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
 
@@ -398,10 +406,12 @@ void Encoder::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenErrors[0]), hiddenErrors.size() * sizeof(float));
 }
 
 void Encoder::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenErrors[0]), hiddenErrors.size() * sizeof(float));
 }
