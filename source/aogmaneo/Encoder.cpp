@@ -83,7 +83,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= abs(delta) * scale;
+                    hiddenSums[hiddenCellIndex] -= delta * delta * scale;
                 }
             }
     }
@@ -149,10 +149,6 @@ void Encoder::forward(
 
         if (maxActivation > hiddenErrors[maxIndex + hiddenCellsStart])
             hiddenRates[hiddenColumnIndex] *= 1.0f - lr;
-        else
-            hiddenRates[hiddenColumnIndex] = min(1.0f, hiddenRates[hiddenColumnIndex] * (1.0f + lr));
-
-        std::cout << hiddenRates[hiddenColumnIndex] << std::endl;
     }
 
     hiddenErrors[maxIndex + hiddenCellsStart] = maxActivation;
