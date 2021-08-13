@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -126,7 +126,8 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f // Reinforcement signal
+        float reward = 0.0f, // Reinforcement signal
+        bool mimic = false // Whether to treat Actors like Decoders
     );
 
     // Serialization
