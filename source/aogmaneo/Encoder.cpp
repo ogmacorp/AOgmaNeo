@@ -151,6 +151,8 @@ void Encoder::forward(
             hiddenRates[hiddenColumnIndex] *= 1.0f - lr;
         else
             hiddenRates[hiddenColumnIndex] = min(1.0f, hiddenRates[hiddenColumnIndex] * (1.0f + lr));
+
+        std::cout << hiddenRates[hiddenColumnIndex] << std::endl;
     }
 
     hiddenErrors[maxIndex + hiddenCellsStart] = maxActivation;
