@@ -83,7 +83,7 @@ public:
     lr(0.01f),
     discount(0.99f),
     qSteps(5),
-    historyIters(8)
+    historyIters(16)
     {}
 
     // Initialized randomly
