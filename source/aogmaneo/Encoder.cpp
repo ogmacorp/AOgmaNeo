@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -105,16 +104,16 @@ void Encoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        hiddenRates[hiddenColumnIndex] += -maxActivation;
+        hiddenRates[hiddenColumnIndex] = max(hiddenRates[hiddenColumnIndex], -maxActivation);
 
-        float rate = lr * -maxActivation / max(0.0001f, hiddenRates[hiddenColumnIndex]);
+        float rate = -maxActivation / max(0.0001f, hiddenRates[hiddenColumnIndex]);
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             float dist = maxIndex - hc;
 
-            float strength = rate * expf(-dist * dist * falloff / max(0.0001f, rate));
+            float strength = lr * rate * expf(-dist * dist * falloff / max(0.0001f, rate));
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
