@@ -82,7 +82,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= abs(delta) * scale;
+                    hiddenSums[hiddenCellIndex] -= delta * delta * scale;
                 }
             }
     }
@@ -104,12 +104,14 @@ void Encoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
+        int hiddenCellIndexMax = maxIndex + hiddenCellsStart;
+
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             float dist = maxIndex - hc;
 
-            float strength = expf(-dist * dist * falloff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float strength = expf(-dist * dist * falloff / max(0.0001f, hiddenRates[hiddenCellIndexMax])) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -214,7 +216,7 @@ void Encoder::reconstruct(
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = min(1.0f, max(-1.0f, vl.reconstruction[visibleColumnIndex] - sum / max(0.0001f, total)));
+    vl.reconstruction[visibleColumnIndex] -= sum / max(0.0001f, total);
 }
 
 void Encoder::initRandom(
@@ -261,7 +263,7 @@ void Encoder::initRandom(
     for (int i = 0; i < hiddenPriorities.size(); i++)
         hiddenPriorities[i] = rand() % numPriorities;
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void Encoder::step(
