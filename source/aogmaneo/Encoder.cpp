@@ -82,7 +82,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= delta * delta * scale;
+                    hiddenSums[hiddenCellIndex] -= abs(delta) * scale;
                 }
             }
     }
@@ -104,14 +104,12 @@ void Encoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        int hiddenCellIndexMax = maxIndex + hiddenCellsStart;
-
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             float dist = maxIndex - hc;
 
-            float strength = expf(-dist * dist * falloff / max(0.0001f, hiddenRates[hiddenCellIndexMax])) * hiddenRates[hiddenCellIndex];
+            float strength = expf(-dist * dist * falloff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
