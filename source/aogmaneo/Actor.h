@@ -88,10 +88,10 @@ public:
     Actor()
     :
     vlr(0.01f),
-    alr(0.05f),
+    alr(0.1f),
     discount(0.99f),
-    minSteps(16),
-    historyIters(16)
+    minSteps(8),
+    historyIters(8)
     {}
 
     // Initialized randomly
