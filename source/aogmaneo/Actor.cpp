@@ -155,50 +155,62 @@ void Actor::learn(
 
     int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
 
-    int hiddenCellIndexTarget = address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize);
+    float maxActivationPrev = -999999.0f;
+    float targetActivationPrev = 0.0f;
 
-    float sumPrev = 0.0f;
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+        float sumPrev = 0.0f;
 
-        int diam = vld.radius * 2 + 1;
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        // Projection
-        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+            int diam = vld.radius * 2 + 1;
 
-        Int2 visibleCenter = project(columnPos, hToV);
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+            Int2 visibleCenter = project(columnPos, hToV);
 
-        // Lower corner
-        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
-        // Bounds of receptive field, clamped to input size
-        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                int inCIPrev = (*inputCIsPrev[vli])[visibleColumnIndex];
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    int inCIPrev = (*inputCIsPrev[vli])[visibleColumnIndex];
 
-                int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                sumPrev += vl.weights[wi];
-            }
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    sumPrev += vl.weights[wi];
+                }
+        }
+
+        sumPrev /= max(1, count);
+
+        if (hc == targetCI)
+            targetActivationPrev = sumPrev;
+
+        maxActivationPrev = max(maxActivationPrev, sumPrev);
     }
 
-    sumPrev /= max(1, count);
+    int hiddenCellIndexTarget = address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize);
 
     float newValue = q + g * maxActivation;
 
-    float delta = lr * (newValue - sumPrev);
+    float delta = lr * (newValue - targetActivationPrev - actionGap * (maxActivationPrev - targetActivationPrev));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -343,7 +355,7 @@ void Actor::step(
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -392,6 +404,7 @@ void Actor::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&actionGap), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&qSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
@@ -442,6 +455,7 @@ void Actor::read(
     
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&actionGap), sizeof(float));
     reader.read(reinterpret_cast<void*>(&qSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 

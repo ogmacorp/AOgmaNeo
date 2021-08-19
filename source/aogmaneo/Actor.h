@@ -74,6 +74,7 @@ private:
 public:
     float lr; // Learning rate
     float discount;
+    float actionGap;
     int qSteps;
     int historyIters;
 
@@ -82,6 +83,7 @@ public:
     :
     lr(0.01f),
     discount(0.99f),
+    actionGap(0.1f),
     qSteps(5),
     historyIters(16)
     {}
