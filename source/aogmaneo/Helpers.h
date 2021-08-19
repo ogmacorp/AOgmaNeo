@@ -402,13 +402,13 @@ void quicksort(
     int low = 0,
     int high = -1
 ) {
-    if (high - low <= 1)
-        return;
-
     if (high == -1)
         high = arr.size() - 1;
     else
         high--;
+
+    if (high - low <= 1)
+        return;
 
     Array<int> stack(high - low + 1);
 
