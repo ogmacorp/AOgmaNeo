@@ -83,7 +83,7 @@ public:
     :
     lr(0.01f),
     discount(0.99f),
-    actionGap(0.3f),
+    actionGap(0.2f),
     qSteps(5),
     historyIters(16)
     {}
