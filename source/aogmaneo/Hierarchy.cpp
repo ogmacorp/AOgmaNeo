@@ -137,9 +137,6 @@ void Hierarchy::initRandom(
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
         hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
-
-        // Default recurrences
-        setRecurrence(l, 0.25f);
     }
 }
 
