@@ -159,7 +159,7 @@ void Encoder::learn(
 
                     int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+                    int hiddenCellIndex = hiddenColumnIndex * hiddenSize.z + hiddenCIs[hiddenColumnIndex];
 
                     Int2 visibleCenter = project(hiddenPos, hToV);
 
@@ -168,19 +168,39 @@ void Encoder::learn(
                     if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                         Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                        for (int dhc = -1; dhc <= 1; dhc++) {
-                            int hc = hiddenCIs[hiddenColumnIndex] + dhc;
-
-                            if (hc < 0 || hc >= hiddenSize.z)
-                                continue;
-
-                            int hiddenCellIndex = hc + hiddenCellsStart;
-
-                            vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
-                        }
+                        vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += delta;
                     }
                 }
         }
+
+        // Boost neighbors
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 hiddenPos = Int2(ix, iy);
+
+                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+
+                int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
+                Int2 visibleCenter = project(hiddenPos, hToV);
+
+                visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+
+                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                    for (int dhc = -1; dhc <= 1; dhc += 2) {
+                        int hc = hiddenCIs[hiddenColumnIndex] + dhc;
+
+                        if (hc < 0 || hc >= hiddenSize.z)
+                            continue;
+
+                        int hiddenCellIndex = hc + hiddenCellsStart;
+
+                        vl.weights[targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += lr;
+                    }
+                }
+            }
     }
 }
 
