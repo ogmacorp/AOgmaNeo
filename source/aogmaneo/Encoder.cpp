@@ -151,7 +151,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
+            float delta = lr * ((vc == targetCI) - vl.reconstruction[visibleCellIndex]);
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -197,7 +197,9 @@ void Encoder::learn(
 
                         int hiddenCellIndex = hc + hiddenCellsStart;
 
-                        vl.weights[targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))] += lr;
+                        int wi = targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        vl.weights[wi] += lr * (1.0f - vl.weights[wi]);
                     }
                 }
             }
