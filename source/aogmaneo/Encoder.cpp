@@ -203,7 +203,7 @@ void Encoder::learn(
 
                         int wi = targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        vl.weights[wi] += blr * (vl.weights[wiSource] - vl.weights[wi]);
+                        vl.weights[wi] += blr * max(0.0f, vl.weights[wiSource] - vl.weights[wi]);
                     }
                 }
             }
