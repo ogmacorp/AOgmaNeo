@@ -41,8 +41,6 @@ void Encoder::forward(
         hiddenSums[hiddenCellIndex] = 0.0f;
     }
 
-    float totalImportance = 0.0f;
-
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -65,7 +63,6 @@ void Encoder::forward(
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
         float scale = vl.importance / ((iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1));
-        totalImportance += vl.importance;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -93,8 +90,6 @@ void Encoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenSums[hiddenCellIndex] /= totalImportance;
-
         if (hiddenSums[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenSums[hiddenCellIndex];
             maxIndex = hc;
@@ -107,9 +102,9 @@ void Encoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float dist = maxIndex - hc;
+            float dist = abs(maxIndex - hc);
 
-            float strength = expf(-dist * dist * falloff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float strength = expf(-dist * falloff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -162,6 +157,8 @@ void Encoder::reconstruct(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
+    Int2 clumpOffset(priority / clumpSize.y, priority % clumpSize.y);
+
     // Projection
     Float2 vToH = Float2(static_cast<float>(numClumps.x) / static_cast<float>(vld.size.x),
         static_cast<float>(numClumps.y) / static_cast<float>(vld.size.y));
@@ -182,9 +179,6 @@ void Encoder::reconstruct(
 
     float sum = 0.0f;
     float total = 0.0f;
-
-    // Find current max
-    Int2 clumpOffset(priority / clumpSize.y, priority % clumpSize.y);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
