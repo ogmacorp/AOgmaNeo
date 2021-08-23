@@ -16,6 +16,8 @@ void Decoder::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
     // Pre-count
     int count = 0;
 
@@ -48,7 +50,7 @@ void Decoder::forward(
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
 
@@ -99,7 +101,7 @@ void Decoder::forward(
     float total = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
 
@@ -109,7 +111,7 @@ void Decoder::forward(
     float scale = 1.0f / max(0.0001f, total);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         hiddenActivations[hiddenCellIndex] *= scale;
     }
@@ -123,10 +125,12 @@ void Decoder::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float delta = lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
             
