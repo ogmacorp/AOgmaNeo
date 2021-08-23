@@ -195,7 +195,7 @@ void Encoder::reconstruct(
 
             int hiddenCellIndex = hiddenColumnIndex * hiddenSize.z + hiddenCIs[hiddenColumnIndex];
 
-            Int2 visibleCenter = project(Int2(ix, iy), hToV);
+            Int2 visibleCenter = project(clumpPos, hToV);
 
             visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
@@ -293,7 +293,7 @@ void Encoder::step(
 
                 #pragma omp parallel for
                 for (int i = 0; i < numVisibleColumns; i++)
-                    reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli, p);
+                    reconstruct(Int2(i / vld.size.y, i % vld.size.y), p, vli);
             }
         }
     }
