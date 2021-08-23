@@ -193,7 +193,7 @@ void Encoder::reconstruct(
             if (hiddenPriorities[hiddenColumnIndex] != priority)
                 continue;
 
-            int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+            int hiddenCellIndex = hiddenColumnIndex * hiddenSize.z + hiddenCIs[hiddenColumnIndex];
 
             Int2 visibleCenter = project(hiddenPos, hToV);
 
