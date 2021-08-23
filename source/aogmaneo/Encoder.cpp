@@ -118,10 +118,10 @@ void Encoder::forward(
                 int diam = vld.radius * 2 + 1;
 
                 // Projection
-                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(numClumps.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(numClumps.y));
 
-                Int2 visibleCenter = project(columnPos, hToV);
+                Int2 visibleCenter = project(clumpPos, hToV);
 
                 visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
@@ -162,54 +162,57 @@ void Encoder::reconstruct(
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
     // Projection
-    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
-        static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
+    Float2 vToH = Float2(static_cast<float>(numClumps.x) / static_cast<float>(vld.size.x),
+        static_cast<float>(numClumps.y) / static_cast<float>(vld.size.y));
 
     Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(numClumps.x),
         static_cast<float>(vld.size.y) / static_cast<float>(numClumps.y));
                 
-    Int2 hiddenCenter = project(columnPos, vToH);
+    Int2 clumpCenter = project(columnPos, vToH);
 
     Int2 reverseRadii(ceilf(vToH.x * vld.radius) + 1, ceilf(vToH.y * vld.radius) + 1);
     
     // Lower corner
-    Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
+    Int2 fieldLowerBound(clumpCenter.x - reverseRadii.x, clumpCenter.y - reverseRadii.y);
 
     // Bounds of receptive field, clamped to input size
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-    Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
-    
-    // Find current max
+    Int2 iterUpperBound(min(numClumps.x - 1, clumpCenter.x + reverseRadii.x), min(numClumps.y - 1, clumpCenter.y + reverseRadii.y));
+
     float sum = 0.0f;
     float total = 0.0f;
 
+    // Find current max
     Int2 clumpOffset(priority / clumpSize.y, priority % clumpSize.y);
 
-    Int2 hiddenPos(iterLowerBound.x + clumpOffset.x, iterLowerBound.y + clumpOffset.y);
+    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+            Int2 clumpPos(ix, iy);
 
-    Int2 clumpPos(hiddenPos.x / clumpSize.x, hiddenPos.y / clumpSize.y);
+            Int2 hiddenPos(clumpPos.x * clumpSize.x + clumpOffset.x, clumpPos.y * clumpSize.y + clumpOffset.y);
 
-    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int hiddenCellIndex = hiddenColumnIndex * hiddenSize.z + hiddenCIs[hiddenColumnIndex];
+            int hiddenCellIndex = hiddenColumnIndex * hiddenSize.z + hiddenCIs[hiddenColumnIndex];
 
-    Int2 visibleCenter = project(clumpPos, hToV);
+            Int2 visibleCenter = project(Int2(ix, iy), hToV);
 
-    visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
-    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+            if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-        int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+                int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-        float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-        float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
 
-        float strength = min(1.0f - distX, 1.0f - distY);
+                float strength = min(1.0f - distX, 1.0f - distY);
 
-        sum += strength * vl.protos[wi];
-        total += strength;
-    }
+                sum += strength * vl.protos[wi];
+                total += strength;
+            }
+        }
 
     vl.reconstruction[visibleColumnIndex] = min(1.0f, max(-1.0f, vl.reconstruction[visibleColumnIndex] - sum / max(0.0001f, total)));
 }
