@@ -65,7 +65,8 @@ private:
     );
     
     void forward(
-        const Int2 &columnPos,
+        const Int2 &clumpPos,
+        int priority,
         bool learnEnabled
     );
 

@@ -24,13 +24,14 @@ void Encoder::resetReconstruction(
 }
 
 void Encoder::forward(
-    const Int2 &columnPos,
+    const Int2 &clumpPos,
+    int priority,
     bool learnEnabled
 ) {
-    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+    Int2 clumpOffset(priority / clumpSize.y, priority % clumpSize.y);
+    Int2 columnPos(clumpPos.x * clumpSize.x + clumpOffset.x, clumpPos.y * clumpSize.y + clumpOffset.y);
 
-    Int2 clumpPos(columnPos.x / clumpSize.x, columnPos.y / clumpSize.y);
-    Int2 clumpOffset(columnPos.x - clumpPos.x * clumpSize.x, columnPos.y - clumpPos.y * clumpSize.y);
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
@@ -279,11 +280,12 @@ void Encoder::step(
 
     // Activate / learn
     int numPriorities = clumpSize.x * clumpSize.y;
+    int totalClumps = numClumps.x * numClumps.y;
 
     for (int p = 0; p < numPriorities; p++) {
         #pragma omp parallel for
-        for (int i = 0; i < numHiddenColumns; i++)
-            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), learnEnabled);
+        for (int i = 0; i < totalClumps; i++)
+            forward(Int2(i / numClumps.y, i % numClumps.y), p, learnEnabled);
 
         if (p < numPriorities - 1) {
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
