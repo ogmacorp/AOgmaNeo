@@ -25,13 +25,12 @@ void Encoder::resetReconstruction(
 
 void Encoder::forward(
     const Int2 &columnPos,
-    int priority,
     bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    if (hiddenPriorities[hiddenColumnIndex] != priority)
-        return;
+    Int2 clumpPos(columnPos.x / clumpSize.x, columnPos.y / clumpSize.y);
+    Int2 clumpOffset(columnPos.x - clumpPos.x * clumpSize.x, columnPos.y - clumpPos.y * clumpSize.y);
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
@@ -50,10 +49,10 @@ void Encoder::forward(
         int diam = vld.radius * 2 + 1;
 
         // Projection
-        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(numClumps.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(numClumps.y));
 
-        Int2 visibleCenter = project(columnPos, hToV);
+        Int2 visibleCenter = project(clumpPos, hToV);
 
         visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
@@ -152,8 +151,8 @@ void Encoder::forward(
 
 void Encoder::reconstruct(
     const Int2 &columnPos,
-    int vli,
-    int priority
+    int priority,
+    int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
     VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -166,8 +165,8 @@ void Encoder::reconstruct(
     Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
         static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
 
-    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(numClumps.x),
+        static_cast<float>(vld.size.y) / static_cast<float>(numClumps.y));
                 
     Int2 hiddenCenter = project(columnPos, vToH);
 
@@ -184,48 +183,47 @@ void Encoder::reconstruct(
     float sum = 0.0f;
     float total = 0.0f;
 
-    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-            Int2 hiddenPos = Int2(ix, iy);
+    Int2 clumpOffset(priority / clumpSize.y, priority % clumpSize.y);
 
-            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+    Int2 hiddenPos(iterLowerBound.x + clumpOffset.x, iterLowerBound.y + clumpOffset.y);
 
-            if (hiddenPriorities[hiddenColumnIndex] != priority)
-                continue;
+    Int2 clumpPos(hiddenPos.x / clumpSize.x, hiddenPos.y / clumpSize.y);
 
-            int hiddenCellIndex = hiddenColumnIndex * hiddenSize.z + hiddenCIs[hiddenColumnIndex];
+    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-            Int2 visibleCenter = project(hiddenPos, hToV);
+    int hiddenCellIndex = hiddenColumnIndex * hiddenSize.z + hiddenCIs[hiddenColumnIndex];
 
-            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+    Int2 visibleCenter = project(clumpPos, hToV);
 
-            if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+    visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
-                int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+        int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                float strength = min(1.0f - distX, 1.0f - distY);
+        float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+        float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
 
-                sum += strength * vl.protos[wi];
-                total += strength;
-            }
-        }
+        float strength = min(1.0f - distX, 1.0f - distY);
+
+        sum += strength * vl.protos[wi];
+        total += strength;
+    }
 
     vl.reconstruction[visibleColumnIndex] = min(1.0f, max(-1.0f, vl.reconstruction[visibleColumnIndex] - sum / max(0.0001f, total)));
 }
 
 void Encoder::initRandom(
     const Int3 &hiddenSize,
-    int numPriorities,
+    const Int2 &clumpSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
     this->visibleLayerDescs = visibleLayerDescs;
 
     this->hiddenSize = hiddenSize;
-    this->numPriorities = numPriorities;
+    this->clumpSize = clumpSize;
+    this->numClumps = Int2(hiddenSize.x / clumpSize.x, hiddenSize.y / clumpSize.y);
 
     visibleLayers.resize(visibleLayerDescs.size());
 
@@ -256,11 +254,6 @@ void Encoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
-    hiddenPriorities = IntBuffer(numHiddenColumns);
-
-    for (int i = 0; i < hiddenPriorities.size(); i++)
-        hiddenPriorities[i] = rand() % numPriorities;
-
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
 
@@ -282,10 +275,12 @@ void Encoder::step(
     }
 
     // Activate / learn
+    int numPriorities = clumpSize.x * clumpSize.y;
+
     for (int p = 0; p < numPriorities; p++) {
         #pragma omp parallel for
         for (int i = 0; i < numHiddenColumns; i++)
-            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), p, learnEnabled);
+            forward(Int2(i / hiddenSize.y, i % hiddenSize.y), learnEnabled);
 
         if (p < numPriorities - 1) {
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -302,7 +297,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenPriorities.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(Int2) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -321,13 +316,12 @@ void Encoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
-    writer.write(reinterpret_cast<const void*>(&numPriorities), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&clumpSize), sizeof(Int2));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&falloff), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     
     int numVisibleLayers = visibleLayers.size();
@@ -348,7 +342,9 @@ void Encoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
-    reader.read(reinterpret_cast<void*>(&numPriorities), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&clumpSize), sizeof(Int2));
+
+    numClumps = Int2(hiddenSize.x / clumpSize.x, hiddenSize.y / clumpSize.y);
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
@@ -357,11 +353,9 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
-    hiddenPriorities.resize(numHiddenColumns);
     hiddenRates.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hiddenPriorities[0]), hiddenPriorities.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     hiddenSums = FloatBuffer(numHiddenCells, 0.0f);

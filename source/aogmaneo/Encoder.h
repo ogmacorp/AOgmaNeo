@@ -44,11 +44,11 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int numPriorities;
+    Int2 clumpSize;
+    Int2 numClumps;
 
     FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenPriorities;
 
     FloatBuffer hiddenRates;
 
@@ -66,14 +66,13 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        int priority,
         bool learnEnabled
     );
 
     void reconstruct(
         const Int2 &columnPos,
-        int vli,
-        int priority
+        int priority,
+        int vli
     );
 
 public:
@@ -90,7 +89,7 @@ public:
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int numPriorities, // Lateral radius
+        const Int2 &clumpSize,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
