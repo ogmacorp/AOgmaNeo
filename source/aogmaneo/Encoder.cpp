@@ -19,15 +19,17 @@ void Encoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    for (int dhc = -1; dhc <= 1; dhc++) {
-        int hc = hiddenCIs[hiddenColumnIndex] + dhc;
+    if (learnEnabled) {
+        for (int dhc = -1; dhc <= 1; dhc++) {
+            int hc = hiddenCIs[hiddenColumnIndex] + dhc;
 
-        if (hc < 0 || hc >= hiddenSize.z)
-            continue;
+            if (hc < 0 || hc >= hiddenSize.z)
+                continue;
 
-        int hiddenCellIndex = hc + hiddenCellsStart;
+            int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex] * (dhc == 0 ? 1.0f : 0.5f);
+            hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex] * (dhc == 0 ? 1.0f : 0.5f);
+        }
     }
 
     int maxIndex = -1;
