@@ -19,7 +19,7 @@ void Encoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    for (int dhc = -1; dhc <= 1; dhc += 2) {
+    for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hiddenCIs[hiddenColumnIndex] + dhc;
 
         if (hc < 0 || hc >= hiddenSize.z)
