@@ -146,6 +146,7 @@ typedef Vec4<float> Float4;
 typedef unsigned char Byte;
 typedef signed char SByte;
 typedef Array<Byte> ByteBuffer;
+typedef Array<SByte> SByteBuffer;
 typedef Array<int> IntBuffer;
 typedef Array<float> FloatBuffer;
 
@@ -352,8 +353,6 @@ inline float tanh(
 
 // --- RNG ---
 
-// From http://cas.ee.ic.ac.uk/people/dt10/research/rngs-gpu-mwc64x.html
-
 extern unsigned int globalState;
 
 const unsigned int randMax = 0x00003fff;
@@ -403,13 +402,13 @@ void quicksort(
     int low = 0,
     int high = -1
 ) {
-    if (high - low <= 1)
-        return;
-
     if (high == -1)
         high = arr.size() - 1;
     else
         high--;
+
+    if (high - low <= 1)
+        return;
 
     Array<int> stack(high - low + 1);
 
