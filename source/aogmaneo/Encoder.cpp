@@ -28,7 +28,7 @@ void Encoder::forward(
 
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex] * (dhc == 0 ? 1.0f : 0.5f);
+            hiddenRates[hiddenCellIndex] -= lr * hiddenRates[hiddenCellIndex];
         }
     }
 
