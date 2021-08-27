@@ -74,14 +74,7 @@ void Encoder::forward(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    for (int dvc = -1; dvc <= 1; dvc++) {
-                        int vc = inCI + dvc;
-
-                        if (vc < 0 || vc >= vld.size.z)
-                            continue;
-
-                        subSum += vl.weights[vc + wiStart] * (dvc == 0 ? 1.0f : 0.5f);
-                    }
+                    subSum += vl.weights[inCI + wiStart];
                 }
 
             subSum /= max(1, subCount);
@@ -177,7 +170,9 @@ void Encoder::learn(
 
             int diff = targetCI - vc;
 
-            float delta = (abs(diff) <= 1 ? (diff == 0 ? 1.0f : 0.5f) : 0.0f) - vl.reconstruction[visibleCellIndex];
+            bool isTarget = (abs(diff) <= 1);
+
+            float delta = isTarget - vl.reconstruction[visibleCellIndex];
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -200,17 +195,19 @@ void Encoder::learn(
 
                         vl.weights[wiSource] += delta * hiddenRates[hiddenCellIndexMax];
 
-                        for (int dhc = -1; dhc <= 1; dhc += 2) {
-                            int hc = hiddenCIs[hiddenColumnIndex] + dhc;
+                        if (isTarget) {
+                            for (int dhc = -1; dhc <= 1; dhc += 2) {
+                                int hc = hiddenCIs[hiddenColumnIndex] + dhc;
 
-                            if (hc < 0 || hc >= hiddenSize.z)
-                                continue;
+                                if (hc < 0 || hc >= hiddenSize.z)
+                                    continue;
 
-                            int hiddenCellIndex = hc + hiddenCellsStart;
+                                int hiddenCellIndex = hc + hiddenCellsStart;
 
-                            int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                                int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                            vl.weights[wi] += max(0.0f, delta) * hiddenRates[hiddenCellIndex];
+                                vl.weights[wi] += hiddenRates[hiddenCellIndex];
+                            }
                         }
                     }
                 }
