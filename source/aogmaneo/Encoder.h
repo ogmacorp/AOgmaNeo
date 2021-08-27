@@ -68,10 +68,12 @@ private:
 
 public:
     float lr; // Source learning rate
+    float overboost;
 
     Encoder()
     :
-    lr(0.01f)
+    lr(0.01f),
+    overboost(1.0f)
     {}
 
     // Create a sparse coding layer with random initialization
