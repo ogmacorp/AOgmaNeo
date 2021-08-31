@@ -12,9 +12,6 @@
 #include "Array.h"
 
 namespace aon {
-const float halfByteInv = 1.0f / 127.0f;
-const float byteInv = 1.0f / 255.0f;
-
 const int expIters = 10;
 const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
 
@@ -405,13 +402,13 @@ void quicksort(
     int low = 0,
     int high = -1
 ) {
-    if (high - low <= 1)
-        return;
-
     if (high == -1)
         high = arr.size() - 1;
     else
         high--;
+
+    if (high - low <= 1)
+        return;
 
     Array<int> stack(high - low + 1);
 
