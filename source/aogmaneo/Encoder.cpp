@@ -175,7 +175,7 @@ void Encoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                        vl.weights[wi] += delta * vl.weights[wi];
+                        vl.weights[wi] += delta;
                     }
                 }
         }
