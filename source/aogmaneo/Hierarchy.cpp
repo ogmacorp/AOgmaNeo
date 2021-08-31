@@ -11,7 +11,7 @@
 using namespace aon;
 
 const Hierarchy &Hierarchy::operator=(
-    const Hierarchy &other // Hierarchy to assign from
+    const Hierarchy &other
 ) {
     // Layers
     eLayers = other.eLayers;
@@ -173,7 +173,6 @@ void Hierarchy::initRandom(
     }
 }
 
-// Simulation step/tick
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
