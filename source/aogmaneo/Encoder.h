@@ -65,7 +65,7 @@ private:
     );
 
 public:
-    float lr; // Source learning rate
+    float lr;
 
     Encoder()
     :
