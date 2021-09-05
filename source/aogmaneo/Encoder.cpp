@@ -180,21 +180,21 @@ void Encoder::learn(
                         int wiSource = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                         vl.weights[wiSource] += delta * vl.rates[wiSource];
+                        vl.rates[wiSource] -= lr * vl.rates[wiSource];
 
-                        for (int hc = 0; hc < hiddenSize.z; hc++) {
-                            if (hc == hiddenCIs[hiddenColumnIndex])
-                                continue;
+                        if (isTarget) {
+                            for (int hc = 0; hc < hiddenSize.z; hc++) {
+                                int hiddenCellIndex = hc + hiddenCellsStart;
 
-                            int hiddenCellIndex = hc + hiddenCellsStart;
+                                int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                            int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                                float dist = static_cast<float>(abs(hiddenCIs[hiddenColumnIndex] - hc)) / static_cast<float>(hiddenSize.z);
 
-                            float dist = static_cast<float>(abs(hiddenCIs[hiddenColumnIndex] - hc)) / static_cast<float>(hiddenSize.z);
+                                float strength = max(0.0f, 1.0f - falloff * dist) * vl.rates[wi];
 
-                            float strength = max(0.0f, 1.0f - falloff * dist) * vl.rates[wi];
-
-                            vl.weights[wi] += max(0.0f, vl.weights[wiSource] - vl.weights[wi]) * strength;
-                            vl.rates[wi] -= lr * strength;
+                                vl.weights[wi] += strength;
+                                vl.rates[wi] -= lr * strength;
+                            }
                         }
                     }
                 }
