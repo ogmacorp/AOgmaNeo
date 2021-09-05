@@ -180,19 +180,21 @@ void Encoder::learn(
                         int wiSource = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                         vl.weights[wiSource] += delta * vl.rates[wiSource];
-                        vl.rates[wiSource] -= lr * vl.rates[wiSource];
 
-                        for (int dhc = -1; dhc <= 1; dhc += 2) {
-                            int hc = hiddenCIs[hiddenColumnIndex] + dhc;
-
-                            if (hc < 0 || hc >= hiddenSize.z)
+                        for (int hc = 0; hc < hiddenSize.z; hc++) {
+                            if (hc == hiddenCIs[hiddenColumnIndex])
                                 continue;
 
                             int hiddenCellIndex = hc + hiddenCellsStart;
 
                             int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                            vl.weights[wi] += max(0.0f, vl.weights[wiSource] - vl.weights[wi]) * vl.rates[wi] * 0.5f;
+                            float dist = static_cast<float>(abs(hiddenCIs[hiddenColumnIndex] - hc)) / static_cast<float>(hiddenSize.z);
+
+                            float strength = max(0.0f, 1.0f - falloff * dist) * vl.rates[wi];
+
+                            vl.weights[wi] += max(0.0f, vl.weights[wiSource] - vl.weights[wi]) * strength;
+                            vl.rates[wi] -= lr * strength;
                         }
                     }
                 }
