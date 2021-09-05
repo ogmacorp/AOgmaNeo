@@ -154,9 +154,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            int diff = targetCI - vc;
-
-            bool isTarget = (abs(diff) <= 1);
+            bool isTarget = (abs(targetCI - vc) <= 1);
 
             float delta = isTarget - vl.reconstruction[visibleCellIndex];
       
@@ -188,9 +186,7 @@ void Encoder::learn(
 
                                 int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                                float dist = static_cast<float>(abs(hiddenCIs[hiddenColumnIndex] - hc)) / static_cast<float>(hiddenSize.z);
-
-                                float strength = max(0.0f, 1.0f - falloff * dist) * vl.rates[wi];
+                                float strength = max(0.0f, 1.0f - abs(hiddenCIs[hiddenColumnIndex] - hc) / static_cast<float>(hiddenSize.z) * falloff) * vl.rates[wi];
 
                                 vl.weights[wi] += strength;
                                 vl.rates[wi] -= lr * strength;
