@@ -33,8 +33,6 @@ public:
         FloatBuffer weights;
         FloatBuffer rates;
 
-        FloatBuffer reconstruction;
-
         float importance;
 
         VisibleLayer()
