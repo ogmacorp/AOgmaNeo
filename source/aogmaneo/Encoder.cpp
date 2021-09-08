@@ -79,7 +79,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    hiddenSums[hiddenCellIndex] -= abs(delta) * scale;
+                    hiddenSums[hiddenCellIndex] -= delta * delta * scale;
                 }
             }
     }
@@ -104,7 +104,7 @@ void Encoder::forward(
 
             float dist = abs(maxIndex - hc);
 
-            float strength = expf(-dist * falloff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float strength = expf(-dist * falloff) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
