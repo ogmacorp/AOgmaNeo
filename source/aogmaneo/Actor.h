@@ -81,7 +81,7 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.01f),
+    lr(0.1f),
     discount(0.99f),
     actionGap(0.1f),
     qSteps(5),
