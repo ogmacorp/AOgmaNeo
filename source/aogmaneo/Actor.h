@@ -30,8 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        FloatBuffer weights;
     };
 
     // History sample for delayed updates
@@ -48,11 +47,7 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenActivations; // Temporary buffer
-
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -64,33 +59,32 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        unsigned int* state
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs,
         const Array<const IntBuffer*> &inputCIsPrev,
         const IntBuffer* hiddenTargetCIsPrev,
         float q,
-        float g,
-        bool mimic
+        float g
     );
 
 public:
-    float vlr; // Value learning rate
-    float alr; // Action learning rate
-    float discount; // Discount factor
-    int minSteps; // Minimum steps before sample can be used
-    int historyIters; // Number of iterations over samples
+    float lr; // Learning rate
+    float discount;
+    float actionGap;
+    int qSteps;
+    int historyIters;
 
     // Defaults
     Actor()
     :
-    vlr(0.01f),
-    alr(0.01f),
+    lr(0.01f),
     discount(0.99f),
-    minSteps(16),
+    actionGap(0.1f),
+    qSteps(5),
     historyIters(16)
     {}
 
@@ -106,8 +100,7 @@ public:
         const Array<const IntBuffer*> &inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
-        bool learnEnabled,
-        bool mimic
+        bool learnEnabled
     );
 
     // Serialization
