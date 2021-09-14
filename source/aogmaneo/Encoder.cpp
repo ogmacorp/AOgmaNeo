@@ -102,7 +102,7 @@ void Encoder::learn(
 
     Int2 hiddenCenter = project(columnPos, vToH);
 
-    hiddenCenter = minOverhang(hiddenCenter, Int2(hiddenSize.x, hiddenSize.y), max(reverseRadii.x, reverseRadii.y));
+    hiddenCenter = minOverhang(hiddenCenter, Int2(hiddenSize.x, hiddenSize.y), reverseRadii);
 
     // Lower corner
     Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);

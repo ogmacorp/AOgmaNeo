@@ -67,24 +67,24 @@ int aon::getNumThreads() {
 Int2 aon::minOverhang(
     const Int2 &pos,
     const Int2 &size,
-    int radius
+    const Int2 &radii
 ) {
     Int2 newPos = pos;
 
-    bool overhangPX = (newPos.x + radius >= size.x);
-    bool overhangNX = (newPos.x - radius < 0);
-    bool overhangPY = (newPos.y + radius >= size.y);
-    bool overhangNY = (newPos.y - radius < 0);
+    bool overhangPX = (newPos.x + radii.x >= size.x);
+    bool overhangNX = (newPos.x - radii.x < 0);
+    bool overhangPY = (newPos.y + radii.y >= size.y);
+    bool overhangNY = (newPos.y - radii.y < 0);
 
     if (overhangPX && !overhangNX)
-       newPos.x = size.x - 1 - radius;
+       newPos.x = size.x - 1 - radii.x;
     else if (overhangNX && !overhangPX)
-       newPos.x = radius;
+       newPos.x = radii.x;
 
     if (overhangPY && !overhangNY)
-       newPos.y = size.y - 1 - radius;
+       newPos.y = size.y - 1 - radii.y;
     else if (overhangNY && !overhangPY)
-       newPos.y = radius;
+       newPos.y = radii.y;
 
     return newPos;
 }
