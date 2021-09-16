@@ -246,8 +246,16 @@ inline Int2 projectf(
 Int2 minOverhang(
     const Int2 &pos,
     const Int2 &size,
-    int radius
+    const Int2 &radii
 );
+
+inline Int2 minOverhang(
+    const Int2 &pos,
+    const Int2 &size,
+    int radius
+) {
+    return minOverhang(pos, size, Int2(radius, radius));
+}
 
 // --- Addressing ---
 
