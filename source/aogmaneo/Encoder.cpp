@@ -102,7 +102,9 @@ void Encoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float strength = max(0.0f, 1.0f - falloff * abs(maxIndex - hc)) * hiddenRates[hiddenCellIndex];
+            float dist = abs(maxIndex - hc);
+
+            float strength = expf(-dist * falloff) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -169,7 +171,7 @@ void Encoder::reconstruct(
     Int2 clumpCenter = project(columnPos, vToH);
 
     clumpCenter = minOverhang(clumpCenter, Int2(numClumps.x, numClumps.y), reverseRadii);
-
+    
     // Lower corner
     Int2 fieldLowerBound(clumpCenter.x - reverseRadii.x, clumpCenter.y - reverseRadii.y);
 
