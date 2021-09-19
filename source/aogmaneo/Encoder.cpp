@@ -164,10 +164,12 @@ void Encoder::reconstruct(
     Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(numClumps.x),
         static_cast<float>(vld.size.y) / static_cast<float>(numClumps.y));
                 
+    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
+
     Int2 clumpCenter = project(columnPos, vToH);
 
-    Int2 reverseRadii(ceilf(vToH.x * vld.radius) + 1, ceilf(vToH.y * vld.radius) + 1);
-    
+    clumpCenter = minOverhang(clumpCenter, Int2(numClumps.x, numClumps.y), reverseRadii);
+
     // Lower corner
     Int2 fieldLowerBound(clumpCenter.x - reverseRadii.x, clumpCenter.y - reverseRadii.y);
 
