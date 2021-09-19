@@ -104,7 +104,7 @@ void Encoder::forward(
 
             float dist = abs(maxIndex - hc);
 
-            float strength = expf(-dist * falloff) * hiddenRates[hiddenCellIndex];
+            float strength = expf(-dist * falloff / max(0.0001f, hiddenRates[maxIndex + hiddenCellsStart])) * hiddenRates[hiddenCellIndex];
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
