@@ -159,7 +159,7 @@ void Hierarchy::initRandom(
         hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
 
         // Default recurrences
-        setRecurrence(l, 0.25f);
+        setRecurrence(l, 0.5f);
     }
 }
 

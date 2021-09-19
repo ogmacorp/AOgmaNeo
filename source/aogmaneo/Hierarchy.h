@@ -38,7 +38,7 @@ public:
         type(prediction),
         ffRadius(2),
         fbRadius(2),
-        historyCapacity(128)
+        historyCapacity(64)
         {}
 
         IODesc(
