@@ -150,7 +150,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 7 - 3;
+            vl.weights[i] = rand() % 15 - 7;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
