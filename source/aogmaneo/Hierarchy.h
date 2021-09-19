@@ -15,8 +15,9 @@
 namespace aon {
 // Type of hierarchy input layer
 enum IOType {
-    prediction = 0,
-    action = 1
+    none = 0,
+    prediction = 1,
+    action = 2
 };
 
 // A SPH
@@ -93,7 +94,7 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Array<Decoder>> dLayers;
+    Array<Array<Ptr<Decoder>>> dLayers;
     Array<Ptr<Actor>> aLayers;
     Array<IntBuffer> hiddenCIsPrev;
 
@@ -188,7 +189,9 @@ public:
         if (aLayers[i] != nullptr) // If is an action layer
             return aLayers[i]->getHiddenCIs();
 
-        return dLayers[0][i].getHiddenCIs();
+        assert(dLayers[0][i] != nullptr);
+
+        return dLayers[0][i]->getHiddenCIs();
     }
 
     // Get input sizes
@@ -211,14 +214,14 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Decoder> &getDLayers(
+    Array<Ptr<Decoder>> &getDLayers(
         int l // Layer index
     ) {
         return dLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Decoder> &getDLayers(
+    const Array<Ptr<Decoder>> &getDLayers(
         int l // Layer index
     ) const {
         return dLayers[l];
