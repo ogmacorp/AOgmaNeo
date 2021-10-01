@@ -83,6 +83,7 @@ public:
     float discount; // Discount factor
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
+    Byte explore; // Enable/disable exploration
 
     // Defaults
     Actor()
@@ -91,7 +92,8 @@ public:
     alr(0.01f),
     discount(0.99f),
     minSteps(8),
-    historyIters(8)
+    historyIters(8),
+    explore(true)
     {}
 
     // Initialized randomly
