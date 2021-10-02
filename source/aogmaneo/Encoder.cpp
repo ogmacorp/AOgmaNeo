@@ -100,7 +100,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float strength = max(0.0f, 1.0f - falloff * abs(maxIndex - hc)) * hiddenRates[hiddenCellIndex];
+            float strength = max(0.0f, 1.0f - falloff * abs(maxIndex - hc) * (1.0f - hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             if (strength == 0.0f)
                 continue;
