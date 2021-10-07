@@ -100,12 +100,8 @@ void Encoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float strength = max(0.0f, 1.0f - falloff * abs(maxIndex - hc) * (1.0f - hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float strength = expf(-falloff * abs(maxIndex - hc) / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
-            if (strength == 0.0f)
-                continue;
-
-            // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
                 const VisibleLayerDesc &vld = visibleLayerDescs[vli];
