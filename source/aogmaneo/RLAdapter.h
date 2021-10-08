@@ -15,16 +15,12 @@ namespace aon {
 class RLAdapter {
 private:
     Int3 hiddenSize;
-    int radius;
 
     IntBuffer goalCIs;
     IntBuffer goalCIsPrev;
     IntBuffer hiddenCIsPrev;
 
-    FloatBuffer hiddenValues;
-
-    FloatBuffer weights;
-    FloatBuffer traces;
+    FloatBuffer rewards;
 
     void forward(
         const Int2 &columnPos,
@@ -35,15 +31,11 @@ private:
 
 public:
     float lr; // Learning rate
-    float discount;
-    float traceDecay;
 
     // Defaults
     RLAdapter()
     :
-    lr(0.01f),
-    discount(0.99f),
-    traceDecay(0.98f)
+    lr(0.01f)
     {}
 
     // Create with random initialization

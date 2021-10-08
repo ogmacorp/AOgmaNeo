@@ -83,7 +83,7 @@ void RLAdapter::forward(
                     traces[wi] = max(traces[wi] * traceDecay, static_cast<float>(hc == (*hiddenCIs)[hiddenColumnIndex] && ohc == hidCIPrev));
 
                     if (learnEnabled)
-                        weights[wi] += delta * traces[wi];
+                        weights[wi] += lr * (reward - weights[wi]);//delta * traces[wi];
                 }
             }
     }
