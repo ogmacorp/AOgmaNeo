@@ -17,10 +17,9 @@ private:
     Int3 hiddenSize;
 
     IntBuffer goalCIs;
-    IntBuffer goalCIsPrev;
-    IntBuffer hiddenCIsPrev;
 
-    FloatBuffer rewards;
+    FloatBuffer weights;
+    FloatBuffer traces;
 
     void forward(
         const Int2 &columnPos,
@@ -31,17 +30,18 @@ private:
 
 public:
     float lr; // Learning rate
+    float traceDecay;
 
     // Defaults
     RLAdapter()
     :
-    lr(0.01f)
+    lr(0.01f),
+    traceDecay(0.98f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
-        int radius
+        const Int3 &hiddenSize // Hidden/output/prediction size
     );
 
     void step(
@@ -76,10 +76,6 @@ public:
 
     const Int3 &getHiddenSize() const {
         return hiddenSize;
-    }
-
-    int getRadius() const {
-        return radius;
     }
 };
 }
