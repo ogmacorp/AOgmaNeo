@@ -18,15 +18,17 @@ void RLAdapter::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, (*hiddenCIs)[hiddenColumnIndex]), hiddenSize);
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    weights[hiddenCellIndex] += lr * (reward - weights[hiddenCellIndex]);
+    int hiddenCellIndexActual = (*hiddenCIs)[hiddenColumnIndex] + hiddenCellsStart;
+
+    weights[hiddenCellIndexActual] += lr * (reward - weights[hiddenCellIndexActual]);
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float value = weights[hiddenCellIndex];
 

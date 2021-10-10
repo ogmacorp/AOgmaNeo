@@ -17,11 +17,13 @@ void ImageEncoder::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
     int maxIndex = -1;
     int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         int sum = 0;
 
@@ -80,7 +82,7 @@ void ImageEncoder::forward(
             if (hc < 0 || hc >= hiddenSize.z)
                 continue;
 
-            int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+            int hiddenCellIndex = hc + hiddenCellsStart;
 
             // For each visible layer
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -139,6 +141,8 @@ void ImageEncoder::reconstruct(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
+    int visibleCellsStart = visibleColumnIndex * vld.size.z;
+
     // Projection
     Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
         static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
@@ -161,7 +165,7 @@ void ImageEncoder::reconstruct(
     
     // Find current max
     for (int vc = 0; vc < vld.size.z; vc++) {
-        int visibleIndex = address3(Int3(columnPos.x, columnPos.y, vc), vld.size);
+        int visibleIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
         float total = 0.0f;
