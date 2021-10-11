@@ -17,6 +17,8 @@ void Decoder::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
     // Pre-count
     int diam = visibleLayerDesc.radius * 2 + 1;
 
@@ -39,7 +41,7 @@ void Decoder::forward(
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
 
@@ -72,6 +74,8 @@ void Decoder::updateTraces(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
     // Pre-count
@@ -95,7 +99,7 @@ void Decoder::updateTraces(
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
 
@@ -114,7 +118,7 @@ void Decoder::updateTraces(
 
         sum /= max(1, count);
 
-        float delta = tr * ((hc == targetCI) - min(1.0f, max(0.0f, sum)));
+        float delta = tr * ((hc == targetCI) - sigmoid(sum));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
