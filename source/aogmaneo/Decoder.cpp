@@ -17,6 +17,8 @@ void Decoder::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
     // Pre-count
     int diam = visibleLayerDesc.radius * 2 + 1;
 
@@ -39,7 +41,7 @@ void Decoder::forward(
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
 
@@ -81,6 +83,8 @@ void Decoder::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
     int targetCI = history[t - 1].hiddenTargetCIs[hiddenColumnIndex];
 
     // Pre-count
@@ -106,7 +110,7 @@ void Decoder::learn(
     float maxActivation = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
 
@@ -129,7 +133,7 @@ void Decoder::learn(
         maxActivation = max(maxActivation, sum);
     }
 
-    int hiddenCellIndexTarget = address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize);
+    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
     float sum = 0.0f;
 
