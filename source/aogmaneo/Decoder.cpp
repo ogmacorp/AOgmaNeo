@@ -36,12 +36,12 @@ void Decoder::forward(
     Int2 iterUpperBound(min(visibleLayerDesc.size.x - 1, visibleCenter.x + visibleLayerDesc.radius), min(visibleLayerDesc.size.y - 1, visibleCenter.y + visibleLayerDesc.radius));
 
     int maxIndex = -1;
-    int maxActivation = -999999;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
-        int sum = 0;
+        float sum = 0.0f;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -171,7 +171,7 @@ void Decoder::learn(
                 for (int vc = 0; vc < visibleLayerDesc.size.z; vc++) {
                     int wi = inCI + vc * visibleLayerDesc.size.z + visibleLayerDesc.size.z * wiStart;
 
-                    visibleLayer.weights[wi] = min(127, max(-127, visibleLayer.weights[wi] + roundftoi(lr * visibleLayer.traces[vc + wiStart])));
+                    visibleLayer.weights[wi] += lr * (visibleLayer.traces[vc + wiStart] - visibleLayer.weights[wi]);
                 }
             }
     }

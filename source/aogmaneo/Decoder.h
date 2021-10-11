@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer weights;
+        FloatBuffer weights;
         FloatBuffer traces;
 
         IntBuffer inputCIsPrev;
@@ -70,7 +70,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(8.0f),
+    lr(0.01f),
     tr(0.1f)
     {}
 
