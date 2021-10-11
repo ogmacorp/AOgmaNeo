@@ -28,12 +28,15 @@ public:
         int ffRadius; // Feed forward radius
         int fbRadius; // Feed back radius
 
+        int historyCapacity;
+
         IODesc()
         :
         size(4, 4, 16),
         type(prediction),
         ffRadius(2),
-        fbRadius(2)
+        fbRadius(2),
+        historyCapacity(32)
         {}
 
         IODesc(
@@ -59,13 +62,16 @@ public:
         int rRadius; // Decoder radius
         int fbRadius; // Feed back radius
 
+        int historyCapacity;
+
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
         clumpSize(2, 2),
         ffRadius(2),
         rRadius(2),
-        fbRadius(2)
+        fbRadius(2),
+        historyCapacity(32)
         {}
 
         LayerDesc(
@@ -73,14 +79,16 @@ public:
             const Int2 &clumpSize,
             int ffRadius,
             int rRadius,
-            int fbRadius
+            int fbRadius,
+            int historyCapacity
         )
         :
         hiddenSize(hiddenSize),
         clumpSize(clumpSize),
         ffRadius(ffRadius),
         rRadius(rRadius),
-        fbRadius(fbRadius)
+        fbRadius(fbRadius),
+        historyCapacity(historyCapacity)
         {}
     };
 

@@ -85,7 +85,7 @@ void Hierarchy::initRandom(
 
                     dLayers[l][i].make();
 
-                    dLayers[l][i]->initRandom(inputSizes[i], dVisibleLayerDesc);
+                    dLayers[l][i]->initRandom(inputSizes[i], layerDescs[l].historyCapacity, dVisibleLayerDesc);
                 }
             }
         }
@@ -111,7 +111,7 @@ void Hierarchy::initRandom(
             // Create decoder
             dLayers[l][0].make();
 
-            dLayers[l][0]->initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDesc);
+            dLayers[l][0]->initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
         }
         
         // Create the sparse coding layer
