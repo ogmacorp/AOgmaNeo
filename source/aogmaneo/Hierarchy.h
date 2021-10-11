@@ -187,6 +187,14 @@ public:
         return inputSizes;
     }
 
+    const IntBuffer &getTopHiddenCIs() const {
+        return eLayers[eLayers.size() - 1].getHiddenCIs();
+    }
+
+    const Int3 &getTopHiddenSize() const {
+        return eLayers[eLayers.size() - 1].getHiddenSize();
+    }
+
     // Retrieve a sparse coding layer
     Encoder &getELayer(
         int l // Layer index
