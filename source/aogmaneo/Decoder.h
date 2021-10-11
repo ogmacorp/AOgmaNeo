@@ -31,9 +31,13 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer traces;
 
-        IntBuffer inputCIsPrev;
+        IntBuffer genGoalCIs;
+    };
+
+    struct HistorySample {
+        IntBuffer inputCIs;
+        IntBuffer hiddenTargetCIs;
     };
 
 private:
@@ -45,6 +49,9 @@ private:
     VisibleLayer visibleLayer;
     VisibleLayerDesc visibleLayerDesc;
 
+    CircleBuffer<HistorySample> history;
+    int historySize;
+
     // --- Kernels ---
 
     void forward(
@@ -53,30 +60,37 @@ private:
         const IntBuffer* inputCIs
     );
 
-    void updateTraces(
+    void generateGoal(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs
+        unsigned int* state
     );
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* inputCIs
+        int t
     );
 
 public:
     float lr; // Learning rate
-    float tr; // Trace rate
+    float discount; // Discount factor
+    float genGoalNoise; // Noise on goal generation
+    int qSteps;
+    int historyIters;
 
     // Defaults
     Decoder()
     :
-    lr(0.1f),
-    tr(0.1f)
+    lr(0.02f),
+    discount(0.97f),
+    genGoalNoise(0.2f),
+    qSteps(5),
+    historyIters(16)
     {}
 
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
+        int historyCapacity,
         const VisibleLayerDesc &visibleLayerDesc
     );
 
