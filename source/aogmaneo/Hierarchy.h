@@ -10,14 +10,12 @@
 
 #include "Encoder.h"
 #include "Decoder.h"
-#include "Actor.h"
 
 namespace aon {
 // Type of hierarchy input layer
 enum IOType {
     none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 1
 };
 
 // A SPH
@@ -30,30 +28,25 @@ public:
         int ffRadius; // Feed forward radius
         int fbRadius; // Feed back radius
 
-        int historyCapacity; // Actor history capacity
-
         IODesc()
         :
         size(4, 4, 16),
         type(prediction),
         ffRadius(2),
-        fbRadius(2),
-        historyCapacity(64)
+        fbRadius(2)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
             int ffRadius,
-            int fbRadius,
-            int historyCapacity
+            int fbRadius
         )
         :
         size(size),
         type(type),
         ffRadius(ffRadius),
-        fbRadius(fbRadius),
-        historyCapacity(historyCapacity)
+        fbRadius(fbRadius)
         {}
     };
 
@@ -95,7 +88,6 @@ private:
     // Layers
     Array<Encoder> eLayers;
     Array<Array<Ptr<Decoder>>> dLayers;
-    Array<Ptr<Actor>> aLayers;
     Array<IntBuffer> hiddenCIsPrev;
 
     // Input dimensions
@@ -126,9 +118,8 @@ public:
     // Simulation step/tick
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
-        bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f, // Reinforcement signal
-        bool mimic = false
+        const IntBuffer* topGoalCIs,
+        bool learnEnabled = true // Whether learning is enabled
     );
 
     // Serialization
@@ -186,9 +177,6 @@ public:
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
-        if (aLayers[i] != nullptr) // If is an action layer
-            return aLayers[i]->getHiddenCIs();
-
         assert(dLayers[0][i] != nullptr);
 
         return dLayers[0][i]->getHiddenCIs();
@@ -225,16 +213,6 @@ public:
         int l // Layer index
     ) const {
         return dLayers[l];
-    }
-
-    // Retrieve predictor layer(s)
-    Array<Ptr<Actor>> &getALayers() {
-        return aLayers;
-    }
-
-    // Retrieve predictor layer(s), const version
-    const Array<Ptr<Actor>> &getALayers() const {
-        return aLayers;
     }
 };
 } // namespace aon
