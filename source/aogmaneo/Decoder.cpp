@@ -121,7 +121,7 @@ void Decoder::learn(
 
         sum /= max(1, count);
 
-        float delta = lr * strength * ((hc == targetCI) - sigmoid(sum));
+        float delta = lr * ((hc == targetCI) * strength - sum);
             
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
