@@ -13,39 +13,37 @@
 namespace aon {
 // Adapts a goal-driven hierarchy to reinforcement learning
 class RLAdapter {
-public:
-    struct Sample {
-        IntBuffer hiddenCIs;
-
-        float reward;
-    };
-
 private:
     Int3 hiddenSize;
 
     IntBuffer goalCIs;
 
-    int numSamples;
-    CircleBuffer<Sample> samples;
+    FloatBuffer weights;
+    FloatBuffer traces;
 
-    void select(
-        const Int2 &columnPos
+    void forward(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenCIs,
+        float reward,
+        bool learnEnabled
     );
 
 public:
     float lr; // Learning rate
-    int minOverlap;
+    float discount;
+    float traceDecay;
 
     // Defaults
     RLAdapter()
     :
-    lr(0.5f),
-    minOverlap(16)
+    lr(0.1f),
+    discount(0.99f),
+    traceDecay(0.98f)
     {}
 
-    void init(
-        const Int3 &hiddenSize,
-        int maxSamples
+    // Create with random initialization
+    void initRandom(
+        const Int3 &hiddenSize // Hidden/output/prediction size
     );
 
     void step(
