@@ -77,6 +77,7 @@ void Decoder::learn(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     float strength = 1.0f - static_cast<float>(historySize - 2 - t) / static_cast<float>(history.size() - 1);
+    strength *= strength;
 
     int targetCI = history[historySize - 2].hiddenTargetCIs[hiddenColumnIndex];
 
