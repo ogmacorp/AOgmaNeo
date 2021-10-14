@@ -78,6 +78,8 @@ void Decoder::learn(
 
     float strength = 1.0f - static_cast<float>(historySize - 2 - t) / static_cast<float>(history.size() - 1);
 
+    strength *= strength;
+
     int targetCI = history[historySize - 2].hiddenTargetCIs[hiddenColumnIndex];
 
     // Pre-count
@@ -159,7 +161,7 @@ void Decoder::initRandom(
     visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
 
     for (int i = 0; i < visibleLayer.weights.size(); i++)
-        visibleLayer.weights[i] = randf(0.0f, 0.01f);
+        visibleLayer.weights[i] = randf(-0.01f, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
