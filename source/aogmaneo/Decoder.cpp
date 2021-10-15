@@ -76,10 +76,6 @@ void Decoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    float strength = 1.0f - static_cast<float>(historySize - 2 - t) / static_cast<float>(history.size() - 1);
-
-    strength *= strength;
-
     int targetCI = history[historySize - 2].hiddenTargetCIs[hiddenColumnIndex];
 
     // Pre-count
@@ -123,7 +119,7 @@ void Decoder::learn(
 
         sum /= max(1, count);
 
-        float delta = lr * ((hc == targetCI) * strength - sum);
+        float delta = lr * ((hc == targetCI) - sigmoid(sum));
             
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
