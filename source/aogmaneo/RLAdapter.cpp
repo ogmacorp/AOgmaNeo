@@ -41,7 +41,7 @@ void RLAdapter::forward(
 
         weights[hiddenCellIndex] += lr * (qTarget - weights[hiddenCellIndex]) * traces[hiddenCellIndex];
 
-        traces[hiddenCellIndex] += (1.0f - traceDecay) * (static_cast<float>(hc == (*hiddenCIs)[hiddenColumnIndex]) - traces[hiddenCellIndex]);
+        traces[hiddenCellIndex] = max(traces[hiddenCellIndex] * traceDecay, static_cast<float>(hc == (*hiddenCIs)[hiddenColumnIndex]));
     }
 }
 
