@@ -46,7 +46,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs;
-    FloatBuffer hiddenTraces;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -66,13 +65,11 @@ private:
     );
 
 public:
-    float traceDecay;
     float lr;
 
     Encoder()
     :
-    traceDecay(0.8f),
-    lr(0.0f)
+    lr(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization

@@ -171,7 +171,7 @@ void Decoder::learn(
 
         subReward /= max(1, count);
 
-        subReward *= subReward; // Curve it a bit to promote exact matches
+        subReward *= subReward * subReward; // Curve it a bit to promote exact matches
 
         reward += g * subReward;
 
