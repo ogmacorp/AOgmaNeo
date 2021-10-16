@@ -16,6 +16,7 @@ void Hierarchy::initRandom(
 ) {
     // Create layers
     eLayers.resize(layerDescs.size());
+    cLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
 
     ticks.resize(layerDescs.size(), 0);
@@ -111,6 +112,15 @@ void Hierarchy::initRandom(
         
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+
+        Array<Encoder::VisibleLayerDesc> cVisibleLayerDescs(2);
+
+        cVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+        cVisibleLayerDescs[0].radius = layerDescs[l].cRadius;
+
+        cVisibleLayerDescs[1] = cVisibleLayerDescs[0];
+
+        cLayers[l].initRandom(layerDescs[l].concatSize, cVisibleLayerDescs);
     }
 }
 
@@ -170,6 +180,11 @@ void Hierarchy::step(
 
     // Backward
     for (int l = eLayers.size() - 1; l >= 0; l--) {
+        // Concatenate
+        Array<const IntBuffer*> learnInputCIs(2);
+        learnInputCIs[0] = &eLayers[l].getHiddenCIs();
+        learnInputCIs[1] = &eLayers[l].getHiddenCIs();
+
         for (int i = 0; i < dLayers[l].size(); i++)
             dLayers[l][i].step(l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : topGoalCIs, &eLayers[l].getHiddenCIs(), &histories[l][i][0], learnEnabled, updates[l]);
     }

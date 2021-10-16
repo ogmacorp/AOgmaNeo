@@ -48,8 +48,10 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
+        Int3 concatSize; // Size of feedback concatenation layer
 
         int eRadius; // Encoder radius
+        int cRadius; // Concatenation radius
         int dRadius; // Decoder radius
 
         int historyCapacity;
@@ -60,7 +62,9 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
+        concatSize(4, 4, 16),
         eRadius(2),
+        cRadius(2),
         dRadius(2),
         historyCapacity(8),
         ticksPerUpdate(2),
@@ -69,7 +73,9 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
+            const Int3 &concatSize,
             int eRadius,
+            int cRadius,
             int dRadius,
             int historyCapacity,
             int ticksPerUpdate,
@@ -77,7 +83,9 @@ public:
         )
         :
         hiddenSize(hiddenSize),
+        concatSize(concatSize),
         eRadius(eRadius),
+        cRadius(cRadius),
         dRadius(dRadius),
         historyCapacity(historyCapacity),
         ticksPerUpdate(ticksPerUpdate),
@@ -88,6 +96,7 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
+    Array<Encoder> cLayers;
     Array<Array<Decoder>> dLayers;
 
     // Histories
@@ -219,6 +228,20 @@ public:
         int l // Layer index
     ) const {
         return eLayers[l];
+    }
+
+    // Retrieve a sparse coding layer
+    Encoder &getCLayer(
+        int l // Layer index
+    ) {
+        return cLayers[l];
+    }
+
+    // Retrieve a sparse coding layer, const version
+    const Encoder &getCLayer(
+        int l // Layer index
+    ) const {
+        return cLayers[l];
     }
 
     // Retrieve predictor layer(s)
