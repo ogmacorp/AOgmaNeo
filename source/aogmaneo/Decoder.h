@@ -31,63 +31,56 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-    };
 
-    struct HistorySample {
-        IntBuffer inputCIs;
-        IntBuffer hiddenTargetCIs;
+        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
+    FloatBuffer hiddenActivations;
+
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
-    VisibleLayer visibleLayer;
-    VisibleLayerDesc visibleLayerDesc;
-
-    CircleBuffer<HistorySample> history;
-    int historySize;
+    Array<VisibleLayer> visibleLayers;
+    Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
 
     void forward(
         const Int2 &columnPos,
-        const IntBuffer* goalCIs,
-        const IntBuffer* inputCIs
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        int t,
-        float strength
+        const IntBuffer* hiddenTargetCIs
     );
 
 public:
     float lr; // Learning rate
-    float decay; // Decay of "trace"
 
     // Defaults
     Decoder()
     :
-    lr(0.1f),
-    decay(0.9f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
-        int historyCapacity,
-        const VisibleLayerDesc &visibleLayerDesc
+        const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
-    void step(
-        const IntBuffer* goalCIs,
-        const IntBuffer* inputCIs,
-        const IntBuffer* hiddenTargetCIs,
-        bool learnEnabled,
-        bool stateUpdate
+    // Activate the predictor (predict values)
+    void activate(
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    // Learning predictions (update weights)
+    void learn(
+        const IntBuffer* hiddenTargetCIs
     );
 
     // Serialization
@@ -110,19 +103,30 @@ public:
         StreamReader &reader
     );
 
-    // Get a visible layer
-    VisibleLayer &getVisibleLayer() {
-        return visibleLayer;
+    // Get number of visible layers
+    int getNumVisibleLayers() const {
+        return visibleLayers.size();
     }
 
     // Get a visible layer
-    const VisibleLayer &getVisibleLayer() const {
-        return visibleLayer;
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
+    }
+
+    // Get a visible layer
+    const VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) const {
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
-    const VisibleLayerDesc &getVisibleLayerDesc() const {
-        return visibleLayerDesc;
+    const VisibleLayerDesc &getVisibleLayerDesc(
+        int i // Index of visible layer
+    ) const {
+        return visibleLayerDescs[i];
     }
 
     // Get the hidden activations (predictions)

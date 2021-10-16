@@ -21,27 +21,22 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int historyCapacity;
-
         IODesc()
         :
         size(4, 4, 16),
         eRadius(2),
-        dRadius(2),
-        historyCapacity(8)
+        dRadius(2)
         {}
 
         IODesc(
             const Int3 &size,
             int eRadius,
-            int dRadius,
-            int historyCapacity
+            int dRadius
         )
         :
         size(size),
         eRadius(eRadius),
-        dRadius(dRadius),
-        historyCapacity(historyCapacity)
+        dRadius(dRadius)
         {}
     };
 
@@ -54,8 +49,6 @@ public:
         int cRadius; // Concatenation radius
         int dRadius; // Decoder radius
 
-        int historyCapacity;
-
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
@@ -66,7 +59,6 @@ public:
         eRadius(2),
         cRadius(2),
         dRadius(2),
-        historyCapacity(8),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
@@ -77,7 +69,6 @@ public:
             int eRadius,
             int cRadius,
             int dRadius,
-            int historyCapacity,
             int ticksPerUpdate,
             int temporalHorizon
         )
@@ -87,7 +78,6 @@ public:
         eRadius(eRadius),
         cRadius(cRadius),
         dRadius(dRadius),
-        historyCapacity(historyCapacity),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
@@ -98,6 +88,7 @@ private:
     Array<Encoder> eLayers;
     Array<Encoder> cLayers;
     Array<Array<Decoder>> dLayers;
+    Array<IntBuffer> hiddenCIsPrev;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
