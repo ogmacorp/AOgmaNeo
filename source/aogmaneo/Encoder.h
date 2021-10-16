@@ -72,7 +72,7 @@ public:
     Encoder()
     :
     traceDecay(0.8f),
-    lr(0.1f)
+    lr(0.0f)
     {}
 
     // Create a sparse coding layer with random initialization

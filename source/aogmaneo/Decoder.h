@@ -80,11 +80,11 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.05f),
+    lr(0.1f),
     discount(0.97f),
     genGoalNoise(0.1f),
-    qSteps(5),
-    historyIters(16)
+    qSteps(3),
+    historyIters(8)
     {}
 
     // Create with random initialization
