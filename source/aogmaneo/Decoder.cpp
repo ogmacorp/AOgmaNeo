@@ -171,14 +171,14 @@ void Decoder::learn(
 
         subReward /= max(1, count);
 
-        subReward *= subReward * subReward; // Curve it a bit to promote exact matches
+        subReward *= subReward; // Curve it a bit to promote exact matches
 
         reward += g * subReward;
 
         g *= discount;
     }
 
-    float delta = lr * ((1.0f - discount) * reward + g * maxActivation - sum);
+    float delta = lr * (reward + g * maxActivation - sum);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
