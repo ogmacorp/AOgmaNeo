@@ -67,7 +67,7 @@ public:
         :
         hiddenSize(4, 4, 16),
         ffRadius(2),
-        rRadius(-1),
+        rRadius(2),
         fbRadius(2),
         historyCapacity(32)
         {}
