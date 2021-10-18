@@ -108,50 +108,42 @@ void Decoder::learn(
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
     float maxActivation = 0.0f;
+    float maxActivationPrev = 0.0f;
+    float activationPrev;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
+        float sumPrev = 0.0f;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
                 int goalCI = visibleLayer.genGoalCIs[visibleColumnIndex];
-                int inCIPrev = history[t - qSteps].inputCIs[visibleColumnIndex];
+                int inCINext = history[t - qSteps].inputCIs[visibleColumnIndex];
+                int inCIPrev = history[t].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += visibleLayer.weights[goalCI + inCIPrev * visibleLayerDesc.size.z + wiStart];
+                sum += visibleLayer.weights[goalCI + inCINext * visibleLayerDesc.size.z + wiStart];
+                sumPrev += visibleLayer.weights[goalCI + inCIPrev * visibleLayerDesc.size.z + wiStart];
             }
 
         sum /= max(1, count);
+        sumPrev /= max(1, count);
 
         maxActivation = max(maxActivation, sum);
+        maxActivationPrev = max(maxActivationPrev, sumPrev);
+
+        if (hc == targetCI)
+            activationPrev = sumPrev;
     }
 
     int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
-
-    float sum = 0.0f;
-
-    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-            int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
-
-            int goalCI = visibleLayer.genGoalCIs[visibleColumnIndex];
-            int inCIPrev = history[t].inputCIs[visibleColumnIndex];
-
-            Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-            int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
-
-            sum += visibleLayer.weights[goalCI + inCIPrev * visibleLayerDesc.size.z + wiStart];
-        }
-
-    sum /= max(1, count);
 
     float reward = 0.0f;
 
@@ -178,7 +170,7 @@ void Decoder::learn(
         g *= discount;
     }
 
-    float delta = lr * (reward + g * maxActivation - sum);
+    float delta = lr * (reward + g * maxActivation - activationPrev - gap * (maxActivationPrev - activationPrev));
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -283,7 +275,7 @@ void Decoder::step(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + 4 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int);
 
     size += sizeof(VisibleLayerDesc) + visibleLayer.weights.size() * sizeof(float);
 
@@ -307,6 +299,7 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&gap), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&genGoalNoise), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&qSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
@@ -343,6 +336,7 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&gap), sizeof(float));
     reader.read(reinterpret_cast<void*>(&genGoalNoise), sizeof(float));
     reader.read(reinterpret_cast<void*>(&qSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
