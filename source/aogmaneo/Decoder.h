@@ -81,11 +81,11 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.01f),
+    lr(0.1f),
     discount(0.99f),
-    gap(0.3f),
+    gap(0.5f),
     genGoalNoise(0.0f),
-    qSteps(3),
+    qSteps(1),
     historyIters(16)
     {}
 
