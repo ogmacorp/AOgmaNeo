@@ -78,6 +78,8 @@ void Decoder::learn(
 
     int targetCI = history[historySize - 2].hiddenTargetCIs[hiddenColumnIndex];
 
+    float strength = 1.0f - static_cast<float>(historySize - 2 - t) / static_cast<float>(history.size() - 1);
+
     // Pre-count
     int diam = visibleLayerDesc.radius * 2 + 1;
 
@@ -119,7 +121,7 @@ void Decoder::learn(
 
         sum /= max(1, count);
 
-        float delta = lr * ((hc == targetCI) - sigmoid(sum));
+        float delta = lr * strength * ((hc == targetCI) - sigmoid(sum));
             
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -193,7 +195,7 @@ void Decoder::step(
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
         if (learnEnabled) {
-            for (int t = 0; t < historySize - 1; t++) {
+            for (int t = historySize - 2; t >= 0; t--) {
                 // Learn kernel
                 #pragma omp parallel for
                 for (int i = 0; i < numHiddenColumns; i++)
