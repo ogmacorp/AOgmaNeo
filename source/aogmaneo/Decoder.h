@@ -31,8 +31,6 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-
-        IntBuffer genGoalCIs;
     };
 
     struct HistorySample {
@@ -60,11 +58,6 @@ private:
         const IntBuffer* inputCIs
     );
 
-    void generateGoal(
-        const Int2 &columnPos,
-        unsigned int* state
-    );
-
     void learn(
         const Int2 &columnPos,
         int t
@@ -72,21 +65,13 @@ private:
 
 public:
     float lr; // Learning rate
-    float discount; // Discount factor
-    float gap; // Action gap
-    float genGoalNoise; // Noise on goal generation
-    int qSteps;
-    int historyIters;
+    float discount;
 
     // Defaults
     Decoder()
     :
     lr(0.1f),
-    discount(0.99f),
-    gap(0.5f),
-    genGoalNoise(0.0f),
-    qSteps(1),
-    historyIters(16)
+    discount(0.99f)
     {}
 
     // Create with random initialization
@@ -96,7 +81,6 @@ public:
         const VisibleLayerDesc &visibleLayerDesc
     );
 
-    // Activate the predictor (predict values)
     void step(
         const IntBuffer* goalCIs,
         const IntBuffer* inputCIs,
