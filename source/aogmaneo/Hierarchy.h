@@ -255,6 +255,10 @@ public:
         return dLayers[l];
     }
 
+    const IntBuffer &getIIndices() const {
+        return iIndices;
+    }
+
     const IntBuffer &getDIndices() const {
         return dIndices;
     }
