@@ -172,6 +172,12 @@ public:
         return updates[updates.size() - 1];
     }
 
+    bool dLayerExists(
+        int i
+    ) const {
+        return dIndices[i] != -1;
+    }
+
     // Importance control
     void setImportance(
         int i,
