@@ -12,11 +12,18 @@
 #include "Decoder.h"
 
 namespace aon {
+// Type of hierarchy input layer
+enum IOType {
+    none = 0,
+    prediction = 1
+};
+
 // A SPH
 class Hierarchy {
 public:
     struct IODesc {
         Int3 size;
+        IOType type;
 
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
@@ -26,6 +33,7 @@ public:
         IODesc()
         :
         size(4, 4, 16),
+        type(prediction),
         eRadius(2),
         dRadius(2),
         historyCapacity(8)
@@ -33,12 +41,14 @@ public:
 
         IODesc(
             const Int3 &size,
+            IOType type,
             int eRadius,
             int dRadius,
             int historyCapacity
         )
         :
         size(size),
+        type(type),
         eRadius(eRadius),
         dRadius(dRadius),
         historyCapacity(historyCapacity)
@@ -89,6 +99,10 @@ private:
     // Layers
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
+
+    // For mapping first layer decoders
+    IntBuffer iIndices;
+    IntBuffer dIndices;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -178,7 +192,7 @@ public:
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
-        return dLayers[0][i].getHiddenCIs();
+        return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -233,6 +247,10 @@ public:
         int l // Layer index
     ) const {
         return dLayers[l];
+    }
+
+    const IntBuffer &getDIndices() const {
+        return dIndices;
     }
 
     const Array<CircleBuffer<IntBuffer>> &getHistories(
