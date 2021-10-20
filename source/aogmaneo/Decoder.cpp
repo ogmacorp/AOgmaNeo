@@ -136,9 +136,7 @@ void Decoder::learn(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float s = sigmoid(hiddenActivations[hiddenCellIndex]);
-
-            float delta = lr * strength * ((hc == targetCI) - s) * s * (1.0f - s);
+            float delta = lr * strength * ((hc == targetCI) - sigmoid(hiddenActivations[hiddenCellIndex]));
                 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
