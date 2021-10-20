@@ -34,6 +34,15 @@ void Hierarchy::initRandom(
     for (int l = 0; l < layerDescs.size(); l++)
         ticksPerUpdate[l] = l == 0 ? 1 : layerDescs[l].ticksPerUpdate; // First layer always 1
 
+    int numPredictions = 0;
+
+    for (int i = 0; i < inputSizes.size(); i++) {
+        inputSizes[i] = ioDescs[i].size;
+
+        if (ioDescs[i].type == prediction)
+            numPredictions++;
+    }
+
     // Iterate through layers
     for (int l = 0; l < layerDescs.size(); l++) {
         // Create sparse coder visible layer descriptors
@@ -62,15 +71,6 @@ void Hierarchy::initRandom(
                 
                 for (int t = 0; t < histories[l][i].size(); t++)
                     histories[l][i][t] = IntBuffer(inSize, 0);
-            }
-
-            int numPredictions = 0;
-
-            for (int i = 0; i < inputSizes.size(); i++) {
-                inputSizes[i] = ioDescs[i].size;
-
-                if (ioDescs[i].type == prediction)
-                    numPredictions++;
             }
 
             dLayers[l].resize(numPredictions);
