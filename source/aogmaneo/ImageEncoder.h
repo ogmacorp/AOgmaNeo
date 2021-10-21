@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "Helpers.h"
+#include "Encoder.h"
 
 namespace aon {
 // Image coder
@@ -39,8 +39,9 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
-
     FloatBuffer hiddenRates;
+
+    Array<Encoder> higherLayers;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -74,7 +75,8 @@ public:
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
+        const Array<VisibleLayerDesc> &visibleLayerDescs, // Descriptors for visible layers
+        const Array<Int3> &higherLayerSizes
     );
 
     // Activate the sparse coder (perform sparse coding)
@@ -88,9 +90,25 @@ public:
     );
 
     const ByteBuffer &getReconstruction(
-        int i
+        int vli
     ) const {
-        return visibleLayers[i].reconstruction;
+        return visibleLayers[vli].reconstruction;
+    }
+
+    int getNumHigherLayers() const {
+        return higherLayers.size();
+    }
+
+    Encoder &getHigherLayer(
+        int l
+    ) {
+        return higherLayers[l];
+    }
+
+    const Encoder &getHigherLayer(
+        int l
+    ) const {
+        return higherLayers[l];
     }
 
     // Serialization
@@ -111,16 +129,16 @@ public:
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states

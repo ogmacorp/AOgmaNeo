@@ -62,7 +62,7 @@ void ImageEncoder::forward(
 
                         int delta = input - static_cast<int>(vl.protos[vc + wiStart]);
 
-                        sum -= abs(delta);
+                        sum -= delta * delta;
                     }
                 }
         }
