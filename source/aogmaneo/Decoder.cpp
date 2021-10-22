@@ -52,6 +52,9 @@ void Decoder::forward(
                 int goalCI = (*goalCIs)[visibleColumnIndex];
                 int inCIPrev = (*inputCIs)[visibleColumnIndex];
 
+                if (inCI == inCIPrev)
+                    continue;
+
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
@@ -123,6 +126,9 @@ void Decoder::learn(
                 int goalCI = visibleLayer.genGoalCIs[visibleColumnIndex];
                 int inCINext = history[t - qSteps].inputCIs[visibleColumnIndex];
                 int inCIPrev = history[t].inputCIs[visibleColumnIndex];
+
+                if (inCI == inCIPrev)
+                    continue;
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 

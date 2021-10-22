@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "Helpers.h"
+#include "Encoder.h"
 
 namespace aon {
 // Image coder
@@ -35,12 +35,26 @@ public:
         ByteBuffer reconstruction;
     };
 
+    struct HigherLayerDesc {
+        Int3 hiddenSize;
+
+        int radius;
+
+        HigherLayerDesc()
+        :
+        hiddenSize(4, 4, 16),
+        radius(2)
+        {}
+    };
+
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
-
     FloatBuffer hiddenRates;
+
+    Array<Encoder> higherLayers;
+    Array<IntBuffer> higherLayerReconCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -75,6 +89,14 @@ public:
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
+    ) {
+        initRandom(hiddenSize, visibleLayerDescs, Array<HigherLayerDesc>()); // Signify no higher layers
+    }
+
+    void initRandom(
+        const Int3 &hiddenSize, // Hidden/output size
+        const Array<VisibleLayerDesc> &visibleLayerDescs, // Descriptors for visible layers
+        const Array<HigherLayerDesc> &higherLayerDescs
     );
 
     // Activate the sparse coder (perform sparse coding)
@@ -88,9 +110,25 @@ public:
     );
 
     const ByteBuffer &getReconstruction(
-        int i
+        int vli
     ) const {
-        return visibleLayers[i].reconstruction;
+        return visibleLayers[vli].reconstruction;
+    }
+
+    int getNumHigherLayers() const {
+        return higherLayers.size();
+    }
+
+    Encoder &getHigherLayer(
+        int l
+    ) {
+        return higherLayers[l];
+    }
+
+    const Encoder &getHigherLayer(
+        int l
+    ) const {
+        return higherLayers[l];
     }
 
     // Serialization
@@ -111,16 +149,16 @@ public:
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states
@@ -128,8 +166,24 @@ public:
         return hiddenCIs;
     }
 
+    // Get the output states
+    const IntBuffer &getOutputCIs() const {
+        if (higherLayers.size() > 0)
+            return higherLayers[higherLayers.size() - 1].getHiddenCIs();
+
+        return hiddenCIs;
+    }
+
     // Get the hidden size
     const Int3 &getHiddenSize() const {
+        return hiddenSize;
+    }
+
+    // Get the output size
+    const Int3 &getOutputSize() const {
+        if (higherLayers.size() > 0)
+            return higherLayers[higherLayers.size() - 1].getHiddenSize();
+
         return hiddenSize;
     }
 };
