@@ -120,7 +120,7 @@ void Hierarchy::initRandom(
                     aLayers[dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
 
                     iIndices[ioSizes.size() + dIndex] = i;
-                    dIndices[i] = dIndex;
+                    dIndices[i] = ioSizes.size() + dIndex;
                     dIndex++;
                 }
             }

@@ -198,6 +198,9 @@ public:
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
+        if (dIndices[i] >= ioSizes.size())
+            return aLayers[dIndices[i] - ioSizes.size()].getHiddenCIs();
+
         return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
@@ -253,6 +256,18 @@ public:
         int l // Layer index
     ) const {
         return dLayers[l];
+    }
+
+    // Retrieve actor layer(s)
+    Array<Actor> &getALayers() {
+        return aLayers;
+    }
+
+    // Retrieve actor layer(s), const version
+    const Array<Actor> &getALayers(
+        int l // Layer index
+    ) const {
+        return aLayers;
     }
 
     const IntBuffer &getIIndices() const {
