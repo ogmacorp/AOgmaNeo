@@ -229,7 +229,7 @@ void Hierarchy::step(
 
             for (int d = 0; d < dLayers[l].size(); d++) {
                 if (learnEnabled)
-                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : d][0]);
+                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d]);
 
                 dLayers[l][d].activate(layerInputCIs);
             }
