@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -15,8 +15,9 @@
 namespace aon {
 // Type of hierarchy input layer
 enum IOType {
-    prediction = 0,
-    action = 1
+    none = 0,
+    prediction = 1,
+    action = 2
 };
 
 // A SPH
@@ -29,7 +30,7 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int historyCapacity; // Actor history capacity
+        int historyCapacity;
 
         IODesc()
         :
@@ -79,6 +80,7 @@ public:
             const Int3 &hiddenSize,
             int eRadius,
             int dRadius,
+            int historyCapacity,
             int ticksPerUpdate,
             int temporalHorizon
         )
@@ -94,8 +96,12 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Array<Array<Decoder>>> dLayers;
-    Array<Ptr<Actor>> aLayers;
+    Array<Array<Decoder>> dLayers;
+    Array<Actor> aLayers;
+
+    // For mapping first layer decoders
+    IntBuffer iIndices;
+    IntBuffer dIndices;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -107,23 +113,11 @@ private:
     IntBuffer ticksPerUpdate;
 
     // Input dimensions
-    Array<Int3> inputSizes;
+    Array<Int3> ioSizes;
 
 public:
     // Default
     Hierarchy() {}
-
-    // Copy
-    Hierarchy(
-        const Hierarchy &other // Hierarchy to copy from
-    ) {
-        *this = other;
-    }
-
-    // Assignment
-    const Hierarchy &operator=(
-        const Hierarchy &other // Hierarchy to assign from
-    );
     
     // Create a randomly initialized hierarchy
     void initRandom(
@@ -135,8 +129,8 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f, // Reinforcement signal
-        bool mimic = false // Whether to treat Actors like Decoders
+        float reward = 0.0f, // Reward
+        bool mimic = false // Mimicry mode - treat actors as regular decoders
     );
 
     // Serialization
@@ -164,6 +158,26 @@ public:
         return eLayers.size();
     }
 
+    // Get state of highest layer (less verbose when dealing with goal-driven learning)
+    const IntBuffer &getTopHiddenCIs() const {
+        return eLayers[eLayers.size() - 1].getHiddenCIs();
+    }
+
+    // Get size of highest layer (less verbose when dealing with goal-driven learning)
+    const Int3 &getTopHiddenSize() const {
+        return eLayers[eLayers.size() - 1].getHiddenSize();
+    }
+
+    bool getTopUpdate() const {
+        return updates[updates.size() - 1];
+    }
+
+    bool dLayerExists(
+        int i
+    ) const {
+        return dIndices[i] != -1;
+    }
+
     // Importance control
     void setImportance(
         int i,
@@ -184,10 +198,7 @@ public:
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
     ) const {
-        if (aLayers[i] != nullptr) // If is an action layer
-            return aLayers[i]->getHiddenCIs();
-
-        return dLayers[0][i][0].getHiddenCIs();
+        return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
@@ -231,27 +242,25 @@ public:
     }
 
     // Retrieve predictor layer(s)
-    Array<Array<Decoder>> &getDLayers(
+    Array<Decoder> &getDLayers(
         int l // Layer index
     ) {
         return dLayers[l];
     }
 
     // Retrieve predictor layer(s), const version
-    const Array<Array<Decoder>> &getDLayers(
+    const Array<Decoder> &getDLayers(
         int l // Layer index
     ) const {
         return dLayers[l];
     }
 
-    // Retrieve predictor layer(s)
-    Array<Ptr<Actor>> &getALayers() {
-        return aLayers;
+    const IntBuffer &getIIndices() const {
+        return iIndices;
     }
 
-    // Retrieve predictor layer(s), const version
-    const Array<Ptr<Actor>> &getALayers() const {
-        return aLayers;
+    const IntBuffer &getDIndices() const {
+        return dIndices;
     }
 
     const Array<CircleBuffer<IntBuffer>> &getHistories(
