@@ -80,7 +80,6 @@ public:
             const Int3 &hiddenSize,
             int eRadius,
             int dRadius,
-            int historyCapacity,
             int ticksPerUpdate,
             int temporalHorizon
         )
