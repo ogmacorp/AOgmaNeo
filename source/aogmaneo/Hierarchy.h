@@ -294,14 +294,12 @@ public:
     }
 
     Actor &getALayer(
-        int l,
         int i
     ) {
         return aLayers[dIndices[ioSizes.size() + i]];
     }
 
     const Actor &getALayer(
-        int l,
         int i
     ) const {
         return aLayers[dIndices[ioSizes.size() + i]];
