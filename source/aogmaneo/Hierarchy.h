@@ -114,7 +114,7 @@ private:
     IntBuffer ticksPerUpdate;
 
     // Input dimensions
-    Array<Int3> inputSizes;
+    Array<Int3> ioSizes;
 
 public:
     // Default
@@ -223,8 +223,8 @@ public:
     }
 
     // Get input sizes
-    const Array<Int3> &getInputSizes() const {
-        return inputSizes;
+    const Array<Int3> &getIOSizes() const {
+        return ioSizes;
     }
 
     // Retrieve a sparse coding layer
