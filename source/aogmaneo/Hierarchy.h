@@ -264,9 +264,7 @@ public:
     }
 
     // Retrieve actor layer(s), const version
-    const Array<Actor> &getALayers(
-        int l // Layer index
-    ) const {
+    const Array<Actor> &getALayers() const {
         return aLayers;
     }
 
