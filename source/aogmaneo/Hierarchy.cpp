@@ -79,7 +79,7 @@ void Hierarchy::initRandom(
             dLayers[l].resize(numPredictions);
             aLayers.resize(numActions);
 
-            iIndices.resize(numPredictions + numActions);
+            iIndices.resize(ioSizes.size() * 2);
             dIndices = IntBuffer(ioSizes.size(), -1);
 
             // Create decoders and actors
@@ -388,7 +388,7 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
-    iIndices.resize(numPredictions + numActions);
+    iIndices.resize(numIO * 2);
     dIndices.resize(numIO);
 
     reader.read(reinterpret_cast<void*>(&iIndices[0]), iIndices.size() * sizeof(int));
