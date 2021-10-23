@@ -222,9 +222,9 @@ public:
         return ticksPerUpdate[l];
     }
 
-    // Get input sizes
-    const Array<Int3> &getInputSizes() const {
-        return inputSizes;
+    // Get input/output sizes
+    const Array<Int3> &getIOSizes() const {
+        return ioSizes;
     }
 
     // Retrieve a sparse coding layer
