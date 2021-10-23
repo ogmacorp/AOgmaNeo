@@ -196,7 +196,7 @@ public:
 
     // Retrieve predictions
     const IntBuffer &getPredictionCIs(
-        int i // Index of input layer to get predictions for
+        int i
     ) const {
         if (dIndices[i] >= ioSizes.size())
             return aLayers[dIndices[i] - ioSizes.size()].getHiddenCIs();
@@ -206,21 +206,21 @@ public:
 
     // Whether this layer received on update this timestep
     bool getUpdate(
-        int l // Layer index
+        int l
     ) const {
         return updates[l];
     }
 
     // Get current layer ticks, relative to previous layer
     int getTicks(
-        int l // Layer Index
+        int l
     ) const {
         return ticks[l];
     }
 
     // Get layer ticks per update, relative to previous layer
     int getTicksPerUpdate(
-        int l // Layer Index
+        int l
     ) const {
         return ticksPerUpdate[l];
     }
@@ -232,28 +232,27 @@ public:
 
     // Retrieve a sparse coding layer
     Encoder &getELayer(
-        int l // Layer index
+        int l
     ) {
         return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
     const Encoder &getELayer(
-        int l // Layer index
+        int l
     ) const {
         return eLayers[l];
     }
 
-    // Retrieve predictor layer(s)
+    // Retrieve deocder layer(s)
     Array<Decoder> &getDLayers(
-        int l // Layer index
+        int l
     ) {
         return dLayers[l];
     }
 
-    // Retrieve predictor layer(s), const version
     const Array<Decoder> &getDLayers(
-        int l // Layer index
+        int l
     ) const {
         return dLayers[l];
     }
@@ -263,9 +262,43 @@ public:
         return aLayers;
     }
 
-    // Retrieve actor layer(s), const version
     const Array<Actor> &getALayers() const {
         return aLayers;
+    }
+
+    // Retrieve by index
+    Decoder &getDLayer(
+        int l,
+        int i
+    ) {
+        if (l == 0)
+            return dLayers[l][dIndices[i]];
+
+        return dLayers[l][i];
+    }
+
+    const Decoder &getDLayer(
+        int l,
+        int i
+    ) const {
+        if (l == 0)
+            return dLayers[l][dIndices[i]];
+
+        return dLayers[l][i];
+    }
+
+    Actor &getALayer(
+        int l,
+        int i
+    ) {
+        return aLayers[dIndices[ioSizes.size() + i]];
+    }
+
+    const Actor &getALayer(
+        int l,
+        int i
+    ) const {
+        return aLayers[dIndices[ioSizes.size() + i]];
     }
 
     const IntBuffer &getIIndices() const {
