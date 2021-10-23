@@ -178,6 +178,12 @@ public:
         return dIndices[i] != -1;
     }
 
+    bool aLayerExists(
+        int i
+    ) const {
+        return dIndices[ioSizes.size() + i] != -1;
+    }
+
     // Importance control
     void setImportance(
         int i,
