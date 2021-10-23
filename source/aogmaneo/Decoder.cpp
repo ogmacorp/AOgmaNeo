@@ -78,8 +78,6 @@ void Decoder::learn(
 
     int targetCI = history[historySize - 2].hiddenTargetCIs[hiddenColumnIndex];
 
-    float strength = 1.0f - static_cast<float>(historySize - 2 - t) / static_cast<float>(history.size() - 1);
-
     // Pre-count
     int diam = visibleLayerDesc.radius * 2 + 1;
 
@@ -154,7 +152,7 @@ void Decoder::learn(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float delta = lr * strength * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+            float delta = lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
                 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
