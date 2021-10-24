@@ -26,7 +26,8 @@ private:
     FloatBuffer rates;
 
 public:
-    float lr; // Learning rate
+    float glr; // Goal learning rate
+    float vlr; // Value learning rate
     float falloff;
     float discount;
     float traceDecay;
@@ -34,7 +35,8 @@ public:
     // Defaults
     RLAdapter()
     :
-    lr(0.05f),
+    glr(0.1f),
+    vlr(0.1f),
     falloff(0.01f),
     discount(0.99f),
     traceDecay(0.1f)

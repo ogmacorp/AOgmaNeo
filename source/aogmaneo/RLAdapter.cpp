@@ -53,15 +53,8 @@ void RLAdapter::step(
     for (int g = 0; g < numGoals; g++) {
         float sum = 0.0f;
 
-        for (int i = 0; i < numHiddenColumns; i++) {
-            for (int hc = 0; hc < hiddenSize.z; hc++) {
-                int wi = hc + hiddenSize.z * (i + numHiddenColumns * g); 
-
-                float delta = ((hc == (*hiddenCIs)[i]) - protos[wi]);
-
-                sum -= delta * delta;
-            }
-        }
+        for (int i = 0; i < numHiddenColumns; i++)
+            sum += protos[(*hiddenCIs)[i] + hiddenSize.z * (i + numHiddenColumns * g)];
 
         if (sum > maxActivation || maxGoalIndex == -1) {
             maxActivation = sum;
@@ -74,7 +67,7 @@ void RLAdapter::step(
         float qTarget = (1.0f - discount) * reward + discount * values[maxGoalIndex];
 
         for (int g = 0; g < numGoals; g++) {
-            values[g] += (qTarget - values[g]) * traces[g];
+            values[g] += vlr * (qTarget - values[g]) * traces[g];
 
             if (stateUpdate) {
                 float strength = expf(-falloff * abs(maxGoalIndex - g) / max(0.0001f, rates[g])) * rates[g];
@@ -87,13 +80,13 @@ void RLAdapter::step(
                     }
                 }
 
-                rates[g] -= lr * strength;
+                rates[g] -= glr * strength;
             }
         }
     }
 
     for (int g = 0; g < numGoals; g++)
-        traces[g] += traceDecay * ((g == maxGoalIndex) - traces[g]);
+        traces[g] = max(traces[g] * (1.0f - traceDecay), (g == maxGoalIndex) - traces[g]);
 
     maxGoalIndex = -1;
     maxActivation = -999999.0f;
@@ -124,7 +117,7 @@ void RLAdapter::step(
 }
 
 int RLAdapter::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 4 * sizeof(float) + goalCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 5 * sizeof(float) + goalCIs.size() * sizeof(int);
 
     size += protos.size() * sizeof(float) + 3 * values.size() * sizeof(float);
 
@@ -141,7 +134,8 @@ void RLAdapter::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&numGoals), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&glr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&vlr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&falloff), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
@@ -164,7 +158,8 @@ void RLAdapter::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&glr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&vlr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
