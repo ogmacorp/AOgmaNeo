@@ -34,14 +34,14 @@ void RLAdapter::forward(
 
     goalCIs[hiddenColumnIndex] = maxIndex;
 
-    float qTarget = reward + discount * maxActivation;
+    float qTarget = (1.0f - discount) * reward + discount * maxActivation;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
 
         weights[hiddenCellIndex] += lr * (qTarget - weights[hiddenCellIndex]) * traces[hiddenCellIndex];
 
-        traces[hiddenCellIndex] = max(traces[hiddenCellIndex] * (1.0f - traceDecay), static_cast<float>(hc == (*hiddenCIs)[hiddenColumnIndex]));
+        traces[hiddenCellIndex] += traceDecay * (static_cast<float>(hc == (*hiddenCIs)[hiddenColumnIndex]) - traces[hiddenCellIndex]);
     }
 }
 
