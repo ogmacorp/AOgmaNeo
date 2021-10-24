@@ -35,9 +35,9 @@ public:
     RLAdapter()
     :
     lr(0.05f),
-    falloff(0.1f),
+    falloff(0.01f),
     discount(0.99f),
-    traceDecay(0.01f)
+    traceDecay(0.1f)
     {}
 
     // Create with random initialization
@@ -49,7 +49,8 @@ public:
     void step(
         const IntBuffer* hiddenCIs,
         float reward,
-        bool learnEnabled
+        bool learnEnabled,
+        bool stateUpdate
     );
 
     const IntBuffer &getGoalCIs() const {

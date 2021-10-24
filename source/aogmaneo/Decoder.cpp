@@ -211,7 +211,7 @@ void Decoder::step(
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
         if (learnEnabled) {
-            for (int t = 0; t < historySize - 1; t++) {
+            for (int t = historySize - 2; t >= 0; t--) {
                 // Learn kernel
                 #pragma omp parallel for
                 for (int i = 0; i < numHiddenColumns; i++)

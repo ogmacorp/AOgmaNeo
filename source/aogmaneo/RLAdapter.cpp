@@ -41,7 +41,8 @@ void RLAdapter::initRandom(
 void RLAdapter::step(
     const IntBuffer* hiddenCIs,
     float reward, 
-    bool learnEnabled
+    bool learnEnabled,
+    bool stateUpdate
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
@@ -52,8 +53,15 @@ void RLAdapter::step(
     for (int g = 0; g < numGoals; g++) {
         float sum = 0.0f;
 
-        for (int i = 0; i < numHiddenColumns; i++)
-            sum += protos[(*hiddenCIs)[i] + hiddenSize.z * (i + numHiddenColumns * g)];
+        for (int i = 0; i < numHiddenColumns; i++) {
+            for (int hc = 0; hc < hiddenSize.z; hc++) {
+                int wi = hc + hiddenSize.z * (i + numHiddenColumns * g); 
+
+                float delta = ((hc == (*hiddenCIs)[i]) - protos[wi]);
+
+                sum -= delta * delta;
+            }
+        }
 
         if (sum > maxActivation || maxGoalIndex == -1) {
             maxActivation = sum;
@@ -68,22 +76,34 @@ void RLAdapter::step(
         for (int g = 0; g < numGoals; g++) {
             values[g] += (qTarget - values[g]) * traces[g];
 
-            float strength = expf(-falloff * abs(maxGoalIndex - g) / max(0.0001f, rates[g])) * rates[g];
+            if (stateUpdate) {
+                float strength = expf(-falloff * abs(maxGoalIndex - g) / max(0.0001f, rates[g])) * rates[g];
 
-            for (int i = 0; i < numHiddenColumns; i++) {
-                for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int wi = hc + hiddenSize.z * (i + numHiddenColumns * g); 
+                for (int i = 0; i < numHiddenColumns; i++) {
+                    for (int hc = 0; hc < hiddenSize.z; hc++) {
+                        int wi = hc + hiddenSize.z * (i + numHiddenColumns * g); 
 
-                    protos[wi] += strength * ((hc == (*hiddenCIs)[i]) - protos[wi]);
+                        protos[wi] += strength * ((hc == (*hiddenCIs)[i]) - protos[wi]);
+                    }
                 }
-            }
 
-            rates[g] -= lr * strength;
+                rates[g] -= lr * strength;
+            }
         }
     }
 
     for (int g = 0; g < numGoals; g++)
         traces[g] += traceDecay * ((g == maxGoalIndex) - traces[g]);
+
+    maxGoalIndex = -1;
+    maxActivation = -999999.0f;
+
+    for (int g = 0; g < numGoals; g++) {
+        if (values[g] > maxActivation || maxGoalIndex == -1) {
+            maxActivation = values[g];
+            maxGoalIndex = g;
+        }
+    }
 
     // Determine goal from protos and goalIndex
     for (int i = 0; i < numHiddenColumns; i++) {
