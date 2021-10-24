@@ -36,10 +36,10 @@ public:
     RLAdapter()
     :
     glr(0.1f),
-    vlr(0.1f),
+    vlr(0.01f),
     falloff(0.01f),
     discount(0.99f),
-    traceDecay(0.1f)
+    traceDecay(0.01f)
     {}
 
     // Create with random initialization
