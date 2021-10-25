@@ -24,12 +24,12 @@ void RLAdapter::initRandom(
     protos.resize(numGoals * numHiddenCells);
 
     for (int i = 0; i < protos.size(); i++)
-        protos[i] = randf(0.0f, 1.0f);
+        protos[i] = randf(0.0f, 0.0001f);
 
     values.resize(numGoals);
 
     for (int i = 0; i < values.size(); i++)
-        values[i] = randf(-0.001f, 0.001f);
+        values[i] = randf(-0.0001f, 0.0001f);
 
     traces = FloatBuffer(values.size(), 0.0f);
 
@@ -72,11 +72,27 @@ void RLAdapter::step(
             if (stateUpdate) {
                 float strength = expf(-falloff * abs(maxGoalIndex - g) / max(0.0001f, rates[g])) * rates[g];
 
+                float total = 0.0f;
+
                 for (int i = 0; i < numHiddenColumns; i++) {
+                    protos[(*hiddenCIs)[i] + hiddenSize.z * (i + numHiddenColumns * g)] += strength;
+
                     for (int hc = 0; hc < hiddenSize.z; hc++) {
                         int wi = hc + hiddenSize.z * (i + numHiddenColumns * g); 
 
-                        protos[wi] += strength * ((hc == (*hiddenCIs)[i]) - protos[wi]);
+                        total += protos[wi];
+                    }
+                }
+
+                float scale = 1.0f / max(0.0001f, total);
+
+                for (int i = 0; i < numHiddenColumns; i++) {
+                    protos[(*hiddenCIs)[i] + hiddenSize.z * (i + numHiddenColumns * g)] += strength;
+
+                    for (int hc = 0; hc < hiddenSize.z; hc++) {
+                        int wi = hc + hiddenSize.z * (i + numHiddenColumns * g); 
+
+                        protos[wi] *= scale;
                     }
                 }
 
@@ -86,7 +102,7 @@ void RLAdapter::step(
     }
 
     for (int g = 0; g < numGoals; g++)
-        traces[g] = max(traces[g] * (1.0f - traceDecay), (g == maxGoalIndex) - traces[g]);
+        traces[g] = max(traces[g] * (1.0f - traceDecay), static_cast<float>(g == maxGoalIndex));
 
     maxGoalIndex = -1;
     maxActivation = -999999.0f;

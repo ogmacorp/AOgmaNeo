@@ -36,7 +36,7 @@ public:
     RLAdapter()
     :
     glr(0.1f),
-    vlr(0.01f),
+    vlr(0.1f),
     falloff(0.01f),
     discount(0.99f),
     traceDecay(0.01f)
