@@ -83,7 +83,7 @@ public:
     :
     lr(0.1f),
     discount(0.9f),
-    gap(0.1f),
+    gap(0.4f),
     genGoalNoise(0.0f),
     qSteps(3),
     historyIters(8)
