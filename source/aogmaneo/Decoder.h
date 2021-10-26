@@ -49,8 +49,8 @@ private:
     VisibleLayer visibleLayer;
     VisibleLayerDesc visibleLayerDesc;
 
-    CircleBuffer<HistorySample> history;
     int historySize;
+    CircleBuffer<HistorySample> history;
 
     // --- Kernels ---
 
@@ -82,11 +82,11 @@ public:
     Decoder()
     :
     lr(0.1f),
-    discount(0.99f),
-    gap(0.5f),
+    discount(0.9f),
+    gap(0.1f),
     genGoalNoise(0.0f),
-    qSteps(1),
-    historyIters(16)
+    qSteps(3),
+    historyIters(8)
     {}
 
     // Create with random initialization

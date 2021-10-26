@@ -110,6 +110,8 @@ void Decoder::learn(
     float maxActivation = 0.0f;
     float maxActivationPrev = 0.0f;
 
+    float activationPrev;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -138,7 +140,8 @@ void Decoder::learn(
         maxActivation = max(maxActivation, sum);
         maxActivationPrev = max(maxActivationPrev, sumPrev);
 
-        hiddenActivations[hiddenCellIndex] = sumPrev;
+        if (hc == targetCI)
+            activationPrev = sumPrev;
     }
 
     float reward = 0.0f;
@@ -166,27 +169,23 @@ void Decoder::learn(
         g *= discount;
     }
 
-    float activationPrev = hiddenActivations[targetCI + hiddenCellsStart];
+    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    float delta = lr * (reward + g * maxActivation - activationPrev - gap * (maxActivationPrev - activationPrev));
 
-        float delta = lr * (hc == targetCI ? (reward + g * maxActivation - activationPrev - gap * (maxActivationPrev - activationPrev)) : -hiddenActivations[hiddenCellIndex]);
+    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+            int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+            int goalCI = visibleLayer.genGoalCIs[visibleColumnIndex];
+            int inCIPrev = history[t].inputCIs[visibleColumnIndex];
 
-                int goalCI = visibleLayer.genGoalCIs[visibleColumnIndex];
-                int inCIPrev = history[t].inputCIs[visibleColumnIndex];
+            Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+            int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                visibleLayer.weights[goalCI + inCIPrev * visibleLayerDesc.size.z + wiStart] += delta;
-            }
-    }
+            visibleLayer.weights[goalCI + inCIPrev * visibleLayerDesc.size.z + wiStart] += delta;
+        }
 }
 
 void Decoder::initRandom(
@@ -215,7 +214,6 @@ void Decoder::initRandom(
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     int numVisibleColumns = visibleLayerDesc.size.x * visibleLayerDesc.size.y;
 
@@ -347,8 +345,6 @@ void Decoder::read(
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     reader.read(reinterpret_cast<void*>(&visibleLayerDesc), sizeof(VisibleLayerDesc));
 
