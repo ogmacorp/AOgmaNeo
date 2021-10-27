@@ -15,44 +15,36 @@ namespace aon {
 class RLAdapter {
 private:
     Int3 hiddenSize;
-    int numGoals;
 
     IntBuffer goalCIs;
 
-    FloatBuffer protos;
-    FloatBuffer values;
-    FloatBuffer traces;
+    FloatBuffer weights;
 
-    FloatBuffer rates;
+    void forward(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenCIs,
+        float reward,
+        bool learnEnabled
+    );
 
 public:
-    float glr; // Goal learning rate
-    float vlr; // Value learning rate
-    float falloff;
-    float discount;
-    float traceDecay;
+    float lr; // Learning rate
 
     // Defaults
     RLAdapter()
     :
-    glr(0.1f),
-    vlr(0.1f),
-    falloff(0.01f),
-    discount(0.99f),
-    traceDecay(0.01f)
+    lr(0.01f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
-        int numGoals
+        const Int3 &hiddenSize // Hidden/output/prediction size
     );
 
     void step(
         const IntBuffer* hiddenCIs,
         float reward,
-        bool learnEnabled,
-        bool stateUpdate
+        bool learnEnabled
     );
 
     const IntBuffer &getGoalCIs() const {
