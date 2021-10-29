@@ -54,9 +54,9 @@ void Decoder::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wi = inCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                sum += visibleLayer.weights[inCI + inCIPrev * visibleLayerDesc.size.z + wiStart];
+                sum += visibleLayer.weights[wi];
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -115,9 +115,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wi = inCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                sum += visibleLayer.weights[inCI + inCIPrev * visibleLayerDesc.size.z + wiStart];
+                sum += visibleLayer.weights[wi];
             }
 
         sum /= max(1, count);
@@ -145,9 +145,9 @@ void Decoder::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = inCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                    visibleLayer.weights[inCI + inCIPrev * visibleLayerDesc.size.z + wiStart] += delta;
+                    visibleLayer.weights[wi] += delta;
                 }
         }
     }
