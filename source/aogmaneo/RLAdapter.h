@@ -28,12 +28,12 @@ private:
     );
 
 public:
-    float lr; // Learning rate
+    float lr; // Learning rate rate
 
     // Defaults
     RLAdapter()
     :
-    lr(0.01f)
+    lr(0.1f)
     {}
 
     // Create with random initialization
