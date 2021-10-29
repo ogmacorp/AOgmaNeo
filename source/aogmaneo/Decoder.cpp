@@ -130,42 +130,26 @@ void Decoder::learn(
         }
     }
 
-    float total = 0.0f;
+    if (maxIndex != targetCI) {
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenCellIndex = hc + hiddenCellsStart;
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+            float delta = lr * ((hc == targetCI) - sigmoid(hiddenActivations[hiddenCellIndex]));
+                
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+                    int inCI = history[t].inputCIs[visibleColumnIndex];
+                    int inCIPrev = history[historySize - 1].inputCIs[visibleColumnIndex];
 
-        total += hiddenActivations[hiddenCellIndex];
-    }
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-    float scale = 1.0f / max(0.0001f, total);
+                    int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] *= scale;
-    }
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        float delta = lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
-            
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
-
-                int inCI = history[t].inputCIs[visibleColumnIndex];
-                int inCIPrev = history[historySize - 1].inputCIs[visibleColumnIndex];
-
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                int wiStart = visibleLayerDesc.size.z * visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                visibleLayer.weights[inCI + inCIPrev * visibleLayerDesc.size.z + wiStart] += delta;
-            }
+                    visibleLayer.weights[inCI + inCIPrev * visibleLayerDesc.size.z + wiStart] += delta;
+                }
+        }
     }
 }
 
@@ -189,7 +173,7 @@ void Decoder::initRandom(
     visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
 
     for (int i = 0; i < visibleLayer.weights.size(); i++)
-        visibleLayer.weights[i] = randf(-0.01f, 0.01f);
+        visibleLayer.weights[i] = randf(-1.0f, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -227,7 +211,7 @@ void Decoder::step(
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
         if (learnEnabled) {
-            for (int t = historySize - 2; t >= 0; t--) {
+            for (int t = 0; t < historySize - 1; t++) {
                 // Learn kernel
                 #pragma omp parallel for
                 for (int i = 0; i < numHiddenColumns; i++)

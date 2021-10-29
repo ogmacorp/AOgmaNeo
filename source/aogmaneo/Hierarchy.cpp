@@ -114,7 +114,7 @@ void Hierarchy::initRandom(
             for (int t = 0; t < histories[l][0].size(); t++)
                 histories[l][0][t] = IntBuffer(inSize, 0);
 
-            dLayers[l].resize(1);
+            dLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
             // Decoder visible layer descriptors
             Decoder::VisibleLayerDesc dVisibleLayerDesc;
@@ -123,7 +123,8 @@ void Hierarchy::initRandom(
             dVisibleLayerDesc.radius = layerDescs[l].dRadius;
 
             // Create decoders
-            dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
+            for (int t = 0; t < layerDescs[l].ticksPerUpdate; t++)
+                dLayers[l][t].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
         }
         
         // Create the sparse coding layer
@@ -188,7 +189,7 @@ void Hierarchy::step(
     // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         for (int d = 0; d < dLayers[l].size(); d++)
-            dLayers[l][d].step(l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : topGoalCIs, &eLayers[l].getHiddenCIs(), &histories[l][l == 0 ? iIndices[d] : 0][0], learnEnabled, updates[l]);
+            dLayers[l][d].step(l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topGoalCIs, &eLayers[l].getHiddenCIs(), &histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], learnEnabled, updates[l]);
     }
 }
 
@@ -360,7 +361,7 @@ void Hierarchy::read(
 
         eLayers[l].read(reader);
         
-        dLayers[l].resize(l == 0 ? numPredictions : 1);
+        dLayers[l].resize(l == 0 ? numPredictions : ticksPerUpdate[l]);
 
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
