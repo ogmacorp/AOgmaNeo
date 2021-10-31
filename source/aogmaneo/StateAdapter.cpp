@@ -173,8 +173,8 @@ void StateAdapter::initRandom(
 }
 
 void StateAdapter::step(
-    const IntBuffer* hiddenCIs,
     const IntBuffer* goalCIs,
+    const IntBuffer* hiddenCIs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;

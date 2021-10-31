@@ -63,8 +63,8 @@ public:
     );
 
     void step(
-        const IntBuffer* hiddenCIs,
         const IntBuffer* goalCIs,
+        const IntBuffer* hiddenCIs,
         bool learnEnabled
     );
 
