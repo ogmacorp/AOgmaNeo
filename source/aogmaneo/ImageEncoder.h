@@ -51,7 +51,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
-    FloatBuffer hiddenRates;
 
     Array<Encoder> higherLayers;
     Array<IntBuffer> higherLayerReconCIs;
@@ -76,13 +75,11 @@ private:
 
 public:
     float lr;
-    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.01f),
-    falloff(0.01f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
