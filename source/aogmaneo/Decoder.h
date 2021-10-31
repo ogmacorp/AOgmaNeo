@@ -55,7 +55,7 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const IntBuffer* goalCIs,
+        const IntBuffer* progCIs,
         const IntBuffer* inputCIs
     );
 
@@ -81,7 +81,7 @@ public:
     );
 
     void step(
-        const IntBuffer* goalCIs,
+        const IntBuffer* progCIs,
         const IntBuffer* inputCIs,
         const IntBuffer* hiddenTargetCIs,
         bool learnEnabled,

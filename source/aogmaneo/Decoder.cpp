@@ -12,14 +12,13 @@ using namespace aon;
 
 void Decoder::forward(
     const Int2 &columnPos,
-    const IntBuffer* goalCIs,
+    const IntBuffer* progCIs,
     const IntBuffer* inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    // Pre-count
     int diam = visibleLayerDesc.radius * 2 + 1;
 
     // Projection
@@ -49,7 +48,7 @@ void Decoder::forward(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-                int inCI = (*goalCIs)[visibleColumnIndex];
+                int inCI = (*progCIs)[visibleColumnIndex];
                 int inCIPrev = (*inputCIs)[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
@@ -120,7 +119,7 @@ void Decoder::learn(
                 sum += visibleLayer.weights[wi];
             }
 
-        sum /= max(1, count);
+        sum /= count;
 
         hiddenActivations[hiddenCellIndex] = sum;
 
@@ -208,7 +207,7 @@ void Decoder::initRandom(
 }
 
 void Decoder::step(
-    const IntBuffer* goalCIs,
+    const IntBuffer* progCIs,
     const IntBuffer* inputCIs,
     const IntBuffer* hiddenTargetCIs,
     bool learnEnabled,
@@ -239,7 +238,7 @@ void Decoder::step(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs, inputCIs);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), progCIs, inputCIs);
 }
 
 int Decoder::size() const {

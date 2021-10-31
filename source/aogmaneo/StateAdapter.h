@@ -11,39 +11,60 @@
 #include "Helpers.h"
 
 namespace aon {
-// Adapts a program-driven hierarchy to reinforcement learning
-class RLAdapter {
+// Adapts a prog-driven hierarchy to reinforcement learning
+class StateAdapter {
+public:
+    struct HistorySample {
+        IntBuffer hiddenCIs;
+    };
+
 private:
     Int3 hiddenSize;
+    int radius;
 
     IntBuffer progCIs;
 
     FloatBuffer weights;
 
+    CircleBuffer<HistorySample> history;
+    int historySize;
+
     void forward(
         const Int2 &columnPos,
-        const IntBuffer* hiddenCIs,
-        float reward,
-        bool learnEnabled
+        const IntBuffer* goalCIs,
+        const IntBuffer* hiddenCIs
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        int t1,
+        int t2,
+        float reward
     );
 
 public:
-    float lr; // Learning rate
+    float lr; // Learning rate rate
+    float discount;
+    int historyIters;
 
     // Defaults
-    RLAdapter()
+    StateAdapter()
     :
-    lr(0.1f)
+    lr(0.1f),
+    discount(0.9f),
+    historyIters(16)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize // Hidden/output/prediction size
+        const Int3 &hiddenSize, // Hidden/output/prediction size
+        int radius,
+        int historyCapacity
     );
 
     void step(
         const IntBuffer* hiddenCIs,
-        float reward,
+        const IntBuffer* goalCIs,
         bool learnEnabled
     );
 

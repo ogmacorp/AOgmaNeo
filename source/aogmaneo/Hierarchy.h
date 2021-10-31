@@ -129,7 +129,7 @@ public:
     // Simulation step/tick
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
-        const IntBuffer* topGoalCIs,
+        const IntBuffer* topProgCIs,
         bool learnEnabled = true // Whether learning is enabled
     );
 
@@ -158,12 +158,12 @@ public:
         return eLayers.size();
     }
 
-    // Get state of highest layer (less verbose when dealing with goal-driven learning)
+    // Get state of highest layer (less verbose when dealing with program-driven learning)
     const IntBuffer &getTopHiddenCIs() const {
         return eLayers[eLayers.size() - 1].getHiddenCIs();
     }
 
-    // Get size of highest layer (less verbose when dealing with goal-driven learning)
+    // Get size of highest layer (less verbose when dealing with program-driven learning)
     const Int3 &getTopHiddenSize() const {
         return eLayers[eLayers.size() - 1].getHiddenSize();
     }

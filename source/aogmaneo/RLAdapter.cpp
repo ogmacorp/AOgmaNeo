@@ -36,7 +36,7 @@ void RLAdapter::forward(
         }
     }
 
-    goalCIs[hiddenColumnIndex] = maxIndex;
+    progCIs[hiddenColumnIndex] = maxIndex;
 }
 
 void RLAdapter::initRandom(
@@ -53,7 +53,7 @@ void RLAdapter::initRandom(
     for (int i = 0; i < weights.size(); i++)
         weights[i] = randf(-1.01f, -1.0f);
 
-    goalCIs = IntBuffer(numHiddenColumns, 0);
+    progCIs = IntBuffer(numHiddenColumns, 0);
 }
 
 void RLAdapter::step(
@@ -69,7 +69,7 @@ void RLAdapter::step(
 }
 
 int RLAdapter::size() const {
-    int size = sizeof(Int3) + sizeof(float) + goalCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + progCIs.size() * sizeof(int);
 
     size += weights.size() * sizeof(float);
 
@@ -77,7 +77,7 @@ int RLAdapter::size() const {
 }
 
 int RLAdapter::stateSize() const {
-    return goalCIs.size() * sizeof(int);
+    return progCIs.size() * sizeof(int);
 }
 
 void RLAdapter::write(
@@ -87,7 +87,7 @@ void RLAdapter::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&progCIs[0]), progCIs.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&weights[0]), weights.size() * sizeof(float));
 }
@@ -102,9 +102,9 @@ void RLAdapter::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
-    goalCIs.resize(numHiddenColumns);
+    progCIs.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&progCIs[0]), progCIs.size() * sizeof(int));
 
     weights.resize(numHiddenCells);
 
@@ -114,11 +114,11 @@ void RLAdapter::read(
 void RLAdapter::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&progCIs[0]), progCIs.size() * sizeof(int));
 }
 
 void RLAdapter::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&progCIs[0]), progCIs.size() * sizeof(int));
 }

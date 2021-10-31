@@ -34,6 +34,7 @@ set(SOURCES
     "${SOURCE_PATH}/aogmaneo/Hierarchy.cpp"
     "${SOURCE_PATH}/aogmaneo/ImageEncoder.cpp"
     "${SOURCE_PATH}/aogmaneo/RLAdapter.cpp"
+    "${SOURCE_PATH}/aogmaneo/StateAdapter.cpp"
 )
 
 find_package(OpenMP REQUIRED)

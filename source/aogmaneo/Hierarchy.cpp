@@ -135,7 +135,7 @@ void Hierarchy::initRandom(
 // Simulation step/tick
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
-    const IntBuffer* topGoalCIs,
+    const IntBuffer* topProgCIs,
     bool learnEnabled
 ) {
     // First tick is always 0
@@ -189,7 +189,7 @@ void Hierarchy::step(
     // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         for (int d = 0; d < dLayers[l].size(); d++)
-            dLayers[l][d].step(l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topGoalCIs, &eLayers[l].getHiddenCIs(), &histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], learnEnabled, updates[l]);
+            dLayers[l][d].step(l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs, &eLayers[l].getHiddenCIs(), &histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], learnEnabled, updates[l]);
     }
 }
 
