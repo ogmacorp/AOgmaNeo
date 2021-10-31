@@ -211,7 +211,7 @@ void StateAdapter::step(
 }
 
 int StateAdapter::size() const {
-    int size = sizeof(Int3) + sizeof(int) + sizeof(float) + progCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + sizeof(int) + progCIs.size() * sizeof(int);
 
     size += weights.size() * sizeof(float);
 
@@ -235,6 +235,8 @@ void StateAdapter::write(
     writer.write(reinterpret_cast<const void*>(&radius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&progCIs[0]), progCIs.size() * sizeof(int));
 
@@ -264,6 +266,8 @@ void StateAdapter::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
     progCIs.resize(numHiddenColumns);
 
