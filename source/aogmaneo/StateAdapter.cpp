@@ -187,7 +187,7 @@ void StateAdapter::step(
 
     history[0].hiddenCIs = *hiddenCIs;
 
-    if (learnEnabled) {
+    if (learnEnabled && historySize > 1) {
         for (int it = 0; it < historyIters; it++) {
             int t1 = rand() % (historySize - 1) + 1;
             int t2 = rand() % t1;
