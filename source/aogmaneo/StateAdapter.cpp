@@ -38,7 +38,7 @@ void StateAdapter::forward(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x,  hiddenSize.y));
+                int otherHiddenColumnIndex = address2(Int2(ix, iy), Int2(hiddenSize.x, hiddenSize.y));
 
                 int inCI = (*goalCIs)[otherHiddenColumnIndex];
                 int inCIPrev = (*hiddenCIs)[otherHiddenColumnIndex];
