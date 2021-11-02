@@ -84,12 +84,12 @@ void Hierarchy::initRandom(
             for (int i = 0; i < ioSizes.size(); i++) {
                 if (ioDescs[i].type == prediction) {
                     // Decoder visible layer descriptors
-                    Decoder::VisibleLayerDesc dVisibleLayerDesc;
+                    Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(1);
 
-                    dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
-                    dVisibleLayerDesc.radius = ioDescs[i].dRadius;
+                    dVisibleLayerDescs[0].size = layerDescs[l].concatSize;
+                    dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
-                    dLayers[l][dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, dVisibleLayerDesc);
+                    dLayers[l][dIndex].initRandom(ioSizes[i], dVisibleLayerDescs);
 
                     iIndices[dIndex] = i;
                     dIndices[i] = dIndex;
@@ -117,18 +117,27 @@ void Hierarchy::initRandom(
             dLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
             // Decoder visible layer descriptors
-            Decoder::VisibleLayerDesc dVisibleLayerDesc;
+            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(1);
 
-            dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
-            dVisibleLayerDesc.radius = layerDescs[l].dRadius;
+            dVisibleLayerDescs[0].size = layerDescs[l].concatSize;
+            dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
 
             // Create decoders
             for (int t = 0; t < layerDescs[l].ticksPerUpdate; t++)
-                dLayers[l][t].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
+                dLayers[l][t].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDescs);
         }
         
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+
+        Array<Encoder::VisibleLayerDesc> cVisibleLayerDescs(2);
+
+        cVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
+        cVisibleLayerDescs[0].radius = layerDescs[l].cRadius;
+
+        cVisibleLayerDescs[1] = cVisibleLayerDescs[0];
+
+        cLayers[l].initRandom(layerDescs[l].concatSize, cVisibleLayerDescs);
     }
 }
 
@@ -151,6 +160,22 @@ void Hierarchy::step(
     // Set all updates to no update, will be set to true if an update occurred later
     updates.fill(false);
 
+    // Learn
+    for (int l = dLayers.size() - 1; l >= 0; l--) {
+        // Concatenate
+        Array<const IntBuffer*> concatCIs(2);
+        concatCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs;
+        concatCIs[1] = &eLayers[l].getHiddenCIs();
+
+        cLayers[l].step(concatCIs, learnEnabled);
+
+        Array<const IntBuffer*> decoderCIs(1);
+        decoderCIs[0] = &cLayers[l].getHiddenCIs();
+
+        for (int d = 0; d < dLayers[l].size(); d++)
+            dLayers[l][d].activate(decoderCIs);
+    }
+
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
         // If is time for layer to tick
@@ -161,17 +186,36 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
+            Array<const IntBuffer*> encoderCIs(eLayers[l].getNumVisibleLayers());
 
             int index = 0;
 
             for (int i = 0; i < histories[l].size(); i++) {
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    layerInputCIs[index++] = &histories[l][i][t];
+                    encoderCIs[index++] = &histories[l][i][t];
             }
 
+            IntBuffer hiddenCIsPrev = eLayers[l].getHiddenCIs();
+
             // Activate sparse coder
-            eLayers[l].step(layerInputCIs, learnEnabled);
+            eLayers[l].step(encoderCIs, learnEnabled);
+
+            if (learnEnabled) {
+                // Concatenate
+                Array<const IntBuffer*> concatCIs(2);
+                concatCIs[0] = &eLayers[l].getHiddenCIs();
+                concatCIs[1] = &hiddenCIsPrev;
+
+                cLayers[l].step(concatCIs, true);
+
+                Array<const IntBuffer*> decoderCIs(1);
+                decoderCIs[0] = &cLayers[l].getHiddenCIs();
+
+                for (int d = 0; d < dLayers[l].size(); d++) {
+                    dLayers[l][d].activate(decoderCIs);
+                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d]);
+                }
+            }
 
             // Add to next layer's history
             if (l < eLayers.size() - 1) {
@@ -186,10 +230,20 @@ void Hierarchy::step(
         }
     }
 
-    // Backward
+    // Backward infer
     for (int l = dLayers.size() - 1; l >= 0; l--) {
+        // Concatenate
+        Array<const IntBuffer*> concatCIs(2);
+        concatCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs;
+        concatCIs[1] = &eLayers[l].getHiddenCIs();
+
+        cLayers[l].step(concatCIs, false);
+
+        Array<const IntBuffer*> decoderCIs(1);
+        decoderCIs[0] = &cLayers[l].getHiddenCIs();
+
         for (int d = 0; d < dLayers[l].size(); d++)
-            dLayers[l][d].step(l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs, &eLayers[l].getHiddenCIs(), &histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], learnEnabled, updates[l]);
+            dLayers[l][d].activate(decoderCIs);
     }
 }
 
