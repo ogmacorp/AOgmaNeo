@@ -16,6 +16,7 @@ void Hierarchy::initRandom(
 ) {
     // Create layers
     eLayers.resize(layerDescs.size());
+    cLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
 
     ticks.resize(layerDescs.size(), 0);
@@ -261,6 +262,7 @@ int Hierarchy::size() const {
         }
 
         size += eLayers[l].size();
+        size += cLayers[l].size();
 
         for (int d = 0; d < dLayers[l].size(); d++)
             size += dLayers[l][d].size();
@@ -281,6 +283,7 @@ int Hierarchy::stateSize() const {
         }
 
         size += eLayers[l].stateSize();
+        size += cLayers[l].stateSize();
         
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
@@ -338,6 +341,7 @@ void Hierarchy::write(
         }
 
         eLayers[l].write(writer);
+        cLayers[l].write(writer);
 
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
@@ -365,6 +369,7 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&ioSizes[0]), numIO * sizeof(Int3));
 
     eLayers.resize(numLayers);
+    cLayers.resize(numLayers);
     dLayers.resize(numLayers);
 
     histories.resize(numLayers);
@@ -414,6 +419,7 @@ void Hierarchy::read(
         }
 
         eLayers[l].read(reader);
+        cLayers[l].read(reader);
         
         dLayers[l].resize(l == 0 ? numPredictions : ticksPerUpdate[l]);
 
@@ -440,6 +446,7 @@ void Hierarchy::writeState(
         }
 
         eLayers[l].writeState(writer);
+        cLayers[l].writeState(writer);
 
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
@@ -466,6 +473,7 @@ void Hierarchy::readState(
         }
 
         eLayers[l].readState(reader);
+        cLayers[l].readState(reader);
         
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
