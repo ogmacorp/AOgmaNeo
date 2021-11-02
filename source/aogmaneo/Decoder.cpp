@@ -12,7 +12,7 @@ using namespace aon;
 
 void Decoder::forward(
     const Int2 &columnPos,
-    const IntBuffer* goalCIs,
+    const IntBuffer* progCIs,
     const IntBuffer* inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
@@ -49,12 +49,12 @@ void Decoder::forward(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-                int goalCI = (*goalCIs)[visibleColumnIndex];
+                int progCI = (*progCIs)[visibleColumnIndex];
                 int inCIPrev = (*inputCIs)[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wi = goalCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
+                int wi = progCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
                 sum += visibleLayer.weights[wi];
             }
@@ -111,12 +111,12 @@ void Decoder::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-                int goalCI = history[t2].inputCIs[visibleColumnIndex];
+                int progCI = history[t2].inputCIs[visibleColumnIndex];
                 int inCINext = history[t1 - 1].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wi = goalCI + visibleLayerDesc.size.z * (inCINext + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
+                int wi = progCI + visibleLayerDesc.size.z * (inCINext + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
                 sum += visibleLayer.weights[wi];
             }
@@ -134,12 +134,12 @@ void Decoder::learn(
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
             int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-            int goalCI = history[t2].inputCIs[visibleColumnIndex];
+            int progCI = history[t2].inputCIs[visibleColumnIndex];
             int inCIPrev = history[t1].inputCIs[visibleColumnIndex];
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-            int wi = goalCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
+            int wi = progCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
 
             sumPrev += visibleLayer.weights[wi];
         }
@@ -152,12 +152,12 @@ void Decoder::learn(
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
             int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
-            int goalCI = history[t2].inputCIs[visibleColumnIndex];
+            int progCI = history[t2].inputCIs[visibleColumnIndex];
             int inCIPrev = history[t1].inputCIs[visibleColumnIndex];
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-            int wi = goalCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
+            int wi = progCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
 
             visibleLayer.weights[wi] += delta;
         }
@@ -200,7 +200,7 @@ void Decoder::initRandom(
 }
 
 void Decoder::step(
-    const IntBuffer* goalCIs,
+    const IntBuffer* progCIs,
     const IntBuffer* inputCIs,
     const IntBuffer* hiddenTargetCIs,
     bool learnEnabled,
@@ -230,7 +230,7 @@ void Decoder::step(
             for (int p = 0; p < power; p++)
                 reward *= discount;
 
-            // Learn under goal
+            // Learn under prog
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
                 learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
@@ -240,7 +240,7 @@ void Decoder::step(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs, inputCIs);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), progCIs, inputCIs);
 }
 
 int Decoder::size() const {

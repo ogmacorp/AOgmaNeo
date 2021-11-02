@@ -54,7 +54,7 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const IntBuffer* goalCIs,
+        const IntBuffer* progCIs,
         const IntBuffer* inputCIs
     );
 
@@ -74,7 +74,7 @@ public:
     Decoder()
     :
     lr(0.01f),
-    discount(0.97f),
+    discount(0.99f),
     historyIters(8)
     {}
 
@@ -87,7 +87,7 @@ public:
 
     // Activate the predictor (predict values)
     void step(
-        const IntBuffer* goalCIs,
+        const IntBuffer* progCIs,
         const IntBuffer* inputCIs,
         const IntBuffer* hiddenTargetCIs,
         bool learnEnabled,
