@@ -47,29 +47,35 @@ private:
     VisibleLayer visibleLayer;
     VisibleLayerDesc visibleLayerDesc;
 
-    CircleBuffer<HistorySample> history;
     int historySize;
+    CircleBuffer<HistorySample> history;
 
     // --- Kernels ---
 
     void forward(
         const Int2 &columnPos,
-        const IntBuffer* progCIs,
+        const IntBuffer* goalCIs,
         const IntBuffer* inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        int t
+        int t1,
+        int t2,
+        float reward
     );
 
 public:
     float lr; // Learning rate
+    float discount; // Discount factor
+    int historyIters;
 
     // Defaults
     Decoder()
     :
-    lr(0.01f)
+    lr(0.01f),
+    discount(0.97f),
+    historyIters(8)
     {}
 
     // Create with random initialization
@@ -79,8 +85,9 @@ public:
         const VisibleLayerDesc &visibleLayerDesc
     );
 
+    // Activate the predictor (predict values)
     void step(
-        const IntBuffer* progCIs,
+        const IntBuffer* goalCIs,
         const IntBuffer* inputCIs,
         const IntBuffer* hiddenTargetCIs,
         bool learnEnabled,
