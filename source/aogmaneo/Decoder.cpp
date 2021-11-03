@@ -100,7 +100,7 @@ void Decoder::learn(
 
     int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
-    float total = 0.0f;
+    float sum = 0.0f;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -113,16 +113,10 @@ void Decoder::learn(
 
             int wiStart = visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
 
-            visibleLayer.weights[inCI + wiStart] += lr;
-
-            for (int vc = 0; vc < visibleLayerDesc.size.z; vc++) {
-                int wi = vc + wiStart;
-
-                total += visibleLayer.weights[wi];
-            }
+            sum += visibleLayer.weights[inCI + wiStart];
         }
 
-    float scale = 1.0f / max(0.0001f, total);
+    sum /= count;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -138,7 +132,7 @@ void Decoder::learn(
             for (int vc = 0; vc < visibleLayerDesc.size.z; vc++) {
                 int wi = vc + wiStart;
 
-                visibleLayer.weights[wi] *= scale;
+                visibleLayer.weights[wi] += lr * ((vc == inCI) - sum * visibleLayer.weights[wi]);
             }
         }
 }
