@@ -62,7 +62,8 @@ void StateAdapter::forward(
 void StateAdapter::learn(
     const Int2 &columnPos,
     int t1,
-    int t2
+    int t2,
+    float reward
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -108,7 +109,6 @@ void StateAdapter::learn(
     int hiddenCellIndexTarget = history[t1 - 1].hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     float sumPrev = 0.0f;
-    float match = 0.0f;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -122,14 +122,11 @@ void StateAdapter::learn(
             int wi = inCI + hiddenSize.z * (inCIPrev + hiddenSize.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
 
             sumPrev += weights[wi];
-
-            match += (inCI == history[t1 - 1].hiddenCIs[otherHiddenColumnIndex]);
         }
 
     sumPrev /= count;
-    match /= count;
 
-    float delta = lr * (match * match + discount * maxActivation - sumPrev);
+    float delta = lr * (max(reward, discount * maxActivation) - sumPrev);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -195,10 +192,17 @@ void StateAdapter::step(
             int t1 = rand() % (historySize - 1) + 1;
             int t2 = rand() % t1;
 
+            int power = t1 - 1 - t2;
+
+            float reward = 1.0f;
+
+            for (int p = 0; p < power; p++)
+                reward *= discount;
+
             // Learn kernel
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
         }
     }
     

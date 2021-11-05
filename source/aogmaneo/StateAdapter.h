@@ -38,7 +38,8 @@ private:
     void learn(
         const Int2 &columnPos,
         int t1,
-        int t2
+        int t2,
+        float reward
     );
 
 public:
@@ -49,8 +50,8 @@ public:
     // Defaults
     StateAdapter()
     :
-    lr(0.01f),
-    discount(0.97f),
+    lr(0.1f),
+    discount(0.95f),
     historyIters(16)
     {}
 
