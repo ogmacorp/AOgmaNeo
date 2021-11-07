@@ -196,10 +196,8 @@ void Hierarchy::step(
                 Array<const IntBuffer*> decoderCIs(1);
                 decoderCIs[0] = &cLayers[l].getHiddenCIs();
 
-                for (int d = 0; d < dLayers[l].size(); d++) {
-                    dLayers[l][d].activate(decoderCIs);
-                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d]);
-                }
+                for (int d = 0; d < dLayers[l].size(); d++)
+                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], decoderCIs);
             }
 
             // Add to next layer's history

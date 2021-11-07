@@ -31,14 +31,10 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-
-        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
-
-    FloatBuffer hiddenActivations;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -55,7 +51,8 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs
+        const IntBuffer* hiddenTargetCIs,
+        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
@@ -80,7 +77,8 @@ public:
 
     // Learning predictions (update weights)
     void learn(
-        const IntBuffer* hiddenTargetCIs
+        const IntBuffer* hiddenTargetCIs,
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Serialization
