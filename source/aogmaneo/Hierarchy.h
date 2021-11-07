@@ -53,7 +53,7 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        Int3 concatSize; // Concatenation layer size
+        Int3 combSize; // Concatenation layer size
 
         int eRadius; // Encoder radius
         int cRadius; // Concatenation radius
@@ -65,7 +65,7 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        concatSize(4, 4, 16),
+        combSize(4, 4, 16),
         eRadius(2),
         cRadius(2),
         dRadius(2),
@@ -75,7 +75,7 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            const Int3 &concatSize,
+            const Int3 &combSize,
             int eRadius,
             int cRadius,
             int dRadius,
@@ -84,7 +84,7 @@ public:
         )
         :
         hiddenSize(hiddenSize),
-        concatSize(concatSize),
+        combSize(combSize),
         eRadius(eRadius),
         cRadius(cRadius),
         dRadius(dRadius),

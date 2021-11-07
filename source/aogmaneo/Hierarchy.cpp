@@ -87,7 +87,7 @@ void Hierarchy::initRandom(
                     // Decoder visible layer descriptors
                     Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(1);
 
-                    dVisibleLayerDescs[0].size = layerDescs[l].concatSize;
+                    dVisibleLayerDescs[0].size = layerDescs[l].combSize;
                     dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
 
                     dLayers[l][dIndex].initRandom(ioSizes[i], dVisibleLayerDescs);
@@ -120,7 +120,7 @@ void Hierarchy::initRandom(
             // Decoder visible layer descriptors
             Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(1);
 
-            dVisibleLayerDescs[0].size = layerDescs[l].concatSize;
+            dVisibleLayerDescs[0].size = layerDescs[l].combSize;
             dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
 
             // Create decoders
@@ -138,7 +138,7 @@ void Hierarchy::initRandom(
 
         cVisibleLayerDescs[1] = cVisibleLayerDescs[0];
 
-        cLayers[l].initRandom(layerDescs[l].concatSize, cVisibleLayerDescs);
+        cLayers[l].initRandom(layerDescs[l].combSize, cVisibleLayerDescs);
     }
 }
 
@@ -187,11 +187,11 @@ void Hierarchy::step(
 
             if (learnEnabled) {
                 // Concatenate
-                Array<const IntBuffer*> concatCIs(2);
-                concatCIs[0] = &eLayers[l].getHiddenCIs();
-                concatCIs[1] = &hiddenCIsPrev;
+                Array<const IntBuffer*> combCIs(2);
+                combCIs[0] = &eLayers[l].getHiddenCIs();
+                combCIs[1] = &hiddenCIsPrev;
 
-                cLayers[l].step(concatCIs, true);
+                cLayers[l].step(combCIs, true);
 
                 Array<const IntBuffer*> decoderCIs(1);
                 decoderCIs[0] = &cLayers[l].getHiddenCIs();
@@ -216,11 +216,11 @@ void Hierarchy::step(
     // Backward infer
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         // Concatenate
-        Array<const IntBuffer*> concatCIs(2);
-        concatCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs;
-        concatCIs[1] = &eLayers[l].getHiddenCIs();
+        Array<const IntBuffer*> combCIs(2);
+        combCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs;
+        combCIs[1] = &eLayers[l].getHiddenCIs();
 
-        cLayers[l].step(concatCIs, false);
+        cLayers[l].step(combCIs, false);
 
         Array<const IntBuffer*> decoderCIs(1);
         decoderCIs[0] = &cLayers[l].getHiddenCIs();
