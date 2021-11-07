@@ -105,6 +105,7 @@ private:
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
+    CircleBuffer<IntBuffer> topHistories;
 
     // Per-layer values
     ByteBuffer updates;
