@@ -178,7 +178,7 @@ public:
     }
 
     // Importance control
-    void setImportance(
+    void setInputImportance(
         int i,
         float importance
     ) {
@@ -187,10 +187,23 @@ public:
     }
 
     // Importance control
-    float getImportance(
+    float getInputImportance(
         int i
     ) const {
         return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
+    }
+
+    void setProgImportance(
+        int l,
+        float importance
+    ) {
+        cLayers[l].getVisibleLayer(0).importance = importance;
+    }
+
+    float getProgImportance(
+        int l
+    ) const {
+        return cLayers[l].getVisibleLayer(0).importance;
     }
 
     // Retrieve predictions
