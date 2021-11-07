@@ -161,22 +161,6 @@ void Hierarchy::step(
     // Set all updates to no update, will be set to true if an update occurred later
     updates.fill(false);
 
-    // Learn
-    for (int l = dLayers.size() - 1; l >= 0; l--) {
-        // Concatenate
-        Array<const IntBuffer*> concatCIs(2);
-        concatCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs;
-        concatCIs[1] = &eLayers[l].getHiddenCIs();
-
-        cLayers[l].step(concatCIs, learnEnabled);
-
-        Array<const IntBuffer*> decoderCIs(1);
-        decoderCIs[0] = &cLayers[l].getHiddenCIs();
-
-        for (int d = 0; d < dLayers[l].size(); d++)
-            dLayers[l][d].activate(decoderCIs);
-    }
-
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
         // If is time for layer to tick
