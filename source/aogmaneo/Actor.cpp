@@ -59,7 +59,7 @@ void Actor::forward(
             }
     }
 
-    value /= max(1, count);
+    value /= count;
 
     hiddenValues[hiddenColumnIndex] = value;
 
@@ -106,7 +106,7 @@ void Actor::forward(
                     }
             }
 
-            sum /= max(1, count);
+            sum /= count;
 
             hiddenActivations[hiddenCellIndex] = sum;
 
@@ -248,7 +248,7 @@ void Actor::learn(
             }
     }
 
-    value /= max(1, count);
+    value /= count;
 
     float tdErrorValue = newValue - value;
     
@@ -331,7 +331,7 @@ void Actor::learn(
                 }
         }
 
-        sum /= max(1, count);
+        sum /= count;
 
         hiddenActivations[hiddenCellIndex] = sum;
 
