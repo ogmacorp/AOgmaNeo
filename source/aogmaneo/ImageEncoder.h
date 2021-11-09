@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        ByteBuffer protos;
 
-        FloatBuffer reconstruction;
+        ByteBuffer reconstruction;
     };
 
     struct HigherLayerDesc {
@@ -51,6 +51,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
+    FloatBuffer hiddenRates;
 
     Array<Encoder> higherLayers;
     Array<IntBuffer> higherLayerReconCIs;
@@ -63,7 +64,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const FloatBuffer*> &inputCIs,
+        const Array<const ByteBuffer*> &inputCIs,
         bool learnEnabled
     );
 
@@ -75,11 +76,13 @@ private:
 
 public:
     float lr;
+    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.01f)
+    lr(0.02f),
+    falloff(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -98,7 +101,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const FloatBuffer*> &inputs, // Input states
+        const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -106,7 +109,7 @@ public:
         const IntBuffer* reconCIs
     );
 
-    const FloatBuffer &getReconstruction(
+    const ByteBuffer &getReconstruction(
         int vli
     ) const {
         return visibleLayers[vli].reconstruction;
