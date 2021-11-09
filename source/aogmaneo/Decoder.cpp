@@ -88,7 +88,7 @@ void Decoder::forward(
                 }
         }
 
-        sum /= max(1, count);
+        sum /= count;
 
         hiddenActivations[hiddenCellIndex] = sum;
 
