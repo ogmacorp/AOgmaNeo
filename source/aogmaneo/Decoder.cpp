@@ -97,7 +97,6 @@ void Decoder::learn(
 
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
-    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -123,14 +122,8 @@ void Decoder::learn(
 
         hiddenActivations[hiddenCellIndex] = sum;
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
-        }
+        maxActivation = max(maxActivation, sum);
     }
-
-    if (maxIndex == targetCI)
-        return;
 
     float total = 0.0f;
 
