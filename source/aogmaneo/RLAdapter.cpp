@@ -57,8 +57,8 @@ void RLAdapter::initRandom(
 }
 
 void RLAdapter::step(
-    const IntBuffer* hiddenCIs,
     float reward, 
+    const IntBuffer* hiddenCIs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
