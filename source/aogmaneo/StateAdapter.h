@@ -50,8 +50,8 @@ public:
     // Defaults
     StateAdapter()
     :
-    lr(0.1f),
-    discount(0.95f),
+    lr(0.01f),
+    discount(0.99f),
     historyIters(16)
     {}
 
