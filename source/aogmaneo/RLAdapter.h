@@ -33,7 +33,7 @@ public:
     // Defaults
     RLAdapter()
     :
-    lr(0.001f)
+    lr(0.01f)
     {}
 
     // Create with random initialization
