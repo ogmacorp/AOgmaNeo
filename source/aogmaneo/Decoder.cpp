@@ -129,8 +129,8 @@ void Decoder::learn(
         }
     }
 
-    //if (maxIndex == targetCI)
-    //    return;
+    if (maxIndex == targetCI)
+        return;
 
     float total = 0.0f;
 
