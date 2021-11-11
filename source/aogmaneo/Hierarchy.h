@@ -113,6 +113,7 @@ private:
 
     // Input dimensions
     Array<Int3> ioSizes;
+    Array<Byte> ioTypes;
 
 public:
     // Default
@@ -171,16 +172,10 @@ public:
         return updates[updates.size() - 1];
     }
 
-    bool dLayerExists(
+    bool ioLayerExists(
         int i
     ) const {
         return dIndices[i] != -1;
-    }
-
-    bool aLayerExists(
-        int i
-    ) const {
-        return dIndices[ioSizes.size() + i] != -1;
     }
 
     // Importance control
@@ -203,8 +198,8 @@ public:
     const IntBuffer &getPredictionCIs(
         int i
     ) const {
-        if (dIndices[i] >= ioSizes.size())
-            return aLayers[dIndices[i] - ioSizes.size()].getHiddenCIs();
+        if (ioTypes[i] == action)
+            return aLayers[dIndices[i]].getHiddenCIs();
 
         return dLayers[0][dIndices[i]].getHiddenCIs();
     }
@@ -233,6 +228,13 @@ public:
     // Get input/output sizes
     const Array<Int3> &getIOSizes() const {
         return ioSizes;
+    }
+
+    // Get input/output types
+    IOType getIOType(
+        int i
+    ) const {
+        return static_cast<IOType>(ioTypes[i]);
     }
 
     // Retrieve a sparse coding layer
@@ -295,13 +297,13 @@ public:
     Actor &getALayer(
         int i
     ) {
-        return aLayers[dIndices[ioSizes.size() + i]];
+        return aLayers[dIndices[i]];
     }
 
     const Actor &getALayer(
         int i
     ) const {
-        return aLayers[dIndices[ioSizes.size() + i]];
+        return aLayers[dIndices[i]];
     }
 
     const IntBuffer &getIIndices() const {

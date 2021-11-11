@@ -29,6 +29,7 @@ void Hierarchy::initRandom(
 
     // Cache input sizes
     ioSizes.resize(ioDescs.size());
+    ioTypes.resize(ioDescs.size());
 
     // Determine ticks per update, first layer is always 1
     for (int l = 0; l < layerDescs.size(); l++)
@@ -39,6 +40,7 @@ void Hierarchy::initRandom(
 
     for (int i = 0; i < ioSizes.size(); i++) {
         ioSizes[i] = ioDescs[i].size;
+        ioTypes[i] = static_cast<Byte>(ioDescs[i].type);
 
         if (ioDescs[i].type == prediction)
             numPredictions++;
@@ -120,7 +122,7 @@ void Hierarchy::initRandom(
                     aLayers[dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
 
                     iIndices[ioSizes.size() + dIndex] = i;
-                    dIndices[i] = ioSizes.size() + dIndex;
+                    dIndices[i] = dIndex;
                     dIndex++;
                 }
             }
@@ -311,6 +313,7 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&numActions), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&ioSizes[0]), numIO * sizeof(Int3));
+    writer.write(reinterpret_cast<const void*>(&ioTypes[0]), numIO * sizeof(Byte));
 
     writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
     writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
@@ -372,8 +375,10 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&numActions), sizeof(int));
 
     ioSizes.resize(numIO);
+    ioTypes.resize(numIO);
 
     reader.read(reinterpret_cast<void*>(&ioSizes[0]), numIO * sizeof(Int3));
+    reader.read(reinterpret_cast<void*>(&ioTypes[0]), numIO * sizeof(Byte));
 
     eLayers.resize(numLayers);
     dLayers.resize(numLayers);
