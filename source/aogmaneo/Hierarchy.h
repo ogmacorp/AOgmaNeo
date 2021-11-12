@@ -53,10 +53,8 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        Int3 combSize; // Concatenation layer size
 
         int eRadius; // Encoder radius
-        int cRadius; // Concatenation radius
         int dRadius; // Decoder radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
@@ -65,9 +63,7 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        combSize(4, 4, 16),
         eRadius(2),
-        cRadius(2),
         dRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
@@ -75,18 +71,14 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            const Int3 &combSize,
             int eRadius,
-            int cRadius,
             int dRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
-        combSize(combSize),
         eRadius(eRadius),
-        cRadius(cRadius),
         dRadius(dRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
@@ -96,7 +88,6 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Encoder> cLayers;
     Array<Array<Decoder>> dLayers;
 
     // For mapping first layer decoders
@@ -192,19 +183,6 @@ public:
         int i
     ) const {
         return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
-    }
-
-    void setProgImportance(
-        int l,
-        float importance
-    ) {
-        cLayers[l].getVisibleLayer(0).importance = importance;
-    }
-
-    float getProgImportance(
-        int l
-    ) const {
-        return cLayers[l].getVisibleLayer(0).importance;
     }
 
     // Retrieve predictions
