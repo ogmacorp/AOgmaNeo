@@ -206,7 +206,7 @@ void Hierarchy::step(
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         // Concatenate
         Array<const IntBuffer*> decoderCIs(2);
-        decoderCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs;
+        decoderCIs[0] = (l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topProgCIs);
         decoderCIs[1] = &eLayers[l].getHiddenCIs();
 
         for (int d = 0; d < dLayers[l].size(); d++)
