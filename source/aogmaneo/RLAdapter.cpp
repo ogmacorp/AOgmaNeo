@@ -20,7 +20,7 @@ void RLAdapter::forward(
 
     int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, (*hiddenCIs)[hiddenColumnIndex]), hiddenSize);
 
-    weights[hiddenCellIndexMax] += lr * max(0.0f, reward - weights[hiddenCellIndexMax]);
+    weights[hiddenCellIndexMax] += lr * (reward - weights[hiddenCellIndexMax]);
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
