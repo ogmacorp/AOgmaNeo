@@ -229,12 +229,6 @@ void Decoder::step(
             int t1 = rand() % (historySize - 1) + 1;
             int t2 = rand() % t1;
 
-            int power = t1 - 1 - t2;
-            float reward = 1.0f;
-
-            for (int p = 0; p < power; p++)
-                reward *= discount;
-
             // Learn under prog
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
