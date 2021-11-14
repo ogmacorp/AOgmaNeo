@@ -71,8 +71,7 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &columnPos,
     int t1,
-    int t2,
-    float reward
+    int t2
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -129,6 +128,7 @@ void Decoder::learn(
     int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
     float sumPrev = 0.0f;
+    float reward = 0.0f;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -142,11 +142,16 @@ void Decoder::learn(
             int wi = progCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
 
             sumPrev += visibleLayer.weights[wi];
+
+            reward += history[t1 - 1].inputCIs[visibleColumnIndex] == progCI;
         }
 
     sumPrev /= count;
+    reward /= count;
 
-    float delta = lr * (max(reward, discount * min(1.0f, maxActivation)) - sumPrev);
+    reward *= reward;
+
+    float delta = lr * (reward + discount * maxActivation - sumPrev);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -233,7 +238,7 @@ void Decoder::step(
             // Learn under prog
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2);
         }
     }
 
