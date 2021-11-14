@@ -360,7 +360,7 @@ void Hierarchy::read(
 
         eLayers[l].read(reader);
         
-        dLayers[l].resize(l == 0 ? numPredictions : ticksPerUpdate[l]);
+        dLayers[l].resize(l == 0 ? numPredictions : 1);
 
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
