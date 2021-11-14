@@ -121,7 +121,7 @@ void Decoder::learn(
                 sum += visibleLayer.weights[wi];
             }
 
-        sum /= max(1, count);
+        sum /= count;
 
         maxActivation = max(maxActivation, sum);
     }
@@ -144,7 +144,7 @@ void Decoder::learn(
             sumPrev += visibleLayer.weights[wi];
         }
 
-    sumPrev /= max(1, count);
+    sumPrev /= count;
 
     float delta = lr * (max(reward, discount * min(1.0f, maxActivation)) - sumPrev);
 
