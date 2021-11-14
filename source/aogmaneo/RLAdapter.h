@@ -42,8 +42,8 @@ public:
     );
 
     void step(
-        const IntBuffer* hiddenCIs,
         float reward,
+        const IntBuffer* hiddenCIs,
         bool learnEnabled
     );
 
