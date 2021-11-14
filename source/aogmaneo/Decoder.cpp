@@ -219,7 +219,7 @@ void Decoder::step(
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
     }
 
-    if (learnEnabled && stateUpdate && historySize > 1) {
+    if (learnEnabled && historySize > 1) {
         for (int it = 0; it < historyIters; it++) {
             int t1 = rand() % (historySize - 1) + 1;
             int t2 = rand() % t1;
