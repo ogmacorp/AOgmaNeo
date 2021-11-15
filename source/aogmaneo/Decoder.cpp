@@ -136,9 +136,6 @@ void Decoder::learn(
         }
     }
 
-    if (maxIndex == targetCI)
-        return;
-
     float total = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
