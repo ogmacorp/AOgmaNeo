@@ -56,40 +56,35 @@ public:
         Int3 combSize; // Concatenation layer size
 
         int eRadius; // Encoder radius
+        int rRadius; // Recurrent radius
         int cRadius; // Concatenation radius
         int dRadius; // Decoder radius
-
-        int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
         combSize(4, 4, 16),
         eRadius(2),
+        rRadius(2),
         cRadius(2),
-        dRadius(2),
-        ticksPerUpdate(2),
-        temporalHorizon(2)
+        dRadius(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
             const Int3 &combSize,
             int eRadius,
+            int rRadius,
             int cRadius,
-            int dRadius,
-            int ticksPerUpdate,
-            int temporalHorizon
+            int dRadius
         )
         :
         hiddenSize(hiddenSize),
         combSize(combSize),
         eRadius(eRadius),
+        rRadius(rRadius),
         cRadius(cRadius),
-        dRadius(dRadius),
-        ticksPerUpdate(ticksPerUpdate),
-        temporalHorizon(temporalHorizon)
+        dRadius(dRadius)
         {}
     };
 
@@ -102,16 +97,6 @@ private:
     // For mapping first layer decoders
     IntBuffer iIndices;
     IntBuffer dIndices;
-
-    // Histories
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
-    CircleBuffer<IntBuffer> topHistories;
-
-    // Per-layer values
-    ByteBuffer updates;
-
-    IntBuffer ticks;
-    IntBuffer ticksPerUpdate;
 
     // Input dimensions
     Array<Int3> ioSizes;
@@ -168,10 +153,6 @@ public:
         return eLayers[eLayers.size() - 1].getHiddenSize();
     }
 
-    bool getTopUpdate() const {
-        return updates[updates.size() - 1];
-    }
-
     bool dLayerExists(
         int i
     ) const {
@@ -183,15 +164,27 @@ public:
         int i,
         float importance
     ) {
-        for (int t = 0; t < histories[0][i].size(); t++)
-            eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+        eLayers[0].getVisibleLayer(i).importance = importance;
     }
 
     // Importance control
     float getInputImportance(
         int i
     ) const {
-        return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
+        return eLayers[0].getVisibleLayer(i).importance;
+    }
+
+    void setRecurrentImportance(
+        int l,
+        float importance
+    ) {
+        eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance = importance;
+    }
+
+    float getRecurrentImportance(
+        int l
+    ) const {
+        return eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance;
     }
 
     void setProgImportance(
@@ -212,27 +205,6 @@ public:
         int i // Index of input layer to get predictions for
     ) const {
         return dLayers[0][dIndices[i]].getHiddenCIs();
-    }
-
-    // Whether this layer received on update this timestep
-    bool getUpdate(
-        int l // Layer index
-    ) const {
-        return updates[l];
-    }
-
-    // Get current layer ticks, relative to previous layer
-    int getTicks(
-        int l // Layer Index
-    ) const {
-        return ticks[l];
-    }
-
-    // Get layer ticks per update, relative to previous layer
-    int getTicksPerUpdate(
-        int l // Layer Index
-    ) const {
-        return ticksPerUpdate[l];
     }
 
     // Get input sizes
@@ -274,12 +246,6 @@ public:
 
     const IntBuffer &getDIndices() const {
         return dIndices;
-    }
-
-    const Array<CircleBuffer<IntBuffer>> &getHistories(
-        int l
-    ) const {
-        return histories[l];
     }
 };
 } // namespace aon
