@@ -136,6 +136,9 @@ void Decoder::learn(
         }
     }
 
+    if (maxIndex == targetCI)
+        return;
+
     float total = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -223,7 +226,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
     }
 
     // Hidden CIs
