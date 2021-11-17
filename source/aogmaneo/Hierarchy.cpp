@@ -161,7 +161,7 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
+            Array<const IntBuffer*> layerInputCIs(eLayers[l].getNumVisibleLayers());
 
             int index = 0;
 
