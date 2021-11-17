@@ -133,7 +133,7 @@ void Hierarchy::step(
         else {
             encoderCIs[0] = &eLayers[l - 1].getHiddenCIs();
 
-            if (1 < encoderCIs.size())
+            if (encoderCIs.size() > 1)
                 encoderCIs[1] = &hiddenCIsPrev;
         }
 
