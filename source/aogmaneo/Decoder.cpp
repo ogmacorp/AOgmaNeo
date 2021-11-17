@@ -107,7 +107,7 @@ void Decoder::learn(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
                 int inCI = history[t].inputCIs[visibleColumnIndex];
                 int inCIPrev = history[historySize - 1].inputCIs[visibleColumnIndex];
@@ -157,7 +157,7 @@ void Decoder::learn(
             
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
                 int inCI = history[t].inputCIs[visibleColumnIndex];
                 int inCIPrev = history[historySize - 1].inputCIs[visibleColumnIndex];
