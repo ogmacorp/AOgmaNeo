@@ -49,7 +49,7 @@ public:
     RLAdapter()
     :
     lr(0.01f),
-    discount(0.95f),
+    discount(0.99f),
     historyIters(16)
     {}
 
