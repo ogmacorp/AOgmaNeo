@@ -74,7 +74,7 @@ void Encoder::forward(
             sum += subSum * vl.importance;
         }
 
-        hiddenActivations[hiddenCellIndex] += sigmoid(sum);
+        hiddenActivations[hiddenCellIndex] += max(0.0f, sum);
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
@@ -154,7 +154,7 @@ void Encoder::backward(
 
         sum /= max(0.0001f, total);
 
-        vl.reconstruction[visibleCellIndex] = sigmoid(sum);
+        vl.reconstruction[visibleCellIndex] = min(1.0f, max(0.0f, sum));
     }
 }
 
@@ -242,7 +242,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
+            float delta = lr * ((vc == targetCI) - vl.reconstruction[visibleCellIndex]);
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -374,7 +374,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(0.0f, 0.01f);
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
