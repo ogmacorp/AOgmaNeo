@@ -61,7 +61,7 @@ void Encoder::forward(
                     subSum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
 
-            subSum /= max(1, subCount);
+            subSum /= subCount;
 
             sum += subSum * vl.importance;
         }
@@ -159,7 +159,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
+            float delta = lr * ((vc == targetCI) - tanh(max(0.0f, vl.reconstruction[visibleCellIndex])));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
