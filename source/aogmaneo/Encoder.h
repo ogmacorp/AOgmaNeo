@@ -45,6 +45,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -56,6 +57,12 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
+    );
+
+    void backward(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        int vli
     );
 
     void learn(
@@ -72,10 +79,12 @@ private:
     );
 
 public:
+    int explainIters;
     float lr;
 
     Encoder()
     :
+    explainIters(3),
     lr(0.1f)
     {}
 
