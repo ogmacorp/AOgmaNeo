@@ -154,7 +154,7 @@ void Encoder::backward(
 
         sum /= max(0.0001f, total);
 
-        vl.reconstruction[visibleCellIndex] = min(1.0f, max(0.0f, sum));
+        vl.reconstruction[visibleCellIndex] = tanh(sum);
     }
 }
 
@@ -242,7 +242,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - vl.reconstruction[visibleCellIndex]);
+            float delta = lr * ((vc == targetCI) - tanh(vl.reconstruction[visibleCellIndex]));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -261,7 +261,7 @@ void Encoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                        vl.weights[wi] += delta;
+                        vl.weights[wi] = max(0.0f, vl.weights[wi] + delta);
                     }
                 }
         }
@@ -374,7 +374,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 0.01f);
+            vl.weights[i] = randf(0.0f, 1.0f);
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
