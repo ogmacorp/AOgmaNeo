@@ -68,7 +68,7 @@ void Encoder::forward(
             sum += subSum * vl.importance;
         }
 
-        hiddenActivations[hiddenCellIndex] += max(0.0f, sum);
+        hiddenActivations[hiddenCellIndex] += sum;
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
