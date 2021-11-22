@@ -61,7 +61,7 @@ void Encoder::forward(
                     subSum += vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
 
-            subSum /= max(1, subCount);
+            subSum /= subCount;
 
             sum += subSum * vl.importance;
         }
@@ -291,7 +291,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(0.0f, 2.0f);
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
