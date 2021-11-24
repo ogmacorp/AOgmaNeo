@@ -178,19 +178,6 @@ public:
         return eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance;
     }
 
-    void setProgImportance(
-        int l,
-        float importance
-    ) {
-        cLayers[l].getVisibleLayer(0).importance = importance;
-    }
-
-    float getProgImportance(
-        int l
-    ) const {
-        return cLayers[l].getVisibleLayer(0).importance;
-    }
-
     // Retrieve predictions
     const IntBuffer &getPredictionCIs(
         int i // Index of input layer to get predictions for
