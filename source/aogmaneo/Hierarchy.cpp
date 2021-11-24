@@ -129,27 +129,12 @@ void Hierarchy::step(
 
         // Activate sparse coder
         eLayers[l].step(encoderCIs, learnEnabled);
-
-        if (learnEnabled) {
-            // Concatenate
-            Array<const IntBuffer*> decoderCIs(2);
-            decoderCIs[0] = &eLayers[l].getHiddenCIs();
-            decoderCIs[1] = &hiddenCIsPrev;
-
-            for (int d = 0; d < dLayers[l].size(); d++)
-                dLayers[l][d].learn(l == 0 ? inputCIs[iIndices[d]] : &eLayers[l - 1].getHiddenCIs(), decoderCIs);
-        }
     }
 
-    // Backward infer
+    // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
-        // Concatenate
-        Array<const IntBuffer*> decoderCIs(2);
-        decoderCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : topProgCIs;
-        decoderCIs[1] = &eLayers[l].getHiddenCIs();
-
         for (int d = 0; d < dLayers[l].size(); d++)
-            dLayers[l][d].activate(decoderCIs);
+            dLayers[l][d].step(l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : topProgCIs, &eLayers[l].getHiddenCIs(), l == 0 ? inputCIs[iIndices[d]] : &eLayers[l - 1].getHiddenCIs(), learnEnabled, true);
     }
 }
 
