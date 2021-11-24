@@ -18,7 +18,7 @@ void RLAdapter::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, (*hiddenCIs)[hiddenColumnIndex]), hiddenSize);
+    int hiddenCellIndexMax = address3(Int3(columnPos.x, columnPos.y, progCIs[hiddenColumnIndex]), hiddenSize);
 
     weights[hiddenCellIndexMax] += lr * (reward - weights[hiddenCellIndexMax]);
 
@@ -51,7 +51,7 @@ void RLAdapter::initRandom(
     weights.resize(numHiddenCells);
 
     for (int i = 0; i < weights.size(); i++)
-        weights[i] = randf(-1.01f, -1.0f);
+        weights[i] = randf(1.0f, 1.01f);
 
     progCIs = IntBuffer(numHiddenColumns, 0);
 }
