@@ -16,7 +16,6 @@ void Hierarchy::initRandom(
 ) {
     // Create layers
     eLayers.resize(layerDescs.size());
-    cLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
 
     // Cache input sizes
@@ -61,10 +60,12 @@ void Hierarchy::initRandom(
             for (int i = 0; i < ioSizes.size(); i++) {
                 if (ioDescs[i].type == prediction) {
                     // Decoder visible layer descriptors
-                    Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(1);
+                    Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(2);
 
-                    dVisibleLayerDescs[0].size = layerDescs[l].combSize;
+                    dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
                     dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
+
+                    dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
 
                     dLayers[l][dIndex].initRandom(ioSizes[i], dVisibleLayerDescs);
 
@@ -88,10 +89,12 @@ void Hierarchy::initRandom(
             dLayers[l].resize(1);
 
             // Decoder visible layer descriptors
-            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(1);
+            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(2);
 
-            dVisibleLayerDescs[0].size = layerDescs[l].combSize;
+            dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
+
+            dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
 
             // Create decoders
             dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDescs);
@@ -99,15 +102,6 @@ void Hierarchy::initRandom(
         
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
-
-        Array<Encoder::VisibleLayerDesc> cVisibleLayerDescs(2);
-
-        cVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-        cVisibleLayerDescs[0].radius = layerDescs[l].cRadius;
-
-        cVisibleLayerDescs[1] = cVisibleLayerDescs[0];
-
-        cLayers[l].initRandom(layerDescs[l].combSize, cVisibleLayerDescs);
     }
 }
 
@@ -142,14 +136,9 @@ void Hierarchy::step(
 
         if (learnEnabled) {
             // Concatenate
-            Array<const IntBuffer*> combCIs(2);
-            combCIs[0] = &eLayers[l].getHiddenCIs();
-            combCIs[1] = &hiddenCIsPrev;
-
-            cLayers[l].step(combCIs, true);
-
-            Array<const IntBuffer*> decoderCIs(1);
-            decoderCIs[0] = &cLayers[l].getHiddenCIs();
+            Array<const IntBuffer*> decoderCIs(2);
+            decoderCIs[0] = &eLayers[l].getHiddenCIs();
+            decoderCIs[1] = &hiddenCIsPrev;
 
             for (int d = 0; d < dLayers[l].size(); d++)
                 dLayers[l][d].learn(l == 0 ? inputCIs[iIndices[d]] : &eLayers[l - 1].getHiddenCIs(), decoderCIs);
@@ -159,14 +148,9 @@ void Hierarchy::step(
     // Backward infer
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         // Concatenate
-        Array<const IntBuffer*> combCIs(2);
-        combCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : topProgCIs;
-        combCIs[1] = &eLayers[l].getHiddenCIs();
-
-        cLayers[l].step(combCIs, false);
-
-        Array<const IntBuffer*> decoderCIs(1);
-        decoderCIs[0] = &cLayers[l].getHiddenCIs();
+        Array<const IntBuffer*> decoderCIs(2);
+        decoderCIs[0] = l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : topProgCIs;
+        decoderCIs[1] = &eLayers[l].getHiddenCIs();
 
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].activate(decoderCIs);
@@ -178,7 +162,6 @@ int Hierarchy::size() const {
 
     for (int l = 0; l < eLayers.size(); l++) {
         size += eLayers[l].size();
-        size += cLayers[l].size();
 
         for (int d = 0; d < dLayers[l].size(); d++)
             size += dLayers[l][d].size();
@@ -192,7 +175,6 @@ int Hierarchy::stateSize() const {
 
     for (int l = 0; l < eLayers.size(); l++) {
         size += eLayers[l].stateSize();
-        size += cLayers[l].stateSize();
         
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
@@ -224,7 +206,6 @@ void Hierarchy::write(
 
     for (int l = 0; l < numLayers; l++) {
         eLayers[l].write(writer);
-        cLayers[l].write(writer);
 
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
@@ -252,7 +233,6 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&ioSizes[0]), numIO * sizeof(Int3));
 
     eLayers.resize(numLayers);
-    cLayers.resize(numLayers);
     dLayers.resize(numLayers);
 
     iIndices.resize(numPredictions);
@@ -263,7 +243,6 @@ void Hierarchy::read(
     
     for (int l = 0; l < numLayers; l++) {
         eLayers[l].read(reader);
-        cLayers[l].read(reader);
         
         dLayers[l].resize(l == 0 ? numPredictions : 1);
 
@@ -278,7 +257,6 @@ void Hierarchy::writeState(
 ) const {
     for (int l = 0; l < eLayers.size(); l++) {
         eLayers[l].writeState(writer);
-        cLayers[l].writeState(writer);
 
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
@@ -291,7 +269,6 @@ void Hierarchy::readState(
 ) {
     for (int l = 0; l < eLayers.size(); l++) {
         eLayers[l].readState(reader);
-        cLayers[l].readState(reader);
         
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)

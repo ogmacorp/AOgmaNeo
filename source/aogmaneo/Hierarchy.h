@@ -53,37 +53,29 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        Int3 combSize; // Concatenation layer size
 
         int eRadius; // Encoder radius
         int rRadius; // Recurrent radius
-        int cRadius; // Concatenation radius
         int dRadius; // Decoder radius
 
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        combSize(4, 4, 16),
         eRadius(2),
         rRadius(2),
-        cRadius(2),
         dRadius(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
-            const Int3 &combSize,
             int eRadius,
             int rRadius,
-            int cRadius,
             int dRadius
         )
         :
         hiddenSize(hiddenSize),
-        combSize(combSize),
         eRadius(eRadius),
         rRadius(rRadius),
-        cRadius(cRadius),
         dRadius(dRadius)
         {}
     };
@@ -91,7 +83,6 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Encoder> cLayers;
     Array<Array<Decoder>> dLayers;
 
     // For mapping first layer decoders
