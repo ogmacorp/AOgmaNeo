@@ -33,6 +33,11 @@ public:
         FloatBuffer weights;
     };
 
+    struct HistorySample {
+        IntBuffer inputCIs;
+        IntBuffer hiddenTargetCIs;
+    };
+
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
@@ -40,20 +45,23 @@ private:
     FloatBuffer hiddenActivations;
 
     // Visible layers and descs
-    Array<VisibleLayer> visibleLayers;
-    Array<VisibleLayerDesc> visibleLayerDescs;
+    VisibleLayer visibleLayer;
+    VisibleLayerDesc visibleLayerDesc;
+
+    CircleBuffer<HistorySample> history;
+    int historySize;
 
     // --- Kernels ---
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* progCIs,
+        const IntBuffer* inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        const Array<const IntBuffer*> &inputCIs
+        int t
     );
 
 public:
@@ -68,18 +76,16 @@ public:
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
-        const Array<VisibleLayerDesc> &visibleLayerDescs
+        int historyCapacity,
+        const VisibleLayerDesc &visibleLayerDesc
     );
 
-    // Activate the predictor (predict values)
-    void activate(
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    // Learning predictions (update weights)
-    void learn(
+    void step(
+        const IntBuffer* progCIs,
+        const IntBuffer* inputCIs,
         const IntBuffer* hiddenTargetCIs,
-        const Array<const IntBuffer*> &inputCIs
+        bool learnEnabled,
+        bool stateUpdate
     );
 
     // Serialization
@@ -102,30 +108,19 @@ public:
         StreamReader &reader
     );
 
-    // Get number of visible layers
-    int getNumVisibleLayers() const {
-        return visibleLayers.size();
+    // Get a visible layer
+    VisibleLayer &getVisibleLayer() {
+        return visibleLayer;
     }
 
     // Get a visible layer
-    VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
-    ) {
-        return visibleLayers[i];
-    }
-
-    // Get a visible layer
-    const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
-    ) const {
-        return visibleLayers[i];
+    const VisibleLayer &getVisibleLayer() const {
+        return visibleLayer;
     }
 
     // Get a visible layer descriptor
-    const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
-    ) const {
-        return visibleLayerDescs[i];
+    const VisibleLayerDesc &getVisibleLayerDesc() const {
+        return visibleLayerDesc;
     }
 
     // Get the hidden activations (predictions)

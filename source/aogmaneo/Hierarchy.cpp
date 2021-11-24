@@ -60,14 +60,12 @@ void Hierarchy::initRandom(
             for (int i = 0; i < ioSizes.size(); i++) {
                 if (ioDescs[i].type == prediction) {
                     // Decoder visible layer descriptors
-                    Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(2);
+                    Decoder::VisibleLayerDesc dVisibleLayerDesc;
 
-                    dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-                    dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
+                    dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
+                    dVisibleLayerDesc.radius = ioDescs[i].dRadius;
 
-                    dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
-
-                    dLayers[l][dIndex].initRandom(ioSizes[i], dVisibleLayerDescs);
+                    dLayers[l][dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, dVisibleLayerDesc);
 
                     iIndices[dIndex] = i;
                     dIndices[i] = dIndex;
@@ -89,15 +87,13 @@ void Hierarchy::initRandom(
             dLayers[l].resize(1);
 
             // Decoder visible layer descriptors
-            Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(2);
+            Decoder::VisibleLayerDesc dVisibleLayerDesc;
 
-            dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
-            dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
-
-            dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
+            dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
+            dVisibleLayerDesc.radius = layerDescs[l].dRadius;
 
             // Create decoders
-            dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDescs);
+            dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
         }
         
         // Create the sparse coding layer
