@@ -48,7 +48,7 @@ public:
     // Defaults
     RLAdapter()
     :
-    lr(0.05f),
+    lr(0.02f),
     discount(0.99f),
     historyIters(16)
     {}
