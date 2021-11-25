@@ -62,36 +62,36 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int historyCapacity;
-
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
+
+        int historyCapacity;
 
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
         eRadius(2),
         dRadius(2),
-        historyCapacity(8),
         ticksPerUpdate(2),
-        temporalHorizon(2)
+        temporalHorizon(2),
+        historyCapacity(8)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
             int eRadius,
             int dRadius,
-            int historyCapacity,
             int ticksPerUpdate,
-            int temporalHorizon
+            int temporalHorizon,
+            int historyCapacity
         )
         :
         hiddenSize(hiddenSize),
         eRadius(eRadius),
         dRadius(dRadius),
-        historyCapacity(historyCapacity),
         ticksPerUpdate(ticksPerUpdate),
-        temporalHorizon(temporalHorizon)
+        temporalHorizon(temporalHorizon),
+        historyCapacity(historyCapacity)
         {}
     };
 
