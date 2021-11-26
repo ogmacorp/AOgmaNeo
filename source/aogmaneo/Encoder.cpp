@@ -296,7 +296,7 @@ void Encoder::initRandom(
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 }
 
 void Encoder::step(

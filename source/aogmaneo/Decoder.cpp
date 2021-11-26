@@ -230,7 +230,7 @@ void Decoder::initRandom(
     }
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 }
 
