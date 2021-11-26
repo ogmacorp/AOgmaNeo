@@ -23,7 +23,6 @@ private:
     void forward(
         const Int2 &columnPos,
         const IntBuffer* hiddenCIs,
-        const IntBuffer* hiddenCIsPrev,
         float reward,
         bool learnEnabled
     );
@@ -34,7 +33,7 @@ public:
     // Defaults
     RLAdapter()
     :
-    lr(0.01f)
+    lr(0.001f)
     {}
 
     // Create with random initialization
@@ -43,8 +42,8 @@ public:
     );
 
     void step(
+        float reward,
         const IntBuffer* hiddenCIs,
-        const IntBuffer* hiddenCIsPrev,
         bool learnEnabled
     );
 
