@@ -13,52 +13,32 @@
 namespace aon {
 // Adapts a prog-driven hierarchy to reinforcement learning
 class StateAdapter {
-public:
-    struct HistorySample {
-        IntBuffer hiddenCIs;
-    };
-
 private:
     Int3 hiddenSize;
-    int radius;
 
     IntBuffer progCIs;
 
     FloatBuffer weights;
 
-    CircleBuffer<HistorySample> history;
-    int historySize;
-
     void forward(
         const Int2 &columnPos,
         const IntBuffer* goalCIs,
-        const IntBuffer* hiddenCIs
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        int t1,
-        int t2
+        const IntBuffer* hiddenCIs,
+        bool learnEnabled
     );
 
 public:
     float lr; // Learning rate rate
-    float discount;
-    int historyIters;
 
     // Defaults
     StateAdapter()
     :
-    lr(0.1f),
-    discount(0.9f),
-    historyIters(16)
+    lr(0.01f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
-        int radius,
-        int historyCapacity
+        const Int3 &hiddenSize // Hidden/output/prediction size
     );
 
     void step(
