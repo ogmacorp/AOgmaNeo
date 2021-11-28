@@ -70,7 +70,7 @@ void Hierarchy::initRandom(
                 histories[l][i].resize(layerDescs[l].temporalHorizon);
                 
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = IntBuffer(inSize, 0);
+                    histories[l][i][t] = IntBuffer(inSize, ioSizes[i].z / 2);
             }
 
             dLayers[l].resize(numPredictions);
@@ -112,7 +112,7 @@ void Hierarchy::initRandom(
             histories[l][0].resize(layerDescs[l].temporalHorizon);
 
             for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = IntBuffer(inSize, 0);
+                histories[l][0][t] = IntBuffer(inSize, layerDescs[l - 1].hiddenSize.z / 2);
 
             dLayers[l].resize(layerDescs[l].ticksPerUpdate);
 

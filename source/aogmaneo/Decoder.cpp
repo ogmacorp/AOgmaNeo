@@ -176,7 +176,7 @@ void Decoder::initRandom(
         visibleLayer.weights[i] = randf(-0.01f, 0.01f);
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
@@ -186,8 +186,8 @@ void Decoder::initRandom(
     history.resize(historyCapacity);
 
     for (int i = 0; i < history.size(); i++) {
-        history[i].inputCIs = IntBuffer(numVisibleColumns, 0);
-        history[i].hiddenTargetCIs = IntBuffer(numHiddenColumns, 0);
+        history[i].inputCIs = IntBuffer(numVisibleColumns, visibleLayerDesc.size.z / 2);
+        history[i].hiddenTargetCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
     }
 }
 
