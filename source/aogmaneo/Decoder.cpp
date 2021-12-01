@@ -143,13 +143,13 @@ void Decoder::learn(
 
             sumPrev += visibleLayer.weights[wi];
 
-            reward += history[t1 - 1].inputCIs[visibleColumnIndex] == progCI;
+            reward += (history[t1 - 1].inputCIs[visibleColumnIndex] == progCI);
         }
 
     sumPrev /= count;
     reward /= count;
 
-    reward *= reward;
+    reward *= reward * reward;
 
     float delta = lr * (reward + discount * maxActivation - sumPrev);
 
