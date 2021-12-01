@@ -146,9 +146,6 @@ void Encoder::learn(
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-    float activation = max(0.0f, hiddenActivations[hiddenCellIndexMax]);
-
-    // For each visible layer
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -183,7 +180,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += lr * activation * ((vc == inCI) - activation * vl.weights[wi]);
+                    vl.weights[wi] += hiddenRates[hiddenCellIndexMax] * ((vc == inCI) - vl.weights[wi]);
                 }
             }
     }
@@ -210,9 +207,11 @@ void Encoder::learn(
             for (int vc = 0; vc < hiddenSize.z; vc++) {
                 int wi = vc + wiStart;
 
-                laterals[wi] += lr * activation * ((vc == inCI) - activation * laterals[wi]);
+                laterals[wi] += hiddenRates[hiddenCellIndexMax] * ((vc == inCI) - laterals[wi]);
             }
         }
+
+    hiddenRates[hiddenCellIndexMax] *= 1.0f - lr;
 }
 
 void Encoder::initRandom(
@@ -255,6 +254,8 @@ void Encoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     hiddenCIsTemp = IntBuffer(numHiddenColumns, 0);
+
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     int diam = lRadius * 2 + 1;
     int area = diam * diam;
@@ -321,6 +322,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -361,8 +363,10 @@ void Encoder::read(
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCIsTemp.resize(numHiddenColumns);
+    hiddenRates.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     hiddenStimuli = FloatBuffer(numHiddenCells, 0.0f);
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
