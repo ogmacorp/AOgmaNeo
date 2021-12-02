@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        FloatBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -42,21 +44,12 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int lRadius; // Lateral radius
 
-    FloatBuffer hiddenStimuli;
-    FloatBuffer hiddenActivations;
-
-    IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenCIsTemp; // Temporary hidden states
-
-    FloatBuffer hiddenRates;
+    IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-
-    FloatBuffer laterals; // Lateral weights
     
     // --- Kernels ---
     
@@ -65,39 +58,42 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void inhibit(
-        const Int2 &columnPos
-    );
-
     void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* inputCIs,
+        int vli
+    );
+
+    void reconstruct(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenCIs,
+        IntBuffer* reconCIs,
+        int vli
     );
 
 public:
-    int explainIters; // Explaining-away iterations
-    float actRate; // Activation rate
     float lr;
-    
-    // Defaults
+
     Encoder()
     :
-    explainIters(4),
-    actRate(0.1f),
     lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int lRadius, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
+    );
+
+    void reconstruct(
+        const IntBuffer* hiddenCIs,
+        IntBuffer* reconCIs,
+        int vli
     );
 
     // Serialization
@@ -127,23 +123,23 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states
