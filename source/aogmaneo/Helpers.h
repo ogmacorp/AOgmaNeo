@@ -12,10 +12,21 @@
 #include "Array.h"
 
 namespace aon {
-const int expIters = 10;
-const float expFactorials[] = { 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
+const int expIters = 6;
+const int sinIters = 6;
+const float pi = 3.14159f;
+const float pi2 = pi * 2.0f;
+
+float modf(
+    float x,
+    float y
+);
 
 float expf(
+    float x
+);
+
+float sinf(
     float x
 );
 
