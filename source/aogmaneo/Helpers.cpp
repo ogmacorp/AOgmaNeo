@@ -14,34 +14,73 @@
 
 using namespace aon;
 
+float aon::modf(
+    float x,
+    float y
+) {
+    return x - static_cast<int>(x / y) * y;
+}
+
 float aon::expf(
     float x
 ) {
     if (x > 0.0f) {
-        float res = 1.0f;
-
         float p = x;
+        int f = 1;
 
-        for (int i = 0; i < expIters; i++) {
-            res += p / expFactorials[i];
+        float res = 1.0f + x;
 
+        for (int n = 2; n <= expIters; n++) {
             p *= x;
+            f *= n;
+
+            res += p / f;
         }
 
         return res;
     }
 
-    float res = 1.0f;
-
     float p = -x;
+    int f = 1;
 
-    for (int i = 0; i < expIters; i++) {
-        res += p / expFactorials[i];
+    float res = 1.0f - x;
 
+    for (int n = 2; n <= expIters; n++) {
         p *= -x;
+        f *= n;
+
+        res += p / f;
     }
 
     return 1.0f / res;
+}
+
+float aon::sinf(
+    float x
+) {
+    x = modf(x, pi2);
+
+    if (x < -pi)
+        x += pi2;
+    else if (x > pi)
+        x -= pi2;
+
+    float p = x;
+    int f = 1;
+
+    float res = x;
+
+    for (int n = 1; n <= sinIters; n++) {
+        p *= -x * x;
+
+        int f1 = n * 2;
+
+        f *= f1 * (f1 + 1);
+
+        res += p / f;
+    }
+
+    return res;
 }
 
 #ifdef USE_OMP
