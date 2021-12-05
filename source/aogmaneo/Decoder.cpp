@@ -69,13 +69,14 @@ void Decoder::forward(
 
 void Decoder::learn(
     const Int2 &columnPos,
-    int t
+    int t1,
+    int t2
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int targetCI = history[historySize - 2].hiddenTargetCIs[hiddenColumnIndex];
+    int targetCI = history[t1 - 1].hiddenTargetCIs[hiddenColumnIndex];
 
     // Pre-count
     int diam = visibleLayerDesc.radius * 2 + 1;
@@ -109,8 +110,8 @@ void Decoder::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
-                int inCI = history[t].inputCIs[visibleColumnIndex];
-                int inCIPrev = history[historySize - 1].inputCIs[visibleColumnIndex];
+                int inCI = history[t2].inputCIs[visibleColumnIndex];
+                int inCIPrev = history[t1].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -159,8 +160,8 @@ void Decoder::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
-                int inCI = history[t].inputCIs[visibleColumnIndex];
-                int inCIPrev = history[historySize - 1].inputCIs[visibleColumnIndex];
+                int inCI = history[t2].inputCIs[visibleColumnIndex];
+                int inCIPrev = history[t1].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -228,14 +229,15 @@ void Decoder::step(
         history[0].inputCIs = *inputCIs;
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
-        if (learnEnabled && historySize > 1) {
+        if (learnEnabled && historySize > 2) {
             for (int it = 0; it < iters; it++) {
-                int t = rand() % (historySize - 1);
+                int t1 = rand() % (historySize - 1) + 1;
+                int t2 = rand() % t1;
 
                 // Learn kernel
                 #pragma omp parallel for
                 for (int i = 0; i < numHiddenColumns; i++)
-                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t);
+                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2);
             }
         }
     }
