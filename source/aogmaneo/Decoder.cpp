@@ -228,8 +228,10 @@ void Decoder::step(
         history[0].inputCIs = *inputCIs;
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
-        if (learnEnabled) {
-            for (int t = 0; t < historySize - 1; t++) {
+        if (learnEnabled && historySize > 1) {
+            for (int it = 0; it < iters; it++) {
+                int t = rand() % (historySize - 1);
+
                 // Learn kernel
                 #pragma omp parallel for
                 for (int i = 0; i < numHiddenColumns; i++)
@@ -245,7 +247,7 @@ void Decoder::step(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int);
 
     size += sizeof(VisibleLayerDesc) + visibleLayer.weights.size() * sizeof(float);
 
@@ -268,6 +270,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&iters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
@@ -300,6 +303,7 @@ void Decoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&iters), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
 
