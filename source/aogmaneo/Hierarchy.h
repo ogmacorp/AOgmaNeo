@@ -36,7 +36,7 @@ public:
         type(prediction),
         eRadius(2),
         dRadius(2),
-        historyCapacity(8)
+        historyCapacity(32)
         {}
 
         IODesc(
@@ -60,7 +60,6 @@ public:
         Int3 hiddenSize; // Size of hidden layer
 
         int eRadius; // Encoder radius
-        int lRadius; // Lateral radius
         int dRadius; // Decoder radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
@@ -72,17 +71,15 @@ public:
         :
         hiddenSize(4, 4, 16),
         eRadius(2),
-        lRadius(2),
         dRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2),
-        historyCapacity(8)
+        historyCapacity(32)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
             int eRadius,
-            int lRadius,
             int dRadius,
             int ticksPerUpdate,
             int temporalHorizon,
@@ -91,7 +88,6 @@ public:
         :
         hiddenSize(hiddenSize),
         eRadius(eRadius),
-        lRadius(lRadius),
         dRadius(dRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon),
