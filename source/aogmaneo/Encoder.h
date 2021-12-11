@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        FloatBuffer rates;
+
         FloatBuffer reconstruction;
 
         float importance;
