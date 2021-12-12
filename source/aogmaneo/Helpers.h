@@ -30,6 +30,10 @@ float sinf(
     float x
 );
 
+float sqrtf(
+    float x
+);
+
 inline float ceilf(
     float x
 ) {
@@ -479,5 +483,48 @@ public:
         void* data,
         int len
     ) = 0;
+};
+
+// Default buffer reader/writer
+class BufferReader : public StreamReader {
+public:
+    int start;
+    const ByteBuffer* buffer;
+
+    BufferReader()
+    :
+    start(0),
+    buffer(nullptr)
+    {}
+
+    void read(
+        void* data,
+        int len
+    ) override;
+};
+
+class BufferWriter : public StreamWriter {
+public:
+    int start;
+    ByteBuffer buffer;
+
+    BufferWriter()
+    :
+    start(0)
+    {}
+
+    BufferWriter(
+        int bufferSize
+    )
+    :
+    start(0)
+    {
+        buffer.resize(bufferSize);
+    }
+
+    void write(
+        const void* data,
+        int len
+    ) override;
 };
 } // namespace aon
