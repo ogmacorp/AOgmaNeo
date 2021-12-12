@@ -83,21 +83,6 @@ float aon::sinf(
     return res;
 }
 
-// Quake method
-float aon::sqrtf(
-    float x
-) {
-    union {
-        float x;
-        int i;
-    } u;
-
-    u.x = x;
-    u.i = 0x5f3759df - (u.i >> 1);
-
-    return x * u.x * (1.5f - 0.5f * x * u.x * u.x);
-}
-
 #ifdef USE_OMP
 void aon::setNumThreads(
     int numThreads
