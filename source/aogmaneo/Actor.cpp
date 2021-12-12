@@ -65,7 +65,7 @@ void Actor::forward(
 
     // --- Action ---
 
-    if (explore) {
+    if (temperature > 0.0f) {
         float maxActivation = -999999.0f;
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -118,7 +118,7 @@ void Actor::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+            hiddenActivations[hiddenCellIndex] = expf((hiddenActivations[hiddenCellIndex] - maxActivation) / temperature);
             
             total += hiddenActivations[hiddenCellIndex];
         }
@@ -570,9 +570,9 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&vlr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&alr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&explore), sizeof(Byte));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
@@ -624,9 +624,9 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&vlr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&alr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
-    reader.read(reinterpret_cast<void*>(&explore), sizeof(Byte));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenValues.resize(numHiddenColumns);

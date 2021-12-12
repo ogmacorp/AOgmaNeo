@@ -83,6 +83,21 @@ float aon::sinf(
     return res;
 }
 
+// Quake method
+float aon::sqrtf(
+    float x
+) {
+    union {
+        float x;
+        int i;
+    } u;
+
+    u.x = x;
+    u.i = 0x5f3759df - (u.i >> 1);
+
+    return x * u.x * (1.5f - 0.5f * x * u.x * u.x);
+}
+
 #ifdef USE_OMP
 void aon::setNumThreads(
     int numThreads
@@ -141,7 +156,7 @@ unsigned int aon::rand(
 float aon::randf(
     unsigned int* state
 ) {
-    return static_cast<float>(rand(state)) / static_cast<float>(randMax - 1);
+    return static_cast<float>(rand(state)) / static_cast<float>(randMax);
 }
 
 float aon::randf(
@@ -150,4 +165,18 @@ float aon::randf(
     unsigned int* state
 ) {
     return low + (high - low) * randf(state);
+}
+
+void BufferReader::read(void* data, int len) {
+    for (int i = 0; i < len; i++)
+        static_cast<unsigned char*>(data)[i] = (*buffer)[start + i];
+
+    start += len;
+}
+
+void BufferWriter::write(const void* data, int len) {
+    for (int i = 0; i < len; i++)
+        buffer[start + i] = static_cast<const unsigned char*>(data)[i];
+
+    start += len;
 }
