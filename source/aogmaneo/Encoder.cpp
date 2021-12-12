@@ -161,7 +161,9 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float grad = (vc == targetCI) - vl.reconstruction[visibleCellIndex];
+            float s = sigmoid(vl.reconstruction[visibleCellIndex]);
+
+            float grad = ((vc == targetCI) - s) * s * (1.0f - s);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
