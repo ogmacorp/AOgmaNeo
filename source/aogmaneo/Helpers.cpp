@@ -166,17 +166,3 @@ float aon::randf(
 ) {
     return low + (high - low) * randf(state);
 }
-
-void BufferReader::read(void* data, int len) {
-    for (int i = 0; i < len; i++)
-        static_cast<unsigned char*>(data)[i] = (*buffer)[start + i];
-
-    start += len;
-}
-
-void BufferWriter::write(const void* data, int len) {
-    for (int i = 0; i < len; i++)
-        buffer[start + i] = static_cast<const unsigned char*>(data)[i];
-
-    start += len;
-}
