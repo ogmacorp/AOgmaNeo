@@ -31,6 +31,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
+        FloatBuffer weightsPrev;
     };
 
     struct HistorySample {
@@ -73,9 +74,9 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.1f),
+    lr(0.01f),
     discount(0.9f),
-    historyIters(8)
+    historyIters(16)
     {}
 
     // Create with random initialization
