@@ -45,8 +45,8 @@ private:
     FloatBuffer hiddenActivations;
 
     // Visible layers and descs
-    VisibleLayer vl;
-    VisibleLayerDesc vld;
+    VisibleLayer visibleLayer;
+    VisibleLayerDesc visibleLayerDesc;
 
     CircleBuffer<HistorySample> history;
     int historySize;
@@ -80,7 +80,7 @@ public:
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
         int historyCapacity,
-        const VisibleLayerDesc &vld
+        const VisibleLayerDesc &visibleLayerDesc
     );
 
     void step(
@@ -113,17 +113,17 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer() {
-        return vl;
+        return visibleLayer;
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer() const {
-        return vl;
+        return visibleLayer;
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc() const {
-        return vld;
+        return visibleLayerDesc;
     }
 
     // Get the hidden activations (predictions)

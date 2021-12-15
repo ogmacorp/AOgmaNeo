@@ -19,22 +19,22 @@ void Decoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int diam = vld.radius * 2 + 1;
+    int diam = visibleLayerDesc.radius * 2 + 1;
 
     // Projection
-    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+    Float2 hToV = Float2(static_cast<float>(visibleLayerDesc.size.x) / static_cast<float>(hiddenSize.x),
+        static_cast<float>(visibleLayerDesc.size.y) / static_cast<float>(hiddenSize.y));
 
     Int2 visibleCenter = project(columnPos, hToV);
 
-    visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+    visibleCenter = minOverhang(visibleCenter, Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y), visibleLayerDesc.radius);
 
     // Lower corner
-    Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+    Int2 fieldLowerBound(visibleCenter.x - visibleLayerDesc.radius, visibleCenter.y - visibleLayerDesc.radius);
 
     // Bounds of receptive field, clamped to input size
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-    Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+    Int2 iterUpperBound(min(visibleLayerDesc.size.x - 1, visibleCenter.x + visibleLayerDesc.radius), min(visibleLayerDesc.size.y - 1, visibleCenter.y + visibleLayerDesc.radius));
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
@@ -46,16 +46,16 @@ void Decoder::forward(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
 
                 int inCI = (*progCIs)[visibleColumnIndex];
                 int inCIPrev = (*inputCIs)[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wi = inCI + vld.size.z * (inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
+                int wi = inCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                sum += vl.weights[wi];
+                sum += visibleLayer.weights[wi];
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -79,22 +79,22 @@ void Decoder::learn(
     int targetCI = history[t1 - 1].hiddenTargetCIs[hiddenColumnIndex];
 
     // Pre-count
-    int diam = vld.radius * 2 + 1;
+    int diam = visibleLayerDesc.radius * 2 + 1;
 
     // Projection
-    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+    Float2 hToV = Float2(static_cast<float>(visibleLayerDesc.size.x) / static_cast<float>(hiddenSize.x),
+        static_cast<float>(visibleLayerDesc.size.y) / static_cast<float>(hiddenSize.y));
 
     Int2 visibleCenter = project(columnPos, hToV);
 
-    visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
+    visibleCenter = minOverhang(visibleCenter, Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y), visibleLayerDesc.radius);
 
     // Lower corner
-    Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+    Int2 fieldLowerBound(visibleCenter.x - visibleLayerDesc.radius, visibleCenter.y - visibleLayerDesc.radius);
 
     // Bounds of receptive field, clamped to input size
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-    Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+    Int2 iterUpperBound(min(visibleLayerDesc.size.x - 1, visibleCenter.x + visibleLayerDesc.radius), min(visibleLayerDesc.size.y - 1, visibleCenter.y + visibleLayerDesc.radius));
 
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
@@ -108,16 +108,16 @@ void Decoder::learn(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
                 int inCI = history[t2].inputCIs[visibleColumnIndex];
                 int inCIPrev = history[t1].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wi = inCI + vld.size.z * (inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
+                int wi = inCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                sum += vl.weights[wi];
+                sum += visibleLayer.weights[wi];
             }
 
         sum /= count;
@@ -158,16 +158,16 @@ void Decoder::learn(
             
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
                 int inCI = history[t2].inputCIs[visibleColumnIndex];
                 int inCIPrev = history[t1].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wi = inCI + vld.size.z * (inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
+                int wi = inCI + visibleLayerDesc.size.z * (inCIPrev + visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                vl.weights[wi] += delta;
+                visibleLayer.weights[wi] += delta;
             }
     }
 }
@@ -175,9 +175,9 @@ void Decoder::learn(
 void Decoder::initRandom(
     const Int3 &hiddenSize,
     int historyCapacity,
-    const VisibleLayerDesc &vld
+    const VisibleLayerDesc &visibleLayerDesc
 ) {
-    this->vld = vld; 
+    this->visibleLayerDesc = visibleLayerDesc; 
 
     this->hiddenSize = hiddenSize;
 
@@ -186,26 +186,26 @@ void Decoder::initRandom(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
     
     // Create layers
-    int diam = vld.radius * 2 + 1;
+    int diam = visibleLayerDesc.radius * 2 + 1;
     int area = diam * diam;
 
-    vl.weights.resize(numHiddenCells * area * vld.size.z * vld.size.z);
+    visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
 
-    for (int i = 0; i < vl.weights.size(); i++)
-        vl.weights[i] = randf(-0.01f, 0.01f);
+    for (int i = 0; i < visibleLayer.weights.size(); i++)
+        visibleLayer.weights[i] = randf(-0.01f, 0.01f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
-    int numVisibleColumns = vld.size.x * vld.size.y;
+    int numVisibleColumns = visibleLayerDesc.size.x * visibleLayerDesc.size.y;
 
     historySize = 0;
     history.resize(historyCapacity);
 
     for (int i = 0; i < history.size(); i++) {
-        history[i].inputCIs = IntBuffer(numVisibleColumns, vld.size.z / 2);
+        history[i].inputCIs = IntBuffer(numVisibleColumns, visibleLayerDesc.size.z / 2);
         history[i].hiddenTargetCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
     }
 }
@@ -251,7 +251,7 @@ void Decoder::step(
 int Decoder::size() const {
     int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int);
 
-    size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float);
+    size += sizeof(VisibleLayerDesc) + visibleLayer.weights.size() * sizeof(float);
 
     size += 3 * sizeof(int) + history.size() * (history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
 
@@ -276,9 +276,9 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
-    writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
+    writer.write(reinterpret_cast<const void*>(&visibleLayerDesc), sizeof(VisibleLayerDesc));
 
-    writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&visibleLayer.weights[0]), visibleLayer.weights.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&historySize), sizeof(int));
 
@@ -313,14 +313,14 @@ void Decoder::read(
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
-    reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
+    reader.read(reinterpret_cast<void*>(&visibleLayerDesc), sizeof(VisibleLayerDesc));
 
-    int diam = vld.radius * 2 + 1;
+    int diam = visibleLayerDesc.radius * 2 + 1;
     int area = diam * diam;
 
-    vl.weights.resize(numHiddenCells * area * vld.size.z * vld.size.z);
+    visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
 
-    reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&visibleLayer.weights[0]), visibleLayer.weights.size() * sizeof(float));
 
     reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
 
@@ -335,7 +335,7 @@ void Decoder::read(
     history.resize(numHistory);
     history.start = historyStart;
 
-    int numVisibleColumns = vld.size.x * vld.size.y;
+    int numVisibleColumns = visibleLayerDesc.size.x * visibleLayerDesc.size.y;
 
     for (int t = 0; t < history.size(); t++) {
         history[t].inputCIs.resize(numVisibleColumns);
