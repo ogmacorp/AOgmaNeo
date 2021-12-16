@@ -188,8 +188,8 @@ void Decoder::initRandom(
     visibleLayer.weightsPrev.resize(visibleLayer.weights.size());
 
     for (int i = 0; i < visibleLayer.weights.size(); i++) {
-        visibleLayer.weights[i] = randf(-0.01f, 0.0f);
-        visibleLayer.weightsPrev[i] = randf(-0.01f, 0.0f);
+        visibleLayer.weights[i] = randf(-1.0f, 0.0f);
+        visibleLayer.weightsPrev[i] = randf(-1.0f, 0.0f);
     }
 
     // Hidden CIs
