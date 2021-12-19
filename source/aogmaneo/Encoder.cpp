@@ -120,7 +120,6 @@ void Encoder::learn(
         int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
-        float total = 0.0f;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
