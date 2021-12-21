@@ -36,7 +36,7 @@ public:
         type(prediction),
         eRadius(2),
         dRadius(2),
-        historyCapacity(32)
+        historyCapacity(3)
         {}
 
         IODesc(
@@ -74,7 +74,7 @@ public:
         dRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2),
-        historyCapacity(32)
+        historyCapacity(3)
         {}
 
         LayerDesc(
