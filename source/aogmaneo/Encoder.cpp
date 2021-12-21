@@ -140,7 +140,7 @@ void Encoder::learn(
                 }
             }
 
-        sum *= sqrtf(1.0f / count);
+        sum /= count;
 
         vl.reconstruction[visibleCellIndex] = sum;
 

@@ -88,7 +88,7 @@ void Decoder::forward(
                 }
         }
 
-        sum *= sqrtf(1.0f / count);
+        sum /= count;
 
         hiddenActivations[hiddenCellIndex] = sum;
 
@@ -198,7 +198,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-2.0f, 2.0f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
