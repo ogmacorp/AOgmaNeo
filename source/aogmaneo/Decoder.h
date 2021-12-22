@@ -67,6 +67,7 @@ private:
 
 public:
     float lr; // Learning rate
+    float decay;
     float discount; // Discount factor
     int historyIters;
 
@@ -74,6 +75,7 @@ public:
     Decoder()
     :
     lr(0.01f),
+    decay(0.001f),
     discount(0.9f),
     historyIters(8)
     {}
