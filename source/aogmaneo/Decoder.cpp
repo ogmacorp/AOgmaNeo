@@ -56,8 +56,7 @@ void Decoder::forward(
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += visibleLayer.weights[progCI + wiStart];
-                sum += visibleLayer.weightsPrev[inCIPrev + wiStart];
+                sum += visibleLayer.weights[progCI + visibleLayerDesc.size.z * (inCIPrev + wiStart)];
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -119,11 +118,10 @@ void Decoder::learn(
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += visibleLayer.weights[progCI + wiStart];
-                sum += visibleLayer.weightsPrev[inCINext + wiStart];
+                sum += visibleLayer.weights[progCI + visibleLayerDesc.size.z * (inCINext + wiStart)];
             }
 
-        sum /= max(1, count);
+        sum /= count;
 
         maxActivation = max(maxActivation, sum);
     }
@@ -143,11 +141,10 @@ void Decoder::learn(
 
             int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-            sumPrev += visibleLayer.weights[progCI + wiStart];
-            sumPrev += visibleLayer.weightsPrev[inCIPrev + wiStart];
+            sumPrev += visibleLayer.weights[progCI + visibleLayerDesc.size.z * (inCIPrev + wiStart)];
         }
 
-    sumPrev /= max(1, count);
+    sumPrev /= count;
 
     float delta = lr * (max(reward, discount * min(1.0f, maxActivation)) - sumPrev);
 
@@ -162,8 +159,7 @@ void Decoder::learn(
 
             int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-            visibleLayer.weights[progCI + wiStart] += delta;
-            visibleLayer.weights[inCIPrev + wiStart] += delta;
+            visibleLayer.weights[progCI + visibleLayerDesc.size.z * (inCIPrev + wiStart)] += delta;
         }
 }
 
@@ -184,13 +180,10 @@ void Decoder::initRandom(
     int diam = visibleLayerDesc.radius * 2 + 1;
     int area = diam * diam;
 
-    visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z);
-    visibleLayer.weightsPrev.resize(visibleLayer.weights.size());
+    visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
 
-    for (int i = 0; i < visibleLayer.weights.size(); i++) {
-        visibleLayer.weights[i] = randf(-1.0f, 0.0f);
-        visibleLayer.weightsPrev[i] = randf(-1.0f, 0.0f);
-    }
+    for (int i = 0; i < visibleLayer.weights.size(); i++)
+        visibleLayer.weights[i] = randf(-0.01f, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -282,7 +275,6 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&visibleLayerDesc), sizeof(VisibleLayerDesc));
 
     writer.write(reinterpret_cast<const void*>(&visibleLayer.weights[0]), visibleLayer.weights.size() * sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&visibleLayer.weightsPrev[0]), visibleLayer.weightsPrev.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&historySize), sizeof(int));
 
@@ -321,11 +313,9 @@ void Decoder::read(
     int diam = visibleLayerDesc.radius * 2 + 1;
     int area = diam * diam;
 
-    visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z);
-    visibleLayer.weightsPrev.resize(visibleLayer.weights.size());
+    visibleLayer.weights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
 
     reader.read(reinterpret_cast<void*>(&visibleLayer.weights[0]), visibleLayer.weights.size() * sizeof(float));
-    reader.read(reinterpret_cast<void*>(&visibleLayer.weightsPrev[0]), visibleLayer.weightsPrev.size() * sizeof(float));
 
     reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
 
