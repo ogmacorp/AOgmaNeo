@@ -67,17 +67,15 @@ private:
 
 public:
     float lr; // Learning rate
-    float decay;
     float discount; // Discount factor
     int historyIters;
 
     // Defaults
     Decoder()
     :
-    lr(0.01f),
-    decay(0.001f),
+    lr(0.05f),
     discount(0.9f),
-    historyIters(8)
+    historyIters(4)
     {}
 
     // Create with random initialization
