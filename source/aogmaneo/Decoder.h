@@ -61,8 +61,7 @@ private:
     void learn(
         const Int2 &columnPos,
         int t1,
-        int t2,
-        float reward
+        int t2
     );
 
 public:
@@ -74,7 +73,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.03f),
+    lr(0.02f),
     decay(0.001f),
     discount(0.9f),
     historyIters(8)
