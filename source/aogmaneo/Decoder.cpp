@@ -263,23 +263,23 @@ void Decoder::step(
     
         history[0].inputCIs = *inputCIs;
         history[0].hiddenTargetCIs = *hiddenTargetCIs;
-    }
 
-    if (learnEnabled && stateUpdate && historySize > 1) {
-        for (int it = 0; it < historyIters; it++) {
-            int t1 = rand() % (historySize - 1) + 1;
-            int t2 = rand() % t1;
+        if (learnEnabled && historySize > 1) {
+            for (int it = 0; it < historyIters; it++) {
+                int t1 = rand() % (historySize - 1) + 1;
+                int t2 = rand() % t1;
 
-            int power = t1 - 1 - t2;
-            float reward = 1.0f;
+                int power = t1 - 1 - t2;
+                float reward = 1.0f;
 
-            for (int p = 0; p < power; p++)
-                reward *= discount;
+                for (int p = 0; p < power; p++)
+                    reward *= discount;
 
-            // Learn under goal
-            #pragma omp parallel for
-            for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
+                // Learn under goal
+                #pragma omp parallel for
+                for (int i = 0; i < numHiddenColumns; i++)
+                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
+            }
         }
     }
 
