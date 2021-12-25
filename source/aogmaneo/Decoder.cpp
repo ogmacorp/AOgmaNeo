@@ -288,6 +288,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
 
     for (int t = 0; t < history.size(); t++) {
+        writer.write(reinterpret_cast<const void*>(&history[t].actualCIs[0]), history[t].actualCIs.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&history[t].inputCIs[0]), history[t].inputCIs.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&history[t].hiddenTargetCIs[0]), history[t].hiddenTargetCIs.size() * sizeof(int));
     }
@@ -334,9 +335,11 @@ void Decoder::read(
     int numVisibleColumns = visibleLayerDesc.size.x * visibleLayerDesc.size.y;
 
     for (int t = 0; t < history.size(); t++) {
+        history[t].actualCIs.resize(numVisibleColumns);
         history[t].inputCIs.resize(numVisibleColumns);
         history[t].hiddenTargetCIs.resize(numHiddenColumns);
 
+        reader.read(reinterpret_cast<void*>(&history[t].actualCIs[0]), history[t].actualCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&history[t].inputCIs[0]), history[t].inputCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&history[t].hiddenTargetCIs[0]), history[t].hiddenTargetCIs.size() * sizeof(int));
     }
