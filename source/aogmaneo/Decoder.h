@@ -74,8 +74,8 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.03f),
-    discount(0.95f),
+    lr(0.02f),
+    discount(0.97f),
     historyIters(8)
     {}
 
