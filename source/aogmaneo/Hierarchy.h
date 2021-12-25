@@ -251,14 +251,14 @@ public:
         return ioSizes;
     }
 
-    // Retrieve a sparse coding layer
+    // Retrieve an encoding layer
     Encoder &getELayer(
         int l // Layer index
     ) {
         return eLayers[l];
     }
 
-    // Retrieve a sparse coding layer, const version
+    // Retrieve an encoding layer, const version
     const Encoder &getELayer(
         int l // Layer index
     ) const {
@@ -277,6 +277,20 @@ public:
         int l // Layer index
     ) const {
         return dLayers[l];
+    }
+
+    // Retrieve a goal encoding layer
+    Encoder &getGLayer(
+        int l // Layer index
+    ) {
+        return gLayers[l];
+    }
+
+    // Retrieve a goal encoding layer, const version
+    const Encoder &getGLayer(
+        int l // Layer index
+    ) const {
+        return gLayers[l];
     }
 
     const IntBuffer &getIIndices() const {
