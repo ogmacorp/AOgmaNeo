@@ -205,39 +205,36 @@ void Decoder::step(
     const IntBuffer* actualCIs,
     const IntBuffer* inputCIs,
     const IntBuffer* hiddenTargetCIs,
-    bool learnEnabled,
-    bool stateUpdate
+    bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    if (stateUpdate) {
-        history.pushFront();
+    history.pushFront();
 
-        // If not at cap, increment
-        if (historySize < history.size())
-            historySize++;
-    
-        history[0].actualCIs = *actualCIs;
-        history[0].inputCIs = *inputCIs;
-        history[0].hiddenTargetCIs = *hiddenTargetCIs;
+    // If not at cap, increment
+    if (historySize < history.size())
+        historySize++;
 
-        if (learnEnabled && historySize > 1) {
-            for (int it = 0; it < historyIters; it++) {
-                int t1 = rand() % (historySize - 1) + 1;
-                int t2 = rand() % t1;
+    history[0].actualCIs = *actualCIs;
+    history[0].inputCIs = *inputCIs;
+    history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
-                int power = t1 - 1 - t2;
+    if (learnEnabled && historySize > 1) {
+        for (int it = 0; it < historyIters; it++) {
+            int t1 = rand() % (historySize - 1) + 1;
+            int t2 = rand() % t1;
 
-                float reward = 1.0f;
+            int power = t1 - 1 - t2;
 
-                for (int p = 0; p < power; p++)
-                    reward *= discount;
+            float reward = 1.0f;
 
-                // Learn under goal
-                #pragma omp parallel for
-                for (int i = 0; i < numHiddenColumns; i++)
-                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
-            }
+            for (int p = 0; p < power; p++)
+                reward *= discount;
+
+            // Learn under goal
+            #pragma omp parallel for
+            for (int i = 0; i < numHiddenColumns; i++)
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
         }
     }
 
