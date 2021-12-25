@@ -30,11 +30,13 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        FloatBuffer weights0; // Input
+        FloatBuffer weights1; // Feedback
     };
 
     struct HistorySample {
         IntBuffer inputCIs;
+        IntBuffer feedBackCIs;
         IntBuffer actualCIs;
         IntBuffer hiddenTargetCIs;
     };
@@ -56,7 +58,8 @@ private:
     void forward(
         const Int2 &columnPos,
         const IntBuffer* goalCIs,
-        const IntBuffer* inputCIs
+        const IntBuffer* inputCIs,
+        const IntBuffer* feedBackCIs
     );
 
     void learn(
@@ -91,6 +94,7 @@ public:
         const IntBuffer* goalCIs,
         const IntBuffer* actualCIs,
         const IntBuffer* inputCIs,
+        const IntBuffer* feedBackCIs,
         const IntBuffer* hiddenTargetCIs,
         bool learnEnabled
     );
