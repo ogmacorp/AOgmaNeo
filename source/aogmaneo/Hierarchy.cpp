@@ -266,6 +266,8 @@ int Hierarchy::size() const {
 
         for (int d = 0; d < dLayers[l].size(); d++)
             size += dLayers[l][d].size();
+
+        size += gLayers[l].size();
     }
 
     return size;
@@ -287,6 +289,8 @@ int Hierarchy::stateSize() const {
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
             size += dLayers[l][d].stateSize();
+
+        size += gLayers[l].stateSize();
     }
 
     return size;
@@ -344,6 +348,8 @@ void Hierarchy::write(
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].write(writer);
+
+        gLayers[l].write(writer);
     }
 }
 
@@ -368,6 +374,8 @@ void Hierarchy::read(
 
     eLayers.resize(numLayers);
     dLayers.resize(numLayers);
+    gLayers.resize(numLayers);
+    gHiddenCIs.resize(numLayers);
 
     histories.resize(numLayers);
     
@@ -422,6 +430,10 @@ void Hierarchy::read(
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].read(reader);
+
+        gLayers[l].read(reader);
+
+        gHiddenCIs[l] = gLayers[l].getHiddenCIs();
     }
 }
 
@@ -446,6 +458,8 @@ void Hierarchy::writeState(
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].writeState(writer);
+
+        gLayers[l].writeState(writer);
     }
 }
 
@@ -472,5 +486,7 @@ void Hierarchy::readState(
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].readState(reader);
+
+        gLayers[l].readState(reader);
     }
 }
