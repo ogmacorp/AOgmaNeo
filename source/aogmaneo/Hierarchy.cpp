@@ -12,11 +12,14 @@ using namespace aon;
 
 void Hierarchy::initRandom(
     const Array<IODesc> &ioDescs,
+    const Array<GDesc> &gDescs,
     const Array<LayerDesc> &layerDescs
 ) {
     // Create layers
     eLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
+    gLayers.resize(layerDescs.size());
+    gHiddenCIs.resize(layerDescs.size());
 
     ticks.resize(layerDescs.size(), 0);
 
@@ -47,6 +50,7 @@ void Hierarchy::initRandom(
     for (int l = 0; l < layerDescs.size(); l++) {
         // Create sparse coder visible layer descriptors
         Array<Encoder::VisibleLayerDesc> eVisibleLayerDescs;
+        Array<Encoder::VisibleLayerDesc> gVisibleLayerDescs;
 
         // If first layer
         if (l == 0) {
@@ -96,6 +100,14 @@ void Hierarchy::initRandom(
                     dIndex++;
                 }
             }
+
+            // Goal
+            gVisibleLayerDescs.resize(gDescs.size());
+
+            for (int i = 0; i < gDescs.size(); i++) {
+                gVisibleLayerDescs[i].size = gDescs[i].size;
+                gVisibleLayerDescs[i].radius = gDescs[i].radius;
+            }
         }
         else {
             eVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
@@ -124,17 +136,29 @@ void Hierarchy::initRandom(
 
             // Create decoder
             dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
+
+            // Goal
+            gVisibleLayerDescs.resize(1);
+
+            gVisibleLayerDescs[0].size = layerDescs[l - 1].hiddenSize;
+            gVisibleLayerDescs[0].radius = layerDescs[l].eRadius;
         }
         
-        // Create the sparse coding layer
+        // Create the encoding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+
+        // Goal layer
+        gLayers[l].initRandom(layerDescs[l].hiddenSize, gVisibleLayerDescs);
+
+        gHiddenCIs[l] = gLayers[l].getHiddenCIs();
     }
 }
 
 // Simulation step/tick
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
-    const IntBuffer* topProgCIs,
+    const Array<const IntBuffer*> &goalCIs,
+    const Array<const IntBuffer*> &actualCIs,
     bool learnEnabled
 ) {
     // First tick is always 0
@@ -150,8 +174,41 @@ void Hierarchy::step(
     // Set all updates to no update, will be set to true if an update occurred later
     updates.fill(false);
 
+    // Find goal states for all layers
+    for (int l = 0; l < eLayers.size(); l++) {
+        Array<const IntBuffer*> gInputCIs(gLayers[l].getNumVisibleLayers());
+
+        if (l == 0) {
+            for (int i = 0; i < gInputCIs.size(); i++)
+                gInputCIs[i] = goalCIs[i];
+        }
+        else {
+            gInputCIs.resize(1);
+
+            gInputCIs[0] = &gLayers[l - 1].getHiddenCIs();
+        }
+
+        gLayers[l].step(gInputCIs, false);
+
+        gHiddenCIs[l] = gLayers[l].getHiddenCIs();
+    }
+
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
+        Array<const IntBuffer*> gInputCIs(gLayers[l].getNumVisibleLayers());
+
+        if (l == 0) {
+            for (int i = 0; i < gInputCIs.size(); i++)
+                gInputCIs[i] = actualCIs[i];
+        }
+        else {
+            gInputCIs.resize(1);
+
+            gInputCIs[0] = &gLayers[l - 1].getHiddenCIs();
+        }
+
+        gLayers[l].step(gInputCIs, learnEnabled);
+
         // If is time for layer to tick
         if (l == 0 || ticks[l] >= ticksPerUpdate[l]) {
             // Reset tick
@@ -160,17 +217,17 @@ void Hierarchy::step(
             // Updated
             updates[l] = true;
 
-            Array<const IntBuffer*> layerInputCIs(histories[l].size() * histories[l][0].size());
+            Array<const IntBuffer*> eInputCIs(eLayers[l].getNumVisibleLayers());
 
             int index = 0;
 
             for (int i = 0; i < histories[l].size(); i++) {
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    layerInputCIs[index++] = &histories[l][i][t];
+                    eInputCIs[index++] = &histories[l][i][t];
             }
 
             // Activate sparse coder
-            eLayers[l].step(layerInputCIs, learnEnabled);
+            eLayers[l].step(eInputCIs, learnEnabled);
 
             // Add to next layer's history
             if (l < eLayers.size() - 1) {
@@ -188,7 +245,7 @@ void Hierarchy::step(
     // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         for (int d = 0; d < dLayers[l].size(); d++)
-            dLayers[l][d].step(l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : topProgCIs, &eLayers[l].getHiddenCIs(), &histories[l][l == 0 ? iIndices[d] : 0][0], learnEnabled, updates[l]);
+            dLayers[l][d].step(l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : topGoalCIs, &eLayers[l].getHiddenCIs(), &histories[l][l == 0 ? iIndices[d] : 0][0], learnEnabled, updates[l]);
     }
 }
 

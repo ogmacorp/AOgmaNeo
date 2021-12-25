@@ -95,10 +95,32 @@ public:
         {}
     };
 
+    struct GDesc {
+        Int3 size;
+        int radius;
+
+        GDesc()
+        :
+        size(4, 4, 16),
+        radius(2)
+        {}
+
+        GDesc(
+            const Int3 &size,
+            int radius
+        )
+        :
+        size(size),
+        radius(radius)
+        {}
+    };
+
 private:
     // Layers
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
+    Array<Encoder> gLayers;
+    Array<IntBuffer> gHiddenCIs;
 
     // For mapping first layer decoders
     IntBuffer iIndices;
@@ -123,13 +145,15 @@ public:
     // Create a randomly initialized hierarchy
     void initRandom(
         const Array<IODesc> &ioDescs, // Input-output descriptors
+        const Array<GDesc> &gDescs, // Goal descriptors
         const Array<LayerDesc> &layerDescs // Descriptors for layers
     );
 
     // Simulation step/tick
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
-        const IntBuffer* topProgCIs,
+        const Array<const IntBuffer*> &goalCIs, // Goals to achieve
+        const Array<const IntBuffer*> &actualCIs, // Goals inputs current at
         bool learnEnabled = true // Whether learning is enabled
     );
 
@@ -158,12 +182,12 @@ public:
         return eLayers.size();
     }
 
-    // Get state of highest layer (less verbose when dealing with program-driven learning)
+    // Get state of highest layer (less verbose when dealing with goalram-driven learning)
     const IntBuffer &getTopHiddenCIs() const {
         return eLayers[eLayers.size() - 1].getHiddenCIs();
     }
 
-    // Get size of highest layer (less verbose when dealing with program-driven learning)
+    // Get size of highest layer (less verbose when dealing with goalram-driven learning)
     const Int3 &getTopHiddenSize() const {
         return eLayers[eLayers.size() - 1].getHiddenSize();
     }

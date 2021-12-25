@@ -35,6 +35,7 @@ public:
 
     struct HistorySample {
         IntBuffer inputCIs;
+        IntBuffer actualCIs;
         IntBuffer hiddenTargetCIs;
     };
 
@@ -54,7 +55,7 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const IntBuffer* progCIs,
+        const IntBuffer* goalCIs,
         const IntBuffer* inputCIs
     );
 
@@ -87,7 +88,8 @@ public:
 
     // Activate the predictor (predict values)
     void step(
-        const IntBuffer* progCIs,
+        const IntBuffer* goalCIs,
+        const IntBuffer* actualCIs,
         const IntBuffer* inputCIs,
         const IntBuffer* hiddenTargetCIs,
         bool learnEnabled,
