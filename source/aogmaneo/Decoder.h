@@ -76,8 +76,8 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.02f),
-    discount(0.95f),
+    lr(0.01f),
+    discount(0.9f),
     historyIters(8)
     {}
 
@@ -85,7 +85,8 @@ public:
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output/prediction size
         int historyCapacity,
-        const VisibleLayerDesc &visibleLayerDesc
+        const VisibleLayerDesc &visibleLayerDesc,
+        bool hasFeedBack
     );
 
     // Activate the predictor (predict values)
@@ -95,7 +96,8 @@ public:
         const IntBuffer* inputCIs,
         const IntBuffer* feedBackCIs,
         const IntBuffer* hiddenTargetCIs,
-        bool learnEnabled
+        bool learnEnabled,
+        bool stateUpdate
     );
 
     // Serialization

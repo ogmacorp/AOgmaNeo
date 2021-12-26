@@ -52,14 +52,19 @@ void Decoder::forward(
 
                 int goalCI = (*goalCIs)[visibleColumnIndex];
                 int inCI = (*inputCIs)[visibleColumnIndex];
-                int feedBackCI = (*feedBackCIs)[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.size.z * (inCI + wiStart)];
-                sum += visibleLayer.fbWeights[goalCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
+                if (feedBackCIs != nullptr && visibleLayer.fbWeights.size() == visibleLayer.iWeights.size()) {
+                    int feedBackCI = (*feedBackCIs)[visibleColumnIndex];
+
+                    sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.size.z * (inCI + wiStart)];
+                    sum += visibleLayer.fbWeights[goalCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
+                }
+                else
+                    sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.size.z * (inCI + wiStart)];
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -123,7 +128,9 @@ void Decoder::learn(
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                 sum += visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCINext + wiStart)];
-                sum += visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCINext + wiStart)];
+
+                if (visibleLayer.fbWeights.size() == visibleLayer.iWeights.size())
+                    sum += visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCINext + wiStart)];
             }
 
         sum /= count;
@@ -148,7 +155,9 @@ void Decoder::learn(
             int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
             sumPrev += visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCI + wiStart)];
-            sumPrev += visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
+
+            if (visibleLayer.fbWeights.size() == visibleLayer.iWeights.size())
+                sumPrev += visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
         }
 
     sumPrev /= count;
@@ -168,14 +177,17 @@ void Decoder::learn(
             int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
             visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCI + wiStart)] += delta;
-            visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)] += delta;
+
+            if (visibleLayer.fbWeights.size() == visibleLayer.iWeights.size())
+                visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)] += delta;
         }
 }
 
 void Decoder::initRandom(
     const Int3 &hiddenSize,
     int historyCapacity,
-    const VisibleLayerDesc &visibleLayerDesc
+    const VisibleLayerDesc &visibleLayerDesc,
+    bool hasFeedBack
 ) {
     this->visibleLayerDesc = visibleLayerDesc; 
 
@@ -190,12 +202,18 @@ void Decoder::initRandom(
     int area = diam * diam;
 
     visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
-    visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
 
-    for (int i = 0; i < visibleLayer.iWeights.size(); i++) {
+    for (int i = 0; i < visibleLayer.iWeights.size(); i++)
         visibleLayer.iWeights[i] = randf(0.0f, 0.0001f);
-        visibleLayer.fbWeights[i] = randf(0.0f, 0.0001f);
+
+    if (hasFeedBack) {
+        visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
+
+        for (int i = 0; i < visibleLayer.iWeights.size(); i++)
+            visibleLayer.fbWeights[i] = randf(0.0f, 0.0001f);
     }
+    else
+        visibleLayer.fbWeights.resize(0); // No feed back
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -218,36 +236,39 @@ void Decoder::step(
     const IntBuffer* inputCIs,
     const IntBuffer* feedBackCIs,
     const IntBuffer* hiddenTargetCIs,
-    bool learnEnabled
+    bool learnEnabled,
+    bool stateUpdate
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    history.pushFront();
+    if (stateUpdate) {
+        history.pushFront();
 
-    // If not at cap, increment
-    if (historySize < history.size())
-        historySize++;
+        // If not at cap, increment
+        if (historySize < history.size())
+            historySize++;
 
-    history[0].actualCIs = *actualCIs;
-    history[0].inputCIs = *inputCIs;
-    history[0].hiddenTargetCIs = *hiddenTargetCIs;
+        history[0].actualCIs = *actualCIs;
+        history[0].inputCIs = *inputCIs;
+        history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
-    if (learnEnabled && historySize > 2) {
-        for (int it = 0; it < historyIters; it++) {
-            int t1 = rand() % (historySize - 2) + 2;
-            int t2 = rand() % t1;
+        if (learnEnabled && historySize > 2) {
+            for (int it = 0; it < historyIters; it++) {
+                int t1 = rand() % (historySize - 2) + 2;
+                int t2 = rand() % t1;
 
-            int power = t1 - 1 - t2;
+                int power = t1 - 1 - t2;
 
-            float reward = 1.0f;
+                float reward = 1.0f;
 
-            for (int p = 0; p < power; p++)
-                reward *= discount;
+                for (int p = 0; p < power; p++)
+                    reward *= discount;
 
-            // Learn under goal
-            #pragma omp parallel for
-            for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
+                // Learn under goal
+                #pragma omp parallel for
+                for (int i = 0; i < numHiddenColumns; i++)
+                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, reward);
+            }
         }
     }
 

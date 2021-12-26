@@ -93,7 +93,7 @@ void Hierarchy::initRandom(
                     dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
                     dVisibleLayerDesc.radius = ioDescs[i].dRadius;
 
-                    dLayers[l][dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, dVisibleLayerDesc);
+                    dLayers[l][dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, dVisibleLayerDesc, l < eLayers.size() - 1);
 
                     iIndices[dIndex] = i;
                     dIndices[i] = dIndex;
@@ -135,7 +135,7 @@ void Hierarchy::initRandom(
             dVisibleLayerDesc.radius = layerDescs[l].dRadius;
 
             // Create decoder
-            dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc);
+            dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc, l < eLayers.size() - 1);
 
             // Goal
             gVisibleLayerDescs.resize(1);
@@ -246,8 +246,8 @@ void Hierarchy::step(
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].step(&gHiddenCIs[l], &gLayers[l].getHiddenCIs(), &eLayers[l].getHiddenCIs(),
-                l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : &eLayers[l].getHiddenCIs(),
-                &histories[l][l == 0 ? iIndices[d] : 0][0], learnEnabled);
+                l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : nullptr,
+                &histories[l][l == 0 ? iIndices[d] : 0][0], learnEnabled, updates[l]);
     }
 }
 
