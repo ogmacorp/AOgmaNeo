@@ -59,7 +59,7 @@ void Decoder::forward(
 
                 sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.size.z * (inCI + wiStart)];
 
-                if (feedBackCIs != nullptr && visibleLayer.fbWeights.size() == visibleLayer.iWeights.size()) {
+                if (hasFeedBack) {
                     int feedBackCI = (*feedBackCIs)[visibleColumnIndex];
 
                     sum += visibleLayer.fbWeights[goalCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
@@ -128,7 +128,7 @@ void Decoder::learn(
 
                 sum += visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCINext + wiStart)];
 
-                if (visibleLayer.fbWeights.size() == visibleLayer.iWeights.size())
+                if (hasFeedBack)
                     sum += visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCINext + wiStart)];
             }
 
@@ -155,7 +155,7 @@ void Decoder::learn(
 
             sumPrev += visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCI + wiStart)];
 
-            if (visibleLayer.fbWeights.size() == visibleLayer.iWeights.size())
+            if (hasFeedBack)
                 sumPrev += visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
         }
 
@@ -177,7 +177,7 @@ void Decoder::learn(
 
             visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCI + wiStart)] += delta;
 
-            if (visibleLayer.fbWeights.size() == visibleLayer.iWeights.size())
+            if (hasFeedBack)
                 visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)] += delta;
         }
 }
