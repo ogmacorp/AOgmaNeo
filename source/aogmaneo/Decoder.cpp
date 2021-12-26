@@ -208,7 +208,6 @@ void Decoder::initRandom(
     for (int i = 0; i < history.size(); i++) {
         history[i].actualCIs = IntBuffer(numVisibleColumns, 0);
         history[i].inputCIs = IntBuffer(numVisibleColumns, 0);
-        history[i].feedBackCIs = IntBuffer(numVisibleColumns, 0);
         history[i].hiddenTargetCIs = IntBuffer(numHiddenColumns, 0);
     }
 }
@@ -231,7 +230,6 @@ void Decoder::step(
 
     history[0].actualCIs = *actualCIs;
     history[0].inputCIs = *inputCIs;
-    history[0].feedBackCIs = *feedBackCIs;
     history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
     if (learnEnabled && historySize > 2) {
@@ -272,7 +270,7 @@ int Decoder::size() const {
 int Decoder::stateSize() const {
     int size = hiddenCIs.size() * sizeof(int);
 
-    size += sizeof(int) + history.size() * (history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
+    size += sizeof(int) + history.size() * (2 * history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
 
     return size;
 }
@@ -306,7 +304,6 @@ void Decoder::write(
     for (int t = 0; t < history.size(); t++) {
         writer.write(reinterpret_cast<const void*>(&history[t].actualCIs[0]), history[t].actualCIs.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&history[t].inputCIs[0]), history[t].inputCIs.size() * sizeof(int));
-        writer.write(reinterpret_cast<const void*>(&history[t].feedBackCIs[0]), history[t].feedBackCIs.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&history[t].hiddenTargetCIs[0]), history[t].hiddenTargetCIs.size() * sizeof(int));
     }
 }
@@ -356,12 +353,10 @@ void Decoder::read(
     for (int t = 0; t < history.size(); t++) {
         history[t].actualCIs.resize(numVisibleColumns);
         history[t].inputCIs.resize(numVisibleColumns);
-        history[t].feedBackCIs.resize(numVisibleColumns);
         history[t].hiddenTargetCIs.resize(numHiddenColumns);
 
         reader.read(reinterpret_cast<void*>(&history[t].actualCIs[0]), history[t].actualCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&history[t].inputCIs[0]), history[t].inputCIs.size() * sizeof(int));
-        reader.read(reinterpret_cast<void*>(&history[t].feedBackCIs[0]), history[t].feedBackCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&history[t].hiddenTargetCIs[0]), history[t].hiddenTargetCIs.size() * sizeof(int));
     }
 }
@@ -378,7 +373,6 @@ void Decoder::writeState(
     for (int t = 0; t < history.size(); t++) {
         writer.write(reinterpret_cast<const void*>(&history[t].actualCIs[0]), history[t].actualCIs.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&history[t].inputCIs[0]), history[t].inputCIs.size() * sizeof(int));
-        writer.write(reinterpret_cast<const void*>(&history[t].feedBackCIs[0]), history[t].feedBackCIs.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&history[t].hiddenTargetCIs[0]), history[t].hiddenTargetCIs.size() * sizeof(int));
     }
 }
@@ -397,7 +391,6 @@ void Decoder::readState(
     for (int t = 0; t < history.size(); t++) {
         reader.read(reinterpret_cast<void*>(&history[t].actualCIs[0]), history[t].actualCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&history[t].inputCIs[0]), history[t].inputCIs.size() * sizeof(int));
-        reader.read(reinterpret_cast<void*>(&history[t].feedBackCIs[0]), history[t].feedBackCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&history[t].hiddenTargetCIs[0]), history[t].hiddenTargetCIs.size() * sizeof(int));
     }
 }

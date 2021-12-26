@@ -36,7 +36,6 @@ public:
 
     struct HistorySample {
         IntBuffer inputCIs;
-        IntBuffer feedBackCIs;
         IntBuffer actualCIs;
         IntBuffer hiddenTargetCIs;
     };
