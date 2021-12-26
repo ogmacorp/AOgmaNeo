@@ -246,11 +246,9 @@ void Hierarchy::step(
     // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         for (int d = 0; d < dLayers[l].size(); d++) {
-            if (updates[l]) {
-                dLayers[l][d].step(&gHiddenCIs[l], &gLayers[l].getHiddenCIs(), &eLayers[l].getHiddenCIs(),
-                    l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : nullptr,
-                    &histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], learnEnabled, true);
-            }
+            dLayers[l][d].step(&gHiddenCIs[l], &gLayers[l].getHiddenCIs(), &eLayers[l].getHiddenCIs(),
+                l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : nullptr,
+                &histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], learnEnabled, updates[l]);
         }
     }
 }
