@@ -57,14 +57,13 @@ void Decoder::forward(
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
+                sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.size.z * (inCI + wiStart)];
+
                 if (feedBackCIs != nullptr && visibleLayer.fbWeights.size() == visibleLayer.iWeights.size()) {
                     int feedBackCI = (*feedBackCIs)[visibleColumnIndex];
 
-                    sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.size.z * (inCI + wiStart)];
                     sum += visibleLayer.fbWeights[goalCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
                 }
-                else
-                    sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.size.z * (inCI + wiStart)];
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -192,6 +191,7 @@ void Decoder::initRandom(
     this->visibleLayerDesc = visibleLayerDesc; 
 
     this->hiddenSize = hiddenSize;
+    this->hasFeedBack = hasFeedBack;
 
     // Pre-compute dimensions
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -279,7 +279,7 @@ void Decoder::step(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + sizeof(Byte) + 2 * sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int);
 
     size += sizeof(VisibleLayerDesc) + 2 * visibleLayer.iWeights.size() * sizeof(float);
 
@@ -300,6 +300,7 @@ void Decoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
+    writer.write(reinterpret_cast<const void*>(&hasFeedBack), sizeof(Byte));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
@@ -310,7 +311,9 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&visibleLayerDesc), sizeof(VisibleLayerDesc));
 
     writer.write(reinterpret_cast<const void*>(&visibleLayer.iWeights[0]), visibleLayer.iWeights.size() * sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&visibleLayer.fbWeights[0]), visibleLayer.fbWeights.size() * sizeof(float));
+
+    if (hasFeedBack)
+        writer.write(reinterpret_cast<const void*>(&visibleLayer.fbWeights[0]), visibleLayer.fbWeights.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&historySize), sizeof(int));
 
@@ -333,6 +336,7 @@ void Decoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
+    reader.read(reinterpret_cast<void*>(&hasFeedBack), sizeof(Byte));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
@@ -351,10 +355,16 @@ void Decoder::read(
     int area = diam * diam;
 
     visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
-    visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
 
     reader.read(reinterpret_cast<void*>(&visibleLayer.iWeights[0]), visibleLayer.iWeights.size() * sizeof(float));
-    reader.read(reinterpret_cast<void*>(&visibleLayer.fbWeights[0]), visibleLayer.fbWeights.size() * sizeof(float));
+
+    if (hasFeedBack) {
+        visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
+
+        reader.read(reinterpret_cast<void*>(&visibleLayer.fbWeights[0]), visibleLayer.fbWeights.size() * sizeof(float));
+    }
+    else
+        visibleLayer.fbWeights.resize(0); // No feedback
 
     reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
 

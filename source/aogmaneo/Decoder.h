@@ -42,6 +42,7 @@ public:
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
+    Byte hasFeedBack;
 
     IntBuffer hiddenCIs; // Hidden state
 
