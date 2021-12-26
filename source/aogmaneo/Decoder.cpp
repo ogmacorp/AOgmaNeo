@@ -161,7 +161,7 @@ void Decoder::learn(
 
     sumPrev /= count;
 
-    float delta = lr * (reward - sumPrev);
+    float delta = lr * (max(reward, discount * min(1.0f, maxActivation)) - sumPrev);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
