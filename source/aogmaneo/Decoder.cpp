@@ -161,7 +161,7 @@ void Decoder::learn(
 
     sumPrev /= count;
 
-    float delta = lr * (max(reward, discount * min(1.0f, maxActivation)) - sumPrev);
+    float delta = lr * (reward - sumPrev);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -281,7 +281,7 @@ void Decoder::step(
 int Decoder::size() const {
     int size = sizeof(Int3) + sizeof(Byte) + 2 * sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int);
 
-    size += sizeof(VisibleLayerDesc) + 2 * visibleLayer.iWeights.size() * sizeof(float);
+    size += sizeof(VisibleLayerDesc) + (hasFeedBack ? 2 : 1) * visibleLayer.iWeights.size() * sizeof(float);
 
     size += 3 * sizeof(int) + history.size() * (2 * history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
 

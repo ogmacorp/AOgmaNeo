@@ -244,10 +244,13 @@ void Hierarchy::step(
 
     // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
-        for (int d = 0; d < dLayers[l].size(); d++)
-            dLayers[l][d].step(&gHiddenCIs[l], &gLayers[l].getHiddenCIs(), &eLayers[l].getHiddenCIs(),
-                l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : nullptr,
-                &histories[l][l == 0 ? iIndices[d] : 0][0], learnEnabled, updates[l]);
+        for (int d = 0; d < dLayers[l].size(); d++) {
+            if (updates[l]) {
+                dLayers[l][d].step(&gHiddenCIs[l], &gLayers[l].getHiddenCIs(), &eLayers[l].getHiddenCIs(),
+                    l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : nullptr,
+                    &histories[l][l == 0 ? iIndices[d] : 0][0], learnEnabled, true);
+            }
+        }
     }
 }
 
