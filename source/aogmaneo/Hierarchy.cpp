@@ -126,7 +126,7 @@ void Hierarchy::initRandom(
             for (int t = 0; t < histories[l][0].size(); t++)
                 histories[l][0][t] = IntBuffer(inSize, 0);
 
-            dLayers[l].resize(1);
+            dLayers[l].resize(layerDescs[l].ticksPerUpdate);
 
             // Decoder visible layer descriptors
             Decoder::VisibleLayerDesc dVisibleLayerDesc;
@@ -135,7 +135,8 @@ void Hierarchy::initRandom(
             dVisibleLayerDesc.radius = layerDescs[l].dRadius;
 
             // Create decoder
-            dLayers[l][0].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc, l < eLayers.size() - 1);
+            for (int t = 0; t < layerDescs[l].ticksPerUpdate; t++)
+                dLayers[l][t].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].historyCapacity, dVisibleLayerDesc, l < eLayers.size() - 1);
 
             // Goal
             gVisibleLayerDescs.resize(1);
@@ -247,7 +248,7 @@ void Hierarchy::step(
         for (int d = 0; d < dLayers[l].size(); d++) {
             if (updates[l]) {
                 dLayers[l][d].step(&gHiddenCIs[l], &gLayers[l].getHiddenCIs(), &eLayers[l].getHiddenCIs(),
-                    l < eLayers.size() - 1 ? &dLayers[l + 1][0].getHiddenCIs() : nullptr,
+                    l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : nullptr,
                     &histories[l][l == 0 ? iIndices[d] : 0][0], learnEnabled, true);
             }
         }
