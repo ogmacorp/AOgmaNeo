@@ -17,6 +17,7 @@ public:
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
+        int gSizeZ; // Size of input for goals (z only)
 
         int radius; // Radius onto input
 
@@ -24,6 +25,7 @@ public:
         VisibleLayerDesc()
         :
         size(4, 4, 16),
+        gSizeZ(16),
         radius(2)
         {}
     };

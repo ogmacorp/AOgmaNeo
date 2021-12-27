@@ -57,12 +57,12 @@ void Decoder::forward(
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.size.z * (inCI + wiStart)];
+                sum += visibleLayer.iWeights[goalCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)];
 
                 if (hasFeedBack) {
                     int feedBackCI = (*feedBackCIs)[visibleColumnIndex];
 
-                    sum += visibleLayer.fbWeights[goalCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
+                    sum += visibleLayer.fbWeights[goalCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)];
                 }
             }
 
@@ -126,10 +126,10 @@ void Decoder::learn(
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCINext + wiStart)];
+                sum += visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCINext + wiStart)];
 
                 if (hasFeedBack)
-                    sum += visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCINext + wiStart)];
+                    sum += visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCINext + wiStart)];
             }
 
         sum /= count;
@@ -154,10 +154,10 @@ void Decoder::learn(
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sumPrev += visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCI + wiStart)];
+                sumPrev += visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)];
 
                 if (hasFeedBack)
-                    sumPrev += visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)];
+                    sumPrev += visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)];
             }
 
         sumPrev /= count;
@@ -181,10 +181,10 @@ void Decoder::learn(
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                visibleLayer.iWeights[actualCI + visibleLayerDesc.size.z * (inCI + wiStart)] += delta;
+                visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)] += delta;
 
                 if (hasFeedBack)
-                    visibleLayer.fbWeights[actualCI + visibleLayerDesc.size.z * (feedBackCI + wiStart)] += delta;
+                    visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)] += delta;
             }
     }
 }
@@ -208,7 +208,7 @@ void Decoder::initRandom(
     int diam = visibleLayerDesc.radius * 2 + 1;
     int area = diam * diam;
 
-    visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
+    visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.gSizeZ);
 
     for (int i = 0; i < visibleLayer.iWeights.size(); i++)
         visibleLayer.iWeights[i] = randf(0.0f, 0.0001f);
@@ -363,7 +363,7 @@ void Decoder::read(
     int diam = visibleLayerDesc.radius * 2 + 1;
     int area = diam * diam;
 
-    visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.size.z);
+    visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.gSizeZ);
 
     reader.read(reinterpret_cast<void*>(&visibleLayer.iWeights[0]), visibleLayer.iWeights.size() * sizeof(float));
 
