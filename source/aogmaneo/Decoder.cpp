@@ -48,7 +48,7 @@ void Decoder::forward(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
                 int goalCI = (*goalCIs)[visibleColumnIndex];
                 int inCI = (*inputCIs)[visibleColumnIndex];
@@ -116,7 +116,7 @@ void Decoder::learn(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
                 int actualCI = history[t2].actualCIs[visibleColumnIndex];
                 int inCINext = history[t1 - 1].inputCIs[visibleColumnIndex];
@@ -144,7 +144,7 @@ void Decoder::learn(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
                 int actualCI = history[t2].actualCIs[visibleColumnIndex];
                 int inCI = history[t1].inputCIs[visibleColumnIndex];
@@ -171,7 +171,7 @@ void Decoder::learn(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x,  visibleLayerDesc.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
 
                 int actualCI = history[t2].actualCIs[visibleColumnIndex];
                 int inCI = history[t1].inputCIs[visibleColumnIndex];
