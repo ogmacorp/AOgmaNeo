@@ -182,7 +182,7 @@ void Decoder::learn(
         if (hc == targetCI)
             delta = lr * (reward + discount * maxActivation - sumPrev);
         else
-            delta = decay * -sumPrev;
+            delta = decay * -max(0.0f, sumPrev);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
