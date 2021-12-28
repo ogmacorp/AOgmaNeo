@@ -83,7 +83,7 @@ public:
     lr(0.03f),
     decay(0.001f),
     discount(0.95f),
-    historyIters(8)
+    historyIters(4)
     {}
 
     // Create with random initialization
