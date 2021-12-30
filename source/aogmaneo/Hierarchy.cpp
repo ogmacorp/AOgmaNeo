@@ -185,11 +185,8 @@ void Hierarchy::step(
             for (int i = 0; i < gInputCIs.size(); i++)
                 gInputCIs[i] = goalCIs[i];
         }
-        else {
-            gInputCIs.resize(1);
-
+        else
             gInputCIs[0] = &gLayers[l - 1].getHiddenCIs();
-        }
 
         gLayers[l].step(gInputCIs, false);
 
@@ -204,11 +201,8 @@ void Hierarchy::step(
             for (int i = 0; i < gInputCIs.size(); i++)
                 gInputCIs[i] = actualCIs[i];
         }
-        else {
-            gInputCIs.resize(1);
-
+        else
             gInputCIs[0] = &gLayers[l - 1].getHiddenCIs();
-        }
 
         gLayers[l].step(gInputCIs, learnEnabled);
 
