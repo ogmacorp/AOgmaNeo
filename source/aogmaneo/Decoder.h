@@ -75,14 +75,16 @@ public:
     float decay; // Slight decay towards supervised objective
     float discount; // Discount factor
     int historyIters;
+    int maxSteps;
 
     // Defaults
     Decoder()
     :
     lr(0.05f),
     decay(0.001f),
-    discount(0.95f),
-    historyIters(4)
+    discount(0.9f),
+    historyIters(4),
+    maxSteps(8)
     {}
 
     // Create with random initialization
