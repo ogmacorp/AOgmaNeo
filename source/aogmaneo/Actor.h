@@ -54,6 +54,8 @@ private:
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
 
+    FloatBuffer hiddenTDErrors; // Hidden TD errors for sign comparison
+
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
