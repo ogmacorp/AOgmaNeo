@@ -13,6 +13,7 @@
 
 #ifdef USE_STD_MATH
 #include <cmath>
+#include <algorithm>
 #endif
 
 namespace aon {
@@ -61,10 +62,14 @@ T min(
     T left,
     T right
 ) {
+#ifdef USE_STD_MATH
+    return std::min(left, right);
+#else
     if (left < right)
         return left;
     
     return right;
+#endif
 }
 
 template <typename T>
@@ -72,20 +77,28 @@ T max(
     T left,
     T right
 ) {
+#ifdef USE_STD_MATH
+    return std::max(left, right);
+#else
     if (left > right)
         return left;
     
     return right;
+#endif
 }
 
 template <typename T>
 T abs(
     T x
 ) {
+#ifdef USE_STD_MATH
+    return std::abs(x);
+#else
     if (x >= 0)
         return x;
 
     return  -x;
+#endif
 }
 
 template <typename T>
