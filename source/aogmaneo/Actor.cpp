@@ -281,7 +281,7 @@ void Actor::learn(
     // Gate based on sign change to avoid large jumps early on
     int targetCI = historySamples[t - 1].hiddenTargetCIsPrev[hiddenColumnIndex];
 
-    float tdErrorAction = (mimic ? 1.0f : tanh(newValue - historySamples[t].hiddenValues[hiddenColumnIndex]));
+    float tdErrorAction = (mimic ? 1.0f : (newValue > historySamples[t].hiddenValues[hiddenColumnIndex] ? 1.0f : -1.0f));
 
     float maxActivation = -999999.0f;
 
