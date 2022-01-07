@@ -190,8 +190,7 @@ void Actor::forward(
 
 void Actor::learn(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIsPrev,
-    const IntBuffer* hiddenTargetCIsPrev,
+    int t,
     float q,
     float g,
     bool mimic
@@ -232,7 +231,7 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int inCI = (*inputCIsPrev[vli])[visibleColumnIndex];
+                int inCI = historySamples[t].inputCIs[vli][visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -242,9 +241,9 @@ void Actor::learn(
 
     value /= count;
 
-    float tdError = newValue - value;
+    float tdErrorValue = newValue - value;
     
-    float deltaValue = vlr * tdError;
+    float deltaValue = vlr * tdErrorValue;
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -269,7 +268,7 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int inCI = (*inputCIsPrev[vli])[visibleColumnIndex];
+                int inCI = historySamples[t].inputCIs[vli][visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -280,7 +279,9 @@ void Actor::learn(
     // --- Action ---
 
     // Gate based on sign change to avoid large jumps early on
-    int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
+    int targetCI = historySamples[t - 1].hiddenTargetCIsPrev[hiddenColumnIndex];
+
+    float tdErrorAction = (mimic ? 1.0f : tanh(newValue - historySamples[t].hiddenValues[hiddenColumnIndex]));
 
     float maxActivation = -999999.0f;
 
@@ -312,7 +313,7 @@ void Actor::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int inCI = (*inputCIsPrev[vli])[visibleColumnIndex];
+                    int inCI = historySamples[t].inputCIs[vli][visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -348,7 +349,7 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float deltaAction = (mimic ? alr : alr * tanh(tdError)) * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        float deltaAction = alr * tdErrorAction * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -373,7 +374,7 @@ void Actor::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int inCI = (*inputCIsPrev[vli])[visibleColumnIndex];
+                    int inCI = historySamples[t].inputCIs[vli][visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -440,6 +441,8 @@ void Actor::initRandom(
         }
 
         historySamples[i].hiddenTargetCIsPrev = IntBuffer(numHiddenColumns);
+
+        historySamples[i].hiddenValues = FloatBuffer(numHiddenColumns);
     }
 }
 
@@ -475,33 +478,31 @@ void Actor::step(
         for (int vli = 0; vli < visibleLayers.size(); vli++)
             s.inputCIs[vli] = *inputCIs[vli];
 
-        // Copy hidden CIs
+        // Copy
         s.hiddenTargetCIsPrev = *hiddenTargetCIsPrev;
+        s.hiddenValues = hiddenValues;
 
         s.reward = reward;
     }
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > minSteps + 1) {
+    if (learnEnabled && historySize > minSteps) {
         for (int it = 0; it < historyIters; it++) {
-            int historyIndex = rand() % (historySize - 1 - minSteps) + minSteps;
-
-            const HistorySample &sPrev = historySamples[historyIndex + 1];
-            const HistorySample &s = historySamples[historyIndex];
+            int t = rand() % (historySize - minSteps) + minSteps;
 
             // Compute (partial) values, rest is completed in the kernel
             float q = 0.0f;
             float g = 1.0f;
 
-            for (int t = historyIndex; t >= 0; t--) {
-                q += historySamples[t].reward * g;
+            for (int t2 = t; t2 >= 0; t2--) {
+                q += historySamples[t2].reward * g;
 
                 g *= discount;
             }
 
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), constGet(sPrev.inputCIs), &s.hiddenTargetCIsPrev, q, g, mimic);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, q, g, mimic);
         }
     }
 }
@@ -525,7 +526,7 @@ int Actor::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++)
         sampleSize += s.inputCIs[vli].size() * sizeof(int);
 
-    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + s.hiddenValues.size() * sizeof(float) + sizeof(float);
 
     size += historySamples.size() * sampleSize;
 
@@ -542,7 +543,7 @@ int Actor::stateSize() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++)
         sampleSize += s.inputCIs[vli].size() * sizeof(int);
 
-    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+    sampleSize += s.hiddenTargetCIsPrev.size() * sizeof(int) + s.hiddenValues.size() * sizeof(float) + sizeof(float);
 
     size += historySamples.size() * sampleSize;
 
@@ -595,6 +596,7 @@ void Actor::write(
             writer.write(reinterpret_cast<const void*>(&s.inputCIs[vli][0]), s.inputCIs[vli].size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&s.hiddenValues[0]), s.hiddenValues.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
     }
@@ -675,8 +677,10 @@ void Actor::read(
         }
 
         s.hiddenTargetCIsPrev.resize(numHiddenColumns);
+        s.hiddenValues.resize(numHiddenColumns);
 
         reader.read(reinterpret_cast<void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
+        reader.read(reinterpret_cast<void*>(&s.hiddenValues[0]), s.hiddenValues.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
@@ -699,6 +703,7 @@ void Actor::writeState(
             writer.write(reinterpret_cast<const void*>(&s.inputCIs[vli][0]), s.inputCIs[vli].size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&s.hiddenValues[0]), s.hiddenValues.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
     }
@@ -726,6 +731,7 @@ void Actor::readState(
         }
 
         reader.read(reinterpret_cast<void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
+        reader.read(reinterpret_cast<void*>(&s.hiddenValues[0]), s.hiddenValues.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
