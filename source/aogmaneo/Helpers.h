@@ -17,7 +17,7 @@ const int sinIters = 6;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
 
-float modf(
+inline float modf(
     float x,
     float y
 );
@@ -227,17 +227,17 @@ struct CircleBuffer {
 
 // Bounds check from (0, 0) to upperBound
 inline bool inBounds0(
-    const Int2 &pos, // Position
-    const Int2 &upperBound // Bottom-right corner
+    const Int2 &pos,
+    const Int2 &upperBound
 ) {
     return pos.x >= 0 && pos.x < upperBound.x && pos.y >= 0 && pos.y < upperBound.y;
 }
 
 // Bounds check in range
 inline bool inBounds(
-    const Int2 &pos, // Position
-    const Int2 &lowerBound, // Top-left corner
-    const Int2 &upperBound // Bottom-right corner
+    const Int2 &pos,
+    const Int2 &lowerBound,
+    const Int2 &upperBound
 ) {
     return pos.x >= lowerBound.x && pos.x < upperBound.x && pos.y >= lowerBound.y && pos.y < upperBound.y;
 }
