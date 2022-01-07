@@ -54,8 +54,6 @@ private:
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
 
-    FloatBuffer hiddenTDErrors; // Hidden TD errors for sign comparison
-
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
@@ -90,11 +88,11 @@ public:
     // Defaults
     Actor()
     :
-    vlr(0.02f),
-    alr(0.02f),
+    vlr(0.03f),
+    alr(0.03f),
     discount(0.99f),
     temperature(1.0f),
-    minSteps(8),
+    minSteps(16),
     historyIters(16)
     {}
 

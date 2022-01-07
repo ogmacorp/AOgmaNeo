@@ -12,10 +12,6 @@
 #include <omp.h>
 #endif
 
-#ifdef USE_STD_MATH
-#include <cmath>
-#endif
-
 using namespace aon;
 
 float aon::modf(

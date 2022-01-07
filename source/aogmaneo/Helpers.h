@@ -11,6 +11,10 @@
 #include "Ptr.h"
 #include "Array.h"
 
+#ifdef USE_STD_MATH
+#include <cmath>
+#endif
+
 namespace aon {
 const int expIters = 6;
 const int sinIters = 6;
@@ -351,6 +355,9 @@ Array<const Array<T>*> constGet(
 inline float sigmoid(
     float x
 ) {
+#ifdef USE_STD_MATH
+    return std::tanh(x * 0.5f) * 0.5f + 0.5f;
+#else
     if (x < 0.0f) {
         float z = expf(x);
 
@@ -358,11 +365,15 @@ inline float sigmoid(
     }
     
     return 1.0f / (1.0f + expf(-x));
+#endif
 }
 
 inline float tanh(
     float x
 ) {
+#ifdef USE_STD_MATH
+    return std::tanh(x);
+#else
     if (x < 0.0f) {
         float z = expf(2.0f * x);
 
@@ -372,6 +383,7 @@ inline float tanh(
     float z = expf(-2.0f * x);
 
     return -(z - 1.0f) / (z + 1.0f);
+#endif
 }
 
 // --- RNG ---
