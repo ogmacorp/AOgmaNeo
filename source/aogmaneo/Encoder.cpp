@@ -462,6 +462,7 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
