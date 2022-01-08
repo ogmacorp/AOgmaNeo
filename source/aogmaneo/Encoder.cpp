@@ -61,7 +61,7 @@ void Encoder::forward(
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    subSum += strength * max(0.0f, vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))]);
+                    subSum += strength * vl.weights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     subTotal += strength;
                 }
 
