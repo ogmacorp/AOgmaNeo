@@ -139,7 +139,7 @@ void Encoder::backward(
 
     sum /= max(0.0001f, total);
 
-    vl.reconstruction[visibleColumnIndex] = sigmoid(sum);
+    vl.reconstruction[visibleColumnIndex] = sum;
 }
 
 void Encoder::learn(
