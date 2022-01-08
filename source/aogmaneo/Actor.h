@@ -38,6 +38,7 @@ public:
     struct HistorySample {
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
+        FloatBuffer hiddenValues;
 
         float reward;
     };
@@ -70,8 +71,7 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIsPrev,
-        const IntBuffer* hiddenTargetCIsPrev,
+        int t,
         float q,
         float g,
         bool mimic
@@ -81,9 +81,9 @@ public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
     float discount; // Discount factor
+    float temperature; // Exploration amount
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
-    Byte explore; // Enable/disable exploration
 
     // Defaults
     Actor()
@@ -91,9 +91,9 @@ public:
     vlr(0.01f),
     alr(0.01f),
     discount(0.99f),
+    temperature(1.0f),
     minSteps(8),
-    historyIters(8),
-    explore(true)
+    historyIters(16)
     {}
 
     // Initialized randomly

@@ -38,8 +38,6 @@ void Encoder::forward(
 
             Int2 visibleCenter = project(columnPos, hToV);
 
-            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
-
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
@@ -106,8 +104,6 @@ void Encoder::backward(
 
     Int2 hiddenCenter = project(columnPos, vToH);
 
-    hiddenCenter = minOverhang(hiddenCenter, Int2(hiddenSize.x, hiddenSize.y), reverseRadii);
-
     // Lower corner
     Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
 
@@ -128,15 +124,13 @@ void Encoder::backward(
 
             Int2 visibleCenter = project(hiddenPos, hToV);
 
-            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
-
-            float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-            float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-            float strength = min(1.0f - distX, 1.0f - distY);
-
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+
+                float strength = min(1.0f - distX, 1.0f - distY);
 
                 sum += strength * vl.weights[targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))];
                 total += strength;
@@ -175,8 +169,6 @@ void Encoder::learn(
 
     Int2 hiddenCenter = project(columnPos, vToH);
 
-    hiddenCenter = minOverhang(hiddenCenter, Int2(hiddenSize.x, hiddenSize.y), reverseRadii);
-
     // Lower corner
     Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
 
@@ -203,15 +195,13 @@ void Encoder::learn(
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
-                visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
-
-                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                float strength = min(1.0f - distX, 1.0f - distY);
-
                 if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+
+                    float strength = min(1.0f - distX, 1.0f - distY);
 
                     sum += strength * vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))];
                     total += strength;
@@ -243,8 +233,6 @@ void Encoder::learn(
                     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
                     Int2 visibleCenter = project(hiddenPos, hToV);
-
-                    visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
                     if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                         Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
@@ -284,8 +272,6 @@ void Encoder::reconstruct(
 
     Int2 hiddenCenter = project(columnPos, vToH);
 
-    hiddenCenter = minOverhang(hiddenCenter, Int2(hiddenSize.x, hiddenSize.y), reverseRadii);
-
     // Lower corner
     Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
 
@@ -312,15 +298,13 @@ void Encoder::reconstruct(
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
-                visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
-
-                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                float strength = min(1.0f - distX, 1.0f - distY);
-
                 if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+
+                    float strength = min(1.0f - distX, 1.0f - distY);
 
                     sum += strength * vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))];
                     total += strength;

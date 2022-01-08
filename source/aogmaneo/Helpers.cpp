@@ -14,34 +14,100 @@
 
 using namespace aon;
 
+float aon::modf(
+    float x,
+    float y
+) {
+    return x - static_cast<int>(x / y) * y;
+}
+
 float aon::expf(
     float x
 ) {
+#ifdef USE_STD_MATH
+    return std::exp(x);
+#else
     if (x > 0.0f) {
-        float res = 1.0f;
-
         float p = x;
+        int f = 1;
 
-        for (int i = 0; i < expIters; i++) {
-            res += p / expFactorials[i];
+        float res = 1.0f + x;
 
+        for (int n = 2; n <= expIters; n++) {
             p *= x;
+            f *= n;
+
+            res += p / f;
         }
 
         return res;
     }
 
-    float res = 1.0f;
-
     float p = -x;
+    int f = 1;
 
-    for (int i = 0; i < expIters; i++) {
-        res += p / expFactorials[i];
+    float res = 1.0f - x;
 
+    for (int n = 2; n <= expIters; n++) {
         p *= -x;
+        f *= n;
+
+        res += p / f;
     }
 
     return 1.0f / res;
+#endif
+}
+
+float aon::sinf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::sin(x);
+#else
+    x = modf(x, pi2);
+
+    if (x < -pi)
+        x += pi2;
+    else if (x > pi)
+        x -= pi2;
+
+    float p = x;
+    int f = 1;
+
+    float res = x;
+
+    for (int n = 1; n <= sinIters; n++) {
+        p *= -x * x;
+
+        int f1 = n * 2;
+
+        f *= f1 * (f1 + 1);
+
+        res += p / f;
+    }
+
+    return res;
+#endif
+}
+
+float aon::sqrtf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::sqrt(x);
+#else
+    // Quake method
+    union {
+        float x;
+        int i;
+    } u;
+
+    u.x = x;
+    u.i = 0x5f3759df - (u.i >> 1);
+
+    return x * u.x * (1.5f - 0.5f * x * u.x * u.x);
+#endif
 }
 
 #ifdef USE_OMP
@@ -102,7 +168,7 @@ unsigned int aon::rand(
 float aon::randf(
     unsigned int* state
 ) {
-    return static_cast<float>(rand(state)) / static_cast<float>(randMax - 1);
+    return static_cast<float>(rand(state)) / static_cast<float>(randMax);
 }
 
 float aon::randf(
