@@ -47,6 +47,8 @@ private:
 
     IntBuffer hiddenCIs;
 
+    FloatBuffer hiddenBiases;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -72,10 +74,12 @@ private:
     );
 
 public:
+    float br;
     float lr;
 
     Encoder()
     :
+    br(0.01f),
     lr(1.0f)
     {}
 
