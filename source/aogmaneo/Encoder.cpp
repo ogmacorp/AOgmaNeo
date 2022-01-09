@@ -79,6 +79,8 @@ void Encoder::forward(
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
+
+    hiddenBiases[maxIndex + hiddenCellsStart] = 0.0f;
 }
 
 void Encoder::learn(
