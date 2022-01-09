@@ -24,7 +24,13 @@ void Encoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float sum = hiddenBiases[hiddenCellIndex];
+        if (hc == hiddenCIs[hiddenColumnIndex])
+            hiddenBiases[hiddenCellIndex] = 0.0f;
+        else
+            hiddenBiases[hiddenCellIndex] += br;
+
+        float sum = 0.0f;
+        float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -68,9 +74,12 @@ void Encoder::forward(
             subSum /= max(0.0001f, subTotal);
 
             sum += subSum * vl.importance;
+            totalImportance += vl.importance;
         }
 
-        hiddenBiases[hiddenCellIndex] -= br * sum;
+        sum /= max(0.0001f, totalImportance);
+
+        sum += hiddenBiases[hiddenCellIndex];
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -79,8 +88,6 @@ void Encoder::forward(
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
-
-    hiddenBiases[maxIndex + hiddenCellsStart] = 0.0f;
 }
 
 void Encoder::learn(
