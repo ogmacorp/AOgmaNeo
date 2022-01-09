@@ -59,15 +59,13 @@ void Encoder::forward(
                 }
         }
 
-        float rate = 1.0f / (1.0f + hiddenVariances[hiddenCellIndex]);
+        float rate = decay * expf(-hiddenVariances[hiddenCellIndex]);
 
-        hiddenMeans[hiddenCellIndex] += decay1 * rate * (sum - hiddenMeans[hiddenCellIndex]);
+        hiddenMeans[hiddenCellIndex] += rate * (sum - hiddenMeans[hiddenCellIndex]);
 
         sum -= hiddenMeans[hiddenCellIndex];
 
-        hiddenVariances[hiddenCellIndex] += decay2 * rate * (sum * sum - hiddenVariances[hiddenCellIndex]);
-
-        sum /= max(0.0001f, sqrtf(hiddenVariances[hiddenCellIndex]));
+        hiddenVariances[hiddenCellIndex] += rate * (sum * sum - hiddenVariances[hiddenCellIndex]);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -282,6 +280,7 @@ void Encoder::initRandom(
 
     hiddenMeans = FloatBuffer(numHiddenCells, 0.0f);
     hiddenVariances = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenAccums = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void Encoder::step(
@@ -322,7 +321,7 @@ void Encoder::reconstruct(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + 2 * hiddenMeans.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + 3 * hiddenMeans.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -343,13 +342,13 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&decay1), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&decay2), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&decay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenAccums[0]), hiddenAccums.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -376,8 +375,7 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&decay1), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&decay2), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&decay), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
@@ -385,9 +383,11 @@ void Encoder::read(
 
     hiddenMeans.resize(numHiddenCells);
     hiddenVariances.resize(numHiddenCells);
+    hiddenAccums.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenAccums[0]), hiddenAccums.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -425,6 +425,7 @@ void Encoder::writeState(
 
     writer.write(reinterpret_cast<const void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenAccums[0]), hiddenAccums.size() * sizeof(float));
 }
 
 void Encoder::readState(
@@ -434,4 +435,5 @@ void Encoder::readState(
 
     reader.read(reinterpret_cast<void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenAccums[0]), hiddenAccums.size() * sizeof(float));
 }
