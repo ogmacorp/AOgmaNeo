@@ -47,7 +47,8 @@ private:
 
     IntBuffer hiddenCIs;
 
-    FloatBuffer hiddenBiases;
+    FloatBuffer hiddenMeans;
+    FloatBuffer hiddenVariances;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -74,13 +75,15 @@ private:
     );
 
 public:
-    float br;
     float lr;
+    float decay1;
+    float decay2;
 
     Encoder()
     :
-    br(0.01f),
-    lr(1.0f)
+    lr(0.1f),
+    decay1(0.01f),
+    decay2(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
