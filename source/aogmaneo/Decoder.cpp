@@ -29,8 +29,6 @@ void Decoder::forward(
 
     Int2 visibleCenter = project(columnPos, hToV);
 
-    visibleCenter = minOverhang(visibleCenter, Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y), visibleLayerDesc.radius);
-
     // Lower corner
     Int2 fieldLowerBound(visibleCenter.x - visibleLayerDesc.radius, visibleCenter.y - visibleLayerDesc.radius);
 
@@ -95,8 +93,6 @@ void Decoder::learn(
         static_cast<float>(visibleLayerDesc.size.y) / static_cast<float>(hiddenSize.y));
 
     Int2 visibleCenter = project(columnPos, hToV);
-
-    visibleCenter = minOverhang(visibleCenter, Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y), visibleLayerDesc.radius);
 
     // Lower corner
     Int2 fieldLowerBound(visibleCenter.x - visibleLayerDesc.radius, visibleCenter.y - visibleLayerDesc.radius);
