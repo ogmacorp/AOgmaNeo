@@ -81,8 +81,8 @@ public:
     Decoder()
     :
     lr(0.05f),
-    decay(0.001f),
-    discount(0.9f),
+    decay(0.0001f),
+    discount(0.95f),
     historyIters(4),
     maxSteps(8)
     {}
