@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "Encoder.h"
+#include "Helpers.h"
 
 namespace aon {
 // Image coder
@@ -35,26 +35,11 @@ public:
         ByteBuffer reconstruction;
     };
 
-    struct HigherLayerDesc {
-        Int3 hiddenSize;
-
-        int radius;
-
-        HigherLayerDesc()
-        :
-        hiddenSize(4, 4, 16),
-        radius(2)
-        {}
-    };
-
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
     FloatBuffer hiddenRates;
-
-    Array<Encoder> higherLayers;
-    Array<IntBuffer> higherLayerReconCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -81,22 +66,13 @@ public:
     // Defaults
     ImageEncoder()
     :
-    lr(0.02f),
+    lr(0.01f),
     falloff(0.05f)
     {}
 
-    // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
-    ) {
-        initRandom(hiddenSize, visibleLayerDescs, Array<HigherLayerDesc>()); // Signify no higher layers
-    }
-
-    void initRandom(
-        const Int3 &hiddenSize, // Hidden/output size
-        const Array<VisibleLayerDesc> &visibleLayerDescs, // Descriptors for visible layers
-        const Array<HigherLayerDesc> &higherLayerDescs
     );
 
     // Activate the sparse coder (perform sparse coding)
@@ -113,22 +89,6 @@ public:
         int vli
     ) const {
         return visibleLayers[vli].reconstruction;
-    }
-
-    int getNumHigherLayers() const {
-        return higherLayers.size();
-    }
-
-    Encoder &getHigherLayer(
-        int l
-    ) {
-        return higherLayers[l];
-    }
-
-    const Encoder &getHigherLayer(
-        int l
-    ) const {
-        return higherLayers[l];
     }
 
     // Serialization
@@ -166,24 +126,8 @@ public:
         return hiddenCIs;
     }
 
-    // Get the output states
-    const IntBuffer &getOutputCIs() const {
-        if (higherLayers.size() > 0)
-            return higherLayers[higherLayers.size() - 1].getHiddenCIs();
-
-        return hiddenCIs;
-    }
-
     // Get the hidden size
     const Int3 &getHiddenSize() const {
-        return hiddenSize;
-    }
-
-    // Get the output size
-    const Int3 &getOutputSize() const {
-        if (higherLayers.size() > 0)
-            return higherLayers[higherLayers.size() - 1].getHiddenSize();
-
         return hiddenSize;
     }
 };
