@@ -154,7 +154,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - vl.reconstruction[visibleCellIndex]);
+            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -282,7 +282,6 @@ void Encoder::initRandom(
 
     hiddenMeans = FloatBuffer(numHiddenCells, 0.0f);
     hiddenVariances = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenAccums = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void Encoder::step(
@@ -323,7 +322,7 @@ void Encoder::reconstruct(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + 3 * hiddenMeans.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + 2 * hiddenMeans.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -350,7 +349,6 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&hiddenAccums[0]), hiddenAccums.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -385,11 +383,9 @@ void Encoder::read(
 
     hiddenMeans.resize(numHiddenCells);
     hiddenVariances.resize(numHiddenCells);
-    hiddenAccums.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
-    reader.read(reinterpret_cast<void*>(&hiddenAccums[0]), hiddenAccums.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -427,7 +423,6 @@ void Encoder::writeState(
 
     writer.write(reinterpret_cast<const void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&hiddenAccums[0]), hiddenAccums.size() * sizeof(float));
 }
 
 void Encoder::readState(
@@ -437,5 +432,4 @@ void Encoder::readState(
 
     reader.read(reinterpret_cast<void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
-    reader.read(reinterpret_cast<void*>(&hiddenAccums[0]), hiddenAccums.size() * sizeof(float));
 }

@@ -49,7 +49,6 @@ private:
 
     FloatBuffer hiddenMeans;
     FloatBuffer hiddenVariances;
-    FloatBuffer hiddenAccums;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
