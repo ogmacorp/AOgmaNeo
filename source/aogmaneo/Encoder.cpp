@@ -67,7 +67,7 @@ void Encoder::forward(
 
         hiddenVariances[hiddenCellIndex] += rate * (sum * sum - hiddenVariances[hiddenCellIndex]);
 
-        sum /= max(0.0001f, hiddenVariances[hiddenCellIndex]);
+        sum /= max(0.0001f, sqrtf(hiddenVariances[hiddenCellIndex]));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
