@@ -61,7 +61,7 @@ void Encoder::forward(
                     subSum += max(0.0f, vl.weights[wi] - vl.reconstruction[visibleColumnIndex]);
                 }
 
-            subSum /= max(1, subCount);
+            subSum /= subCount;
 
             sum += subSum * vl.importance;
         }
