@@ -38,7 +38,6 @@ public:
     struct HistorySample {
         Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
-        FloatBuffer hiddenValues;
 
         float reward;
     };
