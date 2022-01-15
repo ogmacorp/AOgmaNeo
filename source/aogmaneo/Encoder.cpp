@@ -139,7 +139,7 @@ void Encoder::backward(
 
     sum /= max(0.0001f, total);
 
-    vl.reconstruction[visibleColumnIndex] = sigmoid(sum);
+    vl.reconstruction[visibleColumnIndex] = tanh(max(0.0f, sum));
 }
 
 void Encoder::learn(
@@ -207,7 +207,7 @@ void Encoder::learn(
 
         sum /= max(0.0001f, total);
 
-        float delta = lr * ((vc == targetCI) - sigmoid(sum));
+        float delta = lr * ((vc == targetCI) - tanh(max(0.0f, sum)));
   
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
