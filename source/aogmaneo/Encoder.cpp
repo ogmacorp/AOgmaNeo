@@ -228,7 +228,6 @@ void Encoder::learn(
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
-
             maxIndex = vc;
         }
     }
