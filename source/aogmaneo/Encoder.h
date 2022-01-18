@@ -45,7 +45,10 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenSums;
+    FloatBuffer hiddenAccums;
+    FloatBuffer hiddenMeans;
+
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -56,7 +59,8 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        int it
     );
 
     void backward(
@@ -81,11 +85,15 @@ private:
 public:
     int explainIters;
     float lr;
+    float decay;
+    float boost;
 
     Encoder()
     :
     explainIters(5),
-    lr(0.2f)
+    lr(0.1f),
+    decay(0.01f),
+    boost(0.4f)
     {}
 
     // Create a sparse coding layer with random initialization
