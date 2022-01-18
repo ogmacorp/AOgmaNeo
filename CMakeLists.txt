@@ -1,6 +1,6 @@
 # ----------------------------------------------------------------------------
 #  AOgmaNeo
-#  Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+#  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 #
 #  This copy of AOgmaNeo is licensed to you under the terms described
 #  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -20,7 +20,8 @@ endif()
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-add_compile_definitions(USE_OMP)
+add_compile_definitions(USE_OMP) # Use OpenMP
+add_compile_definitions(USE_STD_MATH) # Use math funcs from standard library
 
 include_directories("${PROJECT_SOURCE_DIR}/source")
 
@@ -28,12 +29,12 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
  
 set(SOURCE_PATH "${PROJECT_SOURCE_DIR}/source")
 set(SOURCES
-    "${SOURCE_PATH}/aogmaneo/Actor.cpp"
     "${SOURCE_PATH}/aogmaneo/Helpers.cpp"
+    "${SOURCE_PATH}/aogmaneo/Encoder.cpp"
+    "${SOURCE_PATH}/aogmaneo/Decoder.cpp"
+    "${SOURCE_PATH}/aogmaneo/Actor.cpp"
     "${SOURCE_PATH}/aogmaneo/Hierarchy.cpp"
     "${SOURCE_PATH}/aogmaneo/ImageEncoder.cpp"
-    "${SOURCE_PATH}/aogmaneo/Decoder.cpp"
-    "${SOURCE_PATH}/aogmaneo/Encoder.cpp"
 )
 
 find_package(OpenMP REQUIRED)
