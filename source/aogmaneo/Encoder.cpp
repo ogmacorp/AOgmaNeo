@@ -66,9 +66,7 @@ void Encoder::forward(
             sum += subSum * vl.importance;
         }
 
-        float s = sigmoid(hiddenActivations[hiddenCellIndex]);
-
-        hiddenActivations[hiddenCellIndex] += sum * s * (1.0f - s);
+        hiddenActivations[hiddenCellIndex] += sum;
 
         if (hiddenActivations[hiddenCellIndex] > maxActivation || maxIndex == -1) {
             maxActivation = hiddenActivations[hiddenCellIndex];
