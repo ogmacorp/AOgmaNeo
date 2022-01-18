@@ -19,7 +19,6 @@ void Encoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     float minSum = 999999.0f;
-    float maxSum = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -71,7 +70,6 @@ void Encoder::forward(
         hiddenSums[hiddenCellIndex] = sum;
 
         minSum = min(minSum, sum);
-        maxSum = max(maxSum, sum);
     }
 
     int maxIndex = -1;
@@ -80,7 +78,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float activation = (hiddenSums[hiddenCellIndex] - minSum) / max(0.0001f, maxSum - minSum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
+        float activation = (hiddenSums[hiddenCellIndex] - minSum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
 
         if (activation > maxActivation || maxIndex == -1) {
             maxActivation = activation;
