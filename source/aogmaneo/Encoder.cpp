@@ -18,8 +18,8 @@ void Encoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    float minSum = 999999.0f;
+    float maxSum = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -66,16 +66,24 @@ void Encoder::forward(
             sum += subSum * vl.importance;
         }
 
-        float rate = decay * expf(-hiddenVariances[hiddenCellIndex]);
+        hiddenMeans[hiddenCellIndex] += decay * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenMeans[hiddenCellIndex]);
 
-        hiddenMeans[hiddenCellIndex] += rate * (sum - hiddenMeans[hiddenCellIndex]);
+        hiddenSums[hiddenCellIndex] = sum;
 
-        sum -= hiddenMeans[hiddenCellIndex];
+        minSum = min(minSum, sum);
+        maxSum = max(maxSum, sum);
+    }
 
-        hiddenVariances[hiddenCellIndex] += rate * (sum * sum - hiddenVariances[hiddenCellIndex]);
+    int maxIndex = -1;
+    float maxActivation = -999999.0f;
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        float activation = (hiddenSums[hiddenCellIndex] - minSum) / max(0.0001f, maxSum - minSum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
+
+        if (activation > maxActivation || maxIndex == -1) {
+            maxActivation = activation;
             maxIndex = hc;
         }
     }
@@ -285,8 +293,8 @@ void Encoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
+    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMeans = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenVariances = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void Encoder::step(
@@ -327,7 +335,7 @@ void Encoder::reconstruct(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + 2 * hiddenMeans.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenMeans.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -349,11 +357,11 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&decay), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&boost), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -381,16 +389,17 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&decay), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
+    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
+
     hiddenMeans.resize(numHiddenCells);
-    hiddenVariances.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
-    reader.read(reinterpret_cast<void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -427,7 +436,6 @@ void Encoder::writeState(
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
 }
 
 void Encoder::readState(
@@ -436,5 +444,4 @@ void Encoder::readState(
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     reader.read(reinterpret_cast<void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
-    reader.read(reinterpret_cast<void*>(&hiddenVariances[0]), hiddenVariances.size() * sizeof(float));
 }
