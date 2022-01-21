@@ -83,7 +83,7 @@ public:
     :
     lr(0.01f),
     decay(0.0f),
-    discount(0.97f),
+    discount(0.95f),
     historyIters(4),
     maxSteps(8)
     {}
