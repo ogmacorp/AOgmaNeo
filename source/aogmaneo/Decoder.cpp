@@ -130,7 +130,7 @@ void Decoder::learn(
 
         sum /= count;
 
-        maxActivation = max(maxActivation, sum);
+        maxActivation = max(maxActivation, sigmoid(sum));
     }
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -158,12 +158,14 @@ void Decoder::learn(
 
         sumPrev /= count;
 
+        float s = sigmoid(sumPrev);
+
         float delta;
 
         if (hc == targetCI)
-            delta = lr * (max(reward, discount * min(1.0f, maxActivation)) - sumPrev);
+            delta = lr * (max(reward, discount * maxActivation) - s) * s * (1.0f - s);
         else
-            delta = decay * -max(0.0f, sumPrev);
+            delta = decay * -s * s * (1.0f - s);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -207,13 +209,13 @@ void Decoder::initRandom(
     visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.gSizeZ);
 
     for (int i = 0; i < visibleLayer.iWeights.size(); i++)
-        visibleLayer.iWeights[i] = randf(0.0f, 0.0001f);
+        visibleLayer.iWeights[i] = randf(-1.0f, 1.0f);
 
     if (hasFeedBack) {
         visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
 
         for (int i = 0; i < visibleLayer.iWeights.size(); i++)
-            visibleLayer.fbWeights[i] = randf(0.0f, 0.0001f);
+            visibleLayer.fbWeights[i] = randf(-1.0f, 1.0f);
     }
     else
         visibleLayer.fbWeights.resize(0); // No feed back
