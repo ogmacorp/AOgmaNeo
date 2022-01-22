@@ -133,8 +133,8 @@ void Decoder::learn(
         maxActivation = max(maxActivation, sigmoid(sum));
     }
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    if (decay == 0.0f) {
+        int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
         float sumPrev = 0.0f;
 
@@ -148,7 +148,7 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
                 sumPrev += visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)];
 
@@ -160,12 +160,7 @@ void Decoder::learn(
 
         float s = sigmoid(sumPrev);
 
-        float delta;
-
-        if (hc == targetCI)
-            delta = lr * (max(reward, discount * maxActivation) - s) * s * (1.0f - s);
-        else
-            delta = decay * -s * s * (1.0f - s);
+        float delta = lr * (max(reward, discount * maxActivation) - s) * s * (1.0f - s);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -177,13 +172,67 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
                 visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)] += delta;
 
                 if (hasFeedBack)
                     visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)] += delta;
             }
+    }
+    else {
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenCellIndex = hc + hiddenCellsStart;
+
+            float sumPrev = 0.0f;
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
+
+                    int actualCI = history[t2].actualCIs[visibleColumnIndex];
+                    int inCI = history[t1].inputCIs[visibleColumnIndex];
+                    int feedBackCI = history[t1 - 1].inputCIs[visibleColumnIndex];
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    sumPrev += visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)];
+
+                    if (hasFeedBack)
+                        sumPrev += visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)];
+                }
+
+            sumPrev /= count;
+
+            float s = sigmoid(sumPrev);
+
+            float delta;
+
+            if (hc == targetCI)
+                delta = lr * (max(reward, discount * maxActivation) - s) * s * (1.0f - s);
+            else
+                delta = decay * -s * s * (1.0f - s);
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
+
+                    int actualCI = history[t2].actualCIs[visibleColumnIndex];
+                    int inCI = history[t1].inputCIs[visibleColumnIndex];
+                    int feedBackCI = history[t1 - 1].inputCIs[visibleColumnIndex];
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)] += delta;
+
+                    if (hasFeedBack)
+                        visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)] += delta;
+                }
+        }
     }
 }
 
