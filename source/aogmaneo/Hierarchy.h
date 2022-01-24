@@ -287,6 +287,27 @@ public:
         return dLayers[l];
     }
 
+    // Retrieve by index
+    Decoder &getDLayer(
+        int l,
+        int i
+    ) {
+        if (l == 0)
+            return dLayers[l][dIndices[i]];
+
+        return dLayers[l][i];
+    }
+
+    const Decoder &getDLayer(
+        int l,
+        int i
+    ) const {
+        if (l == 0)
+            return dLayers[l][dIndices[i]];
+
+        return dLayers[l][i];
+    }
+
     // Retrieve a goal encoding layer
     Encoder &getGLayer(
         int l // Layer index
