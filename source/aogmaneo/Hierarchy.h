@@ -255,10 +255,6 @@ public:
         return ioSizes;
     }
 
-    int getNumGVisibleLayers() const {
-        return gLayers[0].getNumVisibleLayers();
-    }
-
     // Retrieve an encoding layer
     Encoder &getELayer(
         int l // Layer index
