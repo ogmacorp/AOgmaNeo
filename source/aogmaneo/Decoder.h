@@ -67,8 +67,7 @@ private:
     void learn(
         const Int2 &columnPos,
         int t1,
-        int t2,
-        float reward
+        int t2
     );
 
 public:
