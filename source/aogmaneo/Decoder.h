@@ -46,6 +46,7 @@ private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
     Byte hasFeedBack;
 
+    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
@@ -73,7 +74,6 @@ private:
 
 public:
     float lr; // Learning rate
-    float decay; // Slight decay towards supervised objective
     float discount; // Discount factor
     int historyIters;
     int maxSteps;
@@ -82,7 +82,6 @@ public:
     Decoder()
     :
     lr(0.01f),
-    decay(0.0f),
     discount(0.9f),
     historyIters(4),
     maxSteps(8)
