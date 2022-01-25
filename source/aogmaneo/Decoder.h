@@ -81,7 +81,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.01f),
+    lr(1.0f),
     discount(0.9f),
     historyIters(4),
     maxSteps(8)
