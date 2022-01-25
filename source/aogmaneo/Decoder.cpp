@@ -76,7 +76,8 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &columnPos,
     int t1,
-    int t2
+    int t2,
+    float modulation
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -129,30 +130,11 @@ void Decoder::learn(
 
         sum /= count;
 
-        maxActivation = max(maxActivation, sum);
+        maxActivation = max(maxActivation, sigmoid(sum));
     }
 
-    float reward = 0.0f;
-
-    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-            int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
-
-            int actualCI = history[t2].actualCIs[visibleColumnIndex];
-
-            reward += (actualCI == history[t1 - 1].actualCIs[visibleColumnIndex]);
-        }
-
-    reward /= count;
-
-    // Curve a bit
-    reward *= reward;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        if (hc != targetCI && decay == 0.0f) // Little shortcut for when there is no decay, could do separate branch but that's more annoying to maintain
-            continue;
-
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    if (decay == 0.0f) {
+        int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
         float sumPrev = 0.0f;
 
@@ -166,7 +148,7 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
                 sumPrev += visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)];
 
@@ -176,12 +158,9 @@ void Decoder::learn(
 
         sumPrev /= count;
 
-        float delta;
+        float s = sigmoid(sumPrev);
 
-        if (hc == targetCI)
-            delta = lr * (reward + discount * maxActivation - sumPrev);
-        else
-            delta = decay * -max(0.0f, sumPrev);
+        float delta = lr * (max(reward, discount * maxActivation) - s) * s * (1.0f - s);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -193,13 +172,67 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
                 visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)] += delta;
 
                 if (hasFeedBack)
                     visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)] += delta;
             }
+    }
+    else {
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenCellIndex = hc + hiddenCellsStart;
+
+            float sumPrev = 0.0f;
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
+
+                    int actualCI = history[t2].actualCIs[visibleColumnIndex];
+                    int inCI = history[t1].inputCIs[visibleColumnIndex];
+                    int feedBackCI = history[t1 - 1].inputCIs[visibleColumnIndex];
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    sumPrev += visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)];
+
+                    if (hasFeedBack)
+                        sumPrev += visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)];
+                }
+
+            sumPrev /= count;
+
+            float s = sigmoid(sumPrev);
+
+            float delta;
+
+            if (hc == targetCI)
+                delta = lr * (max(reward, discount * maxActivation) - s) * s * (1.0f - s);
+            else
+                delta = decay * -s * s * (1.0f - s);
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(visibleLayerDesc.size.x, visibleLayerDesc.size.y));
+
+                    int actualCI = history[t2].actualCIs[visibleColumnIndex];
+                    int inCI = history[t1].inputCIs[visibleColumnIndex];
+                    int feedBackCI = history[t1 - 1].inputCIs[visibleColumnIndex];
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)] += delta;
+
+                    if (hasFeedBack)
+                        visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)] += delta;
+                }
+        }
     }
 }
 
@@ -225,13 +258,13 @@ void Decoder::initRandom(
     visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.gSizeZ);
 
     for (int i = 0; i < visibleLayer.iWeights.size(); i++)
-        visibleLayer.iWeights[i] = randf(0.0f, 0.0001f);
+        visibleLayer.iWeights[i] = randf(-1.0f, 1.0f);
 
     if (hasFeedBack) {
         visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
 
         for (int i = 0; i < visibleLayer.iWeights.size(); i++)
-            visibleLayer.fbWeights[i] = randf(0.0f, 0.0001f);
+            visibleLayer.fbWeights[i] = randf(-1.0f, 1.0f);
     }
     else
         visibleLayer.fbWeights.resize(0); // No feed back
@@ -279,10 +312,17 @@ void Decoder::step(
 
                 int t2 = t1 - 1 - (rand() % maxSteps);
 
+                int power = t1 - 1 - t2;
+
+                float modulation = 1.0f;
+
+                for (int p = 0; p < power; p++)
+                    modulation *= discount;
+
                 // Learn under goal
                 #pragma omp parallel for
                 for (int i = 0; i < numHiddenColumns; i++)
-                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2);
+                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, modulation);
             }
         }
     }

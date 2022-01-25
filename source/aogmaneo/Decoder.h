@@ -67,7 +67,8 @@ private:
     void learn(
         const Int2 &columnPos,
         int t1,
-        int t2
+        int t2,
+        float modulation
     );
 
 public:
@@ -82,7 +83,7 @@ public:
     :
     lr(0.01f),
     decay(0.0f),
-    discount(0.97f),
+    discount(0.9f),
     historyIters(4),
     maxSteps(8)
     {}
