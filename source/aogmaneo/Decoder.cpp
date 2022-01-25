@@ -211,6 +211,8 @@ void Decoder::initRandom(
     else
         visibleLayer.fbWeights.resize(0); // No feed back
 
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -343,6 +345,8 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
     reader.read(reinterpret_cast<void*>(&maxSteps), sizeof(int));
+
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
 
