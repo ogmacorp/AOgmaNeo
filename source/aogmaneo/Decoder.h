@@ -81,10 +81,10 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.1f),
-    discount(0.9f),
+    lr(1.0f),
+    discount(0.8f),
     historyIters(3),
-    maxSteps(16)
+    maxSteps(8)
     {}
 
     // Create with random initialization
