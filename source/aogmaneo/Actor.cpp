@@ -278,7 +278,6 @@ void Actor::learn(
 
     // --- Action ---
 
-    // Gate based on sign change to avoid large jumps early on
     int targetCI = historySamples[t - 1].hiddenTargetCIsPrev[hiddenColumnIndex];
 
     float maxActivation = -999999.0f;
