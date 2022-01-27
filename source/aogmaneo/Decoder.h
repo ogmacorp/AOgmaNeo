@@ -82,8 +82,8 @@ public:
     Decoder()
     :
     lr(1.0f),
-    discount(0.8f),
-    historyIters(3),
+    discount(0.9f),
+    historyIters(4),
     maxSteps(8)
     {}
 
