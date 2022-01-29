@@ -200,13 +200,13 @@ void Decoder::initRandom(
     visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.gSizeZ);
 
     for (int i = 0; i < visibleLayer.iWeights.size(); i++)
-        visibleLayer.iWeights[i] = randf(-0.01f, 0.01f);
+        visibleLayer.iWeights[i] = randf(-1.0f, 1.0f);
 
     if (hasFeedBack) {
         visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
 
         for (int i = 0; i < visibleLayer.iWeights.size(); i++)
-            visibleLayer.fbWeights[i] = randf(-0.01f, 0.01f);
+            visibleLayer.fbWeights[i] = randf(-1.0f, 1.0f);
     }
     else
         visibleLayer.fbWeights.resize(0); // No feed back
