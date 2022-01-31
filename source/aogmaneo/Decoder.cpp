@@ -99,7 +99,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+        hiddenActivations[hiddenCellIndex] = expf(scale * (hiddenActivations[hiddenCellIndex] - maxActivation));
 
         total += hiddenActivations[hiddenCellIndex];
     }
@@ -128,7 +128,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float delta = lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        int delta = roundftoi(lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]));
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -159,7 +159,7 @@ void Decoder::learn(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights[wi] += delta;
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
                 }
         }
     }
@@ -192,7 +192,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.01f);
+            vl.weights[i] = rand() % 9 - 4;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -262,6 +262,7 @@ void Decoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
+    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
@@ -291,6 +292,7 @@ void Decoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
+    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenActivations.resize(numHiddenCells);
