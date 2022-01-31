@@ -32,8 +32,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer iWeights; // Input
-        FloatBuffer fbWeights; // Feedback
+        SByteBuffer iWeights; // Input
+        SByteBuffer fbWeights; // Feedback
     };
 
     struct HistorySample {
@@ -73,6 +73,7 @@ private:
     );
 
 public:
+    float scale; // Activation scale
     float lr; // Learning rate
     float discount; // Discount factor
     int historyIters;
@@ -81,9 +82,10 @@ public:
     // Defaults
     Decoder()
     :
-    lr(1.0f),
+    scale(0.1f),
+    lr(8.0f),
     discount(0.9f),
-    historyIters(4),
+    historyIters(3),
     maxSteps(8)
     {}
 

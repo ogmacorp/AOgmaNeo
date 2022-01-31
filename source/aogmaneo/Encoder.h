@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        SByteBuffer weights;
 
         FloatBuffer reconstruction;
 
@@ -75,12 +75,14 @@ private:
     );
 
 public:
+    float scale;
     float lr;
     float decay;
     float boost;
 
     Encoder()
     :
+    scale(0.1f),
     lr(0.1f),
     decay(0.01f),
     boost(0.5f)

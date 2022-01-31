@@ -37,12 +37,12 @@ void Decoder::forward(
     Int2 iterUpperBound(min(visibleLayerDesc.size.x - 1, visibleCenter.x + visibleLayerDesc.radius), min(visibleLayerDesc.size.y - 1, visibleCenter.y + visibleLayerDesc.radius));
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float sum = 0.0f;
+        int sum = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -103,12 +103,12 @@ void Decoder::learn(
 
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
-    float maxActivation = -999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float sum = 0.0f;
+        int sum = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -140,7 +140,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+        hiddenActivations[hiddenCellIndex] = expf((hiddenActivations[hiddenCellIndex] - maxActivation) * scale);
 
         total += hiddenActivations[hiddenCellIndex];
     }
@@ -156,7 +156,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float delta = lr * modulation * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        int delta = roundftoi(lr * modulation * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -170,10 +170,15 @@ void Decoder::learn(
 
                 int wiStart = visibleLayerDesc.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                visibleLayer.iWeights[actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart)] += delta;
+                int wi = actualCI + visibleLayerDesc.gSizeZ * (inCI + wiStart);
 
-                if (hasFeedBack)
-                    visibleLayer.fbWeights[actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart)] += delta;
+                visibleLayer.iWeights[wi] = min(127, max(-127, visibleLayer.iWeights[wi] + delta));
+
+                if (hasFeedBack) {
+                    wi = actualCI + visibleLayerDesc.gSizeZ * (feedBackCI + wiStart);
+
+                    visibleLayer.fbWeights[wi] = min(127, max(-127, visibleLayer.fbWeights[wi] + delta));
+                }
             }
     }
 }
@@ -200,13 +205,13 @@ void Decoder::initRandom(
     visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.gSizeZ);
 
     for (int i = 0; i < visibleLayer.iWeights.size(); i++)
-        visibleLayer.iWeights[i] = randf(-1.0f, 1.0f);
+        visibleLayer.iWeights[i] = rand() % 9 - 4;
 
     if (hasFeedBack) {
         visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
 
         for (int i = 0; i < visibleLayer.iWeights.size(); i++)
-            visibleLayer.fbWeights[i] = randf(-1.0f, 1.0f);
+            visibleLayer.fbWeights[i] = rand() % 9 - 4;
     }
     else
         visibleLayer.fbWeights.resize(0); // No feed back
@@ -278,9 +283,9 @@ void Decoder::step(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(Byte) + 2 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + sizeof(Byte) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int);
 
-    size += sizeof(VisibleLayerDesc) + (hasFeedBack ? 2 : 1) * visibleLayer.iWeights.size() * sizeof(float);
+    size += sizeof(VisibleLayerDesc) + (hasFeedBack ? 2 : 1) * visibleLayer.iWeights.size() * sizeof(SByte);
 
     size += 3 * sizeof(int) + history.size() * (2 * history[0].inputCIs.size() * sizeof(int) + history[0].hiddenTargetCIs.size() * sizeof(int));
 
@@ -301,6 +306,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&hasFeedBack), sizeof(Byte));
 
+    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
@@ -310,10 +316,10 @@ void Decoder::write(
     
     writer.write(reinterpret_cast<const void*>(&visibleLayerDesc), sizeof(VisibleLayerDesc));
 
-    writer.write(reinterpret_cast<const void*>(&visibleLayer.iWeights[0]), visibleLayer.iWeights.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&visibleLayer.iWeights[0]), visibleLayer.iWeights.size() * sizeof(SByte));
 
     if (hasFeedBack)
-        writer.write(reinterpret_cast<const void*>(&visibleLayer.fbWeights[0]), visibleLayer.fbWeights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&visibleLayer.fbWeights[0]), visibleLayer.fbWeights.size() * sizeof(SByte));
 
     writer.write(reinterpret_cast<const void*>(&historySize), sizeof(int));
 
@@ -341,6 +347,7 @@ void Decoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
+    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
@@ -359,12 +366,12 @@ void Decoder::read(
 
     visibleLayer.iWeights.resize(numHiddenCells * area * visibleLayerDesc.size.z * visibleLayerDesc.gSizeZ);
 
-    reader.read(reinterpret_cast<void*>(&visibleLayer.iWeights[0]), visibleLayer.iWeights.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&visibleLayer.iWeights[0]), visibleLayer.iWeights.size() * sizeof(SByte));
 
     if (hasFeedBack) {
         visibleLayer.fbWeights.resize(visibleLayer.iWeights.size());
 
-        reader.read(reinterpret_cast<void*>(&visibleLayer.fbWeights[0]), visibleLayer.fbWeights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&visibleLayer.fbWeights[0]), visibleLayer.fbWeights.size() * sizeof(SByte));
     }
     else
         visibleLayer.fbWeights.resize(0); // No feedback
