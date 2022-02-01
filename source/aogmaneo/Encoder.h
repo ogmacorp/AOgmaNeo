@@ -83,7 +83,7 @@ public:
     Encoder()
     :
     scale(0.1f),
-    lr(0.1f),
+    lr(4.0f),
     decay(0.01f),
     boost(0.5f)
     {}
