@@ -31,7 +31,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        SByteBuffer actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
@@ -77,6 +77,7 @@ private:
     );
 
 public:
+    float scale;
     float vlr; // Value learning rate
     float alr; // Action learning rate
     float discount; // Discount factor
@@ -87,6 +88,7 @@ public:
     // Defaults
     Actor()
     :
+    scale(0.1f),
     vlr(0.01f),
     alr(0.01f),
     discount(0.99f),

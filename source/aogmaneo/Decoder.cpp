@@ -104,12 +104,12 @@ void Decoder::forward(
         total += hiddenActivations[hiddenCellIndex];
     }
 
-    float scale = 1.0f / max(0.0001f, total);
+    float mul = 1.0f / max(0.0001f, total);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] *= scale;
+        hiddenActivations[hiddenCellIndex] *= mul;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
