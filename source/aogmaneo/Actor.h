@@ -30,8 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
+        FloatBuffer valueWeightsEval; // Value function weights for evaluation
+        FloatBuffer valueWeightsLearn; // Value function weights for learning
+        FloatBuffer actionWeights; // Action function weights (both evaluation and learning)
     };
 
     // History sample for delayed updates
@@ -65,6 +66,7 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
+        bool learnEnabled,
         unsigned int* state
     );
 
@@ -79,6 +81,7 @@ private:
 public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
+    float drift; // Drift of eval to learn
     float discount; // Discount factor
     float temperature; // Exploration amount
     int minSteps; // Minimum steps before sample can be used
@@ -89,6 +92,7 @@ public:
     :
     vlr(0.01f),
     alr(0.01f),
+    drift(0.01f),
     discount(0.99f),
     temperature(1.0f),
     minSteps(8),
