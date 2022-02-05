@@ -84,19 +84,15 @@ public:
     float drift; // Drift of eval to learn
     float discount; // Discount factor
     float temperature; // Exploration amount
-    int minSteps; // Minimum steps before sample can be used
-    int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
     :
-    vlr(0.01f),
-    alr(0.01f),
-    drift(0.01f),
+    vlr(0.1f),
+    alr(0.1f),
+    drift(0.001f),
     discount(0.99f),
-    temperature(1.0f),
-    minSteps(8),
-    historyIters(16)
+    temperature(1.0f)
     {}
 
     // Initialized randomly
