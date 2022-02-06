@@ -580,6 +580,7 @@ void Actor::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
         writer.write(reinterpret_cast<const void*>(&vl.valueWeightsEval[0]), vl.valueWeightsEval.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.valueWeightsLearn[0]), vl.valueWeightsLearn.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
     }
 

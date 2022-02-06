@@ -88,7 +88,7 @@ public:
     // Defaults
     Actor()
     :
-    vlr(0.1f),
+    vlr(0.01f),
     alr(0.1f),
     drift(0.001f),
     discount(0.99f),
