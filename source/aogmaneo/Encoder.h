@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -47,6 +47,9 @@ private:
 
     IntBuffer hiddenCIs;
 
+    FloatBuffer hiddenSums;
+    FloatBuffer hiddenMeans;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -73,10 +76,14 @@ private:
 
 public:
     float lr;
+    float decay;
+    float boost;
 
     Encoder()
     :
-    lr(0.1f)
+    lr(0.1f),
+    decay(0.01f),
+    boost(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization

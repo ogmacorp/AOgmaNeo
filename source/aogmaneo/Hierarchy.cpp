@@ -32,7 +32,7 @@ void Hierarchy::initRandom(
 
     // Determine ticks per update, first layer is always 1
     for (int l = 0; l < layerDescs.size(); l++)
-        ticksPerUpdate[l] = l == 0 ? 1 : layerDescs[l].ticksPerUpdate; // First layer always 1
+        ticksPerUpdate[l] = (l == 0 ? 1 : layerDescs[l].ticksPerUpdate); // First layer always 1
 
     int numPredictions = 0;
 

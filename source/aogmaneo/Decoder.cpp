@@ -189,7 +189,7 @@ void Decoder::initRandom(
         vl.weights[i] = randf(-0.01f, 0.01f);
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 }
 

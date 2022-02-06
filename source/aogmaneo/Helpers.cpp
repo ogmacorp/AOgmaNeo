@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -24,6 +24,9 @@ float aon::modf(
 float aon::expf(
     float x
 ) {
+#ifdef USE_STD_MATH
+    return std::exp(x);
+#else
     if (x > 0.0f) {
         float p = x;
         int f = 1;
@@ -53,11 +56,15 @@ float aon::expf(
     }
 
     return 1.0f / res;
+#endif
 }
 
 float aon::sinf(
     float x
 ) {
+#ifdef USE_STD_MATH
+    return std::sin(x);
+#else
     x = modf(x, pi2);
 
     if (x < -pi)
@@ -81,6 +88,26 @@ float aon::sinf(
     }
 
     return res;
+#endif
+}
+
+float aon::sqrtf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::sqrt(x);
+#else
+    // Quake method
+    union {
+        float x;
+        int i;
+    } u;
+
+    u.x = x;
+    u.i = 0x5f3759df - (u.i >> 1);
+
+    return x * u.x * (1.5f - 0.5f * x * u.x * u.x);
+#endif
 }
 
 #ifdef USE_OMP
@@ -141,7 +168,7 @@ unsigned int aon::rand(
 float aon::randf(
     unsigned int* state
 ) {
-    return static_cast<float>(rand(state)) / static_cast<float>(randMax - 1);
+    return static_cast<float>(rand(state)) / static_cast<float>(randMax);
 }
 
 float aon::randf(

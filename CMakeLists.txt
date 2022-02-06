@@ -1,6 +1,6 @@
 # ----------------------------------------------------------------------------
 #  AOgmaNeo
-#  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+#  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 #
 #  This copy of AOgmaNeo is licensed to you under the terms described
 #  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -20,7 +20,8 @@ endif()
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-add_compile_definitions(USE_OMP)
+add_compile_definitions(USE_OMP) # Use OpenMP
+add_compile_definitions(USE_STD_MATH) # Use math funcs from standard library
 
 include_directories("${PROJECT_SOURCE_DIR}/source")
 
