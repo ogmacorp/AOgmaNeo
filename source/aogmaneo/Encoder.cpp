@@ -452,6 +452,8 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&decay), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
 
     hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
     hiddenAccums = FloatBuffer(numHiddenCells, 0.0f);
