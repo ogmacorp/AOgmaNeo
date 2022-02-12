@@ -144,7 +144,7 @@ void Encoder::backward(
             }
         }
 
-    vl.reconstruction[visibleColumnIndex] = min(1.0f, max(0.0f, sum));
+    vl.reconstruction[visibleColumnIndex] = sigmoid(sum);
 }
 
 void Encoder::learn(
@@ -204,7 +204,9 @@ void Encoder::learn(
                 if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    sum += vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))];
+                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+
+                    sum += vl.weights[wi];
                 }
             }
 
@@ -222,7 +224,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - min(1.0f, max(0.0f, vl.reconstruction[visibleCellIndex])));
+            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -341,7 +343,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(-1.0f, 1.0f);
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
