@@ -53,7 +53,15 @@ void Decoder::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                sum += vl.weights[inCI + vld.size.z * (progCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)))];
+                int wiStart = vld.size.z * (progCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
+
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int wi = vc + wiStart;
+
+                    float delta = (vc == inCI) - vl.weights[wi];
+
+                    sum += -delta * delta;
+                }
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -94,43 +102,7 @@ void Decoder::learn(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-    int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        float sum = 0.0f;
-
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
-
-                int inCI = (*inputCIs)[visibleColumnIndex];
-                int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
-
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                sum += vl.weights[inCIPrev + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)))];
-            }
-
-        sum /= count;
-
-        hiddenActivations[hiddenCellIndex] = sum;
-
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
-        }
-    }
-
-    if (maxIndex == targetCI)
-        return;
-
     int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
-    int hiddenCellIndexMax = maxIndex + hiddenCellsStart;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -141,8 +113,13 @@ void Decoder::learn(
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-            vl.weights[inCIPrev + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)))] += lr;
-            vl.weights[inCIPrev + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax)))] -= lr;
+            int wiStart = vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
+
+            for (int vc = 0; vc < vld.size.z; vc++) {
+                int wi = vc + wiStart;
+
+                vl.weights[wi] += lr * ((vc == inCIPrev) - vl.weights[wi]);
+            }
         }
 }
 
@@ -166,7 +143,7 @@ void Decoder::initRandom(
     vl.weights.resize(numHiddenCells * area * vld.size.z * vld.size.z);
 
     for (int i = 0; i < vl.weights.size(); i++)
-        vl.weights[i] = randf(-0.01f, 0.01f);
+        vl.weights[i] = randf(0.0f, 0.01f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
