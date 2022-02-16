@@ -51,7 +51,7 @@ void RLAdapter::initRandom(
     weights.resize(numHiddenCells);
 
     for (int i = 0; i < weights.size(); i++)
-        weights[i] = randf(-1.01f, -1.0f);
+        weights[i] = randf(-0.01f, 0.01f);
 
     progCIs = IntBuffer(numHiddenColumns, 0);
 }

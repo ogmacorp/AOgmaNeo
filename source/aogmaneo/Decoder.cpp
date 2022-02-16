@@ -129,41 +129,21 @@ void Decoder::learn(
     if (maxIndex == targetCI)
         return;
 
-    float total = 0.0f;
+    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
+    int hiddenCellIndexMax = maxIndex + hiddenCellsStart;
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+            int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+            int inCI = (*inputCIs)[visibleColumnIndex];
+            int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
 
-        total += hiddenActivations[hiddenCellIndex];
-    }
+            Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] *= scale;
-    }
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        float delta = lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
-
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
-
-                int inCI = (*inputCIs)[visibleColumnIndex];
-                int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
-
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                vl.weights[inCIPrev + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)))] += delta;
-            }
-    }
+            vl.weights[inCIPrev + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)))] += lr;
+            vl.weights[inCIPrev + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax)))] -= lr;
+        }
 }
 
 void Decoder::initRandom(
