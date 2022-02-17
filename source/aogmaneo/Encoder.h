@@ -45,7 +45,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenSums;
     FloatBuffer hiddenAccums;
     FloatBuffer hiddenMeans;
 
@@ -91,9 +90,9 @@ public:
     Encoder()
     :
     explainIters(5),
-    lr(0.1f),
+    lr(0.01f),
     decay(0.01f),
-    boost(0.5f)
+    boost(1.0f)
     {}
 
     // Create a sparse coding layer with random initialization

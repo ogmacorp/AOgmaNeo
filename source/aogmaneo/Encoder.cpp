@@ -19,7 +19,8 @@ void Encoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    float minAccum = 999999.0f;
+    int maxIndex = -1;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -71,16 +72,7 @@ void Encoder::forward(
 
         hiddenAccums[hiddenCellIndex] += sum;
 
-        minAccum = min(minAccum, hiddenAccums[hiddenCellIndex]);
-    }
-
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        float activation = (hiddenAccums[hiddenCellIndex] - minAccum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
+        float activation = sigmoid(hiddenAccums[hiddenCellIndex]) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
 
         if (activation > maxActivation || maxIndex == -1) {
             maxActivation = activation;
@@ -212,39 +204,26 @@ void Encoder::learn(
 
         sum /= count;
 
-        vl.reconstruction[visibleCellIndex] = sum;
-  
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = vc;
-        }
-    }
+        float delta = lr * ((vc == targetCI) - sigmoid(sum));
 
-    if (maxIndex != targetCI) {
-        for (int vc = 0; vc < vld.size.z; vc++) {
-            int visibleCellIndex = vc + visibleCellsStart;
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 hiddenPos = Int2(ix, iy);
 
-            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
+                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    Int2 hiddenPos = Int2(ix, iy);
+                int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
-                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                Int2 visibleCenter = project(hiddenPos, hToV);
 
-                    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
+                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    Int2 visibleCenter = project(hiddenPos, hToV);
+                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
-
-                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
-
-                        vl.weights[wi] += delta;
-                    }
+                    vl.weights[wi] += delta;
                 }
-        }
+            }
     }
 }
 
@@ -348,7 +327,6 @@ void Encoder::initRandom(
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 
-    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
     hiddenAccums = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMeans = FloatBuffer(numHiddenCells, 1.0f / hiddenSize.z);
 
@@ -470,7 +448,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&decay), sizeof(float));
     reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
 
-    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
     hiddenAccums = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenMeans.resize(numHiddenCells);
