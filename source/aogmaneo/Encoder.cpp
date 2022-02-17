@@ -18,7 +18,8 @@ void Encoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    float minSum = 999999.0f;
+    int maxIndex = -1;
+    float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -67,18 +68,7 @@ void Encoder::forward(
 
         hiddenMeans[hiddenCellIndex] += decay * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenMeans[hiddenCellIndex]);
 
-        hiddenSums[hiddenCellIndex] = sum;
-
-        minSum = min(minSum, sum);
-    }
-
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        float activation = (hiddenSums[hiddenCellIndex] - minSum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
+        float activation = sigmoid(sum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
 
         if (activation > maxActivation || maxIndex == -1) {
             maxActivation = activation;
@@ -149,7 +139,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    sum += sigmoid(vl.weights[wi]);
+                    sum += vl.weights[wi];
                 }
             }
 
@@ -167,7 +157,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - vl.reconstruction[visibleCellIndex]);
+            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -295,7 +285,6 @@ void Encoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMeans = FloatBuffer(numHiddenCells, 1.0f / hiddenSize.z);
 }
 
@@ -396,8 +385,6 @@ void Encoder::read(
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-
-    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenMeans.resize(numHiddenCells);
 

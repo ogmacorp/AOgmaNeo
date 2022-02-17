@@ -47,7 +47,6 @@ private:
 
     IntBuffer hiddenCIs;
 
-    FloatBuffer hiddenSums;
     FloatBuffer hiddenMeans;
 
     // Visible layers and associated descriptors
