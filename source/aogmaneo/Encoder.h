@@ -123,17 +123,24 @@ public:
     }
 
     // Get a visible layer
+    VisibleLayer &getVisibleLayer(
+        int vli // Index of visible layer
+    ) {
+        return visibleLayers[vli];
+    }
+
+    // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states
