@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -61,15 +61,15 @@ public:
     float lr; // Learning rate
     float discount;
     float traceDecay;
-    float epsilon; // Exploration
+    float traceScale;
 
     // Defaults
     Actor()
     :
     lr(0.05f),
     discount(0.99f),
-    traceDecay(0.96f),
-    epsilon(0.03f)
+    traceDecay(0.97f),
+    traceScale(0.2f)
     {}
 
     // Initialized randomly

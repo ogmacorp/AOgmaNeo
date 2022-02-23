@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -20,6 +20,8 @@ void Actor::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
     // Pre-count
     int count = 0;
 
@@ -36,8 +38,6 @@ void Actor::forward(
 
         Int2 visibleCenter = project(columnPos, hToV);
 
-        visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
-
         // Lower corner
         Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
@@ -50,13 +50,13 @@ void Actor::forward(
 
     int targetCI = (*hiddenTargetCIsPrev)[hiddenColumnIndex];
 
-    float valuePrev = hiddenValues[address3(Int3(columnPos.x, columnPos.y, targetCI), hiddenSize)];
+    float valuePrev = hiddenValues[targetCI + hiddenCellsStart];
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
 
@@ -71,8 +71,6 @@ void Actor::forward(
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
             Int2 visibleCenter = project(columnPos, hToV);
-
-            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -93,7 +91,7 @@ void Actor::forward(
                 }
         }
 
-        sum /= max(1, count);
+        sum /= count;
 
         hiddenValues[hiddenCellIndex] = sum;
 
@@ -103,23 +101,12 @@ void Actor::forward(
         }
     }
 
-    int selectIndex = maxIndex;
+    float nextValue = hiddenValues[maxIndex + hiddenCellsStart];
 
-    if (randf(state) < epsilon)
-        selectIndex = rand(state) % hiddenSize.z;
-
-    float nextValue = 0.0f;
+    float delta = lr * tanh(reward + discount * nextValue - valuePrev);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
-    
-        nextValue += hiddenValues[hiddenCellIndex] * (hc == maxIndex ? 1.0f - epsilon : epsilon / (hiddenSize.z - 1));
-    }
-
-    float delta = lr * (reward + discount * nextValue - valuePrev);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = address3(Int3(columnPos.x, columnPos.y, hc), hiddenSize);
+        int hiddenCellIndex = hc + hiddenCellsStart;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -132,8 +119,6 @@ void Actor::forward(
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
             Int2 visibleCenter = project(columnPos, hToV);
-
-            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
 
             // Lower corner
             Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
@@ -156,7 +141,7 @@ void Actor::forward(
                         int wi = vc + wiStart;
 
                         if (vc == inCIPrev && hc == targetCI)
-                            vl.traces[wi] = 1.0f;
+                            vl.traces[wi] = vl.traces[wi] * traceDecay + expf(-traceScale * vl.traces[wi]);
                         else
                             vl.traces[wi] *= traceDecay;
 
@@ -167,7 +152,7 @@ void Actor::forward(
         }
     }
 
-    hiddenCIs[hiddenColumnIndex] = selectIndex;
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
 void Actor::initRandom(
@@ -235,7 +220,7 @@ void Actor::step(
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 4 * sizeof(float) + hiddenValues.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 5 * sizeof(float) + hiddenValues.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -259,7 +244,7 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&epsilon), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&traceScale), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -292,7 +277,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&epsilon), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&traceScale), sizeof(float));
 
     hiddenValues.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
