@@ -33,13 +33,19 @@ public:
         FloatBuffer protos;
 
         FloatBuffer reconstruction;
+
+        float importance;
+
+        VisibleLayer()
+        :
+        importance(1.0f)
+        {}
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
     int numPriorities;
 
-    FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
     IntBuffer hiddenPriorities;
 

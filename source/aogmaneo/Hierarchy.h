@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -27,13 +27,13 @@ public:
         Int3 size;
         IOType type;
 
-        int eRadius; // Feed forward radius
-        int dRadius; // Feed back radius
+        int eRadius; // Encoder radius
+        int dRadius; // Decoder radius
 
         IODesc()
         :
         size(4, 4, 16),
-        type(none),
+        type(prediction),
         eRadius(2),
         dRadius(2)
         {}
@@ -55,10 +55,11 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
+
         int numPriorities;
 
-        int eRadius; // Feed forward radius
-        int dRadius; // Prediction radius
+        int eRadius; // Encoder radius
+        int dRadius; // Decoder radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -94,8 +95,12 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Array<Ptr<Decoder>>> dLayers;
-    Array<Ptr<Actor>> aLayers;
+    Array<Array<Decoder>> dLayers;
+    Array<Actor> aLayers;
+
+    // For mapping first layer decoders
+    IntBuffer iIndices;
+    IntBuffer dIndices;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -107,23 +112,12 @@ private:
     IntBuffer ticksPerUpdate;
 
     // Input dimensions
-    Array<Int3> inputSizes;
+    Array<Int3> ioSizes;
+    Array<Byte> ioTypes;
 
 public:
     // Default
     Hierarchy() {}
-
-    // Copy
-    Hierarchy(
-        const Hierarchy &other // Hierarchy to copy from
-    ) {
-        *this = other;
-    }
-
-    // Assignment
-    const Hierarchy &operator=(
-        const Hierarchy &other // Hierarchy to assign from
-    );
     
     // Create a randomly initialized hierarchy
     void initRandom(
@@ -135,7 +129,7 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f // Reinforcement signal
+        float reward = 0.0f // Reward
     );
 
     // Serialization
@@ -163,76 +157,160 @@ public:
         return eLayers.size();
     }
 
+    // Get state of highest layer (less verbose when dealing with goal-driven learning)
+    const IntBuffer &getTopHiddenCIs() const {
+        return eLayers[eLayers.size() - 1].getHiddenCIs();
+    }
+
+    // Get size of highest layer (less verbose when dealing with goal-driven learning)
+    const Int3 &getTopHiddenSize() const {
+        return eLayers[eLayers.size() - 1].getHiddenSize();
+    }
+
+    bool getTopUpdate() const {
+        return updates[updates.size() - 1];
+    }
+
+    bool ioLayerExists(
+        int i
+    ) const {
+        return dIndices[i] != -1;
+    }
+
+    // Importance control
+    void setImportance(
+        int i,
+        float importance
+    ) {
+        for (int t = 0; t < histories[0][i].size(); t++)
+            eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+    }
+
+    // Importance control
+    float getImportance(
+        int i
+    ) const {
+        return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
+    }
+
     // Retrieve predictions
     const IntBuffer &getPredictionCIs(
-        int i // Index of input layer to get predictions for
+        int i
     ) const {
-        if (aLayers[i] != nullptr) // If is an action layer
-            return aLayers[i]->getHiddenCIs();
+        if (ioTypes[i] == action)
+            return aLayers[dIndices[i]].getHiddenCIs();
 
-        return dLayers[0][i]->getHiddenCIs();
+        return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
     bool getUpdate(
-        int l // Layer index
+        int l
     ) const {
         return updates[l];
     }
 
     // Get current layer ticks, relative to previous layer
     int getTicks(
-        int l // Layer Index
+        int l
     ) const {
         return ticks[l];
     }
 
     // Get layer ticks per update, relative to previous layer
     int getTicksPerUpdate(
-        int l // Layer Index
+        int l
     ) const {
         return ticksPerUpdate[l];
     }
 
-    // Get input sizes
-    const Array<Int3> &getInputSizes() const {
-        return inputSizes;
+    // Get input/output sizes
+    const Array<Int3> &getIOSizes() const {
+        return ioSizes;
+    }
+
+    // Get input/output types
+    IOType getIOType(
+        int i
+    ) const {
+        return static_cast<IOType>(ioTypes[i]);
     }
 
     // Retrieve a sparse coding layer
     Encoder &getELayer(
-        int l // Layer index
+        int l
     ) {
         return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
     const Encoder &getELayer(
-        int l // Layer index
+        int l
     ) const {
         return eLayers[l];
     }
 
-    Array<Ptr<Decoder>> &getDLayers(
-        int l // Layer index
+    // Retrieve deocder layer(s)
+    Array<Decoder> &getDLayers(
+        int l
     ) {
         return dLayers[l];
     }
 
-    const Array<Ptr<Decoder>> &getDLayers(
-        int l // Layer index
+    const Array<Decoder> &getDLayers(
+        int l
     ) const {
         return dLayers[l];
     }
 
-    // Retrieve predictor layer(s)
-    Array<Ptr<Actor>> &getALayers() {
+    // Retrieve actor layer(s)
+    Array<Actor> &getALayers() {
         return aLayers;
     }
 
-    // Retrieve predictor layer(s), const version
-    const Array<Ptr<Actor>> &getALayers() const {
+    const Array<Actor> &getALayers() const {
         return aLayers;
+    }
+
+    // Retrieve by index
+    Decoder &getDLayer(
+        int l,
+        int i
+    ) {
+        if (l == 0)
+            return dLayers[l][dIndices[i]];
+
+        return dLayers[l][i];
+    }
+
+    const Decoder &getDLayer(
+        int l,
+        int i
+    ) const {
+        if (l == 0)
+            return dLayers[l][dIndices[i]];
+
+        return dLayers[l][i];
+    }
+
+    Actor &getALayer(
+        int i
+    ) {
+        return aLayers[dIndices[i]];
+    }
+
+    const Actor &getALayer(
+        int i
+    ) const {
+        return aLayers[dIndices[i]];
+    }
+
+    const IntBuffer &getIIndices() const {
+        return iIndices;
+    }
+
+    const IntBuffer &getDIndices() const {
+        return dIndices;
     }
 
     const Array<CircleBuffer<IntBuffer>> &getHistories(
