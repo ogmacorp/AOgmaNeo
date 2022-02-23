@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,17 +30,16 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        FloatBuffer protos;
+        FloatBuffer masks;
 
-        ByteBuffer reconstruction;
+        FloatBuffer reconstruction;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -50,7 +49,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputCIs,
         bool learnEnabled
     );
 
@@ -62,14 +61,15 @@ private:
 
 public:
     float lr;
+    float mr;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.05f)
+    lr(0.1f),
+    mr(0.01f)
     {}
 
-    // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
@@ -77,7 +77,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const ByteBuffer*> &inputs, // Input states
+        const Array<const FloatBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -85,10 +85,10 @@ public:
         const IntBuffer* reconCIs
     );
 
-    const ByteBuffer &getReconstruction(
-        int i
+    const FloatBuffer &getReconstruction(
+        int vli
     ) const {
-        return visibleLayers[i].reconstruction;
+        return visibleLayers[vli].reconstruction;
     }
 
     // Serialization
@@ -109,16 +109,16 @@ public:
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states
