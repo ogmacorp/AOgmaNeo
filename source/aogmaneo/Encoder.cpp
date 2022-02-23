@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -75,15 +75,11 @@ void Encoder::forward(
 
                     float inValue = vl.reconstruction[visibleColumnIndex];
 
-                    for (int hc = 0; hc < hiddenSize.z; hc++) {
-                        int hiddenCellIndex = hc + hiddenCellsStart;
+                    int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                        int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+                    float delta = inValue - vl.protos[wi];
 
-                        float delta = inValue - vl.protos[wi];
-
-                        subSum -= delta * delta;
-                    }
+                    subSum -= delta * delta;
                 }
 
             subSum /= subCount;
@@ -190,7 +186,7 @@ void Encoder::reconstruct(
             if (hiddenPriorities[hiddenColumnIndex] != priority)
                 continue;
 
-            int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+            int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
             Int2 visibleCenter = project(hiddenPos, hToV);
 

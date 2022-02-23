@@ -55,7 +55,6 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-
         int numPriorities;
 
         int eRadius; // Encoder radius
