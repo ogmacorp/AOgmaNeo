@@ -80,7 +80,7 @@ public:
 
     Encoder()
     :
-    lr(0.1f),
+    lr(0.2f),
     decay(0.01f),
     boost(1.0f)
     {}
