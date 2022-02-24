@@ -31,7 +31,6 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer protos;
-        FloatBuffer masks;
 
         FloatBuffer reconstruction;
     };
@@ -40,6 +39,8 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -61,13 +62,11 @@ private:
 
 public:
     float lr;
-    float mr;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.1f),
-    mr(0.01f)
+    lr(0.1f)
     {}
 
     void initRandom(
