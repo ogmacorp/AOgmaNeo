@@ -218,13 +218,11 @@ void Encoder::learn(
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenCellIndex = hc + hiddenCellsStart;
+                int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-                    int wi = targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wi = targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights1[wi] = min(1.0f, max(0.0f, vl.weights1[wi] + lr1 * ((hc == hiddenCIs[hiddenColumnIndex]) - 1.0f / hiddenSize.z)));
-                }
+                vl.weights1[wi] += lr1 * (1.0f - vl.weights1[wi]);
             }
         }
 }
