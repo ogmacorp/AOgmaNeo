@@ -327,7 +327,7 @@ void Encoder::initRandom(
         vl.weights1.resize(vl.weights0.size());
 
         for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = randf(0.0f, 0.01f);
+            vl.weights0[i] = randf(-1.0f, 0.0f);
             vl.weights1[i] = randf(0.0f, 0.01f);
         }
     }
