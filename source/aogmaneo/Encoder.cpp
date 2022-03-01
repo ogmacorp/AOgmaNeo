@@ -181,7 +181,7 @@ void Encoder::learn(
 
         sum /= count;
 
-        float delta = lr0 * ((vc == targetCI) - min(1.0f, max(0.0f, sum)));
+        float delta = lr0 * ((vc == targetCI) - expf(sum));
   
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -327,7 +327,7 @@ void Encoder::initRandom(
         vl.weights1.resize(vl.weights0.size());
 
         for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = randf(0.99f, 1.0f);
+            vl.weights0[i] = randf(0.0f, 0.01f);
             vl.weights1[i] = randf(0.0f, 0.01f);
         }
     }
