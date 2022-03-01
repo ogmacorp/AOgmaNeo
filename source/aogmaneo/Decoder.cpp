@@ -185,7 +185,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float delta = lr0 * ((hc == targetCI) - min(1.0f, max(0.0f, hiddenActivations[hiddenCellIndex])));
+        float delta = lr0 * ((hc == targetCI) - sigmoid(hiddenActivations[hiddenCellIndex]));
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -288,7 +288,7 @@ void Decoder::initRandom(
         vl.weights1.resize(vl.weights0.size());
 
         for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = randf(0.0f, 0.01f);
+            vl.weights0[i] = randf(-0.01f, 0.01f);
             vl.weights1[i] = randf(0.0f, 0.01f);
         }
 
