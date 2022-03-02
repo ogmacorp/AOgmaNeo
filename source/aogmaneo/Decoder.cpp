@@ -269,7 +269,7 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights1[wi] += (vc == inCIPrev ? lr1p * (1.0f - vl.weights1[wi]) : lr1n / vld.size.z * -vl.weights1[wi]);
+                    vl.weights1[wi] += (vc == inCIPrev ? lr1p * (1.0f - vl.weights1[wi]) : lr1n * -vl.weights1[wi]);
                 }
             }
     }
