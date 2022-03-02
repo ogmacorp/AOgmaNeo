@@ -167,8 +167,6 @@ void Decoder::backward(
 
             Int2 visibleCenter = project(hiddenPos, hToV);
 
-            visibleCenter = minOverhang(visibleCenter, Int2(vld.size.x, vld.size.y), vld.radius);
-
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
@@ -180,7 +178,7 @@ void Decoder::backward(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    m = min(m, 1.0f - vl.weights1[wi]);
+                    m *= 1.0f - vl.weights1[wi];
                 }
             }
         }

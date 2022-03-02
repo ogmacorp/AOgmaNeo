@@ -111,7 +111,7 @@ void Encoder::forward(
 
                     int wi = vc + wiStart;
 
-                    m = min(m, 1.0f - vl.weights1[wi]);
+                    m *= 1.0f - vl.weights1[wi];
                 }
             }
     }
