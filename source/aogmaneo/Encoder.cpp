@@ -214,11 +214,13 @@ void Encoder::learn(
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
+                for (int hc = 0; hc < hiddenSize.z; hc++) {
+                    int hiddenCellIndex = hc + hiddenCellsStart;
 
-                int wi = targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                vl.weights1[wi] += lr1 * (1.0f - vl.weights1[wi]);
+                    vl.weights1[wi] += (hc == hiddenCIs[hiddenColumnIndex] ? lr1p : lr1n / hiddenSize.z) * ((hc == hiddenCIs[hiddenColumnIndex]) - vl.weights1[wi]);
+                }
             }
         }
 }
@@ -369,7 +371,7 @@ void Encoder::reconstruct(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -390,7 +392,8 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr0), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&lr1), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&lr1p), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&lr1n), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -420,7 +423,8 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr0), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&lr1), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&lr1p), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&lr1n), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
