@@ -59,6 +59,27 @@ float aon::expf(
 #endif
 }
 
+float aon::logf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::log(x);
+#else
+    if (x <= 0.0f)
+        return -999999.0f;
+
+    float res = 1.0f; // Initial guess
+
+    for (int n = 1; n <= logIters; n++) {
+        float ey = expf(res);
+
+        res += 2.0f * (x - ey) / (x + ey);
+    }
+
+    return res;
+#endif
+}
+
 float aon::sinf(
     float x
 ) {
@@ -107,6 +128,17 @@ float aon::sqrtf(
     u.i = 0x5f3759df - (u.i >> 1);
 
     return x * u.x * (1.5f - 0.5f * x * u.x * u.x);
+#endif
+}
+
+float aon::powf(
+    float x,
+    float y
+) {
+#ifdef USE_STD_MATH
+    return std::pow(x, y);
+#else
+    return expf(y * logf(x));
 #endif
 }
 

@@ -58,7 +58,8 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        bool learnEnabled
     );
 
     void learn(
@@ -81,9 +82,9 @@ public:
 
     Encoder()
     :
-    lr0(0.2f),
-    lr1(0.01f),
-    vigilance(0.95f)
+    lr0(0.1f),
+    lr1(0.001f),
+    vigilance(8.0f)
     {}
 
     // Create a sparse coding layer with random initialization
