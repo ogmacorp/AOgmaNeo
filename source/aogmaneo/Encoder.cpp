@@ -228,7 +228,7 @@ void Encoder::learn(
 
     sum /= count;
     
-    if (sum >= vigilance) {
+    if (sum >= (1.0f - vigilance)) {
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 Int2 hiddenPos = Int2(ix, iy);

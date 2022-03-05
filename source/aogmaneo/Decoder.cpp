@@ -277,7 +277,7 @@ void Decoder::learn(
     
     sum /= count;
 
-    if (sum >= vigilance) {
+    if (sum >= (1.0f - vigilance)) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
