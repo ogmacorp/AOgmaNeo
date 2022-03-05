@@ -76,14 +76,14 @@ private:
 
 public:
     float lr0;
-    float lr1p;
-    float lr1n;
+    float lr1;
+    float vigilance;
 
     Encoder()
     :
     lr0(0.2f),
-    lr1p(0.01f),
-    lr1n(0.001f)
+    lr1(0.01f),
+    vigilance(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
