@@ -471,6 +471,9 @@ void Actor::initRandom(
         VisibleLayer &vl = visibleLayers[vli];
         VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
 
+        int numVisibleColumns = vld.size.x * vld.size.y;
+        int numVisibleCells = numVisibleColumns * vld.size.z;
+
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
@@ -489,6 +492,8 @@ void Actor::initRandom(
 
         for (int i = 0; i < vl.weights1.size(); i++)
             vl.weights1[i] = randf(0.0f, 0.0001f);
+
+        vl.gates = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -721,6 +726,9 @@ void Actor::read(
 
         reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
+        int numVisibleColumns = vld.size.x * vld.size.y;
+        int numVisibleCells = numVisibleColumns * vld.size.z;
+
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
@@ -731,6 +739,8 @@ void Actor::read(
         reader.read(reinterpret_cast<void*>(&vl.valueWeights[0]), vl.valueWeights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.actionWeights[0]), vl.actionWeights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(float));
+
+        vl.gates = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
     reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
