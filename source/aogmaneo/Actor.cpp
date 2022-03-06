@@ -620,6 +620,10 @@ void Actor::step(
                 backward(Int2(i / vld.size.y, i % vld.size.y), vli);
         }
 
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            learn1(Int2(i / hiddenSize.y, i % hiddenSize.y));
+
         for (int it = 0; it < historyIters; it++) {
             int t = rand() % (historySize - minSteps) + minSteps;
 
