@@ -451,6 +451,55 @@ void Actor::learn(
     }
 }
 
+void Actor::learn1(
+    const Int2 &columnPos
+) {
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
+    int targetCI = historySamples[0].hiddenTargetCIsPrev[hiddenColumnIndex];
+
+    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        int diam = vld.radius * 2 + 1;
+
+        // Projection
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+        Int2 visibleCenter = project(columnPos, hToV);
+
+        // Lower corner
+        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+        // Bounds of receptive field, clamped to input size
+        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                int inCIPrev = historySamples[1].inputCIs[vli][visibleColumnIndex];
+
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int wi = vc + wiStart;
+
+                    vl.weights1[wi] += lr1 * ((vc == inCIPrev) - vl.weights1[wi]);
+                }
+            }
+    }
+}
+
 void Actor::initRandom(
     const Int3 &hiddenSize,
     int historyCapacity,

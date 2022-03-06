@@ -84,6 +84,10 @@ private:
         bool mimic
     );
 
+    void learn1( // For weights1 (rememberance weights)
+        const Int2 &columnPos
+    );
+
 public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
