@@ -84,7 +84,7 @@ public:
     :
     lr0(0.2f),
     lr1(0.01f),
-    rememberance(12.0f)
+    rememberance(10.0f)
     {}
 
     // Create a sparse coding layer with random initialization
