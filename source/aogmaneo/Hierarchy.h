@@ -201,7 +201,7 @@ public:
         if (ioTypes[i] == action)
             return aLayers[dIndices[i]].getHiddenCIs();
 
-        return dLayers[0][dIndices[i]].getOutputCIs();
+        return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
     // Whether this layer received on update this timestep
