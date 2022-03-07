@@ -187,7 +187,7 @@ void Encoder::learn(
 
         sum /= count;
 
-        float delta = lr0 * ((vc == targetCI) - expf(sum - 1.0f));
+        float delta = lr0 * ((vc == targetCI) - sum);
   
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -226,7 +226,7 @@ void Encoder::learn(
 
                 int wi = targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                vl.weights1[wi] += lr1 * ((vl.weights0[wi] > 0.0f) - vl.weights1[wi]);
+                vl.weights1[wi] += lr1 * ((vl.weights0[wi] > 0.5f) - vl.weights1[wi]);
             }
         }
 }
