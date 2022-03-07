@@ -27,6 +27,8 @@ void Decoder::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
+        float total2 = 0.0f;
+        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -47,6 +49,8 @@ void Decoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
+            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
@@ -57,18 +61,17 @@ void Decoder::forward(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += logf(max(0.0001f, vl.protos[inCI + wiStart]));
+                    sum += vl.protos[inCI + wiStart];
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        if (vc == inCI)
-                            continue;
-
                         int wi = vc + wiStart;
 
-                        sum += logf(max(0.0001f, 1.0f - vl.protos[wi]));
+                        total2 += vl.protos[wi] * vl.protos[wi];
                     }
                 }
         }
+
+        sum /= max(0.0001f, sqrtf(total2));
 
         hiddenActivations[hiddenCellIndex] = sum;
 
