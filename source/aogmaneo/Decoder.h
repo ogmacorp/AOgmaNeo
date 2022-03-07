@@ -30,20 +30,19 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights0;
-        FloatBuffer weights1;
+        FloatBuffer weights;
+        FloatBuffer protos;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-
-        FloatBuffer gates;
     };
 
 private:
-    Int3 hiddenSize; // Size of the output/hidden/prediction
+    Int3 outputSize; // Size of the output/hidden/prediction
+    int numDendrites;
 
     FloatBuffer hiddenActivations;
 
-    IntBuffer hiddenCIs; // Hidden state
+    IntBuffer outputCIs;
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -56,31 +55,26 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void backward(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        int vli
-    );
-
     void learn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
     );
 
 public:
-    float lr0; // Learning rate
-    float lr1;
+    float lr; // Learning rate
+    float boost;
 
     // Defaults
     Decoder()
     :
-    lr0(1.0f),
-    lr1(0.01f)
+    lr(0.1f),
+    boost(0.01f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Int3 &outputSize, // Hidden/output/prediction size
+        int numDendrites,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
@@ -141,13 +135,13 @@ public:
     }
 
     // Get the hidden activations (predictions)
-    const IntBuffer &getHiddenCIs() const {
-        return hiddenCIs;
+    const IntBuffer &getOutputCIs() const {
+        return outputCIs;
     }
 
     // Get the hidden size
-    const Int3 &getHiddenSize() const {
-        return hiddenSize;
+    const Int3 &getOutputSize() const {
+        return outputSize;
     }
 };
 } // Namespace aon
