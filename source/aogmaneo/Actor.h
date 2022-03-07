@@ -73,6 +73,7 @@ private:
 
     void backward(
         const Int2 &columnPos,
+        int t,
         int vli
     );
 
@@ -92,7 +93,6 @@ public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
     float lr1;
-    float rememberance;
     float discount; // Discount factor
     float temperature; // Exploration amount
     int minSteps; // Minimum steps before sample can be used
@@ -102,11 +102,10 @@ public:
     Actor()
     :
     vlr(0.01f),
-    alr(0.01f),
+    alr(0.5f),
     lr1(0.01f),
-    rememberance(12.0f),
     discount(0.99f),
-    temperature(1.0f),
+    temperature(0.1f),
     minSteps(8),
     historyIters(16)
     {}

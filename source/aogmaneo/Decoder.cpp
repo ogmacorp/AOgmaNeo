@@ -179,7 +179,7 @@ void Decoder::backward(
             }
         }
 
-    vl.gates[visibleColumnIndex] = powf(1.0f - m, rememberance);
+    vl.gates[visibleColumnIndex] = 1.0f - m;
 }
 
 void Decoder::learn(
@@ -260,13 +260,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+                int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wiStart;
-
-                    vl.weights1[wi] += lr1 * ((vc == inCIPrev) - vl.weights1[wi]);
-                }
+                vl.weights1[wi] += lr1 * (1.0f - vl.weights1[wi]);
             }
     }
 }
@@ -355,7 +351,7 @@ void Decoder::learn(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -386,7 +382,6 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr0), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr1), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&rememberance), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -418,7 +413,6 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr0), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr1), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&rememberance), sizeof(float));
 
     hiddenActivations.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
