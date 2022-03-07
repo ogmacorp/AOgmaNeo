@@ -530,14 +530,12 @@ void Actor::initRandom(
             vl.valueWeights[i] = randf(-0.01f, 0.01f);
 
         vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
-
-        for (int i = 0; i < vl.actionWeights.size(); i++)
-            vl.actionWeights[i] = randf(-0.01f, 0.01f);
-
         vl.weights1.resize(vl.actionWeights.size());
 
-        for (int i = 0; i < vl.weights1.size(); i++)
+        for (int i = 0; i < vl.actionWeights.size(); i++) {
+            vl.actionWeights[i] = randf(-0.01f, 0.01f);
             vl.weights1[i] = randf(0.0f, 0.0001f);
+        }
 
         vl.gates = FloatBuffer(numVisibleColumns, 0.0f);
     }
