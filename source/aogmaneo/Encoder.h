@@ -33,6 +33,8 @@ public:
         FloatBuffer weights0;
         FloatBuffer weights1;
 
+        FloatBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -79,7 +81,7 @@ public:
 
     Encoder()
     :
-    lr0(0.01f),
+    lr0(0.2f),
     lr1(0.01f)
     {}
 
