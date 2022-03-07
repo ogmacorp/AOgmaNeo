@@ -262,8 +262,7 @@ void Decoder::learn(
 
                 int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                if (vl.weights0[wi] > 0.0f)
-                    vl.weights1[wi] += lr1 * (1.0f - vl.weights1[wi]);
+                vl.weights1[wi] += lr1 * ((vl.weights0[wi] > 0.0f) - vl.weights1[wi]);
             }
     }
 }
