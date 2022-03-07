@@ -77,7 +77,7 @@ public:
     :
     lr0(2.0f),
     lr1(0.01f),
-    rememberance(10.0f)
+    rememberance(16.0f)
     {}
 
     // Create with random initialization
