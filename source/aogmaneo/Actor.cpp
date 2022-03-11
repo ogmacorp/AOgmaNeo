@@ -232,12 +232,12 @@ void Actor::backward(
 
             int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-            int targetCI = historySamples[t - 1].hiddenTargetCIsPrev[hiddenColumnIndex];
-
             Int2 visibleCenter = project(hiddenPos, hToV);
 
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                int targetCI = historySamples[t - 1].hiddenTargetCIsPrev[hiddenColumnIndex];
 
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
                     if (hc == targetCI)
@@ -252,7 +252,7 @@ void Actor::backward(
             }
         }
 
-    vl.gates[visibleColumnIndex] = max(0.0f, 1.0f - rememberance - m) / (1.0f - rememberance);
+    vl.gates[visibleColumnIndex] = 1.0f - m;
 }
 
 void Actor::learn(
@@ -646,7 +646,7 @@ void Actor::step(
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 6 * sizeof(float) + 2 * sizeof(int) + sizeof(Byte) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 5 * sizeof(float) + 2 * sizeof(int) + sizeof(Byte) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -696,7 +696,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&vlr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&alr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr1), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&rememberance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
@@ -753,7 +752,6 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&vlr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&alr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr1), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&rememberance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));

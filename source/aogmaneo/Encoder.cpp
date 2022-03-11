@@ -107,7 +107,7 @@ void Encoder::forward(
                 int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
-
+                
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     if (vc == inCI)
                         continue;
@@ -119,7 +119,7 @@ void Encoder::forward(
             }
     }
 
-    hiddenGates[hiddenColumnIndex] = max(0.0f, 1.0f - rememberance - m) / (1.0f - rememberance);
+    hiddenGates[hiddenColumnIndex] = 1.0f - m;
 }
 
 void Encoder::learn(
@@ -240,7 +240,7 @@ void Encoder::learn(
 
                     int wi = targetCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights1[wi] += lr1 * ((hc == hiddenCIs[hiddenColumnIndex]) - vl.weights1[wi]);
+                    vl.weights1[wi] = min(1.0f, max(0.0f, vl.weights1[wi] + lr1 * ((hc == hiddenCIs[hiddenColumnIndex]) - 1.0f / hiddenSize.z)));
                 }
             }
         }
@@ -311,7 +311,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -333,7 +333,6 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr0), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr1), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&rememberance), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -364,7 +363,6 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr0), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr1), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&rememberance), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
