@@ -490,9 +490,13 @@ void Actor::learn1(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                vl.weights1[wi] += lr1 * (1.0f - vl.weights1[wi]);
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int wi = vc + wiStart;
+
+                    vl.weights1[wi] += lr1 * ((vc == inCIPrev) - vl.weights1[wi]);
+                }
             }
     }
 }
