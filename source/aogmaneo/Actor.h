@@ -90,7 +90,7 @@ public:
     :
     vlr(0.01f),
     alr(0.01f),
-    rememberance(0.01f),
+    rememberance(8.0f),
     discount(0.99f),
     temperature(1.0f),
     minSteps(8),
