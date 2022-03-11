@@ -119,7 +119,7 @@ void Encoder::forward(
             }
     }
 
-    hiddenGates[hiddenColumnIndex] = powf(1.0f - m, rememberance);
+    hiddenGates[hiddenColumnIndex] = max(0.0f, 1.0f - rememberance - m) / (1.0f - rememberance);
 }
 
 void Encoder::learn(

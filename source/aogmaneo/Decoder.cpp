@@ -179,7 +179,7 @@ void Decoder::backward(
             }
         }
 
-    vl.gates[visibleColumnIndex] = powf(1.0f - m, rememberance);
+    vl.gates[visibleColumnIndex] = max(0.0f, 1.0f - rememberance - m) / (1.0f - rememberance);
 }
 
 void Decoder::learn(
