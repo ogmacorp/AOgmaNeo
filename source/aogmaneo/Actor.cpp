@@ -495,7 +495,7 @@ void Actor::learn1(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights1[wi] += lr1 * ((vc == inCIPrev) - vl.weights1[wi]);
+                    vl.weights1[wi] = min(1.0f, max(0.0f, vl.weights1[wi] + lr1 * ((vc == inCIPrev) - 1.0f / vld.size.z)));
                 }
             }
     }
