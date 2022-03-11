@@ -351,7 +351,7 @@ void Encoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenGates = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenGates = FloatBuffer(numHiddenColumns, 0.0f);
 }
 
 void Encoder::step(
@@ -449,7 +449,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
-    hiddenGates = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenGates = FloatBuffer(numHiddenColumns, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
