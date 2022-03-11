@@ -33,9 +33,9 @@ public:
         FloatBuffer weights0;
         FloatBuffer weights1;
 
-        FloatBuffer reconstruction;
-
         float importance;
+
+        FloatBuffer reconstruction;
 
         VisibleLayer()
         :
@@ -68,13 +68,6 @@ private:
         int vli
     );
 
-    void reconstruct(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
-    );
-
 public:
     float lr0;
     float lr1;
@@ -96,12 +89,6 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
-    );
-
-    void reconstruct(
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
     );
 
     // Serialization
