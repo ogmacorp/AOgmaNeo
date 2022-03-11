@@ -345,6 +345,8 @@ void Actor::learn(
         hiddenActivations[hiddenCellIndex] *= scale;
     }
 
+    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -379,9 +381,8 @@ void Actor::learn(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float gate = expf(-rememberance * vl.actionWeights[wi] * vl.actionWeights[wi]);
-
-                    vl.actionWeights[wi] += deltaAction * gate;
+                    vl.actionWeights[wi] += deltaAction * vl.rates[wi];
+                    vl.rates[wi] *= 1.0f - decay * hiddenActivations[hiddenCellIndexTarget];
                 }
         }
     }
@@ -423,6 +424,8 @@ void Actor::initRandom(
 
         for (int i = 0; i < vl.actionWeights.size(); i++)
             vl.actionWeights[i] = randf(-0.01f, 0.01f);
+
+        vl.rates = FloatBuffer(vl.actionWeights.size(), 1.0f);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -560,7 +563,7 @@ void Actor::write(
 
     writer.write(reinterpret_cast<const void*>(&vlr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&alr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&rememberance), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&decay), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
@@ -615,7 +618,7 @@ void Actor::read(
     
     reader.read(reinterpret_cast<void*>(&vlr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&alr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&rememberance), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&decay), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));

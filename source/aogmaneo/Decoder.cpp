@@ -163,9 +163,8 @@ void Decoder::learn(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float gate = expf(-rememberance * vl.weights[wi] * vl.weights[wi]);
-
-                    vl.weights[wi] += delta * gate;
+                    vl.weights[wi] += delta * vl.rates[wi];
+                    vl.rates[wi] *= 1.0f - decay * hiddenActivations[hiddenCellIndexTarget];
                 }
         }
     }
@@ -200,6 +199,8 @@ void Decoder::initRandom(
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(-0.01f, 0.01f);
+
+        vl.rates = FloatBuffer(vl.weights.size(), 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -270,7 +271,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&rememberance), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&decay), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -300,7 +301,7 @@ void Decoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&rememberance), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&decay), sizeof(float));
 
     hiddenActivations.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
