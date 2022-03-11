@@ -492,7 +492,7 @@ void Actor::learn1(
 
                 int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                vl.weights1[wi] += lr1 * ((vl.actionWeights[wi] > 0.0f) - vl.weights1[wi]);
+                vl.weights1[wi] += lr1 * (1.0f - vl.weights1[wi]);
             }
     }
 }
