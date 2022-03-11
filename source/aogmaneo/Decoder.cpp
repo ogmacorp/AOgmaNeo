@@ -127,7 +127,7 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
+    float mult = (hiddenCIs[hiddenColumnIndex] == targetCI ? 1.0f - decay : 1.0f + decay);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -164,7 +164,8 @@ void Decoder::learn(
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     vl.weights[wi] += delta * vl.rates[wi];
-                    vl.rates[wi] *= 1.0f - decay * hiddenActivations[hiddenCellIndexTarget];
+
+                    vl.rates[wi] = min(1.0f, vl.rates[wi] * mult);
                 }
         }
     }
