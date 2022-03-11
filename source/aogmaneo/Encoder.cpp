@@ -62,6 +62,8 @@ void Encoder::forward(
                     subSum += vl.weights0[wi];
                 }
 
+            sum /= subCount;
+
             sum += subSum * vl.importance;
         }
 
