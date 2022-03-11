@@ -119,7 +119,7 @@ void Encoder::forward(
             }
     }
 
-    hiddenGates[hiddenColumnIndex] = 1.0f - m;
+    hiddenGates[hiddenColumnIndex] = powf(1.0f - m, rememberance);
 }
 
 void Encoder::learn(
@@ -394,7 +394,7 @@ void Encoder::reconstruct(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -416,6 +416,7 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr0), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr1), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&rememberance), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -446,6 +447,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr0), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr1), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&rememberance), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
