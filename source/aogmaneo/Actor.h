@@ -102,10 +102,10 @@ public:
     Actor()
     :
     vlr(0.01f),
-    alr(0.5f),
+    alr(0.01f),
     lr1(0.01f),
     discount(0.99f),
-    temperature(0.1f),
+    temperature(1.0f),
     minSteps(8),
     historyIters(16)
     {}
