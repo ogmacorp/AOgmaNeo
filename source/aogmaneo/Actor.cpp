@@ -611,6 +611,20 @@ void Actor::step(
             for (int i = 0; i < numHiddenColumns; i++)
                 learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, q, g, mimic);
         }
+
+        // Compute (partial) values, rest is completed in the kernel
+        float q = 0.0f;
+        float g = 1.0f;
+
+        for (int t2 = historySize - 2; t2 >= 0; t2--) {
+            q += historySamples[t2].reward * g;
+
+            g *= discount;
+        }
+
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            learn1(Int2(i / hiddenSize.y, i % hiddenSize.y), q, g);
     }
 }
 
