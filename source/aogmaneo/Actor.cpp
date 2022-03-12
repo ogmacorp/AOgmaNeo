@@ -334,7 +334,7 @@ void Actor::learn(
 
                 int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
 
-                vl.valueWeights[wi] += deltaValue;// * vl.gates[visibleColumnIndex];
+                vl.valueWeights[wi] += deltaValue * vl.gates[visibleColumnIndex];
             }
     }
 
@@ -441,7 +441,7 @@ void Actor::learn(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.actionWeights[wi] += deltaAction;// * vl.gates[visibleColumnIndex];
+                    vl.actionWeights[wi] += deltaAction * vl.gates[visibleColumnIndex];
                 }
         }
     }
