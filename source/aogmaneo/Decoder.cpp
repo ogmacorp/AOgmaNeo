@@ -117,6 +117,62 @@ void Decoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
+void Decoder::backward(
+    const Int2 &columnPos,
+    const IntBuffer* hiddenTargetCIs,
+    int vli
+) {
+    VisibleLayer &vl = visibleLayers[vli];
+    VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+    int diam = vld.radius * 2 + 1;
+
+    int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
+
+    int visibleCellsStart = visibleColumnIndex * vld.size.z;
+
+    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+
+    // Projection
+    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
+        static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
+
+    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
+
+    Int2 hiddenCenter = project(columnPos, vToH);
+
+    // Lower corner
+    Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
+
+    // Bounds of receptive field, clamped to input size
+    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+    Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
+
+    float m = 1.0f;
+
+    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+            Int2 hiddenPos = Int2(ix, iy);
+
+            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+
+            Int2 visibleCenter = project(hiddenPos, hToV);
+
+            if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
+
+                m = min(m, vl.rates[wi]);
+            }
+        }
+
+    vl.gates[visibleColumnIndex] = m;
+}
+
 void Decoder::learn(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs
@@ -160,9 +216,8 @@ void Decoder::learn(
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-                    int wiRate = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
 
-                    vl.weights[wi] += delta * vl.rates[wiRate];
+                    vl.weights[wi] += delta * vl.gates[visibleColumnIndex];
                 }
         }
     }
@@ -236,6 +291,8 @@ void Decoder::initRandom(
         vl.rates = FloatBuffer(numHiddenColumns * area * vld.size.z, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
+
+        vl.gates = FloatBuffer(numVisibleColumns, 1.0f);
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
@@ -266,6 +323,16 @@ void Decoder::learn(
     const IntBuffer* hiddenTargetCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        int numVisibleColumns = vld.size.x * vld.size.y;
+    
+        #pragma omp parallel for
+        for (int i = 0; i < numVisibleColumns; i++)
+            backward(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, vli);
+    }
     
     // Learn kernel
     #pragma omp parallel for
@@ -371,6 +438,8 @@ void Decoder::read(
         vl.inputCIsPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
+
+        vl.gates = FloatBuffer(numVisibleColumns, 1.0f);
     }
 }
 

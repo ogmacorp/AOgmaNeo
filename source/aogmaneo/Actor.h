@@ -33,6 +33,8 @@ public:
         FloatBuffer valueWeights; // Value function weights
         FloatBuffer actionWeights; // Action function weights
         FloatBuffer rates;
+
+        FloatBuffer gates;
     };
 
     // History sample for delayed updates
@@ -67,6 +69,12 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         unsigned int* state
+    );
+
+    void backward(
+        const Int2 &columnPos,
+        int t,
+        int vli
     );
 
     void learn(

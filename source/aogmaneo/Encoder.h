@@ -48,6 +48,8 @@ private:
 
     IntBuffer hiddenCIs;
 
+    FloatBuffer hiddenGates;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -55,6 +57,11 @@ private:
     // --- Kernels ---
     
     void forward(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void backward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );

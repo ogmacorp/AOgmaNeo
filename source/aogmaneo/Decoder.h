@@ -34,6 +34,8 @@ public:
         FloatBuffer rates;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
+
+        FloatBuffer gates;
     };
 
 private:
@@ -52,6 +54,12 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
+    );
+
+    void backward(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs,
+        int vli
     );
 
     void learn(
