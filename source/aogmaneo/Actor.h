@@ -95,11 +95,11 @@ public:
     // Defaults
     Actor()
     :
-    vlr(0.05f),
-    alr(0.05f),
+    vlr(0.01f),
+    alr(0.01f),
     decay(0.005f),
     discount(0.99f),
-    temperature(0.1f),
+    temperature(1.0f),
     minSteps(8),
     historyIters(16)
     {}
