@@ -334,7 +334,7 @@ void Actor::learn(
 
                 int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
 
-                vl.valueWeights[wi] += deltaValue * vl.rates[wi];
+                vl.valueWeights[wi] += deltaValue * vl.gates[visibleColumnIndex];
             }
     }
 
