@@ -279,7 +279,7 @@ void Actor::learn(
                 int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
                 int wiTarget = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                vl.valueWeights[wi] += deltaValue;
+                vl.valueWeights[wi] += deltaValue * vl.rates[wiTarget];
             }
     }
 
@@ -352,12 +352,12 @@ void Actor::learn(
         hiddenActivations[hiddenCellIndex] *= scale;
     }
 
-    float mult = (maxIndex == targetCI ? 1.0f - decay : 1.0f + decay);
+    float mult = (tdErrorValue > 0.0f ? 1.0f - decay : 1.0f + decay);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float deltaAction = (mimic ? alr : alr * tanh(tdErrorValue)) * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        float deltaAction = (mimic || tdErrorValue > 0.0f ? alr : 0.0f) * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -388,7 +388,7 @@ void Actor::learn(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.actionWeights[wi] += deltaAction;// * vl.rates[wi];
+                    vl.actionWeights[wi] += deltaAction * vl.rates[wi];
                     vl.rates[wi] = min(1.0f, vl.rates[wi] * mult);
                 }
         }

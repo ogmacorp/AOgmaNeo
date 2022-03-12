@@ -89,8 +89,8 @@ public:
     // Defaults
     Actor()
     :
-    vlr(0.01f),
-    alr(0.01f),
+    vlr(0.1f),
+    alr(0.5f),
     decay(0.005f),
     discount(0.99f),
     temperature(1.0f),
