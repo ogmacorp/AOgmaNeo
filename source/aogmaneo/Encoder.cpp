@@ -112,11 +112,9 @@ void Encoder::backward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int inCI = (*inputCIs[vli])[visibleColumnIndex];
-
                 int wi = offset.y + diam * (offset.x + diam * hiddenCellIndexMax);
 
-                m = max(m, vl.rates[wi]);
+                m = min(m, vl.rates[wi]);
             }
     }
 
