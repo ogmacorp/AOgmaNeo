@@ -351,8 +351,6 @@ void Actor::learn(
         hiddenActivations[hiddenCellIndex] *= scale;
     }
 
-    float mult = (tdErrorValue > 0.0f ? 1.0f - decay : 1.0f + decay);
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
