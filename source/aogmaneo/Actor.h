@@ -97,7 +97,7 @@ public:
     :
     vlr(0.01f),
     alr(0.01f),
-    decay(0.001f),
+    decay(0.003f),
     discount(0.99f),
     temperature(1.0f),
     minSteps(8),
