@@ -86,9 +86,7 @@ private:
     );
 
     void learn1(
-        const Int2 &columnPos,
-        float q,
-        float g
+        const Int2 &columnPos
     );
 
 public:
