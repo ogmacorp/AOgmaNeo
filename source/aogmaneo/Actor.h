@@ -85,10 +85,6 @@ private:
         bool mimic
     );
 
-    void learn1(
-        const Int2 &columnPos
-    );
-
 public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
@@ -107,7 +103,7 @@ public:
     discount(0.99f),
     temperature(1.0f),
     minSteps(8),
-    historyIters(16)
+    historyIters(8)
     {}
 
     // Initialized randomly
