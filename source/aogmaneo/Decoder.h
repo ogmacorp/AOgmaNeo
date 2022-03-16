@@ -34,6 +34,11 @@ public:
     struct VisibleLayer {
         FloatBuffer iWeights; // Input
         FloatBuffer fbWeights; // Feedback
+        FloatBuffer iRates;
+        FloatBuffer fbRates;
+
+        FloatBuffer iGates;
+        FloatBuffer fbGates;
     };
 
     struct HistorySample {
@@ -65,6 +70,12 @@ private:
         const IntBuffer* feedBackCIs
     );
 
+    void backward(
+        const Int2 &columnPos,
+        int t1,
+        int t2
+    );
+
     void learn(
         const Int2 &columnPos,
         int t1,
@@ -74,6 +85,7 @@ private:
 
 public:
     float lr; // Learning rate
+    float decay;
     float discount; // Discount factor
     int historyIters;
     int maxSteps;
@@ -82,6 +94,7 @@ public:
     Decoder()
     :
     lr(1.0f),
+    decay(0.002f),
     discount(0.9f),
     historyIters(4),
     maxSteps(16)
