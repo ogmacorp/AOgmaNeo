@@ -338,6 +338,8 @@ void Decoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
+    int numVisibleColumns = visibleLayerDesc.size.x * visibleLayerDesc.size.y;
+
     if (stateUpdate) {
         history.pushFront();
 
@@ -361,6 +363,10 @@ void Decoder::step(
 
                 for (int p = 0; p < power; p++)
                     modulation *= discount;
+                
+                #pragma omp parallel for
+                for (int i = 0; i < numVisibleColumns; i++)
+                    backward(Int2(i / visibleLayerDesc.size.y, i % visibleLayerDesc.size.y), t1, t2);
 
                 // Learn under goal
                 #pragma omp parallel for
