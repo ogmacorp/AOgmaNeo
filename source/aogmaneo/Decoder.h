@@ -96,8 +96,8 @@ public:
     lr(1.0f),
     decay(0.002f),
     discount(0.9f),
-    historyIters(4),
-    maxSteps(16)
+    historyIters(8),
+    maxSteps(8)
     {}
 
     // Create with random initialization
