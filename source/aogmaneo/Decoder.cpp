@@ -192,36 +192,12 @@ void Decoder::learn(
 
         sum /= count;
 
-        hiddenActivations[hiddenCellIndex] = sum;
-
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
-    }
 
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActivations[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] *= scale;
-    }
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        float delta = lr * modulation * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        float delta = lr * modulation * ((hc == targetCI) - sigmoid(sum));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -311,8 +287,6 @@ void Decoder::initRandom(
 
     visibleLayer.iGates = FloatBuffer(numVisibleColumns, 1.0f);
     visibleLayer.fbGates = FloatBuffer(numVisibleColumns, 1.0f);
-
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -455,8 +429,6 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
     reader.read(reinterpret_cast<void*>(&maxSteps), sizeof(int));
-
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
 

@@ -51,7 +51,6 @@ private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
     Byte hasFeedBack;
 
-    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
