@@ -446,7 +446,7 @@ void Actor::learn(
         }
     }
 
-    float mult = (tdErrorValue > 0.0f ? 1.0f - decay / historyIters : 1.0f + decay / historyIters);
+    float mult = (maxIndex == targetCI ? 1.0f - decay / historyIters : 1.0f + decay / historyIters);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
