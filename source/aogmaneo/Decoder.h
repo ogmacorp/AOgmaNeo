@@ -93,7 +93,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.5f),
+    lr(1.0f),
     decay(0.002f),
     discount(0.9f),
     historyIters(8),
