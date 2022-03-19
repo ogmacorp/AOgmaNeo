@@ -471,7 +471,7 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int inCI = historySamples[historySize - 1].inputCIs[vli][visibleColumnIndex];
+                int inCI = historySamples[t].inputCIs[vli][visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
