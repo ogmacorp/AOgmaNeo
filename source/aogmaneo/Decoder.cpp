@@ -247,7 +247,7 @@ void Decoder::learn(
 
     int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
-    float mult = (maxIndex == targetCI ? 1.0f - decay : 1.0f + decay);
+    float mult = (maxIndex == targetCI ? 1.0f - decay / historyIters : 1.0f + decay / historyIters);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {

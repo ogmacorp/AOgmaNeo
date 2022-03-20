@@ -21,6 +21,7 @@ endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 add_compile_definitions(USE_OMP)
+add_compile_definitions(USE_STD_MATH)
 
 include_directories("${PROJECT_SOURCE_DIR}/source")
 
