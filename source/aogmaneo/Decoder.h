@@ -96,7 +96,7 @@ public:
     lr(0.2f),
     decay(0.002f),
     discount(0.9f),
-    historyIters(8),
+    historyIters(16),
     maxSteps(16)
     {}
 
