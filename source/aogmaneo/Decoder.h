@@ -36,12 +36,12 @@ public:
     };
 
 private:
-    Int3 outputSize; // Size of the output/hidden/prediction
+    Int3 hiddenSize; // Size of the hidden/hidden/prediction
     int numDendrites;
 
     FloatBuffer hiddenActivations;
 
-    IntBuffer outputCIs;
+    IntBuffer hiddenCIs;
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -66,13 +66,13 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.001f),
-    boost(0.0001f)
+    lr(0.01f),
+    boost(0.001f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &outputSize, // Hidden/output/prediction size
+        const Int3 &hiddenSize, // Hidden/hidden/prediction size
         int numDendrites,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
@@ -134,13 +134,13 @@ public:
     }
 
     // Get the hidden activations (predictions)
-    const IntBuffer &getOutputCIs() const {
-        return outputCIs;
+    const IntBuffer &getHiddenCIs() const {
+        return hiddenCIs;
     }
 
     // Get the hidden size
-    const Int3 &getOutputSize() const {
-        return outputSize;
+    const Int3 &getHiddenSize() const {
+        return hiddenSize;
     }
 };
 } // Namespace aon
