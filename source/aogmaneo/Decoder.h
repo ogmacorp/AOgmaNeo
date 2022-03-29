@@ -93,11 +93,11 @@ public:
     // Defaults
     Decoder()
     :
-    lr(1.0f),
+    lr(0.2f),
     decay(0.002f),
     discount(0.9f),
     historyIters(16),
-    maxSteps(16)
+    maxSteps(8)
     {}
 
     // Create with random initialization
