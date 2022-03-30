@@ -331,43 +331,46 @@ void Decoder::step(
     const IntBuffer* inputCIs,
     const IntBuffer* feedBackCIs,
     const IntBuffer* hiddenTargetCIs,
-    bool learnEnabled
+    bool learnEnabled,
+    bool stateUpdate
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
-    int numVisibleColumns = visibleLayerDesc.size.x * visibleLayerDesc.size.y;
+    if (stateUpdate) {
+        int numVisibleColumns = visibleLayerDesc.size.x * visibleLayerDesc.size.y;
 
-    history.pushFront();
+        history.pushFront();
 
-    // If not at cap, increment
-    if (historySize < history.size())
-        historySize++;
+        // If not at cap, increment
+        if (historySize < history.size())
+            historySize++;
 
-    history[0].actualCIs = *actualCIs;
-    history[0].inputCIs = *inputCIs;
-    history[0].hiddenTargetCIs = *hiddenTargetCIs;
+        history[0].actualCIs = *actualCIs;
+        history[0].inputCIs = *inputCIs;
+        history[0].hiddenTargetCIs = *hiddenTargetCIs;
 
-    if (learnEnabled && historySize > maxSteps + 1) {
-        for (int it = 0; it < historyIters; it++) {
-            int t1 = rand() % (historySize - 1 - maxSteps) + maxSteps + 1;
+        if (learnEnabled && historySize > maxSteps + 1) {
+            for (int it = 0; it < historyIters; it++) {
+                int t1 = rand() % (historySize - 1 - maxSteps) + maxSteps + 1;
 
-            int t2 = t1 - 1 - (rand() % maxSteps);
+                int t2 = t1 - 1 - (rand() % maxSteps);
 
-            int power = t1 - 1 - t2;
+                int power = t1 - 1 - t2;
 
-            float modulation = 1.0f;
+                float modulation = 1.0f;
 
-            for (int p = 0; p < power; p++)
-                modulation *= discount;
-            
-            #pragma omp parallel for
-            for (int i = 0; i < numVisibleColumns; i++)
-                backward(Int2(i / visibleLayerDesc.size.y, i % visibleLayerDesc.size.y), t1, t2);
+                for (int p = 0; p < power; p++)
+                    modulation *= discount;
+                
+                #pragma omp parallel for
+                for (int i = 0; i < numVisibleColumns; i++)
+                    backward(Int2(i / visibleLayerDesc.size.y, i % visibleLayerDesc.size.y), t1, t2);
 
-            // Learn under goal
-            #pragma omp parallel for
-            for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, modulation);
+                // Learn under goal
+                #pragma omp parallel for
+                for (int i = 0; i < numHiddenColumns; i++)
+                    learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, modulation);
+            }
         }
     }
 
