@@ -36,7 +36,7 @@ public:
         type(prediction),
         eRadius(2),
         dRadius(2),
-        historyCapacity(32)
+        historyCapacity(64)
         {}
 
         IODesc(
@@ -74,7 +74,7 @@ public:
         gHiddenSizeZ(16),
         eRadius(2),
         dRadius(2),
-        historyCapacity(32),
+        historyCapacity(64),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
