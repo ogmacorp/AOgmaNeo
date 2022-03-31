@@ -81,7 +81,7 @@ public:
     lr(0.2f),
     decay(0.002f),
     eta(0.01f),
-    boost(0.1f)
+    boost(0.4f)
     {}
 
     // Create a sparse coding layer with random initialization
