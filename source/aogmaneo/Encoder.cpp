@@ -276,7 +276,7 @@ void Encoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenMeans = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenMeans = FloatBuffer(numHiddenCells, 1.0f / hiddenSize.z);
 
     hiddenGates = FloatBuffer(numHiddenColumns, 1.0f);
 }
