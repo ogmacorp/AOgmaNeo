@@ -67,7 +67,7 @@ void Encoder::forward(
             sum += subSum * vl.importance;
         }
 
-        hiddenMeans[hiddenCellIndex] += decay * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenMeans[hiddenCellIndex]);
+        hiddenMeans[hiddenCellIndex] += eta * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenMeans[hiddenCellIndex]);
 
         float activation = sigmoid(sum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
 
