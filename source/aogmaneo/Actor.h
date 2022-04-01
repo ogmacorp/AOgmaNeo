@@ -102,8 +102,8 @@ public:
     decay(0.002f),
     discount(0.99f),
     temperature(1.0f),
-    minSteps(8),
-    historyIters(8)
+    minSteps(16),
+    historyIters(16)
     {}
 
     // Initialized randomly
