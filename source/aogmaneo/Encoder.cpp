@@ -67,15 +67,10 @@ void Encoder::forward(
             sum += subSum * vl.importance;
         }
 
-        if (it == 0)
-            hiddenMeans[hiddenCellIndex] += decay * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenMeans[hiddenCellIndex]);
-
         hiddenAccums[hiddenCellIndex] += sum;
 
-        float activation = sigmoid(hiddenAccums[hiddenCellIndex]) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
-
-        if (activation > maxActivation || maxIndex == -1) {
-            maxActivation = activation;
+        if (hiddenAccums[hiddenCellIndex] > maxActivation || maxIndex == -1) {
+            maxActivation = hiddenAccums[hiddenCellIndex];
             maxIndex = hc;
         }
     }
@@ -174,9 +169,6 @@ void Encoder::learn(
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
@@ -324,11 +316,10 @@ void Encoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(-1.0f, 1.0f);
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+        vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
     hiddenAccums = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenMeans = FloatBuffer(numHiddenCells, 1.0f / hiddenSize.z);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
@@ -390,7 +381,7 @@ void Encoder::reconstruct(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 3 * sizeof(float) + hiddenMeans.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -402,7 +393,7 @@ int Encoder::size() const {
 }
 
 int Encoder::stateSize() const {
-    return hiddenMeans.size() * sizeof(float) + hiddenCIs.size() * sizeof(int);
+    return hiddenCIs.size() * sizeof(int);
 }
 
 void Encoder::write(
@@ -412,10 +403,6 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&explainIters), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&decay), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&boost), sizeof(float));
-
-    writer.write(reinterpret_cast<const void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -445,14 +432,8 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&decay), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
 
     hiddenAccums = FloatBuffer(numHiddenCells, 0.0f);
-
-    hiddenMeans.resize(numHiddenCells);
-
-    reader.read(reinterpret_cast<void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
@@ -481,7 +462,7 @@ void Encoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+        vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
@@ -490,15 +471,11 @@ void Encoder::read(
 void Encoder::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
-
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
 
 void Encoder::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hiddenMeans[0]), hiddenMeans.size() * sizeof(float));
-
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }

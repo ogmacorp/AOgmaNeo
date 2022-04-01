@@ -32,6 +32,9 @@ public:
     struct VisibleLayer {
         FloatBuffer valueWeights; // Value function weights
         FloatBuffer actionWeights; // Action function weights
+        FloatBuffer rates;
+
+        FloatBuffer gates;
     };
 
     // History sample for delayed updates
@@ -68,6 +71,12 @@ private:
         unsigned int* state
     );
 
+    void backward(
+        const Int2 &columnPos,
+        int t,
+        int vli
+    );
+
     void learn(
         const Int2 &columnPos,
         int t,
@@ -79,6 +88,7 @@ private:
 public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
+    float decay;
     float discount; // Discount factor
     float temperature; // Exploration amount
     int minSteps; // Minimum steps before sample can be used
@@ -89,9 +99,10 @@ public:
     :
     vlr(0.01f),
     alr(0.01f),
+    decay(0.002f),
     discount(0.99f),
     temperature(1.0f),
-    minSteps(8),
+    minSteps(16),
     historyIters(16)
     {}
 
