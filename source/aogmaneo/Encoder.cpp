@@ -60,7 +60,7 @@ void Encoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    subSum += max(0.0f, vl.weights[wi] * (1.0f - vl.reconstruction[visibleColumnIndex]));
+                    subSum += vl.weights[wi] * (1.0f - vl.reconstruction[visibleColumnIndex]);
                 }
 
             subSum /= subCount;
