@@ -48,8 +48,6 @@ private:
 
     IntBuffer hiddenCIs;
 
-    FloatBuffer hiddenMeans;
-
     FloatBuffer hiddenGates;
 
     // Visible layers and associated descriptors
@@ -79,9 +77,7 @@ public:
 
     Encoder()
     :
-    lr(0.005f),
-    eta(0.01f),
-    boost(0.05f),
+    lr(0.01f),
     decay(0.002f)
     {}
 
