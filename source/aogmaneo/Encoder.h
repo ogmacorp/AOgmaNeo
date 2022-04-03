@@ -33,6 +33,8 @@ public:
         FloatBuffer weights;
         FloatBuffer rates;
 
+        IntBuffer inputCIsPrev;
+
         FloatBuffer reconstruction;
 
         float importance;
@@ -61,6 +63,7 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
+        const FloatBuffer* hiddenErrors,
         int it,
         bool learnEnabled
     );
@@ -91,8 +94,8 @@ public:
 
     Encoder()
     :
-    explainIters(4),
-    lr(1.0f),
+    explainIters(8),
+    lr(0.01f),
     decay(0.002f)
     {}
 
@@ -104,6 +107,7 @@ public:
 
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
+        const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
     );
 
