@@ -293,6 +293,11 @@ void Encoder::learn(
 
         sum /= max(0.0001f, total);
 
+        if (sum > maxActivation || maxIndex == vc) {
+            maxActivation = sum;
+            maxIndex = vc;
+        }
+
         float delta = lr * ((vc == targetCI) - sigmoid(sum));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -313,11 +318,6 @@ void Encoder::learn(
                     vl.weights[wi] += delta * hiddenGates[hiddenColumnIndex];
                 }
             }
-
-        if (sum > maxActivation || maxIndex == vc) {
-            maxActivation = sum;
-            maxIndex = vc;
-        }
     }
 
     float mult = (maxIndex == targetCI ? 1.0f - decay : 1.0f + decay);
