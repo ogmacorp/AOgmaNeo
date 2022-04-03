@@ -23,7 +23,7 @@ void Encoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-        float delta = lr * tanh((*hiddenErrors)[hiddenColumnIndex]) * hiddenGates[hiddenColumnIndex];
+        float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * hiddenGates[hiddenColumnIndex];
 
         float total2 = 0.0f;
 
