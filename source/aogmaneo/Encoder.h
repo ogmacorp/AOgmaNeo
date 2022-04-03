@@ -31,7 +31,6 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer rates;
 
         IntBuffer inputCIsPrev;
 
@@ -48,8 +47,6 @@ private:
 
     IntBuffer hiddenCIs;
 
-    FloatBuffer hiddenGates;
-
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -63,22 +60,12 @@ private:
         bool learnEnabled
     );
 
-    void learn(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
-    );
-
 public:
     float lr;
-    float eta;
-    float boost;
-    float decay;
 
     Encoder()
     :
-    lr(0.01f),
-    decay(0.002f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization

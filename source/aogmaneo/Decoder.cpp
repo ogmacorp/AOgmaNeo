@@ -321,7 +321,7 @@ void Decoder::generateErrors(
 
     sum /= count;
 
-    (*visibleErrors)[visibleColumnIndex] += sum;
+    (*visibleErrors)[visibleColumnIndex] += sum * vl.gates[visibleColumnIndex];
 }
 
 void Decoder::initRandom(
