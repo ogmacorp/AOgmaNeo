@@ -81,7 +81,7 @@ public:
     :
     lr(0.01f),
     eta(0.01f),
-    boost(0.01f),
+    boost(0.1f),
     decay(0.002f)
     {}
 
