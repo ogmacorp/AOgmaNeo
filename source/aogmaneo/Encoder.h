@@ -37,8 +37,6 @@ public:
 
         float importance;
 
-        FloatBuffer reconstruction;
-
         VisibleLayer()
         :
         importance(1.0f)
@@ -77,7 +75,7 @@ public:
 
     Encoder()
     :
-    lr(0.2f),
+    lr(0.01f),
     decay(0.002f)
     {}
 
