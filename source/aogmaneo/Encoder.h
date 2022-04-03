@@ -79,9 +79,9 @@ public:
 
     Encoder()
     :
-    lr(0.01f),
+    lr(0.005f),
     eta(0.01f),
-    boost(0.1f),
+    boost(0.05f),
     decay(0.002f)
     {}
 

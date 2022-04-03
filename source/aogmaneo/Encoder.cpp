@@ -154,7 +154,7 @@ void Encoder::forward(
 
         hiddenMeans[hiddenCellIndex] += eta * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenMeans[hiddenCellIndex]);
 
-        float activation = sigmoid(sum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
+        float activation = max(0.0f, sum) * expf(boost * (1.0f / hiddenSize.z - hiddenMeans[hiddenCellIndex]));
 
         if (activation > maxActivation || maxIndex == -1) {
             maxActivation = activation;
