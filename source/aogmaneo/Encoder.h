@@ -94,7 +94,7 @@ public:
 
     Encoder()
     :
-    explainIters(8),
+    explainIters(4),
     lr(0.01f),
     decay(0.002f)
     {}
