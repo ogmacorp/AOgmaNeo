@@ -46,7 +46,7 @@ void Hierarchy::initRandom(
         if (ioDescs[i].type == prediction)
             numPredictions++;
         else if (ioDescs[i].type == action) {
-            numPredictions++;
+            numPredictions++; // Actions also implicitly have a regular prediction for error purposes
             numActions++;
         }
     }
