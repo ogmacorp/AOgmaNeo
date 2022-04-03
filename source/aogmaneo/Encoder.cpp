@@ -293,7 +293,7 @@ void Encoder::learn(
 
         sum /= max(0.0001f, total);
 
-        if (sum > maxActivation || maxIndex == vc) {
+        if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = vc;
         }
