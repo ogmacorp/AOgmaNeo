@@ -88,30 +88,12 @@ void Decoder::forward(
 
         sum /= count;
 
-        hiddenActivations[hiddenCellIndex] = sum;
+        hiddenActivations[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActivations[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] *= scale;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -305,8 +287,10 @@ void Decoder::generateErrors(
             if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                 Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
+                int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
                 for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hc), hiddenSize);
+                    int hiddenCellIndex = hc + hiddenCellsStart;
 
                     float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivations[hiddenCellIndex];
 
