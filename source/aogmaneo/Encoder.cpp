@@ -97,7 +97,7 @@ void Encoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    subSum += vl.weights[wi] * (1.0f - vl.reconstruction[visibleColumnIndex]);
+                    subSum += vl.weights[wi];
                 }
 
             subSum /= subCount;
@@ -309,8 +309,6 @@ void Encoder::initRandom(
             vl.weights[i] = randf(0.0f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
-
-        vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -443,8 +441,6 @@ void Encoder::read(
         vl.inputCIsPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-
-        vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }

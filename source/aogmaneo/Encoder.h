@@ -34,8 +34,6 @@ public:
 
         IntBuffer inputCIsPrev;
 
-        FloatBuffer reconstruction;
-
         float importance;
 
         VisibleLayer()
