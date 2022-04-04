@@ -34,6 +34,8 @@ public:
 
         IntBuffer inputCIsPrev;
 
+        FloatBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -74,11 +76,13 @@ private:
     );
 
 public:
-    float lr;
+    float elr;
+    float rlr;
 
     Encoder()
     :
-    lr(0.01f)
+    elr(0.01f),
+    rlr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
