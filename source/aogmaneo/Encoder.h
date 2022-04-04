@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -34,6 +34,8 @@ public:
 
         IntBuffer inputCIsPrev;
 
+        FloatBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -60,6 +62,19 @@ private:
         bool learnEnabled
     );
 
+    void learn(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        int vli
+    );
+
+    void reconstruct(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenCIs,
+        IntBuffer* reconCIs,
+        int vli
+    );
+
 public:
     float lr;
 
@@ -78,6 +93,12 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Input states
         const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
+    );
+
+    void reconstruct(
+        const IntBuffer* hiddenCIs,
+        IntBuffer* reconCIs,
+        int vli
     );
 
     // Serialization
