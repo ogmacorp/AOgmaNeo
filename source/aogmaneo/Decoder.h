@@ -31,11 +31,8 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer rates;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-
-        FloatBuffer gates;
     };
 
 private:
@@ -76,13 +73,11 @@ private:
 
 public:
     float lr; // Learning rate
-    float decay;
 
     // Defaults
     Decoder()
     :
-    lr(1.0f),
-    decay(0.002f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
