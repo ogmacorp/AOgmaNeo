@@ -181,7 +181,7 @@ void Encoder::learn(
 
         sum /= max(0.0001f, total);
 
-        float delta = lr * ((vc == targetCI) - expf(sum));
+        float delta = lr * ((vc == targetCI) - sigmoid(sum));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -306,7 +306,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 0.0f);
+            vl.weights[i] = randf(0.0f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
 
