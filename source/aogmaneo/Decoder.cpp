@@ -303,7 +303,7 @@ void Decoder::generateErrors(
 
     sum /= max(1, count);
 
-    (*visibleErrors)[visibleColumnIndex] += sum * vl.gates[visibleColumnIndex];
+    (*visibleErrors)[visibleColumnIndex] += sum;
 }
 
 void Decoder::initRandom(
