@@ -53,12 +53,6 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void backward(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        int vli
-    );
-
     void learn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
