@@ -88,30 +88,12 @@ void Decoder::forward(
 
         sum /= count;
 
-        hiddenActivations[hiddenCellIndex] = sum;
+        hiddenActivations[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActivations[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActivations[hiddenCellIndex] *= scale;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -321,7 +303,7 @@ void Decoder::generateErrors(
 
     sum /= max(1, count);
 
-    (*visibleErrors)[visibleColumnIndex] += sum;
+    (*visibleErrors)[visibleColumnIndex] += sum * vl.gates[visibleColumnIndex];
 }
 
 void Decoder::initRandom(
@@ -352,7 +334,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.01f);
+            vl.weights[i] = randf(0.0f, 0.01f);
 
         vl.rates = FloatBuffer(numHiddenColumns * area * vld.size.z, 1.0f);
 
