@@ -81,7 +81,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.1f),
+    lr(1.0f),
     decay(0.002f)
     {}
 

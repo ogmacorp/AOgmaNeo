@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -33,9 +33,9 @@ public:
         FloatBuffer weights;
         FloatBuffer rates;
 
-        FloatBuffer reconstruction;
-
         float importance;
+
+        FloatBuffer reconstruction;
 
         VisibleLayer()
         :
@@ -45,8 +45,6 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-
-    FloatBuffer hiddenAccums;
 
     IntBuffer hiddenCIs;
 
@@ -61,14 +59,7 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
-        int it,
         bool learnEnabled
-    );
-
-    void backward(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
     );
 
     void learn(
@@ -78,14 +69,12 @@ private:
     );
 
 public:
-    int explainIters;
     float lr;
     float decay;
 
     ReconEncoder()
     :
-    explainIters(4),
-    lr(0.01f),
+    lr(0.5f),
     decay(0.002f)
     {}
 
@@ -157,4 +146,5 @@ public:
     }
 };
 } // namespace aon
+
 
