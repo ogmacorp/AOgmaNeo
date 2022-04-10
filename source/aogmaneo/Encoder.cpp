@@ -12,8 +12,7 @@ using namespace aon;
 
 void Encoder::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
-    bool learnEnabled
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
