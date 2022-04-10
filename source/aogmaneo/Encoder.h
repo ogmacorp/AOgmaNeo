@@ -74,7 +74,7 @@ public:
 
     Encoder()
     :
-    elr(0.003f),
+    elr(0.01f),
     rlr(0.1f)
     {}
 
