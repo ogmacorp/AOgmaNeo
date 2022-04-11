@@ -135,7 +135,7 @@ void Encoder::backward(
                 }
             }
 
-        sum /= count;
+        sum /= max(1, count);
 
         vl.errors[visibleCellIndex] = (vc == targetCI) - min(1.0f, max(0.0f, sum));
     }
@@ -218,9 +218,6 @@ void Encoder::learn(
         Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-        float subSum = 0.0f;
-        int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -265,7 +262,7 @@ void Encoder::initRandom(
         vl.bWeights.resize(vl.fWeights.size());
 
         for (int i = 0; i < vl.fWeights.size(); i++) {
-            vl.fWeights[i] = randf(0.99f, 1.0f);
+            vl.fWeights[i] = randf(0.0f, 1.0f);
             vl.bWeights[i] = randf(0.99f, 1.0f);
         }
 
