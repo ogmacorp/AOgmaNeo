@@ -52,8 +52,6 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenValues; // Hidden value function output buffer
-
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
@@ -81,7 +79,7 @@ public:
     float alr; // Action learning rate
     float discount; // Discount factor
     float temperature; // Exploration amount
-    int minSteps; // Minimum steps before sample can be used
+    int nSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
 
     // Defaults
@@ -91,7 +89,7 @@ public:
     alr(0.01f),
     discount(0.99f),
     temperature(1.0f),
-    minSteps(8),
+    nSteps(32),
     historyIters(16)
     {}
 
