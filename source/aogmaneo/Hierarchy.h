@@ -38,7 +38,7 @@ public:
         type(prediction),
         eRadius(2),
         dRadius(2),
-        historyCapacity(64)
+        historyCapacity(128)
         {}
 
         IODesc(
@@ -97,6 +97,7 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
+    Array<FloatBuffer> errors; // Accumulation
 
     // For mapping first layer decoders
     IntBuffer iIndices;

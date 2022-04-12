@@ -64,7 +64,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(2.0f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
@@ -81,6 +81,12 @@ public:
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
+    );
+
+    void generateErrors(
+        const IntBuffer* hiddenTargetCIs,
+        FloatBuffer* visibleErrors,
+        int vli
     );
 
     // Serialization
