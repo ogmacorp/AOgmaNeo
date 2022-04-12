@@ -38,7 +38,7 @@ public:
         type(prediction),
         eRadius(2),
         dRadius(2),
-        historyCapacity(64)
+        historyCapacity(128)
         {}
 
         IODesc(
