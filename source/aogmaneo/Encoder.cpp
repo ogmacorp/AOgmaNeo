@@ -219,7 +219,6 @@ void Encoder::initRandom(
 
 void Encoder::step(
     const Array<const IntBuffer*> &inputCIs,
-    const FloatBuffer* hiddenErrors,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;

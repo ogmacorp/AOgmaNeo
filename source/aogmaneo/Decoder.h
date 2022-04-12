@@ -83,12 +83,6 @@ public:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
-    );
-
     // Serialization
     int size() const; // Returns size in bytes
     int stateSize() const; // Returns size of state in bytes

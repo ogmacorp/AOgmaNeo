@@ -80,7 +80,6 @@ public:
 
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
     );
 
