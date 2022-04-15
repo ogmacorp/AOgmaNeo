@@ -68,7 +68,6 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        int t,
         float q,
         float g,
         bool mimic
@@ -79,8 +78,6 @@ public:
     float alr; // Action learning rate
     float discount; // Discount factor
     float temperature; // Exploration amount
-    int nSteps; // Minimum steps before sample can be used
-    int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
@@ -88,9 +85,7 @@ public:
     vlr(0.01f),
     alr(0.01f),
     discount(0.99f),
-    temperature(1.0f),
-    nSteps(32),
-    historyIters(16)
+    temperature(1.0f)
     {}
 
     // Initialized randomly
