@@ -52,6 +52,8 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
+    FloatBuffer hiddenValues; // Hidden value function output buffer
+
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
@@ -68,6 +70,7 @@ private:
 
     void learn(
         const Int2 &columnPos,
+        int t,
         float q,
         float g,
         bool mimic
@@ -78,14 +81,18 @@ public:
     float alr; // Action learning rate
     float discount; // Discount factor
     float temperature; // Exploration amount
+    int minSteps; // Minimum steps before sample can be used
+    int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
     :
     vlr(0.01f),
-    alr(1.0f),
+    alr(0.01f),
     discount(0.99f),
-    temperature(1.0f)
+    temperature(1.0f),
+    minSteps(16),
+    historyIters(16)
     {}
 
     // Initialized randomly
