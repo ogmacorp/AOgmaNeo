@@ -16,7 +16,7 @@ Welcome to the [Ogma](https://ogmacorp.com) AOgmaNeo library, C++ library that c
 
 For easier use on desktop, we also have [Python bindings](https://github.com/ogmacorp/PyAOgmaNeo).
 
-This version of OgmaNeo (AOgmaNeo) is similar to [OgmaNeo2](https://github.com/ogmacorp/OgmaNeo2), but stripped down in order to be able to run on an Arduino or similar microcontroller.
+This version of OgmaNeo (AOgmaNeo) is similar to [OgmaNeo2](https://github.com/ogmacorp/OgmaNeo2), but optimized in order to be able to run on an Arduino or similar microcontroller.
 However, it has since become the default and preferred version of OgmaNeo for all tasks, as it works great on desktop as well.
 
 For an introduction to how the algorithm works, see [the user guide](./AOgmaNeo_User_Guide.pdf).
