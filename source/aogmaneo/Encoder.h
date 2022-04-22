@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        IntBuffer inputCIsPrev;
+
         FloatBuffer reconstruction;
 
         float importance;
@@ -55,7 +57,9 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        const FloatBuffer* hiddenErrors,
+        bool learnEnabled
     );
 
     void learn(
@@ -65,11 +69,13 @@ private:
     );
 
 public:
-    float lr;
+    float elr;
+    float rlr;
 
     Encoder()
     :
-    lr(0.1f)
+    elr(0.001f),
+    rlr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -80,6 +86,7 @@ public:
 
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
+        const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
     );
 
