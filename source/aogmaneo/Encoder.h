@@ -47,6 +47,8 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
+
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -74,7 +76,7 @@ public:
 
     Encoder()
     :
-    elr(0.01f),
+    elr(0.1f),
     rlr(0.1f)
     {}
 
