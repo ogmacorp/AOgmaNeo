@@ -185,7 +185,15 @@ int ErrorEncoder::size() const {
 }
 
 int ErrorEncoder::stateSize() const {
-    return hiddenCIs.size() * sizeof(int);
+    int size = hiddenCIs.size() * sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        size += vl.inputCIsPrev.size() * sizeof(int);
+    }
+
+    return size;
 }
 
 void ErrorEncoder::write(
