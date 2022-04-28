@@ -196,7 +196,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = rlr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
+            float delta = rlr * ((vc == targetCI) - expf(vl.reconstruction[visibleCellIndex]));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -248,7 +248,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(-0.01f, 0.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
 
@@ -301,7 +301,15 @@ int Encoder::size() const {
 }
 
 int Encoder::stateSize() const {
-    return hiddenCIs.size() * sizeof(int);
+    int size = hiddenCIs.size() * sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        size += vl.inputCIsPrev.size() * sizeof(int);
+    }
+
+    return size;
 }
 
 void Encoder::write(
