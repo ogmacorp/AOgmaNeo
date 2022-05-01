@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,8 +32,6 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        IntBuffer inputCIsPrev;
-
         FloatBuffer reconstruction;
 
         float importance;
@@ -47,8 +45,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
-
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -59,9 +55,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
@@ -71,13 +65,11 @@ private:
     );
 
 public:
-    float elr;
-    float rlr;
+    float lr;
 
     Encoder()
     :
-    elr(0.02f),
-    rlr(0.1f)
+    lr(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -88,8 +80,13 @@ public:
 
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
+    );
+
+    void reconstruct(
+        const IntBuffer* hiddenCIs,
+        IntBuffer* reconCIs,
+        int vli
     );
 
     // Serialization

@@ -17,7 +17,6 @@ void Hierarchy::initRandom(
     // Create layers
     eLayers.resize(layerDescs.size());
     dLayers.resize(layerDescs.size());
-    errors.resize(layerDescs.size());
 
     ticks.resize(layerDescs.size(), 0);
 
@@ -165,8 +164,6 @@ void Hierarchy::initRandom(
         
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
-
-        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
     }
 }
 
@@ -208,15 +205,8 @@ void Hierarchy::step(
                     layerInputCIs[index++] = &histories[l][i][t];
             }
 
-            if (learnEnabled) {
-                errors[l].fill(0.0f);
-
-                for (int d = 0; d < dLayers[l].size(); d++)
-                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
-            }
-
             // Activate sparse coder
-            eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+            eLayers[l].step(layerInputCIs, learnEnabled);
 
             // Add to next layer's history
             if (l < eLayers.size() - 1) {
@@ -394,7 +384,6 @@ void Hierarchy::read(
 
     eLayers.resize(numLayers);
     dLayers.resize(numLayers);
-    errors.resize(numLayers);
 
     histories.resize(numLayers);
     
@@ -449,8 +438,6 @@ void Hierarchy::read(
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].read(reader);
-
-        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
     }
 
     aLayers.resize(numActions);

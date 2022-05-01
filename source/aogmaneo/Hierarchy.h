@@ -97,7 +97,6 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
-    Array<FloatBuffer> errors; // Accumulation
 
     // For mapping first layer decoders
     IntBuffer iIndices;
