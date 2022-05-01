@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        FloatBuffer reconstruction;
+        FloatBuffer errors;
 
         float importance;
 
@@ -58,10 +58,15 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void learn(
+    void backward(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
         int vli
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
