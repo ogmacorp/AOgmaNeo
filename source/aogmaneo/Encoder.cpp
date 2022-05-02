@@ -113,7 +113,7 @@ void Encoder::backward(
         int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
-        float total = 0.0f;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -130,17 +130,12 @@ void Encoder::backward(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                    float strength = min(1.0f - distX, 1.0f - distY);
-
-                    sum += vl.weights[wi] * strength;
-                    total += strength;
+                    sum += vl.weights[wi];
+                    count++;
                 }
             }
 
-        sum /= max(0.0001f, total);
+        sum /= max(1, count);
 
         vl.errors[visibleCellIndex] = (vc == targetCI) - sum;
     }
