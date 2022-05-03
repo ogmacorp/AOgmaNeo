@@ -139,7 +139,7 @@ void ReconEncoder::learn(
                 }
             }
 
-        sum /= count;
+        sum /= max(1, count);
 
         vl.reconstruction[visibleCellIndex] = sum;
 
