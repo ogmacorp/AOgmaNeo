@@ -8,7 +8,8 @@
 
 #pragma once
 
-#include "Encoder.h"
+#include "ReconEncoder.h"
+#include "ErrorEncoder.h"
 #include "Decoder.h"
 #include "Actor.h"
 
@@ -94,7 +95,8 @@ public:
 
 private:
     // Layers
-    Array<Encoder> eLayers;
+    Array<ReconEncoder> rLayers;
+    Array<ErrorEncoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
 
@@ -238,14 +240,28 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    Encoder &getELayer(
+    ReconEncoder &getReconEnc(
+        int l
+    ) {
+        return rLayers[l];
+    }
+
+    // Retrieve a sparse coding layer, const version
+    const ReconEncoder &getReconEnc(
+        int l
+    ) const {
+        return rLayers[l];
+    }
+
+    // Retrieve a sparse coding layer
+    ErrorEncoder &getErrorEnc(
         int l
     ) {
         return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const Encoder &getELayer(
+    const ErrorEncoder &getErrorEnc(
         int l
     ) const {
         return eLayers[l];
