@@ -156,8 +156,8 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weightsLearn[wi] += lr * ((vc == inCI) - vl.weightsLearn[wi]);
-                    vl.weightsLearnPrev[wi] += lr * ((vc == inCIPrev) - vl.weightsLearnPrev[wi]);
+                    vl.weightsLearn[wi] += rate * ((vc == inCI) - vl.weightsLearn[wi]);
+                    vl.weightsLearnPrev[wi] += rate * ((vc == inCIPrev) - vl.weightsLearnPrev[wi]);
 
                     vl.weightsInfer[wi] = logf(max(0.0001f, vl.weightsLearn[wi]));
                     vl.weightsInferPrev[wi] = logf(max(0.0001f, vl.weightsLearnPrev[wi]));
