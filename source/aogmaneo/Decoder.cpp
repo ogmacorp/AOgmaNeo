@@ -141,7 +141,6 @@ void Decoder::initRandom(
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void Decoder::activate(
@@ -209,8 +208,6 @@ void Decoder::read(
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     reader.read(reinterpret_cast<void*>(&vld), sizeof(VisibleLayerDesc));
 
