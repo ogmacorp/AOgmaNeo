@@ -38,8 +38,6 @@ private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
     int numDendrites;
 
-    FloatBuffer hiddenActivations;
-
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs

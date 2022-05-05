@@ -79,15 +79,45 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    // Select strongest dendrite
     int maxDendriteIndex = -1;
     float maxDendriteActivation = -999999.0f;
 
     for (int di = 0; di < numDendrites; di++) {
         int hiddenCellIndex = (targetCI * numDendrites + di) + hiddenCellsStart;
 
-        if (hiddenActivations[hiddenCellIndex] > maxDendriteActivation || maxDendriteIndex == -1) {
-            maxDendriteActivation = hiddenActivations[hiddenCellIndex];
+        float sum = 0.0f;
+
+        int diam = vld.radius * 2 + 1;
+
+        // Projection
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+        Int2 visibleCenter = project(columnPos, hToV);
+
+        // Lower corner
+        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+        // Bounds of receptive field, clamped to input size
+        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+
+                int inCI = (*inputCIs)[visibleColumnIndex];
+                int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
+
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                sum += logf(max(0.0001f, vl.weights[inCI + wiStart])) + logf(max(0.0001f, vl.weightsPrev[inCIPrev + wiStart]));
+            }
+
+        if (sum > maxDendriteActivation || maxDendriteIndex == -1) {
+            maxDendriteActivation = sum;
             maxDendriteIndex = di;
         }
     }
@@ -163,8 +193,6 @@ void Decoder::initRandom(
         vl.weightsPrev[i] = randf(0.0f, 0.01f);
     }
 
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
-
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
@@ -234,8 +262,6 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
-
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
 
