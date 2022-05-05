@@ -17,8 +17,9 @@
 #endif
 
 namespace aon {
-const int expIters = 6;
-const int sinIters = 6;
+const int expIters = 5;
+const int logIters = 3;
+const int sinIters = 5;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
 
@@ -31,12 +32,21 @@ float expf(
     float x
 );
 
+float logf(
+    float x
+);
+
 float sinf(
     float x
 );
 
 float sqrtf(
     float x
+);
+
+float powf(
+    float x,
+    float y
 );
 
 inline float ceilf(
