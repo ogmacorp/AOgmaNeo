@@ -70,7 +70,8 @@ void Decoder::learn(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIsPrev,
     const IntBuffer* inputCIs,
-    const IntBuffer* inputCIsPrev
+    const IntBuffer* inputCIsPrev,
+    float strength
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -156,8 +157,8 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weightsLearn[wi] += rate * ((vc == inCI) - vl.weightsLearn[wi]);
-                    vl.weightsLearnPrev[wi] += rate * ((vc == inCIPrev) - vl.weightsLearnPrev[wi]);
+                    vl.weightsLearn[wi] += rate * ((vc == inCI) * strength - vl.weightsLearn[wi]);
+                    vl.weightsLearnPrev[wi] += rate * ((vc == inCIPrev) * strength - vl.weightsLearnPrev[wi]);
 
                     vl.weightsInfer[wi] = logf(max(0.0001f, vl.weightsLearn[wi]));
                     vl.weightsInferPrev[wi] = logf(max(0.0001f, vl.weightsLearnPrev[wi]));
@@ -252,16 +253,18 @@ void Decoder::learn(
             HistorySample &sPrev = history[t];
             HistorySample &sPrevNext = history[t - 1];
 
+            float strength = powf(discount, historySize - 1 - t);
+
             // Learn kernel
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), &sPrevNext.hiddenTargetCIsPrev, &s.inputCIs, &sPrev.inputCIs);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), &sPrevNext.hiddenTargetCIsPrev, &s.inputCIs, &sPrev.inputCIs, strength);
         }
     }
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     size += sizeof(VisibleLayerDesc) + 4 * vl.weightsInfer.size() * sizeof(float);
 
@@ -296,6 +299,7 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&boost), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
@@ -336,6 +340,7 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
