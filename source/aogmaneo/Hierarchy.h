@@ -35,8 +35,8 @@ public:
         :
         size(4, 4, 16),
         type(prediction),
-        numDendrites(4),
-        historyCapacity(8),
+        numDendrites(3),
+        historyCapacity(4),
         eRadius(2),
         dRadius(2)
         {}
@@ -74,8 +74,8 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        numDendrites(4),
-        historyCapacity(8),
+        numDendrites(3),
+        historyCapacity(4),
         eRadius(2),
         dRadius(2),
         ticksPerUpdate(2),

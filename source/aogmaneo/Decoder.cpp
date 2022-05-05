@@ -207,8 +207,8 @@ void Decoder::initRandom(
     history.resize(historyCapacity);
 
     for (int i = 0; i < history.size(); i++) {
-        history[i].inputCIs.resize(numVisibleColumns);
-        history[i].hiddenTargetCIsPrev = IntBuffer(numHiddenColumns);
+        history[i].inputCIs.resize(numVisibleColumns, 0);
+        history[i].hiddenTargetCIsPrev = IntBuffer(numHiddenColumns, 0);
     }
 }
 
@@ -246,11 +246,11 @@ void Decoder::learn(
     }
 
     if (historySize == history.size()) {
-        HistorySample &sPrev = history[historySize - 1];
-        HistorySample &sPrevNext = history[historySize - 2];
+        HistorySample &s = history[0];
 
-        for (int t = historySize - 2; t >= 0; t--) {
-            HistorySample &s = history[t];
+        for (int t = historySize - 1; t > 0; t--) {
+            HistorySample &sPrev = history[t];
+            HistorySample &sPrevNext = history[t - 1];
 
             // Learn kernel
             #pragma omp parallel for
