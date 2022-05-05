@@ -53,15 +53,9 @@ void Decoder::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = vld.size.z * (progCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
+                int wi = inCI + vld.size.z * (progCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wiStart;
-
-                    float delta = (vc == inCI) - vl.weights[wi];
-
-                    sum += -delta * delta;
-                }
+                sum += logf(max(0.0001f, vl.weights[wi]));
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -143,7 +137,7 @@ void Decoder::initRandom(
     vl.weights.resize(numHiddenCells * area * vld.size.z * vld.size.z);
 
     for (int i = 0; i < vl.weights.size(); i++)
-        vl.weights[i] = randf(0.0f, 0.01f);
+        vl.weights[i] = randf(0.0f, 1.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
