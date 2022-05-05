@@ -30,8 +30,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
-        FloatBuffer weightsPrev;
+        FloatBuffer weightsInfer;
+        FloatBuffer weightsInferPrev;
+        FloatBuffer weightsLearn;
+        FloatBuffer weightsLearnPrev;
     };
 
 private:

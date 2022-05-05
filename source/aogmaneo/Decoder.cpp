@@ -54,7 +54,7 @@ void Decoder::forward(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += logf(max(0.0001f, vl.weights[progCI + wiStart])) + logf(max(0.0001f, vl.weightsPrev[inCI + wiStart]));
+                sum += vl.weightsInfer[progCI + wiStart] + vl.weightsInferPrev[inCI + wiStart];
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -113,7 +113,7 @@ void Decoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += logf(max(0.0001f, vl.weights[inCI + wiStart])) + logf(max(0.0001f, vl.weightsPrev[inCIPrev + wiStart]));
+                sum += vl.weightsInfer[inCI + wiStart] + vl.weightsInferPrev[inCIPrev + wiStart];
             }
 
         if (sum > maxDendriteActivation || maxDendriteIndex == -1) {
@@ -156,8 +156,11 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += lr * ((vc == inCI) - vl.weights[wi]);
-                    vl.weightsPrev[wi] += lr * ((vc == inCIPrev) - vl.weightsPrev[wi]);
+                    vl.weightsLearn[wi] += lr * ((vc == inCI) - vl.weightsLearn[wi]);
+                    vl.weightsLearnPrev[wi] += lr * ((vc == inCIPrev) - vl.weightsLearnPrev[wi]);
+
+                    vl.weightsInfer[wi] = logf(max(0.0001f, vl.weightsLearn[wi]));
+                    vl.weightsInferPrev[wi] = logf(max(0.0001f, vl.weightsLearnPrev[wi]));
                 }
             }
     }
@@ -183,12 +186,18 @@ void Decoder::initRandom(
     int diam = vld.radius * 2 + 1;
     int area = diam * diam;
 
-    vl.weights.resize(numHiddenCells * area * vld.size.z);
-    vl.weightsPrev.resize(vl.weights.size());
+    vl.weightsInfer.resize(numHiddenCells * area * vld.size.z);
+    vl.weightsInferPrev.resize(vl.weightsInfer.size());
+    vl.weightsLearn.resize(vl.weightsInfer.size());
+    vl.weightsLearnPrev.resize(vl.weightsInfer.size());
 
-    for (int i = 0; i < vl.weights.size(); i++) {
-        vl.weights[i] = randf(0.0f, 0.01f);
-        vl.weightsPrev[i] = randf(0.0f, 0.01f);
+    for (int i = 0; i < vl.weightsInfer.size(); i++) {
+        vl.weightsLearn[i] = randf(0.0f, 0.01f);
+        vl.weightsLearnPrev[i] = randf(0.0f, 0.01f);
+
+        vl.weightsInfer[i] = logf(max(0.0001f, vl.weightsLearn[i]));
+        vl.weightsInferPrev[i] = logf(max(0.0001f, vl.weightsLearnPrev[i]));
+
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -222,7 +231,7 @@ void Decoder::learn(
 int Decoder::size() const {
     int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
-    size += sizeof(VisibleLayerDesc) + 2 * vl.weights.size() * sizeof(float);
+    size += sizeof(VisibleLayerDesc) + 4 * vl.weightsInfer.size() * sizeof(float);
 
     return size;
 }
@@ -244,8 +253,10 @@ void Decoder::write(
     
     writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-    writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&vl.weightsPrev[0]), vl.weightsPrev.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&vl.weightsInfer[0]), vl.weightsInfer.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&vl.weightsInferPrev[0]), vl.weightsInferPrev.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&vl.weightsLearn[0]), vl.weightsLearn.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&vl.weightsLearnPrev[0]), vl.weightsLearnPrev.size() * sizeof(float));
 }
 
 void Decoder::read(
@@ -272,11 +283,15 @@ void Decoder::read(
     int diam = vld.radius * 2 + 1;
     int area = diam * diam;
 
-    vl.weights.resize(numHiddenCells * area * vld.size.z);
-    vl.weightsPrev.resize(vl.weights.size());
+    vl.weightsInfer.resize(numHiddenCells * area * vld.size.z);
+    vl.weightsInferPrev.resize(vl.weightsInfer.size());
+    vl.weightsLearn.resize(vl.weightsInfer.size());
+    vl.weightsLearnPrev.resize(vl.weightsInfer.size());
 
-    reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-    reader.read(reinterpret_cast<void*>(&vl.weightsPrev[0]), vl.weightsPrev.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&vl.weightsInfer[0]), vl.weightsInfer.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&vl.weightsInferPrev[0]), vl.weightsInferPrev.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&vl.weightsLearn[0]), vl.weightsLearn.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&vl.weightsLearnPrev[0]), vl.weightsLearnPrev.size() * sizeof(float));
 }
 
 void Decoder::writeState(
