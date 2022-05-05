@@ -64,13 +64,6 @@ private:
         int vli
     );
 
-    void reconstruct(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
-    );
-
 public:
     float lr;
 
@@ -88,12 +81,6 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
-    );
-
-    void reconstruct(
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
     );
 
     // Serialization
