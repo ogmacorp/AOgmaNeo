@@ -135,8 +135,8 @@ void Decoder::initRandom(
     vl.weightsPrev.resize(vl.weights.size());
 
     for (int i = 0; i < vl.weights.size(); i++) {
-        vl.weights[i] = randf(0.0f, 1.0f);
-        vl.weightsPrev[i] = randf(0.0f, 1.0f);
+        vl.weights[i] = randf(0.0f, 0.01f);
+        vl.weightsPrev[i] = randf(0.0f, 0.01f);
     }
 
     // Hidden CIs
