@@ -248,7 +248,7 @@ void Decoder::learn(
     if (historySize == history.size()) {
         HistorySample &s = history[0];
 
-        for (int t = historySize - 1; t > 0; t--) {
+        for (int t = 1; t < historySize; t++) {
             HistorySample &sPrev = history[t];
             HistorySample &sPrevNext = history[t - 1];
 
