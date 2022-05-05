@@ -247,14 +247,16 @@ void Decoder::learn(
     }
 
     if (historySize > 1) {
+        HistorySample &sPrev = history[historySize - 1];
+        HistorySample &sPrevNext = history[historySize - 2];
+
         for (int t = historySize - 2; t >= 0; t--) {
             HistorySample &s = history[t];
-            HistorySample &sPrev = history[t + 1];
 
             // Learn kernel
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), &s.hiddenTargetCIsPrev, &s.inputCIs, &sPrev.inputCIs);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), &sPrevNext.hiddenTargetCIsPrev, &s.inputCIs, &sPrev.inputCIs);
         }
     }
 }
