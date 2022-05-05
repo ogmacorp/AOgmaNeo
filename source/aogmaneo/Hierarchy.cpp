@@ -170,14 +170,12 @@ void Hierarchy::step(
                     encoderCIs[index++] = &histories[l][i][t];
             }
 
-            IntBuffer hiddenCIsPrev = eLayers[l].getHiddenCIs();
-
             // Activate sparse coder
             eLayers[l].step(encoderCIs, learnEnabled);
 
             if (learnEnabled) {
                 for (int d = 0; d < dLayers[l].size(); d++)
-                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &eLayers[l].getHiddenCIs(), &hiddenCIsPrev);
+                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &eLayers[l].getHiddenCIs());
             }
 
             // Add to next layer's history
