@@ -36,6 +36,9 @@ public:
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
+    int numDendrites;
+
+    FloatBuffer hiddenActivations;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -60,16 +63,19 @@ private:
 
 public:
     float lr; // Learning rate
+    float boost;
 
     // Defaults
     Decoder()
     :
-    lr(0.01f)
+    lr(0.01f),
+    boost(0.001f)
     {}
 
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize,
+        int numDendrites,
         const VisibleLayerDesc &vld
     );
 
