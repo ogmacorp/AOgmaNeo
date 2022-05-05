@@ -198,7 +198,6 @@ void Decoder::initRandom(
 
         vl.weightsInfer[i] = logf(max(0.0001f, vl.weightsLearn[i]));
         vl.weightsInferPrev[i] = logf(max(0.0001f, vl.weightsLearnPrev[i]));
-
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -246,7 +245,7 @@ void Decoder::learn(
         s.hiddenTargetCIsPrev = *hiddenTargetCIsPrev;
     }
 
-    if (historySize > 1) {
+    if (historySize == history.size()) {
         HistorySample &sPrev = history[historySize - 1];
         HistorySample &sPrevNext = history[historySize - 2];
 
