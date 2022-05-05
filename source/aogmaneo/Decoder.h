@@ -79,8 +79,8 @@ public:
     Decoder()
     :
     lr(0.1f),
-    boost(0.01f),
-    discount(0.8f)
+    boost(0.001f),
+    discount(0.9f)
     {}
 
     // Create with random initialization
