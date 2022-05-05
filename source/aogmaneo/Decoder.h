@@ -36,6 +36,11 @@ public:
         FloatBuffer weightsLearnPrev;
     };
 
+    struct HistorySample {
+        IntBuffer inputCIs;
+        IntBuffer hiddenTargetCIsPrev;
+    };
+
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
     int numDendrites;
@@ -45,6 +50,9 @@ private:
     // Visible layers and descs
     VisibleLayer vl;
     VisibleLayerDesc vld;
+
+    int historySize;
+    CircleBuffer<HistorySample> history;
 
     // --- Kernels ---
 
@@ -56,7 +64,7 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
+        const IntBuffer* hiddenTargetCIsPrev,
         const IntBuffer* inputCIs,
         const IntBuffer* inputCIsPrev
     );
@@ -76,6 +84,7 @@ public:
     void initRandom(
         const Int3 &hiddenSize,
         int numDendrites,
+        int historyCapacity,
         const VisibleLayerDesc &vld
     );
 
@@ -87,9 +96,8 @@ public:
 
     // Learning predictions (update weights)
     void learn(
-        const IntBuffer* hiddenTargetCIs,
-        const IntBuffer* inputCIs,
-        const IntBuffer* inputCIsPrev
+        const IntBuffer* hiddenTargetCIsPrev,
+        const IntBuffer* inputCIs
     );
 
     // Serialization
