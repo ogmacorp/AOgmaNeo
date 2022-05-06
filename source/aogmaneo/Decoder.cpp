@@ -262,7 +262,7 @@ void Decoder::learn(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int);
 
     size += sizeof(VisibleLayerDesc) + 2 * vl.weights.size() * sizeof(float);
 
