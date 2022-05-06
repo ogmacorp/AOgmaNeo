@@ -134,7 +134,6 @@ void Decoder::learn(
 
         float rate = (di == maxDendriteIndex ? lr : boost) * strength;
         float activation = hiddenActivations[di + hiddenColumnIndex * numDendrites];
-        activation *= activation;
 
         int diam = vld.radius * 2 + 1;
 
@@ -251,16 +250,18 @@ void Decoder::learn(
     if (historySize == history.size()) {
         HistorySample &s = history[0];
 
+        float strength = 1.0f;
+
         for (int t = 1; t < historySize; t++) {
             HistorySample &sPrev = history[t];
             HistorySample &sPrevNext = history[t - 1];
-
-            float strength = powf(discount, historySize - 1 - t);
 
             // Learn kernel
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
                 learn(Int2(i / hiddenSize.y, i % hiddenSize.y), &sPrevNext.hiddenTargetCIsPrev, &s.inputCIs, &sPrev.inputCIs, strength);
+
+            strength *= discount;
         }
     }
 }
