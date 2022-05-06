@@ -134,6 +134,7 @@ void Decoder::learn(
 
         float rate = (di == maxDendriteIndex ? lr : boost);
         float activation = hiddenActivations[di + hiddenColumnIndex * numDendrites];
+        activation *= activation;
 
         int diam = vld.radius * 2 + 1;
 
