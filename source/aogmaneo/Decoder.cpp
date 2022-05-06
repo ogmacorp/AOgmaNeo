@@ -45,7 +45,7 @@ void Decoder::forward(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 int progCI = (*progCIs)[visibleColumnIndex];
                 int inCI = (*inputCIs)[visibleColumnIndex];
@@ -107,7 +107,7 @@ void Decoder::learn(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 int inCI = (*inputCIs)[visibleColumnIndex];
                 int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
@@ -134,6 +134,7 @@ void Decoder::learn(
 
         float rate = (di == maxDendriteIndex ? lr : boost) * strength;
         float activation = hiddenActivations[di + hiddenColumnIndex * numDendrites];
+        activation *= activation;
 
         int diam = vld.radius * 2 + 1;
 
@@ -152,7 +153,7 @@ void Decoder::learn(
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 int inCI = (*inputCIs)[visibleColumnIndex];
                 int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
