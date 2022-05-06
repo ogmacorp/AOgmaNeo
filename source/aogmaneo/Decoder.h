@@ -80,7 +80,7 @@ public:
     :
     lr(0.01f),
     boost(0.001f),
-    discount(0.9f)
+    discount(0.99f)
     {}
 
     // Create with random initialization
