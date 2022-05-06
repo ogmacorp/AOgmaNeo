@@ -134,7 +134,6 @@ void Decoder::learn(
 
         float rate = (di == maxDendriteIndex ? lr : boost) * strength;
         float activation = hiddenActivations[di + hiddenColumnIndex * numDendrites];
-        float activation2 = activation * activation;
 
         int diam = vld.radius * 2 + 1;
 
@@ -165,8 +164,8 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += rate * ((vc == inCI) - activation2 * vl.weights[wi]);
-                    vl.weightsPrev[wi] += rate * ((vc == inCIPrev) - activation2 * vl.weightsPrev[wi]);
+                    vl.weights[wi] += rate * ((vc == inCI) - activation * vl.weights[wi]);
+                    vl.weightsPrev[wi] += rate * ((vc == inCIPrev) - activation * vl.weightsPrev[wi]);
                 }
             }
     }
