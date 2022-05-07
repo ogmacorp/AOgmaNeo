@@ -31,7 +31,6 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer weightsPrev;
     };
 
     struct HistorySample {
@@ -78,8 +77,8 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.1f),
-    boost(0.01f),
+    lr(0.01f),
+    boost(0.001f),
     discount(0.9f)
     {}
 
