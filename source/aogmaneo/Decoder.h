@@ -31,6 +31,7 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
+        FloatBuffer weightsPrev;
     };
 
     struct HistorySample {
@@ -41,8 +42,6 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
     int numDendrites;
-
-    FloatBuffer hiddenActivations;
 
     IntBuffer hiddenCIs; // Hidden state
 
