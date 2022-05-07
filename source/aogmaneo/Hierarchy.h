@@ -36,7 +36,7 @@ public:
         size(4, 4, 16),
         type(prediction),
         numDendrites(3),
-        historyCapacity(4),
+        historyCapacity(8),
         eRadius(2),
         dRadius(2)
         {}
@@ -75,7 +75,7 @@ public:
         :
         hiddenSize(4, 4, 16),
         numDendrites(3),
-        historyCapacity(4),
+        historyCapacity(8),
         eRadius(2),
         dRadius(2),
         ticksPerUpdate(2),
