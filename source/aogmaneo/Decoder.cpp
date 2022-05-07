@@ -54,7 +54,7 @@ void Decoder::forward(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += vl.weights[progCI + wiStart] + vl.weightsPrev[inCI + wiStart];
+                sum += logf(max(0.0001f, vl.weights[progCI + wiStart] * vl.weightsPrev[inCI + wiStart]));
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -116,7 +116,7 @@ void Decoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += vl.weights[inCI + wiStart] + vl.weightsPrev[inCIPrev + wiStart];
+                sum += logf(max(0.0001f, vl.weights[inCI + wiStart] * vl.weightsPrev[inCIPrev + wiStart]));
             }
 
         sum /= count;
@@ -132,9 +132,7 @@ void Decoder::learn(
     for (int di = 0; di < numDendrites; di++) {
         int hiddenCellIndex = (targetCI * numDendrites + di) + hiddenCellsStart;
 
-        float rate = (di == maxDendriteIndex ? lr : boost);
-        float activation = hiddenActivations[di + hiddenColumnIndex * numDendrites];
-        activation *= activation;
+        float rate = (di == maxDendriteIndex ? lr : boost) * strength;
 
         int diam = vld.radius * 2 + 1;
 
@@ -165,8 +163,8 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += rate * ((vc == inCI) * strength - activation * vl.weights[wi]);
-                    vl.weightsPrev[wi] += rate * ((vc == inCIPrev) * strength - activation * vl.weightsPrev[wi]);
+                    vl.weights[wi] += rate * ((vc == inCI) - vl.weights[wi]);
+                    vl.weightsPrev[wi] += rate * ((vc == inCIPrev) - vl.weightsPrev[wi]);
                 }
             }
     }
@@ -197,8 +195,8 @@ void Decoder::initRandom(
     vl.weightsPrev.resize(vl.weights.size());
 
     for (int i = 0; i < vl.weights.size(); i++) {
-        vl.weights[i] = randf(0.0f, 0.0001f);
-        vl.weightsPrev[i] = randf(0.0f, 0.0001f);
+        vl.weights[i] = randf(0.0f, 0.01f);
+        vl.weightsPrev[i] = randf(0.0f, 0.01f);
     }
 
     hiddenActivations = FloatBuffer(numHiddenColumns * numDendrites, 0.0f);
