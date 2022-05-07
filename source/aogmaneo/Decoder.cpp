@@ -54,7 +54,7 @@ void Decoder::forward(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += vl.weights[progCI + wiStart] - vl.weights[inCI + wiStart];
+                sum += vl.weights[progCI + wiStart] - vl.weights[inCI + wiStart] * 0.99f; // Small bias to avoid zero case
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -116,7 +116,7 @@ void Decoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                sum += vl.weights[inCI + wiStart] - vl.weights[inCIPrev + wiStart];
+                sum += vl.weights[inCI + wiStart] - vl.weights[inCIPrev + wiStart] * 0.99f; // Small bias to avoid zero case
             }
 
         sum /= count;
@@ -132,7 +132,7 @@ void Decoder::learn(
     for (int di = 0; di < numDendrites; di++) {
         int hiddenCellIndex = (targetCI * numDendrites + di) + hiddenCellsStart;
 
-        float rate = (di == maxDendriteIndex ? lr : boost) * strength;
+        float rate = (di == maxDendriteIndex ? lr : boost);
         float activation = hiddenActivations[di + hiddenColumnIndex * numDendrites];
         activation *= activation;
 
@@ -165,7 +165,7 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += rate * ((vc == inCI) - (vc == inCIPrev) - activation * vl.weights[wi]);
+                    vl.weights[wi] += rate * (strength * ((vc == inCI) - (vc == inCIPrev)) - activation * vl.weights[wi]);
                 }
             }
     }
