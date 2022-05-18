@@ -50,7 +50,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const FloatBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputs,
         bool learnEnabled
     );
 
