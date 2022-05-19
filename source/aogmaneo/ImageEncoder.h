@@ -68,7 +68,7 @@ public:
     ImageEncoder()
     :
     lr(0.01f),
-    falloff(0.05f)
+    falloff(0.5f)
     {}
 
     void initRandom(
