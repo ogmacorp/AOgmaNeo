@@ -128,7 +128,7 @@ void Decoder::learn(
     for (int di = 0; di < numDendrites; di++) {
         int hiddenCellIndex = (targetCI * numDendrites + di) + hiddenCellsStart;
 
-        float rate = (di == maxDendriteIndex ? lr : boost);
+        float rate = (di == maxDendriteIndex ? lr : boost) * strength;
 
         int diam = vld.radius * 2 + 1;
 
