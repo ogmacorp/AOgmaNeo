@@ -83,7 +83,7 @@ void ImageEncoder::forward(
 
             float diff = maxIndex - hc;
 
-            float strength = expf(-falloff * abs(diff) / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float strength = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -233,7 +233,7 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
 
 void ImageEncoder::step(
