@@ -59,7 +59,6 @@ private:
 
 public:
     float lr; // Learning rate
-    float boost;
 
     // Defaults
     Decoder()
