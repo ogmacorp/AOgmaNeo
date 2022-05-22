@@ -89,7 +89,7 @@ void Hierarchy::initRandom(
                     dVisibleLayerDesc.size = layerDescs[l].hiddenSize;
                     dVisibleLayerDesc.radius = ioDescs[i].dRadius;
 
-                    dLayers[l][dIndex].initRandom(ioSizes[i], ioDescs[i].numDendrites, dVisibleLayerDesc);
+                    dLayers[l][dIndex].initRandom(ioSizes[i], dVisibleLayerDesc);
 
                     iIndices[dIndex] = i;
                     dIndices[i] = dIndex;
@@ -124,7 +124,7 @@ void Hierarchy::initRandom(
 
             // Create decoders
             for (int t = 0; t < layerDescs[l].ticksPerUpdate; t++)
-                dLayers[l][t].initRandom(layerDescs[l - 1].hiddenSize, layerDescs[l].numDendrites, dVisibleLayerDesc);
+                dLayers[l][t].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDesc);
         }
         
         // Create the sparse coding layer

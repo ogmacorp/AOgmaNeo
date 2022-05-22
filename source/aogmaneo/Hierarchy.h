@@ -25,8 +25,6 @@ public:
         Int3 size;
         IOType type;
 
-        int numDendrites;
-
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
@@ -34,7 +32,6 @@ public:
         :
         size(4, 4, 16),
         type(prediction),
-        numDendrites(4),
         eRadius(2),
         dRadius(2)
         {}
@@ -42,14 +39,12 @@ public:
         IODesc(
             const Int3 &size,
             IOType type,
-            int numDendrites,
             int eRadius,
             int dRadius
         )
         :
         size(size),
         type(type),
-        numDendrites(numDendrites),
         eRadius(eRadius),
         dRadius(dRadius)
         {}
@@ -58,7 +53,6 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        int numDendrites;
 
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
@@ -69,7 +63,6 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        numDendrites(4),
         eRadius(2),
         dRadius(2),
         ticksPerUpdate(2),
@@ -78,7 +71,6 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int numDendrites,
             int eRadius,
             int dRadius,
             int ticksPerUpdate,
@@ -86,7 +78,6 @@ public:
         )
         :
         hiddenSize(hiddenSize),
-        numDendrites(numDendrites),
         eRadius(eRadius),
         dRadius(dRadius),
         ticksPerUpdate(ticksPerUpdate),
