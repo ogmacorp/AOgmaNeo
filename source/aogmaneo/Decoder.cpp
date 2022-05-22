@@ -51,9 +51,9 @@ void Decoder::forward(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wi = progCI + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                sum += vl.weights[progCI + wiStart] - vl.weights[inCI + wiStart] * 0.99f;
+                sum += vl.weights[wi];
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -110,9 +110,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wi = inCI + vld.size.z * (inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                sum += vl.weights[inCI + wiStart] - vl.weights[inCIPrev + wiStart] * 0.99f;
+                sum += vl.weights[wi];
             }
 
         sum /= count;
@@ -128,10 +128,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wi = inCI + vld.size.z * (inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
-                vl.weights[inCI + wiStart] += delta;
-                vl.weights[inCIPrev + wiStart] -= delta;
+                vl.weights[wi] += delta;
             }
     }
 }
@@ -153,7 +152,7 @@ void Decoder::initRandom(
     int diam = vld.radius * 2 + 1;
     int area = diam * diam;
 
-    vl.weights.resize(numHiddenCells * area * vld.size.z);
+    vl.weights.resize(numHiddenCells * area * vld.size.z * vld.size.z);
 
     for (int i = 0; i < vl.weights.size(); i++)
         vl.weights[i] = randf(-0.01f, 0.01f);
@@ -233,7 +232,7 @@ void Decoder::read(
     int diam = vld.radius * 2 + 1;
     int area = diam * diam;
 
-    vl.weights.resize(numHiddenCells * area * vld.size.z);
+    vl.weights.resize(numHiddenCells * area * vld.size.z * vld.size.z);
 
     reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 }
