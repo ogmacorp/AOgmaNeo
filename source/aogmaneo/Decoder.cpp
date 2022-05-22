@@ -25,8 +25,6 @@ void Decoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float sum = 0.0f;
-
         int diam = vld.radius * 2 + 1;
 
         // Projection
@@ -41,6 +39,8 @@ void Decoder::forward(
         // Bounds of receptive field, clamped to input size
         Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+        float sum = 0.0f;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
