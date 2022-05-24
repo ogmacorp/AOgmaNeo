@@ -27,7 +27,6 @@ void ImageEncoder::forward(
 
         float sum = 0.0f;
 
-        // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -177,15 +176,15 @@ void ImageEncoder::reconstruct(
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
-                float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                float strength = min(1.0f - distX, 1.0f - distY);
-
                 if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+
+                    float strength = min(1.0f - distX, 1.0f - distY);
 
                     sum += strength * vl.protos[wi];
                     total += strength;
@@ -227,13 +226,13 @@ void ImageEncoder::initRandom(
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = randf(-0.01f, 0.01f);
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0);
+        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
 
 void ImageEncoder::step(
@@ -342,7 +341,7 @@ void ImageEncoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0);
+        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 }
 
