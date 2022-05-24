@@ -55,8 +55,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
