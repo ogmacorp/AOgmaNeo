@@ -31,7 +31,6 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer weightsPrev;
     };
 
     struct HistorySample {
@@ -41,7 +40,6 @@ public:
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
-    int numDendrites;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -62,29 +60,25 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIsPrev,
-        const IntBuffer* inputCIs,
-        const IntBuffer* inputCIsPrev,
-        float strength
+        int t1,
+        int t2,
+        float minQ
     );
 
 public:
     float lr; // Learning rate
-    float boost; // Weaker secondary learning rate
     float discount; // Prediction falloff
 
     // Defaults
     Decoder()
     :
-    lr(0.01f),
-    boost(0.001f),
-    discount(0.95f)
+    lr(0.1f),
+    discount(0.9f)
     {}
 
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize,
-        int numDendrites,
         int historyCapacity,
         const VisibleLayerDesc &vld
     );
