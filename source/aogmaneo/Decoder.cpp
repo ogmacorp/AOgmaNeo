@@ -228,8 +228,6 @@ void Decoder::learn(
     if (historySize == history.size()) {
         int t1 = historySize - 1;
 
-        float strength = 1.0f;
-
         for (int t2 = 0; t2 < historySize - 1; t2++) {
             float minQ = powf(discount, t1 - 1 - t2);
 
