@@ -105,8 +105,8 @@ void Decoder::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int progCI = history[t1 - 1].inputCIs[visibleColumnIndex];
-                int inCI = history[t1].inputCIs[visibleColumnIndex];
+                int progCI = history[t2].inputCIs[visibleColumnIndex];
+                int inCI = history[t1 - 1].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -128,7 +128,7 @@ void Decoder::learn(
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
             int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-            int progCI = history[t1 - 1].inputCIs[visibleColumnIndex];
+            int progCI = history[t2].inputCIs[visibleColumnIndex];
             int inCI = history[t1].inputCIs[visibleColumnIndex];
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
@@ -146,7 +146,7 @@ void Decoder::learn(
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
             int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-            int progCI = history[t1 - 1].inputCIs[visibleColumnIndex];
+            int progCI = history[t2].inputCIs[visibleColumnIndex];
             int inCI = history[t1].inputCIs[visibleColumnIndex];
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
