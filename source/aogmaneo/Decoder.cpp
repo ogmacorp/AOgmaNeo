@@ -55,15 +55,9 @@ void Decoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int wi = vc + wiStart;
-
-                        float delta = (vc == inCI) - vl.weights[wi];
-
-                        sum -= delta * delta;
-                    }
+                    sum += logf(max(0.0001f, vl.weights[wi]));
                 }
         }
 
