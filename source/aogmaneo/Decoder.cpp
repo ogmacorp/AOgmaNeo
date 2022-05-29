@@ -102,8 +102,6 @@ void Decoder::learn(
 
         float rate = (di == maxDendriteIndex ? lr : boost);
 
-        float total2 = 0.0f;
-
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
