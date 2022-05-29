@@ -91,7 +91,7 @@ void Decoder::learn(
     for (int di = 0; di < numDendrites; di++) {
         int hiddenCellIndex = (targetCI * numDendrites + di) + hiddenCellsStart;
 
-        if (hiddenActivations[hiddenCellIndex] < maxDendriteActivation || maxDendriteIndex == -1) {
+        if (hiddenActivations[hiddenCellIndex] > maxDendriteActivation || maxDendriteIndex == -1) {
             maxDendriteActivation = hiddenActivations[hiddenCellIndex];
             maxDendriteIndex = di;
         }
