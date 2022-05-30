@@ -38,7 +38,7 @@ public:
         :
         size(4, 4, 16),
         type(prediction),
-        supportSize(4),
+        supportSize(64),
         eRadius(2),
         dRadius(2),
         historyCapacity(64)
@@ -77,7 +77,7 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        supportSize(4),
+        supportSize(64),
         eRadius(2),
         dRadius(2),
         ticksPerUpdate(2),
