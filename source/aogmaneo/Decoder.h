@@ -8,44 +8,20 @@
 
 #pragma once
 
-#include "Helpers.h"
+#include "Encoder.h"
 
 namespace aon {
 // A prediction layer (predicts x_(t+1))
 class Decoder {
-public:
-    // Visible layer descriptor
-    struct VisibleLayerDesc {
-        Int3 size; // Size of input
-
-        int radius; // Radius onto input
-
-        // Defaults
-        VisibleLayerDesc()
-        :
-        size(4, 4, 16),
-        radius(2)
-        {}
-    };
-
-    // Visible layer
-    struct VisibleLayer {
-        FloatBuffer weights;
-
-        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-    };
-
 private:
     Int3 hiddenSize; // Size of the hidden/hidden/prediction
-    int numDendrites;
-
-    FloatBuffer hiddenActivations;
 
     IntBuffer hiddenCIs;
+    IntBuffer hiddenCIsPrev;
 
-    // Visible layers and descs
-    Array<VisibleLayer> visibleLayers;
-    Array<VisibleLayerDesc> visibleLayerDescs;
+    Encoder support;
+
+    FloatBuffer weights;
 
     // --- Kernels ---
 
@@ -61,30 +37,24 @@ private:
 
 public:
     float lr; // Learning rate
-    float boost;
 
-    // Defaults
     Decoder()
     :
-    lr(0.01f),
-    boost(0.0001f)
+    lr(0.5f)
     {}
 
     // Create with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/hidden/prediction size
-        int numDendrites,
-        const Array<VisibleLayerDesc> &visibleLayerDescs
+        int supportSize,
+        const Array<Encoder::VisibleLayerDesc> &visibleLayerDescs
     );
 
-    // Activate the predictor (predict values)
-    void activate(
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    // Learning predictions (update weights)
-    void learn(
-        const IntBuffer* hiddenTargetCIs
+    // Activate the predictor (predict values) and optionally learn
+    void step(
+        const Array<const IntBuffer*> &inputCIs,
+        const IntBuffer* hiddenTargetCIs,
+        bool learnEnabled
     );
 
     // Serialization
@@ -109,28 +79,28 @@ public:
 
     // Get number of visible layers
     int getNumVisibleLayers() const {
-        return visibleLayers.size();
+        return support.getNumVisibleLayers();
     }
 
     // Get a visible layer
-    VisibleLayer &getVisibleLayer(
+    Encoder::VisibleLayer &getVisibleLayer(
         int i // Index of visible layer
     ) {
-        return visibleLayers[i];
+        return support.getVisibleLayer(i);
     }
 
     // Get a visible layer
-    const VisibleLayer &getVisibleLayer(
+    const Encoder::VisibleLayer &getVisibleLayer(
         int i // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return support.getVisibleLayer(i);
     }
 
     // Get a visible layer descriptor
-    const VisibleLayerDesc &getVisibleLayerDesc(
+    const Encoder::VisibleLayerDesc &getVisibleLayerDesc(
         int i // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return support.getVisibleLayerDesc(i);
     }
 
     // Get the hidden activations (predictions)
