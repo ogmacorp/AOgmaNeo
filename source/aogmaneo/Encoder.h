@@ -30,8 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights0;
-        FloatBuffer weights1;
+        FloatBuffer weights;
         ByteBuffer mask;
 
         float importance;
@@ -66,9 +65,9 @@ public:
 
     Encoder()
     :
-    gap(0.0001f),
+    gap(1.0f),
     vigilance(0.9f),
-    lr(0.5f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
