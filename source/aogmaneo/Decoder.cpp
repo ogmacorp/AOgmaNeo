@@ -11,8 +11,7 @@
 using namespace aon;
 
 void Decoder::forward(
-    const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Int2 &columnPos
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -51,12 +50,12 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
-        int wi = supportCI + support.getHiddenSize().z * hiddenCellIndex;
+    for (int sc = 0; sc < support.getHiddenSize().z; sc++) {
+        int wi = sc + support.getHiddenSize().z * hiddenCellIndexTarget;
 
-        weights[wi] += lr * ((hc == targetCI) - weights[wi]);
+        weights[wi] += lr * ((sc == supportCI) - weights[wi]);
     }
 }
 
@@ -100,7 +99,7 @@ void Decoder::step(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y));
 }
 
 int Decoder::size() const {

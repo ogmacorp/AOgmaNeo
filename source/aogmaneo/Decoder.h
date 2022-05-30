@@ -26,8 +26,7 @@ private:
     // --- Kernels ---
 
     void forward(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Int2 &columnPos
     );
 
     void learn(
@@ -40,7 +39,7 @@ public:
 
     Decoder()
     :
-    lr(0.5f)
+    lr(0.1f)
     {}
 
     // Create with random initialization
