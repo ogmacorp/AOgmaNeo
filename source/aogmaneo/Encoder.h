@@ -30,7 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        FloatBuffer weights;
+        ByteBuffer mask;
 
         float importance;
 
@@ -44,6 +45,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs;
+    ByteBuffer hiddenUsages;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -58,16 +60,21 @@ private:
     );
 
 public:
+    float gap;
     float vigilance;
+    float lr; // Learning rate
 
     Encoder()
     :
-    vigilance(0.5f)
+    gap(0.01f),
+    vigilance(0.95f),
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        float maskRatio,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
