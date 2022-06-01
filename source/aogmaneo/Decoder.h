@@ -76,7 +76,7 @@ public:
     :
     lr(0.5f),
     pr(0.1f),
-    pruneIters(4)
+    pruneIters(8)
     {}
 
     // Create with random initialization
