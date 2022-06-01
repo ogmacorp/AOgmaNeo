@@ -74,9 +74,9 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.5f),
+    lr(0.01f),
     pr(0.1f),
-    pruneIters(8)
+    pruneIters(16)
     {}
 
     // Create with random initialization
