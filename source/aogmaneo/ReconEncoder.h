@@ -69,7 +69,7 @@ public:
 
     ReconEncoder()
     :
-    lr(0.1f)
+    lr(1.0f)
     {}
 
     // Create a sparse coding layer with random initialization
