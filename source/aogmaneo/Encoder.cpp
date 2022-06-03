@@ -145,7 +145,6 @@ void Encoder::forward(
                         }
                     }
             }
-
         }
     }
 
