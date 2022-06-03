@@ -57,7 +57,12 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         const FloatBuffer* hiddenErrors,
-        bool learnEnabled,
+        bool learnEnabled
+    );
+
+    void prune(
+        const Int2 &columnPos,
+        int vli,
         unsigned int* state
     );
 
@@ -68,7 +73,7 @@ public:
 
     Encoder()
     :
-    lr(0.1f),
+    lr(0.001f),
     pr(0.1f),
     pruneIters(16)
     {}
