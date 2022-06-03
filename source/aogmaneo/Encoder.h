@@ -74,7 +74,7 @@ public:
     :
     lr(0.01f),
     pr(0.2f),
-    pruneIters(8)
+    pruneIters(16)
     {}
 
     // Create a sparse coding layer with random initialization
