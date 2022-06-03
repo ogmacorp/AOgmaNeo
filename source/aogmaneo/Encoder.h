@@ -34,8 +34,6 @@ public:
 
         IntBuffer inputCIsPrev;
 
-        FloatBuffer reconstruction;
-
         float importance;
 
         VisibleLayer()
@@ -61,23 +59,20 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         const FloatBuffer* hiddenErrors,
-        bool learnEnabled
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
+        bool learnEnabled,
+        unsigned int* state
     );
 
 public:
-    float elr;
-    float rlr;
+    float lr;
+    float pr;
+    int pruneIters;
 
     Encoder()
     :
-    elr(0.01f),
-    rlr(0.01f)
+    lr(0.01f),
+    pr(0.1f),
+    pruneIters(32)
     {}
 
     // Create a sparse coding layer with random initialization
