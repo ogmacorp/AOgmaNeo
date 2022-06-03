@@ -59,13 +59,6 @@ private:
         unsigned int* state
     );
 
-    void generateErrors(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
-    ); 
-
 public:
     float lr; // Learning rate
     float pr; // Prune rate
@@ -76,7 +69,7 @@ public:
     :
     lr(0.1f),
     pr(0.1f),
-    pruneIters(32)
+    pruneIters(8)
     {}
 
     // Create with random initialization
@@ -93,12 +86,6 @@ public:
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
-    );
-
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
     );
 
     // Serialization

@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include "ReconEncoder.h"
-#include "ErrorEncoder.h"
+#include "Encoder.h"
 #include "Decoder.h"
 #include "Actor.h"
 
@@ -95,11 +94,9 @@ public:
 
 private:
     // Layers
-    Array<ReconEncoder> rLayers;
-    Array<ErrorEncoder> eLayers;
+    Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
-    Array<FloatBuffer> errors; // Accumulation
 
     // For mapping first layer decoders
     IntBuffer iIndices;
@@ -241,28 +238,14 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    ReconEncoder &getReconEnc(
-        int l
-    ) {
-        return rLayers[l];
-    }
-
-    // Retrieve a sparse coding layer, const version
-    const ReconEncoder &getReconEnc(
-        int l
-    ) const {
-        return rLayers[l];
-    }
-
-    // Retrieve a sparse coding layer
-    ErrorEncoder &getErrorEnc(
+    Encoder &getELayer(
         int l
     ) {
         return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const ErrorEncoder &getErrorEnc(
+    const Encoder &getELayer(
         int l
     ) const {
         return eLayers[l];
