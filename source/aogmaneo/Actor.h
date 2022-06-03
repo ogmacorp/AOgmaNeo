@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -48,11 +48,10 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenActivations; // Temporary buffer
-
     IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenValues; // Hidden value function output buffer
+    FloatBuffer hiddenActivations;
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -70,7 +69,8 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        int t,
+        const Array<const IntBuffer*> &inputCIsPrev,
+        const IntBuffer* hiddenTargetCIsPrev,
         float q,
         float g,
         bool mimic
@@ -80,7 +80,6 @@ public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
     float discount; // Discount factor
-    float temperature; // Exploration amount
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
 
@@ -90,7 +89,6 @@ public:
     vlr(0.01f),
     alr(0.01f),
     discount(0.99f),
-    temperature(1.0f),
     minSteps(16),
     historyIters(16)
     {}
