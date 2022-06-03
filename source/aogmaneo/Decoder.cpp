@@ -259,13 +259,11 @@ void Decoder::generateErrors(
 
                 int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-                for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenCellIndex = hc + hiddenCellsStart;
+                int hiddenCellIndexTarget = (*hiddenTargetCIs)[hiddenColumnIndex] + hiddenCellsStart;
+                int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-                    float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - (hc == hiddenCIs[hiddenColumnIndex]);
-
-                    sum += error * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
-                }
+                sum += vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget))];
+                sum -= vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax))];
 
                 count++;
             }
