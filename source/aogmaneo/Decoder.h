@@ -68,7 +68,7 @@ public:
     Decoder()
     :
     lr(0.1f),
-    pr(0.1f),
+    pr(0.2f),
     pruneIters(8)
     {}
 
