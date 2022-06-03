@@ -61,15 +61,20 @@ private:
     void learn(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
-        int vli
+        int vli,
+        unsigned int* state
     );
 
 public:
     float lr;
+    float pr;
+    int pruneIters;
 
     ReconEncoder()
     :
-    lr(1.0f)
+    lr(1.0f),
+    pr(0.1f),
+    pruneIters(32)
     {}
 
     // Create a sparse coding layer with random initialization

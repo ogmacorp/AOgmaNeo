@@ -236,7 +236,7 @@ void Hierarchy::step(
             }
 
             // Activate sparse coder
-            eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+            eLayers[l].step(layerInputCIs, &errors[l], false);
             rLayers[l].step(layerInputCIs, learnEnabled);
 
             // Add to next layer's history
