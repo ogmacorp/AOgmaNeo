@@ -68,7 +68,7 @@ public:
 
     Encoder()
     :
-    lr(0.001f),
+    lr(0.1f),
     pr(0.1f),
     pruneIters(16)
     {}
