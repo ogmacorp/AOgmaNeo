@@ -212,7 +212,7 @@ void Encoder::learn(
                     }
                 }
 
-            float proj = d1 / max(0.0001f, d2);
+            float proj = pr * d1 / max(0.0001f, d2);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -235,7 +235,7 @@ void Encoder::learn(
                             int wiTarget = targetCI + wiStart;
                             int wi = vc + wiStart;
 
-                            vl.weights[wiTarget] -= vl.weights[wi] * proj * pr;
+                            vl.weights[wiTarget] -= vl.weights[wi] * proj;
                         }
                     }
                 }

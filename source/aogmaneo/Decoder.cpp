@@ -167,7 +167,7 @@ void Decoder::learn(
                     }
             }
 
-            float proj = d1 / max(0.0001f, d2);
+            float proj = pr * d1 / max(0.0001f, d2);
 
             // Remove projected amount
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -202,7 +202,7 @@ void Decoder::learn(
                             int wiTarget = vc + wiStartTarget;
                             int wi = vc + wiStart;
 
-                            vl.weights[wiTarget] -= vl.weights[wi] * proj * pr;
+                            vl.weights[wiTarget] -= vl.weights[wi] * proj;
                         }
                     }
             }
