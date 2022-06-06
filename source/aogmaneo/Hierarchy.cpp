@@ -161,7 +161,7 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+        eLayers[l].initRandom(layerDescs[l].hiddenSize, 0.5f, eVisibleLayerDescs);
     }
 }
 
