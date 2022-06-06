@@ -57,7 +57,7 @@ void Decoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += logf(max(0.0001f, vl.weights[wi]));
+                    sum += weightLookup[vl.weights[wi]];
                 }
         }
 
@@ -134,7 +134,7 @@ void Decoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] += rate * ((vc == inCIPrev) - vl.weights[wi]);
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(rate * ((vc == inCIPrev) * 255.0f - vl.weights[wi]))));
                     }
                 }
         }
@@ -167,10 +167,7 @@ void Decoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHiddenCells * area * vld.size.z);
-
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 0.01f);
+        vl.weights = ByteBuffer(numHiddenCells * area * vld.size.z, 0);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -216,7 +213,7 @@ int Decoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.weights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte) + vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
@@ -256,7 +253,7 @@ void Decoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
@@ -300,7 +297,7 @@ void Decoder::read(
 
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         vl.inputCIsPrev.resize(numVisibleColumns);
 
