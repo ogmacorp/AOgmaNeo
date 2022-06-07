@@ -34,8 +34,6 @@ public:
 
         float importance;
 
-        FloatBuffer reconstruction;
-
         VisibleLayer()
         :
         importance(1.0f)
