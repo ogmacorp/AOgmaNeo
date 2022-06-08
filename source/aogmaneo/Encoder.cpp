@@ -174,72 +174,72 @@ void Encoder::learn(
                     }
                 }
         }
-    }
 
-    // Prune
-    for (int it = 0; it < pruneIters; it++) {
-        int vc = (targetCI + 1 + rand(state) % (vld.size.z - 1)) % vld.size.z;
+        // Prune
+        for (int it = 0; it < pruneIters; it++) {
+            int vc = (targetCI + 1 + rand(state) % (vld.size.z - 1)) % vld.size.z;
 
-        int visibleCellIndexTarget = targetCI + visibleCellsStart;
-        int visibleCellIndex = vc + visibleCellsStart;
+            int visibleCellIndexTarget = targetCI + visibleCellsStart;
+            int visibleCellIndex = vc + visibleCellsStart;
 
-        float d1 = 0.0f;
-        float d2 = 0.0f;
+            float d1 = 0.0f;
+            float d2 = 0.0f;
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                Int2 hiddenPos = Int2(ix, iy);
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    Int2 hiddenPos = Int2(ix, iy);
 
-                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                Int2 visibleCenter = project(hiddenPos, hToV);
+                    Int2 visibleCenter = project(hiddenPos, hToV);
 
-                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+                    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+                        int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-                    for (int hc = 0; hc < hiddenSize.z; hc++) {
-                        int hiddenCellIndex = hc + hiddenCellsStart;
+                        for (int hc = 0; hc < hiddenSize.z; hc++) {
+                            int hiddenCellIndex = hc + hiddenCellsStart;
 
-                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                            int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        int wiTarget = targetCI + wiStart;
-                        int wi = vc + wiStart;
+                            int wiTarget = targetCI + wiStart;
+                            int wi = vc + wiStart;
 
-                        d1 += vl.weights[wiTarget] * vl.weights[wi];
-                        d2 += vl.weights[wi] * vl.weights[wi];
+                            d1 += vl.weights[wiTarget] * vl.weights[wi];
+                            d2 += vl.weights[wi] * vl.weights[wi];
+                        }
                     }
                 }
-            }
 
-        float proj = pr * d1 / max(0.0001f, d2);
+            float proj = pr * d1 / max(0.0001f, d2);
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                Int2 hiddenPos = Int2(ix, iy);
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    Int2 hiddenPos = Int2(ix, iy);
 
-                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                Int2 visibleCenter = project(hiddenPos, hToV);
+                    Int2 visibleCenter = project(hiddenPos, hToV);
 
-                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+                    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+                        int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-                    for (int hc = 0; hc < hiddenSize.z; hc++) {
-                        int hiddenCellIndex = hc + hiddenCellsStart;
+                        for (int hc = 0; hc < hiddenSize.z; hc++) {
+                            int hiddenCellIndex = hc + hiddenCellsStart;
 
-                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                            int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        int wiTarget = targetCI + wiStart;
-                        int wi = vc + wiStart;
+                            int wiTarget = targetCI + wiStart;
+                            int wi = vc + wiStart;
 
-                        vl.weights[wiTarget] -= vl.weights[wi] * proj;
+                            vl.weights[wiTarget] -= vl.weights[wi] * proj;
+                        }
                     }
                 }
-            }
+        }
     }
 }
 
@@ -271,7 +271,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 0.0f);
+            vl.weights[i] = randf(-2.0f, 0.0f);
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
