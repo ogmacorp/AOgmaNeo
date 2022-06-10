@@ -131,7 +131,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    sum += vl.weights[wi];
+                    sum += weightLookup(vl.weights[wi]);
                     count++;
                 }
             }
