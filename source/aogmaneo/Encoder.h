@@ -69,7 +69,7 @@ public:
 
     Encoder()
     :
-    lr(0.2f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -140,4 +140,3 @@ public:
     }
 };
 } // namespace aon
-
