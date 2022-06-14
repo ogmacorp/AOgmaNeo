@@ -32,9 +32,9 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
-        float importance;
-
         FloatBuffer reconstruction;
+
+        float importance;
 
         VisibleLayer()
         :
@@ -61,20 +61,15 @@ private:
     void learn(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
-        int vli,
-        unsigned int* state
+        int vli
     );
 
 public:
     float lr;
-    float pr;
-    int pruneIters;
 
     Encoder()
     :
-    lr(0.1f),
-    pr(0.1f),
-    pruneIters(16)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -145,5 +140,3 @@ public:
     }
 };
 } // namespace aon
-
-
