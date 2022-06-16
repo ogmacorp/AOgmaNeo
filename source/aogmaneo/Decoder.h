@@ -66,7 +66,7 @@ public:
     Decoder()
     :
     lr(0.01f),
-    pr(0.2f),
+    pr(0.5f),
     pruneIters(16)
     {}
 
