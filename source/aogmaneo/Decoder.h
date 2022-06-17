@@ -66,8 +66,8 @@ public:
     Decoder()
     :
     lr(0.01f),
-    pr(0.5f),
-    pruneIters(32)
+    pr(0.01f),
+    pruneIters(16)
     {}
 
     // Create with random initialization
