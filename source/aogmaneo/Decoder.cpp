@@ -84,9 +84,6 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    if (hiddenCIs[hiddenColumnIndex] == targetCI)
-        return;
-
     // Select strongest dendrite
     int maxDendriteIndex = -1;
     float maxDendriteActivation = -999999.0f;
