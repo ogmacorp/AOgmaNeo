@@ -123,8 +123,7 @@ void Decoder::learn(
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             // Project target onto other
-            float d1 = 0.0f;
-            float d2 = 0.0f;
+            float d = 0.0f;
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -158,13 +157,12 @@ void Decoder::learn(
                             int wiTarget = vc + wiStartTarget;
                             int wi = vc + wiStart;
 
-                            d1 += vl.weights[wiTarget] * vl.weights[wi];
-                            d2 += vl.weights[wi] * vl.weights[wi];
+                            d += vl.weights[wiTarget] * vl.weights[wi];
                         }
                     }
             }
 
-            float proj = pr * d1 / max(0.0001f, d2);
+            float proj = pr * d;// / max(0.0001f, d2);
 
             // Remove projected amount
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
