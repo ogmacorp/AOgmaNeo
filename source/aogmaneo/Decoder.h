@@ -38,6 +38,8 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
+    FloatBuffer hiddenActivations;
+
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
@@ -62,7 +64,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.01f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
