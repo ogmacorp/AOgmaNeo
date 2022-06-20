@@ -71,8 +71,7 @@ void Decoder::forward(
 
 void Decoder::learn(
     const Int2 &columnPos,
-    const IntBuffer* hiddenTargetCIs,
-    unsigned int* state
+    const IntBuffer* hiddenTargetCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -80,7 +79,6 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    if (hiddenCIs[hiddenColumnIndex] != targetCI) {
         int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
