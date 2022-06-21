@@ -61,11 +61,15 @@ private:
 
 public:
     float lr; // Learning rate
+    float pr;
+    int pruneIters;
 
     // Defaults
     Decoder()
     :
-    lr(0.5f)
+    lr(0.1f),
+    pr(0.5f),
+    pruneIters(8)
     {}
 
     // Create with random initialization
