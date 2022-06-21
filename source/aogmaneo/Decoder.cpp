@@ -120,7 +120,7 @@ void Decoder::learn(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights[wi] += delta * expf(-vl.weights[wi] * vl.weights[wi] * stick);
+                    vl.weights[wi] += delta * sigmoid(-vl.weights[wi] * stick);
                 }
         }
     }
