@@ -120,7 +120,7 @@ void Decoder::learn(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights[wi] += delta * expf(-vl.weights[wi] * vl.weights[wi] * rememberance);
+                    vl.weights[wi] += delta * expf(-vl.weights[wi] * vl.weights[wi] * stick);
                 }
         }
     }
@@ -225,7 +225,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&rememberance), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&stick), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -255,7 +255,7 @@ void Decoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&rememberance), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&stick), sizeof(float));
 
     hiddenActivations.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
