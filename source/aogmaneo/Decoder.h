@@ -55,16 +55,21 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs
+        const IntBuffer* hiddenTargetCIs,
+        unsigned int* state
     );
 
 public:
     float lr; // Learning rate
+    float pr;
+    int pruneIters;
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(1.0f),
+    pr(0.1f),
+    pruneIters(16)
     {}
 
     // Create with random initialization
