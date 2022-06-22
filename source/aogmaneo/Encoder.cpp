@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -128,8 +127,6 @@ void Encoder::learn(
                     return;
             }
         }
-
-    std::cout << "TEST" << std::endl;
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
