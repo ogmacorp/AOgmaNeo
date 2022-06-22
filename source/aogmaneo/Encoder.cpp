@@ -57,12 +57,12 @@ void Encoder::activate(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int mi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+                    int mi = offset.y + diam * (offset.x + diam * hiddenColumnIndex);
 
                     if (vl.mask[mi]) {
                         int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                        int wiStart = vld.size.z * mi;
+                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                         sum += vl.weights[inCI + wiStart];
 
@@ -176,7 +176,7 @@ void Encoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 255 - rand() % 2;
 
-        vl.mask.resize(numHiddenCells * area);
+        vl.mask.resize(numHiddenColumns * area);
 
         for (int i = 0; i < vl.mask.size(); i++)
             vl.mask[i] = randf() < maskRatio;
