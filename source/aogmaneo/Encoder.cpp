@@ -134,9 +134,12 @@ void Encoder::activate(
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
+                        if (vc == inCI)
+                            continue;
+
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] = max(0, vl.weights[wi] + roundf(lr * min(0.0f, (vc == inCI) * 255.0f - vl.weights[wi])));
+                        vl.weights[wi] = max(0, vl.weights[wi] - roundf(lr * 255.0f));
                     }
                 }
         }
