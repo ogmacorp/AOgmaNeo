@@ -57,9 +57,7 @@ void Encoder::activate(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int mi = offset.y + diam * (offset.x + diam * hiddenColumnIndex);
-
-                    if (vl.mask[mi]) {
+                    if (vl.mask[offset.y + diam * (offset.x + diam * hiddenColumnIndex)]) {
                         int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                         int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
