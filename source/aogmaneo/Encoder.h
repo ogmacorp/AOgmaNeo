@@ -67,7 +67,7 @@ public:
     :
     gap(0.01f),
     vigilance(0.9f),
-    lr(1.0f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
