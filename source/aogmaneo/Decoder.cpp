@@ -156,8 +156,6 @@ void Decoder::learn(
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-            const float visibleSizeZInv = 1.0f / vld.size.z;
-
             int diam = vld.radius * 2 + 1;
 
             // Projection
