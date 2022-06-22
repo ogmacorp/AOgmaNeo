@@ -66,10 +66,12 @@ private:
 
 public:
     float lr;
+    float stick;
 
     Encoder()
     :
-    lr(0.1f)
+    lr(0.2f),
+    stick(4.0f)
     {}
 
     // Create a sparse coding layer with random initialization
