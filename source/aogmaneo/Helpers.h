@@ -22,6 +22,7 @@ const int logIters = 3;
 const int sinIters = 5;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
+const float byteInv = 1.0f / 255.0f;
 
 // Lookup table for weight influence
 const float weightLookupTable[65] {

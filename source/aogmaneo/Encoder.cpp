@@ -77,6 +77,9 @@ void Encoder::activate(
                 }
         }
 
+        sum *= byteInv;
+        weightSum *= byteInv;
+
         float activation = sum / (gap + weightSum);
         float match = sum / count;
 
@@ -135,7 +138,7 @@ void Encoder::activate(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] += lr * min(0.0f, (vc == inCI) - vl.weights[wi]);
+                        vl.weights[wi] = max(0, vl.weights[wi] + roundf(lr * min(0.0f, (vc == inCI) * 255.0f - vl.weights[wi])));
                     }
                 }
         }
@@ -171,7 +174,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.99f, 1.0f);
+            vl.weights[i] = 255 - rand() % 2;
 
         vl.mask.resize(numHiddenCells * area);
 
@@ -199,7 +202,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + vl.mask.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte) + vl.mask.size() * sizeof(Byte) + sizeof(float);
     }
 
     return size;
@@ -230,7 +233,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
         writer.write(reinterpret_cast<const void*>(&vl.mask[0]), vl.mask.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
@@ -275,7 +278,7 @@ void Encoder::read(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
         vl.mask.resize(numHiddenCells * area);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
         reader.read(reinterpret_cast<void*>(&vl.mask[0]), vl.mask.size() * sizeof(Byte));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
