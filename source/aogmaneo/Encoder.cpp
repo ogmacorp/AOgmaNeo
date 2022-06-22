@@ -110,12 +110,12 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    // Check in radius
     float activation = hiddenActivations[hiddenColumnIndex];
 
-    if (activation == -1.0f)
+    if (activation == -1.0f) // Not found
         return;
 
+    // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
         for (int dy = -lRadius; dy <= lRadius; dy++) {
             Int2 otherColumnPos(columnPos.x + dx, columnPos.y + dy);
