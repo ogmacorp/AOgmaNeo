@@ -24,6 +24,8 @@ void Encoder::activate(
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
 
+    float maxMatch = 0.0f;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -79,6 +81,7 @@ void Encoder::activate(
             if (activation > maxActivation || maxIndex == -1) {
                 maxActivation = activation;
                 maxIndex = hc;
+                maxMatch = match;
             }
         }
 
@@ -91,11 +94,11 @@ void Encoder::activate(
     bool found = maxIndex != -1;
 
     if (!found) {
-        maxActivation = -1.0f; // Flag to not learn
+        maxMatch = -1.0f; // Flag to not learn
         maxIndex = backupMaxIndex;
     }
 
-    hiddenActivations[hiddenColumnIndex] = maxActivation;
+    hiddenActivations[hiddenColumnIndex] = maxMatch;
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
