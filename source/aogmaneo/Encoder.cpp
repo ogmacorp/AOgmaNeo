@@ -24,6 +24,8 @@ void Encoder::activate(
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
 
+    float maxMatch = 0.0f;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -82,6 +84,7 @@ void Encoder::activate(
             if (activation > maxActivation || maxIndex == -1) {
                 maxActivation = activation;
                 maxIndex = hc;
+                maxMatch = match;
             }
         }
 
@@ -94,11 +97,11 @@ void Encoder::activate(
     bool found = maxIndex != -1;
 
     if (!found) {
-        maxActivation = -1.0f; // Flag to not learn
+        maxMatch = -1.0f; // Flag to not learn
         maxIndex = backupMaxIndex;
     }
 
-    hiddenActivations[hiddenColumnIndex] = maxActivation;
+    hiddenMatches[hiddenColumnIndex] = maxMatch;
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
@@ -110,7 +113,7 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    float activation = hiddenActivations[hiddenColumnIndex];
+    float activation = hiddenMatches[hiddenColumnIndex];
 
     if (activation == -1.0f) // Not found
         return;
@@ -123,7 +126,7 @@ void Encoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenActivations[otherHiddenColumnIndex] > activation)
+                if (hiddenMatches[otherHiddenColumnIndex] > activation)
                     return;
             }
         }
@@ -202,7 +205,7 @@ void Encoder::initRandom(
             vl.weights[i] = 255 - rand() % 2;
     }
 
-    hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
@@ -281,7 +284,7 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
-    hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
 
