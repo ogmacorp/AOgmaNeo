@@ -32,6 +32,7 @@ void Encoder::activate(
         float sum = 0.0f;
         float weightSum = 0.0f;
         int count = 0;
+        int weightCount = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -52,7 +53,10 @@ void Encoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+
+            count += subCount;
+            weightCount += subCount * vld.size.z;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -74,7 +78,7 @@ void Encoder::activate(
                 }
         }
 
-        float activation = sum / (gap + weightSum);
+        float activation = sum / (gap + weightSum / weightCount);
         float match = sum / count;
 
         if (match >= vigilance) {
