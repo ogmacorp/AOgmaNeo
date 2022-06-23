@@ -113,9 +113,9 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    float activation = hiddenMatches[hiddenColumnIndex];
+    float match = hiddenMatches[hiddenColumnIndex];
 
-    if (activation == -1.0f) // Not found
+    if (match == -1.0f) // Not found
         return;
 
     // Check in radius
@@ -126,7 +126,7 @@ void Encoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenMatches[otherHiddenColumnIndex] > activation)
+                if (hiddenMatches[otherHiddenColumnIndex] > match)
                     return;
             }
         }
