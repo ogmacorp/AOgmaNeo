@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -35,21 +35,20 @@ public:
 
     struct HistorySample {
         IntBuffer inputCIs;
-        IntBuffer hiddenTargetCIs;
+        IntBuffer hiddenTargetCIsPrev;
     };
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
     IntBuffer hiddenCIs; // Hidden state
-    FloatBuffer hiddenActivations;
 
     // Visible layers and descs
-    VisibleLayer visibleLayer;
-    VisibleLayerDesc visibleLayerDesc;
+    VisibleLayer vl;
+    VisibleLayerDesc vld;
 
-    CircleBuffer<HistorySample> history;
     int historySize;
+    CircleBuffer<HistorySample> history;
 
     // --- Kernels ---
 
@@ -62,33 +61,38 @@ private:
     void learn(
         const Int2 &columnPos,
         int t1,
-        int t2
+        int t2,
+        float minQ
     );
 
 public:
     float lr; // Learning rate
-    int iters;
+    float discount; // Prediction falloff
 
     // Defaults
     Decoder()
     :
-    lr(2.0f),
-    iters(3)
+    lr(0.1f),
+    discount(0.9f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Int3 &hiddenSize,
         int historyCapacity,
-        const VisibleLayerDesc &visibleLayerDesc
+        const VisibleLayerDesc &vld
     );
 
-    void step(
+    // Activate the predictor (predict values)
+    void activate(
         const IntBuffer* progCIs,
-        const IntBuffer* inputCIs,
-        const IntBuffer* hiddenTargetCIs,
-        bool learnEnabled,
-        bool stateUpdate
+        const IntBuffer* inputCIs
+    );
+
+    // Learning predictions (update weights)
+    void learn(
+        const IntBuffer* hiddenTargetCIsPrev,
+        const IntBuffer* inputCIs
     );
 
     // Serialization
@@ -113,17 +117,17 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer() {
-        return visibleLayer;
+        return vl;
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer() const {
-        return visibleLayer;
+        return vl;
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc() const {
-        return visibleLayerDesc;
+        return vld;
     }
 
     // Get the hidden activations (predictions)

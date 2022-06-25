@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -25,39 +25,40 @@ public:
         Int3 size;
         IOType type;
 
+        int historyCapacity;
+
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
-
-        int historyCapacity;
 
         IODesc()
         :
         size(4, 4, 16),
         type(prediction),
+        historyCapacity(8),
         eRadius(2),
-        dRadius(2),
-        historyCapacity(3)
+        dRadius(2)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
+            int historyCapacity,
             int eRadius,
-            int dRadius,
-            int historyCapacity
+            int dRadius
         )
         :
         size(size),
         type(type),
+        historyCapacity(historyCapacity),
         eRadius(eRadius),
-        dRadius(dRadius),
-        historyCapacity(historyCapacity)
+        dRadius(dRadius)
         {}
     };
 
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
+        int historyCapacity;
 
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
@@ -65,33 +66,31 @@ public:
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
-        int historyCapacity;
-
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
+        historyCapacity(8),
         eRadius(2),
         dRadius(2),
         ticksPerUpdate(2),
-        temporalHorizon(2),
-        historyCapacity(3)
+        temporalHorizon(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
+            int historyCapacity,
             int eRadius,
             int dRadius,
             int ticksPerUpdate,
-            int temporalHorizon,
-            int historyCapacity
+            int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
+        historyCapacity(historyCapacity),
         eRadius(eRadius),
         dRadius(dRadius),
         ticksPerUpdate(ticksPerUpdate),
-        temporalHorizon(temporalHorizon),
-        historyCapacity(historyCapacity)
+        temporalHorizon(temporalHorizon)
         {}
     };
 
@@ -106,6 +105,7 @@ private:
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
+    CircleBuffer<IntBuffer> topHistories;
 
     // Per-layer values
     ByteBuffer updates;
@@ -179,7 +179,7 @@ public:
     }
 
     // Importance control
-    void setImportance(
+    void setInputImportance(
         int i,
         float importance
     ) {
@@ -188,7 +188,7 @@ public:
     }
 
     // Importance control
-    float getImportance(
+    float getInputImportance(
         int i
     ) const {
         return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;

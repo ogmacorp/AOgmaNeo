@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,15 +30,16 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        FloatBuffer protos;
 
-        ByteBuffer reconstruction;
+        FloatBuffer reconstruction;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs; // Hidden states
+
     FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
@@ -49,7 +50,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputCIs,
         bool learnEnabled
     );
 
@@ -66,8 +67,8 @@ public:
     // Defaults
     ImageEncoder()
     :
-    lr(0.02f),
-    falloff(0.05f)
+    lr(0.01f),
+    falloff(0.1f)
     {}
 
     void initRandom(
@@ -77,7 +78,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const ByteBuffer*> &inputs, // Input states
+        const Array<const FloatBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -85,7 +86,7 @@ public:
         const IntBuffer* reconCIs
     );
 
-    const ByteBuffer &getReconstruction(
+    const FloatBuffer &getReconstruction(
         int vli
     ) const {
         return visibleLayers[vli].reconstruction;

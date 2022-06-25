@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -64,19 +64,12 @@ private:
         int vli
     );
 
-    void reconstruct(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
-    );
-
 public:
     float lr;
 
     Encoder()
     :
-    lr(0.1f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -88,12 +81,6 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
-    );
-
-    void reconstruct(
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
     );
 
     // Serialization
@@ -153,4 +140,3 @@ public:
     }
 };
 } // namespace aon
-

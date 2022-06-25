@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -50,8 +50,8 @@ public:
     // Defaults
     StateAdapter()
     :
-    lr(0.05f),
-    discount(0.95f),
+    lr(0.01f),
+    discount(0.99f),
     historyIters(16)
     {}
 

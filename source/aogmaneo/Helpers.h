@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -11,18 +11,28 @@
 #include "Ptr.h"
 #include "Array.h"
 
+#ifdef USE_STD_MATH
+#include <cmath>
+#include <algorithm>
+#endif
+
 namespace aon {
-const int expIters = 6;
-const int sinIters = 6;
+const int expIters = 5;
+const int logIters = 3;
+const int sinIters = 5;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
 
-float modf(
+inline float modf(
     float x,
     float y
 );
 
 float expf(
+    float x
+);
+
+float logf(
     float x
 );
 
@@ -34,6 +44,11 @@ float sqrtf(
     float x
 );
 
+float powf(
+    float x,
+    float y
+);
+
 inline float ceilf(
     float x
 ) {
@@ -43,7 +58,7 @@ inline float ceilf(
     return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
-inline int roundftoi(
+inline int roundf(
     float x
 ) {
     if (x > 0.0f)
@@ -57,10 +72,14 @@ T min(
     T left,
     T right
 ) {
+#ifdef USE_STD_MATH
+    return std::min(left, right);
+#else
     if (left < right)
         return left;
     
     return right;
+#endif
 }
 
 template <typename T>
@@ -68,20 +87,28 @@ T max(
     T left,
     T right
 ) {
+#ifdef USE_STD_MATH
+    return std::max(left, right);
+#else
     if (left > right)
         return left;
     
     return right;
+#endif
 }
 
 template <typename T>
 T abs(
     T x
 ) {
+#ifdef USE_STD_MATH
+    return std::abs(x);
+#else
     if (x >= 0)
         return x;
 
     return  -x;
+#endif
 }
 
 template <typename T>
@@ -227,17 +254,17 @@ struct CircleBuffer {
 
 // Bounds check from (0, 0) to upperBound
 inline bool inBounds0(
-    const Int2 &pos, // Position
-    const Int2 &upperBound // Bottom-right corner
+    const Int2 &pos,
+    const Int2 &upperBound
 ) {
     return pos.x >= 0 && pos.x < upperBound.x && pos.y >= 0 && pos.y < upperBound.y;
 }
 
 // Bounds check in range
 inline bool inBounds(
-    const Int2 &pos, // Position
-    const Int2 &lowerBound, // Top-left corner
-    const Int2 &upperBound // Bottom-right corner
+    const Int2 &pos,
+    const Int2 &lowerBound,
+    const Int2 &upperBound
 ) {
     return pos.x >= lowerBound.x && pos.x < upperBound.x && pos.y >= lowerBound.y && pos.y < upperBound.y;
 }
@@ -351,6 +378,9 @@ Array<const Array<T>*> constGet(
 inline float sigmoid(
     float x
 ) {
+#ifdef USE_STD_MATH
+    return std::tanh(x * 0.5f) * 0.5f + 0.5f;
+#else
     if (x < 0.0f) {
         float z = expf(x);
 
@@ -358,11 +388,15 @@ inline float sigmoid(
     }
     
     return 1.0f / (1.0f + expf(-x));
+#endif
 }
 
 inline float tanh(
     float x
 ) {
+#ifdef USE_STD_MATH
+    return std::tanh(x);
+#else
     if (x < 0.0f) {
         float z = expf(2.0f * x);
 
@@ -372,6 +406,7 @@ inline float tanh(
     float z = expf(-2.0f * x);
 
     return -(z - 1.0f) / (z + 1.0f);
+#endif
 }
 
 // --- RNG ---
@@ -483,48 +518,5 @@ public:
         void* data,
         int len
     ) = 0;
-};
-
-// Default buffer reader/writer
-class BufferReader : public StreamReader {
-public:
-    int start;
-    const ByteBuffer* buffer;
-
-    BufferReader()
-    :
-    start(0),
-    buffer(nullptr)
-    {}
-
-    void read(
-        void* data,
-        int len
-    ) override;
-};
-
-class BufferWriter : public StreamWriter {
-public:
-    int start;
-    ByteBuffer buffer;
-
-    BufferWriter()
-    :
-    start(0)
-    {}
-
-    BufferWriter(
-        int bufferSize
-    )
-    :
-    start(0)
-    {
-        buffer.resize(bufferSize);
-    }
-
-    void write(
-        const void* data,
-        int len
-    ) override;
 };
 } // namespace aon

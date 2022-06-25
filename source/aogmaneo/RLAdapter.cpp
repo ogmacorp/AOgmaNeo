@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -51,7 +51,7 @@ void RLAdapter::initRandom(
     weights.resize(numHiddenCells);
 
     for (int i = 0; i < weights.size(); i++)
-        weights[i] = randf(-1.01f, -1.0f);
+        weights[i] = randf(-0.01f, 0.01f);
 
     progCIs = IntBuffer(numHiddenColumns, 0);
 }
