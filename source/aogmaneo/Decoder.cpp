@@ -100,7 +100,7 @@ void Decoder::learn(
     for (int di = 0; di < numDendrites; di++) {
         int hiddenCellIndex = (targetCI * numDendrites + di) + hiddenCellsStart;
 
-        float rate = (di == maxDendriteIndex ? lr : boost);
+        bool isMax = (di == maxDendriteIndex);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -131,10 +131,17 @@ void Decoder::learn(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int wi = vc + wiStart;
+                    if (isMax) {
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wiStart;
 
-                        vl.weights[wi] += rate * ((vc == inCIPrev) - vl.weights[wi]);
+                            vl.weights[wi] += lr * ((vc == inCIPrev) - vl.weights[wi]);
+                        }
+                    }
+                    else {
+                        int wi = inCIPrev + wiStart;
+
+                        vl.weights[wi] += boost * (1.0f - vl.weights[wi]);
                     }
                 }
         }
