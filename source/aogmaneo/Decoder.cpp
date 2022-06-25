@@ -106,6 +106,8 @@ void Decoder::learn(
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
+            const float visibleSizeZInv = 1.0f / vld.size.z;
+
             int diam = vld.radius * 2 + 1;
 
             // Projection
@@ -135,13 +137,13 @@ void Decoder::learn(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = vc + wiStart;
 
-                            vl.weights[wi] += lr * ((vc == inCIPrev) - vl.weights[wi]);
+                            vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + lr * ((vc == inCIPrev) - visibleSizeZInv)));
                         }
                     }
                     else {
                         int wi = inCIPrev + wiStart;
 
-                        vl.weights[wi] += boost * (1.0f - vl.weights[wi]);
+                        vl.weights[wi] = min(1.0f, vl.weights[wi] + boost);
                     }
                 }
         }
