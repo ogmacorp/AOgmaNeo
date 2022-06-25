@@ -58,7 +58,7 @@ inline float ceilf(
     return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
-inline int roundftoi(
+inline int roundf(
     float x
 ) {
     if (x > 0.0f)
