@@ -106,11 +106,11 @@ void Decoder::learn(
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 int progCI = history[t2].inputCIs[visibleColumnIndex];
-                int inCI = history[t1 - 1].inputCIs[visibleColumnIndex];
+                int nextCI = history[t1 - 1].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wi = progCI + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
+                int wi = progCI + vld.size.z * (nextCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex)));
 
                 sum += vl.weights[wi];
             }
@@ -123,12 +123,14 @@ void Decoder::learn(
     int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
     float sum = 0.0f;
+    float reward = 0.0f;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
             int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
             int progCI = history[t2].inputCIs[visibleColumnIndex];
+            int nextCI = history[t1 - 1].inputCIs[visibleColumnIndex];
             int inCI = history[t1].inputCIs[visibleColumnIndex];
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
@@ -136,11 +138,16 @@ void Decoder::learn(
             int wi = progCI + vld.size.z * (inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget)));
 
             sum += vl.weights[wi];
+
+            reward += (nextCI == progCI);
         }
 
     sum /= count;
+    reward /= count;
+    
+    reward *= reward; // Curve a bit
 
-    float delta = lr * (max(minQ, discount * maxActivation) - sum);
+    float delta = lr * (max(minQ, reward + discount * maxActivation) - sum);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
