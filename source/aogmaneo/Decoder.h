@@ -61,19 +61,20 @@ private:
     void learn(
         const Int2 &columnPos,
         int t1,
-        int t2,
-        float minQ
+        int t2
     );
 
 public:
     float lr; // Learning rate
     float discount; // Prediction falloff
+    float sharpness;
 
     // Defaults
     Decoder()
     :
     lr(0.1f),
-    discount(0.9f)
+    discount(0.9f),
+    sharpness(2.0f)
     {}
 
     // Create with random initialization

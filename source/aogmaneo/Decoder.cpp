@@ -68,8 +68,7 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &columnPos,
     int t1,
-    int t2,
-    float minQ
+    int t2
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -145,9 +144,9 @@ void Decoder::learn(
     sum /= count;
     reward /= count;
     
-    reward *= reward; // Curve a bit
+    reward = powf(reward, sharpness); // Curve a bit
 
-    float delta = lr * (max(minQ, reward + discount * maxActivation) - sum);
+    float delta = lr * (reward + discount * maxActivation - sum);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -236,18 +235,18 @@ void Decoder::learn(
         int t1 = historySize - 1;
 
         for (int t2 = 0; t2 < historySize - 1; t2++) {
-            float minQ = powf(discount, t1 - 1 - t2);
+            //float minQ = powf(discount, t1 - 1 - t2);
 
             // Learn kernel
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, minQ);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2);
         }
     }
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int);
 
     size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float);
 
@@ -281,6 +280,7 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&sharpness), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
@@ -316,6 +316,7 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&sharpness), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
