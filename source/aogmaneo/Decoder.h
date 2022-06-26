@@ -74,7 +74,7 @@ public:
     :
     lr(0.1f),
     discount(0.9f),
-    sharpness(2.0f)
+    sharpness(4.0f)
     {}
 
     // Create with random initialization
