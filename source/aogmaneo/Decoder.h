@@ -61,7 +61,8 @@ private:
     void learn(
         const Int2 &columnPos,
         int t1,
-        int t2
+        int t2,
+        float minQ
     );
 
 public:

@@ -68,7 +68,8 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &columnPos,
     int t1,
-    int t2
+    int t2,
+    float minQ
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -146,7 +147,7 @@ void Decoder::learn(
     
     reward = powf(reward, sharpness); // Curve a bit
 
-    float delta = lr * (reward + discount * maxActivation - sum);
+    float delta = lr * (max(minQ, reward + discount * maxActivation) - sum);
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -235,12 +236,12 @@ void Decoder::learn(
         int t1 = historySize - 1;
 
         for (int t2 = 0; t2 < historySize - 1; t2++) {
-            //float minQ = powf(discount, t1 - 1 - t2);
+            float minQ = powf(discount, t1 - 1 - t2);
 
             // Learn kernel
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t1, t2, minQ);
         }
     }
 }
