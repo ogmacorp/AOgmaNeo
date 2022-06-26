@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        FloatBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -43,8 +45,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenMatches;
-
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -53,28 +53,23 @@ private:
     
     // --- Kernels ---
     
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
-    float gap;
-    float vigilance;
-    float lr; // Learning rate
-    int lRadius;
+    float lr;
 
     Encoder()
     :
-    gap(0.001f),
-    vigilance(0.9f),
-    lr(0.1f),
-    lRadius(2)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -115,23 +110,23 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states
