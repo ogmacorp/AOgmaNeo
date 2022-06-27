@@ -43,7 +43,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenMatches;
 
     IntBuffer hiddenCIs;
 
@@ -64,12 +64,16 @@ private:
     );
 
 public:
+    float gap;
+    float vigilance;
     float lr; // Learning rate
     int lRadius;
 
     Encoder()
     :
-    lr(0.01f),
+    gap(0.001f),
+    vigilance(0.9f),
+    lr(1.0f),
     lRadius(2)
     {}
 
