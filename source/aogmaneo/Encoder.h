@@ -45,6 +45,8 @@ private:
 
     FloatBuffer hiddenActivations;
 
+    FloatBuffer hiddenRates;
+
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -69,7 +71,7 @@ public:
 
     Encoder()
     :
-    lr(0.01f),
+    lr(0.1f),
     lRadius(2)
     {}
 

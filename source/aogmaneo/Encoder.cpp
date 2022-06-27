@@ -58,7 +58,7 @@ void Encoder::activate(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += weightLookup(vl.weights[inCI + wiStart]);
+                    sum += vl.weights[inCI + wiStart];
                 }
         }
 
@@ -99,6 +99,10 @@ void Encoder::learn(
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
+    float rate = hiddenRates[hiddenCellIndexMax];
+
+    hiddenRates[hiddenCellIndexMax] -= lr * rate;
+
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -131,7 +135,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += lr * ((vc == inCI) - vl.weights[wi]);
+                    vl.weights[wi] += rate * ((vc == inCI) - vl.weights[wi]);
                 }
             }
     }
@@ -170,6 +174,8 @@ void Encoder::initRandom(
 
     hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
 
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
@@ -191,7 +197,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -214,6 +220,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
 
+    writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
@@ -245,8 +252,10 @@ void Encoder::read(
 
     hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
 
+    hiddenRates.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
 
+    reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
