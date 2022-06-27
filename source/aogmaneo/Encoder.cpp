@@ -59,7 +59,7 @@ void Encoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    subSum += weightLookup(vl.weights[wi]);
+                    subSum += vl.weights[wi];
                 }
 
             subSum /= subCount;
@@ -71,7 +71,7 @@ void Encoder::forward(
         sum /= max(0.0001f, totalImportance);
 
         hiddenStimuli[hiddenCellIndex] = sum;
-        hiddenActivations[hiddenCellIndex] = 0.0f;
+        hiddenActivations[hiddenCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -147,11 +147,13 @@ void Encoder::learn(
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
+    float rate = hiddenRates[hiddenCellIndexMax];
+
+    hiddenRates[hiddenCellIndexMax] -= lr * rate;
+
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-        const float visibleSizeZInv = 1.0f / vld.size.z;
 
         int diam = vld.radius * 2 + 1;
 
@@ -181,7 +183,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += lr * ((vc == inCI) - vl.weights[wi]);
+                    vl.weights[wi] += rate * ((vc == inCI) - vl.weights[wi]);
                 }
             }
     }
@@ -194,8 +196,6 @@ void Encoder::learn(
     // Bounds of receptive field, clamped to input size
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, columnPos.x + lRadius), min(hiddenSize.y - 1, columnPos.y + lRadius));
-
-    const float hiddenSizeZInv = 1.0f / hiddenSize.z;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -210,7 +210,7 @@ void Encoder::learn(
             for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
                 int wi = ohc + wiStart;
 
-                laterals[wi] += lr * ((ohc == inCI) - laterals[wi]);
+                laterals[wi] += rate * ((ohc == inCI) - laterals[wi]);
             }
         }
 }
@@ -252,6 +252,8 @@ void Encoder::initRandom(
     hiddenStimuli = FloatBuffer(numHiddenCells, 0.0f);
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -261,7 +263,7 @@ void Encoder::initRandom(
     laterals.resize(numHiddenCells * area * hiddenSize.z);
 
     for (int i = 0; i < laterals.size(); i++)
-        laterals[i] = randf(0.0f, 0.01f);
+        laterals[i] = randf(0.0f, 1.0f);
 }
 
 // Activate the sparse coder (perform sparse coding)
@@ -291,7 +293,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -318,6 +320,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&explainIters), sizeof(int));
 
+    writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
@@ -348,9 +351,12 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&explainIters), sizeof(int));
 
+    hiddenRates.resize(numHiddenCells);
+
     hiddenCIs.resize(numHiddenColumns);
     hiddenCIsTemp.resize(numHiddenColumns);
 
+    reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     hiddenStimuli = FloatBuffer(numHiddenCells, 0.0f);

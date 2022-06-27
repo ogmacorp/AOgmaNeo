@@ -47,6 +47,8 @@ private:
     FloatBuffer hiddenStimuli;
     FloatBuffer hiddenActivations;
 
+    FloatBuffer hiddenRates;
+
     IntBuffer hiddenCIs; // Hidden states
     IntBuffer hiddenCIsTemp; // Temporary hidden states
 
@@ -79,7 +81,7 @@ public:
     // Defaults
     Encoder()
     :
-    lr(0.01f),
+    lr(0.05f),
     explainIters(6)
     {}
 
