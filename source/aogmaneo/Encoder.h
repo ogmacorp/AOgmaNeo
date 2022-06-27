@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -42,20 +42,29 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    int lRadius; // Lateral radius
 
-    FloatBuffer hiddenMatches;
+    FloatBuffer hiddenStimuli;
+    FloatBuffer hiddenActivations;
 
-    IntBuffer hiddenCIs;
+    IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCIsTemp; // Temporary hidden states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
+
+    FloatBuffer laterals; // Lateral weights
     
     // --- Kernels ---
     
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
+    );
+
+    void inhibit(
+        const Int2 &columnPos
     );
 
     void learn(
@@ -64,25 +73,24 @@ private:
     );
 
 public:
-    float gap;
-    float vigilance;
-    float lr; // Learning rate
-    int lRadius;
-
+    float lr;
+    int explainIters; // Explaining-away iterations
+    
+    // Defaults
     Encoder()
     :
-    gap(0.001f),
-    vigilance(0.9f),
-    lr(1.0f),
-    lRadius(2)
+    lr(0.01f),
+    explainIters(6)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        int lRadius, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
+    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
