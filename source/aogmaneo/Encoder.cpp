@@ -58,7 +58,7 @@ void Encoder::activate(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += weightLookup(vl.weights[inCI + wiStart]);
+                    sum += vl.weights[inCI + wiStart];
                 }
         }
 
