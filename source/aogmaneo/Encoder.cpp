@@ -135,7 +135,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] += rate * ((vc == inCI) - vl.weights[wi]);
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + rate * ((vc == inCI) - 1.0f / vld.size.z)));
                 }
             }
     }
