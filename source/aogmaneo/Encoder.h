@@ -35,8 +35,6 @@ public:
         IntBuffer inputCIs;
         IntBuffer reconCIs;
 
-        FloatBuffer reconTemp;
-
         bool useInput;
 
         float importance;
@@ -78,7 +76,7 @@ public:
 
     Encoder()
     :
-    lr(1.0f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
