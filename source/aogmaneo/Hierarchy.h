@@ -9,7 +9,6 @@
 #pragma once
 
 #include "Encoder.h"
-#include "Decoder.h"
 #include "Actor.h"
 
 namespace aon {
@@ -27,8 +26,9 @@ public:
         Int3 size;
         IOType type;
 
-        int eRadius; // Encoder radius
-        int dRadius; // Decoder radius
+        int ffRadius; // Feed forward radius
+        int fbRadius; // Feedback radius
+        int aRadius; // Actor radius
 
         int historyCapacity;
 
@@ -36,23 +36,26 @@ public:
         :
         size(4, 4, 16),
         type(prediction),
-        eRadius(2),
-        dRadius(2),
+        ffRadius(2),
+        fbRadius(2),
+        aRadius(2),
         historyCapacity(64)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
-            int eRadius,
-            int dRadius,
+            int ffRadius,
+            int fbRadius,
+            int aRadius,
             int historyCapacity
         )
         :
         size(size),
         type(type),
-        eRadius(eRadius),
-        dRadius(dRadius),
+        ffRadius(ffRadius),
+        fbRadius(fbRadius),
+        aRadius(aRadius),
         historyCapacity(historyCapacity)
         {}
     };
@@ -61,8 +64,8 @@ public:
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
 
-        int eRadius; // Encoder radius
-        int dRadius; // Decoder radius
+        int ffRadius; // Encoder radius
+        int fbRadius;
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -70,23 +73,23 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
-        eRadius(2),
-        dRadius(2),
+        ffRadius(2),
+        fbRadius(2),
         ticksPerUpdate(2),
         temporalHorizon(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int eRadius,
-            int dRadius,
+            int ffRadius,
+            int fbRadius,
             int ticksPerUpdate,
             int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
-        eRadius(eRadius),
-        dRadius(dRadius),
+        ffRadius(ffRadius),
+        fbRadius(fbRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
@@ -95,7 +98,6 @@ public:
 private:
     // Layers
     Array<Encoder> eLayers;
-    Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
 
     // For mapping first layer decoders
@@ -201,7 +203,7 @@ public:
         if (ioTypes[i] == action)
             return aLayers[dIndices[i]].getHiddenCIs();
 
-        return dLayers[0][dIndices[i]].getHiddenCIs();
+        return eLayers[0].getReconstruction(dIndices[i]);
     }
 
     // Whether this layer received on update this timestep
@@ -251,19 +253,6 @@ public:
         return eLayers[l];
     }
 
-    // Retrieve deocder layer(s)
-    Array<Decoder> &getDLayers(
-        int l
-    ) {
-        return dLayers[l];
-    }
-
-    const Array<Decoder> &getDLayers(
-        int l
-    ) const {
-        return dLayers[l];
-    }
-
     // Retrieve actor layer(s)
     Array<Actor> &getALayers() {
         return aLayers;
@@ -271,27 +260,6 @@ public:
 
     const Array<Actor> &getALayers() const {
         return aLayers;
-    }
-
-    // Retrieve by index
-    Decoder &getDLayer(
-        int l,
-        int i
-    ) {
-        if (l == 0)
-            return dLayers[l][dIndices[i]];
-
-        return dLayers[l][i];
-    }
-
-    const Decoder &getDLayer(
-        int l,
-        int i
-    ) const {
-        if (l == 0)
-            return dLayers[l][dIndices[i]];
-
-        return dLayers[l][i];
     }
 
     Actor &getALayer(

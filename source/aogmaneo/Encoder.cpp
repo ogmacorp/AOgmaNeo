@@ -11,8 +11,7 @@
 using namespace aon;
 
 void Encoder::activate(
-    const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Int2 &columnPos
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -31,7 +30,7 @@ void Encoder::activate(
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-            if (inputCIs[vli] == nullptr)
+            if (!vl.useInput)
                 continue;
 
             int diam = vld.radius * 2 + 1;
@@ -57,7 +56,7 @@ void Encoder::activate(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
+                    int inCI = vl.inputCIs[visibleColumnIndex];
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
@@ -78,8 +77,7 @@ void Encoder::activate(
 }
 
 void Encoder::learn(
-    const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Int2 &columnPos
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -110,6 +108,9 @@ void Encoder::learn(
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
+        if (!vl.useInput)
+            continue;
+
         int diam = vld.radius * 2 + 1;
 
         // Projection
@@ -131,7 +132,7 @@ void Encoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int inCI = (*inputCIs[vli])[visibleColumnIndex];
+                int inCI = vl.inputCIs[visibleColumnIndex];
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
@@ -240,6 +241,9 @@ void Encoder::initRandom(
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(0.0f, 1.0f);
+
+        vl.inputCIs = IntBuffer(numVisibleColumns, 0);
+        vl.reconCIs = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
@@ -250,19 +254,18 @@ void Encoder::initRandom(
 }
 
 void Encoder::step(
-    const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y));
 
     if (learnEnabled) {
         #pragma omp parallel for
         for (int i = 0; i < numHiddenColumns; i++)
-            learn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+            learn(Int2(i / hiddenSize.y, i % hiddenSize.y));
     }
 }
 

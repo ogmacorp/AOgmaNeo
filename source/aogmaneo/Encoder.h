@@ -32,12 +32,16 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        IntBuffer inputCIs;
         IntBuffer reconCIs;
+
+        bool useInput;
 
         float importance;
 
         VisibleLayer()
         :
+        useInput(false),
         importance(1.0f)
         {}
     };
@@ -58,13 +62,11 @@ private:
     // --- Kernels ---
     
     void activate(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Int2 &columnPos
     );
 
     void learn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Int2 &columnPos
     );
 
     void reconstruct(
@@ -88,14 +90,31 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
+    void setInputs(
+        const IntBuffer* inputCIs,
+        int vli
+    ) {
+        if (inputCIs == nullptr)
+            visibleLayers[vli].useInput = false;
+        else {
+            visibleLayers[vli].useInput = true;
+            visibleLayers[vli].inputCIs = *inputCIs;
+        }
+    }
+
     void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
     );
 
     void reconstruct(
         int vli
     );
+
+    const IntBuffer &getReconstruction(
+        int vli
+    ) const {
+        return visibleLayers[vli].reconCIs;
+    }
 
     // Serialization
     int size() const; // Returns size in bytes
