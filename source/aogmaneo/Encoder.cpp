@@ -77,13 +77,14 @@ void Encoder::learn(
     VisibleLayer &vl = visibleLayers[vli];
     VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
+    if (!vl.useInput)
+        return;
+
     int diam = vld.radius * 2 + 1;
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
     int visibleCellsStart = visibleColumnIndex * vld.size.z;
-
-    assert(vl.useInput);
 
     int targetCI = vl.inputCIs[visibleColumnIndex];
 
