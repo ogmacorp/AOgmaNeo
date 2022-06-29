@@ -266,8 +266,20 @@ void Encoder::step(
     }
 }
 
+void Encoder::reconstruct(
+    int vli
+) {
+    const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+    int numVisibleColumns = vld.size.x * vld.size.y;
+
+    #pragma omp parallel for
+    for (int i = 0; i < numVisibleColumns; i++)
+        reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli);
+}
+
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + 2 * hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
