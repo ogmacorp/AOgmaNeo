@@ -83,6 +83,8 @@ void Encoder::learn(
 
     int visibleCellsStart = visibleColumnIndex * vld.size.z;
 
+    assert(vl.useInput);
+
     int targetCI = vl.inputCIs[visibleColumnIndex];
 
     // Projection
@@ -108,8 +110,6 @@ void Encoder::learn(
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
-
-        assert(vl.useInput);
 
         float sum = 0.0f;
         int count = 0;
