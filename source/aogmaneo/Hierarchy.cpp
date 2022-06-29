@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Hierarchy.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -70,6 +71,7 @@ void Hierarchy::initRandom(
 
             iIndices.resize(ioSizes.size() * 2);
             dIndices = IntBuffer(ioSizes.size(), -1);
+            std::cout << numPredictions << std::endl;
 
             eVisibleLayerDescs.resize(ioSizes.size() * layerDescs[l].temporalHorizon + numPredictions + (l < eLayers.size() - 1 ? 1 : 0));
 
