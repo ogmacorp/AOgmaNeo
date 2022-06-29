@@ -203,7 +203,7 @@ public:
         if (ioTypes[i] == action)
             return aLayers[dIndices[i]].getHiddenCIs();
 
-        assert(dIndices[i] != -1);
+        assert(ioTypes[i] == prediction);
 
         return eLayers[0].getReconstruction(histories[0].size() * histories[0][0].size() + dIndices[i]);
     }

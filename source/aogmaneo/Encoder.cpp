@@ -108,8 +108,7 @@ void Encoder::learn(
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        if (!vl.useInput)
-            continue;
+        assert(vl.useInput);
 
         int diam = vld.radius * 2 + 1;
 
