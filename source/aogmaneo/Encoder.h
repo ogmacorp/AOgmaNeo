@@ -35,6 +35,8 @@ public:
         IntBuffer inputCIs;
         IntBuffer reconCIs;
 
+        FloatBuffer reconTemp;
+
         bool useInput;
 
         float importance;
@@ -51,8 +53,6 @@ private:
 
     FloatBuffer hiddenActivations;
 
-    FloatBuffer hiddenRates;
-
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -66,7 +66,8 @@ private:
     );
 
     void learn(
-        const Int2 &columnPos
+        const Int2 &columnPos,
+        int vli
     );
 
     void reconstruct(
@@ -76,14 +77,10 @@ private:
 
 public:
     float lr; // Learning rate
-    float leak;
-    int lRadius;
 
     Encoder()
     :
-    lr(0.1f),
-    leak(0.01f),
-    lRadius(2)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
