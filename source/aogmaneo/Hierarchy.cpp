@@ -125,6 +125,15 @@ void Hierarchy::initRandom(
             }
         }
         else {
+            histories[l].resize(1);
+
+            int inSize = layerDescs[l - 1].hiddenSize.x * layerDescs[l - 1].hiddenSize.y;
+
+            histories[l][0].resize(layerDescs[l].temporalHorizon);
+
+            for (int t = 0; t < histories[l][0].size(); t++)
+                histories[l][0][t] = IntBuffer(inSize, 0);
+
             eVisibleLayerDescs.resize(layerDescs[l].temporalHorizon + layerDescs[l].ticksPerUpdate + (l < eLayers.size() - 1 ? 1 : 0));
 
             for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
@@ -136,15 +145,6 @@ void Hierarchy::initRandom(
                 eVisibleLayerDescs[layerDescs[l].temporalHorizon + t].size = layerDescs[l - 1].hiddenSize;
                 eVisibleLayerDescs[layerDescs[l].temporalHorizon + t].radius = layerDescs[l].ffRadius;
             }
-
-            histories[l].resize(1);
-
-            int inSize = layerDescs[l - 1].hiddenSize.x * layerDescs[l - 1].hiddenSize.y;
-
-            histories[l][0].resize(layerDescs[l].temporalHorizon);
-
-            for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = IntBuffer(inSize, 0);
 
             if (l < eLayers.size() - 1) {
                 eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].size = layerDescs[l].hiddenSize;
@@ -235,9 +235,9 @@ void Hierarchy::step(
                 int numInputsNext = histories[l + 1].size() * histories[l + 1][0].size();
 
                 eLayers[l].setInputs(&eLayers[l + 1].getReconstruction(numInputsNext + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]), eLayers[l].getNumVisibleLayers() - 1);
-            }
 
-            eLayers[l].step(false);
+                eLayers[l].step(false);
+            }
 
             for (int i = 0; i < numPredictions; i++)
                 eLayers[l].reconstruct(numInputs + i);
