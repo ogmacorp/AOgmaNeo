@@ -203,7 +203,7 @@ public:
         if (ioTypes[i] == action)
             return aLayers[dIndices[i]].getHiddenCIs();
 
-        return eLayers[0].getReconstruction(dIndices[i]);
+        return eLayers[0].getReconstruction(ioSizes.size() + dIndices[i]);
     }
 
     // Whether this layer received on update this timestep
