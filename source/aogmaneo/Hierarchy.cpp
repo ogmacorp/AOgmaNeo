@@ -191,7 +191,7 @@ void Hierarchy::step(
             int numPredictions = eLayers[l].getNumVisibleLayers() - numInputs - (l < eLayers.size() - 1 ? 1 : 0);
 
             for (int i = 0; i < numPredictions; i++)
-                eLayers[l].setInputs(&histories[l][l == 0 ? iIndices[i] : 0][l == 0 ? 0 : i], numInputs + i);
+                eLayers[l].setInputs(numInputs + i, &histories[l][l == 0 ? iIndices[i] : 0][l == 0 ? 0 : i]);
 
             // Learn
             if (learnEnabled)
@@ -199,14 +199,14 @@ void Hierarchy::step(
 
             // Clear to null
             for (int i = 0; i < eLayers[l].getNumVisibleLayers(); i++)
-                eLayers[l].setInputs(nullptr, i);
+                eLayers[l].setInputs(i, nullptr);
 
             // Set feed forward inputs
             int index = 0;
 
             for (int i = 0; i < histories[l].size(); i++) {
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    eLayers[l].setInputs(&histories[l][i][t], index++);
+                    eLayers[l].setInputs(index++, &histories[l][i][t]);
             }
 
             // Activate sparse coder
@@ -234,7 +234,7 @@ void Hierarchy::step(
             if (l < eLayers.size() - 1) {
                 int numInputsNext = histories[l + 1].size() * histories[l + 1][0].size();
 
-                eLayers[l].setInputs(&eLayers[l + 1].getReconstruction(numInputsNext + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]), eLayers[l].getNumVisibleLayers() - 1);
+                eLayers[l].setInputs(eLayers[l].getNumVisibleLayers() - 1, &eLayers[l + 1].getReconstruction(numInputsNext + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]));
 
                 eLayers[l].step(false);
             }

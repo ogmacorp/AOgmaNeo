@@ -91,8 +91,8 @@ public:
     );
 
     void setInputs(
-        const IntBuffer* inputCIs,
-        int vli
+        int vli,
+        const IntBuffer* inputCIs
     ) {
         if (inputCIs == nullptr)
             visibleLayers[vli].useInput = false;
