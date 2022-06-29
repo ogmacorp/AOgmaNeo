@@ -187,15 +187,16 @@ void Hierarchy::step(
             updates[l] = true;
 
             // Complete for learning
-            int numInputs = histories[l].size() * histories[l][0].size();
-            int numPredictions = eLayers[l].getNumVisibleLayers() - numInputs - (l < eLayers.size() - 1 ? 1 : 0);
+            if (learnEnabled) {
+                int numInputs = histories[l].size() * histories[l][0].size();
+                int numPredictions = eLayers[l].getNumVisibleLayers() - numInputs - (l < eLayers.size() - 1 ? 1 : 0);
 
-            for (int i = 0; i < numPredictions; i++)
-                eLayers[l].setInputs(numInputs + i, &histories[l][l == 0 ? iIndices[i] : 0][l == 0 ? 0 : i]);
+                for (int i = 0; i < numPredictions; i++)
+                    eLayers[l].setInputs(numInputs + i, &histories[l][l == 0 ? iIndices[i] : 0][l == 0 ? 0 : i]);
 
-            // Learn
-            if (learnEnabled)
+                // Learn
                 eLayers[l].step(true);
+            }
 
             // Clear to null
             for (int i = 0; i < eLayers[l].getNumVisibleLayers(); i++)
