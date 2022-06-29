@@ -76,11 +76,13 @@ private:
 
 public:
     float lr; // Learning rate
+    float leak;
     int lRadius;
 
     Encoder()
     :
     lr(0.1f),
+    leak(0.01f),
     lRadius(2)
     {}
 

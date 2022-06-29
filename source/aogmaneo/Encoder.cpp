@@ -86,6 +86,8 @@ void Encoder::learn(
     float activation = hiddenActivations[hiddenColumnIndex];
 
     // Check in radius
+    bool isMax = true;
+
     for (int dx = -lRadius; dx <= lRadius; dx++)
         for (int dy = -lRadius; dy <= lRadius; dy++) {
             Int2 otherColumnPos(columnPos.x + dx, columnPos.y + dy);
@@ -93,14 +95,19 @@ void Encoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenActivations[otherHiddenColumnIndex] > activation)
-                    return;
+                if (hiddenActivations[otherHiddenColumnIndex] > activation) {
+                    isMax = false;
+
+                    goto foundIsMax;
+                }
             }
         }
 
+foundIsMax:
+
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-    float rate = hiddenRates[hiddenCellIndexMax];
+    float rate = (isMax ? hiddenRates[hiddenCellIndexMax] : hiddenRates[hiddenCellIndexMax] * leak);
 
     hiddenRates[hiddenCellIndexMax] -= lr * rate;
 
@@ -281,7 +288,7 @@ void Encoder::reconstruct(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -302,6 +309,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&leak), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
@@ -335,6 +343,7 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&leak), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
     hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
