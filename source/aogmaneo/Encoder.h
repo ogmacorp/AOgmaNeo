@@ -45,6 +45,8 @@ private:
 
     FloatBuffer hiddenActivations;
 
+    FloatBuffer hiddenBiases;
+
     FloatBuffer hiddenRates;
 
     IntBuffer hiddenCIs;
