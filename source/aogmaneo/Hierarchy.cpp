@@ -231,8 +231,11 @@ void Hierarchy::step(
             int numInputs = histories[l].size() * histories[l][0].size();
             int numPredictions = eLayers[l].getNumVisibleLayers() - numInputs - (l < eLayers.size() - 1 ? 1 : 0);
 
-            if (l < eLayers.size() - 1)
-                eLayers[l].setInputs(&eLayers[l + 1].getReconstruction(numInputs + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]), eLayers[l].getNumVisibleLayers() - 1);
+            if (l < eLayers.size() - 1) {
+                int numInputsNext = histories[l + 1].size() * histories[l + 1][0].size();
+
+                eLayers[l].setInputs(&eLayers[l + 1].getReconstruction(numInputsNext + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]), eLayers[l].getNumVisibleLayers() - 1);
+            }
 
             eLayers[l].step(false);
 
