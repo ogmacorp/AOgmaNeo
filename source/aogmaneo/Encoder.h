@@ -67,6 +67,11 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
+    void reconstruct(
+        const Int2 &columnPos,
+        int vli
+    );
+
 public:
     float lr; // Learning rate
     int lRadius;
