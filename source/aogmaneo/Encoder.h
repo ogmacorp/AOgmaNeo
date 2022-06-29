@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        IntBuffer reconCIs;
+
         float importance;
 
         VisibleLayer()
@@ -44,8 +46,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenActivations;
-
-    FloatBuffer hiddenBiases;
 
     FloatBuffer hiddenRates;
 
@@ -86,6 +86,10 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
+    );
+
+    void reconstruct(
+        int vli
     );
 
     // Serialization

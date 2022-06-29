@@ -31,6 +31,9 @@ void Encoder::activate(
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
+            if (inputCIs[vli] == nullptr)
+                continue;
+
             int diam = vld.radius * 2 + 1;
  
             // Projection
@@ -63,8 +66,6 @@ void Encoder::activate(
         }
 
         sum /= count;
-
-        sum += hiddenBiases[hiddenCellIndex];
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -104,8 +105,6 @@ void Encoder::learn(
     float rate = hiddenRates[hiddenCellIndexMax];
 
     hiddenRates[hiddenCellIndexMax] -= lr * rate;
-
-    hiddenBiases[hiddenCellIndexMax] -= rate * hiddenActivations[hiddenCellIndexMax];
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -178,8 +177,6 @@ void Encoder::initRandom(
 
     hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
 
-    hiddenBiases = FloatBuffer(numHiddenCells, 0.5f);
-
     hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -226,7 +223,6 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -259,11 +255,9 @@ void Encoder::read(
 
     hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
 
-    hiddenBiases.resize(numHiddenCells);
     hiddenRates.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&hiddenBiases[0]), hiddenBiases.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
