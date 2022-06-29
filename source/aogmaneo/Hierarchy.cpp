@@ -187,7 +187,7 @@ void Hierarchy::step(
             updates[l] = true;
 
             // Complete for learning
-            if (learnEnabled) {
+            if (learnEnabled && eLayers[l].getVisibleLayer(0).useInput) { // Also check if ran once before
                 int numInputs = histories[l].size() * histories[l][0].size();
                 int numPredictions = eLayers[l].getNumVisibleLayers() - numInputs - (l < eLayers.size() - 1 ? 1 : 0);
 
@@ -206,8 +206,10 @@ void Hierarchy::step(
             int index = 0;
 
             for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    eLayers[l].setInputs(index++, &histories[l][i][t]);
+                for (int t = 0; t < histories[l][i].size(); t++) {
+                    eLayers[l].setInputs(index, &histories[l][i][t]);
+                    index++;
+                }
             }
 
             // Activate sparse coder
