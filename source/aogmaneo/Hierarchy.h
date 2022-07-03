@@ -201,14 +201,6 @@ public:
         return layers[l];
     }
 
-    const IntBuffer &getIIndices() const {
-        return iIndices;
-    }
-
-    const IntBuffer &getDIndices() const {
-        return dIndices;
-    }
-
     const Array<CircleBuffer<IntBuffer>> &getHistories(
         int l
     ) const {
