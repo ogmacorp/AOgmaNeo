@@ -30,8 +30,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 set(SOURCE_PATH "${PROJECT_SOURCE_DIR}/source")
 set(SOURCES
     "${SOURCE_PATH}/aogmaneo/Helpers.cpp"
-    "${SOURCE_PATH}/aogmaneo/Encoder.cpp"
-    "${SOURCE_PATH}/aogmaneo/Decoder.cpp"
+    "${SOURCE_PATH}/aogmaneo/Layer.cpp"
     "${SOURCE_PATH}/aogmaneo/Hierarchy.cpp"
     "${SOURCE_PATH}/aogmaneo/ImageEncoder.cpp"
     "${SOURCE_PATH}/aogmaneo/RLAdapter.cpp"

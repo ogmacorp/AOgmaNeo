@@ -12,7 +12,7 @@
 
 namespace aon {
 // Sparse coder
-class Encoder {
+class Layer {
 public:
     // Visible layer descriptor
     struct VisibleLayerDesc {
@@ -67,7 +67,7 @@ private:
 public:
     float lr;
 
-    Encoder()
+    Layer()
     :
     lr(0.01f)
     {}

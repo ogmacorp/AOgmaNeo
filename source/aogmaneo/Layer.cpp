@@ -6,11 +6,11 @@
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
-#include "Encoder.h"
+#include "Layer.h"
 
 using namespace aon;
 
-void Encoder::forward(
+void Layer::forward(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs
 ) {
@@ -75,7 +75,7 @@ void Encoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
-void Encoder::learn(
+void Layer::learn(
     const Int2 &columnPos,
     const IntBuffer* inputCIs,
     int vli
@@ -176,7 +176,7 @@ void Encoder::learn(
     }
 }
 
-void Encoder::initRandom(
+void Layer::initRandom(
     const Int3 &hiddenSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
@@ -212,7 +212,7 @@ void Encoder::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
-void Encoder::step(
+void Layer::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled
 ) {
@@ -235,7 +235,7 @@ void Encoder::step(
     }
 }
 
-int Encoder::size() const {
+int Layer::size() const {
     int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -247,11 +247,11 @@ int Encoder::size() const {
     return size;
 }
 
-int Encoder::stateSize() const {
+int Layer::stateSize() const {
     return hiddenCIs.size() * sizeof(int);
 }
 
-void Encoder::write(
+void Layer::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
@@ -276,7 +276,7 @@ void Encoder::write(
     }
 }
 
-void Encoder::read(
+void Layer::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
@@ -319,13 +319,13 @@ void Encoder::read(
     }
 }
 
-void Encoder::writeState(
+void Layer::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
 
-void Encoder::readState(
+void Layer::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
