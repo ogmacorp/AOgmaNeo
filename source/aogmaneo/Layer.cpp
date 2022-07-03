@@ -12,7 +12,8 @@ using namespace aon;
 
 void Layer::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Array<const IntBuffer*> &inputCIs,
+    bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -75,7 +76,7 @@ void Layer::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
-void Layer::learn(
+void Layer::learnRecon(
     const Int2 &columnPos,
     const IntBuffer* inputCIs,
     int vli
@@ -140,7 +141,7 @@ void Layer::learn(
 
         sum /= max(1, count);
 
-        vl.reconstruction[visibleCellIndex] = sum;
+        vl.reconsTemp[visibleCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -152,7 +153,7 @@ void Layer::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - sigmoid(vl.reconstruction[visibleCellIndex]));
+            float delta = rlr * ((vc == targetCI) - sigmoid(vl.reconsTemp[visibleCellIndex]));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -206,13 +207,21 @@ void Layer::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(0.0f, 1.0f);
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+        vl.reconCIs = IntBuffer(numVisibleColumns, 0);
+
+        vl.reconsTemp = FloatBuffer(numVisibleCells, 0.0f);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIsPrev = IntBuffer(numHiddenColumns, 0);
+
+    hiddenTransitions.resize(numHiddenCells * hiddenSize.z * hiddenSize.z);
+
+    for (int i = 0; i < hiddenTransitions.size(); i++)
+        hiddenTransitions[i] = randf(0.0f, 0.0001f);
 }
 
-void Layer::step(
+void Layer::stepUp(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled
 ) {
@@ -220,7 +229,7 @@ void Layer::step(
     
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, learnEnabled);
 
     if (learnEnabled) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -230,25 +239,35 @@ void Layer::step(
         
             #pragma omp parallel for
             for (int i = 0; i < numVisibleColumns; i++)
-                learn(Int2(i / vld.size.y, i % vld.size.y), inputCIs[vli], vli);
+                learnRecon(Int2(i / vld.size.y, i % vld.size.y), inputCIs[vli], vli);
         }
     }
+
+    hiddenCIsPrev = hiddenCIs;
 }
 
 int Layer::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + vl.reconCIs.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
 }
 
 int Layer::stateSize() const {
-    return hiddenCIs.size() * sizeof(int);
+    int size = 2 * hiddenCIs.size() * sizeof(int);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        size += vl.reconCIs.size() * sizeof(int);
+    }
+
+    return size;
 }
 
 void Layer::write(
@@ -256,9 +275,11 @@ void Layer::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&rlr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&tlr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -272,6 +293,8 @@ void Layer::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
+        writer.write(reinterpret_cast<const void*>(&vl.reconCIs[0]), vl.reconCIs.size() * sizeof(int));
+
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
@@ -284,11 +307,14 @@ void Layer::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&rlr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&tlr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
+    hiddenCIsPrev.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -313,7 +339,9 @@ void Layer::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+        reader.read(reinterpret_cast<void*>(&vl.reconCIs[0]), vl.reconCIs.size() * sizeof(int));
+
+        vl.reconsTemp = FloatBuffer(numVisibleCells, 0.0f);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
@@ -323,10 +351,24 @@ void Layer::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayer &vl = visibleLayers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.reconCIs[0]), vl.reconCIs.size() * sizeof(int));
+    }
 }
 
 void Layer::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.reconCIs[0]), vl.reconCIs.size() * sizeof(int));
+    }
 }
