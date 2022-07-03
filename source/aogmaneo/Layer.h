@@ -50,6 +50,8 @@ private:
     IntBuffer hiddenCIs;
     IntBuffer hiddenCIsPrev;
 
+    IntBuffer hiddenPlanCIsTemp;
+
     FloatBuffer hiddenTransitions;
 
     // Visible layers and associated descriptors
