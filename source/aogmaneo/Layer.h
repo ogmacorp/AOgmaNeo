@@ -50,6 +50,10 @@ private:
     IntBuffer hiddenCIs;
     IntBuffer hiddenCIsPrev;
 
+    // Planning
+    FloatBuffer hiddenPlanDistsTemp;
+    IntBuffer hiddenPlanPrevsTemp;
+    ByteBuffer hiddenPlanOpensTemp;
     IntBuffer hiddenPlanCIsTemp;
 
     FloatBuffer hiddenTransitions;

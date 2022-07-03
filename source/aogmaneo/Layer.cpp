@@ -74,6 +74,17 @@ void Layer::forward(
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
+
+    // Update transition probabilities
+    if (learnEnabled) {
+        int tiStart = hiddenSize.z * hiddenCIsPrev[hiddenColumnIndex];
+
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int ti = hc + tiStart;
+
+            hiddenTransitions[ti] += tlr * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenTransitions[ti]);
+        }
+    }
 }
 
 void Layer::learnRecon(
@@ -185,6 +196,63 @@ void Layer::plan(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
+    int goalCI = (*goalCIs)[hiddenColumnIndex];
+
+    bool empty = false;
+
+    while (!empty) {
+        int uhc = 0;
+        float minDist = 999999.0f;
+
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenCellIndex = hc + hiddenCellsStart;
+
+            if (hiddenPlanOpensTemp[hiddenCellIndex]) {
+                if (hiddenPlanDistsTemp[hiddenCellIndex] < minDist) {
+                    minDist = hc;
+                    uhc = hc;
+                }
+            }
+        }
+
+        if (uhc == goalCI) {
+            int prevU = uhc;
+
+            while (hiddenPlanPrevsTemp[uhc + hiddenCellsStart] != -1) {
+                prevU = uhc;
+                uhc = hiddenPlanPrevsTemp[uhc + hiddenCellsStart];
+            }
+
+            hiddenPlanCIsTemp[hiddenColumnIndex] = prevU;
+
+            return;
+        }
+
+        hiddenPlanOpensTemp[uhc + hiddenCellsStart] = false;
+
+        for (int nhc = 0; nhc < hiddenSize.z; nhc++) {
+            float p = hiddenTransitions[nhc + hiddenSize.z * (uhc + hiddenCellsStart)];
+
+            float alt = hiddenPlanDistsTemp[uhc + hiddenCellsStart] + 1.0f / max(0.0001f, p);
+
+            if (alt < hiddenPlanDistsTemp[nhc + hiddenCellsStart]) {
+                hiddenPlanDistsTemp[nhc + hiddenCellsStart] = alt;
+                hiddenPlanPrevsTemp[nhc + hiddenCellsStart] = uhc;
+            }
+        }
+
+        empty = true;
+
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            if (hiddenPlanOpensTemp[hc + hiddenCellsStart]) {
+                empty = false;
+
+                break;
+            }
+        }
+    }
+
+    assert(false);
 }
 
 void Layer::backward(
@@ -292,9 +360,12 @@ void Layer::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     hiddenCIsPrev = IntBuffer(numHiddenColumns, 0);
 
+    hiddenPlanDistsTemp = FloatBuffer(numHiddenColumns);
+    hiddenPlanPrevsTemp = IntBuffer(numHiddenColumns);
+    hiddenPlanOpensTemp = ByteBuffer(numHiddenColumns);
     hiddenPlanCIsTemp = IntBuffer(numHiddenColumns, 0);
 
-    hiddenTransitions.resize(numHiddenCells * hiddenSize.z * hiddenSize.z);
+    hiddenTransitions.resize(numHiddenCells * hiddenSize.z);
 
     for (int i = 0; i < hiddenTransitions.size(); i++)
         hiddenTransitions[i] = randf(0.0f, 0.0001f);
@@ -331,10 +402,16 @@ void Layer::stepDown(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
+    // Clear
+    hiddenPlanDistsTemp.fill(999999.0f);
+    hiddenPlanPrevsTemp.fill(-1);
+    hiddenPlanOpensTemp.fill(true);
+
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         plan(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs);
 
+    // Get action
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
