@@ -108,9 +108,18 @@ public:
     );
 
     void stepDown(
-        const IntBuffer* goalCIs,
-        bool learnEnabled
+        const IntBuffer* goalCIs
     );
+
+    void reconstruct(
+        int vli
+    );
+
+    const IntBuffer &getReconstruction(
+        int vli
+    ) const {
+        return visibleLayers[vli].reconCIs;
+    }
 
     // Serialization
     int size() const; // Returns size in bytes

@@ -397,8 +397,7 @@ void Layer::stepUp(
 }
 
 void Layer::stepDown(
-    const IntBuffer* goalCIs,
-    bool learnEnabled
+    const IntBuffer* goalCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
@@ -410,17 +409,18 @@ void Layer::stepDown(
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         plan(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs);
+}
 
-    // Get action
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+void Layer::reconstruct(
+    int vli
+) {
+    const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        int numVisibleColumns = vld.size.x * vld.size.y;
-    
-        #pragma omp parallel for
-        for (int i = 0; i < numVisibleColumns; i++)
-            backward(Int2(i / vld.size.y, i % vld.size.y), vli);
-    }
+    int numVisibleColumns = vld.size.x * vld.size.y;
+
+    #pragma omp parallel for
+    for (int i = 0; i < numVisibleColumns; i++)
+        backward(Int2(i / vld.size.y, i % vld.size.y), vli);
 }
 
 int Layer::size() const {
