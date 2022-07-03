@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Layer.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -199,8 +198,6 @@ void Layer::plan(
 
     int goalCI = (*goalCIs)[hiddenColumnIndex];
 
-    hiddenPlanCIsTemp[hiddenColumnIndex] = 0;
-
     bool empty = false;
 
     while (!empty) {
@@ -224,10 +221,6 @@ void Layer::plan(
             int its = 0;
 
             while (uhc != -1) {
-                if (its > hiddenSize.z)
-                    std::cout << "STUCK" << std::endl;
-
-                its++;
                 prevU = uhc;
                 uhc = hiddenPlanPrevsTemp[uhc + hiddenCellsStart];
             }
@@ -242,7 +235,7 @@ void Layer::plan(
         for (int nhc = 0; nhc < hiddenSize.z; nhc++) {
             float p = hiddenTransitions[nhc + hiddenSize.z * (uhc + hiddenCellsStart)];
 
-            float alt = hiddenPlanDistsTemp[uhc + hiddenCellsStart] + 1.0f / max(0.0001f, p);
+            float alt = hiddenPlanDistsTemp[uhc + hiddenCellsStart] + 1.0f / (0.0001f + p);
 
             if (alt < hiddenPlanDistsTemp[nhc + hiddenCellsStart]) {
                 hiddenPlanDistsTemp[nhc + hiddenCellsStart] = alt;
