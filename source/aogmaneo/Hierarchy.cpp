@@ -29,6 +29,9 @@ void Hierarchy::initRandom(
     // Cache input sizes
     ioSizes.resize(ioDescs.size());
 
+    for (int i = 0; i < ioDescs.size(); i++)
+        ioSizes[i] = ioDescs[i].size;
+
     // Determine ticks per update, first layer is always 1
     for (int l = 0; l < layerDescs.size(); l++)
         ticksPerUpdate[l] = (l == 0 ? 1 : layerDescs[l].ticksPerUpdate); // First layer always 1
@@ -36,18 +39,18 @@ void Hierarchy::initRandom(
     // Iterate through layers
     for (int l = 0; l < layerDescs.size(); l++) {
         // Create sparse coder visible layer descriptors
-        Array<Layer::VisibleLayerDesc> eVisibleLayerDescs;
+        Array<Layer::VisibleLayerDesc> vlds;
 
         // If first layer
         if (l == 0) {
-            eVisibleLayerDescs.resize(ioSizes.size() * layerDescs[l].temporalHorizon);
+            vlds.resize(ioSizes.size() * layerDescs[l].temporalHorizon);
 
             for (int i = 0; i < ioSizes.size(); i++) {
                 for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
                     int index = t + layerDescs[l].temporalHorizon * i;
 
-                    eVisibleLayerDescs[index].size = ioSizes[i];
-                    eVisibleLayerDescs[index].radius = ioDescs[i].radius;
+                    vlds[index].size = ioSizes[i];
+                    vlds[index].radius = ioDescs[i].radius;
                 }
             }
             
@@ -64,11 +67,11 @@ void Hierarchy::initRandom(
             }
         }
         else {
-            eVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
+            vlds.resize(layerDescs[l].temporalHorizon);
 
             for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
-                eVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
-                eVisibleLayerDescs[t].radius = layerDescs[l].radius;
+                vlds[t].size = layerDescs[l - 1].hiddenSize;
+                vlds[t].radius = layerDescs[l].radius;
             }
 
             histories[l].resize(1);
@@ -82,7 +85,7 @@ void Hierarchy::initRandom(
         }
         
         // Create the sparse coding layer
-        layers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+        layers[l].initRandom(layerDescs[l].hiddenSize, vlds);
     }
 }
 

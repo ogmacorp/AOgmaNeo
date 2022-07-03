@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Layer.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -198,18 +199,20 @@ void Layer::plan(
 
     int goalCI = (*goalCIs)[hiddenColumnIndex];
 
+    hiddenPlanCIsTemp[hiddenColumnIndex] = 0;
+
     bool empty = false;
 
     while (!empty) {
-        int uhc = 0;
+        int uhc = -1;
         float minDist = 999999.0f;
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             if (hiddenPlanOpensTemp[hiddenCellIndex]) {
-                if (hiddenPlanDistsTemp[hiddenCellIndex] < minDist) {
-                    minDist = hc;
+                if (hiddenPlanDistsTemp[hiddenCellIndex] < minDist || uhc == -1) {
+                    minDist = hiddenPlanDistsTemp[hiddenCellIndex];
                     uhc = hc;
                 }
             }
@@ -218,7 +221,13 @@ void Layer::plan(
         if (uhc == goalCI) {
             int prevU = uhc;
 
-            while (hiddenPlanPrevsTemp[uhc + hiddenCellsStart] != -1) {
+            int its = 0;
+
+            while (uhc != -1) {
+                if (its > hiddenSize.z)
+                    std::cout << "STUCK" << std::endl;
+
+                its++;
                 prevU = uhc;
                 uhc = hiddenPlanPrevsTemp[uhc + hiddenCellsStart];
             }
@@ -360,9 +369,9 @@ void Layer::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     hiddenCIsPrev = IntBuffer(numHiddenColumns, 0);
 
-    hiddenPlanDistsTemp = FloatBuffer(numHiddenColumns);
-    hiddenPlanPrevsTemp = IntBuffer(numHiddenColumns);
-    hiddenPlanOpensTemp = ByteBuffer(numHiddenColumns);
+    hiddenPlanDistsTemp = FloatBuffer(numHiddenCells);
+    hiddenPlanPrevsTemp = IntBuffer(numHiddenCells);
+    hiddenPlanOpensTemp = ByteBuffer(numHiddenCells);
     hiddenPlanCIsTemp = IntBuffer(numHiddenColumns, 0);
 
     hiddenTransitions.resize(numHiddenCells * hiddenSize.z);
