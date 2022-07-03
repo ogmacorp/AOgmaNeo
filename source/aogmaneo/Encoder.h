@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        FloatBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -42,21 +44,12 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int lRadius; // Lateral radius
 
-    FloatBuffer hiddenStimuli;
-    FloatBuffer hiddenActivations;
-
-    FloatBuffer hiddenRates;
-
-    IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenCIsTemp; // Temporary hidden states
+    IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-
-    FloatBuffer laterals; // Lateral weights
     
     // --- Kernels ---
     
@@ -65,34 +58,26 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void inhibit(
-        const Int2 &columnPos
-    );
-
     void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
     float lr;
-    int explainIters; // Explaining-away iterations
-    
-    // Defaults
+
     Encoder()
     :
-    lr(0.1f),
-    explainIters(4)
+    lr(0.2f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int lRadius, // Lateral radius
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
@@ -125,23 +110,23 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states
@@ -155,4 +140,3 @@ public:
     }
 };
 } // namespace aon
-
