@@ -124,12 +124,12 @@ public:
         return layers.size();
     }
 
-    // Get state of highest layer (less verbose when dealing with program-driven learning)
+    // Get state of highest layer (less verbose when dealing with goalram-driven learning)
     const IntBuffer &getTopHiddenCIs() const {
         return layers[layers.size() - 1].getHiddenCIs();
     }
 
-    // Get size of highest layer (less verbose when dealing with program-driven learning)
+    // Get size of highest layer (less verbose when dealing with goal-driven learning)
     const Int3 &getTopHiddenSize() const {
         return layers[layers.size() - 1].getHiddenSize();
     }

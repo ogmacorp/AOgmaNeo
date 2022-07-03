@@ -11,7 +11,7 @@
 #include "Helpers.h"
 
 namespace aon {
-// Adapts a prog-driven hierarchy to reinforcement learning
+// Adapts a goal-driven hierarchy to reinforcement learning
 class StateAdapter {
 public:
     struct HistorySample {
@@ -22,7 +22,7 @@ private:
     Int3 hiddenSize;
     int radius;
 
-    IntBuffer progCIs;
+    IntBuffer goalCIs;
 
     FloatBuffer weights;
 
@@ -68,8 +68,8 @@ public:
         bool learnEnabled
     );
 
-    const IntBuffer &getProgCIs() const {
-        return progCIs;
+    const IntBuffer &getGoalCIs() const {
+        return goalCIs;
     }
 
     // Serialization

@@ -11,12 +11,12 @@
 #include "Helpers.h"
 
 namespace aon {
-// Adapts a program-driven hierarchy to reinforcement learning
+// Adapts a goalram-driven hierarchy to reinforcement learning
 class RLAdapter {
 private:
     Int3 hiddenSize;
 
-    IntBuffer progCIs;
+    IntBuffer goalCIs;
 
     FloatBuffer weights;
 
@@ -47,8 +47,8 @@ public:
         bool learnEnabled
     );
 
-    const IntBuffer &getProgCIs() const {
-        return progCIs;
+    const IntBuffer &getGoalCIs() const {
+        return goalCIs;
     }
 
     // Serialization

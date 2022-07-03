@@ -56,7 +56,7 @@ void StateAdapter::forward(
         }
     }
 
-    progCIs[hiddenColumnIndex] = maxIndex;
+    this->goalCIs[hiddenColumnIndex] = maxIndex;
 }
 
 void StateAdapter::learn(
@@ -165,7 +165,7 @@ void StateAdapter::initRandom(
     for (int i = 0; i < weights.size(); i++)
         weights[i] = randf(-0.01f, 0.0f);
 
-    progCIs = IntBuffer(numHiddenColumns, 0);
+    goalCIs = IntBuffer(numHiddenColumns, 0);
 
     historySize = 0;
     history.resize(historyCapacity);
@@ -214,7 +214,7 @@ void StateAdapter::step(
 }
 
 int StateAdapter::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + sizeof(int) + progCIs.size() * sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + sizeof(int) + goalCIs.size() * sizeof(int);
 
     size += weights.size() * sizeof(float);
 
@@ -224,7 +224,7 @@ int StateAdapter::size() const {
 }
 
 int StateAdapter::stateSize() const {
-    int size = progCIs.size() * sizeof(int);
+    int size = goalCIs.size() * sizeof(int);
 
     size += sizeof(int) + history.size() * (history[0].hiddenCIs.size() * sizeof(int));
 
@@ -241,7 +241,7 @@ void StateAdapter::write(
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&progCIs[0]), progCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&weights[0]), weights.size() * sizeof(float));
 
@@ -272,9 +272,9 @@ void StateAdapter::read(
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
-    progCIs.resize(numHiddenColumns);
+    goalCIs.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&progCIs[0]), progCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
 
     int diam = radius * 2 + 1;
     int area = diam * diam;
@@ -306,7 +306,7 @@ void StateAdapter::read(
 void StateAdapter::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&progCIs[0]), progCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
 
     int historyStart = history.start;
 
@@ -319,7 +319,7 @@ void StateAdapter::writeState(
 void StateAdapter::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&progCIs[0]), progCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&goalCIs[0]), goalCIs.size() * sizeof(int));
 
     int historyStart;
 

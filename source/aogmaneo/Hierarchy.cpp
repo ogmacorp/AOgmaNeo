@@ -89,7 +89,7 @@ void Hierarchy::initRandom(
 // Simulation step/tick
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
-    const IntBuffer* topProgCIs,
+    const IntBuffer* topGoalCIs,
     bool learnEnabled
 ) {
     // First tick is always 0
@@ -144,7 +144,7 @@ void Hierarchy::step(
         if (l < layers.size() - 1)
             layers[l + 1].reconstruct(ticksPerUpdate[l + 1] - 1 - ticks[l + 1]);
 
-        layers[l].stepDown(l < layers.size() - 1 ? &layers[l + 1].getReconstruction(ticksPerUpdate[l + 1] - 1 - ticks[l + 1]) : topProgCIs);
+        layers[l].stepDown(l < layers.size() - 1 ? &layers[l + 1].getReconstruction(ticksPerUpdate[l + 1] - 1 - ticks[l + 1]) : topGoalCIs);
     }
 
     // Reconstruct predictions
