@@ -145,9 +145,9 @@ void Hierarchy::step(
     // Backward infer
     for (int l = layers.size() - 1; l >= 0; l--) {
         if (l < layers.size() - 1)
-            layers[l + 1].reconstruct(0);
+            layers[l + 1].reconstruct(0); // ticksPerUpdate[l + 1] - 1 - ticks[l + 1]
 
-        layers[l].stepDown(l < layers.size() - 1 ? &layers[l + 1].getReconstruction(0) : topGoalCIs);
+        layers[l].stepDown(l < layers.size() - 1 ? &layers[l + 1].getReconstruction(0) : topGoalCIs); // ticksPerUpdate[l + 1] - 1 - ticks[l + 1]
     }
 
     // Reconstruct predictions
