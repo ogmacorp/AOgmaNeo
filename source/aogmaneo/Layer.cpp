@@ -465,6 +465,8 @@ void Layer::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
+
+    writer.write(reinterpret_cast<const void*>(&hiddenTransitions[0]), hiddenTransitions.size() * sizeof(float));
 }
 
 void Layer::read(
@@ -485,6 +487,9 @@ void Layer::read(
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
 
+    hiddenPlanDistsTemp = FloatBuffer(numHiddenCells);
+    hiddenPlanPrevsTemp = IntBuffer(numHiddenCells);
+    hiddenPlanOpensTemp = ByteBuffer(numHiddenCells);
     hiddenPlanCIsTemp = IntBuffer(numHiddenColumns, 0);
 
     int numVisibleLayers = visibleLayers.size();
@@ -516,6 +521,10 @@ void Layer::read(
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
+
+    hiddenTransitions.resize(numHiddenCells * hiddenSize.z);
+
+    reader.read(reinterpret_cast<void*>(&hiddenTransitions[0]), hiddenTransitions.size() * sizeof(float));
 }
 
 void Layer::writeState(
