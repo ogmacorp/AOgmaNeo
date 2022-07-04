@@ -77,12 +77,10 @@ void Layer::forward(
 
     // Update transition probabilities
     if (learnEnabled) {
-        int tiStart = hiddenSize.z * (hiddenCIsPrev[hiddenColumnIndex] + hiddenCellsStart);
-
         for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int ti = hc + tiStart;
+            int ti = hiddenCIs[hiddenColumnIndex] + hiddenSize.z * (hc + hiddenCellsStart);
 
-            hiddenTransitions[ti] += tlr * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenTransitions[ti]);
+            hiddenTransitions[ti] += tlr * ((hc == hiddenCIsPrev[hiddenColumnIndex]) - hiddenTransitions[ti]);
         }
     }
 }
