@@ -80,7 +80,7 @@ void Layer::forward(
         int tiStart = hiddenSize.z * (hiddenCIsPrev[hiddenColumnIndex] + hiddenCellsStart);
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int ti = hc + hiddenCIsPrev[hiddenColumnIndex] * hiddenSize.z + tiStart;
+            int ti = hc + tiStart;
 
             hiddenTransitions[ti] += tlr * ((hc == hiddenCIs[hiddenColumnIndex]) - hiddenTransitions[ti]);
         }
