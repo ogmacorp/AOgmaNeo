@@ -218,8 +218,6 @@ void Layer::plan(
         if (uhc == goalCI) {
             int prevU = uhc;
 
-            int its = 0;
-
             while (uhc != -1) {
                 prevU = uhc;
                 uhc = hiddenPlanPrevsTemp[uhc + hiddenCellsStart];
