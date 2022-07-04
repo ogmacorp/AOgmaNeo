@@ -93,7 +93,7 @@ public:
     :
     rlr(0.1f),
     tlr(0.1f),
-    dlr(0.0001f)
+    dlr(0.001f)
     {}
 
     // Create a sparse coding layer with random initialization
