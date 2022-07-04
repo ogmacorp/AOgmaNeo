@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Layer.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -222,14 +221,10 @@ void Layer::plan(
         if (uhc == goalCI) {
             int prevU = uhc;
 
-            int planLen = 0;
-
             while (hiddenPlanPrevsTemp[uhc + hiddenCellsStart] != -1) {
                 prevU = uhc;
                 uhc = hiddenPlanPrevsTemp[uhc + hiddenCellsStart];
-                planLen++;
             }
-            std::cout << planLen << std::endl;
 
             hiddenPlanCIsTemp[hiddenColumnIndex] = prevU;
 
