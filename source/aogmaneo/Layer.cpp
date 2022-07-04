@@ -77,11 +77,9 @@ void Layer::forward(
 
     // Update transition probabilities
     if (learnEnabled) {
-        for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int ti = hiddenCIs[hiddenColumnIndex] + hiddenSize.z * (hc + hiddenCellsStart);
+        int ti = hiddenCIs[hiddenColumnIndex] + hiddenSize.z * (hiddenCIsPrev[hiddenColumnIndex] + hiddenCellsStart);
 
-            hiddenTransitions[ti] += tlr * ((hc == hiddenCIsPrev[hiddenColumnIndex]) - hiddenTransitions[ti]);
-        }
+        hiddenTransitions[ti] += tlr * (1.0f - hiddenTransitions[ti]);
     }
 }
 
@@ -150,39 +148,26 @@ void Layer::learnRecon(
 
         sum /= max(1, count);
 
-        vl.reconsTemp[visibleCellIndex] = sum;
+        float delta = rlr * ((vc == targetCI) - min(1.0f, max(0.0f, sum)));
+  
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 hiddenPos = Int2(ix, iy);
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = vc;
-        }
-    }
+                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    if (maxIndex != targetCI) {
-        for (int vc = 0; vc < vld.size.z; vc++) {
-            int visibleCellIndex = vc + visibleCellsStart;
+                Int2 visibleCenter = project(hiddenPos, hToV);
 
-            float delta = rlr * ((vc == targetCI) - sigmoid(vl.reconsTemp[visibleCellIndex]));
-      
-            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    Int2 hiddenPos = Int2(ix, iy);
+                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
-                    Int2 visibleCenter = project(hiddenPos, hToV);
+                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
-
-                        int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
-
-                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
-
-                        vl.weights[wi] += delta;
-                    }
+                    vl.weights[wi] += delta;
                 }
-        }
+            }
     }
 }
 
@@ -351,7 +336,7 @@ void Layer::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.reconCIs = IntBuffer(numVisibleColumns, 0);
 
@@ -378,6 +363,12 @@ void Layer::stepUp(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
+    // Decay
+    if (learnEnabled) {
+        for (int i = 0; i < hiddenTransitions.size(); i++)
+            hiddenTransitions[i] *= 1.0f - dlr;
+    }
+
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, learnEnabled);
@@ -425,7 +416,7 @@ void Layer::reconstruct(
 }
 
 int Layer::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -455,6 +446,7 @@ void Layer::write(
 
     writer.write(reinterpret_cast<const void*>(&rlr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&tlr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&dlr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
@@ -487,6 +479,7 @@ void Layer::read(
 
     reader.read(reinterpret_cast<void*>(&rlr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&tlr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&dlr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCIsPrev.resize(numHiddenColumns);

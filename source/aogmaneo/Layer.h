@@ -89,11 +89,13 @@ private:
 public:
     float rlr;
     float tlr;
+    float dlr;
 
     Layer()
     :
-    rlr(0.01f),
-    tlr(0.01f)
+    rlr(0.1f),
+    tlr(0.1f),
+    dlr(0.0001f)
     {}
 
     // Create a sparse coding layer with random initialization
