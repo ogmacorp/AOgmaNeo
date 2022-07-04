@@ -91,9 +91,9 @@ public:
 
     Layer()
     :
-    rlr(0.1f),
+    rlr(0.01f),
     tlr(0.1f),
-    dlr(0.001f)
+    dlr(0.0001f)
     {}
 
     // Create a sparse coding layer with random initialization
