@@ -145,7 +145,7 @@ void Layer::learnRecon(
 
         sum /= max(1, count);
 
-        float delta = rlr * ((vc == targetCI) - min(1.0f, max(0.0f, sum)));
+        float delta = rlr * ((vc == targetCI) - sum);
   
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -162,7 +162,7 @@ void Layer::learnRecon(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    vl.weights[wi] += delta;
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * vl.weights[wi]));
                 }
             }
     }
