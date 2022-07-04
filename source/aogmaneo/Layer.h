@@ -76,7 +76,8 @@ private:
 
     void plan(
         const Int2 &columnPos,
-        const IntBuffer* goalCIs
+        const IntBuffer* goalCIs,
+        int t
     );
 
     void backward(
@@ -108,7 +109,8 @@ public:
     );
 
     void stepDown(
-        const IntBuffer* goalCIs
+        const IntBuffer* goalCIs,
+        int t
     );
 
     void reconstruct(

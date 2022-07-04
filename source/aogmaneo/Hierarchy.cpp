@@ -147,7 +147,7 @@ void Hierarchy::step(
         if (l < layers.size() - 1)
             layers[l + 1].reconstruct(0); // ticksPerUpdate[l + 1] - 1 - ticks[l + 1]
 
-        layers[l].stepDown(l < layers.size() - 1 ? &layers[l + 1].getReconstruction(0) : topGoalCIs); // ticksPerUpdate[l + 1] - 1 - ticks[l + 1]
+        layers[l].stepDown(l < layers.size() - 1 ? &layers[l + 1].getReconstruction(0) : topGoalCIs, l == 0 ? 0 : 1); // ticksPerUpdate[l + 1] - 1 - ticks[l + 1]
     }
 
     // Reconstruct predictions

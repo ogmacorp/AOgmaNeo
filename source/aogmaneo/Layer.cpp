@@ -170,7 +170,8 @@ void Layer::learnRecon(
 
 void Layer::plan(
     const Int2 &columnPos,
-    const IntBuffer* goalCIs
+    const IntBuffer* goalCIs,
+    int t
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -199,14 +200,25 @@ void Layer::plan(
         }
 
         if (uhc == goalCI) {
-            int prevU = uhc;
+            int uhcOld = uhc;
+
+            int planLength = 0;
 
             while (hiddenPlanPrevsTemp[uhc + hiddenCellsStart] != -1) {
-                prevU = uhc;
                 uhc = hiddenPlanPrevsTemp[uhc + hiddenCellsStart];
+                planLength++;
             }
 
-            hiddenPlanCIsTemp[hiddenColumnIndex] = prevU;
+            t = min(t, planLength - 1);
+
+            int targetLength = planLength - 1 - t;
+
+            uhc = uhcOld;
+
+            for (int i = 0; i < targetLength; i++)
+                uhc = hiddenPlanPrevsTemp[uhc + hiddenCellsStart];
+
+            hiddenPlanCIsTemp[hiddenColumnIndex] = uhc;
 
             return;
         }
@@ -384,7 +396,8 @@ void Layer::stepUp(
 }
 
 void Layer::stepDown(
-    const IntBuffer* goalCIs
+    const IntBuffer* goalCIs,
+    int t
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
@@ -395,7 +408,7 @@ void Layer::stepDown(
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        plan(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs);
+        plan(Int2(i / hiddenSize.y, i % hiddenSize.y), goalCIs, t);
 }
 
 void Layer::reconstruct(
