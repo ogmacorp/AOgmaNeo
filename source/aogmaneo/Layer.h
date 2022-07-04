@@ -34,8 +34,6 @@ public:
 
         IntBuffer reconCIs;
 
-        FloatBuffer reconsTemp;
-
         float importance;
 
         VisibleLayer()

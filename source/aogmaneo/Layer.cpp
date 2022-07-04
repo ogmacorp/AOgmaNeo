@@ -339,8 +339,6 @@ void Layer::initRandom(
             vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.reconCIs = IntBuffer(numVisibleColumns, 0);
-
-        vl.reconsTemp = FloatBuffer(numVisibleCells, 0.0f);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -513,8 +511,6 @@ void Layer::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&vl.reconCIs[0]), vl.reconCIs.size() * sizeof(int));
-
-        vl.reconsTemp = FloatBuffer(numVisibleCells, 0.0f);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
