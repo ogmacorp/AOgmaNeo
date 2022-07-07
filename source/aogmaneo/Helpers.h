@@ -306,7 +306,7 @@ inline int address2(
     const Int2 &pos, // Position
     const Int2 &dims // Dimensions to ravel with
 ) {
-    return pos.y + pos.x * dims.y;
+    return pos.y + dims.y * pos.x;
 }
 
 inline int address3(

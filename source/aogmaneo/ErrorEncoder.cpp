@@ -23,7 +23,9 @@ void ErrorEncoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-        float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * hiddenActivations[hiddenColumnIndex] * (1.0f - hiddenActivations[hiddenColumnIndex]);
+        float s = sigmoid(hiddenActivations[hiddenCellIndexMax]);
+
+        float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * s * (1.0f - s);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -109,13 +111,13 @@ void ErrorEncoder::forward(
 
         sum /= max(0.0001f, totalImportance);
 
+        hiddenActivations[hiddenCellIndex] = sum;
+
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
     }
-
-    hiddenActivations[hiddenColumnIndex] = sigmoid(maxActivation);
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
@@ -148,12 +150,12 @@ void ErrorEncoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenActivations = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
@@ -239,7 +241,7 @@ void ErrorEncoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
-    hiddenActivations.resize(numHiddenColumns);
+    hiddenActivations.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
 

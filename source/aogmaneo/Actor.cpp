@@ -201,8 +201,6 @@ void Actor::learn(
 
     int targetCI = historySamples[t - 1].hiddenTargetCIsPrev[hiddenColumnIndex];
 
-    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
-
     // --- Value Prev ---
 
     float newValue = q + g * hiddenValues[hiddenColumnIndex];

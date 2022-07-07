@@ -27,7 +27,6 @@ void ImageEncoder::forward(
 
         float sum = 0.0f;
 
-        // For each visible layer
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -227,7 +226,7 @@ void ImageEncoder::initRandom(
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = randf(-0.01f, 0.01f);
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0);
+        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 
     // Hidden CIs
@@ -342,7 +341,7 @@ void ImageEncoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0);
+        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
 }
 
