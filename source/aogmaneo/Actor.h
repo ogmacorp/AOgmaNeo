@@ -80,17 +80,15 @@ public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
     float discount; // Discount factor
-    float temperature; // Exploration amount
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
     :
-    vlr(0.01f),
-    alr(0.01f),
+    vlr(0.1f),
+    alr(0.1f),
     discount(0.99f),
-    temperature(1.0f),
     minSteps(16),
     historyIters(16)
     {}
