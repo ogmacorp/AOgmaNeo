@@ -59,7 +59,7 @@ void ReconEncoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    subSum += weightLookup(vl.weights[wi]);
+                    subSum += vl.weights[wi];
                 }
 
             subSum /= subCount;
