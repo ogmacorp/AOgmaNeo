@@ -31,7 +31,6 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer protos;
-        FloatBuffer masks;
 
         FloatBuffer reconstruction;
     };
@@ -41,6 +40,8 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
+    FloatBuffer hiddenRates;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -49,7 +50,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const FloatBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputs,
         bool learnEnabled
     );
 
@@ -61,13 +62,13 @@ private:
 
 public:
     float lr;
-    float mr;
+    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.1f),
-    mr(0.01f)
+    lr(0.01f),
+    falloff(0.1f)
     {}
 
     void initRandom(
