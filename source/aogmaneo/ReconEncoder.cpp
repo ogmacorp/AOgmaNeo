@@ -158,7 +158,7 @@ void ReconEncoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    vl.weights[wi] += delta * hiddenRates[hiddenCellIndexMax];
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * hiddenRates[hiddenCellIndexMax]));
                 }
             }
     }
