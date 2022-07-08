@@ -34,8 +34,6 @@ public:
 
         float importance;
 
-        FloatBuffer reconstruction;
-
         VisibleLayer()
         :
         importance(1.0f)
@@ -46,6 +44,8 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs;
+
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
