@@ -161,18 +161,34 @@ public:
     }
 
     // Importance control
-    void setImportance(
+    void setInputImportance(
         int i,
         float importance
     ) {
         eLayers[0].getVisibleLayer(i).importance = importance;
     }
 
-    // Importance control
-    float getImportance(
+    float getInputImportance(
         int i
     ) const {
         return eLayers[0].getVisibleLayer(i).importance;
+    }
+
+    void setRecurrentImportance(
+        int l,
+        float importance
+    ) {
+        assert(l == 0 ? eLayers[l].getNumVisibleLayers() > ioSizes.size() : eLayers[l].getNumVisibleLayers() > 1);
+
+        eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance = importance;
+    }
+
+    float getRecurrentImportance(
+        int l
+    ) const {
+        assert(l == 0 ? eLayers[l].getNumVisibleLayers() > ioSizes.size() : eLayers[l].getNumVisibleLayers() > 1);
+
+        return eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance;
     }
 
     // Retrieve predictions
