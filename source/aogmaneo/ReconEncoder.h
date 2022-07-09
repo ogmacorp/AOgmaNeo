@@ -47,8 +47,6 @@ private:
 
     IntBuffer hiddenCIs;
 
-    FloatBuffer hiddenRates;
-
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
