@@ -205,7 +205,7 @@ void Encoder::initRandom(
 
         if (vld.isRecurrent) {
             for (int i = 0; i < vl.weights.size(); i++)
-                vl.weights[i] = randf(0.0f, 0.01f);
+                vl.weights[i] = randf(-0.01f, 0.01f);
         }
         else {
             for (int i = 0; i < vl.weights.size(); i++)
