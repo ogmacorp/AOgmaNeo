@@ -22,6 +22,8 @@ void Hierarchy::initRandom(
     ioSizes.resize(ioDescs.size());
     ioTypes.resize(ioDescs.size());
 
+    errors.resize(layerDescs.size());
+
     int numPredictions = 0;
     int numActions = 0;
 
@@ -127,6 +129,8 @@ void Hierarchy::initRandom(
 
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+
+        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
     }
 }
 
@@ -291,6 +295,8 @@ void Hierarchy::read(
     eLayers.resize(numLayers);
     dLayers.resize(numLayers);
 
+    errors.resize(numLayers);
+
     iIndices.resize(numIO * 2);
     dIndices.resize(numIO);
 
@@ -305,6 +311,8 @@ void Hierarchy::read(
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].read(reader);
+
+        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
     }
 
     aLayers.resize(numActions);
