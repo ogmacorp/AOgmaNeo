@@ -24,7 +24,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float sum = 0.0f;
+        float m = 1.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -63,11 +63,11 @@ void Encoder::forward(
 
             subSum /= subCount;
 
-            sum += subSum * vl.importance;
+            m *= subSum;
         }
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
+        if (m > maxActivation || maxIndex == -1) {
+            maxActivation = m;
             maxIndex = hc;
         }
     }
@@ -137,9 +137,7 @@ void Encoder::learn(
 
         sum /= max(1, count);
 
-        float clip = min(1.0f, max(0.0f, sum));
-
-        float delta = lr * ((vc == targetCI) - clip) * clip * (1.0f - clip);
+        float delta = lr * ((vc == targetCI) - sum);
   
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -156,7 +154,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    vl.weights[wi] += delta;
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * vl.weights[wi]));
                 }
             }
     }
