@@ -123,6 +123,7 @@ void Hierarchy::initRandom(
         if (layerDescs[l].rRadius >= 0) {
             eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].size = layerDescs[l].hiddenSize;
             eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].radius = layerDescs[l].rRadius;
+            eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].isRecurrent = true;
         }
 
         // Create the sparse coding layer
@@ -171,8 +172,12 @@ void Hierarchy::step(
 
         Array<const IntBuffer*> targetCIs;
 
-        if (l == 0)
-            targetCIs = inputCIs;
+        if (l == 0) {
+            targetCIs.resize(dLayers[l].size());
+
+            for (int d = 0; d < dLayers[l].size(); d++)
+                targetCIs[d] = inputCIs[iIndices[d]];
+        }
         else {
             targetCIs.resize(1);
             targetCIs[0] = &eLayers[l - 1].getHiddenCIs();

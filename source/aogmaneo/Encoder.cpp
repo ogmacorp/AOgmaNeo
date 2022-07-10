@@ -24,7 +24,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float m = 1.0f;
+        float sum = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -63,11 +63,14 @@ void Encoder::forward(
 
             subSum /= subCount;
 
-            m *= subSum;
+            if (vld.isRecurrent)
+                sum *= vl.importance * subSum + (1.0f - vl.importance);
+            else
+                sum += subSum * vl.importance;
         }
 
-        if (m > maxActivation || maxIndex == -1) {
-            maxActivation = m;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
