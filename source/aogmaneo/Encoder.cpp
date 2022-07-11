@@ -402,9 +402,13 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&k), sizeof(int));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+
     hiddenCIs.resize(numHiddenColumns);
+    hiddenCIsPrev.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenCIsPrev[0]), hiddenCIsPrev.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 
