@@ -201,8 +201,68 @@ void Encoder::learnForward(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta));
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * vl.weights[wi]));
                 }
+            }
+    }
+}
+
+void Encoder::learnRecurrent(
+    const Int2 &columnPos
+) {
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
+    int diam = rRadius * 2 + 1;
+
+    // Lower corner
+    Int2 fieldLowerBound(columnPos.x - rRadius, columnPos.y - rRadius);
+
+    // Bounds of receptive field, clamped to input size
+    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+    Int2 iterUpperBound(min(hiddenSize.x - 1, columnPos.x + rRadius), min(hiddenSize.y - 1, columnPos.y + rRadius));
+
+    int targetCI = hiddenCIsPrev[hiddenColumnIndex];
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        float sum = 0.0f;
+        int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 otherHiddenPos = Int2(ix, iy);
+
+                int otherHiddenColumnIndex = address2(otherHiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+
+                Int2 offset(columnPos.x - otherHiddenPos.x + rRadius, columnPos.y - otherHiddenPos.y + rRadius);
+
+                int otherHiddenCellIndex = hiddenCIs[otherHiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z;
+
+                int wi = hc + hiddenSize.z * (offset.y + diam * (offset.x + diam * otherHiddenCellIndex));
+
+                sum += recurrentWeights[wi];
+            }
+
+        sum /= count;
+
+        float delta = lr * ((hc == targetCI) - sum);
+  
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 otherHiddenPos = Int2(ix, iy);
+
+                int otherHiddenColumnIndex = address2(otherHiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+
+                Int2 offset(columnPos.x - otherHiddenPos.x + rRadius, columnPos.y - otherHiddenPos.y + rRadius);
+
+                int otherHiddenCellIndex = hiddenCIs[otherHiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z;
+
+                int wi = hc + hiddenSize.z * (offset.y + diam * (offset.x + diam * otherHiddenCellIndex));
+
+                recurrentWeights[wi] = min(1.0f, max(0.0f, recurrentWeights[wi] + delta * recurrentWeights[wi]));
             }
     }
 }
@@ -271,9 +331,15 @@ void Encoder::step(
         
             #pragma omp parallel for
             for (int i = 0; i < numVisibleColumns; i++)
-                learn(Int2(i / vld.size.y, i % vld.size.y), inputCIs[vli], vli);
+                learnForward(Int2(i / vld.size.y, i % vld.size.y), inputCIs[vli], vli);
         }
+
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            learnRecurrent(Int2(i / hiddenSize.y, i % hiddenSize.y));
     }
+
+    hiddenCIsPrev = hiddenCIs;
 }
 
 int Encoder::size() const {
