@@ -42,9 +42,11 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    int rRadius;
 
     FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
+    IntBuffer hiddenCIsPrev;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -59,10 +61,14 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void learn(
+    void learnForward(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
         int vli
+    );
+
+    void learnRecurrent(
+        const Int2 &columnPos
     );
 
 public:
@@ -78,6 +84,7 @@ public:
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        int rRadius,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
