@@ -42,7 +42,7 @@ void Hierarchy::initRandom(
 
         // If first layer
         if (l == 0) {
-            eVisibleLayerDescs.resize(ioSizes.size() + (layerDescs[l].rRadius >= 0 ? 1 : 0));
+            eVisibleLayerDescs.resize(ioSizes.size());
 
             for (int i = 0; i < ioSizes.size(); i++) {
                 eVisibleLayerDescs[i].size = ioSizes[i];
@@ -99,7 +99,7 @@ void Hierarchy::initRandom(
             }
         }
         else {
-            eVisibleLayerDescs.resize(layerDescs[l].rRadius >= 0 ? 2 : 1);
+            eVisibleLayerDescs.resize(1);
 
             eVisibleLayerDescs[0].size = layerDescs[l - 1].hiddenSize;
             eVisibleLayerDescs[0].radius = layerDescs[l].eRadius;
@@ -119,19 +119,9 @@ void Hierarchy::initRandom(
             for (int t = 0; t < dLayers[l].size(); t++)
                 dLayers[l][t].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDescs);
         }
-        
-        if (layerDescs[l].rRadius >= 0) {
-            eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].size = layerDescs[l].hiddenSize;
-            eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].radius = layerDescs[l].rRadius;
-            eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].isRecurrent = true;
-        }
 
         // Create the sparse coding layer
-        eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
-
-        // Set default recurrence
-        if (layerDescs[l].rRadius >= 0)
-            setRecurrentImportance(l, 0.05f); // Low enough to not trigger activation on its own unless the input didn't change
+        eLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].rRadius, eVisibleLayerDescs);
     }
 }
 

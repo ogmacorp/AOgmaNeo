@@ -69,7 +69,7 @@ public:
         :
         hiddenSize(4, 4, 16),
         eRadius(2),
-        rRadius(0),
+        rRadius(2),
         dRadius(2)
         {}
 
