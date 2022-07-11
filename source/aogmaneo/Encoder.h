@@ -20,14 +20,11 @@ public:
 
         int radius; // Radius onto input
         
-        Byte isRecurrent;
-
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2),
-        isRecurrent(false)
+        radius(2)
         {}
     };
 

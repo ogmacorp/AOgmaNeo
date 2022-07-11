@@ -63,10 +63,7 @@ void Encoder::forward(
 
             subSum /= subCount;
 
-            if (vld.isRecurrent)
-                sum *= sigmoid(subSum) * vl.importance + (1.0f - vl.importance);
-            else
-                sum += subSum * vl.importance;
+            sum += subSum * vl.importance;
         }
 
         if (sum > maxActivation || maxIndex == -1) {
