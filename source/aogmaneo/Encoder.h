@@ -20,14 +20,11 @@ public:
 
         int radius; // Radius onto input
         
-        Byte isRecurrent;
-
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2),
-        isRecurrent(false)
+        radius(2)
         {}
     };
 
@@ -46,11 +43,14 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
+
+    FloatBuffer recurrentWeights;
     
     // --- Kernels ---
     
@@ -66,10 +66,12 @@ private:
     );
 
 public:
+    int k;
     float lr;
 
     Encoder()
     :
+    k(4),
     lr(0.01f)
     {}
 

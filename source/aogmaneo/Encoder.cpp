@@ -18,9 +18,6 @@ void Encoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -63,15 +60,30 @@ void Encoder::forward(
 
             subSum /= subCount;
 
-            if (vld.isRecurrent)
-                sum *= vl.importance * subSum + (1.0f - vl.importance);
-            else
-                sum += subSum * vl.importance;
+            sum += subSum * vl.importance;
         }
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
+        hiddenActivations[hiddenCellIndex] = sum;
+    }
+
+    int maxIndex = -1;
+    float maxActivation = -999999.0f;
+
+    // Inefficient top-k
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        int numHigher = 0;
+
+        for (int ohc = 0; ohc < hiddenSize.z; ohc++) {
+            int otherHiddenCellIndex = ohc + hiddenCellsStart;
+
+            if (hiddenActivations[otherHiddenCellIndex] > hiddenActivations[hiddenCellIndex])
+                numHigher++;
+        }
+
+        if (numHigher < k) {
+            // Select via recurrence
         }
     }
 
