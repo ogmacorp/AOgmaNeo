@@ -91,8 +91,8 @@ public:
     alr(0.01f),
     discount(0.99f),
     temperature(1.0f),
-    minSteps(16),
-    historyIters(16)
+    minSteps(8),
+    historyIters(8)
     {}
 
     // Initialized randomly
