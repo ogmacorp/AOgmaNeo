@@ -74,7 +74,7 @@ public:
         eRadius(2),
         dRadius(2),
         ticksPerUpdate(2),
-        temporalHorizon(2)
+        temporalHorizon(4)
         {}
 
         LayerDesc(
