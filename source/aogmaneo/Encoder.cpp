@@ -184,7 +184,7 @@ void Encoder::learnForward(
 
         sum /= max(1, count);
 
-        float delta = lr * ((vc == targetCI) - sum);
+        float delta = (vc == targetCI) - sum;
   
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
