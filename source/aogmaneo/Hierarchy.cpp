@@ -127,9 +127,6 @@ void Hierarchy::initRandom(
 
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
-
-        if (layerDescs[l].rRadius >= 0)
-            setRecurrentImportance(l, 0.5f); // Default recurrence
     }
 }
 
