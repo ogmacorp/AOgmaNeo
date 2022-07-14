@@ -55,8 +55,7 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        unsigned int* state
+        const IntBuffer* hiddenTargetCIs
     );
 
     void generateErrors(
@@ -68,15 +67,11 @@ private:
 
 public:
     float lr; // Learning rate
-    float pr; // Prune rate
-    int pruneIters; // Pruning iterations
 
     // Defaults
     Decoder()
     :
-    lr(0.1f),
-    pr(0.1f),
-    pruneIters(16)
+    lr(1.0f)
     {}
 
     // Create with random initialization

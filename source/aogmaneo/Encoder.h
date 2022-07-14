@@ -60,22 +60,12 @@ private:
         bool learnEnabled
     );
 
-    void prune(
-        const Int2 &columnPos,
-        int vli,
-        unsigned int* state
-    );
-
 public:
     float lr;
-    float pr;
-    int pruneIters;
 
     Encoder()
     :
-    lr(0.001f),
-    pr(0.1f),
-    pruneIters(16)
+    lr(0.001f)
     {}
 
     // Create a sparse coding layer with random initialization
