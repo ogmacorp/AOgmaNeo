@@ -54,7 +54,7 @@ void Encoder::forward(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    vl.weights[wi] = min(1.0f, max(-1.0f, vl.weights[wi] + delta));
+                    vl.weights[wi] += delta;
                 }
         }
     }
