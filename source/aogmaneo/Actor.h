@@ -91,7 +91,7 @@ public:
     alr(0.01f),
     discount(0.99f),
     temperature(1.0f),
-    minSteps(32),
+    minSteps(16),
     historyIters(16)
     {}
 
