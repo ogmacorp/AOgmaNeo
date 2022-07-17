@@ -122,7 +122,7 @@ void Encoder::forward(
 
         sum /= max(0.0001f, totalImportance);
 
-        hiddenActivations[hiddenColumnIndex] = max(0.0f, sum);
+        hiddenActivations[hiddenCellIndex] = max(0.0f, sum);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
