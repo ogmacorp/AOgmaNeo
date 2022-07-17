@@ -235,17 +235,21 @@ void Hierarchy::step(
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
             Array<const IntBuffer*> layerInputCIs(l < eLayers.size() - 1 ? 2 : 1);
+            Array<const FloatBuffer*> layerInputActs(layerInputCIs.size());
 
             layerInputCIs[0] = &eLayers[l].getHiddenCIs();
+            layerInputActs[0] = &eLayers[l].getHiddenActs();
             
-            if (l < eLayers.size() - 1)
+            if (l < eLayers.size() - 1) {
                 layerInputCIs[1] = &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
+                layerInputActs[1] = nullptr;
+            }
 
             for (int d = 0; d < dLayers[l].size(); d++) {
                 if (learnEnabled)
                     dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d]);
 
-                dLayers[l][d].activate(layerInputCIs);
+                dLayers[l][d].activate(layerInputCIs, layerInputActs);
             }
 
             if (l == 0) {
