@@ -20,7 +20,7 @@ void Encoder::forward(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    if (learnEnabled && hiddenActivations[hiddenColumnIndex] > 0.0f) {
+    if (learnEnabled) {
         int numNonZero = 0;
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
