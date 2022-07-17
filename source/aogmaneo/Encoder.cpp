@@ -66,6 +66,7 @@ void Encoder::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
+        float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -105,7 +106,10 @@ void Encoder::forward(
             subSum /= subCount;
 
             sum += subSum * vl.importance;
+            totalImportance += vl.importance;
         }
+
+        sum /= max(0.0001f, totalImportance);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -114,7 +118,6 @@ void Encoder::forward(
     }
 
     hiddenActivations[hiddenColumnIndex] = max(0.0f, maxActivation);
-
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
