@@ -166,7 +166,7 @@ void Hierarchy::initRandom(
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
-        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
+        errors[l] = FloatBuffer(eLayers[l].getHiddenActs().size(), 0.0f);
     }
 }
 
@@ -454,7 +454,7 @@ void Hierarchy::read(
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].read(reader);
 
-        errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
+        errors[l] = FloatBuffer(eLayers[l].getHiddenActs().size(), 0.0f);
     }
 
     aLayers.resize(numActions);

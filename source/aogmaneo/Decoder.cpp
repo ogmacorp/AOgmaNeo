@@ -53,14 +53,30 @@ void Decoder::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
-                    float inAct = (inputActs[vli] == nullptr ? 1.0f : (*inputActs[vli])[visibleColumnIndex]);
-
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    if (inputActs[vli] == nullptr) {
+                        int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    sum += vl.weights[wi] * inAct;
+                        int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        sum += vl.weights[wi];
+                    }
+                    else {
+                        int visibleCellsStart = visibleColumnIndex * vld.size.z;
+
+                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int visibleCellIndex = vc + visibleCellsStart;
+
+                            float inAct = (*inputActs[vli])[visibleCellIndex];
+
+                            int wi = vc + wiStart;
+
+                            sum += vl.weights[wi] * inAct;
+                        }
+                    }
                 }
         }
 
@@ -133,14 +149,28 @@ void Decoder::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
-                    int inActPrev = vl.inputActsPrev[visibleColumnIndex];
-
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int visibleCellsStart = visibleColumnIndex * vld.size.z;
 
-                    vl.weights[wi] += delta * inActPrev;
+                    if (vl.inputActsPrev[visibleCellsStart] == -1.0f) {
+                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+
+                        int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        vl.weights[wi] += delta;
+                    }
+                    else {
+                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int visibleCellIndex = vc + visibleCellsStart;
+
+                            int wi = vc + wiStart;
+
+                            vl.weights[wi] += delta * vl.inputActsPrev[visibleCellIndex];
+                        }
+                    }
                 }
         }
     }
@@ -158,6 +188,8 @@ void Decoder::generateErrors(
     int diam = vld.radius * 2 + 1;
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
+
+    int visibleCellsStart = visibleColumnIndex * vld.size.z;
 
     // Projection
     Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
@@ -177,39 +209,85 @@ void Decoder::generateErrors(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
-    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+    if (vl.inputActsPrev[visibleCellsStart] == -1.0f) {
+        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-    float sum = 0.0f;
-    int count = 0;
+        int visibleCellIndex = inCIPrev + visibleCellsStart;
 
-    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-            Int2 hiddenPos = Int2(ix, iy);
+        float sum = 0.0f;
+        int count = 0;
 
-            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 hiddenPos = Int2(ix, iy);
 
-            Int2 visibleCenter = project(hiddenPos, hToV);
+                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-            if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+                Int2 visibleCenter = project(hiddenPos, hToV);
 
-                int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                for (int hc = 0; hc < hiddenSize.z; hc++) {
-                    int hiddenCellIndex = hc + hiddenCellsStart;
+                    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-                    float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivations[hiddenCellIndex];
+                    for (int hc = 0; hc < hiddenSize.z; hc++) {
+                        int hiddenCellIndex = hc + hiddenCellsStart;
 
-                    sum += error * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                        float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivations[hiddenCellIndex];
+
+                        sum += error * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                    }
+
+                    count++;
+                }
+            }
+
+        sum /= max(1, count);
+
+        (*visibleErrors)[visibleCellIndex] += sum;
+    }
+    else {
+        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+
+        for (int vc = 0; vc < vld.size.z; vc++) {
+            int visibleCellIndex = vc + visibleCellsStart;
+
+            if (vl.inputActsPrev[visibleCellIndex] <= 0.0f)
+                continue;
+
+            float sum = 0.0f;
+            int count = 0;
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    Int2 hiddenPos = Int2(ix, iy);
+
+                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+
+                    Int2 visibleCenter = project(hiddenPos, hToV);
+
+                    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                        int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
+                        for (int hc = 0; hc < hiddenSize.z; hc++) {
+                            int hiddenCellIndex = hc + hiddenCellsStart;
+
+                            float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivations[hiddenCellIndex];
+
+                            sum += error * vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
+                        }
+
+                        count++;
+                    }
                 }
 
-                count++;
-            }
+            sum /= max(1, count);
+
+            (*visibleErrors)[visibleCellIndex] += sum;
         }
-
-    sum /= max(1, count);
-
-    (*visibleErrors)[visibleColumnIndex] += sum;
+    }
 }
 
 void Decoder::initRandom(
@@ -243,7 +321,7 @@ void Decoder::initRandom(
             vl.weights[i] = randf(-1.0f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
-        vl.inputActsPrev = FloatBuffer(numVisibleColumns, 1.0f);
+        vl.inputActsPrev = FloatBuffer(numVisibleCells, -1.0f); // Flag
     }
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
@@ -269,7 +347,9 @@ void Decoder::activate(
 
         vl.inputCIsPrev = *inputCIs[vli];
         
-        if (inputActs[vli] != nullptr)
+        if (inputActs[vli] == nullptr)
+            vl.inputActsPrev.fill(-1.0f); // Flag
+        else
             vl.inputActsPrev = *inputActs[vli];
     }
 }
@@ -392,7 +472,7 @@ void Decoder::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         vl.inputCIsPrev.resize(numVisibleColumns);
-        vl.inputActsPrev.resize(numVisibleColumns);
+        vl.inputActsPrev.resize(numVisibleCells);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&vl.inputActsPrev[0]), vl.inputActsPrev.size() * sizeof(float));
