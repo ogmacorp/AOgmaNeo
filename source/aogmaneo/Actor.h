@@ -34,6 +34,7 @@ public:
         FloatBuffer traces;
 
         IntBuffer inputCIsPrev;
+        FloatBuffer inputActsPrev;
     };
 
 private:
@@ -52,7 +53,8 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputActs
     );
 
     void learn(
@@ -60,6 +62,13 @@ private:
         const IntBuffer* hiddenTargetCIs,
         float reward
     );
+
+    void generateErrors(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs,
+        FloatBuffer* visibleErrors,
+        int vli
+    ); 
 
 public:
     float lr; // Learning rate
@@ -83,7 +92,8 @@ public:
     // Step (get actions and update)
     void step(
         const Array<const IntBuffer*> &inputCIs,
-        const IntBuffer* hiddenTargetCIsPrev,
+        const Array<const FloatBuffer*> &inputActs,
+        const IntBuffer* hiddenTargetCIs,
         float reward,
         bool learnEnabled
     );
