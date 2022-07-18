@@ -12,7 +12,8 @@ using namespace aon;
 
 void Actor::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Array<const IntBuffer*> &inputCIs,
+    bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -56,6 +57,14 @@ void Actor::forward(
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum += vl.weightsEval[inCI + wiStart];
+
+                    if (learnEnabled) {
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wiStart;
+
+                            vl.weightsEval[wi] += drift * (vl.weightsLearn[wi] - vl.weightsEval[wi]);
+                        }
+                    }
                 }
         }
 
@@ -152,8 +161,6 @@ void Actor::learn(
         Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-        count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -204,7 +211,6 @@ void Actor::learn(
                 int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
                 vl.weightsLearn[wi] += delta;
-                vl.weightsEval[wi] += drift * (vl.weightsLearn[wi] - vl.weightsEval[wi]);
             }
     }
 }
@@ -275,7 +281,7 @@ void Actor::step(
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, learnEnabled);
 
     historySamples.pushFront();
 

@@ -60,7 +60,8 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        bool learnEnabled
     );
 
     void learn(
@@ -80,7 +81,7 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.1f),
+    lr(0.01f),
     drift(0.01f),
     discount(0.99f),
     nSteps(5),
