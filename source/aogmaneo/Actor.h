@@ -80,8 +80,8 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.01f),
-    drift(0.1f),
+    lr(0.1f),
+    drift(0.01f),
     discount(0.99f),
     nSteps(5),
     historyIters(16)
