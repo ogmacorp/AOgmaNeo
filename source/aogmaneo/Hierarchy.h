@@ -30,30 +30,25 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int historyCapacity;
-
         IODesc()
         :
         size(4, 4, 16),
         type(prediction),
         eRadius(2),
-        dRadius(2),
-        historyCapacity(64)
+        dRadius(2)
         {}
 
         IODesc(
             const Int3 &size,
             IOType type,
             int eRadius,
-            int dRadius,
-            int historyCapacity
+            int dRadius
         )
         :
         size(size),
         type(type),
         eRadius(eRadius),
-        dRadius(dRadius),
-        historyCapacity(historyCapacity)
+        dRadius(dRadius)
         {}
     };
 
