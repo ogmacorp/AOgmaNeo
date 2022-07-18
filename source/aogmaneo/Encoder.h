@@ -68,8 +68,8 @@ public:
 
     Encoder()
     :
-    lr(0.5f),
-    reg(0.003f)
+    lr(0.1f),
+    reg(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
