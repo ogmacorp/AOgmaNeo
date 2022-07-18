@@ -82,9 +82,9 @@ public:
     Actor()
     :
     lr(0.01f),
-    drift(0.01f),
+    drift(0.1f),
     discount(0.99f),
-    nSteps(5),
+    nSteps(3),
     historyIters(16)
     {}
 
