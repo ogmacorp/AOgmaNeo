@@ -183,13 +183,7 @@ void Encoder::activate(
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
-
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-
-        vl.inputCIsPrev = (*inputCIs[vli]);
-    }
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
 }
 
 void Encoder::learn(
