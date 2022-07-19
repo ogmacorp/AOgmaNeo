@@ -41,7 +41,8 @@ private:
     Int3 hiddenSize; // Hidden/output/action size
 
     FloatBuffer hiddenValues;
-    FloatBuffer hiddenValuesPrev;
+
+    FloatBuffer hiddenTDErrors;
 
     IntBuffer hiddenCIs; // Hidden states
 
@@ -54,13 +55,14 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs
+        const Array<const FloatBuffer*> &inputActs,
+        const IntBuffer* hiddenTargetCIs,
+        float reward
     );
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        float reward
+        const IntBuffer* hiddenTargetCIs
     );
 
     void generateErrors(
@@ -96,6 +98,12 @@ public:
         const IntBuffer* hiddenTargetCIs,
         float reward,
         bool learnEnabled
+    );
+
+    void generateErrors(
+        const IntBuffer* hiddenTargetCIs,
+        FloatBuffer* visibleErrors,
+        int vli
     );
 
     // Serialization
