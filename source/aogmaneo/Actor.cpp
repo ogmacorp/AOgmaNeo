@@ -98,7 +98,7 @@ void Actor::activate(
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenTDErrors[hiddenColumnIndex] = min(1.0f, max(-1.0f, reward + discount * maxActivation - valuePrev));
+    hiddenTDErrors[hiddenColumnIndex] = reward + discount * maxActivation - valuePrev;
 }
 
 void Actor::learn(
