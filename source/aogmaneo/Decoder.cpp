@@ -215,7 +215,7 @@ void Decoder::generateErrors(
                     for (int hc = 0; hc < hiddenSize.z; hc++) {
                         int hiddenCellIndex = hc + hiddenCellsStart;
 
-                        float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivations[hiddenCellIndex];
+                        float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivationsPrev[hiddenCellIndex];
 
                         sum += error * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     }
@@ -256,7 +256,7 @@ void Decoder::generateErrors(
                         for (int hc = 0; hc < hiddenSize.z; hc++) {
                             int hiddenCellIndex = hc + hiddenCellsStart;
 
-                            float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivations[hiddenCellIndex];
+                            float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActivationsPrev[hiddenCellIndex];
 
                             sum += error * vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                         }
