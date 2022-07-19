@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -100,7 +99,6 @@ void Actor::activate(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     hiddenTDErrors[hiddenColumnIndex] = min(1.0f, max(-1.0f, reward + discount * maxActivation - valuePrev));
-    std::cout << maxActivation << std::endl;
 }
 
 void Actor::learn(
