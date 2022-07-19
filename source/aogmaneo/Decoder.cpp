@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-void Decoder::forward(
+void Decoder::activate(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs,
     const Array<const FloatBuffer*> &inputActs
@@ -321,19 +321,7 @@ void Decoder::activate(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, inputActs);
-
-    // Copy to prevs
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-
-        vl.inputCIsPrev = *inputCIs[vli];
-        
-        if (inputActs[vli] == nullptr)
-            vl.inputActsPrev.fill(-1.0f); // Flag
-        else
-            vl.inputActsPrev = *inputActs[vli];
-    }
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, inputActs);
 }
 
 void Decoder::learn(
@@ -345,6 +333,23 @@ void Decoder::learn(
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
+}
+
+void Decoder::stepEnd(
+    const Array<const IntBuffer*> &inputCIs,
+    const Array<const FloatBuffer*> &inputActs
+) {
+    // Copy to prevs
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        vl.inputCIsPrev = *inputCIs[vli];
+        
+        if (inputActs[vli] == nullptr)
+            vl.inputActsPrev.fill(-1.0f); // Flag
+        else
+            vl.inputActsPrev = *inputActs[vli];
+    }
 }
 
 void Decoder::generateErrors(

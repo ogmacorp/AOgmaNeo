@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-void Actor::forward(
+void Actor::activate(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs,
     const Array<const FloatBuffer*> &inputActs,
@@ -324,25 +324,33 @@ void Actor::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
-void Actor::step(
+void Actor::activate(
     const Array<const IntBuffer*> &inputCIs,
     const Array<const FloatBuffer*> &inputActs,
     const IntBuffer* hiddenTargetCIs,
-    float reward,
-    bool learnEnabled
+    float reward
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, inputActs, hiddenTargetCIs, reward);
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, inputActs, hiddenTargetCIs, reward);
+}
 
-    if (learnEnabled) {
-        #pragma omp parallel for
-        for (int i = 0; i < numHiddenColumns; i++)
-            learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
-    }
+void Actor::learn(
+    const IntBuffer* hiddenTargetCIs
+) {
+    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++)
+        learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
+}
+
+void Actor::stepEnd(
+    const Array<const IntBuffer*> &inputCIs,
+    const Array<const FloatBuffer*> &inputActs
+) {
     // Copy to prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];

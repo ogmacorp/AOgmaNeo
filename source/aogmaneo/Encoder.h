@@ -55,11 +55,14 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        const FloatBuffer* hiddenErrors
     );
 
 public:
@@ -68,8 +71,8 @@ public:
 
     Encoder()
     :
-    lr(0.5f),
-    reg(0.003f)
+    lr(0.1f),
+    reg(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -78,10 +81,16 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled // Whether to learn
+    void activate(
+        const Array<const IntBuffer*> &inputCIs // Input states
+    );
+
+    void learn(
+        const FloatBuffer* hiddenErrors
+    );
+
+    void stepEnd(
+        const Array<const IntBuffer*> &inputCIs // Input states
     );
 
     // Serialization

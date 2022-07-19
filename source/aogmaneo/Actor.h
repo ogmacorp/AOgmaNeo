@@ -52,7 +52,7 @@ private:
 
     // --- Kernels ---
 
-    void forward(
+    void activate(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         const Array<const FloatBuffer*> &inputActs,
@@ -92,12 +92,20 @@ public:
     );
 
     // Step (get actions and update)
-    void step(
+    void activate(
         const Array<const IntBuffer*> &inputCIs,
         const Array<const FloatBuffer*> &inputActs,
         const IntBuffer* hiddenTargetCIs,
-        float reward,
-        bool learnEnabled
+        float reward
+    );
+
+    void learn(
+        const IntBuffer* hiddenTargetCIs
+    );
+
+    void stepEnd(
+        const Array<const IntBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputActs
     );
 
     void generateErrors(

@@ -205,20 +205,8 @@ void Hierarchy::step(
                     layerInputCIs[index++] = &histories[l][i][t];
             }
 
-            if (learnEnabled) {
-                errors[l].fill(0.0f);
-
-                for (int d = 0; d < dLayers[l].size(); d++)
-                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
-
-                if (l == 0) {
-                    for (int d = 0; d < aLayers.size(); d++)
-                        aLayers[d].generateErrors(&histories[l][iIndices[d + ioSizes.size()]][0], &errors[l], 0);
-                }
-            }
-
             // Activate sparse coder
-            eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+            eLayers[l].activate(layerInputCIs);
 
             // Add to next layer's history
             if (l < eLayers.size() - 1) {
@@ -247,17 +235,42 @@ void Hierarchy::step(
                 layerInputActs[1] = nullptr;
             }
 
+            if (learnEnabled)
+                errors[l].fill(0.0f);
+
+            if (l == 0) {
+                for (int d = 0; d < aLayers.size(); d++) {
+                    aLayers[d].activate(layerInputCIs, layerInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward);
+
+                    if (learnEnabled)
+                        aLayers[d].generateErrors(&histories[l][iIndices[d + ioSizes.size()]][0], &errors[l], 0);
+
+                    aLayers[d].stepEnd(layerInputCIs, layerInputActs);
+                }
+            }
+
+            if (learnEnabled) {
+                errors[l].fill(0.0f);
+
+                for (int d = 0; d < dLayers[l].size(); d++)
+                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
+
+                if (l == 0) {
+                    for (int d = 0; d < aLayers.size(); d++)
+                        aLayers[d].generateErrors(&histories[l][iIndices[d + ioSizes.size()]][0], &errors[l], 0);
+                }
+            }
+
             for (int d = 0; d < dLayers[l].size(); d++) {
-                if (learnEnabled)
+                if (learnEnabled) {
+                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
+
                     dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d]);
+                }
 
                 dLayers[l][d].activate(layerInputCIs, layerInputActs);
             }
 
-            if (l == 0) {
-                for (int d = 0; d < aLayers.size(); d++)
-                    aLayers[d].step(layerInputCIs, layerInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled);
-            }
         }
     }
 }
