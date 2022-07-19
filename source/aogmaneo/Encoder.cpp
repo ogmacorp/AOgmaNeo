@@ -171,7 +171,7 @@ void Encoder::initRandom(
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenActivations = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
