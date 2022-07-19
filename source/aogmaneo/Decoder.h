@@ -40,6 +40,7 @@ private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
     FloatBuffer hiddenActivations;
+    FloatBuffer hiddenActivationsPrev;
 
     IntBuffer hiddenCIs; // Hidden state
 

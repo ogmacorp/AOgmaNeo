@@ -46,6 +46,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenActivations;
+    FloatBuffer hiddenActivationsPrev;
 
     IntBuffer hiddenCIs;
     

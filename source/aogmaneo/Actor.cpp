@@ -334,7 +334,6 @@ void Actor::stepEnd(
     const Array<const IntBuffer*> &inputCIs,
     const Array<const FloatBuffer*> &inputActs
 ) {
-    // Copy to prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
