@@ -23,9 +23,7 @@ void Actor::forward(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
-
-    float valuePrev = hiddenValues[hiddenCellIndexTarget];
+    float valuePrev = hiddenValues[targetCI + hiddenCellsStart];
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
@@ -100,9 +98,7 @@ void Actor::forward(
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
-    float nextValue = hiddenValues[hiddenCIs[hiddenColumnIndex] + hiddenCellsStart];
-
-    hiddenTDErrors[hiddenColumnIndex] = reward + discount * nextValue - valuePrev;
+    hiddenTDErrors[hiddenColumnIndex] = min(1.0f, max(-1.0f, reward + discount * maxActivation - valuePrev));
 }
 
 void Actor::learn(
@@ -178,7 +174,7 @@ void Actor::learn(
                             if (hc == targetCI)
                                 vl.traces[wi] = max(vl.traces[wi], vl.inputActsPrev[visibleCellIndex]);
 
-                            vl.weights[wi] += delta * vl.inputActsPrev[visibleCellIndex];
+                            vl.weights[wi] += delta * vl.traces[wi];
                         }
                     }
                 }
@@ -250,12 +246,10 @@ void Actor::generateErrors(
         (*visibleErrors)[visibleCellIndex] += sum;
     }
     else {
-        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
-
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            if (vl.inputActsPrev[visibleCellIndex] <= 0.0f)
+            if (vl.inputActsPrev[visibleCellIndex] == 0.0f)
                 continue;
 
             float sum = 0.0f;
