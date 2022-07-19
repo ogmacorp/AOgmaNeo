@@ -101,7 +101,7 @@ void Encoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float delta = lr * ((*hiddenErrors)[hiddenCellIndex] - reg * max(0.0f, numNonZero - 1.0f)) * (hiddenActivations[hiddenCellIndex] > 0.0f);
+        float delta = lr * (min(1.0f, max(-1.0f, (*hiddenErrors)[hiddenCellIndex])) - reg * max(0.0f, numNonZero - 1.0f)) * (hiddenActivations[hiddenCellIndex] > 0.0f);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
