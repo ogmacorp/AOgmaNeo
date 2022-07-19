@@ -143,22 +143,39 @@ void Actor::learn(
 
                     int visibleCellsStart = visibleColumnIndex * vld.size.z;
 
-                    //if (vl.inputActsPrev[visibleCellsStart] == -1.0f) {
-                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+                    if (vl.inputActsPrev[visibleCellsStart] == -1.0f) {
+                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int visibleCellIndex = vc + visibleCellsStart;
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int visibleCellIndex = vc + visibleCellsStart;
 
-                        int wi = vc + wiStart;
+                            int wi = vc + wiStart;
 
-                        vl.traces[wi] *= traceDecay;
+                            vl.traces[wi] *= traceDecay;
 
-                        if (vc == inCIPrev && hc == targetCI)
-                            vl.traces[wi] = 1.0f;
+                            if (vc == inCIPrev && hc == targetCI)
+                                vl.traces[wi] = 1.0f;
 
-                        vl.weights[wi] += delta * vl.traces[wi];
+                            vl.weights[wi] += delta * vl.traces[wi];
+                        }
+                    }
+                    else {
+                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int visibleCellIndex = vc + visibleCellsStart;
+
+                            int wi = vc + wiStart;
+
+                            vl.traces[wi] *= traceDecay;
+
+                            if (hc == targetCI)
+                                vl.traces[wi] = max(vl.traces[wi], vl.inputActsPrev[visibleCellIndex]);
+
+                            vl.weights[wi] += delta * vl.traces[wi];
+                        }
                     }
                 }
         }

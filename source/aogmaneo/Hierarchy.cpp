@@ -243,9 +243,9 @@ void Hierarchy::step(
                     aLayers[d].activate(dInputCIs, dInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward);
 
                     if (learnEnabled) {
-                        aLayers[d].generateErrors(&histories[l][iIndices[d + ioSizes.size()]][0], &errors[l], 0);
+                        aLayers[d].generateErrors(inputCIs[iIndices[d + ioSizes.size()]], &errors[l], 0);
                         
-                        aLayers[d].learn(&histories[l][iIndices[d + ioSizes.size()]][0]);
+                        aLayers[d].learn(inputCIs[iIndices[d + ioSizes.size()]]);
                     }
 
                     aLayers[d].stepEnd(dInputCIs, dInputActs);
