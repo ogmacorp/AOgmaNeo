@@ -213,7 +213,7 @@ void Hierarchy::step(
 
                 if (l == 0) {
                     for (int d = 0; d < aLayers.size(); d++)
-                        aLayers[d].generateErrors(&histories[l][iIndices[d]][0], &errors[l], 0);
+                        aLayers[d].generateErrors(&histories[l][iIndices[d + ioSizes.size()]][0], &errors[l], 0);
                 }
             }
 
