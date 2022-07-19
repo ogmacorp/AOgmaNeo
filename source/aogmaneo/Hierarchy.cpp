@@ -249,18 +249,6 @@ void Hierarchy::step(
                 }
             }
 
-            if (learnEnabled) {
-                errors[l].fill(0.0f);
-
-                for (int d = 0; d < dLayers[l].size(); d++)
-                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
-
-                if (l == 0) {
-                    for (int d = 0; d < aLayers.size(); d++)
-                        aLayers[d].generateErrors(&histories[l][iIndices[d + ioSizes.size()]][0], &errors[l], 0);
-                }
-            }
-
             for (int d = 0; d < dLayers[l].size(); d++) {
                 if (learnEnabled) {
                     dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
