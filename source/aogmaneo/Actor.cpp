@@ -98,7 +98,7 @@ void Actor::activate(
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenTDErrors[hiddenColumnIndex] = reward + discount * maxActivation - valuePrev;
+    hiddenTDErrors[hiddenColumnIndex] = min(1.0f, max(-1.0f, reward + discount * maxActivation - valuePrev)); // Squash
 }
 
 void Actor::learn(
@@ -292,7 +292,7 @@ void Actor::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.0001f, 0.0001f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.traces = FloatBuffer(vl.weights.size(), 0.0f);
 
