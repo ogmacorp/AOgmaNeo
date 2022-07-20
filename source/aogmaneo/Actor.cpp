@@ -156,7 +156,7 @@ void Actor::learn(
                             vl.traces[wi] *= traceDecay;
 
                             if (vc == inCIPrev && hc == targetCI)
-                                vl.traces[wi] += 1.0f;
+                                vl.traces[wi] = 1.0f;
 
                             vl.weights[wi] += delta * vl.traces[wi];
                         }
@@ -172,7 +172,7 @@ void Actor::learn(
                             vl.traces[wi] *= traceDecay;
 
                             if (hc == targetCI)
-                                vl.traces[wi] += vl.inputActsPrev[visibleCellIndex];
+                                vl.traces[wi] = max(vl.traces[wi], vl.inputActsPrev[visibleCellIndex]);
 
                             vl.weights[wi] += delta * vl.traces[wi];
                         }
