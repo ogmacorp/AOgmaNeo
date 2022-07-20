@@ -389,7 +389,7 @@ void Actor::generateErrors(
 
                         int hiddenCellIndexTarget = historySamples[t - 1].hiddenTargetCIsPrev[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
-                        sum += hiddenTDErrors[hiddenColumnIndex] * vl.weightsEval[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget))];
+                        sum += hiddenTDErrors[hiddenColumnIndex] * vl.weightsLearn[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget))];
                         count++;
                     }
                 }
@@ -453,9 +453,10 @@ void Actor::initRandom(
             VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
 
             int numVisibleColumns = vld.size.x * vld.size.y;
+            int numVisibleCells = numVisibleColumns * vld.size.z;
 
             historySamples[i].inputCIs[vli] = IntBuffer(numVisibleColumns);
-            historySamples[i].inputActs[vli] = FloatBuffer(numVisibleColumns);
+            historySamples[i].inputActs[vli] = FloatBuffer(numVisibleCells, -1.0f);
         }
 
         historySamples[i].hiddenTargetCIsPrev = IntBuffer(numHiddenColumns);
@@ -487,7 +488,11 @@ void Actor::step(
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             s.inputCIs[vli] = *inputCIs[vli];
-            s.inputActs[vli] = *inputActs[vli];
+
+            if (inputActs[vli] == nullptr)
+                s.inputActs[vli].fill(-1.0f); // Flag
+            else
+                s.inputActs[vli] = *inputActs[vli];
         }
 
         // Copy hidden CIs
@@ -522,6 +527,9 @@ void Actor::generateErrors(
     FloatBuffer* visibleErrors,
     int vli
 ) {
+    if (historySamples.size() < 2)
+        return;
+
     const VisibleLayer &vl = visibleLayers[vli];
     const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
@@ -699,9 +707,10 @@ void Actor::read(
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
             int numVisibleColumns = vld.size.x * vld.size.y;
+            int numVisibleCells = numVisibleColumns * vld.size.z;
 
             s.inputCIs[vli].resize(numVisibleColumns);
-            s.inputActs[vli].resize(numVisibleColumns);
+            s.inputActs[vli].resize(numVisibleCells);
 
             reader.read(reinterpret_cast<void*>(&s.inputCIs[vli][0]), s.inputCIs[vli].size() * sizeof(int));
             reader.read(reinterpret_cast<void*>(&s.inputActs[vli][0]), s.inputActs[vli].size() * sizeof(float));
