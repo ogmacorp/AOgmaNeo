@@ -438,6 +438,9 @@ void Actor::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
+    hiddenQs = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenTDErrors = FloatBuffer(numHiddenColumns, 0.0f);
+
     // Create (pre-allocated) history samples
     historySize = 0;
     historySamples.resize(historyCapacity);
@@ -530,7 +533,7 @@ void Actor::generateErrors(
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenQs.size() * sizeof(float) + hiddenTDErrors.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -556,7 +559,7 @@ int Actor::size() const {
 }
 
 int Actor::stateSize() const {
-    int size = hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = hiddenCIs.size() * sizeof(int) + hiddenQs.size() * sizeof(float) + hiddenTDErrors.size() * sizeof(float) + sizeof(int);
 
     int sampleSize = 0;
 
@@ -584,6 +587,8 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenQs[0]), hiddenQs.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenTDErrors[0]), hiddenTDErrors.size() * sizeof(float));
 
     int numVisibleCellsLayers = visibleLayers.size();
 
@@ -638,8 +643,12 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
+    hiddenQs.resize(numHiddenCells);
+    hiddenTDErrors.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenQs[0]), hiddenQs.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenTDErrors[0]), hiddenTDErrors.size() * sizeof(float));
 
     int numVisibleCellsLayers = visibleLayers.size();
 
@@ -710,6 +719,8 @@ void Actor::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hiddenQs[0]), hiddenQs.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenTDErrors[0]), hiddenTDErrors.size() * sizeof(float));
 
     int historyStart = historySamples.start;
 
@@ -733,6 +744,8 @@ void Actor::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hiddenQs[0]), hiddenQs.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenTDErrors[0]), hiddenTDErrors.size() * sizeof(float));
 
     int historyStart;
 
