@@ -507,18 +507,18 @@ void Actor::step(
             int t = rand() % (historySize - nSteps) + nSteps;
 
             // Compute (partial) values, rest is completed in the kernel
-            float q = 0.0f;
-            float g = 1.0f;
+            float r = 0.0f;
+            float d = 1.0f;
 
             for (int t2 = t - 1; t2 >= t - nSteps; t2--) {
-                q += historySamples[t2].reward * g;
+                r += historySamples[t2].reward * d;
 
-                g *= discount;
+                d *= discount;
             }
 
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, q, g);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, r, d);
         }
     }
 }
