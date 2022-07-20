@@ -527,7 +527,7 @@ void Actor::generateErrors(
     FloatBuffer* visibleErrors,
     int vli
 ) {
-    if (historySamples.size() < 2)
+    if (historySize < 2)
         return;
 
     const VisibleLayer &vl = visibleLayers[vli];
