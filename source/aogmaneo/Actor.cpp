@@ -431,7 +431,7 @@ void Actor::initRandom(
         vl.weightsEval.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weightsEval.size(); i++)
-            vl.weightsEval[i] = randf(-1.0f, 1.0f);
+            vl.weightsEval[i] = randf(-0.01f, 0.01f);
 
         vl.weightsLearn = vl.weightsEval;
     }
