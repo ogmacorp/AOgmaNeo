@@ -30,21 +30,31 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
-        FloatBuffer traces;
+        FloatBuffer weightsEval;
+        FloatBuffer weightsLearn;
+    };
 
-        IntBuffer inputCIsPrev;
-        FloatBuffer inputActsPrev;
+    // History sample for delayed updates
+    struct HistorySample {
+        Array<IntBuffer> inputCIs;
+        Array<FloatBuffer> inputActs;
+        IntBuffer hiddenTargetCIsPrev;
+
+        float reward;
     };
 
 private:
     Int3 hiddenSize; // Hidden/output/action size
 
-    FloatBuffer hiddenValues;
-
-    FloatBuffer hiddenTDErrors;
+    // Current history size - fixed after initialization. Determines length of wait before updating
+    int historySize;
 
     IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenQs;
+    FloatBuffer hiddenTDErrors;
+
+    CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
@@ -56,60 +66,59 @@ private:
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
         const Array<const FloatBuffer*> &inputActs,
-        const IntBuffer* hiddenTargetCIs,
-        float reward
+        const IntBuffer* hiddenTargetCIsPrev,
+        float reward,
+        bool learnEnabled
     );
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs
+        int t,
+        float r,
+        float d
     );
 
     void generateErrors(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
+        int t,
         int vli
     ); 
 
 public:
     float lr; // Learning rate
+    float drift;
     float discount;
-    float traceDecay;
+    int nSteps;
+    int historyIters;
 
     // Defaults
     Actor()
     :
-    lr(0.1f),
+    lr(0.01f),
+    drift(0.1f),
     discount(0.99f),
-    traceDecay(0.95f)
+    nSteps(5),
+    historyIters(16)
     {}
 
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
+        int historyCapacity,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
     // Step (get actions and update)
-    void activate(
+    void step(
         const Array<const IntBuffer*> &inputCIs,
         const Array<const FloatBuffer*> &inputActs,
-        const IntBuffer* hiddenTargetCIs,
-        float reward
-    );
-
-    void learn(
-        const IntBuffer* hiddenTargetCIs
-    );
-
-    void stepEnd(
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs
+        const IntBuffer* hiddenTargetCIsPrev,
+        float reward,
+        bool learnEnabled
     );
 
     void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors,
         int vli
     );
@@ -161,6 +170,14 @@ public:
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
+    }
+
+    int getHistoryCapacity() const {
+        return historySamples.size();
+    }
+
+    int getHistorySize() const {
+        return historySize;
     }
 };
 } // namespace aon

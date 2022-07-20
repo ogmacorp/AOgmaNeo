@@ -120,7 +120,7 @@ void Hierarchy::initRandom(
                     if (l < eLayers.size() - 1)
                         aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
 
-                    aLayers[dIndex].initRandom(ioSizes[i], aVisibleLayerDescs);
+                    aLayers[dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
 
                     iIndices[ioSizes.size() + dIndex] = i;
                     dIndices[i] = dIndex;
@@ -240,15 +240,10 @@ void Hierarchy::step(
 
             if (l == 0) {
                 for (int d = 0; d < aLayers.size(); d++) {
-                    aLayers[d].activate(dInputCIs, dInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward);
+                    aLayers[d].step(dInputCIs, dInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled);
 
-                    if (learnEnabled) {
-                        aLayers[d].generateErrors(inputCIs[iIndices[d + ioSizes.size()]], &errors[l], 0);
-                        
-                        aLayers[d].learn(inputCIs[iIndices[d + ioSizes.size()]]);
-                    }
-
-                    aLayers[d].stepEnd(dInputCIs, dInputActs);
+                    if (learnEnabled)
+                        aLayers[d].generateErrors(&errors[l], 0);
                 }
             }
 
