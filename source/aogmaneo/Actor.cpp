@@ -249,7 +249,7 @@ void Actor::generateErrors(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            if (vl.inputActsPrev[visibleCellIndex] <= 0.0f)
+            if (vl.inputActsPrev[visibleCellIndex] == 0.0f)
                 continue;
 
             float sum = 0.0f;
