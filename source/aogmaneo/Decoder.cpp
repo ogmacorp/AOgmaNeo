@@ -229,8 +229,6 @@ void Decoder::generateErrors(
         (*visibleErrors)[visibleCellIndex] += sum;
     }
     else {
-        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
-
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
