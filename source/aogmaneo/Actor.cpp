@@ -365,8 +365,6 @@ void Actor::generateErrors(
         (*visibleErrors)[visibleCellIndex] += sum;
     }
     else {
-        int inCIPrev = historySamples[t].inputCIs[vli][visibleColumnIndex];
-
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 

@@ -166,6 +166,11 @@ void Hierarchy::initRandom(
 
         errors[l] = FloatBuffer(eLayers[l].getHiddenActs().size(), 0.0f);
     }
+
+    for (int i = 0; i < ioSizes.size(); i++) {
+        if (ioDescs[i].type == action)
+            setImportance(i, 0.0f); // Default to 0 importance for actions
+    }
 }
 
 void Hierarchy::step(
