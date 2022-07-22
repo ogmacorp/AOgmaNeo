@@ -81,9 +81,9 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.05f),
+    lr(0.01f),
     discount(0.99f),
-    traceDecay(0.95f),
+    traceDecay(0.98f),
     traceScale(1.0f)
     {}
 
