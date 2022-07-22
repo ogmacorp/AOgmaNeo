@@ -156,7 +156,7 @@ void Actor::learn(
                             vl.traces[wi] *= traceDecay;
 
                             if (vc == inCIPrev && hc == targetCI)
-                                vl.traces[wi] = 1.0f;
+                                vl.traces[wi] += expf(-vl.traces[wi] * traceScale);
 
                             vl.weights[wi] += delta * vl.traces[wi];
                         }
@@ -172,7 +172,7 @@ void Actor::learn(
                             vl.traces[wi] *= traceDecay;
 
                             if (hc == targetCI)
-                                vl.traces[wi] = max(vl.traces[wi], vl.inputActsPrev[visibleCellIndex]);
+                                vl.traces[wi] += vl.inputActsPrev[visibleCellIndex] * expf(-vl.traces[wi] * traceScale);
 
                             vl.weights[wi] += delta * vl.traces[wi];
                         }
@@ -309,7 +309,7 @@ void Actor::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.traces = FloatBuffer(vl.weights.size(), 0.0f);
 
@@ -379,7 +379,7 @@ void Actor::generateErrors(
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenValues.size() * sizeof(float) + hiddenTDErrors.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 4 * sizeof(float) + hiddenValues.size() * sizeof(float) + hiddenTDErrors.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -412,6 +412,7 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&traceDecay), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&traceScale), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenTDErrors[0]), hiddenTDErrors.size() * sizeof(float));
@@ -446,6 +447,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&traceDecay), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&traceScale), sizeof(float));
 
     hiddenValues.resize(numHiddenCells);
     hiddenTDErrors.resize(numHiddenColumns);

@@ -76,13 +76,15 @@ public:
     float lr; // Learning rate
     float discount;
     float traceDecay;
+    float traceScale;
 
     // Defaults
     Actor()
     :
     lr(0.01f),
     discount(0.99f),
-    traceDecay(0.95f)
+    traceDecay(0.95f),
+    traceScale(1.0f)
     {}
 
     // Initialized randomly
