@@ -105,7 +105,7 @@ void Actor::activate(
         }
     }
 
-    hiddenTDErrors[hiddenColumnIndex] = reward + discount * maxActivation - valuePrev;
+    hiddenTDErrors[hiddenColumnIndex] = tanh(reward + discount * maxActivation - valuePrev);
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
