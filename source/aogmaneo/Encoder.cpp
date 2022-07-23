@@ -33,7 +33,12 @@ void Encoder::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float delta = lr * ((*hiddenErrors)[hiddenCellIndex] * (hiddenActivations[hiddenCellIndex] > 0.0f && hiddenActivations[hiddenCellIndex] < 1.0f) - reg * max(0.0f, numNonZero - 1.0f) * (hiddenActivations[hiddenCellIndex] > 0.0f));
+            float act = hiddenActivations[hiddenCellIndex];
+
+            if (act == 0.0f)
+                continue;
+
+            float delta = lr * ((*hiddenErrors)[hiddenCellIndex] * (act < 1.0f) - tanh(reg * (numNonZero - 1.0f)));
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
