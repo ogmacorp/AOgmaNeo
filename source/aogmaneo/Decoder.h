@@ -33,12 +33,14 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
+        FloatBuffer inputActsPrev;
     };
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
     FloatBuffer hiddenActivations;
+    FloatBuffer hiddenActivationsPrev;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -48,9 +50,10 @@ private:
 
     // --- Kernels ---
 
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputActs
     );
 
     void learn(
@@ -71,7 +74,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(0.5f)
     {}
 
     // Create with random initialization
@@ -82,12 +85,18 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputActs
     );
 
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
+    );
+
+    void stepEnd(
+        const Array<const IntBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputActs
     );
 
     void generateErrors(
@@ -145,6 +154,10 @@ public:
     // Get the hidden activations (predictions)
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    const FloatBuffer &getHiddenActs() const {
+        return hiddenActivations;
     }
 
     // Get the hidden size

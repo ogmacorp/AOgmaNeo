@@ -19,7 +19,7 @@ public:
         Int3 size; // Size of input
 
         int radius; // Radius onto input
-        
+
         // Defaults
         VisibleLayerDesc()
         :
@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        IntBuffer inputCIsPrev;
+
         float importance;
 
         VisibleLayer()
@@ -43,33 +45,35 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenActivationsPrev;
+
     IntBuffer hiddenCIs;
-
-    FloatBuffer hiddenRates;
-
+    
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
+        const FloatBuffer* hiddenErrors
     );
 
 public:
     float lr;
+    float reg;
 
     Encoder()
     :
-    lr(0.05f)
+    lr(0.1f),
+    reg(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -78,9 +82,16 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        bool learnEnabled // Whether to learn
+    void activate(
+        const Array<const IntBuffer*> &inputCIs // Input states
+    );
+
+    void learn(
+        const FloatBuffer* hiddenErrors
+    );
+
+    void stepEnd(
+        const Array<const IntBuffer*> &inputCIs // Input states
     );
 
     // Serialization
@@ -130,6 +141,11 @@ public:
     }
 
     // Get the hidden states
+    const FloatBuffer &getHiddenActs() const {
+        return hiddenActivations;
+    }
+
+    // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
@@ -140,3 +156,4 @@ public:
     }
 };
 } // namespace aon
+
