@@ -30,17 +30,15 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        SByteBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-        FloatBuffer inputActsPrev;
     };
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
     FloatBuffer hiddenActivations;
-    FloatBuffer hiddenActivationsPrev;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -50,10 +48,9 @@ private:
 
     // --- Kernels ---
 
-    void activate(
+    void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
@@ -61,20 +58,15 @@ private:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
-    ); 
-
 public:
     float lr; // Learning rate
+    float scale;
 
     // Defaults
     Decoder()
     :
-    lr(0.5f)
+    lr(0.1f),
+    scale(8.0f)
     {}
 
     // Create with random initialization
@@ -85,24 +77,12 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
-    );
-
-    void stepEnd(
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs
-    );
-
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
     );
 
     // Serialization
@@ -154,10 +134,6 @@ public:
     // Get the hidden activations (predictions)
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
-    }
-
-    const FloatBuffer &getHiddenActs() const {
-        return hiddenActivations;
     }
 
     // Get the hidden size

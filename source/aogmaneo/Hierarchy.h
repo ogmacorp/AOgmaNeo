@@ -60,6 +60,7 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
+        Int2 clumpSize;
 
         int eRadius; // Encoder radius
         int rRadius; // Recurrent radius
@@ -68,6 +69,7 @@ public:
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
+        clumpSize(2, 2),
         eRadius(2),
         rRadius(0),
         dRadius(2)
@@ -75,12 +77,14 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
+            const Int2 &clumpSize,
             int eRadius,
             int rRadius,
             int dRadius
         )
         :
         hiddenSize(hiddenSize),
+        clumpSize(clumpSize),
         eRadius(eRadius),
         rRadius(rRadius),
         dRadius(dRadius)
@@ -116,7 +120,8 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f // Reward
+        float reward = 0.0f, // Reward
+        bool mimic = false // Mimicry mode
     );
 
     // Serialization

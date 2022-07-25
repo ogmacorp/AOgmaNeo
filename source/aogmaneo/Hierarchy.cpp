@@ -128,7 +128,7 @@ void Hierarchy::initRandom(
         }
 
         // Create the sparse coding layer
-        eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
+        eLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].clumpSize, eVisibleLayerDescs);
 
         hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
     }
@@ -137,7 +137,8 @@ void Hierarchy::initRandom(
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
-    float reward
+    float reward,
+    bool mimic
 ) {
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
@@ -160,23 +161,18 @@ void Hierarchy::step(
         }
 
         // Activate sparse coder
-        eLayers[l].activate(eInputCIs);
+        eLayers[l].step(eInputCIs, learnEnabled);
     }
 
     // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
-        FloatBuffer errors = FloatBuffer(eLayers[l].getHiddenActs().size(), 0.0f);
-
         Array<const IntBuffer*> dInputCIs(l < eLayers.size() - 1 ? 2 : 1);
         Array<const FloatBuffer*> dInputActs(dInputCIs.size());
 
         dInputCIs[0] = &eLayers[l].getHiddenCIs();
-        dInputActs[0] = &eLayers[l].getHiddenActs();
         
-        if (l < eLayers.size() - 1) {
+        if (l < eLayers.size() - 1)
             dInputCIs[1] = &dLayers[l + 1][0].getHiddenCIs();
-            dInputActs[1] = nullptr;
-        }
 
         Array<const IntBuffer*> targetCIs;
 
@@ -192,46 +188,16 @@ void Hierarchy::step(
         }
 
         for (int d = 0; d < dLayers[l].size(); d++) {
-            if (learnEnabled) {
-                dLayers[l][d].generateErrors(targetCIs[d], &errors, 0);
-
+            if (learnEnabled)
                 dLayers[l][d].learn(targetCIs[d]);
-            }
 
-            dLayers[l][d].activate(dInputCIs, dInputActs);
-
-            dLayers[l][d].stepEnd(dInputCIs, dInputActs);
+            dLayers[l][d].activate(dInputCIs);
         }
 
         if (l == 0) {
-            for (int d = 0; d < aLayers.size(); d++) {
-                if (learnEnabled)
-                    aLayers[d].generateErrors(&errors, 0);
-
-                aLayers[d].step(dInputCIs, dInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled);
-            }
+            for (int d = 0; d < aLayers.size(); d++)
+                aLayers[d].step(dInputCIs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled, mimic);
         }
-
-        if (learnEnabled)
-            eLayers[l].learn(&errors);
-
-        Array<const IntBuffer*> eInputCIs(eLayers[l].getNumVisibleLayers());
-
-        if (l == 0) {
-            for (int i = 0; i < ioSizes.size(); i++)
-                eInputCIs[i] = inputCIs[i];
-
-            if (eInputCIs.size() > ioSizes.size())
-                eInputCIs[ioSizes.size()] = &hiddenCIsPrev[l];
-        }
-        else {
-            eInputCIs[0] = &eLayers[l - 1].getHiddenCIs();
-
-            if (eInputCIs.size() > 1)
-                eInputCIs[1] = &hiddenCIsPrev[l];
-        }
-
-        eLayers[l].stepEnd(eInputCIs);
     }
 }
 

@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        FloatBuffer protos;
 
-        IntBuffer inputCIsPrev;
+        FloatBuffer reconstruction;
 
         float importance;
 
@@ -44,54 +44,58 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
+    Int2 clumpSize;
+    Int2 numClumps;
 
-    FloatBuffer hiddenActivations;
-    FloatBuffer hiddenActivationsPrev;
+    FloatBuffer hiddenSums;
+    IntBuffer hiddenCIs; // Hidden states
 
-    IntBuffer hiddenCIs;
-    
+    FloatBuffer hiddenRates;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-    
+
     // --- Kernels ---
     
-    void activate(
+    void resetReconstruction(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* inputCIs,
+        int vli
+    );
+    
+    void forward(
+        const Int2 &clumpPos,
+        int priority,
+        bool learnEnabled
     );
 
-    void learn(
+    void reconstruct(
         const Int2 &columnPos,
-        const FloatBuffer* hiddenErrors
+        int priority,
+        int vli
     );
 
 public:
     float lr;
-    float reg;
 
+    // Defaults
     Encoder()
     :
-    lr(0.1f),
-    reg(0.01f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        const Int2 &clumpSize,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    void activate(
-        const Array<const IntBuffer*> &inputCIs // Input states
-    );
-
-    void learn(
-        const FloatBuffer* hiddenErrors
-    );
-
-    void stepEnd(
-        const Array<const IntBuffer*> &inputCIs // Input states
+    // Activate the sparse coder (perform sparse coding)
+    void step(
+        const Array<const IntBuffer*> &inputCIs, // Input states
+        bool learnEnabled // Whether to learn
     );
 
     // Serialization
@@ -121,28 +125,23 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayerDescs[vli];
-    }
-
-    // Get the hidden states
-    const FloatBuffer &getHiddenActs() const {
-        return hiddenActivations;
+        return visibleLayerDescs[i];
     }
 
     // Get the hidden states
@@ -156,4 +155,3 @@ public:
     }
 };
 } // namespace aon
-
