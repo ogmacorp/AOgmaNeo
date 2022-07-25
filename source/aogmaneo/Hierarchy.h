@@ -154,10 +154,6 @@ public:
         return eLayers[eLayers.size() - 1].getHiddenSize();
     }
 
-    bool getTopUpdate() const {
-        return updates[updates.size() - 1];
-    }
-
     bool ioLayerExists(
         int i
     ) const {
@@ -169,15 +165,14 @@ public:
         int i,
         float importance
     ) {
-        for (int t = 0; t < histories[0][i].size(); t++)
-            eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+        eLayers[0].getVisibleLayer(i).importance = importance;
     }
 
     // Importance control
     float getImportance(
         int i
     ) const {
-        return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
+        return eLayers[0].getVisibleLayer(i).importance;
     }
 
     // Retrieve predictions
@@ -188,27 +183,6 @@ public:
             return aLayers[dIndices[i]].getHiddenCIs();
 
         return dLayers[0][dIndices[i]].getHiddenCIs();
-    }
-
-    // Whether this layer received on update this timestep
-    bool getUpdate(
-        int l
-    ) const {
-        return updates[l];
-    }
-
-    // Get current layer ticks, relative to previous layer
-    int getTicks(
-        int l
-    ) const {
-        return ticks[l];
-    }
-
-    // Get layer ticks per update, relative to previous layer
-    int getTicksPerUpdate(
-        int l
-    ) const {
-        return ticksPerUpdate[l];
     }
 
     // Get input/output sizes
@@ -298,12 +272,6 @@ public:
 
     const IntBuffer &getDIndices() const {
         return dIndices;
-    }
-
-    const Array<CircleBuffer<IntBuffer>> &getHistories(
-        int l
-    ) const {
-        return histories[l];
     }
 };
 } // namespace aon

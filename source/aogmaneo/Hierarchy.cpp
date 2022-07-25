@@ -138,101 +138,106 @@ void Hierarchy::step(
     bool learnEnabled,
     float reward
 ) {
+    Array<IntBuffer> hiddenCIsPrev(eLayers.size());
+
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
-            Array<const IntBuffer*> eInputCIs(eLayers[l].getNumVisibleLayers());
+        hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
 
-            int index = 0;
+        Array<const IntBuffer*> eInputCIs(eLayers[l].getNumVisibleLayers());
 
-            for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    eInputCIs[index++] = &histories[l][i][t];
-            }
+        if (l == 0) {
+            for (int i = 0; i < ioSizes.size(); i++)
+                eInputCIs[i] = inputCIs[i];
 
-            // Activate sparse coder
-            eLayers[l].activate(eInputCIs);
-
-            // Add to next layer's history
-            if (l < eLayers.size() - 1) {
-                int lNext = l + 1;
-
-                histories[lNext][0].pushFront();
-
-                histories[lNext][0][0] = eLayers[l].getHiddenCIs();
-
-                ticks[lNext]++;
-            }
+            if (eInputCIs.size() > ioSizes.size())
+                eInputCIs[ioSizes.size()] = &hiddenCIsPrev[l];
         }
+        else {
+            eInputCIs[0] = &eLayers[l - 1].getHiddenCIs();
+
+            if (eInputCIs.size() > 1)
+                eInputCIs[1] = &hiddenCIsPrev[l];
+        }
+
+        // Activate sparse coder
+        eLayers[l].activate(eInputCIs);
     }
 
     // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
-        if (updates[l]) {
-            Array<const IntBuffer*> dInputCIs(l < eLayers.size() - 1 ? 2 : 1);
-            Array<const FloatBuffer*> dInputActs(dInputCIs.size());
+        Array<const IntBuffer*> dInputCIs(l < eLayers.size() - 1 ? 2 : 1);
+        Array<const FloatBuffer*> dInputActs(dInputCIs.size());
 
-            dInputCIs[0] = &eLayers[l].getHiddenCIs();
-            dInputActs[0] = &eLayers[l].getHiddenActs();
-            
-            if (l < eLayers.size() - 1) {
-                dInputCIs[1] = &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
-                dInputActs[1] = nullptr;
-            }
-
-            if (learnEnabled)
-                errors[l].fill(0.0f);
-
-            if (l == 0) {
-                for (int d = 0; d < aLayers.size(); d++) {
-                    aLayers[d].step(dInputCIs, dInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled);
-
-                    if (learnEnabled)
-                        aLayers[d].generateErrors(&errors[l], 0);
-                }
-            }
-
-            for (int d = 0; d < dLayers[l].size(); d++) {
-                if (learnEnabled) {
-                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
-
-                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d]);
-                }
-
-                dLayers[l][d].activate(dInputCIs, dInputActs);
-
-                dLayers[l][d].stepEnd(dInputCIs, dInputActs);
-            }
-
-            if (learnEnabled)
-                eLayers[l].learn(&errors[l]);
-
-            Array<const IntBuffer*> eInputCIs(eLayers[l].getNumVisibleLayers());
-
-            int index = 0;
-
-            for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    eInputCIs[index++] = &histories[l][i][t];
-            }
-
-            eLayers[l].stepEnd(eInputCIs);
+        dInputCIs[0] = &eLayers[l].getHiddenCIs();
+        dInputActs[0] = &eLayers[l].getHiddenActs();
+        
+        if (l < eLayers.size() - 1) {
+            dInputCIs[1] = &dLayers[l + 1][0].getHiddenCIs();
+            dInputActs[1] = &dLayers[l + 1][0].getHiddenActs();
         }
+
+        Array<const IntBuffer*> targetCIs;
+
+        if (l == 0) {
+            targetCIs.resize(dLayers[l].size());
+
+            for (int d = 0; d < dLayers[l].size(); d++)
+                targetCIs[d] = inputCIs[iIndices[d]];
+        }
+        else {
+            targetCIs.resize(1);
+            targetCIs[0] = &eLayers[l - 1].getHiddenCIs();
+        }
+
+        if (learnEnabled)
+            errors[l].fill(0.0f);
+
+        if (l == 0) {
+            for (int d = 0; d < aLayers.size(); d++) {
+                aLayers[d].step(dInputCIs, dInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled);
+
+                if (learnEnabled)
+                    aLayers[d].generateErrors(&errors[l], 0);
+            }
+        }
+
+        for (int d = 0; d < dLayers[l].size(); d++) {
+            if (learnEnabled) {
+                dLayers[l][d].generateErrors(targetCIs[d], &errors[l], 0);
+
+                dLayers[l][d].learn(targetCIs[d]);
+            }
+
+            dLayers[l][d].activate(dInputCIs, dInputActs);
+
+            dLayers[l][d].stepEnd(dInputCIs, dInputActs);
+        }
+
+        Array<const IntBuffer*> eInputCIs(eLayers[l].getNumVisibleLayers());
+
+        if (l == 0) {
+            for (int i = 0; i < ioSizes.size(); i++)
+                eInputCIs[i] = inputCIs[i];
+
+            if (eInputCIs.size() > ioSizes.size())
+                eInputCIs[ioSizes.size()] = &hiddenCIsPrev[l];
+        }
+        else {
+            eInputCIs[0] = &eLayers[l - 1].getHiddenCIs();
+
+            if (eInputCIs.size() > 1)
+                eInputCIs[1] = &hiddenCIsPrev[l];
+        }
+
+        eLayers[l].stepEnd(eInputCIs);
     }
 }
 
 int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + ioSizes.size() * sizeof(Int3) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + iIndices.size() * sizeof(int) + dIndices.size() * sizeof(int);
+    int size = 4 * sizeof(int) + ioSizes.size() * sizeof(Int3) + iIndices.size() * sizeof(int) + dIndices.size() * sizeof(int);
 
     for (int l = 0; l < eLayers.size(); l++) {
-        size += sizeof(int);
-
-        for (int i = 0; i < histories[l].size(); i++) {
-            size += 2 * sizeof(int);
-
-            for (int t = 0; t < histories[l][i].size(); t++)
-                size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
-        }
-
         size += eLayers[l].size();
 
         for (int d = 0; d < dLayers[l].size(); d++)
@@ -247,16 +252,9 @@ int Hierarchy::size() const {
 }
 
 int Hierarchy::stateSize() const {
-    int size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
+    int size = 0;
 
     for (int l = 0; l < eLayers.size(); l++) {
-        for (int i = 0; i < histories[l].size(); i++) {
-            size += sizeof(int);
-
-            for (int t = 0; t < histories[l][i].size(); t++)
-                size += histories[l][i][t].size() * sizeof(int);
-        }
-
         size += eLayers[l].stateSize();
         
         // Decoders
@@ -291,36 +289,10 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&ioSizes[0]), numIO * sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&ioTypes[0]), numIO * sizeof(Byte));
 
-    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
-    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
-
     writer.write(reinterpret_cast<const void*>(&iIndices[0]), iIndices.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&dIndices[0]), dIndices.size() * sizeof(int));
 
     for (int l = 0; l < numLayers; l++) {
-        int numLayerInputs = histories[l].size();
-
-        writer.write(reinterpret_cast<const void*>(&numLayerInputs), sizeof(int));
-
-        for (int i = 0; i < histories[l].size(); i++) {
-            int historySize = histories[l][i].size();
-
-            writer.write(reinterpret_cast<const void*>(&historySize), sizeof(int));
-
-            int historyStart = histories[l][i].start;
-
-            writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
-
-            for (int t = 0; t < histories[l][i].size(); t++) {
-                int bufferSize = histories[l][i][t].size();
-
-                writer.write(reinterpret_cast<const void*>(&bufferSize), sizeof(int));
-
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
-            }
-        }
-
         eLayers[l].write(writer);
 
         // Decoders
@@ -360,16 +332,6 @@ void Hierarchy::read(
     dLayers.resize(numLayers);
     errors.resize(numLayers);
 
-    histories.resize(numLayers);
-    
-    updates.resize(numLayers);
-    ticks.resize(numLayers);
-    ticksPerUpdate.resize(numLayers);
-
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
-    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
-
     iIndices.resize(numIO * 2);
     dIndices.resize(numIO);
 
@@ -377,38 +339,9 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&dIndices[0]), dIndices.size() * sizeof(int));
     
     for (int l = 0; l < numLayers; l++) {
-        int numLayerInputs;
-        
-        reader.read(reinterpret_cast<void*>(&numLayerInputs), sizeof(int));
-
-        histories[l].resize(numLayerInputs);
-
-        for (int i = 0; i < histories[l].size(); i++) {
-            int historySize;
-
-            reader.read(reinterpret_cast<void*>(&historySize), sizeof(int));
-
-            int historyStart;
-            
-            reader.read(reinterpret_cast<void*>(&historyStart), sizeof(int));
-
-            histories[l][i].resize(historySize);
-            histories[l][i].start = historyStart;
-
-            for (int t = 0; t < histories[l][i].size(); t++) {
-                int bufferSize;
-
-                reader.read(reinterpret_cast<void*>(&bufferSize), sizeof(int));
-
-                histories[l][i][t].resize(bufferSize);
-
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
-            }
-        }
-
         eLayers[l].read(reader);
         
-        dLayers[l].resize(l == 0 ? numPredictions : ticksPerUpdate[l]);
+        dLayers[l].resize(l == 0 ? numPredictions : 1);
 
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
@@ -427,19 +360,7 @@ void Hierarchy::read(
 void Hierarchy::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
-    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
-
     for (int l = 0; l < eLayers.size(); l++) {
-        for (int i = 0; i < histories[l].size(); i++) {
-            int historyStart = histories[l][i].start;
-
-            writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
-
-            for (int t = 0; t < histories[l][i].size(); t++)
-                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
-        }
-
         eLayers[l].writeState(writer);
 
         // Decoders
@@ -454,21 +375,7 @@ void Hierarchy::writeState(
 void Hierarchy::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
-    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
-    
     for (int l = 0; l < eLayers.size(); l++) {
-        for (int i = 0; i < histories[l].size(); i++) {
-            int historyStart;
-            
-            reader.read(reinterpret_cast<void*>(&historyStart), sizeof(int));
-
-            histories[l][i].start = historyStart;
-
-            for (int t = 0; t < histories[l][i].size(); t++)
-                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
-        }
-
         eLayers[l].readState(reader);
         
         // Decoders
