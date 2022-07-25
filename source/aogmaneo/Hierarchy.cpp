@@ -214,6 +214,9 @@ void Hierarchy::step(
             dLayers[l][d].stepEnd(dInputCIs, dInputActs);
         }
 
+        if (learnEnabled)
+            eLayers[l].learn(&errors[l]);
+
         Array<const IntBuffer*> eInputCIs(eLayers[l].getNumVisibleLayers());
 
         if (l == 0) {
