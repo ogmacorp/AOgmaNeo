@@ -19,22 +19,9 @@ void Hierarchy::initRandom(
     dLayers.resize(layerDescs.size());
     errors.resize(layerDescs.size());
 
-    ticks.resize(layerDescs.size(), 0);
-
-    histories.resize(layerDescs.size());
-    
-    ticksPerUpdate.resize(layerDescs.size());
-
-    // Default update state is no update
-    updates.resize(layerDescs.size(), false);
-
     // Cache input sizes
     ioSizes.resize(ioDescs.size());
     ioTypes.resize(ioDescs.size());
-
-    // Determine ticks per update, first layer is always 1
-    for (int l = 0; l < layerDescs.size(); l++)
-        ticksPerUpdate[l] = (l == 0 ? 1 : layerDescs[l].ticksPerUpdate);
 
     int numPredictions = 0;
     int numActions = 0;
@@ -56,27 +43,11 @@ void Hierarchy::initRandom(
 
         // If first layer
         if (l == 0) {
-            eVisibleLayerDescs.resize(ioSizes.size() * layerDescs[l].temporalHorizon);
+            eVisibleLayerDescs.resize(ioSizes.size() + (layerDescs[l].rRadius >= 0 ? 1 : 0));
 
             for (int i = 0; i < ioSizes.size(); i++) {
-                for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
-                    int index = t + layerDescs[l].temporalHorizon * i;
-
-                    eVisibleLayerDescs[index].size = ioSizes[i];
-                    eVisibleLayerDescs[index].radius = ioDescs[i].eRadius;
-                }
-            }
-            
-            // Initialize history buffers
-            histories[l].resize(ioSizes.size());
-
-            for (int i = 0; i < histories[l].size(); i++) {
-                int inSize = ioSizes[i].x * ioSizes[i].y;
-
-                histories[l][i].resize(layerDescs[l].temporalHorizon);
-                
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = IntBuffer(inSize, 0);
+                eVisibleLayerDescs[i].size = ioSizes[i];
+                eVisibleLayerDescs[i].radius = ioDescs[i].eRadius;
             }
 
             dLayers[l].resize(numPredictions);
@@ -129,23 +100,12 @@ void Hierarchy::initRandom(
             }
         }
         else {
-            eVisibleLayerDescs.resize(layerDescs[l].temporalHorizon);
+            eVisibleLayerDescs.resize(1 + (layerDescs[l].rRadius >= 0 ? 1 : 0));
 
-            for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
-                eVisibleLayerDescs[t].size = layerDescs[l - 1].hiddenSize;
-                eVisibleLayerDescs[t].radius = layerDescs[l].eRadius;
-            }
+            eVisibleLayerDescs[0].size = layerDescs[l - 1].hiddenSize;
+            eVisibleLayerDescs[0].radius = layerDescs[l].eRadius;
 
-            histories[l].resize(1);
-
-            int inSize = layerDescs[l - 1].hiddenSize.x * layerDescs[l - 1].hiddenSize.y;
-
-            histories[l][0].resize(layerDescs[l].temporalHorizon);
-
-            for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = IntBuffer(inSize, 0);
-
-            dLayers[l].resize(layerDescs[l].ticksPerUpdate);
+            dLayers[l].resize(1);
 
             // Decoder visible layer descriptors
             Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < eLayers.size() - 1 ? 2 : 1);
@@ -160,6 +120,11 @@ void Hierarchy::initRandom(
             for (int t = 0; t < dLayers[l].size(); t++)
                 dLayers[l][t].initRandom(layerDescs[l - 1].hiddenSize, dVisibleLayerDescs);
         }
+
+        if (layerDescs[l].rRadius >= 0) {
+            eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].size = layerDescs[l].hiddenSize;
+            eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].radius = layerDescs[l].rRadius;
+        }
         
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
@@ -173,29 +138,8 @@ void Hierarchy::step(
     bool learnEnabled,
     float reward
 ) {
-    // First tick is always 0
-    ticks[0] = 0;
-
-    // Add input to first layer history   
-    for (int i = 0; i < ioSizes.size(); i++) {
-        histories[0][i].pushFront();
-
-        histories[0][i][0] = *inputCIs[i];
-    }
-
-    // Set all updates to no update, will be set to true if an update occurred later
-    updates.fill(false);
-
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
-        // If is time for layer to tick
-        if (l == 0 || ticks[l] >= ticksPerUpdate[l]) {
-            // Reset tick
-            ticks[l] = 0;
-
-            // Updated
-            updates[l] = true;
-
             Array<const IntBuffer*> eInputCIs(eLayers[l].getNumVisibleLayers());
 
             int index = 0;

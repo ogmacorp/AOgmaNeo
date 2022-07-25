@@ -62,33 +62,28 @@ public:
         Int3 hiddenSize; // Size of hidden layer
 
         int eRadius; // Encoder radius
+        int rRadius; // Recurrent radius
         int dRadius; // Decoder radius
-
-        int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
         LayerDesc()
         :
         hiddenSize(4, 4, 16),
         eRadius(2),
-        dRadius(2),
-        ticksPerUpdate(2),
-        temporalHorizon(4)
+        rRadius(0),
+        dRadius(2)
         {}
 
         LayerDesc(
             const Int3 &hiddenSize,
             int eRadius,
-            int dRadius,
-            int ticksPerUpdate,
-            int temporalHorizon
+            int rRadius,
+            int dRadius
         )
         :
         hiddenSize(hiddenSize),
         eRadius(eRadius),
-        dRadius(dRadius),
-        ticksPerUpdate(ticksPerUpdate),
-        temporalHorizon(temporalHorizon)
+        rRadius(rRadius),
+        dRadius(dRadius)
         {}
     };
 
@@ -102,15 +97,6 @@ private:
     // For mapping first layer decoders
     IntBuffer iIndices;
     IntBuffer dIndices;
-
-    // Histories
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
-
-    // Per-layer values
-    ByteBuffer updates;
-
-    IntBuffer ticks;
-    IntBuffer ticksPerUpdate;
 
     // Input dimensions
     Array<Int3> ioSizes;
