@@ -31,8 +31,11 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
+        FloatBuffer rates;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
+
+        FloatBuffer gates;
     };
 
 private:
@@ -53,25 +56,26 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
+    void backward(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs,
+        int vli
+    );
+
     void learn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
-    ); 
-
 public:
     float lr; // Learning rate
+    float decay;
 
     // Defaults
     Decoder()
     :
-    lr(0.5f)
+    lr(2.0f),
+    decay(0.002f)
     {}
 
     // Create with random initialization
@@ -88,12 +92,6 @@ public:
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
-    );
-
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
     );
 
     // Serialization
