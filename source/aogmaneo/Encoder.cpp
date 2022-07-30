@@ -70,7 +70,7 @@ void Encoder::activate(
 
         sum /= max(0.0001f, totalImportance);
 
-        hiddenActivations[hiddenCellIndex] = tanh(max(0.0f, sum));
+        hiddenActivations[hiddenCellIndex] = max(0.0f, tanh(sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
