@@ -67,8 +67,7 @@ private:
         const Array<const IntBuffer*> &inputCIs,
         const Array<const FloatBuffer*> &inputActs,
         const IntBuffer* hiddenTargetCIsPrev,
-        float reward,
-        bool learnEnabled
+        float reward
     );
 
     void learn(
