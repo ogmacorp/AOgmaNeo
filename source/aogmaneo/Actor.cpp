@@ -15,7 +15,8 @@ void Actor::activate(
     const Array<const IntBuffer*> &inputCIs,
     const Array<const FloatBuffer*> &inputActs,
     const IntBuffer* hiddenTargetCIsPrev,
-    float reward
+    float reward,
+    bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -62,6 +63,14 @@ void Actor::activate(
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    if (learnEnabled) {
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wiStart;
+
+                            vl.weightsEval[wi] += drift * (vl.weightsLearn[wi] - vl.weightsEval[wi]);
+                        }
+                    }
 
                     if (inputActs[vli] == nullptr) {
                         int inCI = (*inputCIs[vli])[visibleColumnIndex];
@@ -288,15 +297,6 @@ void Actor::learn(
                         vl.weightsLearn[wi] += delta * inAct;
                     }
                 }
-
-                // Drift
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visibleCellIndex = vc + visibleCellsStart;
-
-                    int wi = vc + wiStart;
-
-                    vl.weightsEval[wi] += drift * (vl.weightsLearn[wi] - vl.weightsEval[wi]);
-                }
             }
     }
 }
@@ -472,7 +472,7 @@ void Actor::step(
 
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, inputActs, hiddenTargetCIsPrev, reward);
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, inputActs, hiddenTargetCIsPrev, reward, learnEnabled);
 
     historySamples.pushFront();
 
