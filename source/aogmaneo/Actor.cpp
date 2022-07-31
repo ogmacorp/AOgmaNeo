@@ -98,7 +98,7 @@ void Actor::activate(
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenTDErrors[hiddenColumnIndex] = reward + discount * maxActivation - valuePrev;
+    hiddenTDErrors[hiddenColumnIndex] = tanh(reward + discount * maxActivation - valuePrev);
 }
 
 void Actor::learn(
@@ -236,7 +236,7 @@ void Actor::generateErrors(
 
                     int hiddenCellIndexTarget = (*hiddenTargetCIs)[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
-                    sum += tanh(hiddenTDErrors[hiddenColumnIndex]) * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget))];
+                    sum += hiddenTDErrors[hiddenColumnIndex] * vl.weights[inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget))];
                     count++;
                 }
             }
@@ -268,7 +268,7 @@ void Actor::generateErrors(
 
                         int hiddenCellIndexTarget = (*hiddenTargetCIs)[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
-                        sum += tanh(hiddenTDErrors[hiddenColumnIndex]) * vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget))];
+                        sum += hiddenTDErrors[hiddenColumnIndex] * vl.weights[vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget))];
                         count++;
                     }
                 }
