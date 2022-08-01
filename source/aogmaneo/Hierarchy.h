@@ -40,9 +40,9 @@ public:
 
         IODesc(
             const Int3 &size,
-            IOType type,
-            int eRadius,
-            int dRadius
+            IOType type = prediction,
+            int eRadius = 2,
+            int dRadius = 2
         )
         :
         size(size),
@@ -73,10 +73,10 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int eRadius,
-            int dRadius,
-            int ticksPerUpdate,
-            int temporalHorizon
+            int eRadius = 2,
+            int dRadius = 2,
+            int ticksPerUpdate = 2,
+            int temporalHorizon = 4
         )
         :
         hiddenSize(hiddenSize),
