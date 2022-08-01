@@ -112,9 +112,7 @@ void Actor::activate(
 
 void Actor::learn(
     const Int2 &columnPos,
-    int t,
-    float r,
-    float d
+    int t
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -246,7 +244,7 @@ void Actor::learn(
 
     sumPrev /= count;
 
-    float newValue = r + d * maxActivation;
+    float newValue = historySamples[t - 1].reward + discount * maxActivation;
 
     float delta = lr * tanh(newValue - sumPrev);
 
@@ -304,9 +302,10 @@ void Actor::learn(
 void Actor::generateErrors(
     const Int2 &columnPos,
     FloatBuffer* visibleErrors,
-    int t,
     int vli
 ) {
+    const int t = 1;
+
     VisibleLayer &vl = visibleLayers[vli];
     VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
@@ -461,7 +460,7 @@ void Actor::initRandom(
     }
 }
 
-void Actor::step(
+void Actor::activate(
     const Array<const IntBuffer*> &inputCIs,
     const Array<const FloatBuffer*> &inputActs,
     const IntBuffer* hiddenTargetCIsPrev,
@@ -498,25 +497,19 @@ void Actor::step(
 
         s.reward = reward;
     }
+}
+
+void Actor::learn() {
+    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > 1) {
+    if (historySize > 1) {
         for (int it = 0; it < historyIters; it++) {
             int t = rand() % (historySize - 1) + 1;
 
-            // Compute (partial) values, rest is completed in the kernel
-            float r = 0.0f;
-            float d = 1.0f;
-
-            for (int t2 = t - 1; t2 >= t - 1; t2--) {
-                r += historySamples[t2].reward * d;
-
-                d *= discount;
-            }
-
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, r, d);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t);
         }
     }
 }
@@ -535,7 +528,7 @@ void Actor::generateErrors(
 
     #pragma omp parallel for
     for (int i = 0; i < numVisibleColumns; i++)
-        generateErrors(Int2(i / vld.size.y, i % vld.size.y), visibleErrors, 1, vli);
+        generateErrors(Int2(i / vld.size.y, i % vld.size.y), visibleErrors, vli);
 }
 
 int Actor::size() const {

@@ -73,15 +73,12 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        int t,
-        float r,
-        float d
+        int t
     );
 
     void generateErrors(
         const Int2 &columnPos,
         FloatBuffer* visibleErrors,
-        int t,
         int vli
     ); 
 
@@ -108,13 +105,15 @@ public:
     );
 
     // Step (get actions and update)
-    void step(
+    void activate(
         const Array<const IntBuffer*> &inputCIs,
         const Array<const FloatBuffer*> &inputActs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
         bool learnEnabled
     );
+
+    void learn();
 
     void generateErrors(
         FloatBuffer* visibleErrors,
