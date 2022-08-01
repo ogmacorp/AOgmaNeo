@@ -89,7 +89,6 @@ public:
     float lr; // Learning rate
     float drift;
     float discount;
-    int nSteps;
     int historyIters;
 
     // Defaults
@@ -98,7 +97,6 @@ public:
     lr(0.01f),
     drift(0.01f),
     discount(0.99f),
-    nSteps(5),
     historyIters(16)
     {}
 
