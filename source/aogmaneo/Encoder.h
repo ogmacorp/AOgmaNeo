@@ -32,6 +32,7 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        IntBuffer inputCIs;
         IntBuffer inputCIsPrev;
 
         float importance;
@@ -45,7 +46,8 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenActs;
+    FloatBuffer hiddenActsPrev;
 
     IntBuffer hiddenCIs;
     
@@ -55,11 +57,13 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
+        const Int2 &columnPos
+    );
+
+    void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const FloatBuffer* hiddenErrors
     );
 
 public:
@@ -78,11 +82,15 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled // Whether to learn
+    void activate(
+        const Array<const IntBuffer*> &inputCIs
     );
+
+    void learn(
+        const FloatBuffer* hiddenErrors
+    );
+
+    void stepEnd();
 
     // Serialization
     int size() const; // Returns size in bytes
@@ -132,7 +140,11 @@ public:
 
     // Get the hidden states
     const FloatBuffer &getHiddenActs() const {
-        return hiddenActivations;
+        return hiddenActs;
+    }
+
+    const FloatBuffer &getHiddenActsPrev() const {
+        return hiddenActsPrev;
     }
 
     // Get the hidden states

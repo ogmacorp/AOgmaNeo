@@ -73,6 +73,7 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<FloatBuffer> errors; // Accumulation
+    Array<FloatBuffer> hiddenActsPrev;
 
     // For mapping first layer decoders
     IntBuffer iIndices;
