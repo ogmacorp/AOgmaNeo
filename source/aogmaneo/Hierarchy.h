@@ -10,14 +10,12 @@
 
 #include "Encoder.h"
 #include "Decoder.h"
-#include "Actor.h"
 
 namespace aon {
 // Type of hierarchy input layer
 enum IOType {
     none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 1
 };
 
 // A SPH
@@ -30,38 +28,17 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        int numValueScales;
-        int numValueCellsPerColumn;
-        int historyCapacity;
-
-        IODesc()
-        :
-        size(4, 4, 16),
-        type(prediction),
-        eRadius(2),
-        dRadius(2),
-        numValueScales(2),
-        numValueCellsPerColumn(16),
-        historyCapacity(64)
-        {}
-
         IODesc(
-            const Int3 &size,
-            IOType type,
+            const Int3 &size = Int3(4, 4, 16),
+            IOType type = prediction,
             int eRadius = 2,
-            int dRadius = 2,
-            int numValueScales = 2,
-            int numValueCellsPerColumn = 16,
-            int historyCapacity = 64
+            int dRadius = 2
         )
         :
         size(size),
         type(type),
         eRadius(eRadius),
-        dRadius(dRadius),
-        numValueScales(numValueScales),
-        numValueCellsPerColumn(numValueCellsPerColumn),
-        historyCapacity(historyCapacity)
+        dRadius(dRadius)
         {}
     };
 
@@ -75,17 +52,8 @@ public:
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
-        LayerDesc()
-        :
-        hiddenSize(4, 4, 16),
-        eRadius(2),
-        dRadius(2),
-        ticksPerUpdate(2),
-        temporalHorizon(4)
-        {}
-
         LayerDesc(
-            const Int3 &hiddenSize,
+            const Int3 &hiddenSize = Int3(4, 4, 16),
             int eRadius = 2,
             int dRadius = 2,
             int ticksPerUpdate = 2,
@@ -104,7 +72,6 @@ private:
     // Layers
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
-    Array<Actor> aLayers;
     Array<FloatBuffer> errors; // Accumulation
 
     // For mapping first layer decoders
@@ -137,9 +104,8 @@ public:
     // Simulation step/tick
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
-        bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f, // Reward
-        bool mimic = false // Mimicry mode - treat actors as regular decoders
+        const IntBuffer* topGoalCIs,
+        bool learnEnabled = true // Whether learning is enabled
     );
 
     // Serialization
@@ -207,9 +173,6 @@ public:
     const IntBuffer &getPredictionCIs(
         int i
     ) const {
-        if (ioTypes[i] == action)
-            return aLayers[dIndices[i]].getHiddenCIs();
-
         return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
@@ -273,15 +236,6 @@ public:
         return dLayers[l];
     }
 
-    // Retrieve actor layer(s)
-    Array<Actor> &getALayers() {
-        return aLayers;
-    }
-
-    const Array<Actor> &getALayers() const {
-        return aLayers;
-    }
-
     // Retrieve by index
     Decoder &getDLayer(
         int l,
@@ -301,18 +255,6 @@ public:
             return dLayers[l][dIndices[i]];
 
         return dLayers[l][i];
-    }
-
-    Actor &getALayer(
-        int i
-    ) {
-        return aLayers[dIndices[i]];
-    }
-
-    const Actor &getALayer(
-        int i
-    ) const {
-        return aLayers[dIndices[i]];
     }
 
     const IntBuffer &getIIndices() const {
