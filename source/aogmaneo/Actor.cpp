@@ -391,6 +391,8 @@ void Actor::learn(
 
 void Actor::initRandom(
     const Int3 &hiddenSize,
+    int numValueScales,
+    int numValueCellsPerColumn,
     int historyCapacity,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
@@ -432,6 +434,13 @@ void Actor::initRandom(
     hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+
+    this->numValueCellsPerColumn = numValueCellsPerColumn;
+
+    valueCIs.resize(numValueScales);
+
+    for (int j = 0; j < numValueScales; j++)
+        valueCIs[j] = IntBuffer(numHiddenColumns, 0);
 
     // Create (pre-allocated) history samples
     historySize = 0;
@@ -510,10 +519,34 @@ void Actor::step(
                 learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, q, g, mimic);
         }
     }
+
+    // Compute value CSDRs
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++) {
+        float v = hiddenValues[i];
+        float scale = 1.0f;
+
+        for (int j = 0; j < valueCIs.size(); j++) {
+            float factor = v > 0.0f ? 1.0f : -1.0f;
+            float s = modf(v / scale, factor);
+
+            valueCIs[j][i] = (s * 0.5f + 0.5f) * (numValueCellsPerColumn - 1) + 0.5f;
+
+            v -= scale * (static_cast<float>(valueCIs[j][i]) / static_cast<float>(numValueCellsPerColumn - 1) * 2.0f - 1.0f);
+
+            scale *= magnification;
+        }
+    }
+}
+
+const IntBuffer* Actor::getValueCIs(
+    int j
+) const {
+    return &valueCIs[j];
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 4 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 5 * sizeof(float) + 4 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + valueCIs.size() * valueCIs[0].size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -539,7 +572,7 @@ int Actor::size() const {
 }
 
 int Actor::stateSize() const {
-    int size = hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+    int size = hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + valueCIs.size() * valueCIs[0].size() * sizeof(int) + sizeof(int);
 
     int sampleSize = 0;
 
@@ -560,6 +593,8 @@ void Actor::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
+    writer.write(reinterpret_cast<const void*>(&magnification), sizeof(float));
+
     writer.write(reinterpret_cast<const void*>(&vlr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&alr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
@@ -567,8 +602,16 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
+    int numValueScales = valueCIs.size();
+
+    writer.write(reinterpret_cast<const void*>(&numValueScales), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&numValueCellsPerColumn), sizeof(int));
+
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
+
+    for (int j = 0; j < numValueScales; j++)
+        writer.write(reinterpret_cast<const void*>(&valueCIs[j][0]), valueCIs[j].size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -614,12 +657,19 @@ void Actor::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
     
+    reader.read(reinterpret_cast<void*>(&magnification), sizeof(float));
+
     reader.read(reinterpret_cast<void*>(&vlr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&alr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
+
+    int numValueScales;
+
+    reader.read(reinterpret_cast<void*>(&numValueScales), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&numValueCellsPerColumn), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenValues.resize(numHiddenColumns);
@@ -628,6 +678,14 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
     hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+
+    valueCIs.resize(numValueScales);
+
+    for (int j = 0; j < numValueScales; j++) {
+        valueCIs[j].resize(numHiddenColumns);
+
+        reader.read(reinterpret_cast<void*>(&valueCIs[j][0]), valueCIs[j].size() * sizeof(int));
+    }
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -697,6 +755,9 @@ void Actor::writeState(
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
+    for (int j = 0; j < valueCIs.size(); j++)
+        writer.write(reinterpret_cast<const void*>(&valueCIs[j][0]), valueCIs[j].size() * sizeof(int));
+
     int historyStart = historySamples.start;
 
     writer.write(reinterpret_cast<const void*>(&historyStart), sizeof(int));
@@ -718,6 +779,9 @@ void Actor::readState(
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
+
+    for (int j = 0; j < valueCIs.size(); j++)
+        reader.read(reinterpret_cast<void*>(&valueCIs[j][0]), valueCIs[j].size() * sizeof(int));
 
     int historyStart;
 

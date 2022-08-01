@@ -48,6 +48,8 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
+    int numValueCellsPerColumn;
+
     FloatBuffer hiddenActivations; // Temporary buffer
 
     IntBuffer hiddenCIs; // Hidden states
@@ -59,6 +61,9 @@ private:
     // Visible layers and descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
+
+    // Value CSDRs
+    Array<IntBuffer> valueCIs;
 
     // --- Kernels ---
 
@@ -77,6 +82,10 @@ private:
     );
 
 public:
+    // For value CSDRs
+    float magnification;
+
+    // Hyperparameters
     float vlr; // Value learning rate
     float alr; // Action learning rate
     float discount; // Discount factor
@@ -98,6 +107,8 @@ public:
     // Initialized randomly
     void initRandom(
         const Int3 &hiddenSize,
+        int numValueScales,
+        int numValueCellsPerColumn,
         int historyCapacity,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
@@ -110,6 +121,10 @@ public:
         bool learnEnabled,
         bool mimic
     );
+
+    const IntBuffer* getValueCIs(
+        int j // Scale index
+    ) const;
 
     // Serialization
     int size() const; // Returns size in bytes

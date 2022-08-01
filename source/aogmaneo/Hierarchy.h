@@ -30,6 +30,8 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
+        int numValueScales;
+        int numValueCellsPerColumn;
         int historyCapacity;
 
         IODesc()
@@ -38,6 +40,8 @@ public:
         type(prediction),
         eRadius(2),
         dRadius(2),
+        numValueScales(2),
+        numValueCellsPerColumn(16),
         historyCapacity(64)
         {}
 
@@ -46,6 +50,8 @@ public:
             IOType type,
             int eRadius,
             int dRadius,
+            int numValueScales,
+            int numValueCellsPerColumn,
             int historyCapacity
         )
         :
@@ -53,6 +59,8 @@ public:
         type(type),
         eRadius(eRadius),
         dRadius(dRadius),
+        numValueScales(numValueScales),
+        numValueCellsPerColumn(numValueCellsPerColumn),
         historyCapacity(historyCapacity)
         {}
     };

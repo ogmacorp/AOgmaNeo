@@ -26,7 +26,9 @@ const float pi2 = pi * 2.0f;
 inline float modf(
     float x,
     float y
-);
+) {
+    return x - static_cast<int>(x / y) * y;
+}
 
 float expf(
     float x
