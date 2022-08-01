@@ -48,11 +48,11 @@ public:
         IODesc(
             const Int3 &size,
             IOType type,
-            int eRadius,
-            int dRadius,
-            int numValueScales,
-            int numValueCellsPerColumn,
-            int historyCapacity
+            int eRadius = 2,
+            int dRadius = 2,
+            int numValueScales = 2,
+            int numValueCellsPerColumn = 16,
+            int historyCapacity = 64
         )
         :
         size(size),
@@ -86,10 +86,10 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize,
-            int eRadius,
-            int dRadius,
-            int ticksPerUpdate,
-            int temporalHorizon
+            int eRadius = 2,
+            int dRadius = 2,
+            int ticksPerUpdate = 2,
+            int temporalHorizon = 4
         )
         :
         hiddenSize(hiddenSize),
