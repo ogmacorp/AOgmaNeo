@@ -200,9 +200,9 @@ void Hierarchy::step(
 
             for (int d = 0; d < dLayers[l].size(); d++) {
                 if (learnEnabled) {
-                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
+                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &eLayers[l].getHiddenCIs(), &eLayers[l].getHiddenActsPrev(), &errors[l]);
 
-                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &eLayers[l].getHiddenCIs(), &eLayers[l].getHiddenActsPrev());
+                    dLayers[l][d].learn(&eLayers[l].getHiddenCIs(), &eLayers[l].getHiddenActsPrev());
                 }
 
                 dLayers[l][d].activate(layerGoalCIs, &eLayers[l].getHiddenActs());

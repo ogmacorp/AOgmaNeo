@@ -37,7 +37,7 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
-    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenErrors;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -47,24 +47,30 @@ private:
 
     // --- Kernels ---
 
-    void forward(
+    void activate(
         const Int2 &columnPos,
         const IntBuffer* goalCIs,
         const FloatBuffer* inputActs
     );
 
-    void learn(
+    void determineErrors(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
         const IntBuffer* inputCIs,
         const FloatBuffer* inputActsPrev
     );
 
-    void generateErrors(
+    void propagateErrors(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs,
         FloatBuffer* visibleErrors
     ); 
+
+    void learn(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        const FloatBuffer* inputActsPrev
+    );
 
 public:
     float lr; // Learning rate
@@ -88,15 +94,15 @@ public:
     );
 
     void learn(
-        const IntBuffer* hiddenTargetCIs,
         const IntBuffer* inputCIs,
         const FloatBuffer* inputActsPrev
     );
 
     void generateErrors(
         const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
+        const IntBuffer* inputCIs,
+        const FloatBuffer* inputActsPrev,
+        FloatBuffer* visibleErrors
     );
 
     // Serialization
