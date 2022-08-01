@@ -30,16 +30,8 @@ public:
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
-        IODesc()
-        :
-        size(4, 4, 16),
-        type(prediction),
-        eRadius(2),
-        dRadius(2)
-        {}
-
         IODesc(
-            const Int3 &size,
+            const Int3 &size = Int3(4, 4, 16),
             IOType type = prediction,
             int eRadius = 2,
             int dRadius = 2
@@ -62,17 +54,8 @@ public:
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
-        LayerDesc()
-        :
-        hiddenSize(4, 4, 16),
-        eRadius(2),
-        dRadius(2),
-        ticksPerUpdate(2),
-        temporalHorizon(4)
-        {}
-
         LayerDesc(
-            const Int3 &hiddenSize,
+            const Int3 &hiddenSize = Int3(4, 4, 16),
             int eRadius = 2,
             int dRadius = 2,
             int ticksPerUpdate = 2,
