@@ -174,17 +174,8 @@ void Hierarchy::step(
                     layerInputCIs[index++] = &histories[l][i][t];
             }
 
-            if (learnEnabled) {
-                errors[l].fill(0.0f);
-
-                for (int d = 0; d < dLayers[l].size(); d++)
-                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
-            }
-
-            hiddenActsPrev[l] = eLayers[l].getHiddenActs();
-
             // Activate sparse coder
-            eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+            eLayers[l].activate(layerInputCIs);
 
             // Add to next layer's history
             if (l < eLayers.size() - 1) {
@@ -204,12 +195,23 @@ void Hierarchy::step(
         if (updates[l]) {
             const IntBuffer* layerGoalCIs = (l < eLayers.size() - 1 ? &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs() : topGoalCIs);
 
+            if (learnEnabled)
+                errors[l].fill(0.0f);
+
             for (int d = 0; d < dLayers[l].size(); d++) {
-                if (learnEnabled)
-                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &eLayers[l].getHiddenCIs(), &hiddenActsPrev[l]);
+                if (learnEnabled) {
+                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
+
+                    dLayers[l][d].learn(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &eLayers[l].getHiddenCIs(), &eLayers[l].getHiddenActsPrev());
+                }
 
                 dLayers[l][d].activate(layerGoalCIs, &eLayers[l].getHiddenActs());
             }
+
+            if (learnEnabled)
+                eLayers[l].learn(&errors[l]);
+
+            eLayers[l].stepEnd();
         }
     }
 }
