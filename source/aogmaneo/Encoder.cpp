@@ -21,24 +21,12 @@ void Encoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     if (learnEnabled) {
-        int numNonZero = 0;
-
-        for (int hc = 0; hc < hiddenSize.z; hc++) {
-            int hiddenCellIndex = hc + hiddenCellsStart;
-
-            if (hiddenActivations[hiddenCellIndex] > 0.0f)
-                numNonZero++;
-        }
-
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             float act = hiddenActivations[hiddenCellIndex];
 
-            if (act == 0.0f)
-                continue;
-
-            float delta = lr * ((*hiddenErrors)[hiddenCellIndex] * (1.0f - act * act) - tanh(reg * max(0.0f, numNonZero - 1.0f)));
+            float delta = lr * ((*hiddenErrors)[hiddenCellIndex] * (1.0f - act * act) * (act > 0.0f) + reg * (1.0f / hiddenSize.z - (act > 0.0f)));
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
