@@ -45,7 +45,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenActs;
 
     IntBuffer hiddenCIs;
     
@@ -132,7 +132,7 @@ public:
 
     // Get the hidden states
     const FloatBuffer &getHiddenActs() const {
-        return hiddenActivations;
+        return hiddenActs;
     }
 
     // Get the hidden states
