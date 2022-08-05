@@ -98,7 +98,7 @@ public:
     lr(0.01f),
     drift(0.01f),
     discount(0.99f),
-    nSteps(8),
+    nSteps(6),
     historyIters(16)
     {}
 
