@@ -39,8 +39,8 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
-    FloatBuffer hiddenActivations;
-    FloatBuffer hiddenActivationsPrev;
+    FloatBuffer hiddenActs;
+    FloatBuffer hiddenActsPrev;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -157,7 +157,7 @@ public:
     }
 
     const FloatBuffer &getHiddenActs() const {
-        return hiddenActivations;
+        return hiddenActs;
     }
 
     // Get the hidden size

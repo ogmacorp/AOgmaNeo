@@ -159,8 +159,8 @@ void Actor::learn(
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    if (historySamples[t - 1].inputActs[vli][visibleCellsStart] == -1.0f) {
-                        int inCI = historySamples[t - 1].inputCIs[vli][visibleColumnIndex];
+                    if (historySamples[t - nSteps].inputActs[vli][visibleCellsStart] == -1.0f) {
+                        int inCI = historySamples[t - nSteps].inputCIs[vli][visibleColumnIndex];
 
                         int wi = inCI + wiStart;
 
@@ -170,7 +170,7 @@ void Actor::learn(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int visibleCellIndex = vc + visibleCellsStart;
 
-                            float inAct = historySamples[t - 1].inputActs[vli][visibleCellIndex];
+                            float inAct = historySamples[t - nSteps].inputActs[vli][visibleCellIndex];
 
                             int wi = vc + wiStart;
 
@@ -461,7 +461,7 @@ void Actor::initRandom(
     }
 }
 
-void Actor::step(
+void Actor::activate(
     const Array<const IntBuffer*> &inputCIs,
     const Array<const FloatBuffer*> &inputActs,
     const IntBuffer* hiddenTargetCIsPrev,
@@ -498,17 +498,20 @@ void Actor::step(
 
         s.reward = reward;
     }
+}
 
-    // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > 1) {
+void Actor::learn() {
+    int numHiddenColumns = hiddenSize.x * hiddenSize.y;
+
+    if (historySize > nSteps) {
         for (int it = 0; it < historyIters; it++) {
-            int t = rand() % (historySize - 1) + 1;
+            int t = rand() % (historySize - nSteps) + nSteps;
 
             // Compute (partial) values, rest is completed in the kernel
             float r = 0.0f;
             float d = 1.0f;
 
-            for (int t2 = t - 1; t2 >= t - 1; t2--) {
+            for (int t2 = t - 1; t2 >= t - nSteps; t2--) {
                 r += historySamples[t2].reward * d;
 
                 d *= discount;
@@ -589,6 +592,7 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&drift), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&nSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -644,6 +648,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&drift), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&nSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
     hiddenCIs.resize(numHiddenColumns);

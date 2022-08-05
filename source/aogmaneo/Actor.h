@@ -89,14 +89,16 @@ public:
     float lr; // Learning rate
     float drift;
     float discount;
+    int nSteps;
     int historyIters;
 
     // Defaults
     Actor()
     :
     lr(0.01f),
-    drift(0.01f),
+    drift(0.1f),
     discount(0.99f),
+    nSteps(5),
     historyIters(16)
     {}
 
@@ -108,7 +110,7 @@ public:
     );
 
     // Step (get actions and update)
-    void step(
+    void activate(
         const Array<const IntBuffer*> &inputCIs,
         const Array<const FloatBuffer*> &inputActs,
         const IntBuffer* hiddenTargetCIsPrev,
@@ -120,6 +122,8 @@ public:
         FloatBuffer* visibleErrors,
         int vli
     );
+
+    void learn();
 
     // Serialization
     int size() const; // Returns size in bytes
