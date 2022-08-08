@@ -160,8 +160,17 @@ public:
         return dIndices[i] != -1;
     }
 
+    bool isLayerRecurrent(
+        int l
+    ) const {
+        if (l == 0)
+            return eLayers[l].getNumVisibleLayers() > ioSizes.size();
+
+        return eLayers[l].getNumVisibleLayers() > 1;
+    }
+
     // Importance control
-    void setImportance(
+    void setInputImportance(
         int i,
         float importance
     ) {
@@ -169,10 +178,29 @@ public:
     }
 
     // Importance control
-    float getImportance(
+    float getInputImportance(
         int i
     ) const {
         return eLayers[0].getVisibleLayer(i).importance;
+    }
+
+    // Importance control
+    void setRecurrentImportance(
+        int l,
+        float importance
+    ) {
+        assert(isLayerRecurrent(l));
+
+        eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance = importance;
+    }
+
+    // Importance control
+    float getRecurrentImportance(
+        int l
+    ) const {
+        assert(isLayerRecurrent(l));
+
+        return eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance;
     }
 
     // Retrieve predictions
