@@ -164,8 +164,10 @@ void Hierarchy::initRandom(
         //for (int i = 0; i < numInputs; i++)
         //    eLayers[l].getVisibleLayer(i).importance = numInputsInv;
 
+        //float numPredictionsInv = 1.0f / numPredictions;
+
         //for (int i = 0; i < numPredictions; i++)
-        //    eLayers[l].getVisibleLayer(numInputs + i).importance = 0.0001f;
+        //    eLayers[l].getVisibleLayer(numInputs + i).importance = numPredictionsInv;
     }
 }
 
