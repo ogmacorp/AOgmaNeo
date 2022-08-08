@@ -195,10 +195,13 @@ void Hierarchy::step(
 
         if (l == 0) {
             for (int d = 0; d < aLayers.size(); d++) {
-                aLayers[d].step(dInputCIs, dInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled);
+                aLayers[d].activate(dInputCIs, dInputActs, inputCIs[iIndices[d + ioSizes.size()]], reward);
 
-                if (learnEnabled)
+                if (learnEnabled) {
                     aLayers[d].generateErrors(&errors[l], 0);
+
+                    aLayers[d].learn();
+                }
             }
         }
 
