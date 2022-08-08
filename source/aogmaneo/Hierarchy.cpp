@@ -43,8 +43,10 @@ void Hierarchy::initRandom(
 
         if (ioDescs[i].type == prediction)
             numPredictions++;
-        else if (ioDescs[i].type == action)
+        else if (ioDescs[i].type == action) {
             numActions++;
+            numPredictions++;
+        }
     }
 
     // Iterate through layers
@@ -86,7 +88,7 @@ void Hierarchy::initRandom(
             int dIndex = 0;
 
             for (int i = 0; i < ioSizes.size(); i++) {
-                if (ioDescs[i].type == prediction) {
+                if (ioDescs[i].type == prediction || ioDescs[i].type == action) {
                     int vli = ioSizes.size() * layerDescs[l].temporalHorizon + dIndex;
 
                     eVisibleLayerDescs[vli].size = ioSizes[i];

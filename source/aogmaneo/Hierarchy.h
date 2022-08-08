@@ -182,7 +182,7 @@ public:
         int i
     ) const {
         if (ioTypes[i] == action)
-            return aLayers[dIndices[i]].getHiddenCIs();
+            return aLayers[dIndices[ioSizes.size() + i]].getHiddenCIs();
 
         assert(ioTypes[i] == prediction);
 
