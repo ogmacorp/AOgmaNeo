@@ -26,7 +26,9 @@ const float pi2 = pi * 2.0f;
 inline float modf(
     float x,
     float y
-);
+) {
+    return x - static_cast<int>(x / y) * y;
+}
 
 float expf(
     float x
@@ -58,7 +60,7 @@ inline float ceilf(
     return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
-inline int roundf(
+inline int roundftoi(
     float x
 ) {
     if (x > 0.0f)
