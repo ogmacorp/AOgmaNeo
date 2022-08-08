@@ -134,7 +134,9 @@ void Encoder::learn(
 
         sum /= max(1, count);
 
-        float delta = lr * ((vc == targetCI) - min(1.0f, max(0.0f, sum)));
+        float s = sigmoid(sum);
+
+        float delta = lr * ((vc == targetCI) - s) * s * (1.0f - s);
   
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
