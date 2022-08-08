@@ -90,6 +90,31 @@ void Decoder::activate(
         }
     }
 
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
+}
+
+void Decoder::learn(
+    const Int2 &columnPos,
+    const IntBuffer* hiddenTargetCIs
+) {
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
+    int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
+
+    float average = 0.0f;
+    float maxActivation = -999999.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        average += hiddenActs[hiddenCellIndex];
+        maxActivation = max(maxActivation, hiddenActs[hiddenCellIndex]);
+    }
+
+    average /= hiddenSize.z;
+
     float total = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
@@ -108,23 +133,10 @@ void Decoder::activate(
         hiddenActs[hiddenCellIndex] *= scale;
     }
 
-    hiddenCIs[hiddenColumnIndex] = maxIndex;
-}
-
-void Decoder::learn(
-    const Int2 &columnPos,
-    const IntBuffer* hiddenTargetCIs
-) {
-    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
-
-    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
-
-    int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float delta = lr * ((hc == targetCI) - hiddenActsPrev[hiddenCellIndex]);
+        float delta = lr * ((hc == targetCI) - hiddenActsPrev[hiddenCellIndex] - average);
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
