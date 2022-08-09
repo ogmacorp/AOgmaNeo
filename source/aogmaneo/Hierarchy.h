@@ -71,7 +71,7 @@ public:
         hiddenSize(4, 4, 16),
         clumpSize(2, 2),
         eRadius(2),
-        rRadius(0),
+        rRadius(2),
         dRadius(2)
         {}
 
