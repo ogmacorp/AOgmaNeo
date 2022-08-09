@@ -67,11 +67,9 @@ void Encoder::activate(
                 subSum /= subCount;
 
                 vl.partialActs[hiddenCellIndex] = subSum;
-
-                vl.needsUpdate = false;
             }
 
-            sum += vl.partialActs[hiddenCellIndex];
+            sum += vl.partialActs[hiddenCellIndex] * vl.importance;
         }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -284,6 +282,12 @@ void Encoder::step(
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         activate(Int2(i / hiddenSize.y, i % hiddenSize.y));
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        vl.needsUpdate = false;
+    }
 
     if (learnEnabled) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
