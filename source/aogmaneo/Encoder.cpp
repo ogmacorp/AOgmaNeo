@@ -339,13 +339,13 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
 
+    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
+
     hiddenCIs.resize(numHiddenColumns);
     hiddenRates.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
-
-    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
@@ -369,7 +369,7 @@ void Encoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
-        vl.reconstruction = FloatBuffer(numVisibleColumns, 0);
+        vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
 }
 
