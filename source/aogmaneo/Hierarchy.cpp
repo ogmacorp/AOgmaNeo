@@ -300,6 +300,8 @@ void Hierarchy::read(
     eLayers.resize(numLayers);
     dLayers.resize(numLayers);
 
+    hiddenCIsPrev.resize(numLayers);
+
     iIndices.resize(numIO * 2);
     dIndices.resize(numIO);
 
@@ -314,6 +316,8 @@ void Hierarchy::read(
         // Decoders
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].read(reader);
+
+        hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
     }
 
     aLayers.resize(numActions);
