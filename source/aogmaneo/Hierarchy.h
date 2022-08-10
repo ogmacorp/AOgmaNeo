@@ -32,21 +32,12 @@ public:
 
         int historyCapacity;
 
-        IODesc()
-        :
-        size(4, 4, 16),
-        type(prediction),
-        eRadius(2),
-        dRadius(2),
-        historyCapacity(64)
-        {}
-
         IODesc(
-            const Int3 &size,
-            IOType type,
-            int eRadius,
-            int dRadius,
-            int historyCapacity
+            const Int3 &size = Int3(4, 4, 16),
+            IOType type = prediction,
+            int eRadius = 2,
+            int dRadius = 2,
+            int historyCapacity = 64
         )
         :
         size(size),
@@ -66,21 +57,12 @@ public:
         int rRadius; // Recurrent radius
         int dRadius; // Decoder radius
 
-        LayerDesc()
-        :
-        hiddenSize(4, 4, 16),
-        clumpSize(2, 2),
-        eRadius(2),
-        rRadius(0),
-        dRadius(2)
-        {}
-
         LayerDesc(
-            const Int3 &hiddenSize,
-            const Int2 &clumpSize,
-            int eRadius,
-            int rRadius,
-            int dRadius
+            const Int3 &hiddenSize = Int3(4, 4, 16),
+            const Int2 &clumpSize = Int2(2, 2),
+            int eRadius = 2,
+            int rRadius = 0,
+            int dRadius = 2
         )
         :
         hiddenSize(hiddenSize),
