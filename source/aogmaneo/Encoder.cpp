@@ -126,7 +126,7 @@ void Encoder::forward(
 
         sum /= max(0.0001f, totalImportance);
 
-        hiddenActs[hiddenCellIndex] = max(0.0f, tanh(sum));
+        hiddenActs[hiddenCellIndex] = max(0.0f, tanhf(sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
