@@ -82,7 +82,7 @@ void Decoder::activate(
 
         sum /= count;
 
-        hiddenActs[hiddenCellIndex] = sum;
+        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -103,40 +103,10 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    float average = 0.0f;
-    float maxActivation = -999999.0f;
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        average += hiddenActs[hiddenCellIndex];
-        maxActivation = max(maxActivation, hiddenActs[hiddenCellIndex]);
-    }
-
-    average /= hiddenSize.z;
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActs[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] *= scale;
-    }
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        float delta = lr * ((hc == targetCI) - hiddenActsPrev[hiddenCellIndex] - average);
+        float delta = lr * ((hc == targetCI) - hiddenActsPrev[hiddenCellIndex]);
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -328,7 +298,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.01f);
+            vl.weights[i] = randf(0.0f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
         vl.inputActsPrev = FloatBuffer(numVisibleCells, -1.0f); // Flag
