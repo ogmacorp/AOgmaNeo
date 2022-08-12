@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        ByteBuffer weights;
 
-        FloatBuffer reconstruction;
+        ByteBuffer recons;
 
         float importance;
 
@@ -58,20 +58,16 @@ private:
 
     // --- Kernels ---
     
-    void resetReconstruction(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
-    );
-    
     void forward(
         const Int2 &clumpPos,
+        const Array<const IntBuffer*> &inputCIs,
         int priority,
         bool learnEnabled
     );
 
     void reconstruct(
         const Int2 &columnPos,
+        const IntBuffer* inputCIs,
         int priority,
         int vli
     );
