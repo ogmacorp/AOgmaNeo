@@ -46,7 +46,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenActs;
-    FloatBuffer hiddenActsPrev;
 
     IntBuffer hiddenCIs;
     
@@ -56,14 +55,11 @@ private:
     
     // --- Kernels ---
     
-    void activate(
+    void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const FloatBuffer* hiddenErrors
+        const Array<const IntBuffer*> &inputCIs,
+        const FloatBuffer* hiddenErrors,
+        bool learnEnabled
     );
 
 public:
@@ -72,8 +68,8 @@ public:
 
     Encoder()
     :
-    lr(0.1f),
-    reg(0.01f)
+    lr(0.01f),
+    reg(0.001f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -82,16 +78,10 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    void activate(
-        const Array<const IntBuffer*> &inputCIs // Input states
-    );
-
-    void learn(
-        const FloatBuffer* hiddenErrors
-    );
-
-    void stepEnd(
-        const Array<const IntBuffer*> &inputCIs // Input states
+    void step(
+        const Array<const IntBuffer*> &inputCIs, // Input states
+        const FloatBuffer* hiddenErrors,
+        bool learnEnabled // Whether to learn
     );
 
     // Serialization

@@ -30,13 +30,13 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        FloatBuffer valueWeights; // Value function weights
+        FloatBuffer actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
     struct HistorySample {
         Array<IntBuffer> inputCIs;
-        Array<FloatBuffer> inputActs;
         IntBuffer hiddenTargetCIsPrev;
 
         float reward;
@@ -48,10 +48,11 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
+    FloatBuffer hiddenActs; // Temporary buffer
+
     IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenQs;
-    FloatBuffer hiddenTDErrors;
+    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -61,40 +62,36 @@ private:
 
     // --- Kernels ---
 
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs,
-        const IntBuffer* hiddenTargetCIsPrev,
-        float reward
+        unsigned int* state
     );
 
     void learn(
         const Int2 &columnPos,
         int t,
-        float r,
-        float d
+        float q,
+        float g,
+        bool mimic
     );
 
-    void generateErrors(
-        const Int2 &columnPos,
-        FloatBuffer* visibleErrors,
-        int t,
-        int vli
-    ); 
-
 public:
-    float lr; // Learning rate
-    float discount;
-    int nSteps;
-    int historyIters;
+    float vlr; // Value learning rate
+    float alr; // Action learning rate
+    float discount; // Discount factor
+    float temperature; // Exploration amount
+    int minSteps; // Minimum steps before sample can be used
+    int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
     :
-    lr(0.01f),
+    vlr(0.01f),
+    alr(0.01f),
     discount(0.99f),
-    nSteps(5),
+    temperature(1.0f),
+    minSteps(16),
     historyIters(16)
     {}
 
@@ -106,19 +103,13 @@ public:
     );
 
     // Step (get actions and update)
-    void activate(
+    void step(
         const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs,
         const IntBuffer* hiddenTargetCIsPrev,
-        float reward
+        float reward,
+        bool learnEnabled,
+        bool mimic
     );
-
-    void generateErrors(
-        FloatBuffer* visibleErrors,
-        int vli
-    );
-
-    void learn();
 
     // Serialization
     int size() const; // Returns size in bytes
