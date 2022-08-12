@@ -80,7 +80,7 @@ void Encoder::forward(
                     subSum -= delta * delta;
                 }
 
-            subCount /= subCount;
+            subSum /= subCount;
 
             sum += subSum * vl.importance;
         }
