@@ -51,7 +51,6 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
-        Int2 clumpSize;
 
         int eRadius; // Encoder radius
         int rRadius; // Recurrent radius
@@ -59,14 +58,12 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize = Int3(4, 4, 16),
-            const Int2 &clumpSize = Int2(2, 2),
             int eRadius = 2,
             int rRadius = 0,
             int dRadius = 2
         )
         :
         hiddenSize(hiddenSize),
-        clumpSize(clumpSize),
         eRadius(eRadius),
         rRadius(rRadius),
         dRadius(dRadius)
