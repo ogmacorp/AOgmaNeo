@@ -88,7 +88,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        int delta = lr * 127.0f * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]));
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
