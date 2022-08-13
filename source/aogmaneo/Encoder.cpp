@@ -103,7 +103,7 @@ void Encoder::learn(
 
         float act = hiddenActsPrev[hiddenCellIndex];
 
-        if (act > 0.0f)
+        if (act == 0.0f)
             continue;
 
         float delta = lr * (*hiddenErrors)[hiddenCellIndex] * (1.0f - act * act) - reg * (numNonZero > 1);
