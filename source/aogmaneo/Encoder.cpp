@@ -70,7 +70,7 @@ void Encoder::activate(
 
         sum /= max(0.0001f, totalImportance);
 
-        hiddenActs[hiddenCellIndex] = max(0.0f, tanh(sum));
+        hiddenActs[hiddenCellIndex] = max(0.0f, tanhf(sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -103,7 +103,10 @@ void Encoder::learn(
 
         float act = hiddenActsPrev[hiddenCellIndex];
 
-        float delta = lr * (*hiddenErrors)[hiddenCellIndex] * (1.0f - act * act) * (act > 0.0f) - reg * min(1, max(-1, numNonZero - 1));
+        if (act > 0.0f)
+            continue;
+
+        float delta = lr * (*hiddenErrors)[hiddenCellIndex] * (1.0f - act * act) - reg * (numNonZero > 1);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];

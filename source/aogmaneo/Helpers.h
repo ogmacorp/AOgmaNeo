@@ -74,14 +74,10 @@ T min(
     T left,
     T right
 ) {
-#ifdef USE_STD_MATH
-    return std::min(left, right);
-#else
     if (left < right)
         return left;
     
     return right;
-#endif
 }
 
 template <typename T>
@@ -89,14 +85,10 @@ T max(
     T left,
     T right
 ) {
-#ifdef USE_STD_MATH
-    return std::max(left, right);
-#else
     if (left > right)
         return left;
     
     return right;
-#endif
 }
 
 template <typename T>
@@ -377,7 +369,7 @@ Array<const Array<T>*> constGet(
 
 // --- Noninearities ---
 
-inline float sigmoid(
+inline float sigmoidf(
     float x
 ) {
 #ifdef USE_STD_MATH
@@ -393,7 +385,7 @@ inline float sigmoid(
 #endif
 }
 
-inline float tanh(
+inline float tanhf(
     float x
 ) {
 #ifdef USE_STD_MATH
