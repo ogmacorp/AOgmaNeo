@@ -23,7 +23,7 @@ void ErrorEncoder::forward(
     if (learnEnabled) {
         int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-        float s = sigmoid(hiddenActivations[hiddenCellIndexMax]);
+        float s = sigmoidf(hiddenActivations[hiddenCellIndexMax]);
 
         float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * s * (1.0f - s);
 
