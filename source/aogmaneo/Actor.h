@@ -48,7 +48,7 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenActivations; // Temporary buffer
+    FloatBuffer hiddenActs; // Temporary buffer
 
     IntBuffer hiddenCIs; // Hidden states
 
