@@ -17,17 +17,24 @@
 #endif
 
 namespace aon {
-const int expIters = 6;
-const int sinIters = 6;
+const int expIters = 5;
+const int logIters = 3;
+const int sinIters = 5;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
 
 inline float modf(
     float x,
     float y
-);
+) {
+    return x - static_cast<int>(x / y) * y;
+}
 
 float expf(
+    float x
+);
+
+float logf(
     float x
 );
 
@@ -39,6 +46,11 @@ float sqrtf(
     float x
 );
 
+float powf(
+    float x,
+    float y
+);
+
 inline float ceilf(
     float x
 ) {
@@ -48,7 +60,7 @@ inline float ceilf(
     return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
-inline int roundftoi(
+inline int roundf(
     float x
 ) {
     if (x > 0.0f)
@@ -62,14 +74,10 @@ T min(
     T left,
     T right
 ) {
-#ifdef USE_STD_MATH
-    return std::min(left, right);
-#else
     if (left < right)
         return left;
     
     return right;
-#endif
 }
 
 template <typename T>
@@ -77,14 +85,10 @@ T max(
     T left,
     T right
 ) {
-#ifdef USE_STD_MATH
-    return std::max(left, right);
-#else
     if (left > right)
         return left;
     
     return right;
-#endif
 }
 
 template <typename T>
@@ -365,7 +369,7 @@ Array<const Array<T>*> constGet(
 
 // --- Noninearities ---
 
-inline float sigmoid(
+inline float sigmoidf(
     float x
 ) {
 #ifdef USE_STD_MATH
@@ -381,7 +385,7 @@ inline float sigmoid(
 #endif
 }
 
-inline float tanh(
+inline float tanhf(
     float x
 ) {
 #ifdef USE_STD_MATH

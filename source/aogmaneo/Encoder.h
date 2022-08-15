@@ -44,10 +44,11 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    int numPriorities;
+    Int2 clumpSize;
+    Int2 numClumps;
 
+    FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer hiddenPriorities;
 
     FloatBuffer hiddenRates;
 
@@ -64,30 +65,32 @@ private:
     );
     
     void forward(
-        const Int2 &columnPos,
+        const Int2 &clumpPos,
         int priority,
         bool learnEnabled
     );
 
     void reconstruct(
         const Int2 &columnPos,
-        int vli,
-        int priority
+        int priority,
+        int vli
     );
 
 public:
     float lr;
+    float falloff;
 
     // Defaults
     Encoder()
     :
-    lr(0.03f)
+    lr(0.1f),
+    falloff(8.0f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        int numPriorities, // Lateral radius
+        const Int2 &clumpSize,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
@@ -124,23 +127,23 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayerDescs[vli];
+        return visibleLayerDescs[i];
     }
 
     // Get the hidden states
