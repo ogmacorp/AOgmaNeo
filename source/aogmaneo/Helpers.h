@@ -26,7 +26,9 @@ const float pi2 = pi * 2.0f;
 inline float modf(
     float x,
     float y
-);
+) {
+    return x - static_cast<int>(x / y) * y;
+}
 
 float expf(
     float x
@@ -58,7 +60,7 @@ inline float ceilf(
     return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
-inline int roundftoi(
+inline int roundf(
     float x
 ) {
     if (x > 0.0f)
@@ -72,14 +74,10 @@ T min(
     T left,
     T right
 ) {
-#ifdef USE_STD_MATH
-    return std::min(left, right);
-#else
     if (left < right)
         return left;
     
     return right;
-#endif
 }
 
 template <typename T>
@@ -87,14 +85,10 @@ T max(
     T left,
     T right
 ) {
-#ifdef USE_STD_MATH
-    return std::max(left, right);
-#else
     if (left > right)
         return left;
     
     return right;
-#endif
 }
 
 template <typename T>
@@ -375,7 +369,7 @@ Array<const Array<T>*> constGet(
 
 // --- Noninearities ---
 
-inline float sigmoid(
+inline float sigmoidf(
     float x
 ) {
 #ifdef USE_STD_MATH
@@ -391,7 +385,7 @@ inline float sigmoid(
 #endif
 }
 
-inline float tanh(
+inline float tanhf(
     float x
 ) {
 #ifdef USE_STD_MATH
