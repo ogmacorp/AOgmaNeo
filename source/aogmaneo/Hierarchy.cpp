@@ -209,22 +209,16 @@ void Hierarchy::step(
             targetCIs[0] = &eLayers[l - 1].getHiddenCIs();
         }
 
-        if (learnEnabled)
-            errors[l].fill(0.0f);
+        for (int d = 0; d < dLayers[l].size(); d++) {
+            if (learnEnabled)
+                dLayers[l][d].learn(targetCIs[d]);
+
+            dLayers[l][d].activate(dInputCIs, dInputActs);
+        }
 
         if (l == 0) {
             for (int d = 0; d < aLayers.size(); d++)
                 aLayers[d].step(dInputCIs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled, mimic);
-        }
-
-        for (int d = 0; d < dLayers[l].size(); d++) {
-            if (learnEnabled) {
-                dLayers[l][d].generateErrors(targetCIs[d], &errors[l], 0);
-
-                dLayers[l][d].learn(targetCIs[d]);
-            }
-
-            dLayers[l][d].activate(dInputCIs, dInputActs);
         }
     }
 }
