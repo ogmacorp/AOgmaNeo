@@ -104,7 +104,7 @@ void Actor::forward(
 
             sum /= count;
 
-            hiddenActivations[hiddenCellIndex] = sum;
+            hiddenActs[hiddenCellIndex] = sum;
 
             maxActivation = max(maxActivation, sum);
         }
@@ -114,9 +114,9 @@ void Actor::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            hiddenActivations[hiddenCellIndex] = expf((hiddenActivations[hiddenCellIndex] - maxActivation) / temperature);
+            hiddenActs[hiddenCellIndex] = expf((hiddenActs[hiddenCellIndex] - maxActivation) / temperature);
             
-            total += hiddenActivations[hiddenCellIndex];
+            total += hiddenActs[hiddenCellIndex];
         }
 
         float cusp = randf(state) * total;
@@ -127,7 +127,7 @@ void Actor::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            sumSoFar += hiddenActivations[hiddenCellIndex];
+            sumSoFar += hiddenActs[hiddenCellIndex];
 
             if (sumSoFar >= cusp) {
                 selectIndex = hc;
@@ -323,7 +323,7 @@ void Actor::learn(
 
         sum /= count;
 
-        hiddenActivations[hiddenCellIndex] = sum;
+        hiddenActs[hiddenCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -336,9 +336,9 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
 
-        total += hiddenActivations[hiddenCellIndex];
+        total += hiddenActs[hiddenCellIndex];
     }
 
     float scale = 1.0f / max(0.0001f, total);
@@ -346,13 +346,13 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] *= scale;
+        hiddenActs[hiddenCellIndex] *= scale;
     }
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float deltaAction = (mimic || tdErrorValue > 0.0f ? alr : -alr * 0.5f) * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        float deltaAction = (mimic || tdErrorValue > 0.0f ? alr : -alr * 0.5f) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -431,7 +431,7 @@ void Actor::initRandom(
 
     hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
 
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     // Create (pre-allocated) history samples
     historySize = 0;
@@ -627,7 +627,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 
