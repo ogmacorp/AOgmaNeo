@@ -47,7 +47,6 @@ private:
     Int2 clumpSize;
     Int2 numClumps;
 
-    FloatBuffer hiddenSums;
     IntBuffer hiddenCIs; // Hidden states
 
     FloatBuffer hiddenRates;

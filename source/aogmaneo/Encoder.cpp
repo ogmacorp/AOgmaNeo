@@ -236,8 +236,6 @@ void Encoder::initRandom(
         vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
-    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
-
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
@@ -322,6 +320,8 @@ void Encoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
         writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
+
+        writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
@@ -338,8 +338,6 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
-
-    hiddenSums = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenRates.resize(numHiddenCells);
@@ -370,6 +368,8 @@ void Encoder::read(
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
         vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
+
+        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 
