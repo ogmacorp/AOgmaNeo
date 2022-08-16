@@ -197,7 +197,7 @@ void Encoder::reconstruct(
 
     sum /= max(1, count);
 
-    vl.reconstruction[visibleColumnIndex] = min(1.0f, max(-1.0f, vl.reconstruction[visibleColumnIndex] - sum));
+    vl.reconstruction[visibleColumnIndex] -= sum;
 }
 
 void Encoder::initRandom(
