@@ -287,7 +287,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(float) + sizeof(float);
     }
 
     return size;
