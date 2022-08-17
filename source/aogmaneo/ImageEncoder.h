@@ -50,7 +50,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const FloatBuffer*> &inputCIs,
+        const Array<const FloatBuffer*> &inputs,
         bool learnEnabled
     );
 
@@ -62,11 +62,13 @@ private:
 
 public:
     float lr;
+    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.03f)
+    lr(0.1f),
+    falloff(8.0f)
     {}
 
     void initRandom(
