@@ -27,8 +27,6 @@ public:
         Int3 size;
         IOType type;
 
-        int numDendrites;
-
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
@@ -37,7 +35,6 @@ public:
         IODesc(
             const Int3 &size = Int3(4, 4, 16),
             IOType type = prediction,
-            int numDendrites = 3,
             int eRadius = 2,
             int dRadius = 2,
             int historyCapacity = 64
@@ -45,7 +42,6 @@ public:
         :
         size(size),
         type(type),
-        numDendrites(numDendrites),
         eRadius(eRadius),
         dRadius(dRadius),
         historyCapacity(historyCapacity)
@@ -57,8 +53,6 @@ public:
         Int3 hiddenSize; // Size of hidden layer
         Int2 clumpSize;
 
-        int numDendrites;
-
         int eRadius; // Encoder radius
         int rRadius; // Recurrent radius
         int dRadius; // Decoder radius
@@ -66,7 +60,6 @@ public:
         LayerDesc(
             const Int3 &hiddenSize = Int3(4, 4, 16),
             const Int2 &clumpSize = Int2(2, 2),
-            int numDendrites = 3,
             int eRadius = 2,
             int rRadius = 2,
             int dRadius = 2
@@ -74,7 +67,6 @@ public:
         :
         hiddenSize(hiddenSize),
         clumpSize(clumpSize),
-        numDendrites(numDendrites),
         eRadius(eRadius),
         rRadius(rRadius),
         dRadius(dRadius)
