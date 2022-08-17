@@ -36,11 +36,12 @@ public:
     };
 
 private:
-    Int3 hiddenSize; // Size of the output/hidden/prediction
+    Int3 hiddenSize; // Size of the hidden/hidden/prediction
+    int numDendrites;
 
     FloatBuffer hiddenActs;
 
-    IntBuffer hiddenCIs; // Hidden state
+    IntBuffer hiddenCIs;
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -58,25 +59,21 @@ private:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
-    ); 
-
 public:
     float lr; // Learning rate
+    float boost;
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(0.01f),
+    boost(0.001f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Int3 &hiddenSize, // Hidden/hidden/prediction size
+        int numDendrites,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
@@ -88,12 +85,6 @@ public:
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
-    );
-
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
     );
 
     // Serialization
