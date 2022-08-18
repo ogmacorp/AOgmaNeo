@@ -32,21 +32,12 @@ public:
 
         int historyCapacity;
 
-        IODesc()
-        :
-        size(4, 4, 16),
-        type(prediction),
-        eRadius(2),
-        dRadius(2),
-        historyCapacity(64)
-        {}
-
         IODesc(
-            const Int3 &size,
-            IOType type,
-            int eRadius,
-            int dRadius,
-            int historyCapacity
+            const Int3 &size = Int3(4, 4, 16),
+            IOType type = prediction,
+            int eRadius = 2,
+            int dRadius = 2,
+            int historyCapacity = 64
         )
         :
         size(size),
@@ -60,27 +51,22 @@ public:
     // Describes a layer for construction. For the first layer, the IODesc overrides the parameters that are the same name
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
+        Int2 clumpSize;
 
         int eRadius; // Encoder radius
         int rRadius; // Recurrent radius
         int dRadius; // Decoder radius
 
-        LayerDesc()
-        :
-        hiddenSize(4, 4, 16),
-        eRadius(2),
-        rRadius(0),
-        dRadius(2)
-        {}
-
         LayerDesc(
-            const Int3 &hiddenSize,
-            int eRadius,
-            int rRadius,
-            int dRadius
+            const Int3 &hiddenSize = Int3(4, 4, 16),
+            const Int2 &clumpSize = Int2(2, 2),
+            int eRadius = 2,
+            int rRadius = 2,
+            int dRadius = 2
         )
         :
         hiddenSize(hiddenSize),
+        clumpSize(clumpSize),
         eRadius(eRadius),
         rRadius(rRadius),
         dRadius(dRadius)
@@ -92,6 +78,7 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
+    Array<IntBuffer> hiddenCIsPrev;
 
     // For mapping first layer decoders
     IntBuffer iIndices;
@@ -116,7 +103,7 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reward
-        bool mimic = false // Mimicry mode - treat actors as regular decoders
+        bool mimic = false // Mimicry mode
     );
 
     // Serialization
@@ -160,6 +147,15 @@ public:
         return dIndices[i] != -1;
     }
 
+    bool isLayerRecurrent(
+        int l
+    ) const {
+        if (l == 0)
+            return eLayers[l].getNumVisibleLayers() > ioSizes.size();
+
+        return eLayers[l].getNumVisibleLayers() > 1;
+    }
+
     // Importance control
     void setInputImportance(
         int i,
@@ -178,7 +174,7 @@ public:
         int l,
         float importance
     ) {
-        assert(l == 0 ? eLayers[l].getNumVisibleLayers() > ioSizes.size() : eLayers[l].getNumVisibleLayers() > 1);
+        assert(isLayerRecurrent(l));
 
         eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance = importance;
     }
@@ -186,7 +182,7 @@ public:
     float getRecurrentImportance(
         int l
     ) const {
-        assert(l == 0 ? eLayers[l].getNumVisibleLayers() > ioSizes.size() : eLayers[l].getNumVisibleLayers() > 1);
+        assert(isLayerRecurrent(l));
 
         return eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance;
     }
