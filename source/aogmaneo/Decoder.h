@@ -68,7 +68,7 @@ public:
     :
     lr(0.1f),
     scale(2.0f),
-    stick(64.0f)
+    stick(128.0f)
     {}
 
     // Create with random initialization
