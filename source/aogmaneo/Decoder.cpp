@@ -64,7 +64,7 @@ void Decoder::forward(
 
         sum /= count * 127.0f;
 
-        hiddenActivations[hiddenCellIndex] = min(1.0f, max(0.0f, scale * sum));
+        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, scale * sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -144,7 +144,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float delta = lr * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        float delta = lr * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -253,7 +253,7 @@ void Decoder::initRandom(
         vl.gates = ByteBuffer(numVisibleColumns, 255);
     }
 
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -299,7 +299,7 @@ void Decoder::learn(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(int) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(int) + hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -312,7 +312,7 @@ int Decoder::size() const {
 }
 
 int Decoder::stateSize() const {
-    int size = hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int);
+    int size = hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -332,7 +332,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&decay), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenActs[0]), hiddenActs.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
     int numVisibleLayers = visibleLayers.size();
@@ -364,10 +364,10 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&decay), sizeof(int));
 
-    hiddenActivations.resize(numHiddenCells);
+    hiddenActs.resize(numHiddenCells);
     hiddenCIs.resize(numHiddenColumns);
 
-    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenActs[0]), hiddenActs.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     int numVisibleLayers = visibleLayers.size();
@@ -406,7 +406,7 @@ void Decoder::read(
 void Decoder::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hiddenActs[0]), hiddenActs.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -419,7 +419,7 @@ void Decoder::writeState(
 void Decoder::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hiddenActs[0]), hiddenActs.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
