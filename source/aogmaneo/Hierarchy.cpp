@@ -134,7 +134,7 @@ void Hierarchy::initRandom(
 
         // Set default recurrence
         if (layerDescs[l].rRadius >= 0)
-            setRecurrentImportance(l, 0.25f); // Small value
+            setRecurrentImportance(l, 0.125f); // Small value
     }
 }
 
