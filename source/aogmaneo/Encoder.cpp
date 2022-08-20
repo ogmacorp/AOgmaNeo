@@ -163,8 +163,8 @@ void Encoder::reconstruct(
                 
     Int2 clumpCenter = project(columnPos, vToH);
 
-    Int2 reverseRadii(ceilf(vToH.x * vld.radius) + 1, ceilf(vToH.y * vld.radius) + 1);
-    
+    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
+ 
     // Lower corner
     Int2 fieldLowerBound(clumpCenter.x - reverseRadii.x, clumpCenter.y - reverseRadii.y);
 
@@ -238,7 +238,7 @@ void Encoder::initRandom(
         vl.reconstruction = FloatBuffer(numVisibleColumns, 0.0f);
     }
 
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
