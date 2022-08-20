@@ -75,7 +75,7 @@ public:
     // Defaults
     Decoder()
     :
-    scale(2.0f),
+    scale(4.0f),
     lr(0.1f),
     decay(1)
     {}
