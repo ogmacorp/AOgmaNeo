@@ -163,8 +163,8 @@ void Encoder::reconstruct(
                 
     Int2 clumpCenter = project(columnPos, vToH);
 
-    Int2 reverseRadii(ceilf(vToH.x * vld.radius) + 1, ceilf(vToH.y * vld.radius) + 1);
-    
+    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
+ 
     // Lower corner
     Int2 fieldLowerBound(clumpCenter.x - reverseRadii.x, clumpCenter.y - reverseRadii.y);
 
