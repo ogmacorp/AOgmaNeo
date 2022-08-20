@@ -248,7 +248,7 @@ void Decoder::initRandom(
 
         vl.rates = ByteBuffer(numHiddenColumns * area * vld.size.z, 255);
 
-        vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
+        vl.inputCIsPrev = IntBuffer(numVisibleColumns, vld.size.z / 2);
 
         vl.gates = ByteBuffer(numVisibleColumns, 255);
     }
@@ -256,7 +256,7 @@ void Decoder::initRandom(
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 }
 
 void Decoder::activate(
