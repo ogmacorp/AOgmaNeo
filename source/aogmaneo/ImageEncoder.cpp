@@ -227,7 +227,7 @@ void ImageEncoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = randf(0.0f, 1.0f);
+            vl.protos[i] = randf(0.0f, 0.0001f);
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
@@ -235,7 +235,7 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
 
 void ImageEncoder::step(
