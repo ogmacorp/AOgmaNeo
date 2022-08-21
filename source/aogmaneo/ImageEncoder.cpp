@@ -227,7 +227,7 @@ void ImageEncoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = randf(0.0f, 1.0f);
+            vl.protos[i] = randf(0.0f, 0.0001f);
 
         vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
     }
