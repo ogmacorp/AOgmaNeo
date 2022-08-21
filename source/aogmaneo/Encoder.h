@@ -77,13 +77,11 @@ private:
 
 public:
     float lr;
-    float falloff;
 
     // Defaults
     Encoder()
     :
-    lr(0.01f),
-    falloff(0.1f)
+    lr(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
