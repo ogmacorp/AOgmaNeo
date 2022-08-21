@@ -98,7 +98,6 @@ void Encoder::forward(
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             float diff = maxIndex - hc;
-            diff /= hiddenSize.z;
 
             float rate = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
