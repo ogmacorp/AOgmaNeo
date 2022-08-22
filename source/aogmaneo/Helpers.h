@@ -22,36 +22,13 @@ const int logIters = 3;
 const int sinIters = 5;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
-const float byteInv = 1.0f / 255.0f;
-
-// Lookup table for weight influence
-const float weightLookupTable[65] {
-    0.000000, 0.177466, 0.249969, 0.304911, 0.350646, 0.390425, 0.425918, 0.458123, 
-    0.487692, 0.515079, 0.540615, 0.564553, 0.587087, 0.608374, 0.628539, 0.647689, 
-    0.665910, 0.683278, 0.699854, 0.715695, 0.730849, 0.745356, 0.759255, 0.772577, 
-    0.785353, 0.797609, 0.809368, 0.820652, 0.831479, 0.841869, 0.851835, 0.861395, 
-    0.870559, 0.879342, 0.887754, 0.895806, 0.903508, 0.910868, 0.917894, 0.924595, 
-    0.930976, 0.937046, 0.942809, 0.948272, 0.953439, 0.958315, 0.962905, 0.967213, 
-    0.971242, 0.974996, 0.978478, 0.981692, 0.984639, 0.987322, 0.989743, 0.991905, 
-    0.993808, 0.995455, 0.996846, 0.997982, 0.998866, 0.999496, 0.999874, 1.000000,
-    1.0 // Dummy
-};
-
-inline float weightLookup(float w) {
-    assert(w >= 0.0f && w <= 1.0f);
-
-    w *= 64.0f;
-
-    int index = static_cast<int>(w);
-    float interp = w - index;
-
-    return weightLookupTable[index] * (1.0f - interp) + weightLookupTable[index + 1] * interp;
-}
 
 inline float modf(
     float x,
     float y
-);
+) {
+    return x - static_cast<int>(x / y) * y;
+}
 
 float expf(
     float x
@@ -97,14 +74,10 @@ T min(
     T left,
     T right
 ) {
-#ifdef USE_STD_MATH
-    return std::min(left, right);
-#else
     if (left < right)
         return left;
     
     return right;
-#endif
 }
 
 template <typename T>
@@ -112,14 +85,10 @@ T max(
     T left,
     T right
 ) {
-#ifdef USE_STD_MATH
-    return std::max(left, right);
-#else
     if (left > right)
         return left;
     
     return right;
-#endif
 }
 
 template <typename T>
@@ -400,7 +369,7 @@ Array<const Array<T>*> constGet(
 
 // --- Noninearities ---
 
-inline float sigmoid(
+inline float sigmoidf(
     float x
 ) {
 #ifdef USE_STD_MATH
@@ -416,7 +385,7 @@ inline float sigmoid(
 #endif
 }
 
-inline float tanh(
+inline float tanhf(
     float x
 ) {
 #ifdef USE_STD_MATH

@@ -104,7 +104,7 @@ void Actor::forward(
 
             sum /= count;
 
-            hiddenActivations[hiddenCellIndex] = sum;
+            hiddenActs[hiddenCellIndex] = sum;
 
             maxActivation = max(maxActivation, sum);
         }
@@ -114,9 +114,9 @@ void Actor::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            hiddenActivations[hiddenCellIndex] = expf((hiddenActivations[hiddenCellIndex] - maxActivation) / temperature);
+            hiddenActs[hiddenCellIndex] = expf((hiddenActs[hiddenCellIndex] - maxActivation) / temperature);
             
-            total += hiddenActivations[hiddenCellIndex];
+            total += hiddenActs[hiddenCellIndex];
         }
 
         float cusp = randf(state) * total;
@@ -127,7 +127,7 @@ void Actor::forward(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            sumSoFar += hiddenActivations[hiddenCellIndex];
+            sumSoFar += hiddenActs[hiddenCellIndex];
 
             if (sumSoFar >= cusp) {
                 selectIndex = hc;
@@ -191,8 +191,8 @@ void Actor::forward(
 void Actor::learn(
     const Int2 &columnPos,
     int t,
-    float q,
-    float g,
+    float r,
+    float d,
     bool mimic
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
@@ -203,7 +203,7 @@ void Actor::learn(
 
     // --- Value Prev ---
 
-    float newValue = q + g * hiddenValues[hiddenColumnIndex];
+    float newValue = r + d * hiddenValues[hiddenColumnIndex];
 
     float value = 0.0f;
     int count = 0;
@@ -323,7 +323,7 @@ void Actor::learn(
 
         sum /= count;
 
-        hiddenActivations[hiddenCellIndex] = sum;
+        hiddenActs[hiddenCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -336,9 +336,9 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] = expf(hiddenActivations[hiddenCellIndex] - maxActivation);
+        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
 
-        total += hiddenActivations[hiddenCellIndex];
+        total += hiddenActs[hiddenCellIndex];
     }
 
     float scale = 1.0f / max(0.0001f, total);
@@ -346,13 +346,13 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActivations[hiddenCellIndex] *= scale;
+        hiddenActs[hiddenCellIndex] *= scale;
     }
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float deltaAction = (mimic ? alr : alr * tanh(tdErrorValue)) * ((hc == targetCI) - hiddenActivations[hiddenCellIndex]);
+        float deltaAction = (mimic || tdErrorValue > 0.0f ? alr : -alr) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -427,11 +427,11 @@ void Actor::initRandom(
             vl.actionWeights[i] = randf(-0.01f, 0.01f);
     }
 
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
     hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
 
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     // Create (pre-allocated) history samples
     historySize = 0;
@@ -496,18 +496,18 @@ void Actor::step(
             int t = rand() % (historySize - minSteps) + minSteps;
 
             // Compute (partial) values, rest is completed in the kernel
-            float q = 0.0f;
-            float g = 1.0f;
+            float r = 0.0f;
+            float d = 1.0f;
 
             for (int t2 = t - 1; t2 >= 0; t2--) {
-                q += historySamples[t2].reward * g;
+                r += historySamples[t2].reward * d;
 
-                g *= discount;
+                d *= discount;
             }
 
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, q, g, mimic);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, r, d, mimic);
         }
     }
 }
@@ -627,7 +627,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenValues[0]), hiddenValues.size() * sizeof(float));
 
-    hiddenActivations = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     int numVisibleLayers = visibleLayers.size();
 

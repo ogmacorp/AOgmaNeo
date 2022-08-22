@@ -14,13 +14,6 @@
 
 using namespace aon;
 
-float aon::modf(
-    float x,
-    float y
-) {
-    return x - static_cast<int>(x / y) * y;
-}
-
 float aon::expf(
     float x
 ) {
