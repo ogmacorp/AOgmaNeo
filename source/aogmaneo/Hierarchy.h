@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include "ReconEncoder.h"
-#include "ErrorEncoder.h"
+#include "Encoder.h"
 #include "Decoder.h"
 #include "Actor.h"
 
@@ -77,11 +76,9 @@ public:
 
 private:
     // Layers
-    Array<ReconEncoder> rLayers;
-    Array<ErrorEncoder> eLayers;
+    Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
-    Array<FloatBuffer> errors; // Accumulation
 
     // For mapping first layer decoders
     IntBuffer iIndices;
