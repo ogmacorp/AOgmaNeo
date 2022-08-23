@@ -37,7 +37,7 @@ void Encoder::forward(
             if (act == 0.0f)
                 continue;
 
-            float delta = lr * ((*hiddenErrors)[hiddenCellIndex] * (1.0f - act * act) - reg * (numNonZero > 1));
+            float delta = lr * (((*hiddenErrors)[hiddenCellIndex] - reg * (numNonZero > 1)) * (1.0f - act * act));
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
