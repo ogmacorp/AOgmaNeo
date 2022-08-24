@@ -27,6 +27,7 @@ public:
         IOType type;
 
         int eRadius; // Encoder radius
+        int aRadius; // Actor radius
 
         int historyCapacity;
 
@@ -34,12 +35,14 @@ public:
             const Int3 &size = Int3(4, 4, 16),
             IOType type = prediction,
             int eRadius = 2,
+            int aRadius = 2,
             int historyCapacity = 64
         )
         :
         size(size),
         type(type),
         eRadius(eRadius),
+        aRadius(aRadius),
         historyCapacity(historyCapacity)
         {}
     };
@@ -147,14 +150,14 @@ public:
         float importance
     ) {
         for (int t = 0; t < histories[0][i].size(); t++)
-            layers[0].getEnc().getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+            layers[0].enc.getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
     }
 
     // Importance control
     float getImportance(
         int i
     ) const {
-        return layers[0].getEnc().getVisibleLayer(i * histories[0][i].size()).importance;
+        return layers[0].enc.getVisibleLayer(i * histories[0][i].size()).importance;
     }
 
     // Retrieve predictions
@@ -164,7 +167,7 @@ public:
         if (ioTypes[i] == action)
             return actors[dIndices[i]].getHiddenCIs();
 
-        return layers[0].getPredCIs(dIndices[i]);
+        return layers[0].getPredCIs(i * histories[0][i].size());
     }
 
     // Whether this layer received on update this timestep

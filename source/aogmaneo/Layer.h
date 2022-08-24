@@ -15,12 +15,12 @@ namespace aon {
 // A layer with encoder and predictor
 class Layer {
 private:
-    Encoder enc;
-    Predictor pred;
-
     Array<const IntBuffer*> predInputCIs;
 
 public:
+    Encoder enc;
+    Predictor pred;
+
     // Defaults
     Layer()
     {}
@@ -74,22 +74,6 @@ public:
     void readState(
         StreamReader &reader
     );
-
-    Encoder &getEnc() {
-        return enc;
-    }
-
-    const Encoder &getEnc() const {
-        return enc;
-    }
-
-    Predictor &getPred() {
-        return pred;
-    }
-
-    const Predictor &getPred() const {
-        return pred;
-    }
 };
 } // Namespace aon
 
