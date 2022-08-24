@@ -138,7 +138,7 @@ public:
         return layers.size();
     }
 
-    bool ioLayerExists(
+    bool aLayerExists(
         int i
     ) const {
         return dIndices[i] != -1;
