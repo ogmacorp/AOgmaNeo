@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include "Encoder.h"
-#include "Decoder.h"
+#include "Layer.h"
 #include "Actor.h"
 
 namespace aon {
@@ -28,7 +27,6 @@ public:
         IOType type;
 
         int eRadius; // Encoder radius
-        int dRadius; // Decoder radius
 
         int historyCapacity;
 
@@ -36,14 +34,12 @@ public:
             const Int3 &size = Int3(4, 4, 16),
             IOType type = prediction,
             int eRadius = 2,
-            int dRadius = 2,
             int historyCapacity = 64
         )
         :
         size(size),
         type(type),
         eRadius(eRadius),
-        dRadius(dRadius),
         historyCapacity(historyCapacity)
         {}
     };
@@ -53,7 +49,7 @@ public:
         Int3 hiddenSize; // Size of hidden layer
 
         int eRadius; // Encoder radius
-        int dRadius; // Decoder radius
+        int pRadius; // Predictor radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
@@ -61,14 +57,14 @@ public:
         LayerDesc(
             const Int3 &hiddenSize = Int3(4, 4, 16),
             int eRadius = 2,
-            int dRadius = 2,
+            int pRadius = 2,
             int ticksPerUpdate = 2,
             int temporalHorizon = 4
         )
         :
         hiddenSize(hiddenSize),
         eRadius(eRadius),
-        dRadius(dRadius),
+        pRadius(pRadius),
         ticksPerUpdate(ticksPerUpdate),
         temporalHorizon(temporalHorizon)
         {}
@@ -76,9 +72,8 @@ public:
 
 private:
     // Layers
-    Array<Encoder> eLayers;
-    Array<Array<Decoder>> dLayers;
-    Array<Actor> aLayers;
+    Array<Layer> layers;
+    Array<Actor> actors;
 
     // For mapping first layer decoders
     IntBuffer iIndices;
@@ -135,23 +130,9 @@ public:
         StreamReader &reader
     );
 
-    // Get the number of layers (eLayers)
+    // Get the number of layers (layers)
     int getNumLayers() const {
-        return eLayers.size();
-    }
-
-    // Get state of highest layer (less verbose when dealing with goal-driven learning)
-    const IntBuffer &getTopHiddenCIs() const {
-        return eLayers[eLayers.size() - 1].getHiddenCIs();
-    }
-
-    // Get size of highest layer (less verbose when dealing with goal-driven learning)
-    const Int3 &getTopHiddenSize() const {
-        return eLayers[eLayers.size() - 1].getHiddenSize();
-    }
-
-    bool getTopUpdate() const {
-        return updates[updates.size() - 1];
+        return layers.size();
     }
 
     bool ioLayerExists(
@@ -166,14 +147,14 @@ public:
         float importance
     ) {
         for (int t = 0; t < histories[0][i].size(); t++)
-            eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+            layers[0].getEnc().getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
     }
 
     // Importance control
     float getImportance(
         int i
     ) const {
-        return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
+        return layers[0].getEnc().getVisibleLayer(i * histories[0][i].size()).importance;
     }
 
     // Retrieve predictions
@@ -181,9 +162,9 @@ public:
         int i
     ) const {
         if (ioTypes[i] == action)
-            return aLayers[dIndices[i]].getHiddenCIs();
+            return actors[dIndices[i]].getHiddenCIs();
 
-        return dLayers[0][dIndices[i]].getHiddenCIs();
+        return layers[0].getPredCIs(dIndices[i]);
     }
 
     // Whether this layer received on update this timestep
@@ -220,72 +201,38 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    Encoder &getEnc(
+    Layer &getLayer(
         int l
     ) {
-        return eLayers[l];
+        return layers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const Encoder &getEnc(
+    const Layer &getLayer(
         int l
     ) const {
-        return eLayers[l];
-    }
-
-    // Retrieve deocder layer(s)
-    Array<Decoder> &getDLayers(
-        int l
-    ) {
-        return dLayers[l];
-    }
-
-    const Array<Decoder> &getDLayers(
-        int l
-    ) const {
-        return dLayers[l];
+        return layers[l];
     }
 
     // Retrieve actor layer(s)
-    Array<Actor> &getALayers() {
-        return aLayers;
+    Array<Actor> &getActors() {
+        return actors;
     }
 
-    const Array<Actor> &getALayers() const {
-        return aLayers;
+    const Array<Actor> &getActors() const {
+        return actors;
     }
 
-    // Retrieve by index
-    Decoder &getDLayer(
-        int l,
+    Actor &getActor(
         int i
     ) {
-        if (l == 0)
-            return dLayers[l][dIndices[i]];
-
-        return dLayers[l][i];
+        return actors[dIndices[i]];
     }
 
-    const Decoder &getDLayer(
-        int l,
+    const Actor &getActor(
         int i
     ) const {
-        if (l == 0)
-            return dLayers[l][dIndices[i]];
-
-        return dLayers[l][i];
-    }
-
-    Actor &getALayer(
-        int i
-    ) {
-        return aLayers[dIndices[i]];
-    }
-
-    const Actor &getALayer(
-        int i
-    ) const {
-        return aLayers[dIndices[i]];
+        return actors[dIndices[i]];
     }
 
     const IntBuffer &getIIndices() const {

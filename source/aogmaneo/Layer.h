@@ -18,6 +18,8 @@ private:
     Encoder enc;
     Predictor pred;
 
+    Array<const IntBuffer*> predInputCIs;
+
 public:
     // Defaults
     Layer()
@@ -27,16 +29,31 @@ public:
     void initRandom(
         const Int3 &hiddenSize,
         const Array<Encoder::VisibleLayerDesc> &visibleLayerDescs,
+        int pRadius,
         bool hasFeedBack
     );
 
     void stepUp(
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        bool learnEnabled
     );
 
     void stepDown(
-        const IntBuffer* feedBackCIs
+        const IntBuffer* feedBackCIs,
+        bool learnEnabled
     );
+
+    void predReconstruct(
+        int vli
+    ) {
+        enc.reconstruct(&pred.getHiddenCIs(), vli);
+    }
+
+    const IntBuffer &getPredCIs(
+        int vli
+    ) const {
+        return enc.getReconCIs(vli);
+    }
 
     // Serialization
     int size() const; // Returns size in bytes

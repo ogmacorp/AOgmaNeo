@@ -91,7 +91,8 @@ public:
     );
 
     void reconstruct(
-        const IntBuffer* hiddenCIs
+        const IntBuffer* hiddenCIs,
+        int vli
     );
 
     const IntBuffer &getReconCIs(
