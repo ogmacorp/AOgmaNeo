@@ -6,11 +6,11 @@
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
-#include "Decoder.h"
+#include "Predictor.h"
 
 using namespace aon;
 
-void Decoder::forward(
+void Predictor::forward(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs
 ) {
@@ -75,7 +75,7 @@ void Decoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
-void Decoder::backward(
+void Predictor::backward(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs,
     int vli
@@ -131,7 +131,7 @@ void Decoder::backward(
     vl.gates[visibleColumnIndex] = m;
 }
 
-void Decoder::learn(
+void Predictor::learn(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs
 ) {
@@ -216,7 +216,7 @@ void Decoder::learn(
     }
 }
 
-void Decoder::generateErrors(
+void Predictor::generateErrors(
     const Int2 &columnPos,
     const IntBuffer* hiddenTargetCIs,
     FloatBuffer* visibleErrors,
@@ -282,7 +282,7 @@ void Decoder::generateErrors(
     (*visibleErrors)[visibleColumnIndex] += sum;
 }
 
-void Decoder::initRandom(
+void Predictor::initRandom(
     const Int3 &hiddenSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
@@ -325,7 +325,7 @@ void Decoder::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
-void Decoder::activate(
+void Predictor::activate(
     const Array<const IntBuffer*> &inputCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -343,7 +343,7 @@ void Decoder::activate(
     }
 }
 
-void Decoder::learn(
+void Predictor::learn(
     const IntBuffer* hiddenTargetCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -364,7 +364,7 @@ void Decoder::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
 }
 
-void Decoder::generateErrors(
+void Predictor::generateErrors(
     const IntBuffer* hiddenTargetCIs,
     FloatBuffer* visibleErrors,
     int vli
@@ -379,7 +379,7 @@ void Decoder::generateErrors(
         generateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli);
 }
 
-int Decoder::size() const {
+int Predictor::size() const {
     int size = sizeof(Int3) + 2 * sizeof(float) + hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -392,7 +392,7 @@ int Decoder::size() const {
     return size;
 }
 
-int Decoder::stateSize() const {
+int Predictor::stateSize() const {
     int size = hiddenActivations.size() * sizeof(float) + hiddenCIs.size() * sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -404,7 +404,7 @@ int Decoder::stateSize() const {
     return size;
 }
 
-void Decoder::write(
+void Predictor::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
@@ -432,7 +432,7 @@ void Decoder::write(
     }
 }
 
-void Decoder::read(
+void Predictor::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
@@ -482,7 +482,7 @@ void Decoder::read(
     }
 }
 
-void Decoder::writeState(
+void Predictor::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));
@@ -495,7 +495,7 @@ void Decoder::writeState(
     }
 }
 
-void Decoder::readState(
+void Predictor::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenActivations[0]), hiddenActivations.size() * sizeof(float));

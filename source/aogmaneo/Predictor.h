@@ -12,7 +12,7 @@
 
 namespace aon {
 // A prediction layer (predicts x_(t+1))
-class Decoder {
+class Predictor {
 public:
     // Visible layer descriptor
     struct VisibleLayerDesc {
@@ -79,7 +79,7 @@ public:
     float decay;
 
     // Defaults
-    Decoder()
+    Predictor()
     :
     lr(0.1f),
     decay(0.01f)
