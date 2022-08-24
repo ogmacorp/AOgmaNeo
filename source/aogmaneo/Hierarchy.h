@@ -220,14 +220,14 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    Encoder &getReconEnc(
+    Encoder &getEnc(
         int l
     ) {
         return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const Encoder &getReconEnc(
+    const Encoder &getEnc(
         int l
     ) const {
         return eLayers[l];
