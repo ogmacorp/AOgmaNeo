@@ -210,7 +210,7 @@ void Hierarchy::step(
 
     for (int i = 0; i < ioTypes.size(); i++) {
         if (ioTypes[i] == prediction)
-            layers[0].getPredCIs(i * histories[0][i].size());
+            layers[0].predReconstruct(i * histories[0][i].size());
     }
 }
 
