@@ -88,12 +88,10 @@ void Hierarchy::initRandom(
             for (int i = 0; i < ioSizes.size(); i++) {
                 if (ioDescs[i].type == action) {
                     // Decoder visible layer descriptors
-                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(2);
+                    Array<Actor::VisibleLayerDesc> aVisibleLayerDescs(1);
 
                     aVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
                     aVisibleLayerDescs[0].radius = ioDescs[i].aRadius;
-
-                    aVisibleLayerDescs[1] = aVisibleLayerDescs[0];
 
                     actors[dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
 
@@ -197,13 +195,12 @@ void Hierarchy::step(
             layers[l].stepDown(feedBackCIs, learnEnabled);
 
             if (l == 0) {
-                Array<const IntBuffer*> actorInputCIs(2);
+                Array<const IntBuffer*> actorInputCIs(1);
 
-                actorInputCIs[0] = &layers[0].enc.getHiddenCIs();
-                actorInputCIs[1] = &layers[0].pred.getHiddenCIs();
+                actorInputCIs[0] = &layers[0].pred.getHiddenCIs();
 
                 for (int d = 0; d < actors.size(); d++)
-                    actors[d].step(actorInputCIs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled, mimic);
+                    actors[d].step(actorInputCIs, inputCIs[iIndices[d]], reward, learnEnabled, mimic);
             }
         }
     }
