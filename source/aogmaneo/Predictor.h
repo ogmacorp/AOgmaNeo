@@ -41,7 +41,7 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
-    FloatBuffer hiddenActivations;
+    FloatBuffer hiddenActs;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -67,13 +67,6 @@ private:
         const IntBuffer* hiddenTargetCIs
     );
 
-    void generateErrors(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
-    ); 
-
 public:
     float lr; // Learning rate
     float decay;
@@ -81,8 +74,8 @@ public:
     // Defaults
     Predictor()
     :
-    lr(0.1f),
-    decay(0.01f)
+    lr(1.0f),
+    decay(0.001f)
     {}
 
     // Create with random initialization
@@ -99,12 +92,6 @@ public:
     // Learning predictions (update weights)
     void learn(
         const IntBuffer* hiddenTargetCIs
-    );
-
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
-        FloatBuffer* visibleErrors,
-        int vli
     );
 
     // Serialization
