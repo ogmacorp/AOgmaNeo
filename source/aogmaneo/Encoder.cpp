@@ -340,6 +340,8 @@ int Encoder::stateSize() const {
 
         size += vl.reconCIs.size() * sizeof(int);
     }
+
+    return size;
 }
 
 void Encoder::write(
