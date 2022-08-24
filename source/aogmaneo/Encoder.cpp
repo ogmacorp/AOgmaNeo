@@ -6,11 +6,11 @@
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
-#include "ReconEncoder.h"
+#include "Encoder.h"
 
 using namespace aon;
 
-void ReconEncoder::forward(
+void Encoder::forward(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs
 ) {
@@ -75,7 +75,7 @@ void ReconEncoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
-void ReconEncoder::learn(
+void Encoder::learn(
     const Int2 &columnPos,
     const IntBuffer* inputCIs,
     int vli
@@ -176,7 +176,7 @@ void ReconEncoder::learn(
     }
 }
 
-void ReconEncoder::initRandom(
+void Encoder::initRandom(
     const Int3 &hiddenSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
@@ -212,7 +212,7 @@ void ReconEncoder::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
-void ReconEncoder::step(
+void Encoder::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled
 ) {
@@ -235,7 +235,7 @@ void ReconEncoder::step(
     }
 }
 
-int ReconEncoder::size() const {
+int Encoder::size() const {
     int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -247,11 +247,11 @@ int ReconEncoder::size() const {
     return size;
 }
 
-int ReconEncoder::stateSize() const {
+int Encoder::stateSize() const {
     return hiddenCIs.size() * sizeof(int);
 }
 
-void ReconEncoder::write(
+void Encoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
@@ -276,7 +276,7 @@ void ReconEncoder::write(
     }
 }
 
-void ReconEncoder::read(
+void Encoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
@@ -319,13 +319,13 @@ void ReconEncoder::read(
     }
 }
 
-void ReconEncoder::writeState(
+void Encoder::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
 
-void ReconEncoder::readState(
+void Encoder::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));

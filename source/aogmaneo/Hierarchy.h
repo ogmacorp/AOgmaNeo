@@ -220,28 +220,14 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    ReconEncoder &getReconEnc(
-        int l
-    ) {
-        return rLayers[l];
-    }
-
-    // Retrieve a sparse coding layer, const version
-    const ReconEncoder &getReconEnc(
-        int l
-    ) const {
-        return rLayers[l];
-    }
-
-    // Retrieve a sparse coding layer
-    ErrorEncoder &getErrorEnc(
+    Encoder &getReconEnc(
         int l
     ) {
         return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const ErrorEncoder &getErrorEnc(
+    const Encoder &getReconEnc(
         int l
     ) const {
         return eLayers[l];
