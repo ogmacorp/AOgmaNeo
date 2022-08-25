@@ -45,10 +45,8 @@ void Hierarchy::initRandom(
 
         if (ioDescs[i].type == prediction)
             numPredictions++;
-        else if (ioDescs[i].type == action) {
-            numPredictions++; // Actions also implicitly have a regular prediction for error purposes
+        else if (ioDescs[i].type == action)
             numActions++;
-        }
     }
 
     // Iterate through layers
@@ -91,7 +89,7 @@ void Hierarchy::initRandom(
             int dIndex = 0;
 
             for (int i = 0; i < ioSizes.size(); i++) {
-                if (ioDescs[i].type == prediction || ioDescs[i].type == action) {
+                if (ioDescs[i].type == prediction) {
                     // Decoder visible layer descriptors
                     Array<Decoder::VisibleLayerDesc> dVisibleLayerDescs(l < eLayers.size() - 1 ? 2 : 1);
 
