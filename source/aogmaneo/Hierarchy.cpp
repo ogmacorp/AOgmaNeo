@@ -225,10 +225,9 @@ void Hierarchy::step(
             Array<const IntBuffer*> layerInputCIs(l < eLayers.size() - 1 ? 3 : 2);
 
             layerInputCIs[0] = &eLayers[l].getHiddenCIs();
-            layerInputCIs[1] = &eLayers[l].getHiddenCIs();
             
             if (l < eLayers.size() - 1)
-                layerInputCIs[2] = &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
+                layerInputCIs[1] = &dLayers[l + 1][ticksPerUpdate[l + 1] - 1 - ticks[l + 1]].getHiddenCIs();
 
             for (int d = 0; d < dLayers[l].size(); d++) {
                 if (learnEnabled)
