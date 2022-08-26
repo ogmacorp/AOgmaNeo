@@ -222,7 +222,7 @@ void Hierarchy::step(
     // Backward
     for (int l = dLayers.size() - 1; l >= 0; l--) {
         if (updates[l]) {
-            Array<const IntBuffer*> layerInputCIs(l < eLayers.size() - 1 ? 3 : 2);
+            Array<const IntBuffer*> layerInputCIs(l < eLayers.size() - 1 ? 2 : 1);
 
             layerInputCIs[0] = &eLayers[l].getHiddenCIs();
             
