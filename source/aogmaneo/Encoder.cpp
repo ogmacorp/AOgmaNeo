@@ -37,7 +37,7 @@ void Encoder::forward(
             if (act == 0.0f)
                 continue;
 
-            float delta = lr * ((*hiddenErrors)[hiddenCellIndex] * (1.0f - act * act) - reg * (numNonZero > 1));
+            float delta = lr * ((*hiddenErrors)[hiddenCellIndex] - reg * (numNonZero > 1));
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -126,7 +126,7 @@ void Encoder::forward(
 
         sum /= max(0.0001f, totalImportance);
 
-        hiddenActs[hiddenCellIndex] = max(0.0f, tanhf(sum));
+        hiddenActs[hiddenCellIndex] = max(0.0f, sum);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -165,7 +165,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-2.0f, 2.0f);
+            vl.weights[i] = randf(-1.0f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
