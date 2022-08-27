@@ -178,6 +178,8 @@ void Encoder::learn(
 
         sum /= count;
 
+        vl.reconsTemp[visibleCellIndex] = sum;
+
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = vc;
