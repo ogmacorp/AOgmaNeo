@@ -186,16 +186,6 @@ void Decoder::learn(
     const IntBuffer* hiddenTargetCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
-
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-        int numVisibleColumns = vld.size.x * vld.size.y;
-    
-        #pragma omp parallel for
-        for (int i = 0; i < numVisibleColumns; i++)
-            backward(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, vli);
-    }
     
     // Learn kernel
     #pragma omp parallel for
