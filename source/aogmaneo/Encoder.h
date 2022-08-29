@@ -76,12 +76,16 @@ private:
     );
 
 public:
+    float scale;
     float lr;
+    float falloff;
 
     // Defaults
     Encoder()
     :
-    lr(0.05f)
+    scale(4.0f),
+    lr(0.2f),
+    falloff(8.0f)
     {}
 
     // Create a sparse coding layer with random initialization
