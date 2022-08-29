@@ -19,7 +19,7 @@ public:
         Int3 size; // Size of input
 
         int radius; // Radius onto input
-        
+
         // Defaults
         VisibleLayerDesc()
         :
@@ -30,7 +30,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer weights;
+        FloatBuffer weights;
+        FloatBuffer rates;
+
+        FloatBuffer reconsTemp;
 
         float importance;
 
@@ -45,6 +48,8 @@ private:
 
     IntBuffer hiddenCIs;
 
+    FloatBuffer hiddenGates;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -53,7 +58,8 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        bool learnEnabled
     );
 
     void learn(
@@ -64,12 +70,12 @@ private:
 
 public:
     float lr;
-    float scale;
+    float decay;
 
     Encoder()
     :
-    lr(0.1f),
-    scale(8.0f)
+    lr(1.0f),
+    decay(0.005f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -140,3 +146,4 @@ public:
     }
 };
 } // namespace aon
+
