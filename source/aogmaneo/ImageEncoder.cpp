@@ -88,7 +88,7 @@ void ImageEncoder::forward(
             float diff = maxIndex - hc;
             diff /= hiddenSize.z;
 
-            float strength = min(1.0f, sqrtf(-maxActivation) * scale) * expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float strength = (1.0f - expf(maxActivation * scale)) * expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
