@@ -219,7 +219,7 @@ void Decoder::generateErrors(
 
                         int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        sum += error * ((vl.weights[wi] > 0.0f) * 2.0f - 1.0f);
+                        sum += error * vl.weights[wi];
                     }
 
                     count++;
@@ -262,7 +262,7 @@ void Decoder::generateErrors(
 
                             int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                            sum += error * ((vl.weights[wi] > 0.0f) * 2.0f - 1.0f);
+                            sum += error * vl.weights[wi];
                         }
 
                         count++;
