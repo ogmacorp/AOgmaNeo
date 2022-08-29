@@ -84,7 +84,7 @@ public:
     Encoder()
     :
     scale(4.0f),
-    lr(0.2f),
+    lr(0.1f),
     falloff(8.0f)
     {}
 
