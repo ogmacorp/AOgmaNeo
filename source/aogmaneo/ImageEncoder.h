@@ -70,7 +70,7 @@ public:
     :
     scale(8.0f),
     lr(0.1f),
-    falloff(8.0f)
+    falloff(16.0f)
     {}
 
     void initRandom(
