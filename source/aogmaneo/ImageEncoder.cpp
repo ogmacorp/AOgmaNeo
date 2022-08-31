@@ -85,7 +85,7 @@ void ImageEncoder::forward(
 
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float rate = hiddenRates[hiddenCellIndex];
+            float rate = hiddenRates[hiddenCellIndex] * (1.0f - expf(scale * maxActivation));
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
