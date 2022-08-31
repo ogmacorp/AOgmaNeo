@@ -40,6 +40,7 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
+    FloatBuffer hiddenActs;
     FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
