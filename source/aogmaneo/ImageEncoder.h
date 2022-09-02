@@ -40,6 +40,7 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
+    FloatBuffer hiddenActs;
     FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
@@ -61,12 +62,16 @@ private:
     );
 
 public:
+    float scale;
     float lr;
+    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.05f)
+    scale(16.0f),
+    lr(0.25f),
+    falloff(8.0f)
     {}
 
     void initRandom(
