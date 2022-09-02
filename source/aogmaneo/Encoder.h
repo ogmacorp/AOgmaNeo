@@ -83,9 +83,9 @@ public:
     // Defaults
     Encoder()
     :
-    scale(16.0f),
-    lr(0.25f),
-    falloff(8.0f)
+    scale(8.0f),
+    lr(0.5f),
+    falloff(4.0f)
     {}
 
     // Create a sparse coding layer with random initialization
