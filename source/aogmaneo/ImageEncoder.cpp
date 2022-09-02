@@ -73,6 +73,8 @@ void ImageEncoder::forward(
 
         sum /= count;
 
+        hiddenActs[hiddenCellIndex] = sum;
+
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
@@ -88,7 +90,7 @@ void ImageEncoder::forward(
             float diff = maxIndex - hc;
             diff /= hiddenSize.z;
 
-            float strength = (1.0f - expf(maxActivation * scale)) * expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float strength = (1.0f - expf(hiddenActs[hiddenCellIndex] * scale)) * expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -236,8 +238,9 @@ void ImageEncoder::initRandom(
     }
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
 
@@ -321,6 +324,8 @@ void ImageEncoder::read(
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenRates.resize(numHiddenCells);
 
