@@ -61,14 +61,16 @@ private:
     );
 
 public:
+    float scale;
     float lr;
     float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.01f),
-    falloff(0.1f)
+    scale(4.0f),
+    lr(0.2f),
+    falloff(8.0f)
     {}
 
     void initRandom(
