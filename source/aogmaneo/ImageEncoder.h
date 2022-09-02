@@ -70,7 +70,7 @@ public:
     ImageEncoder()
     :
     scale(16.0f),
-    lr(0.2f),
+    lr(0.25f),
     falloff(8.0f)
     {}
 
