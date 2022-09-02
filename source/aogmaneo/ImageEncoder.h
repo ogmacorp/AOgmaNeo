@@ -40,6 +40,7 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
+    FloatBuffer hiddenActs;
     FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
@@ -68,8 +69,8 @@ public:
     // Defaults
     ImageEncoder()
     :
-    scale(4.0f),
-    lr(0.2f),
+    scale(16.0f),
+    lr(0.25f),
     falloff(8.0f)
     {}
 
