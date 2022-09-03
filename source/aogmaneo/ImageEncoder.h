@@ -61,14 +61,12 @@ private:
     );
 
 public:
-    float scale;
     float lr;
     float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    scale(8.0f),
     lr(0.1f),
     falloff(8.0f)
     {}
