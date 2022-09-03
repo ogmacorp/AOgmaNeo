@@ -104,7 +104,7 @@ void Encoder::forward(
             float diff = maxIndex - hc;
             diff /= hiddenSize.z;
 
-            float rate = (1.0f - expf(maxActivation * scale)) * expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float rate = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -286,7 +286,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(Int2) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(Int2) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -307,7 +307,6 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&clumpSize), sizeof(Int2));
 
-    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&falloff), sizeof(float));
 
@@ -341,7 +340,6 @@ void Encoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
 

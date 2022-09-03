@@ -73,8 +73,6 @@ void ImageEncoder::forward(
 
         sum /= count;
 
-        hiddenActs[hiddenCellIndex] = sum;
-
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
@@ -90,7 +88,7 @@ void ImageEncoder::forward(
             float diff = maxIndex - hc;
             diff /= hiddenSize.z;
 
-            float strength = (1.0f - expf(hiddenActs[hiddenCellIndex] * scale)) * expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float strength = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -240,7 +238,6 @@ void ImageEncoder::initRandom(
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
-    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 }
 
@@ -270,7 +267,7 @@ void ImageEncoder::reconstruct(
 }
 
 int ImageEncoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -287,7 +284,6 @@ void ImageEncoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&falloff), sizeof(float));
 
@@ -317,15 +313,12 @@ void ImageEncoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-
-    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenRates.resize(numHiddenCells);
 
