@@ -71,8 +71,8 @@ private:
     void learn(
         const Int2 &columnPos,
         int t,
-        float q,
-        float g,
+        float r,
+        float d,
         bool mimic
     );
 
