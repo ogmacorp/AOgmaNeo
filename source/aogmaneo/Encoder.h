@@ -82,7 +82,7 @@ public:
     // Defaults
     Encoder()
     :
-    lr(0.1f),
+    lr(0.05f),
     falloff(8.0f)
     {}
 
