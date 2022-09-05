@@ -66,7 +66,7 @@ public:
     // Defaults
     ImageEncoder()
     :
-    lr(0.25f)
+    lr(0.2f)
     {}
 
     void initRandom(
