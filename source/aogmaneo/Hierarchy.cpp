@@ -128,7 +128,7 @@ void Hierarchy::initRandom(
         }
 
         // Create the sparse coding layer
-        eLayers[l].initRandom(layerDescs[l].hiddenSize, layerDescs[l].clumpSize, eVisibleLayerDescs);
+        eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
         hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
 
