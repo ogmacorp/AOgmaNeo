@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer weights;
+        ByteBuffer weights;
 
         float importance;
 
@@ -75,8 +75,8 @@ public:
     :
     gap(0.1f),
     vigilance(0.9f),
-    lr(0.1f),
-    boost(0.01f),
+    lr(0.5f),
+    boost(0.1f),
     lRadius(1)
     {}
 

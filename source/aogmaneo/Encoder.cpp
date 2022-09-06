@@ -31,7 +31,7 @@ void Encoder::activate(
 
         float sum = 0.0f;
         float weightSum = 0.0f;
-        int count = 0;
+        float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -81,10 +81,14 @@ void Encoder::activate(
 
             sum += subSum * vl.importance;
             weightSum += subWeightSum * vl.importance;
+            totalImportance += vl.importance;
         }
 
+        sum /= max(0.0001f, totalImportance);
+        weightSum /= max(0.0001f, totalImportance);
+
         float activation = sum / (gap + weightSum);
-        float match = sum / count;
+        float match = sum;
 
         if (match >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
