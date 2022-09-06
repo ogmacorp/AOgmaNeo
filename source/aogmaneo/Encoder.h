@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,8 +32,6 @@ public:
     struct VisibleLayer {
         FloatBuffer protos;
 
-        FloatBuffer reconstruction;
-
         float importance;
 
         VisibleLayer()
@@ -44,12 +42,11 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-    Int2 clumpSize;
-    Int2 numClumps;
+
+    FloatBuffer hiddenActs;
+    FloatBuffer hiddenRates;
 
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -57,39 +54,34 @@ private:
 
     // --- Kernels ---
     
-    void resetReconstruction(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
-    );
-    
     void forward(
-        const Int2 &clumpPos,
-        int priority,
-        bool learnEnabled
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs
     );
 
-    void reconstruct(
+    void learn(
         const Int2 &columnPos,
-        int priority,
-        int vli
+        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
     float lr;
+    float boost;
     float falloff;
+    int groupRadius;
 
     // Defaults
     Encoder()
     :
     lr(0.1f),
-    falloff(4.0f)
+    boost(0.001f),
+    falloff(8.0f),
+    groupRadius(1)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
-        const Int2 &clumpSize,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
