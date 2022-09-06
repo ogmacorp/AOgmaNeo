@@ -65,6 +65,7 @@ private:
     );
 
 public:
+    float vigilance;
     float lr;
     float boost;
     float falloff;
@@ -73,9 +74,10 @@ public:
     // Defaults
     Encoder()
     :
-    lr(0.1f),
+    vigilance(0.03f),
+    lr(0.2f),
     boost(0.001f),
-    falloff(8.0f),
+    falloff(16.0f),
     groupRadius(1)
     {}
 
