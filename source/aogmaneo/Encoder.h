@@ -73,7 +73,7 @@ public:
     Encoder()
     :
     lr(0.2f),
-    boost(0.01f),
+    boost(0.001f),
     groupRadius(1)
     {}
 
