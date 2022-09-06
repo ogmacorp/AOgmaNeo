@@ -74,7 +74,7 @@ public:
     Encoder()
     :
     lr(0.1f),
-    boost(0.001f),
+    boost(0.01f),
     falloff(8.0f),
     groupRadius(1)
     {}
