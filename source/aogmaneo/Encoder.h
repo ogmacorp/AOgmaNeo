@@ -75,7 +75,7 @@ public:
     :
     lr(0.1f),
     boost(0.01f),
-    falloff(4.0f),
+    falloff(16.0f),
     groupRadius(1)
     {}
 
