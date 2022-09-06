@@ -91,6 +91,10 @@ void Encoder::learn(
 
     float activation = hiddenActs[hiddenColumnIndex];
 
+    // Vigilance check
+    if (-activation < vigilance)
+        return;
+
     int numHigher = 0;
 
     for (int dcx = -groupRadius; dcx <= groupRadius; dcx++)
@@ -213,7 +217,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -233,6 +237,7 @@ void Encoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
+    writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&boost), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&groupRadius), sizeof(int));
@@ -265,6 +270,7 @@ void Encoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
+    reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
