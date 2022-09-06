@@ -67,6 +67,7 @@ private:
 public:
     float lr;
     float boost;
+    float falloff;
     int groupRadius;
 
     // Defaults
@@ -74,6 +75,7 @@ public:
     :
     lr(0.2f),
     boost(0.01f),
+    falloff(1.0f),
     groupRadius(1)
     {}
 
