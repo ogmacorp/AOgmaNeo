@@ -47,6 +47,8 @@ private:
 
     IntBuffer hiddenCIs;
 
+    IntBuffer hiddenCommits;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
