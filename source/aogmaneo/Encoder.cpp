@@ -111,7 +111,6 @@ void Encoder::activate(
         maxIndex = backupMaxIndex;
     }
 
-    hiddenActs[hiddenColumnIndex] = maxActivation;
     hiddenMatches[hiddenColumnIndex] = maxMatch;
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
@@ -124,12 +123,10 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    if (hiddenMatches[hiddenColumnIndex] < vigilance)
+    float match = hiddenMatches[hiddenColumnIndex];
+
+    if (match < vigilance)
         return;
-
-    float activation = hiddenActs[hiddenColumnIndex];
-
-    int numHigher = 0;
 
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
@@ -139,12 +136,10 @@ void Encoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenActs[otherHiddenColumnIndex] > activation)
-                    numHigher++;
+                if (hiddenMatches[otherHiddenColumnIndex] > match)
+                    return;
             }
         }
-
-    float rate = (numHigher > 0 ? lr : boost);
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
@@ -180,7 +175,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] = max(0, roundf(vl.weights[wi] + rate * min(0.0f, (vc == inCI) * 255.0f - vl.weights[wi])));
+                    vl.weights[wi] = max(0, roundf(vl.weights[wi] + lr * min(0.0f, (vc == inCI) * 255.0f - vl.weights[wi])));
                 }
             }
     }
@@ -214,10 +209,9 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 2;
+            vl.weights[i] = 255 - rand() % 4;
     }
 
-    hiddenActs = FloatBuffer(numHiddenColumns, 0.0f);
     hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -297,7 +291,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
-    hiddenActs = FloatBuffer(numHiddenColumns, 0.0f);
     hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
