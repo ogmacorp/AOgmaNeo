@@ -91,11 +91,8 @@ void Encoder::learn(
 
     float activation = hiddenActs[hiddenColumnIndex];
 
-    // Vigilance check
-    if (-activation < vigilance)
-        return;
-
     int numHigher = 0;
+    float maxActivation = -999999.0f;
 
     for (int dcx = -groupRadius; dcx <= groupRadius; dcx++)
         for (int dcy = -groupRadius; dcy <= groupRadius; dcy++) {
@@ -106,8 +103,13 @@ void Encoder::learn(
 
                 if (hiddenActs[otherHiddenColumnIndex] > activation)
                     numHigher++;
+
+                maxActivation = max(maxActivation, hiddenActs[otherHiddenColumnIndex]);
             }
         }
+
+    if (-maxActivation < vigilance)
+        return;
 
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hiddenCIs[hiddenColumnIndex] + dhc;
@@ -217,7 +219,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 4 * sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
