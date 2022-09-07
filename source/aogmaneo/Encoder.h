@@ -76,7 +76,7 @@ public:
     :
     vigilance(0.001f),
     lr(0.2f),
-    boost(0.01f),
+    boost(0.001f),
     falloff(0.1f),
     groupRadius(1)
     {}
@@ -142,6 +142,11 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    // Get the hidden rates
+    const FloatBuffer &getHiddenRates() const {
+        return hiddenRates;
     }
 
     // Get the hidden size
