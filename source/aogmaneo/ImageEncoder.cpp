@@ -53,7 +53,7 @@ void ImageEncoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * 2 * vld.size.z;
 
             float subSum = 0.0f;
             float subWeightSum = 0.0f;
@@ -254,7 +254,7 @@ void ImageEncoder::reconstruct(
     
     // Find current max
     for (int vc = 0; vc < vld.size.z; vc++) {
-        int visibleIndex = vc + visibleCellsStart;
+        int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
         float total = 0.0f;
@@ -283,7 +283,7 @@ void ImageEncoder::reconstruct(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = sum / max(0.0001f, total);
+        vl.reconstruction[visibleCellIndex] = roundf(sum / max(0.0001f, total));
     }
 }
 
