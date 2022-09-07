@@ -33,6 +33,8 @@ public:
         ByteBuffer weights0;
         ByteBuffer weights1;
 
+        ByteBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -68,6 +70,12 @@ private:
         const Array<const ByteBuffer*> &inputs
     );
 
+    void reconstruct(
+        const Int2 &columnPos,
+        const IntBuffer* reconCIs,
+        int vli
+    );
+
 public:
     float gap;
     float vigilance;
@@ -92,6 +100,16 @@ public:
         const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
+
+    void reconstruct(
+        const IntBuffer* reconCIs
+    );
+
+    const ByteBuffer &getReconstruction(
+        int vli
+    ) const {
+        return visibleLayers[vli].reconstruction;
+    }
 
     // Serialization
     int size() const; // Returns size in bytes
