@@ -66,11 +66,13 @@ private:
 
 public:
     float lr; // Learning rate
+    float stick;
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(1.0f),
+    stick(1.0f)
     {}
 
     // Create with random initialization
