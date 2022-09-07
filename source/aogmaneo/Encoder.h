@@ -76,8 +76,8 @@ public:
     :
     vigilance(0.001f),
     lr(0.2f),
-    boost(0.001f),
-    falloff(1.0f),
+    boost(0.01f),
+    falloff(0.1f),
     groupRadius(1)
     {}
 
