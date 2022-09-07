@@ -91,10 +91,8 @@ void Encoder::learn(
 
     float activation = hiddenActs[hiddenColumnIndex];
 
-    if (-activation < vigilance)
-        return;
-
     int numHigher = 0;
+    float maxActivation = -999999.0f;
 
     for (int dcx = -groupRadius; dcx <= groupRadius; dcx++)
         for (int dcy = -groupRadius; dcy <= groupRadius; dcy++) {
@@ -105,8 +103,13 @@ void Encoder::learn(
 
                 if (hiddenActs[otherHiddenColumnIndex] > activation)
                     numHigher++;
+
+                maxActivation = max(maxActivation, hiddenActs[otherHiddenColumnIndex]);
             }
         }
+
+    if (-maxActivation < vigilance)
+        return;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
