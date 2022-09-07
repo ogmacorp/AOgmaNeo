@@ -346,6 +346,20 @@ void ImageEncoder::step(
     }
 }
 
+void ImageEncoder::reconstruct(
+    const IntBuffer* reconCIs
+) {
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+        int numVisibleColumns = vld.size.x * vld.size.y;
+
+        #pragma omp parallel for
+        for (int i = 0; i < numVisibleColumns; i++)
+            reconstruct(Int2(i / vld.size.y, i % vld.size.y), reconCIs, vli);
+    }
+}
+
 int ImageEncoder::size() const {
     int size = sizeof(Int3) + 3 * sizeof(float) + sizeof(int) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
 
