@@ -74,7 +74,7 @@ public:
     // Defaults
     Encoder()
     :
-    vigilance(0.02f),
+    vigilance(0.001f),
     lr(0.2f),
     boost(0.001f),
     falloff(1.0f),
