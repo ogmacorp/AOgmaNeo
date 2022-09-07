@@ -44,6 +44,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenMatches;
+    ByteBuffer hiddenFounds;
 
     IntBuffer hiddenCIs;
 
@@ -74,7 +75,7 @@ public:
 
     Encoder()
     :
-    gap(0.0001f),
+    gap(0.001f),
     vigilance(0.8f),
     lr(0.1f),
     lRadius(1)

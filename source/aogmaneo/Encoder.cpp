@@ -115,12 +115,11 @@ void Encoder::activate(
         else {
             maxIndex = hiddenCommits[hiddenColumnIndex];
             maxMatch = 1.0f + randf(state) * 0.0001f;
-
-            hiddenCommits[hiddenColumnIndex]++;
         }
     }
 
     hiddenMatches[hiddenColumnIndex] = maxMatch;
+    hiddenFounds[hiddenColumnIndex] = found;
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
@@ -140,19 +139,22 @@ void Encoder::learn(
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
         for (int dy = -lRadius; dy <= lRadius; dy++) {
+            if (dx == 0 && dy == 0)
+                continue;
+
             Int2 otherColumnPos(columnPos.x + dx, columnPos.y + dy);
 
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenMatches[otherHiddenColumnIndex] > match)
+                if (hiddenMatches[otherHiddenColumnIndex] >= match)
                     return;
             }
         }
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-    bool fastCommit = (match >= 1.0f);
+    bool commit = (match > 0.0f && !hiddenFounds[hiddenColumnIndex]);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -183,7 +185,7 @@ void Encoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                if (fastCommit) {
+                if (commit) {
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
@@ -202,6 +204,9 @@ void Encoder::learn(
                 }
             }
     }
+
+    if (commit && hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
+        hiddenCommits[hiddenColumnIndex]++;
 }
 
 void Encoder::initRandom(
@@ -233,6 +238,7 @@ void Encoder::initRandom(
     }
 
     hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenFounds = ByteBuffer(numHiddenColumns, false);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -320,6 +326,7 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
     hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenFounds = ByteBuffer(numHiddenColumns, false);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
