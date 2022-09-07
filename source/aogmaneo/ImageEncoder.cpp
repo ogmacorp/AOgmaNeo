@@ -314,6 +314,8 @@ void ImageEncoder::initRandom(
 
         vl.weights0.resize(numHiddenCells * area * vld.size.z);
         vl.weights1.resize(vl.weights0.size());
+
+        vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
 
     hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
@@ -402,6 +404,8 @@ void ImageEncoder::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
         writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
 
+        writer.write(reinterpret_cast<const void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
+
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
@@ -452,6 +456,10 @@ void ImageEncoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
         reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
+
+        vl.reconstruction.resize(numVisibleCells);
+
+        reader.read(reinterpret_cast<void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
