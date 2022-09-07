@@ -53,7 +53,7 @@ void ImageEncoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * 2 * vld.size.z;
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
             float subSum = 0.0f;
             float subWeightSum = 0.0f;
