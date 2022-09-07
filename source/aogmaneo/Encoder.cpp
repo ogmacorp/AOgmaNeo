@@ -12,7 +12,8 @@ using namespace aon;
 
 void Encoder::activate(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
+    const Array<const IntBuffer*> &inputCIs,
+    unsigned int* state
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -26,7 +27,7 @@ void Encoder::activate(
 
     float maxMatch = 0.0f;
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
+    for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
@@ -107,8 +108,16 @@ void Encoder::activate(
     bool found = maxIndex != -1;
 
     if (!found) {
-        maxActivation = backupMaxActivation;
-        maxIndex = backupMaxIndex;
+        if (hiddenCommits[hiddenColumnIndex] >= hiddenSize.z) {
+            maxIndex = backupMaxIndex;
+            maxMatch = 0.0f;
+        }
+        else {
+            maxIndex = hiddenCommits[hiddenColumnIndex];
+            maxMatch = 1.0f + randf(state) * 0.0001f;
+
+            hiddenCommits[hiddenColumnIndex]++;
+        }
     }
 
     hiddenMatches[hiddenColumnIndex] = maxMatch;
@@ -143,6 +152,8 @@ void Encoder::learn(
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
+    bool fastCommit = (match >= 1.0f);
+
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -172,10 +183,22 @@ void Encoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wiStart;
+                if (fastCommit) {
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wiStart;
 
-                    vl.weights[wi] = max(0, roundf(vl.weights[wi] + lr * min(0.0f, (vc == inCI) * 255.0f - vl.weights[wi])));
+                        vl.weights[wi] = (vc == inCI) * 255;
+                    }
+                }
+                else {
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        if (vc == inCI)
+                            continue;
+
+                        int wi = vc + wiStart;
+
+                        vl.weights[wi] = max(0, roundf(vl.weights[wi] + lr * -vl.weights[wi]));
+                    }
                 }
             }
     }
@@ -207,9 +230,6 @@ void Encoder::initRandom(
         int area = diam * diam;
 
         vl.weights.resize(numHiddenCells * area * vld.size.z);
-
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255;
     }
 
     hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
@@ -225,9 +245,14 @@ void Encoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
+    unsigned int baseState = rand();
+
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+    for (int i = 0; i < numHiddenColumns; i++) {
+        unsigned int state = baseState + i * 12345;
+
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &state);
+    }
 
     if (learnEnabled) {
         #pragma omp parallel for

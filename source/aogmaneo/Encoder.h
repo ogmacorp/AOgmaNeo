@@ -57,7 +57,8 @@ private:
     
     void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
@@ -74,8 +75,8 @@ public:
     Encoder()
     :
     gap(0.0001f),
-    vigilance(0.9f),
-    lr(0.5f),
+    vigilance(0.8f),
+    lr(0.1f),
     lRadius(1)
     {}
 
@@ -139,6 +140,11 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    // Get the hidden commits
+    const IntBuffer &getHiddenCommits() const {
+        return hiddenCommits;
     }
 
     // Get the hidden size
