@@ -229,12 +229,12 @@ void Encoder::learn(
         if (hiddenCommits[hiddenColumnIndex] == 0)
             hiddenVigilances[hiddenCellIndexMax] = initVigilance;
         else {
-            hiddenVigilances[hiddenCellIndexMax] = 0.0f;
+            hiddenVigilances[hiddenCellIndexMax] = 1.0f;
 
             for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
                 int hiddenCellIndex = hc + hiddenCellsStart;
 
-                hiddenVigilances[hiddenCellIndexMax] = max(hiddenVigilances[hiddenCellIndexMax], hiddenVigilances[hiddenCellIndex]);
+                hiddenVigilances[hiddenCellIndexMax] = min(hiddenVigilances[hiddenCellIndexMax], hiddenVigilances[hiddenCellIndex]);
             }
         }
 
