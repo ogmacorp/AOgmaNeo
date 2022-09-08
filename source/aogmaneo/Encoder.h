@@ -72,6 +72,7 @@ private:
 
 public:
     float gap;
+    float initVigilance; // Initial vigilance
     float offset; // Vigilance offset
     float lr; // Learning rate
     int lRadius;
@@ -79,6 +80,7 @@ public:
     Encoder()
     :
     gap(0.01f),
+    initVigilance(0.5f),
     offset(0.1f),
     lr(0.1f),
     lRadius(1)

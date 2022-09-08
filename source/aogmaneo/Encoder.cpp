@@ -226,6 +226,8 @@ void Encoder::learn(
                 }
         }
 
+        hiddenVigilances[hiddenCellIndexMax] = initVigilance;
+
         if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
             hiddenCommits[hiddenColumnIndex]++;
     }
@@ -306,7 +308,7 @@ void Encoder::initRandom(
     hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
     hiddenFounds = ByteBuffer(numHiddenColumns, false);
 
-    hiddenVigilances = FloatBuffer(numHiddenCells, 0.5f);
+    hiddenVigilances = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -336,7 +338,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + sizeof(int) + 2 * hiddenCIs.size() * sizeof(int) + hiddenVigilances.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 4 * sizeof(float) + sizeof(int) + 2 * hiddenCIs.size() * sizeof(int) + hiddenVigilances.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -357,6 +359,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&gap), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&initVigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&offset), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
@@ -391,6 +394,7 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&gap), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&initVigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&offset), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
