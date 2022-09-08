@@ -79,7 +79,7 @@ public:
 
     Encoder()
     :
-    gap(0.01f),
+    gap(0.001f),
     initVigilance(0.5f),
     scale(0.01f),
     lr(0.1f),
