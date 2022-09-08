@@ -79,7 +79,7 @@ public:
     Encoder()
     :
     gap(0.01f),
-    offset(0.1f),
+    offset(0.01f),
     lr(0.1f),
     lRadius(1)
     {}
