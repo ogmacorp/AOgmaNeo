@@ -46,6 +46,8 @@ private:
     FloatBuffer hiddenMatches;
     ByteBuffer hiddenFounds;
 
+    FloatBuffer hiddenVigilances;
+
     IntBuffer hiddenCIs;
 
     IntBuffer hiddenCommits;
@@ -69,14 +71,14 @@ private:
 
 public:
     float gap;
-    float vigilance;
+    float offset; // Vigilance offset
     float lr; // Learning rate
     int lRadius;
 
     Encoder()
     :
-    gap(0.01f),
-    vigilance(0.9f),
+    gap(0.001f),
+    offset(0.01f),
     lr(0.1f),
     lRadius(1)
     {}
