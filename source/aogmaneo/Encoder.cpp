@@ -177,7 +177,7 @@ void Encoder::learn(
         }
         else {
             // Reset
-            hiddenVigilances[hiddenCellIndex] *= 1.0f - offset;
+            hiddenVigilances[hiddenCellIndex] *= 1.0f - scale;
 
             hiddenActs[maxIndex + hiddenCellsStart] = 0.0f;
         }
@@ -232,7 +232,7 @@ void Encoder::learn(
             hiddenCommits[hiddenColumnIndex]++;
     }
     else {
-        hiddenVigilances[hiddenCellIndexMax] *= 1.0f + offset;
+        hiddenVigilances[hiddenCellIndexMax] *= 1.0f + scale;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -360,7 +360,7 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&gap), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&initVigilance), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&offset), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
 
@@ -395,7 +395,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&gap), sizeof(float));
     reader.read(reinterpret_cast<void*>(&initVigilance), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&offset), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
