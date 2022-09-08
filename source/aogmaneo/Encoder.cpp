@@ -226,7 +226,17 @@ void Encoder::learn(
                 }
         }
 
-        hiddenVigilances[hiddenCellIndexMax] = initVigilance;
+        if (hiddenCommits[hiddenColumnIndex] == 0)
+            hiddenVigilances[hiddenCellIndexMax] = initVigilance;
+        else {
+            hiddenVigilances[hiddenCellIndexMax] = 0.0f;
+
+            for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
+                int hiddenCellIndex = hc + hiddenCellsStart;
+
+                hiddenVigilances[hiddenCellIndexMax] = max(hiddenVigilances[hiddenCellIndexMax], hiddenVigilances[hiddenCellIndex]);
+            }
+        }
 
         if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
             hiddenCommits[hiddenColumnIndex]++;
