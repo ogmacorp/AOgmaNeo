@@ -148,7 +148,7 @@ void Encoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenMatches[hiddenCIs[hiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z] >= maxMatch)
+                if (hiddenMatches[hiddenCIs[otherHiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z] >= maxMatch)
                     return;
             }
         }
