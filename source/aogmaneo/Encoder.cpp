@@ -90,6 +90,7 @@ void Encoder::activate(
         float activation = sum / (gap + weightSum);
         float match = sum;
 
+        hiddenActs[hiddenCellIndex] = activation;
         hiddenMatches[hiddenCellIndex] = match;
 
         if (match >= hiddenVigilances[hiddenCellIndex]) {
@@ -134,9 +135,6 @@ void Encoder::learn(
 
     float maxMatch = hiddenMatches[hiddenCellIndexMax];
 
-    if (maxMatch < hiddenVigilances[hiddenCellIndexMax])
-        return;
-
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
         for (int dy = -lRadius; dy <= lRadius; dy++) {
@@ -152,6 +150,42 @@ void Encoder::learn(
                     return;
             }
         }
+
+    // Adjust reset vigilances
+    for (int t = 0; t < hiddenCommits[hiddenColumnIndex]; t++) {
+        // Max activation
+        int maxIndex = -1;
+        float maxActivation = 0.0f;
+
+        for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
+            int hiddenCellIndex = hc + hiddenCellsStart;
+
+            float activation = hiddenActs[hiddenCellIndex];
+
+            if (activation > maxActivation || maxIndex == -1) {
+                maxActivation = activation;
+                maxIndex = hc;
+            }
+        }
+
+        int hiddenCellIndex = maxIndex + hiddenCellsStart;
+
+        if (hiddenMatches[hiddenCellIndex] >= hiddenVigilances[hiddenCellIndex]) {
+            // Found
+            assert(maxIndex == hiddenCIs[hiddenColumnIndex]);
+
+            break;
+        }
+        else {
+            // Reset
+            hiddenVigilances[hiddenCellIndex] *= 1.0f - offset;
+
+            hiddenActs[maxIndex + hiddenCellsStart] = 0.0f;
+        }
+    }
+
+    if (maxMatch < hiddenVigilances[hiddenCellIndexMax])
+        return;
 
     bool commit = (maxMatch > 0.0f && !hiddenFounds[hiddenColumnIndex]);
 
@@ -197,18 +231,7 @@ void Encoder::learn(
             hiddenCommits[hiddenColumnIndex]++;
     }
     else {
-        for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
-            if (hc == hiddenCIs[hiddenColumnIndex])
-                continue;
-
-            int hiddenCellIndex = hc + hiddenCellsStart;
-
-            if (hiddenMatches[hiddenCellIndex] < hiddenVigilances[hiddenCellIndex])
-                continue;
-            
-            // Vigilance adjustment
-            hiddenVigilances[hiddenCellIndex] = hiddenMatches[hiddenCellIndex] + offset;
-        }
+        hiddenVigilances[hiddenCellIndexMax] *= 1.0f + offset;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -280,6 +303,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
     }
 
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
     hiddenFounds = ByteBuffer(numHiddenColumns, false);
 
@@ -372,6 +396,7 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
     hiddenFounds = ByteBuffer(numHiddenColumns, false);
 

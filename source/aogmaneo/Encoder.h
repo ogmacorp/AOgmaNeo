@@ -43,6 +43,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenActs;
     FloatBuffer hiddenMatches;
     ByteBuffer hiddenFounds;
 
@@ -78,7 +79,7 @@ public:
     Encoder()
     :
     gap(0.01f),
-    offset(0.0001f),
+    offset(0.1f),
     lr(0.1f),
     lRadius(1)
     {}
