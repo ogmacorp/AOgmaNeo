@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -204,7 +205,7 @@ void Encoder::learn(
             
             // Vigilance adjustment
             if (hc != hiddenCIs[hiddenColumnIndex])
-                hiddenVigilances[hiddenCellIndex] = hiddenMatches[hiddenCellIndexMax] + offset;
+                hiddenVigilances[hiddenCellIndex] = hiddenMatches[hiddenCellIndex] + offset;
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
