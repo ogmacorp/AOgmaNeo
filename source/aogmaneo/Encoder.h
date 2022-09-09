@@ -53,7 +53,6 @@ private:
 
     FloatBuffer hiddenActs;
     FloatBuffer hiddenMatches;
-    ByteBuffer hiddenFounds;
 
     FloatBuffer hiddenVigilances;
 
@@ -88,7 +87,7 @@ public:
     Encoder()
     :
     gap(0.001f),
-    initVigilance(0.6f),
+    initVigilance(0.7f),
     scale(0.01f),
     lr(0.1f),
     lRadius(1)

@@ -121,7 +121,6 @@ void Encoder::activate(
         }
     }
 
-    hiddenFounds[hiddenColumnIndex] = found;
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
@@ -134,24 +133,6 @@ void Encoder::learn(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
-
-    float maxMatch = hiddenMatches[hiddenCellIndexMax];
-
-    // Check in radius
-    for (int dx = -lRadius; dx <= lRadius; dx++)
-        for (int dy = -lRadius; dy <= lRadius; dy++) {
-            if (dx == 0 && dy == 0)
-                continue;
-
-            Int2 otherColumnPos(columnPos.x + dx, columnPos.y + dy);
-
-            if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
-                int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
-
-                if (hiddenMatches[hiddenCIs[otherHiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z] >= maxMatch)
-                    return;
-            }
-        }
 
     // Adjust reset vigilances
     for (int t = 0; t < hiddenCommits[hiddenColumnIndex]; t++) {
@@ -185,6 +166,24 @@ void Encoder::learn(
             hiddenActs[maxIndex + hiddenCellsStart] = 0.0f;
         }
     }
+
+    float maxMatch = hiddenMatches[hiddenCellIndexMax];
+
+    // Check in radius
+    for (int dx = -lRadius; dx <= lRadius; dx++)
+        for (int dy = -lRadius; dy <= lRadius; dy++) {
+            if (dx == 0 && dy == 0)
+                continue;
+
+            Int2 otherColumnPos(columnPos.x + dx, columnPos.y + dy);
+
+            if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
+                int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
+
+                if (hiddenMatches[hiddenCIs[otherHiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z] >= maxMatch)
+                    return;
+            }
+        }
 
     if (hiddenModes[hiddenColumnIndex] == commit) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -239,7 +238,7 @@ void Encoder::learn(
         if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
             hiddenCommits[hiddenColumnIndex]++;
     }
-    else {
+    else if (hiddenModes[hiddenColumnIndex] == update) {
         hiddenVigilances[hiddenCellIndexMax] *= 1.0f + scale;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -316,7 +315,6 @@ void Encoder::initRandom(
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenFounds = ByteBuffer(numHiddenColumns, false);
 
     hiddenVigilances = FloatBuffer(numHiddenCells, 0.0f);
 
@@ -413,7 +411,6 @@ void Encoder::read(
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenFounds = ByteBuffer(numHiddenColumns, false);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
