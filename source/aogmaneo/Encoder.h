@@ -52,7 +52,6 @@ private:
     Array<Mode> hiddenModes;
 
     FloatBuffer hiddenActs;
-    FloatBuffer hiddenMatches;
 
     IntBuffer hiddenCIs;
 

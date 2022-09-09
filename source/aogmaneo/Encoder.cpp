@@ -79,7 +79,6 @@ void Encoder::activate(
         float match = sum;
 
         hiddenActs[hiddenCellIndex] = activation;
-        hiddenMatches[hiddenCellIndex] = match;
 
         if (match >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
@@ -265,7 +264,6 @@ void Encoder::initRandom(
     hiddenModes = Array<Mode>(numHiddenColumns, ignore);
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -359,7 +357,6 @@ void Encoder::read(
     hiddenModes = Array<Mode>(numHiddenColumns, ignore);
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
