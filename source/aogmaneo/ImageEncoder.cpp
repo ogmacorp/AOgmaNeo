@@ -71,16 +71,16 @@ void ImageEncoder::activate(
 
                         int wi = vc + wiStart;
 
-                        int input = (*inputs[vli])[visibleCellIndex];
+                        float input = (*inputs[vli])[visibleCellIndex] / 255.0f;
 
-                        subSum += min(input, static_cast<int>(vl.weights0[wi])) + min(255 - input, static_cast<int>(vl.weights1[wi]));
+                        subSum += min(input, vl.weights0[wi]) + min(1.0f - input, vl.weights1[wi]);
 
                         subWeightSum += vl.weights0[wi] + vl.weights1[wi];
                     }
                 }
 
-            subSum /= subCount * 255;
-            subWeightSum /= subCount * 255;
+            subSum /= subCount;
+            subWeightSum /= subCount;
 
             sum += subSum * vl.importance;
             weightSum += subWeightSum * vl.importance;
@@ -191,10 +191,10 @@ void ImageEncoder::learn(
 
                         int wi = vc + wiStart;
 
-                        int input = (*inputs[vli])[visibleCellIndex];
+                        float input = (*inputs[vli])[visibleCellIndex] / 255.0f;
 
                         vl.weights0[wi] = input;
-                        vl.weights1[wi] = 255 - input;
+                        vl.weights1[wi] = 1.0f - input;
                     }
                 }
         }
@@ -239,8 +239,8 @@ void ImageEncoder::learn(
 
                         int input = (*inputs[vli])[visibleCellIndex];
 
-                        vl.weights0[wi] = max(0, roundf(vl.weights0[wi] + lr * min(0, input - vl.weights0[wi])));
-                        vl.weights1[wi] = max(0, roundf(vl.weights1[wi] + lr * min(0, 255 - input - vl.weights1[wi])));
+                        vl.weights0[wi] += min(0.0f, input - vl.weights0[wi]);
+                        vl.weights1[wi] += min(0.0f, 1.0f - input - vl.weights1[wi]);
                     }
                 }
         }
@@ -501,7 +501,7 @@ int ImageEncoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(Byte) + vl.weightsRecon.size() * sizeof(float) + vl.reconstruction.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(float) + vl.weightsRecon.size() * sizeof(float) + vl.reconstruction.size() * sizeof(Byte) + sizeof(float);
     }
 
     return size;
@@ -534,8 +534,8 @@ void ImageEncoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.weightsRecon[0]), vl.weightsRecon.size() * sizeof(float));
 
@@ -592,8 +592,8 @@ void ImageEncoder::read(
         vl.weights1.resize(vl.weights0.size());
         vl.weightsRecon.resize(vl.weights0.size());
 
-        reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&vl.weightsRecon[0]), vl.weightsRecon.size() * sizeof(float));
 
