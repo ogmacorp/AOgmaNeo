@@ -14,6 +14,12 @@ namespace aon {
 // Sparse coder
 class ImageEncoder {
 public:
+    enum Mode {
+        commit = 0,
+        update = 1,
+        ignore = 2
+    };
+
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -33,6 +39,8 @@ public:
         ByteBuffer weights0;
         ByteBuffer weights1;
 
+        FloatBuffer weightsRecon;
+
         ByteBuffer reconstruction;
 
         float importance;
@@ -46,8 +54,10 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    Array<Mode> hiddenModes;
+
+    FloatBuffer hiddenActs;
     FloatBuffer hiddenMatches;
-    ByteBuffer hiddenFounds;
 
     IntBuffer hiddenCIs;
 
@@ -70,6 +80,12 @@ private:
         const Array<const ByteBuffer*> &inputs
     );
 
+    void learnReconstruction(
+        const Int2 &columnPos,
+        const ByteBuffer* inputs,
+        int vli
+    );
+
     void reconstruct(
         const Int2 &columnPos,
         const IntBuffer* reconCIs,
@@ -80,13 +96,15 @@ public:
     float gap;
     float vigilance;
     float lr; // Learning rate
+    float rr; // Recon rate
     int lRadius;
 
     ImageEncoder()
     :
-    gap(0.01f),
-    vigilance(0.99f),
+    gap(0.001f),
+    vigilance(0.9f),
     lr(0.1f),
+    rr(0.1f),
     lRadius(1)
     {}
 
@@ -98,7 +116,8 @@ public:
 
     void step(
         const Array<const ByteBuffer*> &inputs, // Input states
-        bool learnEnabled // Whether to learn
+        bool learnEnabled = true, // Whether to learn
+        bool learnRecon = true // Learning reconstruction
     );
 
     void reconstruct(
@@ -173,4 +192,3 @@ public:
     }
 };
 } // namespace aon
-

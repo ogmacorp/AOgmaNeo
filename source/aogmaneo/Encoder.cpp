@@ -25,8 +25,6 @@ void Encoder::activate(
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
 
-    float maxMatch = 0.0f;
-
     for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -91,11 +89,13 @@ void Encoder::activate(
         float activation = sum / (gap + weightSum);
         float match = sum;
 
+        hiddenActs[hiddenCellIndex] = activation;
+        hiddenMatches[hiddenCellIndex] = match;
+
         if (match >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
                 maxActivation = activation;
                 maxIndex = hc;
-                maxMatch = match;
             }
         }
 
@@ -105,21 +105,22 @@ void Encoder::activate(
         }
     }
 
+    hiddenModes[hiddenColumnIndex] = update;
+
     bool found = maxIndex != -1;
 
     if (!found) {
         if (hiddenCommits[hiddenColumnIndex] >= hiddenSize.z) {
             maxIndex = backupMaxIndex;
-            maxMatch = 0.0f;
+            hiddenModes[hiddenColumnIndex] = ignore;
         }
         else {
             maxIndex = hiddenCommits[hiddenColumnIndex];
-            maxMatch = 1.0f + randf(state) * 0.0001f;
+            hiddenActs[maxIndex + hiddenCellsStart] = 1.0f + randf(state) * 0.0001f;
+            hiddenModes[hiddenColumnIndex] = commit;
         }
     }
 
-    hiddenMatches[hiddenColumnIndex] = maxMatch;
-    hiddenFounds[hiddenColumnIndex] = found;
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
@@ -131,10 +132,12 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    float match = hiddenMatches[hiddenColumnIndex];
+    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-    if (match < vigilance)
+    if (hiddenModes[hiddenColumnIndex] == ignore)
         return;
+
+    float maxAct = hiddenActs[hiddenCellIndexMax];
 
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
@@ -147,52 +150,82 @@ void Encoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenMatches[otherHiddenColumnIndex] >= match)
+                if (hiddenActs[hiddenCIs[otherHiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z] >= maxAct)
                     return;
             }
         }
 
-    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
+    if (hiddenModes[hiddenColumnIndex] == commit) {
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-    bool commit = (match > 0.0f && !hiddenFounds[hiddenColumnIndex]);
+            int diam = vld.radius * 2 + 1;
 
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-        int diam = vld.radius * 2 + 1;
+            Int2 visibleCenter = project(columnPos, hToV);
 
-        // Projection
-        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-        Int2 visibleCenter = project(columnPos, hToV);
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-        // Lower corner
-        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-        // Bounds of receptive field, clamped to input size
-        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                int inCI = (*inputCIs[vli])[visibleColumnIndex];
-
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
-
-                if (commit) {
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
                         vl.weights[wi] = (vc == inCI) * 255;
                     }
                 }
-                else {
+        }
+
+        if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
+            hiddenCommits[hiddenColumnIndex]++;
+    }
+    else {
+        for (int vli = 0; vli < visibleLayers.size(); vli++) {
+            VisibleLayer &vl = visibleLayers[vli];
+            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+            int diam = vld.radius * 2 + 1;
+
+            // Projection
+            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+            Int2 visibleCenter = project(columnPos, hToV);
+
+            // Lower corner
+            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+            // Bounds of receptive field, clamped to input size
+            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
+
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         if (vc == inCI)
                             continue;
@@ -202,11 +235,8 @@ void Encoder::learn(
                         vl.weights[wi] = max(0, roundf(vl.weights[wi] + lr * -vl.weights[wi]));
                     }
                 }
-            }
+        }
     }
-
-    if (commit && hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
-        hiddenCommits[hiddenColumnIndex]++;
 }
 
 void Encoder::initRandom(
@@ -237,8 +267,10 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
     }
 
-    hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
-    hiddenFounds = ByteBuffer(numHiddenColumns, false);
+    hiddenModes = Array<Mode>(numHiddenColumns, ignore);
+
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -325,8 +357,10 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
-    hiddenMatches = FloatBuffer(numHiddenColumns, 0.0f);
-    hiddenFounds = ByteBuffer(numHiddenColumns, false);
+    hiddenModes = Array<Mode>(numHiddenColumns, ignore);
+
+    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
