@@ -105,16 +105,19 @@ void Encoder::activate(
         }
     }
 
+    hiddenModes[hiddenColumnIndex] = update;
+
     bool found = maxIndex != -1;
 
     if (!found) {
         if (hiddenCommits[hiddenColumnIndex] >= hiddenSize.z) {
             maxIndex = backupMaxIndex;
-            hiddenMatches[maxIndex + hiddenCellsStart] = 0.0f;
+            hiddenModes[hiddenColumnIndex] = ignore;
         }
         else {
             maxIndex = hiddenCommits[hiddenColumnIndex];
             hiddenMatches[maxIndex + hiddenCellsStart] = 1.0f + randf(state) * 0.0001f;
+            hiddenModes[hiddenColumnIndex] = commit;
         }
     }
 
@@ -183,12 +186,7 @@ void Encoder::learn(
         }
     }
 
-    if (maxMatch < hiddenVigilances[hiddenCellIndexMax])
-        return;
-
-    bool commit = (maxMatch > 0.0f && !hiddenFounds[hiddenColumnIndex]);
-
-    if (commit) {
+    if (hiddenModes[hiddenColumnIndex] == commit) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -314,6 +312,8 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
     }
 
+    hiddenModes = Array<Mode>(numHiddenColumns, ignore);
+
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
     hiddenFounds = ByteBuffer(numHiddenColumns, false);
@@ -408,6 +408,8 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
+
+    hiddenModes = Array<Mode>(numHiddenColumns, ignore);
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
     hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
