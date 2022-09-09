@@ -36,7 +36,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        FloatBuffer weights;
 
         float importance;
 
@@ -57,6 +57,8 @@ private:
     IntBuffer hiddenCIs;
 
     IntBuffer hiddenCommits;
+
+    FloatBuffer hiddenTotals;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
