@@ -86,9 +86,8 @@ void ImageEncoder::forward(
             int hiddenCellIndex = hc + hiddenCellsStart;
 
             float diff = maxIndex - hc;
-            diff /= hiddenSize.z;
 
-            float strength = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+            float rate = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -124,12 +123,12 @@ void ImageEncoder::forward(
 
                             float input = (*inputs[vli])[vc + iStart];
 
-                            vl.protos[wi] += strength * (input - vl.protos[wi]);
+                            vl.protos[wi] += rate * (input - vl.protos[wi]);
                         }
                     }
             }
 
-            hiddenRates[hiddenCellIndex] -= lr * strength;
+            hiddenRates[hiddenCellIndex] -= lr * rate;
         }
     }
 }

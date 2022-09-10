@@ -116,7 +116,7 @@ void Encoder::learn(
 
         float diff = hiddenCIs[hiddenColumnIndex] - hc;
 
-        float rate = hiddenRates[hiddenCellIndex] * expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex]));
+        float rate = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
         if (numHigher > 0)
             rate *= boost;
