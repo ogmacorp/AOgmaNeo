@@ -14,6 +14,12 @@ namespace aon {
 // Sparse coder
 class Encoder {
 public:
+    enum Mode {
+        commit = 0,
+        update = 1,
+        ignore = 2
+    };
+
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -30,7 +36,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        FloatBuffer weights;
 
         float importance;
 
@@ -43,15 +49,15 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActs;
-    FloatBuffer hiddenMatches;
-    ByteBuffer hiddenFounds;
+    Array<Mode> hiddenModes;
 
-    FloatBuffer hiddenVigilances;
+    FloatBuffer hiddenMaxActs;
 
     IntBuffer hiddenCIs;
 
     IntBuffer hiddenCommits;
+
+    FloatBuffer hiddenTotals;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -72,16 +78,14 @@ private:
 
 public:
     float gap;
-    float initVigilance; // Initial vigilance
-    float scale; // Vigilance scale factor
+    float vigilance;
     float lr; // Learning rate
     int lRadius;
 
     Encoder()
     :
-    gap(0.01f),
-    initVigilance(0.5f),
-    scale(0.01f),
+    gap(0.0001f),
+    vigilance(0.9f),
     lr(0.1f),
     lRadius(1)
     {}
