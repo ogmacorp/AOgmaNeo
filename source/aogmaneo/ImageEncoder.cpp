@@ -204,7 +204,7 @@ void ImageEncoder::learn(
         if (hiddenCommits[hiddenColumnIndex] < hiddenSize.z)
             hiddenCommits[hiddenColumnIndex]++;
     }
-    else if (hiddenModes[hiddenColumnIndex] == update) {
+    else {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -239,10 +239,10 @@ void ImageEncoder::learn(
 
                         int wi = vc + wiStart;
 
-                        int input = (*inputs[vli])[visibleCellIndex];
+                        float input = (*inputs[vli])[visibleCellIndex] / 255.0f;
 
-                        vl.weights0[wi] += min(0.0f, input - vl.weights0[wi]);
-                        vl.weights1[wi] += min(0.0f, 1.0f - input - vl.weights1[wi]);
+                        vl.weights0[wi] += lr * min(0.0f, input - vl.weights0[wi]);
+                        vl.weights1[wi] += lr * min(0.0f, 1.0f - input - vl.weights1[wi]);
                     }
                 }
         }
