@@ -93,8 +93,6 @@ void ImageEncoder::activate(
         float activation = sum / (gap + weightSum);
         float match = sum;
 
-        hiddenMaxActs[hiddenCellIndex] = activation;
-
         if (match >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
                 maxActivation = activation;

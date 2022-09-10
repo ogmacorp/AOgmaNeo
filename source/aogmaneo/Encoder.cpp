@@ -25,8 +25,6 @@ void Encoder::activate(
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
 
-    float maxMatch = 0.0f;
-
     for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -79,8 +77,6 @@ void Encoder::activate(
 
         float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
         float match = sum;
-
-        maxMatch = max(maxMatch, match);
 
         if (match >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
