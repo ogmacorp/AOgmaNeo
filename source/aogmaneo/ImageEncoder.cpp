@@ -433,9 +433,9 @@ void ImageEncoder::initRandom(
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
 
-    hiddenModes = Array<Mode>(numHiddenColumns, ignore);
+    hiddenModes = Array<Mode>(numHiddenColumns);
 
-    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -554,9 +554,9 @@ void ImageEncoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
-    hiddenModes = Array<Mode>(numHiddenColumns, ignore);
+    hiddenModes = Array<Mode>(numHiddenColumns);
 
-    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
