@@ -75,7 +75,7 @@ public:
     Encoder()
     :
     vigilance(0.03f),
-    lr(0.2f),
+    lr(0.1f),
     boost(0.01f),
     falloff(0.1f),
     groupRadius(1)
