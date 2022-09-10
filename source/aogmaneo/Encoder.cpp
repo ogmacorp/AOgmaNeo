@@ -19,11 +19,11 @@ void Encoder::activate(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int maxActIndex = -1;
-    float maxAct = 0.0f;
+    int maxIndex = -1;
+    float maxActivation = 0.0f;
 
-    int maxMatchIndex = -1;
-    float maxMatch = 0.0f;
+    int backupMaxIndex = -1;
+    float backupMaxActivation = 0.0f;
 
     for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -75,41 +75,41 @@ void Encoder::activate(
 
         sum /= max(0.0001f, totalImportance);
 
-        float act = sum / (gap + hiddenTotals[hiddenCellIndex]);
+        float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
         float match = sum;
 
         if (match >= vigilance) {
-            if (act > maxAct || maxActIndex == -1) {
-                maxAct = act;
-                maxActIndex = hc;
+            if (activation > maxActivation || maxIndex == -1) {
+                maxActivation = activation;
+                maxIndex = hc;
             }
         }
 
-        if (match > maxMatch || maxMatchIndex == -1) {
-            maxMatch = match;
-            maxMatchIndex = hc;
+        if (activation > backupMaxActivation || backupMaxIndex == -1) {
+            backupMaxActivation = activation;
+            backupMaxIndex = hc;
         }
     }
 
     hiddenModes[hiddenColumnIndex] = update;
 
-    hiddenMaxActs[hiddenColumnIndex] = maxAct;
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
-    bool found = maxActIndex != -1;
+    bool found = maxIndex != -1;
 
     if (!found) {
         if (hiddenCommits[hiddenColumnIndex] >= hiddenSize.z) {
-            hiddenCIs[hiddenColumnIndex] = maxMatchIndex;
+            maxIndex = backupMaxIndex;
             hiddenModes[hiddenColumnIndex] = ignore;
         }
         else {
-            hiddenCIs[hiddenColumnIndex] = hiddenCommits[hiddenColumnIndex];
+            maxIndex = hiddenCommits[hiddenColumnIndex];
             hiddenMaxActs[hiddenColumnIndex] = randf(state) * 0.0001f;
             hiddenModes[hiddenColumnIndex] = commit;
         }
     }
-    else
-        hiddenCIs[hiddenColumnIndex] = maxActIndex;
+
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
 void Encoder::learn(
