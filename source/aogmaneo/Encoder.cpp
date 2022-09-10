@@ -261,9 +261,9 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
     }
 
-    hiddenModes = Array<Mode>(numHiddenColumns, ignore);
+    hiddenModes = Array<Mode>(numHiddenColumns);
 
-    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -354,9 +354,9 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
-    hiddenModes = Array<Mode>(numHiddenColumns, ignore);
+    hiddenModes = Array<Mode>(numHiddenColumns);
 
-    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
