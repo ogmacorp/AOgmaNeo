@@ -283,7 +283,7 @@ void ImageEncoder::learnReconstruction(
         int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
-        float total = 0.0f;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -299,17 +299,12 @@ void ImageEncoder::learnReconstruction(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                    float strength = min(1.0f - distX, 1.0f - distY);
-
-                    sum += strength * vl.weightsRecon[wi];
-                    total += strength;
+                    sum += vl.weightsRecon[wi];
+                    count++;
                 }
             }
 
-        float delta = rr * ((*inputs)[visibleCellIndex] / 255.0f - sum / max(0.0001f, total));
+        float delta = rr * ((*inputs)[visibleCellIndex] / 255.0f - sum / max(1, count));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -324,11 +319,6 @@ void ImageEncoder::learnReconstruction(
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                    float strength = min(1.0f - distX, 1.0f - distY);
 
                     vl.weightsRecon[wi] += delta;
                 }
