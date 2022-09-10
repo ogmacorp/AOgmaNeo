@@ -124,8 +124,6 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
-
     if (hiddenModes[hiddenColumnIndex] == ignore)
         return;
 
@@ -146,6 +144,8 @@ void Encoder::learn(
                     return;
             }
         }
+
+    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     float total = 0.0f;
 

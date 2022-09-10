@@ -93,8 +93,7 @@ void ImageEncoder::activate(
         float activation = sum / (gap + weightSum);
         float match = sum;
 
-        hiddenActs[hiddenCellIndex] = activation;
-        hiddenMatches[hiddenCellIndex] = match;
+        hiddenMaxActs[hiddenCellIndex] = activation;
 
         if (match >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
@@ -111,6 +110,8 @@ void ImageEncoder::activate(
 
     hiddenModes[hiddenColumnIndex] = update;
 
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
+
     bool found = maxIndex != -1;
 
     if (!found) {
@@ -120,7 +121,7 @@ void ImageEncoder::activate(
         }
         else {
             maxIndex = hiddenCommits[hiddenColumnIndex];
-            hiddenActs[maxIndex + hiddenCellsStart] = 1.0f + randf(state) * 0.0001f;
+            hiddenMaxActs[hiddenColumnIndex] = randf(state) * 0.0001f;
             hiddenModes[hiddenColumnIndex] = commit;
         }
     }
@@ -136,9 +137,10 @@ void ImageEncoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
+    if (hiddenModes[hiddenColumnIndex] == ignore)
+        return;
 
-    float maxAct = hiddenActs[hiddenCellIndexMax];
+    float maxAct = hiddenMaxActs[hiddenColumnIndex];
 
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
@@ -151,10 +153,12 @@ void ImageEncoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenActs[hiddenCIs[otherHiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z] >= maxAct)
+                if (hiddenMaxActs[otherHiddenColumnIndex] >= maxAct)
                     return;
             }
         }
+
+    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     if (hiddenModes[hiddenColumnIndex] == commit) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -433,8 +437,7 @@ void ImageEncoder::initRandom(
 
     hiddenModes = Array<Mode>(numHiddenColumns, ignore);
 
-    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -555,8 +558,7 @@ void ImageEncoder::read(
 
     hiddenModes = Array<Mode>(numHiddenColumns, ignore);
 
-    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
-    hiddenMatches = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);

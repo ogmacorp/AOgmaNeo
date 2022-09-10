@@ -56,8 +56,7 @@ private:
 
     Array<Mode> hiddenModes;
 
-    FloatBuffer hiddenActs;
-    FloatBuffer hiddenMatches;
+    FloatBuffer hiddenMaxActs;
 
     IntBuffer hiddenCIs;
 
@@ -105,7 +104,7 @@ public:
     vigilance(0.95f),
     lr(0.1f),
     rr(0.1f),
-    lRadius(1)
+    lRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
