@@ -25,6 +25,8 @@ void Encoder::activate(
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
 
+    float maxMatch = 0.0f;
+
     for (int hc = 0; hc < hiddenCommits[hiddenColumnIndex]; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -78,7 +80,7 @@ void Encoder::activate(
         float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
         float match = sum;
 
-        hiddenActs[hiddenCellIndex] = activation;
+        maxMatch = max(maxMatch, match);
 
         if (match >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
@@ -95,6 +97,8 @@ void Encoder::activate(
 
     hiddenModes[hiddenColumnIndex] = update;
 
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
+
     bool found = maxIndex != -1;
 
     if (!found) {
@@ -104,7 +108,7 @@ void Encoder::activate(
         }
         else {
             maxIndex = hiddenCommits[hiddenColumnIndex];
-            hiddenActs[maxIndex + hiddenCellsStart] = 1.0f + randf(state) * 0.0001f;
+            hiddenMaxActs[hiddenColumnIndex] = randf(state) * 0.0001f;
             hiddenModes[hiddenColumnIndex] = commit;
         }
     }
@@ -125,7 +129,7 @@ void Encoder::learn(
     if (hiddenModes[hiddenColumnIndex] == ignore)
         return;
 
-    float maxAct = hiddenActs[hiddenCellIndexMax];
+    float maxAct = hiddenMaxActs[hiddenColumnIndex];
 
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
@@ -138,7 +142,7 @@ void Encoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenActs[hiddenCIs[otherHiddenColumnIndex] + otherHiddenColumnIndex * hiddenSize.z] >= maxAct)
+                if (hiddenMaxActs[otherHiddenColumnIndex] >= maxAct)
                     return;
             }
         }
@@ -263,7 +267,7 @@ void Encoder::initRandom(
 
     hiddenModes = Array<Mode>(numHiddenColumns, ignore);
 
-    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
@@ -356,7 +360,7 @@ void Encoder::read(
 
     hiddenModes = Array<Mode>(numHiddenColumns, ignore);
 
-    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);

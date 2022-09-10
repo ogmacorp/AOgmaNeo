@@ -51,7 +51,7 @@ private:
 
     Array<Mode> hiddenModes;
 
-    FloatBuffer hiddenActs;
+    FloatBuffer hiddenMaxActs;
 
     IntBuffer hiddenCIs;
 

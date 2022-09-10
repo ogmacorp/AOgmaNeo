@@ -283,7 +283,7 @@ void ImageEncoder::learnReconstruction(
         int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
-        int count = 0;
+        float total = 0.0f;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -299,12 +299,17 @@ void ImageEncoder::learnReconstruction(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += vl.weightsRecon[wi];
-                    count++;
+                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
+                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
+
+                    float strength = min(1.0f - distX, 1.0f - distY);
+
+                    sum += strength * vl.weightsRecon[wi];
+                    total += strength;
                 }
             }
 
-        float delta = rr * ((*inputs)[visibleCellIndex] / 255.0f - sum / max(1, count));
+        float delta = rr * ((*inputs)[visibleCellIndex] / 255.0f - sum / max(0.0001f, total));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
