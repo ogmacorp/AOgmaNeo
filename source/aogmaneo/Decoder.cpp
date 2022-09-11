@@ -93,8 +93,6 @@ void Decoder::forward(
             }
         }
 
-        hiddenMaxActs[hiddenBranchIndex] = maxActivation;
-
         hiddenModes[hiddenBranchIndex] = update;
 
         bool found = maxIndex != -1;
@@ -131,16 +129,17 @@ void Decoder::learn(
     int numCellsPerColumn = hiddenSize.z * numDendrites;
 
     int hiddenBranchesStart = hiddenColumnIndex * hiddenSize.z;
-    int hiddenCellsStart = hiddenColumnIndex * numCellsPerColumn;
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
     int hiddenBranchIndexTarget = targetCI + hiddenBranchesStart;
 
+    int hiddenCellsStartTarget = hiddenBranchIndexTarget * numDendrites;
+
     if (hiddenCIs[hiddenColumnIndex] == targetCI && hiddenModes[hiddenBranchIndexTarget] == ignore)
         return;
 
-    int hiddenCellIndexTarget = hiddenDIs[hiddenBranchIndexTarget] + hiddenCellsStart;
+    int hiddenCellIndexTarget = hiddenDIs[hiddenBranchIndexTarget] + hiddenCellsStartTarget;
 
     float total = 0.0f;
     int count = 0;
@@ -225,7 +224,8 @@ void Decoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] += lr * min(0.0f, (vc == inCIPrev) - vl.weights[wi]);
+                        if (vc != inCIPrev)
+                            vl.weights[wi] -= lr * vl.weights[wi];
 
                         total += vl.weights[wi];
                     }
@@ -267,15 +267,10 @@ void Decoder::initRandom(
 
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 0.0001f);
-
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenModes = Array<Mode>(numHiddenBranches);
-
-    hiddenMaxActs = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenDIs = IntBuffer(numHiddenBranches, 0);
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -315,7 +310,7 @@ void Decoder::learn(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenMaxActs.size() * sizeof(float) + 3 * hiddenCIs.size() * sizeof(int) + hiddenTotals.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + 3 * hiddenCIs.size() * sizeof(int) + hiddenTotals.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -328,7 +323,7 @@ int Decoder::size() const {
 }
 
 int Decoder::stateSize() const {
-    int size = hiddenMaxActs.size() * sizeof(float) + 2 * hiddenCIs.size() * sizeof(int);
+    int size = 2 * hiddenCIs.size() * sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -347,8 +342,6 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
-
-    writer.write(reinterpret_cast<const void*>(&hiddenMaxActs[0]), hiddenMaxActs.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenDIs[0]), hiddenDIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -387,10 +380,6 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenModes = Array<Mode>(numHiddenBranches);
-
-    hiddenMaxActs.resize(numHiddenCells);
-
-    reader.read(reinterpret_cast<void*>(&hiddenMaxActs[0]), hiddenMaxActs.size() * sizeof(float));
 
     hiddenDIs.resize(numHiddenBranches);
     hiddenCIs.resize(numHiddenColumns);
@@ -437,8 +426,6 @@ void Decoder::read(
 void Decoder::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hiddenMaxActs[0]), hiddenMaxActs.size() * sizeof(float));
-
     writer.write(reinterpret_cast<const void*>(&hiddenDIs[0]), hiddenDIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
@@ -452,8 +439,6 @@ void Decoder::writeState(
 void Decoder::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hiddenMaxActs[0]), hiddenMaxActs.size() * sizeof(float));
-
     reader.read(reinterpret_cast<void*>(&hiddenDIs[0]), hiddenDIs.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
