@@ -98,7 +98,6 @@ void Decoder::forward(
         if (!found) {
             if (hiddenCommits[hiddenBranchIndex] >= numDendrites) {
                 maxIndex = backupMaxIndex;
-                maxActivation = backupMaxActivation;
                 hiddenModes[hiddenBranchIndex] = ignore;
             }
             else {
