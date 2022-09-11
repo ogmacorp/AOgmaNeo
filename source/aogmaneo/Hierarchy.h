@@ -27,30 +27,25 @@ public:
         Int3 size;
         IOType type;
 
+        int numDendrites;
+
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
         int historyCapacity;
 
-        IODesc()
-        :
-        size(4, 4, 16),
-        type(prediction),
-        eRadius(2),
-        dRadius(2),
-        historyCapacity(64)
-        {}
-
         IODesc(
-            const Int3 &size,
-            IOType type,
-            int eRadius,
-            int dRadius,
-            int historyCapacity
+            const Int3 &size = Int3(4, 4, 16),
+            IOType type = prediction,
+            int numDendrites = 4,
+            int eRadius = 2,
+            int dRadius = 2,
+            int historyCapacity = 64
         )
         :
         size(size),
         type(type),
+        numDendrites(numDendrites),
         eRadius(eRadius),
         dRadius(dRadius),
         historyCapacity(historyCapacity)
@@ -61,30 +56,25 @@ public:
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
 
+        int numDendrites;
+
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
-        LayerDesc()
-        :
-        hiddenSize(4, 4, 16),
-        eRadius(2),
-        dRadius(2),
-        ticksPerUpdate(2),
-        temporalHorizon(2)
-        {}
-
         LayerDesc(
-            const Int3 &hiddenSize,
-            int eRadius,
-            int dRadius,
-            int ticksPerUpdate,
-            int temporalHorizon
+            const Int3 &hiddenSize = Int3(4, 4, 16),
+            int numDendrites = 4,
+            int eRadius = 2,
+            int dRadius = 2,
+            int ticksPerUpdate = 2,
+            int temporalHorizon = 4
         )
         :
         hiddenSize(hiddenSize),
+        numDendrites(numDendrites),
         eRadius(eRadius),
         dRadius(dRadius),
         ticksPerUpdate(ticksPerUpdate),

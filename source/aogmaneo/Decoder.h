@@ -31,19 +31,17 @@ public:
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer rates;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-
-        FloatBuffer gates;
     };
 
 private:
-    Int3 hiddenSize; // Size of the output/hidden/prediction
+    Int3 hiddenSize; // Size of the hidden/hidden/prediction
+    int numDendrites;
 
     FloatBuffer hiddenActs;
 
-    IntBuffer hiddenCIs; // Hidden state
+    IntBuffer hiddenCIs;
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -56,12 +54,6 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void backward(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        int vli
-    );
-
     void learn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
@@ -69,18 +61,19 @@ private:
 
 public:
     float lr; // Learning rate
-    float decay;
+    float boost;
 
     // Defaults
     Decoder()
     :
-    lr(0.5f),
-    decay(0.001f)
+    lr(0.02f),
+    boost(0.001f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Int3 &hiddenSize, // Hidden/hidden/prediction size
+        int numDendrites,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
