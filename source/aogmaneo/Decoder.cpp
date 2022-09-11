@@ -16,8 +16,6 @@ void Decoder::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int numCellsPerColumn = hiddenSize.z * numDendrites;
-
     int hiddenBranchesStart = hiddenColumnIndex * hiddenSize.z;
 
     int superMaxIndex = 0;
@@ -127,15 +125,13 @@ void Decoder::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int numCellsPerColumn = hiddenSize.z * numDendrites;
-
     int hiddenBranchesStart = hiddenColumnIndex * hiddenSize.z;
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
     int hiddenBranchIndexTarget = targetCI + hiddenBranchesStart;
 
-    if (hiddenCIs[hiddenColumnIndex] == targetCI && hiddenModes[hiddenBranchIndexTarget] == ignore)
+    if (hiddenModes[hiddenBranchIndexTarget] == ignore)
         return;
 
     int hiddenCellsStartTarget = hiddenBranchIndexTarget * numDendrites;
@@ -278,7 +274,7 @@ void Decoder::initRandom(
 
     hiddenCommits = IntBuffer(numHiddenBranches, 0);
 
-    hiddenTotals = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenTotals = FloatBuffer(numHiddenCells);
 }
 
 void Decoder::activate(
