@@ -14,10 +14,10 @@ namespace aon {
 // A prediction layer (predicts x_(t+1))
 class Decoder {
 public:
+    // Cannot ignore in decoder like in encoder
     enum Mode {
         commit = 0,
-        update = 1,
-        ignore = 2
+        update = 1
     };
 
     // Visible layer descriptor
@@ -81,7 +81,7 @@ public:
     Decoder()
     :
     gap(0.01f),
-    vigilance(0.7f),
+    vigilance(0.9f),
     lr(0.01f)
     {}
 

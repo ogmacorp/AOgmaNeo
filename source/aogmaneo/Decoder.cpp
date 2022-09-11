@@ -99,7 +99,6 @@ void Decoder::forward(
             if (hiddenCommits[hiddenBranchIndex] >= numDendrites) {
                 maxIndex = backupMaxIndex;
                 maxActivation = backupMaxActivation;
-                hiddenModes[hiddenBranchIndex] = ignore;
             }
             else {
                 maxIndex = hiddenCommits[hiddenBranchIndex];
@@ -133,9 +132,6 @@ void Decoder::learn(
         return;
 
     int hiddenBranchIndexTarget = targetCI + hiddenBranchesStart;
-
-    if (hiddenModes[hiddenBranchIndexTarget] == ignore)
-        return;
 
     int hiddenCellsStartTarget = hiddenBranchIndexTarget * numDendrites;
 
