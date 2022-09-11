@@ -14,6 +14,12 @@ namespace aon {
 // A prediction layer (predicts x_(t+1))
 class Decoder {
 public:
+    enum Mode {
+        commit = 0,
+        update = 1,
+        ignore = 2
+    };
+
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -39,9 +45,16 @@ private:
     Int3 hiddenSize; // Size of the hidden/hidden/prediction
     int numDendrites;
 
-    FloatBuffer hiddenActs;
+    Array<Mode> hiddenModes;
 
+    FloatBuffer hiddenMaxActs;
+
+    IntBuffer hiddenDIs;
     IntBuffer hiddenCIs;
+
+    IntBuffer hiddenCommits;
+
+    FloatBuffer hiddenTotals;
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -60,14 +73,16 @@ private:
     );
 
 public:
+    float gap;
+    float vigilance;
     float lr; // Learning rate
-    float boost;
 
     // Defaults
     Decoder()
     :
-    lr(0.01f),
-    boost(0.001f)
+    gap(0.01f),
+    vigilance(0.8f),
+    lr(0.1f)
     {}
 
     // Create with random initialization
