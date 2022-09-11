@@ -224,8 +224,7 @@ void Decoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        if (vc != inCIPrev)
-                            vl.weights[wi] -= lr * vl.weights[wi];
+                        vl.weights[wi] += lr * ((vc == inCIPrev) - vl.weights[wi]);
 
                         total += vl.weights[wi];
                     }
