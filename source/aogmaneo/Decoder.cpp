@@ -130,6 +130,7 @@ void Decoder::learn(
     if (hiddenCIs[hiddenColumnIndex] == targetCI)
         return;
 
+    // Target
     {
         int hiddenBranchIndexTarget = targetCI + hiddenBranchesStart;
 
@@ -220,7 +221,8 @@ void Decoder::learn(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = vc + wiStart;
 
-                            vl.weights[wi] += lr * ((vc == inCIPrev) - vl.weights[wi]);
+                            if (vc != inCIPrev)
+                                vl.weights[wi] -= lr * vl.weights[wi];
 
                             total += vl.weights[wi];
                         }
@@ -233,6 +235,7 @@ void Decoder::learn(
         hiddenTotals[hiddenCellIndexTarget] = total;
     }
 
+    // Max (predicted)
     {
         int hiddenBranchIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenBranchesStart;
 
