@@ -183,7 +183,7 @@ void Encoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] = (vc == inCI);
+                        vl.weights[wi] = 1.0f - lr * (vc != inCI);
 
                         subTotal += vl.weights[wi];
                     }
