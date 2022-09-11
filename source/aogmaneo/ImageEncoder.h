@@ -101,7 +101,7 @@ public:
     ImageEncoder()
     :
     gap(0.01f),
-    vigilance(0.95f),
+    vigilance(0.9f),
     lr(0.1f),
     rr(0.1f),
     lRadius(0)
