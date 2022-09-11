@@ -102,7 +102,6 @@ void Decoder::forward(
             }
             else {
                 maxIndex = hiddenCommits[hiddenBranchIndex];
-                maxActivation = 0.0f;
                 hiddenModes[hiddenBranchIndex] = commit;
             }
         }
@@ -131,16 +130,119 @@ void Decoder::learn(
     if (hiddenCIs[hiddenColumnIndex] == targetCI)
         return;
 
-    int hiddenBranchIndexTarget = targetCI + hiddenBranchesStart;
+    {
+        int hiddenBranchIndexTarget = targetCI + hiddenBranchesStart;
 
-    int hiddenCellsStartTarget = hiddenBranchIndexTarget * numDendrites;
+        int hiddenCellsStartTarget = hiddenBranchIndexTarget * numDendrites;
 
-    int hiddenCellIndexTarget = hiddenDIs[hiddenBranchIndexTarget] + hiddenCellsStartTarget;
+        int hiddenCellIndexTarget = hiddenDIs[hiddenBranchIndexTarget] + hiddenCellsStartTarget;
 
-    float total = 0.0f;
-    int count = 0;
+        float total = 0.0f;
+        int count = 0;
 
-    if (hiddenModes[hiddenBranchIndexTarget] == commit) {
+        if (hiddenModes[hiddenBranchIndexTarget] == commit) {
+            for (int vli = 0; vli < visibleLayers.size(); vli++) {
+                VisibleLayer &vl = visibleLayers[vli];
+                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+                int diam = vld.radius * 2 + 1;
+
+                // Projection
+                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+                Int2 visibleCenter = project(columnPos, hToV);
+
+                // Lower corner
+                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+                // Bounds of receptive field, clamped to input size
+                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+                count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
+
+                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+
+                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wiStart;
+
+                            vl.weights[wi] = 1.0f - lr * (vc != inCIPrev);
+
+                            total += vl.weights[wi];
+                        }
+                    }
+            }
+
+            if (hiddenCommits[hiddenBranchIndexTarget] < numDendrites)
+                hiddenCommits[hiddenBranchIndexTarget]++;
+        }
+        else {
+            for (int vli = 0; vli < visibleLayers.size(); vli++) {
+                VisibleLayer &vl = visibleLayers[vli];
+                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+                int diam = vld.radius * 2 + 1;
+
+                // Projection
+                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+                Int2 visibleCenter = project(columnPos, hToV);
+
+                // Lower corner
+                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+                // Bounds of receptive field, clamped to input size
+                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+                count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
+
+                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+
+                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wiStart;
+
+                            vl.weights[wi] += lr * ((vc == inCIPrev) - vl.weights[wi]);
+
+                            total += vl.weights[wi];
+                        }
+                    }
+            }
+        }
+
+        total /= count;
+
+        hiddenTotals[hiddenCellIndexTarget] = total;
+    }
+
+    {
+        int hiddenBranchIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenBranchesStart;
+
+        int hiddenCellsStartMax = hiddenBranchIndexMax * numDendrites;
+
+        int hiddenCellIndexMax = hiddenDIs[hiddenBranchIndexMax] + hiddenCellsStartMax;
+
+        float total = 0.0f;
+        int count = 0;
+
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -170,67 +272,22 @@ void Decoder::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+
+                    vl.weights[inCIPrev + wiStart] -= lr * vl.weights[inCIPrev + wiStart];
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
-
-                        vl.weights[wi] = 1.0f - lr * (vc != inCIPrev);
 
                         total += vl.weights[wi];
                     }
                 }
         }
 
-        if (hiddenCommits[hiddenBranchIndexTarget] < numDendrites)
-            hiddenCommits[hiddenBranchIndexTarget]++;
+        total /= count;
+
+        hiddenTotals[hiddenCellIndexMax] = total;
     }
-    else {
-        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-            VisibleLayer &vl = visibleLayers[vli];
-            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-            int diam = vld.radius * 2 + 1;
-
-            // Projection
-            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-
-            Int2 visibleCenter = project(columnPos, hToV);
-
-            // Lower corner
-            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
-
-            // Bounds of receptive field, clamped to input size
-            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
-
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
-
-            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
-
-                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
-
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                    int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
-
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int wi = vc + wiStart;
-
-                        vl.weights[wi] += lr * ((vc == inCIPrev) - vl.weights[wi]);
-
-                        total += vl.weights[wi];
-                    }
-                }
-        }
-    }
-
-    total /= count;
-
-    hiddenTotals[hiddenCellIndexTarget] = total;
 }
 
 void Decoder::initRandom(
