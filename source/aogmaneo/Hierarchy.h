@@ -37,7 +37,7 @@ public:
         IODesc(
             const Int3 &size = Int3(4, 4, 16),
             IOType type = prediction,
-            int numDendrites = 4,
+            int numDendrites = 32,
             int eRadius = 2,
             int dRadius = 2,
             int historyCapacity = 64
@@ -66,7 +66,7 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize = Int3(4, 4, 16),
-            int numDendrites = 4,
+            int numDendrites = 32,
             int eRadius = 2,
             int dRadius = 2,
             int ticksPerUpdate = 2,

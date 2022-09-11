@@ -128,6 +128,9 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
+    if (hiddenCIs[hiddenColumnIndex] == targetCI)
+        return;
+
     int hiddenBranchIndexTarget = targetCI + hiddenBranchesStart;
 
     if (hiddenModes[hiddenBranchIndexTarget] == ignore)
@@ -175,7 +178,7 @@ void Decoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        vl.weights[wi] = (vc == inCIPrev);
+                        vl.weights[wi] = 1.0f - lr * (vc == inCIPrev);
 
                         total += vl.weights[wi];
                     }
