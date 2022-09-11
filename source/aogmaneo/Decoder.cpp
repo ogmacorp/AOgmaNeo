@@ -100,18 +100,19 @@ void Decoder::forward(
         if (!found) {
             if (hiddenCommits[hiddenBranchIndex] >= numDendrites) {
                 maxIndex = backupMaxIndex;
+                maxActivation = backupMaxActivation;
                 hiddenModes[hiddenBranchIndex] = ignore;
             }
             else {
                 maxIndex = hiddenCommits[hiddenBranchIndex];
+                maxActivation = 0.0f;
                 hiddenModes[hiddenBranchIndex] = commit;
             }
         }
-        else {
-            if (maxActivation > superMaxActivation || superMaxIndex == -1) {
-                superMaxActivation = maxActivation;
-                superMaxIndex = hc;
-            }
+
+        if (maxActivation > superMaxActivation || superMaxIndex == -1) {
+            superMaxActivation = maxActivation;
+            superMaxIndex = hc;
         }
 
         hiddenDIs[hiddenBranchIndex] = maxIndex;
@@ -164,7 +165,7 @@ void Decoder::learn(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -209,7 +210,7 @@ void Decoder::learn(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
