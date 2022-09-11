@@ -39,7 +39,7 @@ const float weightLookupTable[65] {
 inline float weightLookup(float w) {
     assert(w >= 0.0f && w <= 1.0f);
 
-    w *= 255.0f;
+    w *= 63.0f;
 
     int index = static_cast<int>(w);
     float interp = w - index;
