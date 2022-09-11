@@ -81,7 +81,7 @@ public:
     Decoder()
     :
     gap(0.01f),
-    vigilance(0.5f),
+    vigilance(0.3f),
     lr(0.1f)
     {}
 
