@@ -134,10 +134,10 @@ void Decoder::learn(
 
     int hiddenBranchIndexTarget = targetCI + hiddenBranchesStart;
 
-    int hiddenCellsStartTarget = hiddenBranchIndexTarget * numDendrites;
-
     if (hiddenCIs[hiddenColumnIndex] == targetCI && hiddenModes[hiddenBranchIndexTarget] == ignore)
         return;
+
+    int hiddenCellsStartTarget = hiddenBranchIndexTarget * numDendrites;
 
     int hiddenCellIndexTarget = hiddenDIs[hiddenBranchIndexTarget] + hiddenCellsStartTarget;
 
@@ -186,7 +186,7 @@ void Decoder::learn(
                 }
         }
 
-        if (hiddenCommits[hiddenBranchIndexTarget] < hiddenSize.z)
+        if (hiddenCommits[hiddenBranchIndexTarget] < numDendrites)
             hiddenCommits[hiddenBranchIndexTarget]++;
     }
     else {
@@ -310,7 +310,7 @@ void Decoder::learn(
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + 3 * hiddenCIs.size() * sizeof(int) + hiddenTotals.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenDIs.size() * sizeof(int) + 2 * hiddenCIs.size() * sizeof(int) + hiddenTotals.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -323,7 +323,7 @@ int Decoder::size() const {
 }
 
 int Decoder::stateSize() const {
-    int size = 2 * hiddenCIs.size() * sizeof(int);
+    int size = hiddenDIs.size() * sizeof(int) + hiddenCIs.size() * sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
