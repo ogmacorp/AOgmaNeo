@@ -85,13 +85,12 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    if (hiddenCIs[hiddenColumnIndex] == targetCI)
-        return;
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float delta = lr * ((hc == targetCI) - sigmoidf(hiddenActs[hiddenCellIndex]));
+        float s = sigmoidf(hiddenActs[hiddenCellIndex]);
+
+        float delta = lr * ((hc == targetCI) - s) * s * (1.0f - s);
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
