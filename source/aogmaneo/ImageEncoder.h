@@ -102,7 +102,7 @@ public:
     :
     gap(0.0001f),
     vigilance(0.9f),
-    lr(0.1f),
+    lr(0.01f),
     rr(0.1f),
     lRadius(0)
     {}
