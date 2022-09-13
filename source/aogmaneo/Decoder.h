@@ -33,8 +33,6 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-
-        FloatBuffer gates;
     };
 
 private:
@@ -55,12 +53,6 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void backward(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        int vli
-    );
-
     void learn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
@@ -72,7 +64,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.1f)
+    lr(0.5f)
     {}
 
     // Create with random initialization
