@@ -65,7 +65,6 @@ private:
     );
 
 public:
-    float vigilance;
     float lr;
     float boost;
     int groupRadius;
@@ -73,8 +72,7 @@ public:
     // Defaults
     Encoder()
     :
-    vigilance(0.001f),
-    lr(0.3f),
+    lr(0.1f),
     boost(0.001f),
     groupRadius(1)
     {}
