@@ -15,9 +15,8 @@ namespace aon {
 class Encoder {
 public:
     enum Mode {
-        commit = 0,
-        update = 1,
-        ignore = 2
+        update = 0,
+        ignore = 1
     };
 
     // Visible layer descriptor
@@ -55,8 +54,6 @@ private:
 
     IntBuffer hiddenCIs;
 
-    IntBuffer hiddenCommits;
-
     FloatBuffer hiddenTotals;
 
     // Visible layers and associated descriptors
@@ -85,8 +82,8 @@ public:
     Encoder()
     :
     gap(0.1f),
-    vigilance(0.9f),
-    lr(0.1f),
+    vigilance(0.7f),
+    lr(0.5f),
     lRadius(2)
     {}
 
@@ -150,11 +147,6 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
-    }
-
-    // Get the hidden commits
-    const IntBuffer &getHiddenCommits() const {
-        return hiddenCommits;
     }
 
     // Get the hidden size
