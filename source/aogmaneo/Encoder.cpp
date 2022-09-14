@@ -108,15 +108,12 @@ void Encoder::learn(
             }
         }
 
-    for (int dhc = -1; dhc <= 1; dhc++) {
-        int hc = hiddenCIs[hiddenColumnIndex] + dhc;
-
-        if (hc < 0 || hc >= hiddenSize.z)
-            continue;
-
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float rate = hiddenRates[hiddenCellIndex];
+        float diff = hiddenCIs[hiddenColumnIndex] - hc;
+
+        float rate = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
 
         if (numHigher > 0)
             rate *= boost;
@@ -238,6 +235,7 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&boost), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&falloff), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&groupRadius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
@@ -270,6 +268,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
     hiddenActs = FloatBuffer(numHiddenColumns, 0.0f);
