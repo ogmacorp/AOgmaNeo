@@ -36,10 +36,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights0;
-        FloatBuffer weights1;
+        ByteBuffer weights0;
+        ByteBuffer weights1;
 
-        FloatBuffer weightsRecon;
+        ByteBuffer weightsRecon;
 
         ByteBuffer reconstruction;
 
