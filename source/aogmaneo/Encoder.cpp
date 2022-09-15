@@ -229,7 +229,7 @@ void Encoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenTotals = FloatBuffer(numHiddenCells);
+    hiddenTotals = FloatBuffer(numHiddenCells, 1.0f);
 }
 
 void Encoder::step(
