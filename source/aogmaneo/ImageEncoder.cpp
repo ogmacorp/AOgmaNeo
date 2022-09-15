@@ -138,24 +138,6 @@ void ImageEncoder::learn(
     if (hiddenModes[hiddenColumnIndex] == ignore)
         return;
 
-    float maxAct = hiddenMaxActs[hiddenColumnIndex];
-
-    // Check in radius
-    for (int dx = -lRadius; dx <= lRadius; dx++)
-        for (int dy = -lRadius; dy <= lRadius; dy++) {
-            if (dx == 0 && dy == 0)
-                continue;
-
-            Int2 otherColumnPos(columnPos.x + dx, columnPos.y + dy);
-
-            if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
-                int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
-
-                if (hiddenMaxActs[otherHiddenColumnIndex] >= maxAct)
-                    return;
-            }
-        }
-
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     if (hiddenModes[hiddenColumnIndex] == commit) {
@@ -492,7 +474,7 @@ void ImageEncoder::reconstruct(
 }
 
 int ImageEncoder::size() const {
-    int size = sizeof(Int3) + 4 * sizeof(float) + sizeof(int) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -515,7 +497,6 @@ void ImageEncoder::write(
     writer.write(reinterpret_cast<const void*>(&gap), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hiddenCommits[0]), hiddenCommits.size() * sizeof(int));
@@ -552,7 +533,6 @@ void ImageEncoder::read(
     reader.read(reinterpret_cast<void*>(&gap), sizeof(float));
     reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
 
     hiddenModes = Array<Mode>(numHiddenColumns);
 
