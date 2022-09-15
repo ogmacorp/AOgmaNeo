@@ -93,14 +93,14 @@ void Encoder::activate(
 
     hiddenModes[hiddenColumnIndex] = update;
 
-    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
-
     bool found = maxIndex != -1;
 
     if (!found) {
         maxIndex = backupMaxIndex;
         hiddenModes[hiddenColumnIndex] = ignore;
     }
+
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
