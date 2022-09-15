@@ -92,14 +92,14 @@ void Encoder::activate(
 
     hiddenModes[hiddenColumnIndex] = update;
 
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
+
     bool found = maxIndex != -1;
 
     if (!found) {
         maxIndex = backupMaxIndex;
         hiddenModes[hiddenColumnIndex] = ignore;
     }
-
-    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
@@ -175,7 +175,7 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc != inCI)
-                        vl.weights[wi] = max(0, roundf(vl.weights[wi] - lr * vl.weights[wi]));
+                        vl.weights[wi] = max(0, roundf(vl.weights[wi] - lr * 255.0f));
 
                     subTotal += vl.weights[wi];
                 }
@@ -220,7 +220,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 8;
+            vl.weights[i] = rand() % 256;
     }
 
     hiddenModes = Array<Mode>(numHiddenColumns);
