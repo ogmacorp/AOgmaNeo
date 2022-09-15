@@ -75,8 +75,8 @@ public:
     :
     lr(0.1f),
     boost(0.001f),
-    falloff(1.0f),
-    groupRadius(1)
+    falloff(0.1f),
+    groupRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
