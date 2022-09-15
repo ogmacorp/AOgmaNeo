@@ -64,8 +64,7 @@ private:
     
     void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        unsigned int* state
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(

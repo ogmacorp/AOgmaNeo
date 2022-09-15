@@ -12,8 +12,7 @@ using namespace aon;
 
 void Encoder::activate(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
-    unsigned int* state
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -93,14 +92,14 @@ void Encoder::activate(
 
     hiddenModes[hiddenColumnIndex] = update;
 
-    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
-
     bool found = maxIndex != -1;
 
     if (!found) {
         maxIndex = backupMaxIndex;
         hiddenModes[hiddenColumnIndex] = ignore;
     }
+
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
@@ -239,14 +238,9 @@ void Encoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
-    unsigned int baseState = rand();
-
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned int state = baseState + i * 12345;
-
-        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, &state);
-    }
+    for (int i = 0; i < numHiddenColumns; i++)
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
 
     if (learnEnabled) {
         #pragma omp parallel for
