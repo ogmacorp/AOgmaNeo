@@ -90,10 +90,12 @@ void Encoder::activate(
         }
     }
 
-    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
-
-    if (maxIndex == -1)
+    if (maxIndex == -1) {
         maxIndex = backupMaxIndex;
+        hiddenMaxActs[hiddenColumnIndex] = 0.0f;
+    }
+    else
+        hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
@@ -166,7 +168,7 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc != inCI)
-                        vl.weights[wi] = max(0, roundf(vl.weights[wi] - lr * 255.0f));
+                        vl.weights[wi] = max(0, static_cast<int>(vl.weights[wi] - lr * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
                 }
