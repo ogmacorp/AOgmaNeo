@@ -90,15 +90,10 @@ void Encoder::activate(
         }
     }
 
-    if (maxIndex == -1) {
-        hiddenModes[hiddenColumnIndex] = ignore;
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
+
+    if (maxIndex == -1)
         maxIndex = backupMaxIndex;
-        hiddenMaxActs[hiddenColumnIndex] = 0.0f;
-    }
-    else {
-        hiddenModes[hiddenColumnIndex] = update;
-        hiddenMaxActs[hiddenColumnIndex] = maxActivation;
-    }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
@@ -111,7 +106,7 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    if (hiddenModes[hiddenColumnIndex] == ignore)
+    if (hiddenMaxActs[hiddenColumnIndex] == 0.0f) // Ignore
         return;
 
     float maxAct = hiddenMaxActs[hiddenColumnIndex];
@@ -218,8 +213,6 @@ void Encoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 255 - rand() % 3;
     }
-
-    hiddenModes = Array<Mode>(numHiddenColumns);
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
@@ -365,8 +358,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
-
-    hiddenModes = Array<Mode>(numHiddenColumns);
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
