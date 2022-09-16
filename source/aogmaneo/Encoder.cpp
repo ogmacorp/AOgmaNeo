@@ -90,16 +90,10 @@ void Encoder::activate(
         }
     }
 
-    hiddenModes[hiddenColumnIndex] = update;
-
-    bool found = maxIndex != -1;
-
-    if (!found) {
-        maxIndex = backupMaxIndex;
-        hiddenModes[hiddenColumnIndex] = ignore;
-    }
-
     hiddenMaxActs[hiddenColumnIndex] = maxActivation;
+
+    if (maxIndex == -1)
+        maxIndex = backupMaxIndex;
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
@@ -112,7 +106,7 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    if (hiddenModes[hiddenColumnIndex] == ignore)
+    if (hiddenMaxActs[hiddenColumnIndex] == 0.0f) // Ignore
         return;
 
     float maxAct = hiddenMaxActs[hiddenColumnIndex];
@@ -120,15 +114,12 @@ void Encoder::learn(
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
         for (int dy = -lRadius; dy <= lRadius; dy++) {
-            if (dx == 0 && dy == 0)
-                continue;
-
             Int2 otherColumnPos(columnPos.x + dx, columnPos.y + dy);
 
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenMaxActs[otherHiddenColumnIndex] >= maxAct)
+                if (hiddenMaxActs[otherHiddenColumnIndex] > maxAct)
                     return;
             }
         }
@@ -220,10 +211,8 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 256;
+            vl.weights[i] = 255 - rand() % 3;
     }
-
-    hiddenModes = Array<Mode>(numHiddenColumns);
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
@@ -369,8 +358,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
-
-    hiddenModes = Array<Mode>(numHiddenColumns);
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
