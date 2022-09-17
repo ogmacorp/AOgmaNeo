@@ -66,7 +66,7 @@ void Encoder::activate(
                     subSum += vl.weights[wi];
                 }
 
-            subSum /= subCount * 255.0f;
+            subSum /= subCount;
 
             sum += subSum * vl.importance;
             totalImportance += vl.importance;
@@ -168,13 +168,13 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc != inCI)
-                        vl.weights[wi] = max(0, static_cast<int>(vl.weights[wi] - rate * vl.weights[wi]));
+                        vl.weights[wi] = max(0.0f, vl.weights[wi] - rate * vl.weights[wi]);
 
                     subTotal += vl.weights[wi];
                 }
             }
 
-        subTotal /= subCount * 255.0f;
+        subTotal /= subCount;
 
         total += subTotal * vl.importance;
         totalImportance += vl.importance;
@@ -215,7 +215,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 256;
+            vl.weights[i] = randf(0.0f, 1.0f);
     }
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns);
@@ -276,7 +276,7 @@ void Encoder::initRandom(
                         }
                     }
 
-                subTotal /= subCount * 255.0f;
+                subTotal /= subCount;
 
                 total += subTotal * vl.importance;
                 totalImportance += vl.importance;
@@ -312,7 +312,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte) +  sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) +  sizeof(float);
     }
 
     return size;
@@ -348,7 +348,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
@@ -402,7 +402,7 @@ void Encoder::read(
 
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
