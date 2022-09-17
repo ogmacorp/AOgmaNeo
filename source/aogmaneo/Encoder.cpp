@@ -168,7 +168,7 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc != inCI)
-                        vl.weights[wi] = max(0, static_cast<int>(vl.weights[wi] - lr * vl.weights[wi]));
+                        vl.weights[wi] = max(0, static_cast<int>(vl.weights[wi] - rate * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
                 }
