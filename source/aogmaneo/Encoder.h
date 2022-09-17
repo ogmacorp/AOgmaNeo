@@ -47,6 +47,8 @@ private:
 
     IntBuffer hiddenCIs;
 
+    ByteBuffer hiddenCommits;
+
     FloatBuffer hiddenTotals;
 
     // Visible layers and associated descriptors
@@ -73,8 +75,8 @@ public:
 
     Encoder()
     :
-    gap(8.0f),
-    vigilance(0.7f),
+    gap(0.1f),
+    vigilance(0.4f),
     lr(0.5f),
     lRadius(2)
     {}
