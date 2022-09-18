@@ -106,9 +106,6 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    if (hiddenMaxActs[hiddenColumnIndex] == 0.0f) // Ignore
-        return;
-
     float maxAct = hiddenMaxActs[hiddenColumnIndex];
 
     // Check in radius
