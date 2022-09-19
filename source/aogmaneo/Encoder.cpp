@@ -114,12 +114,15 @@ void Encoder::learn(
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
         for (int dy = -lRadius; dy <= lRadius; dy++) {
+            if (dx == 0 && dy == 0)
+                continue;
+
             Int2 otherColumnPos(columnPos.x + dx, columnPos.y + dy);
 
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenMaxActs[otherHiddenColumnIndex] > maxAct)
+                if (hiddenMaxActs[otherHiddenColumnIndex] >= maxAct)
                     return;
             }
         }
