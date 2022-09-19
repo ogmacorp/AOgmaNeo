@@ -108,6 +108,9 @@ void Encoder::learn(
 
     float maxAct = hiddenMaxActs[hiddenColumnIndex];
 
+    if (maxAct == 0.0f) // Ignore
+        return;
+
     // Check in radius
     for (int dx = -lRadius; dx <= lRadius; dx++)
         for (int dy = -lRadius; dy <= lRadius; dy++) {
