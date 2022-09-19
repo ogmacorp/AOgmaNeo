@@ -43,13 +43,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenMaxActs;
-
     IntBuffer hiddenCIs;
-
-    ByteBuffer hiddenCommits;
-
-    FloatBuffer hiddenTotals;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -64,21 +58,18 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
-    float gap;
-    float vigilance;
+    float scale;
     float lr; // Learning rate
-    int lRadius;
 
     Encoder()
     :
-    gap(0.01f),
-    vigilance(0.1f),
-    lr(0.5f),
-    lRadius(2)
+    scale(8.0f),
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
