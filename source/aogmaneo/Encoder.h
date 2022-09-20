@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         ByteBuffer weights;
 
+        FloatBuffer reconsTemp;
+
         float importance;
 
         VisibleLayer()
