@@ -223,8 +223,8 @@ void ImageEncoder::learn(
 
                         float input = (*inputs[vli])[visibleCellIndex];
 
-                        vl.weights0[wi] = max(0, roundf(vl.weights0[wi] + lr * min(0.0f, input - vl.weights0[wi])));
-                        vl.weights1[wi] = max(0, roundf(vl.weights1[wi] + lr * min(0.0f, 255.0f - input - vl.weights1[wi])));
+                        vl.weights0[wi] = max(0, static_cast<int>(vl.weights0[wi] + lr * min(0.0f, input - vl.weights0[wi])));
+                        vl.weights1[wi] = max(0, static_cast<int>(vl.weights1[wi] + lr * min(0.0f, 255.0f - input - vl.weights1[wi])));
                     }
                 }
         }
