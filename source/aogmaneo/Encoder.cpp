@@ -105,12 +105,15 @@ void Encoder::learn(
             }
         }
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
+    for (int dhc = -1; dhc <= 1; dhc++) {
+        int hc = hiddenCIs[hiddenColumnIndex] + dhc;
+
+        if (hc < 0 || hc >= hiddenSize.z)
+            continue;
+
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float diff = hiddenCIs[hiddenColumnIndex] - hc;
-
-        float rate = expf(-falloff * diff * diff / max(0.0001f, hiddenRates[hiddenCellIndex])) * hiddenRates[hiddenCellIndex];
+        float rate = hiddenRates[hiddenCellIndex];
 
         if (numHigher > 0)
             rate *= boost;
