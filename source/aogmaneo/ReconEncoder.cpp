@@ -1,16 +1,16 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
-#include "ReconEncoder.h"
+#include "Encoder.h"
 
 using namespace aon;
 
-void ReconEncoder::forward(
+void Encoder::activate(
     const Int2 &columnPos,
     const Array<const IntBuffer*> &inputCIs
 ) {
@@ -19,7 +19,7 @@ void ReconEncoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    float maxActivation = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -45,8 +45,9 @@ void ReconEncoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            float subSum = 0.0f;
             int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+
+            float subSum = 0.0f;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -61,7 +62,7 @@ void ReconEncoder::forward(
                     subSum += vl.weights[wi];
                 }
 
-            subSum /= subCount;
+            subSum /= subCount * 255.0f;
 
             sum += subSum * vl.importance;
         }
@@ -75,7 +76,7 @@ void ReconEncoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
-void ReconEncoder::learn(
+void Encoder::learn(
     const Int2 &columnPos,
     const IntBuffer* inputCIs,
     int vli
@@ -138,7 +139,7 @@ void ReconEncoder::learn(
                 }
             }
 
-        sum /= max(1, count);
+        sum /= max(1, count) * 255.0f;
 
         vl.reconsTemp[visibleCellIndex] = sum;
 
@@ -152,7 +153,7 @@ void ReconEncoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - expf(vl.reconsTemp[visibleCellIndex]));
+            float delta = lr * ((vc == targetCI) - expf(scale * (vl.reconsTemp[visibleCellIndex] - 1.0f)));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -169,14 +170,14 @@ void ReconEncoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                        vl.weights[wi] += delta;
+                        vl.weights[wi] = min(255, max(0, static_cast<int>(vl.weights[wi] + delta * vl.weights[wi])));
                     }
                 }
         }
     }
 }
 
-void ReconEncoder::initRandom(
+void Encoder::initRandom(
     const Int3 &hiddenSize,
     const Array<VisibleLayerDesc> &visibleLayerDescs
 ) {
@@ -204,15 +205,15 @@ void ReconEncoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 0.0f);
+            vl.weights[i] = 255 - rand() % 128;
 
-        vl.reconsTemp = FloatBuffer(numVisibleCells, 0.0f);
+        vl.reconsTemp = FloatBuffer(numVisibleCells);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
-void ReconEncoder::step(
+void Encoder::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled
 ) {
@@ -220,7 +221,7 @@ void ReconEncoder::step(
     
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
 
     if (learnEnabled) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -235,27 +236,28 @@ void ReconEncoder::step(
     }
 }
 
-int ReconEncoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+int Encoder::size() const {
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte) +  sizeof(float);
     }
 
     return size;
 }
 
-int ReconEncoder::stateSize() const {
+int Encoder::stateSize() const {
     return hiddenCIs.size() * sizeof(int);
 }
 
-void ReconEncoder::write(
+void Encoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
+    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
@@ -270,13 +272,13 @@ void ReconEncoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
-void ReconEncoder::read(
+void Encoder::read(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
@@ -284,6 +286,7 @@ void ReconEncoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
+    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
@@ -311,21 +314,21 @@ void ReconEncoder::read(
 
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
-        vl.reconsTemp = FloatBuffer(numVisibleCells, 0.0f);
+        vl.reconsTemp = FloatBuffer(numVisibleCells);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 
-void ReconEncoder::writeState(
+void Encoder::writeState(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 }
 
-void ReconEncoder::readState(
+void Encoder::readState(
     StreamReader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));

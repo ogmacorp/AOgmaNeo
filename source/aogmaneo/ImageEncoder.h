@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -36,10 +36,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights0;
-        FloatBuffer weights1;
+        ByteBuffer weights0;
+        ByteBuffer weights1;
 
-        FloatBuffer weightsRecon;
+        ByteBuffer weightsRecon;
 
         ByteBuffer reconstruction;
 
@@ -96,15 +96,13 @@ public:
     float vigilance;
     float lr; // Learning rate
     float rr; // Recon rate
-    int lRadius;
 
     ImageEncoder()
     :
-    gap(0.01f),
+    gap(0.1f),
     vigilance(0.9f),
     lr(0.1f),
-    rr(0.1f),
-    lRadius(0)
+    rr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization

@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -12,7 +12,7 @@
 
 namespace aon {
 // Sparse coder
-class ErrorEncoder {
+class Encoder {
 public:
     // Visible layer descriptor
     struct VisibleLayerDesc {
@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        ByteBuffer weights;
 
-        IntBuffer inputCIsPrev;
+        FloatBuffer reconsTemp;
 
         float importance;
 
@@ -45,7 +45,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActivations;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -54,18 +53,24 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
-    float lr;
+    float scale;
+    float lr; // Learning rate
 
-    ErrorEncoder()
+    Encoder()
     :
+    scale(8.0f),
     lr(0.1f)
     {}
 
@@ -77,14 +82,7 @@ public:
 
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
-    );
-
-    void reconstruct(
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
     );
 
     // Serialization
@@ -114,23 +112,23 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayerDescs[vli];
+        return visibleLayerDescs[i];
     }
 
     // Get the hidden states

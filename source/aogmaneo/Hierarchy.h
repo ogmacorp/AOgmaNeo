@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include "ReconEncoder.h"
-#include "ErrorEncoder.h"
+#include "Encoder.h"
 #include "Decoder.h"
 #include "Actor.h"
 
@@ -33,12 +32,21 @@ public:
 
         int historyCapacity;
 
+        IODesc()
+        :
+        size(4, 4, 16),
+        type(prediction),
+        eRadius(2),
+        dRadius(2),
+        historyCapacity(64)
+        {}
+
         IODesc(
-            const Int3 &size = Int3(4, 4, 16),
-            IOType type = prediction,
-            int eRadius = 2,
-            int dRadius = 2,
-            int historyCapacity = 64
+            const Int3 &size,
+            IOType type,
+            int eRadius,
+            int dRadius,
+            int historyCapacity
         )
         :
         size(size),
@@ -59,12 +67,21 @@ public:
         int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
         int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
+        LayerDesc()
+        :
+        hiddenSize(4, 4, 16),
+        eRadius(2),
+        dRadius(2),
+        ticksPerUpdate(2),
+        temporalHorizon(4)
+        {}
+
         LayerDesc(
-            const Int3 &hiddenSize = Int3(4, 4, 16),
-            int eRadius = 2,
-            int dRadius = 2,
-            int ticksPerUpdate = 2,
-            int temporalHorizon = 4
+            const Int3 &hiddenSize,
+            int eRadius,
+            int dRadius,
+            int ticksPerUpdate,
+            int temporalHorizon
         )
         :
         hiddenSize(hiddenSize),
@@ -77,11 +94,9 @@ public:
 
 private:
     // Layers
-    Array<ReconEncoder> rLayers;
-    Array<ErrorEncoder> eLayers;
+    Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
-    Array<FloatBuffer> errors; // Accumulation
 
     // For mapping first layer decoders
     IntBuffer iIndices;
@@ -223,28 +238,14 @@ public:
     }
 
     // Retrieve a sparse coding layer
-    ReconEncoder &getReconEnc(
-        int l
-    ) {
-        return rLayers[l];
-    }
-
-    // Retrieve a sparse coding layer, const version
-    const ReconEncoder &getReconEnc(
-        int l
-    ) const {
-        return rLayers[l];
-    }
-
-    // Retrieve a sparse coding layer
-    ErrorEncoder &getErrorEnc(
+    Encoder &getELayer(
         int l
     ) {
         return eLayers[l];
     }
 
     // Retrieve a sparse coding layer, const version
-    const ErrorEncoder &getErrorEnc(
+    const Encoder &getELayer(
         int l
     ) const {
         return eLayers[l];
