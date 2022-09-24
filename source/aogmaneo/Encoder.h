@@ -30,7 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        ByteBuffer weights;
+
+        FloatBuffer reconsTemp;
 
         float importance;
 
@@ -51,7 +53,7 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
@@ -63,10 +65,12 @@ private:
     );
 
 public:
-    float lr;
+    float scale;
+    float lr; // Learning rate
 
     Encoder()
     :
+    scale(8.0f),
     lr(0.1f)
     {}
 
@@ -108,23 +112,23 @@ public:
 
     // Get a visible layer
     VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayerDescs[vli];
+        return visibleLayerDescs[i];
     }
 
     // Get the hidden states
