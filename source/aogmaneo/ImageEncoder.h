@@ -39,7 +39,7 @@ public:
         ByteBuffer weights0;
         ByteBuffer weights1;
 
-        ByteBuffer weightsRecon;
+        FloatBuffer weightsRecon;
 
         ByteBuffer reconstruction;
 
@@ -102,7 +102,7 @@ public:
     gap(0.1f),
     vigilance(0.9f),
     lr(0.1f),
-    rr(0.1f)
+    rr(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization

@@ -267,7 +267,7 @@ void ImageEncoder::learnReconstruction(
         int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
-        float total = 0.0f;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -283,17 +283,14 @@ void ImageEncoder::learnReconstruction(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                    float strength = min(1.0f - distX, 1.0f - distY);
-
-                    sum += strength * vl.weightsRecon[wi];
-                    total += strength;
+                    sum += vl.weightsRecon[wi];
+                    count++;
                 }
             }
 
-        float delta = rr * ((*inputs)[visibleCellIndex] - sum / max(0.0001f, total));
+        sum /= max(1, count);
+
+        float delta = rr * ((*inputs)[visibleCellIndex] / 255.0f - sum);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -309,7 +306,7 @@ void ImageEncoder::learnReconstruction(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weightsRecon[wi] = min(255, max(0, roundf(vl.weightsRecon[wi] + delta)));
+                    vl.weightsRecon[wi] += delta;
                 }
             }
     }
@@ -352,7 +349,7 @@ void ImageEncoder::reconstruct(
         int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
-        float total = 0.0f;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -368,17 +365,14 @@ void ImageEncoder::reconstruct(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                    float strength = min(1.0f - distX, 1.0f - distY);
-
-                    sum += strength * vl.weightsRecon[wi];
-                    total += strength;
+                    sum += vl.weightsRecon[wi];
+                    count++;
                 }
             }
 
-        vl.reconstruction[visibleCellIndex] = roundf(min(255.0f, max(0.0f, sum / max(0.0001f, total))));
+        sum /= max(1, count);
+
+        vl.reconstruction[visibleCellIndex] = min(255, max(0, roundf(255.0f * sum)));
     }
 }
 
@@ -410,7 +404,7 @@ void ImageEncoder::initRandom(
         vl.weights0.resize(numHiddenCells * area * vld.size.z);
         vl.weights1.resize(vl.weights0.size());
 
-        vl.weightsRecon = ByteBuffer(vl.weights0.size(), 0);
+        vl.weightsRecon = FloatBuffer(vl.weights0.size(), 0.0f);
 
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
@@ -479,7 +473,7 @@ int ImageEncoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(Byte) + vl.weightsRecon.size() * sizeof(Byte) + vl.reconstruction.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(Byte) + vl.weightsRecon.size() * sizeof(float) + vl.reconstruction.size() * sizeof(Byte) + sizeof(float);
     }
 
     return size;
@@ -514,7 +508,7 @@ void ImageEncoder::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
         writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weightsRecon[0]), vl.weightsRecon.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weightsRecon[0]), vl.weightsRecon.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
 
@@ -570,7 +564,7 @@ void ImageEncoder::read(
         reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
         reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
 
-        reader.read(reinterpret_cast<void*>(&vl.weightsRecon[0]), vl.weightsRecon.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weightsRecon[0]), vl.weightsRecon.size() * sizeof(float));
 
         vl.reconstruction.resize(numVisibleCells);
 
