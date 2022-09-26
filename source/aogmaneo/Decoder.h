@@ -66,7 +66,7 @@ public:
     Decoder()
     :
     scale(5.0f),
-    lr(0.1f)
+    lr(0.04f)
     {}
 
     // Create with random initialization
