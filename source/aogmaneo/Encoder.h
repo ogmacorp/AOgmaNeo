@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        FloatBuffer weights;
 
         FloatBuffer reconsTemp;
 
@@ -65,12 +65,10 @@ private:
     );
 
 public:
-    float scale;
     float lr; // Learning rate
 
     Encoder()
     :
-    scale(8.0f),
     lr(0.1f)
     {}
 
