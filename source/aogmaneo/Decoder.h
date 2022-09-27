@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer weights;
+        FloatBuffer weights;
     };
 
 private:
@@ -58,13 +58,11 @@ private:
     );
 
 public:
-    float scale;
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
-    scale(8.0f),
     lr(0.1f)
     {}
 
