@@ -114,7 +114,7 @@ void Decoder::learn(
 
         sum /= count;
 
-        float delta = lr * ((hc == targetCI) - min(1.0f, max(0.0f, sum)));
+        float delta = lr * ((hc == targetCI) - sigmoidf(sum));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -152,7 +152,7 @@ void Decoder::initRandom(
     vl.weights.resize(numHiddenCells * area * vld.size.z * vld.size.z);
 
     for (int i = 0; i < vl.weights.size(); i++)
-        vl.weights[i] = randf(0.0f, 0.01f);
+        vl.weights[i] = randf(-0.01f, 0.01f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
