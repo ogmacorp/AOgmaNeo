@@ -137,8 +137,7 @@ void Hierarchy::initRandom(
 void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
-    float reward,
-    bool mimic
+    float reward
 ) {
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
@@ -196,7 +195,7 @@ void Hierarchy::step(
 
         if (l == 0) {
             for (int d = 0; d < aLayers.size(); d++)
-                aLayers[d].step(dInputCIs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled, mimic);
+                aLayers[d].step(dInputCIs, inputCIs[iIndices[d + ioSizes.size()]], reward, learnEnabled);
         }
     }
 }
