@@ -47,6 +47,8 @@ private:
 
     IntBuffer hiddenCIs;
 
+    FloatBuffer hiddenRates;
+
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
@@ -64,12 +66,16 @@ private:
         int vli
     );
 
+    void decay(
+        const Int2 &columnPos
+    );
+
 public:
     float lr; // Learning rate
 
     Encoder()
     :
-    lr(0.1f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization
