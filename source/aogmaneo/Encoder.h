@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        ByteBuffer weights;
 
         FloatBuffer reconsTemp;
 
@@ -46,8 +46,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs;
-
-    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -66,16 +64,14 @@ private:
         int vli
     );
 
-    void decay(
-        const Int2 &columnPos
-    );
-
 public:
+    float scale;
     float lr; // Learning rate
 
     Encoder()
     :
-    lr(0.01f)
+    scale(8.0f),
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
