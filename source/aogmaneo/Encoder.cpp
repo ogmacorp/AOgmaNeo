@@ -213,7 +213,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -235,7 +235,6 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&boost), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&falloff), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&groupRadius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
@@ -268,7 +267,6 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
     hiddenActs = FloatBuffer(numHiddenColumns, 0.0f);
