@@ -85,6 +85,9 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
+    if (hiddenCIs[hiddenColumnIndex] == targetCI)
+        return;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -155,13 +158,13 @@ void Decoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5 - 2;
 
-        vl.inputCIsPrev = IntBuffer(numVisibleColumns, vld.size.z / 2);
+        vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
 void Decoder::activate(

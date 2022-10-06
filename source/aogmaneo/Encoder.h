@@ -14,6 +14,12 @@ namespace aon {
 // Sparse coder
 class Encoder {
 public:
+    enum Mode {
+        commit = 0,
+        update = 1,
+        ignore = 2
+    };
+
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -43,11 +49,13 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    Array<Mode> hiddenModes;
+
     FloatBuffer hiddenMaxActs;
 
     IntBuffer hiddenCIs;
 
-    ByteBuffer hiddenCommits;
+    IntBuffer hiddenCommits;
 
     FloatBuffer hiddenTotals;
 
@@ -59,7 +67,8 @@ private:
     
     void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
@@ -77,7 +86,7 @@ public:
     :
     gap(0.1f),
     vigilance(0.9f),
-    lr(0.5f),
+    lr(0.1f),
     lRadius(2)
     {}
 
@@ -141,6 +150,11 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    // Get the hidden commits
+    const IntBuffer &getHiddenCommits() const {
+        return hiddenCommits;
     }
 
     // Get the hidden size
