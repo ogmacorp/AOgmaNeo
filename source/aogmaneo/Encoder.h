@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer protos;
 
+        FloatBuffer reconstruction;
+
         float importance;
 
         VisibleLayer()
@@ -42,11 +44,12 @@ public:
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
-
-    FloatBuffer hiddenActs;
-    FloatBuffer hiddenRates;
+    Int2 clumpSize;
+    Int2 numClumps;
 
     IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -54,36 +57,37 @@ private:
 
     // --- Kernels ---
     
-    void forward(
+    void resetReconstruction(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* inputCIs,
+        int vli
+    );
+    
+    void forward(
+        const Int2 &clumpPos,
+        int priority,
+        bool learnEnabled
     );
 
-    void learn(
+    void reconstruct(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        int priority,
+        int vli
     );
 
 public:
-    float vigilance;
     float lr;
-    float boost;
-    float falloff;
-    int groupRadius;
 
     // Defaults
     Encoder()
     :
-    vigilance(0.03f),
-    lr(0.1f),
-    boost(0.01f),
-    falloff(0.1f),
-    groupRadius(1)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
+        const Int2 &clumpSize,
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
@@ -142,11 +146,6 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
-    }
-
-    // Get the hidden rates
-    const FloatBuffer &getHiddenRates() const {
-        return hiddenRates;
     }
 
     // Get the hidden size

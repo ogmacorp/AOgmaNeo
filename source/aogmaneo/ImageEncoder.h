@@ -62,13 +62,11 @@ private:
 
 public:
     float lr;
-    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.1f),
-    falloff(0.1f)
+    lr(0.1f)
     {}
 
     void initRandom(
