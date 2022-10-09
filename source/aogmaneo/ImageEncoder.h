@@ -39,7 +39,7 @@ public:
         ByteBuffer weights0;
         ByteBuffer weights1;
 
-        ByteBuffer weightsRecon;
+        FloatBuffer weightsRecon;
 
         ByteBuffer reconstruction;
 
@@ -99,8 +99,8 @@ public:
 
     ImageEncoder()
     :
-    gap(1.0f),
-    vigilance(0.9f),
+    gap(0.1f),
+    vigilance(0.95f),
     lr(0.1f),
     rr(0.1f)
     {}
