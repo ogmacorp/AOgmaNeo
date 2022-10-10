@@ -319,3 +319,14 @@ void Decoder::readState(
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
     }
 }
+
+void Decoder::clearState() {
+    hiddenCIs.fill(0);
+    hiddenActs.fill(0.0f);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        vl.inputCIsPrev.fill(0);
+    }
+}

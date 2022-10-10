@@ -131,6 +131,8 @@ public:
         StreamReader &reader
     );
 
+    void clearState();
+
     // Get number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();

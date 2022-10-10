@@ -739,3 +739,10 @@ void Actor::readState(
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
 }
+
+void Actor::clearState() {
+    hiddenCIs.fill(0);
+    hiddenValues.fill(0.0f);
+
+    historySize = 0;
+}

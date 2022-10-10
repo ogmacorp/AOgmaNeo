@@ -135,6 +135,8 @@ public:
         StreamReader &reader
     );
 
+    void clearState();
+
     // Get the number of layers (eLayers)
     int getNumLayers() const {
         return eLayers.size();

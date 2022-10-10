@@ -107,6 +107,10 @@ public:
         StreamReader &reader
     );
 
+    void clearState() {
+        hiddenCIs.fill(0);
+    }
+
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();

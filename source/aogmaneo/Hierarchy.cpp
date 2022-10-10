@@ -501,3 +501,25 @@ void Hierarchy::readState(
     for (int d = 0; d < aLayers.size(); d++)
         aLayers[d].readState(reader);
 }
+
+void Hierarchy::clearState() {
+    updates.fill(false);
+    ticks.fill(0);
+
+    for (int l = 0; l < eLayers.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            for (int t = 0; t < histories[l][i].size(); t++)
+                histories[l][i][t].fill(0);
+        }
+
+        eLayers[l].clearState();
+        
+        // Decoders
+        for (int d = 0; d < dLayers[l].size(); d++)
+            dLayers[l][d].clearState();
+    }
+
+    // Actors
+    for (int d = 0; d < aLayers.size(); d++)
+        aLayers[d].clearState();
+}
