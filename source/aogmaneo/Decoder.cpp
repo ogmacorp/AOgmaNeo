@@ -238,9 +238,9 @@ void Decoder::bLearn(
 
         sum /= max(1, count);
 
-        float activation = max(0.0f, tanhf(sum));
+        float activation = sigmoidf(sum);
 
-        float delta = blr * (vl.inputActsPrev[visibleCellIndex] - activation);
+        float delta = blr * ((vc == vl.inputCIsPrev[visibleColumnIndex]) - activation);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
