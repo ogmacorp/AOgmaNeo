@@ -120,6 +120,7 @@ void Encoder::forward(
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
+
     hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 }
 

@@ -84,7 +84,7 @@ public:
     // Defaults
     Decoder()
     :
-    flr(0.5f),
+    flr(1.0f),
     blr(0.1f)
     {}
 
