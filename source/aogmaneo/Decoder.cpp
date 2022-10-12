@@ -208,6 +208,8 @@ void Decoder::bLearn(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
+    float maxActivation = -999999.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
 
@@ -238,9 +240,29 @@ void Decoder::bLearn(
 
         sum /= max(1, count);
 
-        float activation = sigmoidf(sum);
+        vl.inputActsTemp[visibleCellIndex] = sum;
 
-        float delta = blr * ((vc == vl.inputCIsPrev[visibleColumnIndex]) - activation);
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        vl.inputActsTemp[visibleCellIndex] = expf(vl.inputActsTemp[visibleCellIndex] - maxActivation);
+
+        total += vl.inputActsTemp[visibleCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        vl.inputActsTemp[visibleCellIndex] *= scale;
+
+        float delta = blr * ((vc == vl.inputCIsPrev[visibleColumnIndex]) - vl.inputActsTemp[visibleCellIndex]);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -417,11 +439,13 @@ void Decoder::initRandom(
             vl.bWeights.resize(vl.fWeights.size());
 
             for (int i = 0; i < vl.bWeights.size(); i++)
-                vl.bWeights[i] = randf(0.0f, 0.01f);
+                vl.bWeights[i] = randf(-0.01f, 0.01f);
         }
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
         vl.inputActsPrev = FloatBuffer(numVisibleCells, -1.0f); // Flag
+
+        vl.inputActsTemp = FloatBuffer(numVisibleCells);
     }
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
@@ -610,6 +634,8 @@ void Decoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&vl.inputActsPrev[0]), vl.inputActsPrev.size() * sizeof(float));
+
+        vl.inputActsTemp = FloatBuffer(numVisibleCells);
     }
 }
 
