@@ -366,6 +366,18 @@ void Decoder::generateErrors(
         generateErrors(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, visibleErrors, vli);
 }
 
+void Decoder::clearState() {
+    hiddenCIs.fill(0);
+    hiddenActs.fill(0.0f);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        vl.inputCIsPrev.fill(0);
+        vl.inputActsPrev.fill(-1.0f);
+    }
+}
+
 int Decoder::size() const {
     int size = sizeof(Int3) + sizeof(float) + hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 

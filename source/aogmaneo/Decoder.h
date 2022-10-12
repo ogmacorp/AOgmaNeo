@@ -99,6 +99,9 @@ public:
         int vli
     );
 
+    // Clear out working memory
+    void clearState();
+
     // Serialization
     int size() const; // Returns size in bytes
     int stateSize() const; // Returns size of state in bytes

@@ -193,6 +193,17 @@ void Encoder::step(
     }
 }
 
+void Encoder::clearState() {
+    hiddenCIs.fill(0);
+    hiddenActs.fill(0.0f);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        vl.inputCIsPrev.fill(0);
+    }
+}
+
 int Encoder::size() const {
     int size = sizeof(Int3) + 2 * sizeof(float) + hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
