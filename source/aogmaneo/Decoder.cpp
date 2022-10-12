@@ -12,8 +12,7 @@ using namespace aon;
 
 void Decoder::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
-    const Array<const FloatBuffer*> &inputActs
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -55,28 +54,11 @@ void Decoder::forward(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    if (inputActs[vli] == nullptr) {
-                        int inCI = (*inputCIs[vli])[visibleColumnIndex];
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                        int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        sum += vl.fWeights[wi];
-                    }
-                    else {
-                        int visibleCellsStart = visibleColumnIndex * vld.size.z;
-
-                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                        for (int vc = 0; vc < vld.size.z; vc++) {
-                            int visibleCellIndex = vc + visibleCellsStart;
-
-                            float inAct = (*inputActs[vli])[visibleCellIndex];
-
-                            int wi = vc + wiStart;
-
-                            sum += vl.fWeights[wi] * inAct;
-                        }
-                    }
+                    sum += vl.fWeights[wi];
                 }
         }
 
@@ -151,26 +133,11 @@ void Decoder::fLearn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int visibleCellsStart = visibleColumnIndex * vld.size.z;
+                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    if (vl.inputActsPrev[visibleCellsStart] == -1.0f) {
-                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                        vl.fWeights[wi] += delta;
-                    }
-                    else {
-                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                        for (int vc = 0; vc < vld.size.z; vc++) {
-                            int visibleCellIndex = vc + visibleCellsStart;
-
-                            int wi = vc + wiStart;
-
-                            vl.fWeights[wi] += delta * vl.inputActsPrev[visibleCellIndex];
-                        }
-                    }
+                    vl.fWeights[wi] += delta;
                 }
         }
     }
@@ -320,89 +287,43 @@ void Decoder::generateErrors(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
-    if (vl.inputActsPrev[visibleCellsStart] == -1.0f) {
-        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-        int visibleCellIndex = inCIPrev + visibleCellsStart;
+    int visibleCellIndex = inCIPrev + visibleCellsStart;
 
-        float sum = 0.0f;
-        int count = 0;
+    float sum = 0.0f;
+    int count = 0;
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                Int2 hiddenPos = Int2(ix, iy);
+    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+            Int2 hiddenPos = Int2(ix, iy);
 
-                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+            int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                Int2 visibleCenter = project(hiddenPos, hToV);
+            Int2 visibleCenter = project(hiddenPos, hToV);
 
-                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+            if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+                int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-                    for (int hc = 0; hc < hiddenSize.z; hc++) {
-                        int hiddenCellIndex = hc + hiddenCellsStart;
+                for (int hc = 0; hc < hiddenSize.z; hc++) {
+                    int hiddenCellIndex = hc + hiddenCellsStart;
 
-                        float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActs[hiddenCellIndex];
+                    float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActs[hiddenCellIndex];
 
-                        int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                        sum += error * vl.bWeights[wi];
-                    }
-
-                    count++;
+                    sum += error * vl.bWeights[wi];
                 }
+
+                count++;
             }
-
-        sum /= max(1, count);
-
-        (*visibleErrors)[visibleCellIndex] += sum;
-    }
-    else {
-        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
-
-        for (int vc = 0; vc < vld.size.z; vc++) {
-            int visibleCellIndex = vc + visibleCellsStart;
-
-            if (vl.inputActsPrev[visibleCellIndex] == 0.0f)
-                continue;
-
-            float sum = 0.0f;
-            int count = 0;
-
-            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    Int2 hiddenPos = Int2(ix, iy);
-
-                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-
-                    Int2 visibleCenter = project(hiddenPos, hToV);
-
-                    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
-
-                        int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
-
-                        for (int hc = 0; hc < hiddenSize.z; hc++) {
-                            int hiddenCellIndex = hc + hiddenCellsStart;
-
-                            float error = (hc == (*hiddenTargetCIs)[hiddenColumnIndex]) - hiddenActs[hiddenCellIndex];
-
-                            int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                            sum += error * vl.bWeights[wi];
-                        }
-
-                        count++;
-                    }
-                }
-
-            sum /= max(1, count);
-
-            (*visibleErrors)[visibleCellIndex] += sum;
         }
-    }
+
+    sum /= max(1, count);
+
+    (*visibleErrors)[visibleCellIndex] += sum;
 }
 
 void Decoder::initRandom(
@@ -443,7 +364,6 @@ void Decoder::initRandom(
         }
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
-        vl.inputActsPrev = FloatBuffer(numVisibleCells, -1.0f); // Flag
 
         vl.inputActsTemp = FloatBuffer(numVisibleCells);
     }
@@ -455,26 +375,20 @@ void Decoder::initRandom(
 }
 
 void Decoder::activate(
-    const Array<const IntBuffer*> &inputCIs,
-    const Array<const FloatBuffer*> &inputActs
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, inputActs);
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
 
     // Copy to prevs
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
 
         vl.inputCIsPrev = *inputCIs[vli];
-        
-        if (inputActs[vli] == nullptr)
-            vl.inputActsPrev.fill(-1.0f); // Flag
-        else
-            vl.inputActsPrev = *inputActs[vli];
     }
 }
 
@@ -529,7 +443,6 @@ void Decoder::clearState() {
         VisibleLayer &vl = visibleLayers[vli];
 
         vl.inputCIsPrev.fill(0);
-        vl.inputActsPrev.fill(-1.0f);
     }
 }
 
@@ -540,7 +453,7 @@ int Decoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.fWeights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int) + vl.inputActsPrev.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.fWeights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
@@ -552,7 +465,7 @@ int Decoder::stateSize() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += vl.inputCIsPrev.size() * sizeof(int) + vl.inputActsPrev.size() * sizeof(float);
+        size += vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
@@ -583,7 +496,6 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vl.bWeights[0]), vl.bWeights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-        writer.write(reinterpret_cast<const void*>(&vl.inputActsPrev[0]), vl.inputActsPrev.size() * sizeof(float));
     }
 }
 
@@ -630,10 +542,8 @@ void Decoder::read(
         reader.read(reinterpret_cast<void*>(&vl.bWeights[0]), vl.bWeights.size() * sizeof(float));
 
         vl.inputCIsPrev.resize(numVisibleColumns);
-        vl.inputActsPrev.resize(numVisibleCells);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-        reader.read(reinterpret_cast<void*>(&vl.inputActsPrev[0]), vl.inputActsPrev.size() * sizeof(float));
 
         vl.inputActsTemp = FloatBuffer(numVisibleCells);
     }
@@ -649,7 +559,6 @@ void Decoder::writeState(
         const VisibleLayer &vl = visibleLayers[vli];
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-        writer.write(reinterpret_cast<const void*>(&vl.inputActsPrev[0]), vl.inputActsPrev.size() * sizeof(float));
     }
 }
 
@@ -663,6 +572,5 @@ void Decoder::readState(
         VisibleLayer &vl = visibleLayers[vli];
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-        reader.read(reinterpret_cast<void*>(&vl.inputActsPrev[0]), vl.inputActsPrev.size() * sizeof(float));
     }
 }

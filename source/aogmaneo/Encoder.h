@@ -45,8 +45,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActs;
-
     IntBuffer hiddenCIs;
     
     // Visible layers and associated descriptors
@@ -131,11 +129,6 @@ public:
         int vli // Index of visible layer
     ) const {
         return visibleLayerDescs[vli];
-    }
-
-    // Get the hidden states
-    const FloatBuffer &getHiddenActs() const {
-        return hiddenActs;
     }
 
     // Get the hidden states

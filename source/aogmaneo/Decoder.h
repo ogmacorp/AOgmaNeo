@@ -37,7 +37,6 @@ public:
         FloatBuffer bWeights; // May be empty
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-        FloatBuffer inputActsPrev;
 
         FloatBuffer inputActsTemp; // For backward training
     };
@@ -57,8 +56,7 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void fLearn(
@@ -98,8 +96,7 @@ public:
 
     // Activate the predictor (predict values)
     void activate(
-        const Array<const IntBuffer*> &inputCIs,
-        const Array<const FloatBuffer*> &inputActs
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Learning predictions (update weights)
