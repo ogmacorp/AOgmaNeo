@@ -540,7 +540,7 @@ int Decoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.fWeights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int) + vl.inputActsPrev.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + (vld.hasBWeights ? 2 : 1) * vl.fWeights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int) + vl.inputActsPrev.size() * sizeof(float);
     }
 
     return size;
@@ -580,7 +580,9 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
         writer.write(reinterpret_cast<const void*>(&vl.fWeights[0]), vl.fWeights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.bWeights[0]), vl.bWeights.size() * sizeof(float));
+
+        if (vld.hasBWeights)
+            writer.write(reinterpret_cast<const void*>(&vl.bWeights[0]), vl.bWeights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&vl.inputActsPrev[0]), vl.inputActsPrev.size() * sizeof(float));
@@ -624,10 +626,14 @@ void Decoder::read(
         int area = diam * diam;
 
         vl.fWeights.resize(numHiddenCells * area * vld.size.z);
-        vl.bWeights.resize(vl.fWeights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.fWeights[0]), vl.fWeights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.bWeights[0]), vl.bWeights.size() * sizeof(float));
+
+        if (vld.hasBWeights) {
+            vl.bWeights.resize(vl.fWeights.size());
+
+            reader.read(reinterpret_cast<void*>(&vl.bWeights[0]), vl.bWeights.size() * sizeof(float));
+        }
 
         vl.inputCIsPrev.resize(numVisibleColumns);
         vl.inputActsPrev.resize(numVisibleCells);
