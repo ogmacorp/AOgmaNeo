@@ -97,6 +97,7 @@ void Hierarchy::initRandom(
 
                     dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
                     dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
+                    dVisibleLayerDescs[0].hasBWeights = true;
 
                     if (l < eLayers.size() - 1)
                         dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
@@ -154,6 +155,7 @@ void Hierarchy::initRandom(
 
             dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
+            dVisibleLayerDescs[0].hasBWeights = true;
 
             if (l < eLayers.size() - 1)
                 dVisibleLayerDescs[1] = dVisibleLayerDescs[0];

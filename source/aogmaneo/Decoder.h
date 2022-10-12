@@ -20,20 +20,26 @@ public:
 
         int radius; // Radius onto input
 
+        Byte hasBWeights;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        hasBWeights(false)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        FloatBuffer fWeights;
+        FloatBuffer bWeights; // May be empty
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
         FloatBuffer inputActsPrev;
+
+        FloatBuffer inputActsTemp; // For backward training
     };
 
 private:
@@ -55,9 +61,15 @@ private:
         const Array<const FloatBuffer*> &inputActs
     );
 
-    void learn(
+    void fLearn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
+    );
+
+    void bLearn(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs,
+        int vli
     );
 
     void generateErrors(
@@ -68,12 +80,14 @@ private:
     ); 
 
 public:
-    float lr; // Learning rate
+    float flr; // Forward learning rate
+    float blr; // Backward learning rate
 
     // Defaults
     Decoder()
     :
-    lr(0.2f)
+    flr(0.2f),
+    blr(0.1f)
     {}
 
     // Create with random initialization
