@@ -97,10 +97,12 @@ void Hierarchy::initRandom(
 
                     dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
                     dVisibleLayerDescs[0].radius = ioDescs[i].dRadius;
-                    dVisibleLayerDescs[0].hasBWeights = true;
 
                     if (l < eLayers.size() - 1)
                         dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
+
+                    // Only first layer
+                    dVisibleLayerDescs[0].hasBWeights = true;
 
                     dLayers[l][dIndex].initRandom(ioSizes[i], dVisibleLayerDescs);
 
@@ -155,10 +157,12 @@ void Hierarchy::initRandom(
 
             dVisibleLayerDescs[0].size = layerDescs[l].hiddenSize;
             dVisibleLayerDescs[0].radius = layerDescs[l].dRadius;
-            dVisibleLayerDescs[0].hasBWeights = true;
 
             if (l < eLayers.size() - 1)
                 dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
+
+            // Only first layer
+            dVisibleLayerDescs[0].hasBWeights = true;
 
             // Create decoders
             for (int t = 0; t < dLayers[l].size(); t++)

@@ -38,8 +38,6 @@ public:
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
         FloatBuffer inputActsPrev;
-
-        FloatBuffer inputActsTemp; // For backward training
     };
 
 private:
@@ -87,7 +85,7 @@ public:
     Decoder()
     :
     flr(1.0f),
-    blr(0.1f)
+    blr(0.01f)
     {}
 
     // Create with random initialization
