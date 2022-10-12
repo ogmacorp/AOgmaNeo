@@ -38,6 +38,8 @@ public:
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
         FloatBuffer inputActsPrev;
+
+        FloatBuffer inputActsTemp;
     };
 
 private:
@@ -85,7 +87,7 @@ public:
     Decoder()
     :
     flr(1.0f),
-    blr(0.01f)
+    blr(0.5f)
     {}
 
     // Create with random initialization
