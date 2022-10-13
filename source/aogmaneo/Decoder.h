@@ -38,8 +38,6 @@ public:
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
         FloatBuffer inputActsPrev;
-
-        FloatBuffer inputActsTemp;
     };
 
 private:
@@ -61,15 +59,9 @@ private:
         const Array<const FloatBuffer*> &inputActs
     );
 
-    void fLearn(
+    void learn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
-    );
-
-    void bLearn(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        int vli
     );
 
     void generateErrors(
@@ -80,14 +72,12 @@ private:
     ); 
 
 public:
-    float flr; // Forward learning rate
-    float blr; // Backward learning rate
+    float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
-    flr(1.0f),
-    blr(0.5f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
