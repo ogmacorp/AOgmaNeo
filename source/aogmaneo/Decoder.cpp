@@ -267,8 +267,6 @@ void Decoder::generateErrors(
 
     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-    int visibleCellIndex = inCIPrev + visibleCellsStart;
-
     float sum = 0.0f;
     int count = 0;
 
@@ -301,7 +299,7 @@ void Decoder::generateErrors(
 
     sum /= max(1, count);
 
-    (*visibleErrors)[visibleCellIndex] += sum;
+    (*visibleErrors)[visibleColumnIndex] += sum;
 }
 
 void Decoder::initRandom(
