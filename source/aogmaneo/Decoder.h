@@ -57,15 +57,9 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void fLearn(
+    void learn(
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
-    );
-
-    void bLearn(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        int vli
     );
 
     void generateErrors(
@@ -76,14 +70,12 @@ private:
     ); 
 
 public:
-    float flr; // Forward learning rate
-    float blr; // Backward learning rate
+    float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
-    flr(0.5f),
-    blr(0.1f)
+    lr(0.5f)
     {}
 
     // Create with random initialization
