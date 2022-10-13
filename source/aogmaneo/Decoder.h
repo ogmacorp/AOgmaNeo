@@ -37,8 +37,6 @@ public:
         FloatBuffer bWeights; // May be empty
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-
-        FloatBuffer inputActsTemp; // For backward training
     };
 
 private:
