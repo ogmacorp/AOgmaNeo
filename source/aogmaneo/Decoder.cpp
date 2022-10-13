@@ -338,7 +338,7 @@ void Decoder::initRandom(
             vl.bWeights.resize(vl.fWeights.size());
 
             for (int i = 0; i < vl.bWeights.size(); i++)
-                vl.bWeights[i] = randf(0.0f, 0.01f);
+                vl.bWeights[i] = randf(0.0f, 1.0f);
         }
     }
 
