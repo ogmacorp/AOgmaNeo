@@ -211,6 +211,17 @@ void Decoder::learn(
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
 }
 
+void Decoder::clearState() {
+    hiddenCIs.fill(0);
+    hiddenActs.fill(0.0f);
+
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        vl.inputCIsPrev.fill(0);
+    }
+}
+
 int Decoder::size() const {
     int size = sizeof(Int3) + sizeof(float) + hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
@@ -330,16 +341,5 @@ void Decoder::readState(
         VisibleLayer &vl = visibleLayers[vli];
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-    }
-}
-
-void Decoder::clearState() {
-    hiddenCIs.fill(0);
-    hiddenActs.fill(0.0f);
-
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-
-        vl.inputCIsPrev.fill(0);
     }
 }

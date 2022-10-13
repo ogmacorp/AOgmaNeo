@@ -83,6 +83,10 @@ public:
         bool learnEnabled // Whether to learn
     );
 
+    void clearState() {
+        hiddenCIs.fill(0);
+    }
+
     // Serialization
     int size() const; // Returns size in bytes
     int stateSize() const; // Returns size of state in bytes
@@ -102,10 +106,6 @@ public:
     void readState(
         StreamReader &reader
     );
-
-    void clearState() {
-        hiddenCIs.fill(0);
-    }
 
     // Get the number of visible layers
     int getNumVisibleLayers() const {

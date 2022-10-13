@@ -115,6 +115,8 @@ public:
         bool mimic = false // Mimicry mode - treat actors as regular decoders
     );
 
+    void clearState();
+
     // Serialization
     int size() const; // Returns size in bytes
     int stateSize() const; // Returns size of state in bytes
@@ -134,8 +136,6 @@ public:
     void readState(
         StreamReader &reader
     );
-
-    void clearState();
 
     // Get the number of layers (eLayers)
     int getNumLayers() const {

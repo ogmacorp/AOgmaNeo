@@ -111,6 +111,8 @@ public:
         bool mimic
     );
 
+    void clearState();
+
     // Serialization
     int size() const; // Returns size in bytes
     int stateSize() const; // Returns size of state in bytes
@@ -130,8 +132,6 @@ public:
     void readState(
         StreamReader &reader
     );
-
-    void clearState();
 
     // Get number of visible layers
     int getNumVisibleLayers() const {

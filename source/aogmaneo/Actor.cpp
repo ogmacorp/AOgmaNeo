@@ -512,6 +512,13 @@ void Actor::step(
     }
 }
 
+void Actor::clearState() {
+    hiddenCIs.fill(0);
+    hiddenValues.fill(0.0f);
+
+    historySize = 0;
+}
+
 int Actor::size() const {
     int size = sizeof(Int3) + 4 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
 
@@ -739,11 +746,4 @@ void Actor::readState(
 
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
-}
-
-void Actor::clearState() {
-    hiddenCIs.fill(0);
-    hiddenValues.fill(0.0f);
-
-    historySize = 0;
 }
