@@ -20,21 +20,26 @@ public:
 
         int radius; // Radius onto input
 
+        Byte hasBWeights;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        hasBWeights(false)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
-        FloatBuffer alignment;
+        FloatBuffer fWeights;
+        FloatBuffer bWeights; // May be empty
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
         FloatBuffer inputActsPrev;
+
+        FloatBuffer inputActsTemp;
     };
 
 private:
@@ -99,6 +104,9 @@ public:
         FloatBuffer* visibleErrors,
         int vli
     );
+
+    // Clear out working memory
+    void clearState();
 
     // Serialization
     int size() const; // Returns size in bytes

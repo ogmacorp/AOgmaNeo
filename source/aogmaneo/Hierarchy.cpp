@@ -72,6 +72,8 @@ void Hierarchy::initRandom(
                     if (l < eLayers.size() - 1)
                         dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
 
+                    dVisibleLayerDescs[0].hasBWeights = true;
+
                     dLayers[l][dIndex].initRandom(ioSizes[i], dVisibleLayerDescs);
 
                     iIndices[dIndex] = i;
@@ -117,6 +119,8 @@ void Hierarchy::initRandom(
 
             if (l < eLayers.size() - 1)
                 dVisibleLayerDescs[1] = dVisibleLayerDescs[0];
+
+            dVisibleLayerDescs[0].hasBWeights = true;
 
             // Create decoders
             for (int t = 0; t < dLayers[l].size(); t++)

@@ -68,7 +68,7 @@ public:
 
     Encoder()
     :
-    lr(1.0f),
+    lr(0.1f),
     reg(0.01f)
     {}
 
@@ -83,6 +83,9 @@ public:
         const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
     );
+
+    // Clear out working memory
+    void clearState();
 
     // Serialization
     int size() const; // Returns size in bytes
