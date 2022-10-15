@@ -130,10 +130,24 @@ void Decoder::learn(
         }
     }
 
+    float total = 0.0f;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float delta = lr * ((hc == targetCI) - min(1.0f, max(0.0f, hiddenActs[hiddenCellIndex])));
+        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
+
+        total += hiddenActs[hiddenCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] *= scale;
+
+        float delta = lr * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
         int diam = vld.radius * 2 + 1;
 
