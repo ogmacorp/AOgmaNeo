@@ -203,21 +203,28 @@ void Hierarchy::step(
                     layerInputCIs[index++] = &histories[l][i][t];
             }
 
+            // Activate sparse coder
+            eLayers[l].activate(layerInputCIs);
+
             if (learnEnabled) {
                 errors[l].fill(0.0f);
 
-                for (int d = 0; d < dLayers[l].size(); d++)
+                for (int d = 0; d < dLayers[l].size(); d++) {
+                    dLayers[l][d].activate(&eLayers[l].getHiddenCIs(), &hiddenCIsPrev[l]);
+
                     dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &hiddenCIsPrev[l], &errors[l]);
+                }
 
                 // Rescale
                 float scale = 1.0f / dLayers[l].size();
 
                 for (int i = 0; i < errors[l].size(); i++)
                     errors[l][i] *= scale;
+
+                eLayers[l].learn(&errors[l]);
             }
 
-            // Activate sparse coder
-            eLayers[l].step(layerInputCIs, &errors[l], learnEnabled);
+            eLayers[l].stepEnd(layerInputCIs);
 
             // Add to next layer's history
             if (l < eLayers.size() - 1) {

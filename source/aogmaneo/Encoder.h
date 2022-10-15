@@ -46,7 +46,10 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenMaxActs;
+    FloatBuffer hiddenMaxActsPrev;
+
     IntBuffer hiddenCIs;
+    IntBuffer hiddenCIsPrev;
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -54,11 +57,14 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        const FloatBuffer* hiddenErrors
     );
 
 public:
@@ -75,10 +81,16 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled // Whether to learn
+    void activate(
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const FloatBuffer* hiddenErrors
+    );
+
+    void stepEnd(
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Clear out working memory
