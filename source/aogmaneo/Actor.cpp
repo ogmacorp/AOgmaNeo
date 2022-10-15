@@ -47,14 +47,18 @@ void Actor::forward(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int nextCI = (*nextCIs)[visibleColumnIndex];
-                int inCI = (*inputCIs)[visibleColumnIndex];
-
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
 
-                value += vl.valueWeights[nextCI + wiStart];
+                if (nextCIs != nullptr) {
+                    int nextCI = (*nextCIs)[visibleColumnIndex];
+
+                    value += vl.valueWeights[nextCI + wiStart];
+                }
+
+                int inCI = (*inputCIs)[visibleColumnIndex];
+
                 value += vl.valueWeightsPrev[inCI + wiStart];
             }
     }
@@ -92,14 +96,18 @@ void Actor::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int nextCI = (*nextCIs)[visibleColumnIndex];
-                    int inCI = (*inputCIs)[visibleColumnIndex];
-
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += vl.actionWeights[nextCI + wiStart];
+                    if (nextCIs != nullptr) {
+                        int nextCI = (*nextCIs)[visibleColumnIndex];
+
+                        sum += vl.actionWeights[nextCI + wiStart];
+                    }
+
+                    int inCI = (*inputCIs)[visibleColumnIndex];
+
                     sum += vl.actionWeightsPrev[inCI + wiStart];
                 }
 
@@ -167,14 +175,18 @@ void Actor::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int nextCI = (*nextCIs)[visibleColumnIndex];
-                    int inCI = (*inputCIs)[visibleColumnIndex];
-
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += vl.actionWeights[nextCI + wiStart];
+                    if (nextCIs != nullptr) {
+                        int nextCI = (*nextCIs)[visibleColumnIndex];
+
+                        sum += vl.actionWeights[nextCI + wiStart];
+                    }
+
+                    int inCI = (*inputCIs)[visibleColumnIndex];
+
                     sum += vl.actionWeightsPrev[inCI + wiStart];
                 }
 
