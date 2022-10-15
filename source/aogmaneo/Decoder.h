@@ -20,24 +20,20 @@ public:
 
         int radius; // Radius onto input
 
-        Byte hasBWeights;
-
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2),
-        hasBWeights(false)
+        radius(2)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer fWeights;
+        FloatBuffer weights;
+        FloatBuffer weightsPrev;
 
-        // Prevs
-        FloatBuffer fWeightsPrev;
-        FloatBuffer bWeightsPrev;
+        FloatBuffer alignments;
     };
 
 private:
@@ -55,7 +51,7 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const IntBuffer* feedBackCIs,
+        const IntBuffer* nextCIs,
         const IntBuffer* inputCIs
     );
 
@@ -79,18 +75,18 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.5f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Int3 &hiddenSize,
         const VisibleLayerDesc &vld
     );
 
     // Activate the predictor (predict values)
     void activate(
-        const IntBuffer* feedBackCIs,
+        const IntBuffer* nextCIs,
         const IntBuffer* inputCIs
     );
 
@@ -107,7 +103,6 @@ public:
         FloatBuffer* visibleErrors
     );
 
-    // Clear out working memory
     void clearState();
 
     // Serialization
