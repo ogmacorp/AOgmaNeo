@@ -358,10 +358,6 @@ void Actor::learn(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         hiddenActs[hiddenCellIndex] *= scale;
-    }
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float deltaAction = (mimic ? alr : alr * tanhf(tdErrorValue)) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
