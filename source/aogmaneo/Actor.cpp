@@ -489,9 +489,9 @@ void Actor::step(
     }
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > minSteps) {
+    if (learnEnabled && historySize > minSteps + 1) {
         for (int it = 0; it < historyIters; it++) {
-            int t = rand() % (historySize - minSteps) + minSteps;
+            int t = rand() % (historySize - minSteps - 1) + minSteps; // -1 since need t + 1 as well
 
             // Compute (partial) values, rest is completed in the kernel
             float r = 0.0f;
