@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-void Decoder::forward(
+void Decoder::activate(
     const Int2 &columnPos,
     const IntBuffer* nextCIs,
     const IntBuffer* inputCIs
@@ -61,10 +61,30 @@ void Decoder::forward(
                 sum += vl.weightsPrev[inCI + wiStart];
             }
 
+        hiddenActs[hiddenCellIndex] = sum;
+
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
+
+        total += hiddenActs[hiddenCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] *= scale;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -289,7 +309,7 @@ void Decoder::activate(
     // Forward kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), nextCIs, inputCIs);
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), nextCIs, inputCIs);
 }
 
 void Decoder::learn(

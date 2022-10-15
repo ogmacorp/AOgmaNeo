@@ -49,7 +49,7 @@ private:
 
     // --- Kernels ---
 
-    void forward(
+    void activate(
         const Int2 &columnPos,
         const IntBuffer* nextCIs,
         const IntBuffer* inputCIs
