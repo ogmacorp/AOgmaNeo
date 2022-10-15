@@ -30,12 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer valueWeights; // Value function weights
-        FloatBuffer actionWeights; // Action function weights
-        
-        // Prev versions
-        FloatBuffer valueWeightsPrev;
-        FloatBuffer actionWeightsPrev;
+        FloatBuffer weights;
+        FloatBuffer weightsPrev;
     };
 
     // History sample for delayed updates
@@ -52,11 +48,7 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenActs; // Temporary buffer
-
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -69,34 +61,29 @@ private:
     void forward(
         const Int2 &columnPos,
         const IntBuffer* nextCIs,
-        const IntBuffer* inputCIs,
-        unsigned int* state
+        const IntBuffer* inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
         int t,
-        float r,
-        float d,
-        bool mimic
+        float q,
+        float g
     );
 
 public:
-    float vlr; // Value learning rate
-    float alr; // Action learning rate
-    float discount; // Discount factor
-    float temperature; // Exploration amount
-    int minSteps; // Minimum steps before sample can be used
-    int historyIters; // Number of iterations over samples
+    float lr; // Learning rate
+    float drift;
+    float discount;
+    int nSteps;
+    int historyIters;
 
     // Defaults
     Actor()
     :
-    vlr(0.01f),
-    alr(0.01f),
+    lr(0.01f),
     discount(0.99f),
-    temperature(1.0f),
-    minSteps(16),
+    nSteps(5),
     historyIters(16)
     {}
 
@@ -113,8 +100,7 @@ public:
         const IntBuffer* inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
-        bool learnEnabled,
-        bool mimic
+        bool learnEnabled
     );
 
     void clearState();
