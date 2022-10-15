@@ -32,11 +32,15 @@ public:
     struct VisibleLayer {
         FloatBuffer valueWeights; // Value function weights
         FloatBuffer actionWeights; // Action function weights
+        
+        // Prev versions
+        FloatBuffer valueWeightsPrev;
+        FloatBuffer actionWeightsPrev;
     };
 
     // History sample for delayed updates
     struct HistorySample {
-        Array<IntBuffer> inputCIs;
+        IntBuffer inputCIs;
         IntBuffer hiddenTargetCIsPrev;
 
         float reward;
@@ -57,14 +61,15 @@ private:
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
-    Array<VisibleLayer> visibleLayers;
-    Array<VisibleLayerDesc> visibleLayerDescs;
+    VisibleLayer vl;
+    VisibleLayerDesc vld;
 
     // --- Kernels ---
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
+        const IntBuffer* nextCIs,
+        const IntBuffer* inputCIs,
         unsigned int* state
     );
 
@@ -99,12 +104,13 @@ public:
     void initRandom(
         const Int3 &hiddenSize,
         int historyCapacity,
-        const Array<VisibleLayerDesc> &visibleLayerDescs
+        const VisibleLayerDesc &vld
     );
 
     // Step (get actions and update)
     void step(
-        const Array<const IntBuffer*> &inputCIs,
+        const IntBuffer* nextCIs,
+        const IntBuffer* inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
         bool learnEnabled,
@@ -133,23 +139,14 @@ public:
         StreamReader &reader
     );
 
-    // Get number of visible layers
-    int getNumVisibleLayers() const {
-        return visibleLayers.size();
-    }
-
     // Get a visible layer
-    const VisibleLayer &getVisibleLayer(
-        int i // Index of layer
-    ) const {
-        return visibleLayers[i];
+    const VisibleLayer &getVisibleLayer() const {
+        return vl;
     }
 
     // Get a visible layer descriptor
-    const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of layer
-    ) const {
-        return visibleLayerDescs[i];
+    const VisibleLayerDesc &getVisibleLayerDesc() const {
+        return vld;
     }
 
     // Get hidden state/output/actions
