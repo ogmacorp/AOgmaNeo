@@ -64,30 +64,12 @@ void Decoder::activate(
 
         sum /= count;
 
-        hiddenActs[hiddenCellIndex] = sum;
+        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActs[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] *= scale;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -144,44 +126,9 @@ void Decoder::learn(
 
         sum /= count;
 
-        hiddenActs[hiddenCellIndex] = sum;
+        float activation = min(1.0f, max(0.0f, sum));
 
-        maxActivation = max(maxActivation, sum);
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActs[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] *= scale;
-
-        float delta = lr * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
-
-        int diam = vld.radius * 2 + 1;
-
-        // Projection
-        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
-
-        Int2 visibleCenter = project(columnPos, hToV);
-
-        // Lower corner
-        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
-
-        // Bounds of receptive field, clamped to input size
-        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+        float delta = lr * ((hc == targetCI) - activation);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -289,8 +236,8 @@ void Decoder::initRandom(
     vl.alignments.resize(vl.weights.size());
 
     for (int i = 0; i < vl.weights.size(); i++) {
-        vl.weights[i] = randf(-0.01f, 0.01f);
-        vl.weightsPrev[i] = randf(-0.01f, 0.01f);
+        vl.weights[i] = randf(0.0f, 0.01f);
+        vl.weightsPrev[i] = randf(0.0f, 0.01f);
         vl.alignments[i] = randf(-1.0f, 1.0f);
     }
 
