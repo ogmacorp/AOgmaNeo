@@ -88,9 +88,9 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
+    int hiddenCellIndexMax = hiddenCIsPrev[hiddenColumnIndex] + hiddenCellsStart;
 
-    float s = sigmoidf(hiddenMaxActs[hiddenColumnIndex]);
+    float s = sigmoidf(hiddenMaxActsPrev[hiddenColumnIndex]);
 
     float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * s * (1.0f - s);
 
@@ -162,7 +162,9 @@ void Encoder::initRandom(
     }
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMaxActsPrev = FloatBuffer(numHiddenColumns, 0.0f);
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIsPrev = IntBuffer(numHiddenColumns, 0);
 }
 
 void Encoder::activate(
