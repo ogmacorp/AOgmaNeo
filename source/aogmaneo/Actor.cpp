@@ -209,8 +209,8 @@ void Actor::learn(
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
             int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-            int inCI = historySamples[t].inputCIs[visibleColumnIndex];
-            int inCIPrev = historySamples[t + 1].inputCIs[visibleColumnIndex];
+            int inCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+            int inCIPrev = historySamples[t].inputCIs[visibleColumnIndex];
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -230,8 +230,8 @@ void Actor::learn(
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
             int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-            int inCI = historySamples[t].inputCIs[visibleColumnIndex];
-            int inCIPrev = historySamples[t + 1].inputCIs[visibleColumnIndex];
+            int inCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+            int inCIPrev = historySamples[t].inputCIs[visibleColumnIndex];
 
             Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -255,8 +255,8 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int inCI = historySamples[t].inputCIs[visibleColumnIndex];
-                int inCIPrev = historySamples[t + 1].inputCIs[visibleColumnIndex];
+                int inCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+                int inCIPrev = historySamples[t].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -299,8 +299,8 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int inCI = historySamples[t].inputCIs[visibleColumnIndex];
-                int inCIPrev = historySamples[t + 1].inputCIs[visibleColumnIndex];
+                int inCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+                int inCIPrev = historySamples[t].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -404,9 +404,9 @@ void Actor::step(
     }
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > minSteps + 1) {
+    if (learnEnabled && historySize > minSteps) {
         for (int it = 0; it < historyIters; it++) {
-            int t = rand() % (historySize - minSteps - 1) + minSteps; // -1 since need t + 1 as well
+            int t = rand() % (historySize - minSteps) + minSteps; // -1 since need t + 1 as well
 
             // Compute (partial) values, rest is completed in the kernel
             float r = 0.0f;
