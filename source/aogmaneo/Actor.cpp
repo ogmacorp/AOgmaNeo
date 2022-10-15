@@ -243,73 +243,24 @@ void Actor::learn(
 
     // --- Action ---
 
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    float deltaAction = (mimic ? alr : alr * tanhf(tdErrorValue));
 
-        float sum = 0.0f;
+    for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+        for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+            int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+            int inCI = historySamples[t].inputCIs[visibleColumnIndex];
+            int inCIPrev = historySamples[t + 1].inputCIs[visibleColumnIndex];
 
-                int inCI = historySamples[t].inputCIs[visibleColumnIndex];
-                int inCIPrev = historySamples[t + 1].inputCIs[visibleColumnIndex];
+            Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+            int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                sum += vl.actionWeights[inCI + wiStart];
-                sum += vl.actionWeightsPrev[inCIPrev + wiStart];
-            }
-
-        sum /= count;
-
-        hiddenActs[hiddenCellIndex] = sum;
-
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
+            vl.actionWeights[inCI + wiStart] += deltaAction;
+            vl.actionWeightsPrev[inCIPrev + wiStart] += deltaAction;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActs[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] *= scale;
-
-        float deltaAction = (mimic ? alr : alr * tanhf(tdErrorValue)) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
-
-        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
-
-                int inCI = historySamples[t].inputCIs[visibleColumnIndex];
-                int inCIPrev = historySamples[t + 1].inputCIs[visibleColumnIndex];
-
-                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                vl.actionWeights[inCI + wiStart] += deltaAction;
-                vl.actionWeightsPrev[inCIPrev + wiStart] += deltaAction;
-            }
-    }
 }
 
 void Actor::initRandom(
