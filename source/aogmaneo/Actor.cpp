@@ -397,7 +397,6 @@ void Actor::step(
 
         s.inputCIs = *inputCIs;
 
-        // Copy
         s.hiddenTargetCIsPrev = *hiddenTargetCIsPrev;
 
         s.reward = reward;
