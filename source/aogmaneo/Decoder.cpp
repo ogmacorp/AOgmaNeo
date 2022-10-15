@@ -110,12 +110,12 @@ void Decoder::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                int inCI = (*inputCIs)[visibleColumnIndex];
-                int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
-
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                int inCI = (*inputCIs)[visibleColumnIndex];
+                int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
 
                 sum += vl.weights[inCI + wiStart] + vl.weightsPrev[inCIPrev + wiStart];
             }
@@ -168,12 +168,12 @@ void Decoder::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                int inCI = (*inputCIs)[visibleColumnIndex];
-                int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
-
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                int inCI = (*inputCIs)[visibleColumnIndex];
+                int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
 
                 vl.weights[inCI + wiStart] += delta;
                 vl.weightsPrev[inCIPrev + wiStart] += delta;
