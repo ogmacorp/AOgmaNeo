@@ -203,7 +203,7 @@ void Decoder::initRandom(
     if (vld.hasFeedBack) {
         vl.weightsNext.resize(vl.weights.size());
 
-        for (int i = 0; i < vl.weights.size(); i++)
+        for (int i = 0; i < vl.weightsNext.size(); i++)
             vl.weightsNext[i] = randf(-0.01f, 0.01f);
     }
 

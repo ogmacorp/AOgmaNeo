@@ -105,7 +105,6 @@ void Actor::learn(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -211,7 +210,7 @@ void Actor::initRandom(
     if (vld.hasFeedBack) {
         vl.weightsNext.resize(vl.weights.size());
 
-        for (int i = 0; i < vl.weights.size(); i++)
+        for (int i = 0; i < vl.weightsNext.size(); i++)
             vl.weightsNext[i] = randf(-0.01f, 0.01f);
     }
 

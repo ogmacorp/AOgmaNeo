@@ -84,7 +84,7 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.1f),
+    lr(0.0f),
     discount(0.99f),
     nSteps(8),
     historyIters(16)
