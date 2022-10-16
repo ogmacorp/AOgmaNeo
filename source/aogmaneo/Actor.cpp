@@ -187,12 +187,12 @@ void Actor::learn(
             int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
 
             if (vld.hasFeedBack) {
-                int nextCI = historySamples[0].inputCIs[visibleColumnIndex];
+                int nextCI = historySamples[0].nextCIs[visibleColumnIndex];
 
                 valueNext += vl.valueWeightsNext[nextCI + wiStart];
             }
 
-            int inCI = historySamples[1].inputCIs[visibleColumnIndex];
+            int inCI = historySamples[0].inputCIs[visibleColumnIndex];
 
             valueNext += vl.valueWeights[inCI + wiStart];
         }
@@ -377,6 +377,9 @@ void Actor::initRandom(
     historySamples.resize(historyCapacity);
 
     for (int i = 0; i < historySamples.size(); i++) {
+        if (vld.hasFeedBack)
+            historySamples[i].nextCIs = IntBuffer(numVisibleColumns);
+
         historySamples[i].inputCIs = IntBuffer(numVisibleColumns);
 
         historySamples[i].hiddenTargetCIsPrev = IntBuffer(numHiddenColumns);
@@ -413,6 +416,9 @@ void Actor::step(
     {
         HistorySample &s = historySamples[0];
 
+        if (vld.hasFeedBack)
+            s.nextCIs = *nextCIs;
+
         s.inputCIs = *inputCIs;
 
         s.hiddenTargetCIsPrev = *hiddenTargetCIsPrev;
@@ -429,7 +435,7 @@ void Actor::step(
             float r = 0.0f;
             float d = 1.0f;
 
-            for (int t2 = t - 1; t2 >= 1; t2--) {
+            for (int t2 = t - 1; t2 >= 0; t2--) {
                 r += historySamples[t2].reward * d;
 
                 d *= discount;
@@ -457,7 +463,7 @@ int Actor::size() const {
 
     const HistorySample &s = historySamples[0];
 
-    int sampleSize = s.inputCIs.size() * sizeof(int) + s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+    int sampleSize = (vld.hasFeedBack ? 2 : 1) * s.inputCIs.size() * sizeof(int) + s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
 
     size += historySamples.size() * sampleSize;
 
@@ -469,7 +475,7 @@ int Actor::stateSize() const {
 
     const HistorySample &s = historySamples[0];
 
-    int sampleSize = s.inputCIs.size() * sizeof(int) + s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+    int sampleSize = (vld.hasFeedBack ? 2 : 1) * s.inputCIs.size() * sizeof(int) + s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
 
     size += historySamples.size() * sampleSize;
 
@@ -514,6 +520,9 @@ void Actor::write(
 
     for (int t = 0; t < historySamples.size(); t++) {
         const HistorySample &s = historySamples[t];
+
+        if (vld.hasFeedBack)
+            writer.write(reinterpret_cast<const void*>(&s.nextCIs[0]), s.nextCIs.size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&s.inputCIs[0]), s.inputCIs.size() * sizeof(int));
 
@@ -587,6 +596,12 @@ void Actor::read(
     for (int t = 0; t < historySamples.size(); t++) {
         HistorySample &s = historySamples[t];
 
+        if (vld.hasFeedBack) {
+            s.nextCIs.resize(numVisibleColumns);
+
+            reader.read(reinterpret_cast<void*>(&s.nextCIs[0]), s.nextCIs.size() * sizeof(int));
+        }
+
         s.inputCIs.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&s.inputCIs[0]), s.inputCIs.size() * sizeof(int));
@@ -613,6 +628,9 @@ void Actor::writeState(
     for (int t = 0; t < historySamples.size(); t++) {
         const HistorySample &s = historySamples[t];
 
+        if (vld.hasFeedBack)
+            writer.write(reinterpret_cast<const void*>(&s.nextCIs[0]), s.nextCIs.size() * sizeof(int));
+
         writer.write(reinterpret_cast<const void*>(&s.inputCIs[0]), s.inputCIs.size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
@@ -636,6 +654,9 @@ void Actor::readState(
 
     for (int t = 0; t < historySamples.size(); t++) {
         HistorySample &s = historySamples[t];
+
+        if (vld.hasFeedBack)
+            reader.read(reinterpret_cast<void*>(&s.nextCIs[0]), s.nextCIs.size() * sizeof(int));
 
         reader.read(reinterpret_cast<void*>(&s.inputCIs[0]), s.inputCIs.size() * sizeof(int));
 
