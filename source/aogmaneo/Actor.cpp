@@ -214,7 +214,7 @@ void Actor::learn(
             int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
 
             if (vld.hasFeedBack) {
-                int nextCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+                int nextCI = historySamples[t].nextCIs[visibleColumnIndex];
 
                 valuePrev += vl.valueWeightsNext[nextCI + wiStart];
             }
@@ -239,7 +239,7 @@ void Actor::learn(
             int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex));
 
             if (vld.hasFeedBack) {
-                int nextCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+                int nextCI = historySamples[t].nextCIs[visibleColumnIndex];
 
                 vl.valueWeightsNext[nextCI + wiStart] += deltaValue;
             }
@@ -267,7 +267,7 @@ void Actor::learn(
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                 if (vld.hasFeedBack) {
-                    int nextCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+                    int nextCI = historySamples[t].nextCIs[visibleColumnIndex];
 
                     sum += vl.actionWeightsNext[nextCI + wiStart];
                 }
@@ -312,7 +312,7 @@ void Actor::learn(
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                 if (vld.hasFeedBack) {
-                    int nextCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+                    int nextCI = historySamples[t].nextCIs[visibleColumnIndex];
 
                     vl.actionWeightsNext[nextCI + wiStart] += deltaAction;
                 }
