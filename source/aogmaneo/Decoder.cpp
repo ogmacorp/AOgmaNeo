@@ -50,7 +50,9 @@ void Decoder::forward(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                if (nextCIs != nullptr) {
+                if (vld.hasFeedBack) {
+                    assert(nextCIs != nullptr);
+
                     int nextCI = (*nextCIs)[visibleColumnIndex];
 
                     sum += vl.weightsNext[nextCI + wiStart];
