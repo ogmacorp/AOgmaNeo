@@ -74,7 +74,7 @@ void Actor::forward(
 
             maxActivation = max(maxActivation, sum);
         }
-        
+
         float total = 0.0f;
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
