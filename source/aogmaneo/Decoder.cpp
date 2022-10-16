@@ -114,10 +114,15 @@ void Decoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                int inCI = (*inputCIs)[visibleColumnIndex];
+                if (vld.hasFeedBack) {
+                    int inCI = (*inputCIs)[visibleColumnIndex];
+
+                    sum += vl.weightsNext[inCI + wiStart];
+                }
+
                 int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
 
-                sum += vl.weightsNext[inCI + wiStart] + vl.weights[inCIPrev + wiStart];
+                sum += vl.weights[inCIPrev + wiStart];
             }
 
         sum /= count;
@@ -157,10 +162,14 @@ void Decoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                int inCI = (*inputCIs)[visibleColumnIndex];
+                if (vld.hasFeedBack) {
+                    int inCI = (*inputCIs)[visibleColumnIndex];
+
+                    vl.weightsNext[inCI + wiStart] += delta;
+                }
+
                 int inCIPrev = (*inputCIsPrev)[visibleColumnIndex];
 
-                vl.weightsNext[inCI + wiStart] += delta;
                 vl.weights[inCIPrev + wiStart] += delta;
             }
     }
