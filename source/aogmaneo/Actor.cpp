@@ -115,7 +115,7 @@ void Actor::learn(
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                 if (vld.hasFeedBack) {
-                    int inCI = historySamples[t - 1 - nSteps].inputCIs[visibleColumnIndex];
+                    int inCI = historySamples[t - nSteps].nextCIs[visibleColumnIndex];
 
                     sum += vl.weightsNext[inCI + wiStart];
                 }
@@ -221,6 +221,9 @@ void Actor::initRandom(
     historySamples.resize(historyCapacity);
 
     for (int i = 0; i < historySamples.size(); i++) {
+        if (vld.hasFeedBack)
+            historySamples[i].nextCIs = IntBuffer(numVisibleColumns);
+
         historySamples[i].inputCIs = IntBuffer(numVisibleColumns);
 
         historySamples[i].hiddenTargetCIsPrev = IntBuffer(numHiddenColumns);
@@ -249,6 +252,9 @@ void Actor::step(
     // Add new sample
     {
         HistorySample &s = historySamples[0];
+
+        if (vld.hasFeedBack)
+            s.nextCIs = *nextCIs;
 
         s.inputCIs = *inputCIs;
 
@@ -296,7 +302,7 @@ int Actor::size() const {
 
     const HistorySample &s = historySamples[0];
 
-    sampleSize += s.inputCIs.size() * sizeof(int) + s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+    sampleSize += (vld.hasFeedBack ? 1 : 0) * s.nextCIs.size() * sizeof(int) + s.inputCIs.size() * sizeof(int) + s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
 
     size += historySamples.size() * sampleSize;
 
@@ -310,7 +316,7 @@ int Actor::stateSize() const {
 
     const HistorySample &s = historySamples[0];
 
-    sampleSize += s.inputCIs.size() * sizeof(int) + s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
+    sampleSize += (vld.hasFeedBack ? 1 : 0) * s.nextCIs.size() * sizeof(int) + s.inputCIs.size() * sizeof(int) + s.hiddenTargetCIsPrev.size() * sizeof(int) + sizeof(float);
 
     size += historySamples.size() * sampleSize;
 
@@ -348,6 +354,9 @@ void Actor::write(
 
     for (int t = 0; t < historySamples.size(); t++) {
         const HistorySample &s = historySamples[t];
+
+        if (vld.hasFeedBack)
+            writer.write(reinterpret_cast<const void*>(&s.nextCIs[0]), s.nextCIs.size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&s.inputCIs[0]), s.inputCIs.size() * sizeof(int));
 
@@ -408,6 +417,12 @@ void Actor::read(
     for (int t = 0; t < historySamples.size(); t++) {
         HistorySample &s = historySamples[t];
 
+        if (vld.hasFeedBack) {
+            s.nextCIs.resize(numVisibleColumns);
+
+            reader.read(reinterpret_cast<void*>(&s.nextCIs[0]), s.nextCIs.size() * sizeof(int));
+        }
+
         s.inputCIs.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&s.inputCIs[0]), s.inputCIs.size() * sizeof(int));
@@ -432,6 +447,9 @@ void Actor::writeState(
     for (int t = 0; t < historySamples.size(); t++) {
         const HistorySample &s = historySamples[t];
 
+        if (vld.hasFeedBack)
+            writer.write(reinterpret_cast<const void*>(&s.nextCIs[0]), s.nextCIs.size() * sizeof(int));
+
         writer.write(reinterpret_cast<const void*>(&s.inputCIs[0]), s.inputCIs.size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&s.hiddenTargetCIsPrev[0]), s.hiddenTargetCIsPrev.size() * sizeof(int));
@@ -453,6 +471,9 @@ void Actor::readState(
 
     for (int t = 0; t < historySamples.size(); t++) {
         HistorySample &s = historySamples[t];
+
+        if (vld.hasFeedBack)
+            reader.read(reinterpret_cast<void*>(&s.nextCIs[0]), s.nextCIs.size() * sizeof(int));
 
         reader.read(reinterpret_cast<void*>(&s.inputCIs[0]), s.inputCIs.size() * sizeof(int));
 

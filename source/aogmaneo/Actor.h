@@ -39,6 +39,7 @@ public:
 
     // History sample for delayed updates
     struct HistorySample {
+        IntBuffer nextCIs;
         IntBuffer inputCIs;
         IntBuffer hiddenTargetCIsPrev;
 
