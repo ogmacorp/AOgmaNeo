@@ -20,18 +20,21 @@ public:
 
         int radius; // Radius onto input
 
+        Byte hasFeedBack;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        hasFeedBack(true)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer weightsPrev;
+        FloatBuffer weightsNext;
     };
 
     // History sample for delayed updates
@@ -81,9 +84,9 @@ public:
     // Defaults
     Actor()
     :
-    lr(0.01f),
+    lr(0.1f),
     discount(0.99f),
-    nSteps(5),
+    nSteps(8),
     historyIters(16)
     {}
 

@@ -20,18 +20,21 @@ public:
 
         int radius; // Radius onto input
 
+        Byte hasFeedBack;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        hasFeedBack(true)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer weightsPrev;
+        FloatBuffer weightsNext;
     };
 
 private:
