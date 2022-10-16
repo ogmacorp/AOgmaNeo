@@ -58,7 +58,7 @@ void Actor::forward(
 
                 int inCI = (*inputCIs)[visibleColumnIndex];
 
-                sum += vl.weights[inCI + wiStart];
+                sum += vl.weightsPrev[inCI + wiStart];
             }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -109,13 +109,15 @@ void Actor::learn(
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int inCI = historySamples[t - nSteps].inputCIs[visibleColumnIndex];
+                int inCI = historySamples[t - 1 - nSteps].inputCIs[visibleColumnIndex];
+                int inCIPrev = historySamples[t - nSteps].inputCIs[visibleColumnIndex];
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                 sum += vl.weights[inCI + wiStart];
+                sum += vl.weightsPrev[inCIPrev + wiStart];
             }
 
         sum /= count;
@@ -239,9 +241,9 @@ void Actor::step(
     }
 
     // Learn (if have sufficient samples)
-    if (learnEnabled && historySize > nSteps) {
+    if (learnEnabled && historySize > nSteps + 1) {
         for (int it = 0; it < historyIters; it++) {
-            int t = rand() % (historySize - nSteps) + nSteps;
+            int t = rand() % (historySize - nSteps - 1) + nSteps + 1;
 
             // Compute (partial) values, rest is completed in the kernel
             float r = 0.0f;
