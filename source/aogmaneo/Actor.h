@@ -87,7 +87,7 @@ public:
     :
     lr(0.01f),
     discount(0.99f),
-    nSteps(16),
+    nSteps(8),
     historyIters(16)
     {}
 
