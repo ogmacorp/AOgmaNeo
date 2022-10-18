@@ -117,6 +117,7 @@ void Hierarchy::initRandom(
 
                     aVisibleLayerDesc.size = layerDescs[l].hiddenSize;
                     aVisibleLayerDesc.radius = ioDescs[i].dRadius;
+                    aVisibleLayerDesc.hasFeedBack = l < layerDescs.size() - 1;
 
                     aLayers[dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDesc);
 
