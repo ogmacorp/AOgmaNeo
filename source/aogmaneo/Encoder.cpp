@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -19,7 +19,7 @@ void Encoder::activate(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    float maxActivation = 0.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -62,7 +62,7 @@ void Encoder::activate(
                     subSum += vl.weights[wi];
                 }
 
-            subSum /= subCount * 127.0f;
+            subSum /= subCount;
 
             sum += subSum * vl.importance;
         }
@@ -88,9 +88,9 @@ void Encoder::learn(
 
     int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
 
-    int targetCI = (*inputCIs)[visibleColumnIndex];
-
     int visibleCellsStart = visibleColumnIndex * vld.size.z;
+
+    int targetCI = (*inputCIs)[visibleColumnIndex];
 
     // Projection
     Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
@@ -111,7 +111,7 @@ void Encoder::learn(
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    float maxActivation = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
@@ -139,10 +139,10 @@ void Encoder::learn(
                 }
             }
 
-        sum /= max(1, count) * 127.0f;
+        sum /= max(1, count) * 255.0f;
 
-        vl.reconActsTemp[visibleCellIndex] = sum;
-        
+        vl.reconsTemp[visibleCellIndex] = sum;
+
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = vc;
@@ -153,8 +153,8 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - sigmoidf(scale * vl.reconActsTemp[visibleCellIndex]));
-
+            float delta = lr * ((vc == targetCI) - expf(scale * (vl.reconsTemp[visibleCellIndex] - 1.0f)));
+      
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     Int2 hiddenPos = Int2(ix, iy);
@@ -170,7 +170,7 @@ void Encoder::learn(
 
                         int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                        vl.weights[wi] = min(127, max(-127, roundf(vl.weights[wi] + delta * vl.weights[wi])));
+                        vl.weights[wi] = min(255, max(0, static_cast<int>(vl.weights[wi] + delta * vl.weights[wi])));
                     }
                 }
         }
@@ -205,9 +205,9 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 5 - 2;
+            vl.weights[i] = 255 - rand() % 5;
 
-        vl.reconActsTemp = FloatBuffer(numVisibleCells);
+        vl.reconsTemp = FloatBuffer(numVisibleCells);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -219,8 +219,6 @@ void Encoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
-    unsigned int baseState = rand();
-
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
@@ -230,7 +228,7 @@ void Encoder::step(
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
             int numVisibleColumns = vld.size.x * vld.size.y;
-
+        
             #pragma omp parallel for
             for (int i = 0; i < numVisibleColumns; i++)
                 learn(Int2(i / vld.size.y, i % vld.size.y), inputCIs[vli], vli);
@@ -239,12 +237,12 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(SByte) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte) +  sizeof(float);
     }
 
     return size;
@@ -259,7 +257,8 @@ void Encoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&lr), sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -273,7 +272,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(SByte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
@@ -287,7 +286,8 @@ void Encoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&lr), sizeof(int));
+    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
@@ -314,9 +314,9 @@ void Encoder::read(
 
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(SByte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
-        vl.reconActsTemp = FloatBuffer(numVisibleCells);
+        vl.reconsTemp = FloatBuffer(numVisibleCells);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
