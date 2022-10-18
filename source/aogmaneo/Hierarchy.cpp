@@ -211,11 +211,8 @@ void Hierarchy::step(
             if (learnEnabled) {
                 errors[l].fill(0.0f);
 
-                for (int d = 0; d < dLayers[l].size(); d++) {
-                    dLayers[l][d].activate(&eLayers[l].getHiddenCIs(), &eLayers[l].getHiddenCIsPrev());
-
-                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &eLayers[l].getHiddenCIsPrev(), &errors[l]);
-                }
+                for (int d = 0; d < dLayers[l].size(); d++)
+                    dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &eLayers[l].getHiddenCIs(), &eLayers[l].getHiddenCIsPrev(), &errors[l]);
 
                 // Rescale
                 float scale = 1.0f / dLayers[l].size();
