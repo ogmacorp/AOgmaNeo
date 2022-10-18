@@ -20,18 +20,21 @@ public:
 
         int radius; // Radius onto input
 
+        Byte hasFeedBack;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        hasFeedBack(true)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer weightsPrev;
+        FloatBuffer weightsNext;
 
         FloatBuffer alignments;
     };
@@ -49,7 +52,7 @@ private:
 
     // --- Kernels ---
 
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const IntBuffer* nextCIs,
         const IntBuffer* inputCIs
@@ -75,7 +78,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.5f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
@@ -101,7 +104,7 @@ public:
         const IntBuffer* hiddenTargetCIs,
         const IntBuffer* inputCIsPrev,
         FloatBuffer* visibleErrors
-    );
+    ); 
 
     void clearState();
 

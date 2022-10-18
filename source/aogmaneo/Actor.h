@@ -20,11 +20,14 @@ public:
 
         int radius; // Radius onto input
 
+        Byte hasFeedBack;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        hasFeedBack(true)
         {}
     };
 
@@ -33,13 +36,13 @@ public:
         FloatBuffer valueWeights; // Value function weights
         FloatBuffer actionWeights; // Action function weights
         
-        // Prev versions
-        FloatBuffer valueWeightsPrev;
-        FloatBuffer actionWeightsPrev;
+        FloatBuffer valueWeightsNext;
+        FloatBuffer actionWeightsNext;
     };
 
     // History sample for delayed updates
     struct HistorySample {
+        IntBuffer nextCIs;
         IntBuffer inputCIs;
         IntBuffer hiddenTargetCIsPrev;
 
@@ -55,8 +58,6 @@ private:
     FloatBuffer hiddenActs; // Temporary buffer
 
     IntBuffer hiddenCIs; // Hidden states
-
-    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
