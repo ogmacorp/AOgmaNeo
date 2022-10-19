@@ -284,6 +284,10 @@ void Encoder::learn(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
+    #pragma omp parallel for
+    for (int i = 0; i < numHiddenColumns; i++)
+        learnError(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenErrors);
+
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
@@ -293,10 +297,6 @@ void Encoder::learn(
         for (int i = 0; i < numVisibleColumns; i++)
             learnRecon(Int2(i / vld.size.y, i % vld.size.y), vli);
     }
-
-    #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++)
-        learnError(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenErrors);
 }
 
 void Encoder::stepEnd(
