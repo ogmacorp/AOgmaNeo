@@ -35,8 +35,6 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
         FloatBuffer weightsNext;
-
-        FloatBuffer alignments;
     };
 
 private:

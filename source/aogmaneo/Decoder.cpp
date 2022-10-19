@@ -272,7 +272,7 @@ void Decoder::generateErrors(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += error * vl.alignments[wi];
+                    sum += error * vl.weights[wi];
                 }
 
                 count++;
@@ -312,11 +312,6 @@ void Decoder::initRandom(
         for (int i = 0; i < vl.weightsNext.size(); i++)
             vl.weightsNext[i] = randf(-0.01f, 0.01f);
     }
-
-    vl.alignments.resize(vl.weights.size());
-
-    for (int i = 0; i < vl.alignments.size(); i++)
-        vl.alignments[i] = randf(-1.0f, 1.0f);
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
@@ -397,8 +392,6 @@ void Decoder::write(
 
     if (vld.hasFeedBack)
         writer.write(reinterpret_cast<const void*>(&vl.weightsNext[0]), vl.weightsNext.size() * sizeof(float));
-
-    writer.write(reinterpret_cast<const void*>(&vl.alignments[0]), vl.alignments.size() * sizeof(float));
 }
 
 void Decoder::read(
@@ -433,10 +426,6 @@ void Decoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weightsNext[0]), vl.weightsNext.size() * sizeof(float));
     }
-
-    vl.alignments.resize(vl.weights.size());
-
-    reader.read(reinterpret_cast<void*>(&vl.alignments[0]), vl.alignments.size() * sizeof(float));
 }
 
 void Decoder::writeState(
