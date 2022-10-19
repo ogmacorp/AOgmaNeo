@@ -34,6 +34,8 @@ public:
 
         IntBuffer inputCIsPrev;
 
+        FloatBuffer reconActsTemp;
+
         float importance;
 
         VisibleLayer()
@@ -62,9 +64,14 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void learn(
+    void learnError(
         const Int2 &columnPos,
         const FloatBuffer* hiddenErrors
+    );
+
+    void learnRecon(
+        const Int2 &columnPos,
+        int vli
     );
 
 public:

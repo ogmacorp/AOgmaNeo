@@ -274,7 +274,8 @@ void ImageEncoder::learnReconstruction(
                 Int2 hiddenPos = Int2(ix, iy);
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+
+                int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
@@ -297,7 +298,8 @@ void ImageEncoder::learnReconstruction(
                 Int2 hiddenPos = Int2(ix, iy);
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+
+                int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
@@ -356,7 +358,8 @@ void ImageEncoder::reconstruct(
                 Int2 hiddenPos = Int2(ix, iy);
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, (*reconCIs)[hiddenColumnIndex]), hiddenSize);
+
+                int hiddenCellIndex = (*reconCIs)[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
