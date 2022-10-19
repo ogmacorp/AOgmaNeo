@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer weights;
+        ByteBuffer weights;
 
-        FloatBuffer reconActsTemp;
+        FloatBuffer reconsTemp;
 
         float importance;
 
@@ -65,13 +65,13 @@ private:
     );
 
 public:
-    float scale; // Scaling of bytes
+    float scale;
     float lr; // Learning rate
 
     Encoder()
     :
     scale(8.0f),
-    lr(0.5f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
