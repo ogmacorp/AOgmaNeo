@@ -92,7 +92,7 @@ void Encoder::learnError(
 
     float s = sigmoidf(hiddenMaxActsPrev[hiddenColumnIndex]);
 
-    float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * s * (1.0f - s);
+    float delta = elr * (*hiddenErrors)[hiddenColumnIndex] * s * (1.0f - s);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -204,7 +204,7 @@ void Encoder::learnRecon(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - sigmoidf(vl.reconActsTemp[visibleCellIndex]));
+            float delta = rlr * ((vc == targetCI) - sigmoidf(vl.reconActsTemp[visibleCellIndex]));
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -327,7 +327,7 @@ void Encoder::clearState() {
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + 2 * hiddenMaxActs.size() * sizeof(float) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + 2 * hiddenMaxActs.size() * sizeof(float) + 2 * hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -355,7 +355,8 @@ void Encoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&elr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&rlr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenMaxActs[0]), hiddenMaxActs.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hiddenMaxActsPrev[0]), hiddenMaxActsPrev.size() * sizeof(float));
@@ -388,7 +389,8 @@ void Encoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&elr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&rlr), sizeof(float));
 
     hiddenMaxActs.resize(numHiddenColumns);
     hiddenMaxActsPrev.resize(numHiddenColumns);
