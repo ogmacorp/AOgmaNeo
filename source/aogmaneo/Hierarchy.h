@@ -10,14 +10,12 @@
 
 #include "Encoder.h"
 #include "Decoder.h"
-#include "Actor.h"
 
 namespace aon {
 // Type of hierarchy input layer
 enum IOType {
     none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 1
 };
 
 // A SPH
@@ -78,7 +76,6 @@ private:
     // Layers
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
-    Array<Actor> aLayers;
     Array<IntBuffer> hiddenCIsPrev;
     Array<FloatBuffer> errors; // Accumulation
 
@@ -112,9 +109,8 @@ public:
     // Simulation step/tick
     void step(
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
-        bool learnEnabled = true, // Whether learning is enabled
-        float reward = 0.0f, // Reward
-        bool mimic = false // Mimicry mode - treat actors as regular decoders
+        const IntBuffer* topFeedBackCIs,
+        bool learnEnabled = true // Whether learning is enabled
     );
 
     // Clear out working memory
@@ -185,9 +181,6 @@ public:
     const IntBuffer &getPredictionCIs(
         int i
     ) const {
-        if (ioTypes[i] == action)
-            return aLayers[dIndices[i]].getHiddenCIs();
-
         return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
@@ -251,15 +244,6 @@ public:
         return dLayers[l];
     }
 
-    // Retrieve actor layer(s)
-    Array<Actor> &getALayers() {
-        return aLayers;
-    }
-
-    const Array<Actor> &getALayers() const {
-        return aLayers;
-    }
-
     // Retrieve by index
     Decoder &getDLayer(
         int l,
@@ -279,18 +263,6 @@ public:
             return dLayers[l][dIndices[i]];
 
         return dLayers[l][i];
-    }
-
-    Actor &getALayer(
-        int i
-    ) {
-        return aLayers[dIndices[i]];
-    }
-
-    const Actor &getALayer(
-        int i
-    ) const {
-        return aLayers[dIndices[i]];
     }
 
     const IntBuffer &getIIndices() const {
