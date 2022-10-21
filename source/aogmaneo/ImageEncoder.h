@@ -56,8 +56,6 @@ private:
 
     Array<Mode> hiddenModes;
 
-    FloatBuffer hiddenMaxActs;
-
     IntBuffer hiddenCIs;
 
     IntBuffer hiddenCommits;
@@ -100,7 +98,7 @@ public:
     ImageEncoder()
     :
     gap(0.1f),
-    vigilance(0.95f),
+    vigilance(0.99f),
     lr(0.1f),
     rr(0.1f)
     {}

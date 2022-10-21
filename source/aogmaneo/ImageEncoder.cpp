@@ -108,8 +108,6 @@ void ImageEncoder::activate(
 
     hiddenModes[hiddenColumnIndex] = update;
 
-    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
-
     bool found = maxIndex != -1;
 
     if (!found) {
@@ -119,7 +117,6 @@ void ImageEncoder::activate(
         }
         else {
             maxIndex = hiddenCommits[hiddenColumnIndex];
-            hiddenMaxActs[hiddenColumnIndex] = randf(state) * 0.0001f;
             hiddenModes[hiddenColumnIndex] = commit;
         }
     }
@@ -414,8 +411,6 @@ void ImageEncoder::initRandom(
 
     hiddenModes = Array<Mode>(numHiddenColumns);
 
-    hiddenMaxActs = FloatBuffer(numHiddenColumns);
-
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
     hiddenCommits = IntBuffer(numHiddenColumns, 0);
@@ -532,8 +527,6 @@ void ImageEncoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenModes = Array<Mode>(numHiddenColumns);
-
-    hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
     hiddenCIs.resize(numHiddenColumns);
     hiddenCommits.resize(numHiddenColumns);
