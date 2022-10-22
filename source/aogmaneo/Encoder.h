@@ -34,6 +34,8 @@ public:
 
         IntBuffer inputCIsPrev;
 
+        FloatBuffer reconActsTemp;
+
         float importance;
 
         VisibleLayer()
@@ -45,9 +47,11 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActs;
+    FloatBuffer hiddenMaxActs;
+    FloatBuffer hiddenMaxActsPrev;
 
     IntBuffer hiddenCIs;
+    IntBuffer hiddenCIsPrev;
     
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -55,21 +59,29 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learnError(
+        const Int2 &columnPos,
+        const FloatBuffer* hiddenErrors
+    );
+
+    void learnRecon(
+        const Int2 &columnPos,
+        int vli
     );
 
 public:
-    float lr;
-    float reg;
+    float elr;
+    float rlr;
 
     Encoder()
     :
-    lr(0.1f),
-    reg(0.01f)
+    elr(0.03f),
+    rlr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -78,10 +90,16 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        const FloatBuffer* hiddenErrors,
-        bool learnEnabled // Whether to learn
+    void activate(
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const FloatBuffer* hiddenErrors
+    );
+
+    void stepEnd(
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Clear out working memory
@@ -134,13 +152,13 @@ public:
     }
 
     // Get the hidden states
-    const FloatBuffer &getHiddenActs() const {
-        return hiddenActs;
-    }
-
-    // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    // Get the previous hidden states
+    const IntBuffer &getHiddenCIsPrev() const {
+        return hiddenCIsPrev;
     }
 
     // Get the hidden size
