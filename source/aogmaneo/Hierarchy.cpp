@@ -126,9 +126,6 @@ void Hierarchy::initRandom(
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
         errors[l] = FloatBuffer(eLayers[l].getHiddenCIs().size(), 0.0f);
-
-        if (layerDescs[l].rRadius >= 0)
-            setRecurrentImportance(l, 0.125f);
     }
 }
 
