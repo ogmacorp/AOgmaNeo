@@ -285,11 +285,6 @@ void Decoder::initRandom(
             vl.weightsNext[i] = randf(-0.01f, 0.01f);
     }
 
-    vl.alignments.resize(vl.weights.size());
-
-    for (int i = 0; i < vl.alignments.size(); i++)
-        vl.alignments[i] = randf(-1.0f, 1.0f);
-
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
