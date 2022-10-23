@@ -35,6 +35,7 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
         FloatBuffer weightsNext;
+        FloatBuffer alignments;
     };
 
 private:
@@ -82,7 +83,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.1f)
+    lr(0.5f)
     {}
 
     // Create with random initialization

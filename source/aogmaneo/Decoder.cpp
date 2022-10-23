@@ -98,6 +98,8 @@ void Decoder::reactivate(
 
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
+    float maxActivation = -999999.0f;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -124,7 +126,27 @@ void Decoder::reactivate(
 
         sum /= count;
 
-        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
+        hiddenActs[hiddenCellIndex] = sum;
+
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
+
+        total += hiddenActs[hiddenCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] *= scale;
     }
 }
 
@@ -157,6 +179,8 @@ void Decoder::learn(
 
     int count = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
+    float maxActivation = -999999.0f;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -183,7 +207,33 @@ void Decoder::learn(
 
         sum /= count;
 
-        float delta = lr * ((hc == targetCI) - min(1.0f, max(0.0f, sum)));
+        hiddenActs[hiddenCellIndex] = sum;
+
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
+
+        total += hiddenActs[hiddenCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] *= scale;
+    }
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        float delta = lr * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -261,7 +311,7 @@ void Decoder::generateErrors(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += error * vl.weights[wi];
+                    sum += error * vl.alignments[wi];
                 }
 
                 count++;
@@ -301,6 +351,11 @@ void Decoder::initRandom(
         for (int i = 0; i < vl.weightsNext.size(); i++)
             vl.weightsNext[i] = randf(-0.01f, 0.01f);
     }
+
+    vl.alignments.resize(vl.weights.size());
+
+    for (int i = 0; i < vl.alignments.size(); i++)
+        vl.alignments[i] = randf(-1.0f, 1.0f);
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
