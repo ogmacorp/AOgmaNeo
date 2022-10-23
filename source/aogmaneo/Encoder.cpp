@@ -25,7 +25,6 @@ void Encoder::activate(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -65,10 +64,7 @@ void Encoder::activate(
             subSum /= subCount;
 
             sum += subSum * vl.importance;
-            totalImportance += vl.importance;
         }
-
-        sum /= max(0.0001f, totalImportance);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -189,39 +185,26 @@ void Encoder::learnRecon(
 
         sum /= max(1, count);
 
-        vl.reconActsTemp[visibleCellIndex] = sum;
-        
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = vc;
-        }
-    }
+        float delta = rlr * ((vc == targetCI) - min(1.0f, max(0.0f, sum)));
 
-    if (maxIndex != targetCI) {
-        for (int vc = 0; vc < vld.size.z; vc++) {
-            int visibleCellIndex = vc + visibleCellsStart;
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 hiddenPos = Int2(ix, iy);
 
-            float delta = rlr * ((vc == targetCI) - sigmoidf(vl.reconActsTemp[visibleCellIndex]));
+                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    Int2 hiddenPos = Int2(ix, iy);
+                Int2 visibleCenter = project(hiddenPos, hToV);
 
-                    int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
-                    Int2 visibleCenter = project(hiddenPos, hToV);
+                    int hiddenCellIndexMax = hiddenCIsPrev[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
-                    if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                        Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                        int hiddenCellIndexMax = hiddenCIsPrev[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
-
-                        int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
-
-                        vl.weights[wi] += delta;
-                    }
+                    vl.weights[wi] += delta;
                 }
-        }
+            }
     }
 }
 
@@ -253,7 +236,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 2.0f);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
 
