@@ -70,13 +70,6 @@ private:
         const IntBuffer* inputCIsPrev
     );
 
-    void generateErrors(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        const IntBuffer* inputCIsPrev,
-        FloatBuffer* visibleErrors
-    ); 
-
 public:
     float lr; // Learning rate
 
@@ -104,13 +97,6 @@ public:
         const IntBuffer* inputCIs,
         const IntBuffer* inputCIsPrev
     );
-
-    void generateErrors(
-        const IntBuffer* hiddenTargetCIs,
-        const IntBuffer* inputCIs,
-        const IntBuffer* inputCIsPrev,
-        FloatBuffer* visibleErrors
-    ); 
 
     void clearState();
 
