@@ -77,6 +77,9 @@ private:
     Array<Actor> aLayers;
     Array<FloatBuffer> errors; // Accumulation
 
+    Array<IntBuffer> hiddenCIsPrev;
+    Array<IntBuffer> feedBackCIsPrev;
+
     // For mapping first layer decoders
     IntBuffer iIndices;
     IntBuffer dIndices;
@@ -102,6 +105,8 @@ public:
         float reward = 0.0f, // Reward
         bool mimic = false // Mimicry mode
     );
+
+    void clearState();
 
     // Serialization
     int size() const; // Returns size in bytes
