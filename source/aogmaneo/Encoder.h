@@ -47,9 +47,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenMaxActs;
-    FloatBuffer hiddenMaxActsPrev;
-
     IntBuffer hiddenCIs;
     IntBuffer hiddenCIsPrev;
     
