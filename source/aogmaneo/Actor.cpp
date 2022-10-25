@@ -145,7 +145,7 @@ void Actor::learn(
             int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
             if (vld.hasFeedBack) {
-                int inCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+                int inCI = historySamples[t].nextCIs[visibleColumnIndex];
 
                 sumPrev += vl.weightsNext[inCI + wiStart];
             }
@@ -170,7 +170,7 @@ void Actor::learn(
             int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
             if (vld.hasFeedBack) {
-                int inCI = historySamples[t - 1].inputCIs[visibleColumnIndex];
+                int inCI = historySamples[t].nextCIs[visibleColumnIndex];
 
                 vl.weightsNext[inCI + wiStart] += delta;
             }
