@@ -209,9 +209,15 @@ public:
         return ticksPerUpdate[l];
     }
 
+    int getNumIO() const {
+        return ioSizes.size();
+    }
+
     // Get input/output sizes
-    const Array<Int3> &getIOSizes() const {
-        return ioSizes;
+    const Int3 &getIOSize(
+        int i
+    ) const {
+        return ioSizes[i];
     }
 
     // Get input/output types

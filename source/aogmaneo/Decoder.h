@@ -50,10 +50,16 @@ private:
 
     // --- Kernels ---
 
-    void forward(
+    void activate(
         const Int2 &columnPos,
         const IntBuffer* nextCIs,
         const IntBuffer* inputCIs
+    );
+
+    void reactivate(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        const IntBuffer* inputCIsPrev
     );
 
     void learn(
@@ -69,7 +75,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(0.5f)
     {}
 
     // Create with random initialization
