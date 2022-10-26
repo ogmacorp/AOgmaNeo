@@ -72,7 +72,7 @@ public:
     // Defaults
     Encoder()
     :
-    lr(0.2f),
+    lr(0.1f),
     boost(0.1f),
     groupRadius(2)
     {}
