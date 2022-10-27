@@ -59,7 +59,7 @@ public:
         LayerDesc(
             const Int3 &hiddenSize = Int3(4, 4, 16),
             int eRadius = 2,
-            int rRadius = 2,
+            int rRadius = 0,
             int dRadius = 2
         )
         :
