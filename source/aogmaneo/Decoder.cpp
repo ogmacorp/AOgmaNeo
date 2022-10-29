@@ -25,7 +25,6 @@ void Decoder::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -46,8 +45,6 @@ void Decoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
@@ -61,8 +58,6 @@ void Decoder::forward(
                     sum += vl.fWeights[wi];
                 }
         }
-
-        sum /= count;
 
         hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
 
@@ -163,7 +158,6 @@ void Decoder::generateErrors(
     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
     float sum = 0.0f;
-    int count = 0;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -187,12 +181,8 @@ void Decoder::generateErrors(
 
                     sum += error * vl.bWeights[wi];
                 }
-
-                count++;
             }
         }
-
-    sum /= max(1, count);
 
     (*visibleErrors)[visibleColumnIndex] += sum;
 }
@@ -232,8 +222,10 @@ void Decoder::initRandom(
         if (vld.hasBWeights) {
             vl.bWeights.resize(vl.fWeights.size());
 
+            float weightScale = sqrtf(1.0f / area);
+
             for (int i = 0; i < vl.bWeights.size(); i++)
-                vl.bWeights[i] = randf(-1.0f, 1.0f);
+                vl.bWeights[i] = randf(-weightScale, weightScale);
         }
     }
 
