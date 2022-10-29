@@ -20,21 +20,19 @@ public:
 
         int radius; // Radius onto input
 
-        Byte hasFeedBack;
-
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2),
-        hasFeedBack(true)
+        radius(2)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
         FloatBuffer weights;
-        FloatBuffer weightsNext;
+
+        IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
 private:
@@ -45,28 +43,19 @@ private:
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
-    VisibleLayer vl;
-    VisibleLayerDesc vld;
+    Array<VisibleLayer> visibleLayers;
+    Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
 
-    void activate(
+    void forward(
         const Int2 &columnPos,
-        const IntBuffer* nextCIs,
-        const IntBuffer* inputCIs
-    );
-
-    void reactivate(
-        const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        const IntBuffer* inputCIsPrev
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* hiddenTargetCIs,
-        const IntBuffer* inputCIs,
-        const IntBuffer* inputCIsPrev
+        const IntBuffer* hiddenTargetCIs
     );
 
 public:
@@ -75,26 +64,23 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.2f)
+    lr(0.1f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize,
-        const VisibleLayerDesc &vld
+        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
     // Activate the predictor (predict values)
     void activate(
-        const IntBuffer* nextCIs,
-        const IntBuffer* inputCIs
+        const Array<const IntBuffer*> &inputCIs
     );
 
     // Learning predictions (update weights)
     void learn(
-        const IntBuffer* hiddenTargetCIs,
-        const IntBuffer* inputCIs,
-        const IntBuffer* inputCIsPrev
+        const IntBuffer* hiddenTargetCIs
     );
 
     void clearState();
@@ -119,19 +105,30 @@ public:
         StreamReader &reader
     );
 
-    // Get a visible layer
-    VisibleLayer &getVisibleLayer() {
-        return vl;
+    // Get number of visible layers
+    int getNumVisibleLayers() const {
+        return visibleLayers.size();
     }
 
     // Get a visible layer
-    const VisibleLayer &getVisibleLayer() const {
-        return vl;
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
+    }
+
+    // Get a visible layer
+    const VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) const {
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
-    const VisibleLayerDesc &getVisibleLayerDesc() const {
-        return vld;
+    const VisibleLayerDesc &getVisibleLayerDesc(
+        int i // Index of visible layer
+    ) const {
+        return visibleLayerDescs[i];
     }
 
     // Get the hidden activations (predictions)

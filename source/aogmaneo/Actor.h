@@ -108,6 +108,12 @@ public:
         bool learnEnabled
     );
 
+    void clearState() {
+        hiddenCIs.fill(0);
+
+        historySize = 0;
+    }
+
     // Serialization
     int size() const; // Returns size in bytes
     int stateSize() const; // Returns size of state in bytes
