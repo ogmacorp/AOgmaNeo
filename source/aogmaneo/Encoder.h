@@ -68,7 +68,7 @@ public:
 
     Encoder()
     :
-    lr(1.0f),
+    lr(0.1f),
     reg(0.01f)
     {}
 

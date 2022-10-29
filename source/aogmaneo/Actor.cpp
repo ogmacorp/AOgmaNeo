@@ -22,7 +22,6 @@ void Actor::forward(
     // --- Value ---
 
     float value = 0.0f;
-    int count = 0;
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -43,8 +42,6 @@ void Actor::forward(
         Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-        count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -56,8 +53,6 @@ void Actor::forward(
                 value += vl.valueWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
             }
     }
-
-    value /= count;
 
     hiddenValues[hiddenColumnIndex] = value;
 
@@ -101,8 +96,6 @@ void Actor::forward(
                         sum += vl.actionWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     }
             }
-
-            sum /= count;
 
             hiddenActs[hiddenCellIndex] = sum;
 
@@ -206,7 +199,6 @@ void Actor::learn(
     float newValue = r + d * hiddenValues[hiddenColumnIndex];
 
     float value = 0.0f;
-    int count = 0;
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -227,8 +219,6 @@ void Actor::learn(
         Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-        count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
-
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                 int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -240,8 +230,6 @@ void Actor::learn(
                 value += vl.valueWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenColumnIndex))];
             }
     }
-
-    value /= count;
 
     float tdErrorValue = newValue - value;
     
@@ -320,8 +308,6 @@ void Actor::learn(
                     sum += vl.actionWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                 }
         }
-
-        sum /= count;
 
         hiddenActs[hiddenCellIndex] = sum;
 
@@ -423,8 +409,10 @@ void Actor::initRandom(
 
         vl.actionWeights.resize(numHiddenCells * area * vld.size.z);
 
+        float weightScale = sqrtf(1.0f / area);
+
         for (int i = 0; i < vl.actionWeights.size(); i++)
-            vl.actionWeights[i] = randf(-0.01f, 0.01f);
+            vl.actionWeights[i] = randf(-weightScale, weightScale);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
