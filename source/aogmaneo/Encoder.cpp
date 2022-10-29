@@ -103,7 +103,6 @@ void Encoder::forward(
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
             float subSum = 0.0f;
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -117,8 +116,6 @@ void Encoder::forward(
 
                     subSum += vl.weights[wi];
                 }
-
-            subSum /= subCount;
 
             sum += subSum * vl.importance;
             totalImportance += vl.importance;
@@ -164,8 +161,10 @@ void Encoder::initRandom(
 
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
+        float weightScale = sqrtf(1.0f / area);
+
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-weightScale, weightScale);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
