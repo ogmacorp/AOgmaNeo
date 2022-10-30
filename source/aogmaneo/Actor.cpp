@@ -201,8 +201,6 @@ void Actor::learn(
 
         value /= count;
 
-        int targetCI = historySamples[t - n - 1].hiddenTargetCIsPrev[hiddenColumnIndex];
-
         minAdv = 999999.0f;
         maxAdv = -999999.0f;
 
@@ -249,6 +247,8 @@ void Actor::learn(
             minAdv = min(minAdv, adv);
             maxAdv = max(maxAdv, adv);
         }
+
+        int targetCI = historySamples[t - n - 1].hiddenTargetCIsPrev[hiddenColumnIndex];
 
         float q = value + (n == 0 ? hiddenAdvsTemp[targetCI + hiddenCellsStart] : maxAdv) - minAdv;
 
