@@ -249,7 +249,7 @@ void Actor::learn(
 
     float qPrev = valuePrev + targetAdvPrev;
 
-    float newQ = r + d * value;
+    float newQ = r + d * maxQ;
     float tdError = newQ - qPrev;
 
     float deltaV = vlr * tdError;
