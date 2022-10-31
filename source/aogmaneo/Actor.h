@@ -67,16 +67,15 @@ private:
 
     void learn(
         const Int2 &columnPos,
-        int t
+        int t,
+        float r,
+        float d
     );
 
 public:
     float vlr; // Value learning rate
     float alr; // Advantage learning rate
-    float force;
-    float reg;
     float discount;
-    float decay;
     int nSteps;
     int historyIters;
 
@@ -85,12 +84,9 @@ public:
     :
     vlr(0.01f),
     alr(0.01f),
-    force(0.001f),
-    reg(0.5f),
     discount(0.99f),
-    decay(0.9f),
-    nSteps(8),
-    historyIters(4)
+    nSteps(5),
+    historyIters(16)
     {}
 
     // Initialized randomly
