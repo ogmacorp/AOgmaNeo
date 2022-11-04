@@ -132,6 +132,12 @@ void Hierarchy::initRandom(
 
         hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
     }
+
+    // Default actions to no importance
+    for (int i = 0; i < ioDescs.size(); i++) {
+        if (ioTypes[i] == action)
+            setInputImportance(i, 0.0f);
+    }
 }
 
 void Hierarchy::step(
