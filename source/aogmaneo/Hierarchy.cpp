@@ -202,7 +202,7 @@ void Hierarchy::step(
 }
 
 int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + ioSizes.size() * sizeof(Int3) + iIndices.size() * sizeof(int) + dIndices.size() * sizeof(int);
+    int size = 4 * sizeof(int) + ioSizes.size() * sizeof(Int3) + ioTypes.size() * sizeof(Byte) + iIndices.size() * sizeof(int) + dIndices.size() * sizeof(int);
 
     for (int l = 0; l < eLayers.size(); l++) {
         size += sizeof(int);
