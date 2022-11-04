@@ -79,6 +79,7 @@ private:
 public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
+    float bias; // Bias towards positive updates
     float discount; // Discount factor
     float temperature; // Exploration amount
     int minSteps; // Minimum steps before sample can be used
@@ -89,6 +90,7 @@ public:
     :
     vlr(0.01f),
     alr(0.01f),
+    bias(0.5f),
     discount(0.99f),
     temperature(1.0f),
     minSteps(16),
@@ -110,6 +112,8 @@ public:
         bool learnEnabled,
         bool mimic
     );
+
+    void clearState();
 
     // Serialization
     int size() const; // Returns size in bytes
