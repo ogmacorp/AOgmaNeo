@@ -103,6 +103,8 @@ public:
         bool mimic = false // Mimicry mode
     );
 
+    void clearState();
+
     // Serialization
     int size() const; // Returns size in bytes
     int stateSize() const; // Returns size of state in bytes

@@ -43,7 +43,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenActs;
+    FloatBuffer hiddenMaxActs;
     FloatBuffer hiddenRates;
 
     ByteBuffer hiddenPeaksTemp;
@@ -92,6 +92,10 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
     );
+
+    void clearState() {
+        hiddenCIs.fill(0);
+    }
 
     // Serialization
     int size() const; // Returns size in bytes

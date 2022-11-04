@@ -78,7 +78,7 @@ void Encoder::forward(
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenActs[hiddenColumnIndex] = maxActivation;
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 }
 
 void Encoder::inhibit(
@@ -88,7 +88,7 @@ void Encoder::inhibit(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    float activation = hiddenActs[hiddenColumnIndex];
+    float activation = hiddenMaxActs[hiddenColumnIndex];
 
     hiddenPeaksTemp[hiddenColumnIndex] = true;
 
@@ -99,7 +99,7 @@ void Encoder::inhibit(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenActs[otherHiddenColumnIndex] > activation) {
+                if (hiddenMaxActs[otherHiddenColumnIndex] > activation) {
                     hiddenPeaksTemp[hiddenColumnIndex] = false;
                     return;
                 }
@@ -209,7 +209,7 @@ void Encoder::initRandom(
             vl.protos[i] = randf(0.0f, 1.0f);
     }
 
-    hiddenActs = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 
     hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
@@ -294,7 +294,7 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
-    hiddenActs = FloatBuffer(numHiddenColumns, 0.0f);
+    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenRates.resize(numHiddenCells);
 

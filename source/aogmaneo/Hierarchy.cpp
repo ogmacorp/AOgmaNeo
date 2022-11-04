@@ -201,6 +201,22 @@ void Hierarchy::step(
     }
 }
 
+void Hierarchy::clearState() {
+    for (int l = 0; l < eLayers.size(); l++) {
+        hiddenCIsPrev.fill(0);
+
+        eLayers[l].clearState();
+        
+        // Decoders
+        for (int d = 0; d < dLayers[l].size(); d++)
+            dLayers[l][d].clearState();
+    }
+
+    // Actors
+    for (int d = 0; d < aLayers.size(); d++)
+        aLayers[d].clearState();
+}
+
 int Hierarchy::size() const {
     int size = 4 * sizeof(int) + ioSizes.size() * sizeof(Int3) + ioTypes.size() * sizeof(Byte) + iIndices.size() * sizeof(int) + dIndices.size() * sizeof(int);
 
