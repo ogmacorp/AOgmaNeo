@@ -81,8 +81,9 @@ void Encoder::forward(
     hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 }
 
-void Encoder::inhibit(
-    const Int2 &columnPos
+void Encoder::learn(
+    const Int2 &columnPos,
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -90,7 +91,7 @@ void Encoder::inhibit(
 
     float activation = hiddenMaxActs[hiddenColumnIndex];
 
-    hiddenPeaksTemp[hiddenColumnIndex] = true;
+    bool isPeak = true;
 
     for (int dcx = -groupRadius; dcx <= groupRadius; dcx++)
         for (int dcy = -groupRadius; dcy <= groupRadius; dcy++) {
@@ -100,33 +101,12 @@ void Encoder::inhibit(
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
                 if (hiddenMaxActs[otherHiddenColumnIndex] > activation) {
-                    hiddenPeaksTemp[hiddenColumnIndex] = false;
-                    return;
+                    isPeak = false;
+
+                    goto learn;
                 }
             }
         }
-}
-
-void Encoder::learn(
-    const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs
-) {
-    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
-
-    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
-
-    // Search for peaks in range
-    for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++) {
-            Int2 searchPos(columnPos.x + dx, columnPos.y + dy);
-
-            if (inBounds0(searchPos, Int2(hiddenSize.x, hiddenSize.y))) {
-                if (hiddenPeaksTemp[address2(searchPos, Int2(hiddenSize.x, hiddenSize.y))])
-                    goto learn;
-            }
-        }
-
-    return;
 
 learn:
     for (int dhc = -1; dhc <= 1; dhc++) {
@@ -137,7 +117,7 @@ learn:
 
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float rate = hiddenRates[hiddenCellIndex];
+        float rate = hiddenRates[hiddenCellIndex] * (isPeak ? 1.0f : boost);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -212,8 +192,6 @@ void Encoder::initRandom(
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
 
-    hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
-
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
@@ -231,16 +209,12 @@ void Encoder::step(
     if (learnEnabled) {
         #pragma omp parallel for
         for (int i = 0; i < numHiddenColumns; i++)
-            inhibit(Int2(i / hiddenSize.y, i % hiddenSize.y));
-
-        #pragma omp parallel for
-        for (int i = 0; i < numHiddenColumns; i++)
             learn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
     }
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -261,6 +235,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&boost), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&groupRadius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
@@ -292,6 +267,7 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&boost), sizeof(float));
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
@@ -299,8 +275,6 @@ void Encoder::read(
     hiddenRates.resize(numHiddenCells);
 
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
-
-    hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
 
     hiddenCIs.resize(numHiddenColumns);
 

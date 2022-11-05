@@ -163,6 +163,12 @@ void Hierarchy::initRandom(
         // Create the sparse coding layer
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
     }
+
+    // Default actions to no importance
+    for (int i = 0; i < ioDescs.size(); i++) {
+        if (ioTypes[i] == action)
+            setImportance(i, 0.0f);
+    }
 }
 
 void Hierarchy::step(
