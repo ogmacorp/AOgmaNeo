@@ -170,7 +170,7 @@ void Hierarchy::initRandom(
             setInputImportance(i, 0.0f);
     }
 
-    // Default feed back importance
+    // Default hidden importance (for all but last layer)
     for (int l = 0; l < eLayers.size() - 1; l++)
         setHiddenImportance(l, 0.125f); 
 }
