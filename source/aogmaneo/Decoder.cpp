@@ -25,7 +25,7 @@ void Decoder::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        int count = 0;
+        float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -46,7 +46,8 @@ void Decoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+            float subSum = 0.0f;
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -60,9 +61,14 @@ void Decoder::forward(
 
                     sum += vl.weights[wi];
                 }
+
+            subSum /= subCount * 127.0f;
+
+            sum += subSum * vl.importance;
+            totalImportance += vl.importance;
         }
 
-        sum /= count * 127.0f;
+        sum /= max(0.0001f, totalImportance);
 
         hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, scale * sum));
 

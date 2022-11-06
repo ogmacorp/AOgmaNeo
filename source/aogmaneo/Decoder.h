@@ -33,6 +33,13 @@ public:
         SByteBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
+
+        float importance;
+
+        VisibleLayer()
+        :
+        importance(1.0f)
+        {}
     };
 
 private:

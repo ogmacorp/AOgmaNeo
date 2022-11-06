@@ -167,8 +167,12 @@ void Hierarchy::initRandom(
     // Default actions to no importance
     for (int i = 0; i < ioDescs.size(); i++) {
         if (ioTypes[i] == action)
-            setImportance(i, 0.0f);
+            setInputImportance(i, 0.0f);
     }
+
+    // Default feed back importance
+    for (int l = 0; l < eLayers.size() - 1; l++)
+        setHiddenImportance(l, 0.125f); 
 }
 
 void Hierarchy::step(
