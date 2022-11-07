@@ -217,12 +217,6 @@ void Hierarchy::step(
 
                 for (int d = 0; d < dLayers[l].size(); d++)
                     dLayers[l][d].generateErrors(&histories[l][l == 0 ? iIndices[d] : 0][l == 0 ? 0 : d], &errors[l], 0);
-
-                // Rescale
-                float scale = 1.0f / dLayers[l].size();
-
-                for (int i = 0; i < errors[l].size(); i++)
-                    errors[l][i] *= scale;
             }
 
             // Activate sparse coder

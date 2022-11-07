@@ -24,8 +24,11 @@ void Encoder::forward(
         for (int dhc = -1; dhc <= 1; dhc++) {
             int hc = hiddenCIs[hiddenColumnIndex] + dhc;
 
-            if (hc < 0 || hc >= hiddenSize.z)
-                continue;
+            // Wrap
+            if (hc < 0)
+                hc += hiddenSize.z;
+
+            hc = (hc % hiddenSize.z);
 
             int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -161,7 +164,7 @@ void Encoder::initRandom(
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
@@ -280,6 +283,8 @@ void Encoder::read(
         vl.protos.resize(numHiddenCells * area);
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
+
+        vl.inputCIsPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
 
