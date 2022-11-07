@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -11,15 +11,9 @@
 #include "Helpers.h"
 
 namespace aon {
-// Sparse coder
+// Image coder
 class ImageEncoder {
 public:
-    enum Mode {
-        commit = 0,
-        update = 1,
-        ignore = 2
-    };
-
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -36,31 +30,17 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights0;
-        ByteBuffer weights1;
+        ByteBuffer protos;
 
-        FloatBuffer weightsRecon;
-
-        ByteBuffer reconstruction;
-
-        float importance;
-
-        VisibleLayer()
-        :
-        importance(1.0f)
-        {}
+        ByteBuffer recons;
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<Mode> hiddenModes;
+    IntBuffer hiddenCIs; // Hidden states
 
-    FloatBuffer hiddenMaxActs;
-
-    IntBuffer hiddenCIs;
-
-    IntBuffer hiddenCommits;
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -68,21 +48,10 @@ private:
     
     // --- Kernels ---
     
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const Array<const ByteBuffer*> &inputs,
-        unsigned int* state
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
-    );
-
-    void learnReconstruction(
-        const Int2 &columnPos,
-        const ByteBuffer* inputs,
-        int vli
+        bool learnEnabled
     );
 
     void reconstruct(
@@ -92,29 +61,23 @@ private:
     );
 
 public:
-    float gap;
-    float vigilance;
-    float lr; // Learning rate
-    float rr; // Recon rate
+    float lr;
 
+    // Defaults
     ImageEncoder()
     :
-    gap(0.1f),
-    vigilance(0.95f),
-    lr(0.1f),
-    rr(0.1f)
+    lr(0.1f)
     {}
 
-    // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
+    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const ByteBuffer*> &inputs, // Input states
-        bool learnEnabled = true, // Whether to learn
-        bool learnRecon = true // Learning reconstruction
+        bool learnEnabled // Whether to learn
     );
 
     void reconstruct(
@@ -124,12 +87,11 @@ public:
     const ByteBuffer &getReconstruction(
         int vli
     ) const {
-        return visibleLayers[vli].reconstruction;
+        return visibleLayers[vli].recons;
     }
 
     // Serialization
     int size() const; // Returns size in bytes
-    int stateSize() const; // Returns size of state in bytes
 
     void write(
         StreamWriter &writer
@@ -139,48 +101,28 @@ public:
         StreamReader &reader
     );
 
-    void writeState(
-        StreamWriter &writer
-    ) const;
-
-    void readState(
-        StreamReader &reader
-    );
-
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
     }
 
     // Get a visible layer
-    VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
-    ) {
-        return visibleLayers[i];
-    }
-
-    // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
-    }
-
-    // Get the hidden commits
-    const IntBuffer &getHiddenCommits() const {
-        return hiddenCommits;
     }
 
     // Get the hidden size
