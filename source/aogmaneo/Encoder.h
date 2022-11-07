@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer protos;
 
+        IntBuffer inputCIsPrev;
+
         float importance;
 
         VisibleLayer()
@@ -43,7 +45,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenMaxActs;
     FloatBuffer hiddenRates;
 
     IntBuffer hiddenCIs; // Hidden states
@@ -56,25 +57,18 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        const FloatBuffer* hiddenErrors,
+        bool learnEnabled
     );
 
 public:
     float lr;
-    float boost;
-    int groupRadius;
 
     // Defaults
     Encoder()
     :
-    lr(0.1f),
-    boost(0.1f),
-    groupRadius(2)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -86,12 +80,11 @@ public:
     // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
+        const FloatBuffer* hiddenErrors,
         bool learnEnabled // Whether to learn
     );
 
-    void clearState() {
-        hiddenCIs.fill(0);
-    }
+    void clearState();
 
     // Serialization
     int size() const; // Returns size in bytes

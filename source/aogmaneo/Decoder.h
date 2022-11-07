@@ -20,26 +20,23 @@ public:
 
         int radius; // Radius onto input
 
+        Byte hasBWeights;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        hasBWeights(false)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer weights;
+        SByteBuffer fWeights;
+        SByteBuffer bWeights; // May be empty
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
-
-        float importance;
-
-        VisibleLayer()
-        :
-        importance(1.0f)
-        {}
     };
 
 private:
@@ -64,6 +61,13 @@ private:
         const Int2 &columnPos,
         const IntBuffer* hiddenTargetCIs
     );
+
+    void generateErrors(
+        const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs,
+        FloatBuffer* visibleErrors,
+        int vli
+    ); 
 
 public:
     float scale;
@@ -92,6 +96,13 @@ public:
         const IntBuffer* hiddenTargetCIs
     );
 
+    void generateErrors(
+        const IntBuffer* hiddenTargetCIs,
+        FloatBuffer* visibleErrors,
+        int vli
+    );
+
+    // Clear out working memory
     void clearState();
 
     // Serialization
