@@ -29,7 +29,7 @@ void Encoder::forward(
 
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float rate = hiddenRates[hiddenCellIndex] * min(1.0f, (*hiddenErrors)[hiddenColumnIndex]);
+            float rate = hiddenRates[hiddenCellIndex];
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
