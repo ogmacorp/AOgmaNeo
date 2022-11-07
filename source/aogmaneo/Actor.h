@@ -94,7 +94,7 @@ public:
     discount(0.99f),
     temperature(1.0f),
     minSteps(16),
-    historyIters(16)
+    historyIters(8)
     {}
 
     // Initialized randomly
