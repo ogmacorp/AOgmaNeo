@@ -212,7 +212,7 @@ public:
     }
 
     // Get number of IO layers
-    int getIOSize() const {
+    int getNumIO() const {
         return ioSizes.size();
     }
 
