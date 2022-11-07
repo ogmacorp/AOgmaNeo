@@ -163,6 +163,7 @@ void Decoder::generateErrors(
     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
     float sum = 0.0f;
+    int count = 0;
 
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -185,12 +186,12 @@ void Decoder::generateErrors(
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum += error * vl.bWeights[wi];
+                    count++;
                 }
             }
         }
 
-    sum /= 127.0f;
-    sum *= sqrtf(1.0f / (diam * diam));
+    sum /= count * 127.0f;
 
     (*visibleErrors)[visibleColumnIndex] += sum;
 }
