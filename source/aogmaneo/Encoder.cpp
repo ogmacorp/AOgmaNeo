@@ -129,10 +129,8 @@ learn:
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hiddenCIs[hiddenColumnIndex] + dhc;
 
-        if (hc < 0)
-            hc += hiddenSize.z;
-
-        hc = (hc % hiddenSize.z);
+        if (hc < 0 || hc >= hiddenSize.z)
+            continue;
 
         int hiddenCellIndex = hc + hiddenCellsStart;
 
