@@ -169,10 +169,6 @@ void Hierarchy::initRandom(
         if (ioTypes[i] == action)
             setInputImportance(i, 0.0f);
     }
-
-    // Default hidden importance (for all but last layer)
-    //for (int l = 0; l < eLayers.size() - 1; l++)
-    //    setHiddenImportance(l, 0.125f); 
 }
 
 void Hierarchy::step(
