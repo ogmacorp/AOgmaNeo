@@ -79,7 +79,6 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
-    Array<IntBuffer> hiddenCIsPrev;
 
     // For mapping first layer decoders
     IntBuffer iIndices;
@@ -113,7 +112,7 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reward
-        bool mimic = false // Mimicry mode - treat actors as regular decoders
+        bool mimic = false // Mimicry mode
     );
 
     void clearState();
@@ -164,7 +163,7 @@ public:
     }
 
     // Importance control
-    void setImportance(
+    void setInputImportance(
         int i,
         float importance
     ) {
@@ -173,7 +172,7 @@ public:
     }
 
     // Importance control
-    float getImportance(
+    float getInputImportance(
         int i
     ) const {
         return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
@@ -210,9 +209,16 @@ public:
         return ticksPerUpdate[l];
     }
 
+    // Number of IO layers
+    int getNumIO() const {
+        return ioSizes.size();
+    }
+
     // Get input/output sizes
-    const Array<Int3> &getIOSizes() const {
-        return ioSizes;
+    const Int3 &getIOSize(
+        int i
+    ) const {
+        return ioSizes[i];
     }
 
     // Get input/output types

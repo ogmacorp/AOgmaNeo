@@ -20,14 +20,11 @@ public:
 
         int radius; // Radius onto input
 
-        Byte hasFeedBack;
-
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2),
-        hasFeedBack(true)
+        radius(2)
         {}
     };
 
@@ -35,15 +32,11 @@ public:
     struct VisibleLayer {
         FloatBuffer valueWeights; // Value function weights
         FloatBuffer actionWeights; // Action function weights
-        
-        FloatBuffer valueWeightsNext;
-        FloatBuffer actionWeightsNext;
     };
 
     // History sample for delayed updates
     struct HistorySample {
-        IntBuffer nextCIs;
-        IntBuffer inputCIs;
+        Array<IntBuffer> inputCIs;
         IntBuffer hiddenTargetCIsPrev;
 
         float reward;
@@ -59,18 +52,19 @@ private:
 
     IntBuffer hiddenCIs; // Hidden states
 
+    FloatBuffer hiddenValues; // Hidden value function output buffer
+
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
     // Visible layers and descriptors
-    VisibleLayer vl;
-    VisibleLayerDesc vld;
+    Array<VisibleLayer> visibleLayers;
+    Array<VisibleLayerDesc> visibleLayerDescs;
 
     // --- Kernels ---
 
     void forward(
         const Int2 &columnPos,
-        const IntBuffer* nextCIs,
-        const IntBuffer* inputCIs,
+        const Array<const IntBuffer*> &inputCIs,
         unsigned int* state
     );
 
@@ -85,6 +79,7 @@ private:
 public:
     float vlr; // Value learning rate
     float alr; // Action learning rate
+    float bias; // Bias towards positive updates
     float discount; // Discount factor
     float temperature; // Exploration amount
     int minSteps; // Minimum steps before sample can be used
@@ -95,6 +90,7 @@ public:
     :
     vlr(0.01f),
     alr(0.01f),
+    bias(0.5f),
     discount(0.99f),
     temperature(1.0f),
     minSteps(16),
@@ -105,13 +101,12 @@ public:
     void initRandom(
         const Int3 &hiddenSize,
         int historyCapacity,
-        const VisibleLayerDesc &vld
+        const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
     // Step (get actions and update)
     void step(
-        const IntBuffer* nextCIs,
-        const IntBuffer* inputCIs,
+        const Array<const IntBuffer*> &inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
         bool learnEnabled,
@@ -140,14 +135,23 @@ public:
         StreamReader &reader
     );
 
+    // Get number of visible layers
+    int getNumVisibleLayers() const {
+        return visibleLayers.size();
+    }
+
     // Get a visible layer
-    const VisibleLayer &getVisibleLayer() const {
-        return vl;
+    const VisibleLayer &getVisibleLayer(
+        int i // Index of layer
+    ) const {
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
-    const VisibleLayerDesc &getVisibleLayerDesc() const {
-        return vld;
+    const VisibleLayerDesc &getVisibleLayerDesc(
+        int i // Index of layer
+    ) const {
+        return visibleLayerDescs[i];
     }
 
     // Get hidden state/output/actions
