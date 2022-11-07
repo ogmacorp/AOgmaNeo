@@ -56,7 +56,7 @@ void Encoder::forward(
 
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                        int inCI = (*inputCIs[vli])[visibleColumnIndex];
+                        int inCI = vl.inputCIsPrev[visibleColumnIndex];
 
                         float inValue = static_cast<float>(inCI) / static_cast<float>(vld.size.z - 1);
 
@@ -157,6 +157,8 @@ void Encoder::initRandom(
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = randf(0.0f, 1.0f);
+
+        vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
