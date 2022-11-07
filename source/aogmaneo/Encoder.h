@@ -46,6 +46,8 @@ private:
     FloatBuffer hiddenMaxActs;
     FloatBuffer hiddenRates;
 
+    ByteBuffer hiddenPeaksTemp;
+
     IntBuffer hiddenCIs; // Hidden states
 
     // Visible layers and associated descriptors
@@ -59,6 +61,10 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
+    void inhibit(
+        const Int2 &columnPos
+    );
+
     void learn(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
@@ -66,14 +72,12 @@ private:
 
 public:
     float lr;
-    float boost;
     int groupRadius;
 
     // Defaults
     Encoder()
     :
     lr(0.1f),
-    boost(0.1f),
     groupRadius(2)
     {}
 
