@@ -64,8 +64,7 @@ void Decoder::forward(
 
             subSum /= subCount * 127.0f;
 
-            sum += subSum * vl.importance;
-            totalImportance += vl.importance;
+            sum += subSum;
         }
 
         sum /= max(0.0001f, totalImportance);
@@ -217,7 +216,7 @@ int Decoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(SByte) + vl.inputCIsPrev.size() * sizeof(int) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(SByte) + vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
@@ -259,8 +258,6 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(SByte));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
@@ -307,8 +304,6 @@ void Decoder::read(
         vl.inputCIsPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-
-        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 

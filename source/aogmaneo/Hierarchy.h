@@ -171,27 +171,10 @@ public:
             eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
     }
 
-    // Importance control
     float getInputImportance(
         int i
     ) const {
         return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
-    }
-
-    // Importance control
-    void setHiddenImportance(
-        int l,
-        float importance
-    ) {
-        for (int d = 0; d < dLayers[l].size(); d++)
-            dLayers[l][d].getVisibleLayer(0).importance = importance;
-    }
-
-    // Importance control
-    float getHiddenImportance(
-        int l
-    ) const {
-        return dLayers[l][0].getVisibleLayer(0).importance;
     }
 
     // Retrieve predictions

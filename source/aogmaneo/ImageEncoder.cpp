@@ -80,8 +80,11 @@ void ImageEncoder::forward(
         for (int dhc = -1; dhc <= 1; dhc++) {
             int hc = maxIndex + dhc;
 
-            if (hc < 0 || hc >= hiddenSize.z)
-                continue;
+            // Wrap
+            if (hc < 0)
+                hc += hiddenSize.z;
+
+            hc = (hc % hiddenSize.z);
 
             int hiddenCellIndex = hc + hiddenCellsStart;
 
