@@ -12,7 +12,7 @@ using namespace aon;
 
 void ImageEncoder::forward(
     const Int2 &columnPos,
-    const Array<const FloatBuffer*> &inputs,
+    const Array<const ByteBuffer*> &inputs,
     bool learnEnabled
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
@@ -21,6 +21,8 @@ void ImageEncoder::forward(
 
     int maxIndex = -1;
     float maxActivation = -999999.0f;
+
+    const float scale = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -59,9 +61,9 @@ void ImageEncoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wiStart;
 
-                        float input = (*inputs[vli])[vc + iStart];
+                        float input = (*inputs[vli])[vc + iStart] * scale;
 
-                        float delta = input - vl.protos[wi];
+                        float delta = input - vl.protos[wi] * scale;
 
                         sum -= delta * delta;
                     }
@@ -121,7 +123,7 @@ void ImageEncoder::forward(
 
                             float input = (*inputs[vli])[vc + iStart];
 
-                            vl.protos[wi] += rate * (input - vl.protos[wi]);
+                            vl.protos[wi] = min(255, max(0, roundf(vl.protos[wi] + rate * (input - vl.protos[wi]))));
                         }
                     }
             }
@@ -165,7 +167,7 @@ void ImageEncoder::reconstruct(
     
     // Find current max
     for (int vc = 0; vc < vld.size.z; vc++) {
-        int visibleIndex = vc + visibleCellsStart;
+        int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
         float total = 0.0f;
@@ -194,7 +196,7 @@ void ImageEncoder::reconstruct(
                 }
             }
 
-        vl.reconstruction[visibleIndex] = sum / max(0.0001f, total);
+        vl.recons[visibleCellIndex] = roundf(sum / max(0.0001f, total));
     }
 }
 
@@ -227,9 +229,9 @@ void ImageEncoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = randf(0.0f, 1.0f);
+            vl.protos[i] = rand() % 256;
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+        vl.recons = ByteBuffer(numVisibleCells, 0);
     }
 
     // Hidden CIs
@@ -239,7 +241,7 @@ void ImageEncoder::initRandom(
 }
 
 void ImageEncoder::step(
-    const Array<const FloatBuffer*> &inputs,
+    const Array<const ByteBuffer*> &inputs,
     bool learnEnabled
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
@@ -297,7 +299,7 @@ void ImageEncoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
     }
 }
 
@@ -340,9 +342,9 @@ void ImageEncoder::read(
 
         vl.protos.resize(numHiddenCells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
 
-        vl.reconstruction = FloatBuffer(numVisibleCells, 0.0f);
+        vl.recons = ByteBuffer(numVisibleCells, 0.0f);
     }
 }
 
