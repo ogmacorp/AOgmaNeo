@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        ByteBuffer protos;
 
-        FloatBuffer reconstruction;
+        ByteBuffer recons;
     };
 
 private:
@@ -50,7 +50,7 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const FloatBuffer*> &inputs,
+        const Array<const ByteBuffer*> &inputs,
         bool learnEnabled
     );
 
@@ -76,7 +76,7 @@ public:
 
     // Activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const FloatBuffer*> &inputs, // Input states
+        const Array<const ByteBuffer*> &inputs, // Input states
         bool learnEnabled // Whether to learn
     );
 
@@ -84,10 +84,10 @@ public:
         const IntBuffer* reconCIs
     );
 
-    const FloatBuffer &getReconstruction(
+    const ByteBuffer &getReconstruction(
         int vli
     ) const {
-        return visibleLayers[vli].reconstruction;
+        return visibleLayers[vli].recons;
     }
 
     // Serialization
