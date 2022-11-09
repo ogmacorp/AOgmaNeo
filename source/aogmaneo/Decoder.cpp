@@ -52,9 +52,9 @@ void Decoder::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
-
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
@@ -113,9 +113,9 @@ void Decoder::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
-
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
