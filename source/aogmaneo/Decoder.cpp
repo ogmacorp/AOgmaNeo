@@ -270,7 +270,7 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&hiddenActs[0]), hiddenActs.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
-    int numVisibleLayers = visibleLayers.size();
+    int numVisibleLayers;
 
     reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
 

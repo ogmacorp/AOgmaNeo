@@ -636,7 +636,7 @@ void Actor::read(
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
-    int numVisibleLayers = visibleLayers.size();
+    int numVisibleLayers;
 
     reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
 
