@@ -321,7 +321,7 @@ void ImageEncoder::read(
 
     reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
-    int numVisibleLayers = visibleLayers.size();
+    int numVisibleLayers;
 
     reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
 
