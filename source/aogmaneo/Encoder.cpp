@@ -289,7 +289,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
-    int numVisibleLayers = visibleLayers.size();
+    int numVisibleLayers;
 
     reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
 
