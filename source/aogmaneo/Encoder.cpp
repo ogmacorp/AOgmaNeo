@@ -149,7 +149,7 @@ void Encoder::learn(
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - expf(scale * (vl.reconsTemp[visibleCellIndex] - 1.0f)));
+            float delta = lr * ((vc == targetCI) - expf(scale * (vl.reconsTemp[visibleCellIndex] - 0.5f)));
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -201,7 +201,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 256;
+            vl.weights[i] = 128 - rand() % 5;
 
         vl.reconsTemp = FloatBuffer(numVisibleCells);
     }
