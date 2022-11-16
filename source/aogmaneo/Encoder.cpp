@@ -113,23 +113,16 @@ void Encoder::learn(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     // Search for peaks in range
-    for (int dx = -1; dx <= 1; dx++) {
-        Int2 searchPos(columnPos.x + dx, columnPos.y);
+    for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++) {
+            Int2 searchPos(columnPos.x + dx, columnPos.y + dy);
 
-        if (inBounds0(searchPos, Int2(hiddenSize.x, hiddenSize.y))) {
-            if (hiddenPeaksTemp[address2(searchPos, Int2(hiddenSize.x, hiddenSize.y))])
-                goto learn;
+            if (inBounds0(searchPos, Int2(hiddenSize.x, hiddenSize.y))) {
+                if (hiddenPeaksTemp[address2(searchPos, Int2(hiddenSize.x, hiddenSize.y))])
+                    goto learn;
+            }
+
         }
-
-    }
-    for (int dy = -1; dy <= 1; dy++) {
-        Int2 searchPos(columnPos.x, columnPos.y + dy);
-
-        if (inBounds0(searchPos, Int2(hiddenSize.x, hiddenSize.y))) {
-            if (hiddenPeaksTemp[address2(searchPos, Int2(hiddenSize.x, hiddenSize.y))])
-                goto learn;
-        }
-    }
 
     return;
 
