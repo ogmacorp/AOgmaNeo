@@ -121,7 +121,6 @@ void Encoder::learn(
                 if (hiddenPeaksTemp[address2(searchPos, Int2(hiddenSize.x, hiddenSize.y))])
                     goto learn;
             }
-
         }
 
     return;
