@@ -63,7 +63,7 @@ public:
             int eRadius = 2,
             int dRadius = 2,
             int ticksPerUpdate = 2,
-            int temporalHorizon = 2
+            int temporalHorizon = 4
         )
         :
         hiddenSize(hiddenSize),
