@@ -20,21 +20,17 @@ public:
 
         int radius; // Radius onto input
 
-        Byte hasBWeights;
-
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2),
-        hasBWeights(false)
+        radius(2)
         {}
     };
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer fWeights;
-        FloatBuffer bWeights; // May be empty
+        FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
@@ -75,7 +71,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(0.1f)
     {}
 
     // Create with random initialization

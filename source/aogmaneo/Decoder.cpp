@@ -55,34 +55,16 @@ void Decoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += vl.fWeights[wi];
+                    sum += vl.weights[wi];
                 }
         }
 
-        hiddenActs[hiddenCellIndex] = sum;
+        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, sum));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
-
-        total += hiddenActs[hiddenCellIndex];
-    }
-
-    float scale = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActs[hiddenCellIndex] *= scale;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -134,7 +116,7 @@ void Decoder::learn(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.fWeights[wi] += delta;
+                    vl.weights[wi] += delta;
                 }
         }
     }
@@ -197,7 +179,7 @@ void Decoder::generateErrors(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += error * vl.bWeights[wi];
+                    sum += error * vl.weights[wi];
                 }
             }
         }
@@ -230,21 +212,12 @@ void Decoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.fWeights.resize(numHiddenCells * area * vld.size.z);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        for (int i = 0; i < vl.fWeights.size(); i++)
-            vl.fWeights[i] = randf(-0.01f, 0.01f);
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
-
-        if (vld.hasBWeights) {
-            vl.bWeights.resize(vl.fWeights.size());
-
-            float weightScale = sqrtf(1.0f / area);
-
-            for (int i = 0; i < vl.bWeights.size(); i++)
-                vl.bWeights[i] = randf(-weightScale, weightScale);
-        }
     }
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
@@ -291,8 +264,6 @@ void Decoder::generateErrors(
     const VisibleLayer &vl = visibleLayers[vli];
     const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-    assert(vld.hasBWeights);
-
     int numVisibleColumns = vld.size.x * vld.size.y;
 
     #pragma omp parallel for
@@ -319,7 +290,7 @@ int Decoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + (vld.hasBWeights ? 2 : 1) * vl.fWeights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
+        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(float) + vl.inputCIsPrev.size() * sizeof(int);
     }
 
     return size;
@@ -358,12 +329,9 @@ void Decoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.fWeights[0]), vl.fWeights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-
-        if (vld.hasBWeights)
-            writer.write(reinterpret_cast<const void*>(&vl.bWeights[0]), vl.bWeights.size() * sizeof(float));
     }
 }
 
@@ -402,19 +370,13 @@ void Decoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.fWeights.resize(numHiddenCells * area * vld.size.z);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.fWeights[0]), vl.fWeights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         vl.inputCIsPrev.resize(numVisibleColumns);
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
-
-        if (vld.hasBWeights) {
-            vl.bWeights.resize(vl.fWeights.size());
-
-            reader.read(reinterpret_cast<void*>(&vl.bWeights[0]), vl.bWeights.size() * sizeof(float));
-        }
     }
 }
 
