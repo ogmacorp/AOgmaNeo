@@ -1,17 +1,17 @@
 # --------------------------------------------------------------------------
 # AOgmaNeo
-# Copyright(c) 2020 Ogma Intelligent Systems Corp. All rights reserved.
+# Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 #
-# This copy of OgmaNeo is licensed to you under the terms described
+# This copy of AOgmaNeo is licensed to you under the terms described
 # in the AOGMANEO_LICENSE.md file included in this distribution.
 # --------------------------------------------------------------------------
 
-# Locate OgmaNeo library
+# Locate AOgmaNeo library
 #
 # This module defines
 # AOGMANEO_LIBRARY, the name of the library to link against
-# AOGMANEO_FOUND, if false, do not try to link to OgmaNeo
-# AOGMANEO_INCLUDE_DIR, where to find OgmaNeo headers
+# AOGMANEO_FOUND, if false, do not try to link to AOgmaNeo
+# AOGMANEO_INCLUDE_DIR, where to find AOgmaNeo headers
 
 if(AOGMANEO_INCLUDE_DIR)
     # Already in cache, be silent
@@ -26,7 +26,7 @@ find_library(AOGMANEO_LIBRARY NAMES ${AOGMANEO_NAMES})
 
 # Per-recommendation
 set(AOGMANEO_INCLUDE_DIRS "${AOGMANEO_INCLUDE_DIR}")
-set(AOGMANEO_LIBRARIES    "${AOGMANEO_LIBRARY}")
+set(AOGMANEO_LIBRARIES "${AOGMANEO_LIBRARY}")
 
 # handle the QUIETLY and REQUIRED arguments and set AOGMANEO_FOUND to TRUE if
 # all listed variables are TRUE
