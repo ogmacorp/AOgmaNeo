@@ -123,7 +123,7 @@ void ImageEncoder::forward(
 
                             float input = (*inputs[vli])[vc + iStart];
 
-                            vl.protos[wi] = min(255, max(0, ceilf(vl.protos[wi] + rate * (input - vl.protos[wi]))));
+                            vl.protos[wi] = min(255, max(0, roundf(vl.protos[wi] + rate * (input - vl.protos[wi]))));
                         }
                     }
             }
