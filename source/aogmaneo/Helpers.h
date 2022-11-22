@@ -51,7 +51,7 @@ float powf(
     float y
 );
 
-inline float ceilf(
+inline int ceilf(
     float x
 ) {
     if (x > 0.0f)
