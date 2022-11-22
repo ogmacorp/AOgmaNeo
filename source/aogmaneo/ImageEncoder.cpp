@@ -28,7 +28,6 @@ void ImageEncoder::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        float total = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -64,15 +63,12 @@ void ImageEncoder::forward(
 
                         float input = (*inputs[vli])[vc + iStart] * scale;
 
-                        float weight = vl.protos[wi] * scale;
+                        float delta = input - vl.protos[wi] * scale;
 
-                        sum += weight * input;
-                        total += weight * weight;
+                        sum -= delta * delta;
                     }
                 }
         }
-
-        sum /= max(0.0001f, sqrtf(total));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
