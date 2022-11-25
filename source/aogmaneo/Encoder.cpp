@@ -25,7 +25,7 @@ void Encoder::forward(
 
         float s = sigmoidf(hiddenMaxActs[hiddenColumnIndex]);
 
-        float delta = lr * (*hiddenErrors)[hiddenColumnIndex] * s * (1.0f - s);
+        float delta = lr * (*hiddenErrors)[hiddenColumnIndex];
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
