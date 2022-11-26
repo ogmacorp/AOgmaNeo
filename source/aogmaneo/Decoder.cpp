@@ -119,7 +119,7 @@ void Decoder::learn(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
+                    vl.weights[wi] = min(127, max(-127, static_cast<int>(vl.weights[wi]) + delta));
                 }
         }
     }
