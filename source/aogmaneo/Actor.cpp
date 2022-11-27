@@ -348,9 +348,9 @@ void Actor::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float scale = (tdErrorValue > 0.0f ? 1.0f : 1.0f - bias);
+        float shift = (tdErrorValue > 0.0f ? 1.0f : 1.0f - bias);
 
-        float deltaAction = (mimic ? alr : alr * tanhf(tdErrorValue) * scale) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
+        float deltaAction = (mimic ? alr : alr * tanhf(tdErrorValue) * shift) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
