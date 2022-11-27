@@ -62,10 +62,6 @@ void Decoder::forward(
                 }
         }
 
-        sum /= count * 127.0f;
-
-        hiddenActs[hiddenCellIndex] = sigmoidf(scale * sum);
-
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
@@ -85,10 +81,11 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    if (hiddenCIs[hiddenColumnIndex] != targetCI) {
+        int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
+        int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-        float delta = 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
+        int delta = roundf(lr * 127.0f);
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -117,11 +114,11 @@ void Decoder::learn(
 
                     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wiTarget = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+                    int wiMax = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    int visibleCellIndex = inCIPrev + visibleColumnIndex * vld.size.z;
-
-                    vl.weights[wi] = min(127, max(-127, roundf(vl.weights[wi] + delta * vl.rates[visibleCellIndex])));
+                    vl.weights[wiTarget] = min(127, static_cast<int>(vl.weights[wiTarget]) + delta);
+                    vl.weights[wiMax] = max(-127, static_cast<int>(vl.weights[wiMax]) - delta);
                 }
         }
     }
@@ -156,8 +153,6 @@ void Decoder::initRandom(
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5 - 2;
-
-        vl.rates = FloatBuffer(numVisibleCells, 0.5f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -195,17 +190,6 @@ void Decoder::learn(
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
-
-    // Decay
-    for (int vli = 0; vli < visibleLayers.size(); vli++) {
-        VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
-
-        int numVisibleColumns = vld.size.x * vld.size.y;
-
-        for (int i = 0; i < numVisibleColumns; i++)
-            vl.rates[vl.inputCIsPrev[i] + i * vld.size.z] *= 1.0f - lr;
-    }
 }
 
 void Decoder::clearState() {
@@ -217,7 +201,7 @@ void Decoder::clearState() {
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -246,7 +230,6 @@ void Decoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenActs[0]), hiddenActs.size() * sizeof(float));
@@ -276,7 +259,6 @@ void Decoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenActs.resize(numHiddenCells);
