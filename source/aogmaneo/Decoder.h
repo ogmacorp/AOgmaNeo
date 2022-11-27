@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer weights;
+        ByteBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
@@ -64,7 +64,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.01f)
+    lr(0.1f)
     {}
 
     // Create with random initialization
