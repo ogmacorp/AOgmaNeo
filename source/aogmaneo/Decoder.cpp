@@ -19,13 +19,12 @@ void Decoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    float maxActivation = -1.0f;
+    int maxActivation = 0;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float sum = 0.0f;
-        int count = 0;
+        int sum = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -45,8 +44,6 @@ void Decoder::forward(
             // Bounds of receptive field, clamped to input size
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
-
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -111,9 +108,9 @@ void Decoder::learn(
 
                     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
-                    int wiTarget = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                    vl.weights[wiTarget] = min(255, roundf(vl.weights[wiTarget] + lr * (255.0f - vl.weights[wiTarget])));
+                    vl.weights[wi] = min(255, roundf(vl.weights[wi] + lr * (255.0f - vl.weights[wi])));
                 }
         }
     }
