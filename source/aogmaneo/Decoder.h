@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         SByteBuffer weights;
 
+        FloatBuffer rates;
+
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
@@ -65,7 +67,7 @@ public:
     // Defaults
     Decoder()
     :
-    scale(8.0f),
+    scale(32.0f),
     lr(0.1f)
     {}
 

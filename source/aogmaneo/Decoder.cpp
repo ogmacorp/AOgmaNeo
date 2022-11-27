@@ -64,7 +64,7 @@ void Decoder::forward(
 
         sum /= count * 127.0f;
 
-        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, scale * sum));
+        hiddenActs[hiddenCellIndex] = sigmoidf(scale * sum);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -88,7 +88,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]));
+        float delta = 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -119,7 +119,9 @@ void Decoder::learn(
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights[wi] = min(127, max(-127, static_cast<int>(vl.weights[wi]) + delta));
+                    int visibleCellIndex = inCIPrev + visibleColumnIndex * vld.size.z;
+
+                    vl.weights[wi] = min(127, max(-127, roundf(vl.weights[wi] + delta * vl.rates[visibleCellIndex])));
                 }
         }
     }
@@ -154,6 +156,8 @@ void Decoder::initRandom(
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5 - 2;
+
+        vl.rates = FloatBuffer(numVisibleCells, 0.5f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -191,6 +195,17 @@ void Decoder::learn(
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         learn(Int2(i / hiddenSize.y, i % hiddenSize.y), hiddenTargetCIs);
+
+    // Decay
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = this->visibleLayerDescs[vli];
+
+        int numVisibleColumns = vld.size.x * vld.size.y;
+
+        for (int i = 0; i < numVisibleColumns; i++)
+            vl.rates[vl.inputCIsPrev[i] + i * vld.size.z] *= 1.0f - lr;
+    }
 }
 
 void Decoder::clearState() {
