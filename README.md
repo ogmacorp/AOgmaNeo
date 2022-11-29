@@ -35,4 +35,4 @@ Refer to the [CONTRIBUTING.md](./CONTRIBUTING.md) file for information on making
 
 Contact Ogma via licenses@ogmacorp.com to discuss commercial use and licensing options.
 
-AOgmaNeo Copyright (c) 2020 [Ogma Intelligent Systems Corp](https://ogmacorp.com). All rights reserved.
+AOgmaNeo Copyright (c) 2020-2022 [Ogma Intelligent Systems Corp](https://ogmacorp.com). All rights reserved.
