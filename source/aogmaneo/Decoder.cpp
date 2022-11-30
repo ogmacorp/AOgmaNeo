@@ -114,7 +114,7 @@ void Decoder::learn(
                 }
         }
 
-        int m = 0;
+        int m = 255;
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
