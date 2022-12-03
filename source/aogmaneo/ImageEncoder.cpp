@@ -196,7 +196,7 @@ void ImageEncoder::reconstruct(
                 }
             }
 
-        vl.recons[visibleCellIndex] = roundf(sum / max(0.0001f, total));
+        vl.reconstruction[visibleCellIndex] = roundf(sum / max(0.0001f, total));
     }
 }
 
@@ -231,7 +231,7 @@ void ImageEncoder::initRandom(
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = rand() % 256;
 
-        vl.recons = ByteBuffer(numVisibleCells, 0);
+        vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
 
     // Hidden CIs
@@ -344,7 +344,7 @@ void ImageEncoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
 
-        vl.recons = ByteBuffer(numVisibleCells, 0.0f);
+        vl.reconstruction = ByteBuffer(numVisibleCells, 0.0f);
     }
 }
 

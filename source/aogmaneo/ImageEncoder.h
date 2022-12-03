@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         ByteBuffer protos;
 
-        ByteBuffer recons;
+        ByteBuffer reconstruction;
     };
 
 private:
@@ -87,7 +87,7 @@ public:
     const ByteBuffer &getReconstruction(
         int vli
     ) const {
-        return visibleLayers[vli].recons;
+        return visibleLayers[vli].reconstruction;
     }
 
     // Serialization
