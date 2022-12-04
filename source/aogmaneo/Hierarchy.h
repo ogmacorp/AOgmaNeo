@@ -53,24 +53,20 @@ public:
         Int3 hiddenSize; // Size of hidden layer
 
         int eRadius; // Encoder radius
+        int rRadius; // Recurrent radius
         int dRadius; // Decoder radius
-
-        int ticksPerUpdate; // Number of ticks a layer takes to update (relative to previous layer)
-        int temporalHorizon; // Temporal distance into the past addressed by the layer. Should be greater than or equal to ticksPerUpdate
 
         LayerDesc(
             const Int3 &hiddenSize = Int3(4, 4, 16),
             int eRadius = 2,
-            int dRadius = 2,
-            int ticksPerUpdate = 2,
-            int temporalHorizon = 2
+            int rRadius = 0,
+            int dRadius = 2
         )
         :
         hiddenSize(hiddenSize),
         eRadius(eRadius),
-        dRadius(dRadius),
-        ticksPerUpdate(ticksPerUpdate),
-        temporalHorizon(temporalHorizon)
+        rRadius(rRadius),
+        dRadius(dRadius)
         {}
     };
 
@@ -79,19 +75,11 @@ private:
     Array<Encoder> eLayers;
     Array<Array<Decoder>> dLayers;
     Array<Actor> aLayers;
+    Array<IntBuffer> hiddenCIsPrev;
 
     // For mapping first layer decoders
     IntBuffer iIndices;
     IntBuffer dIndices;
-
-    // Histories
-    Array<Array<CircleBuffer<IntBuffer>>> histories;
-
-    // Per-layer values
-    ByteBuffer updates;
-
-    IntBuffer ticks;
-    IntBuffer ticksPerUpdate;
 
     // Input dimensions
     Array<Int3> ioSizes;
@@ -142,6 +130,13 @@ public:
         return eLayers.size();
     }
 
+    // Get input/output types
+    IOType getIOType(
+        int i
+    ) const {
+        return static_cast<IOType>(ioTypes[i]);
+    }
+
     // Get state of highest layer (less verbose when dealing with goal-driven learning)
     const IntBuffer &getTopHiddenCIs() const {
         return eLayers[eLayers.size() - 1].getHiddenCIs();
@@ -152,14 +147,19 @@ public:
         return eLayers[eLayers.size() - 1].getHiddenSize();
     }
 
-    bool getTopUpdate() const {
-        return updates[updates.size() - 1];
-    }
-
     bool ioLayerExists(
         int i
     ) const {
         return dIndices[i] != -1;
+    }
+
+    bool isLayerRecurrent(
+        int l
+    ) const {
+        if (l == 0)
+            return eLayers[l].getNumVisibleLayers() > ioSizes.size();
+
+        return eLayers[l].getNumVisibleLayers() > 1;
     }
 
     // Importance control
@@ -167,14 +167,30 @@ public:
         int i,
         float importance
     ) {
-        for (int t = 0; t < histories[0][i].size(); t++)
-            eLayers[0].getVisibleLayer(i * histories[0][i].size() + t).importance = importance;
+        eLayers[0].getVisibleLayer(i).importance = importance;
     }
 
     float getInputImportance(
         int i
     ) const {
-        return eLayers[0].getVisibleLayer(i * histories[0][i].size()).importance;
+        return eLayers[0].getVisibleLayer(i).importance;
+    }
+
+    void setRecurrentImportance(
+        int l,
+        float importance
+    ) {
+        assert(isLayerRecurrent(l));
+
+        eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance = importance;
+    }
+
+    float getRecurrentImportance(
+        int l
+    ) const {
+        assert(isLayerRecurrent(l));
+
+        return eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).importance;
     }
 
     // Retrieve predictions
@@ -187,27 +203,6 @@ public:
         return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
-    // Whether this layer received on update this timestep
-    bool getUpdate(
-        int l
-    ) const {
-        return updates[l];
-    }
-
-    // Get current layer ticks, relative to previous layer
-    int getTicks(
-        int l
-    ) const {
-        return ticks[l];
-    }
-
-    // Get layer ticks per update, relative to previous layer
-    int getTicksPerUpdate(
-        int l
-    ) const {
-        return ticksPerUpdate[l];
-    }
-
     // Number of IO layers
     int getNumIO() const {
         return ioSizes.size();
@@ -218,13 +213,6 @@ public:
         int i
     ) const {
         return ioSizes[i];
-    }
-
-    // Get input/output types
-    IOType getIOType(
-        int i
-    ) const {
-        return static_cast<IOType>(ioTypes[i]);
     }
 
     // Retrieve a sparse coding layer
@@ -302,12 +290,6 @@ public:
 
     const IntBuffer &getDIndices() const {
         return dIndices;
-    }
-
-    const Array<CircleBuffer<IntBuffer>> &getHistories(
-        int l
-    ) const {
-        return histories[l];
     }
 };
 } // namespace aon
