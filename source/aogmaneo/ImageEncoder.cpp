@@ -115,6 +115,7 @@ void ImageEncoder::activate(
     if (!found) {
         if (hiddenCommits[hiddenColumnIndex] >= hiddenSize.z) {
             maxIndex = backupMaxIndex;
+            hiddenMaxActs[hiddenColumnIndex] = backupMaxActivation;
             hiddenModes[hiddenColumnIndex] = ignore;
         }
         else {
