@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -14,6 +14,12 @@ namespace aon {
 // Sparse coder
 class Encoder {
 public:
+    enum Mode {
+        commit = 0,
+        update = 1,
+        ignore = 2
+    };
+
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -30,7 +36,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        ByteBuffer weights;
 
         float importance;
 
@@ -43,26 +49,26 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    Array<Mode> hiddenModes;
+
     FloatBuffer hiddenMaxActs;
-    FloatBuffer hiddenRates;
 
-    ByteBuffer hiddenPeaksTemp;
+    IntBuffer hiddenCIs;
 
-    IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCommits;
+
+    FloatBuffer hiddenTotals;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-
+    
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void inhibit(
-        const Int2 &columnPos
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
@@ -71,14 +77,17 @@ private:
     );
 
 public:
-    float lr;
-    int groupRadius;
+    float gap;
+    float vigilance;
+    float lr; // Learning rate
+    int lRadius;
 
-    // Defaults
     Encoder()
     :
+    gap(0.1f),
+    vigilance(0.9f),
     lr(0.1f),
-    groupRadius(2)
+    lRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -87,7 +96,6 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
@@ -146,6 +154,11 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    // Get the hidden commits
+    const IntBuffer &getHiddenCommits() const {
+        return hiddenCommits;
     }
 
     // Get the hidden size
