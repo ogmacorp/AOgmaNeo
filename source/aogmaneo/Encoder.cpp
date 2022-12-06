@@ -100,7 +100,7 @@ void Encoder::activate(
     if (!found) {
         if (hiddenCommits[hiddenColumnIndex] >= hiddenSize.z) {
             maxIndex = backupMaxIndex;
-            hiddenMaxActs[hiddenColumnIndex] = backupMaxActivation;
+            hiddenMaxActs[hiddenColumnIndex] = 0.0f;
             hiddenModes[hiddenColumnIndex] = ignore;
         }
         else {
