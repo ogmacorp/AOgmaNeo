@@ -30,12 +30,18 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        FloatBuffer protos;
+
+        IntBuffer inputCIs;
+        IntBuffer reconCIs;
+
+        bool useInputs;
 
         float importance;
 
         VisibleLayer()
         :
+        useInputs(false),
         importance(1.0f)
         {}
     };
@@ -57,8 +63,7 @@ private:
     // --- Kernels ---
     
     void forward(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Int2 &columnPos
     );
 
     void inhibit(
@@ -66,8 +71,12 @@ private:
     );
 
     void learn(
+        const Int2 &columnPos
+    );
+
+    void reconstruct(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        int vli
     );
 
 public:
@@ -87,11 +96,32 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
+    void setInputCIs(
+        const IntBuffer* inputCIs,
+        int vli
+    ) {
+        if (inputCIs != nullptr) {
+            visibleLayers[vli].inputCIs = *inputCIs;
+            visibleLayers[vli].useInputs = true;
+        }
+        else
+            visibleLayers[vli].useInputs = false;
+    }
+
     // Activate the sparse coder (perform sparse coding)
-    void step(
-        const Array<const IntBuffer*> &inputCIs, // Input states
-        bool learnEnabled // Whether to learn
+    void activate();
+
+    void learn();
+
+    void reconstruct(
+        int vli
     );
+
+    const IntBuffer &getReconCIs(
+        int vli
+    ) const {
+        return visibleLayers[vli].reconCIs;
+    }
 
     void clearState() {
         hiddenCIs.fill(0);
