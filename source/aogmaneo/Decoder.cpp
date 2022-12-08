@@ -85,12 +85,9 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    if (hiddenCIs[hiddenColumnIndex] == targetCI)
-        return;
-
     int delta = roundf(lr * 255.0f);
 
-    if (hiddenMaxActs[hiddenColumnIndex] > vigilance) {
+    if (hiddenMaxActs[hiddenColumnIndex] > capacity) {
         int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -268,7 +265,7 @@ void Decoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&capacity), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenMaxActs[0]), hiddenMaxActs.size() * sizeof(float));
@@ -299,7 +296,7 @@ void Decoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&capacity), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenMaxActs.resize(numHiddenColumns);

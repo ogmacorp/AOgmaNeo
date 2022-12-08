@@ -58,13 +58,13 @@ private:
     );
 
 public:
-    float vigilance;
+    float capacity;
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
-    vigilance(0.9f),
+    capacity(0.75f),
     lr(0.01f)
     {}
 
