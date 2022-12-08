@@ -64,7 +64,7 @@ public:
     // Defaults
     Decoder()
     :
-    capacity(0.75f),
+    capacity(0.9f),
     lr(0.01f)
     {}
 
