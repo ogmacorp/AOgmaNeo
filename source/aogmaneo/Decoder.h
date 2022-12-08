@@ -38,6 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
 
+    FloatBuffer hiddenMaxActs;
     IntBuffer hiddenCIs; // Hidden state
 
     // Visible layers and descs
@@ -57,12 +58,14 @@ private:
     );
 
 public:
+    float vigilance;
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
-    lr(0.1f)
+    vigilance(0.9f),
+    lr(0.01f)
     {}
 
     // Create with random initialization
