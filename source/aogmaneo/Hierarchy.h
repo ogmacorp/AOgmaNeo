@@ -29,8 +29,6 @@ public:
         int ffRadius;
         int fbRadius;
 
-        int aRadius;
-
         int historyCapacity;
 
         IODesc(
@@ -38,7 +36,6 @@ public:
             IOType type = prediction,
             int ffRadius = 2,
             int fbRadius = 2,
-            int aRadius = 2,
             int historyCapacity = 64
         )
         :
@@ -46,7 +43,6 @@ public:
         type(type),
         ffRadius(ffRadius),
         fbRadius(fbRadius),
-        aRadius(aRadius),
         historyCapacity(historyCapacity)
         {}
     };
