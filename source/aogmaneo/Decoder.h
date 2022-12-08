@@ -58,13 +58,13 @@ private:
     );
 
 public:
-    float capacity;
+    float capacity; // Max capacity ratio for when weights start being forced to shrink
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
-    capacity(0.9f),
+    capacity(0.9f), // Must be > 0.5
     lr(0.01f)
     {}
 
