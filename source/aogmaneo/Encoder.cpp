@@ -31,43 +31,48 @@ void Encoder::forward(
             if (!vl.useInputs)
                 continue;
 
-            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+            if (vl.needsUpdate) {
+                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-            int diam = vld.radius * 2 + 1;
- 
-            // Projection
-            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+                int diam = vld.radius * 2 + 1;
+     
+                // Projection
+                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-            Int2 visibleCenter = project(columnPos, hToV);
+                Int2 visibleCenter = project(columnPos, hToV);
 
-            // Lower corner
-            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+                // Lower corner
+                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-            // Bounds of receptive field, clamped to input size
-            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+                // Bounds of receptive field, clamped to input size
+                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            float subSum = 0.0f;
+                float subSum = 0.0f;
 
-            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int inCI = vl.inputCIs[visibleColumnIndex];
+                        int inCI = vl.inputCIs[visibleColumnIndex];
 
-                    float inValue = static_cast<float>(inCI) / static_cast<float>(vld.size.z - 1);
+                        float inValue = static_cast<float>(inCI) / static_cast<float>(vld.size.z - 1);
 
-                    int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
+                        int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    float delta = inValue - vl.protos[wi];
+                        float delta = inValue - vl.protos[wi];
 
-                    subSum -= delta * delta;
-                }
+                        subSum -= delta * delta;
+                    }
 
-            sum += subSum * vl.importance;
+                vl.partialActs[hiddenCellIndex] = subSum;
+                vl.needsUpdate = false;
+            }
+
+            sum += vl.partialActs[hiddenCellIndex] * vl.importance;
         }
 
         if (sum > maxActivation || maxIndex == -1) {
@@ -265,6 +270,8 @@ void Encoder::initRandom(
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = randf(0.0f, 1.0f);
 
+        vl.partialActs = FloatBuffer(numHiddenCells, 0.0f);
+
         vl.inputCIs = IntBuffer(numVisibleColumns, 0);
         vl.reconCIs = IntBuffer(numVisibleColumns, 0);
     }
@@ -412,6 +419,8 @@ void Encoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
+        vl.partialActs = FloatBuffer(numHiddenCells, 0.0f);
+
         vl.inputCIs.resize(numVisibleColumns);
         vl.reconCIs.resize(numVisibleColumns);
 
@@ -419,6 +428,9 @@ void Encoder::read(
         reader.read(reinterpret_cast<void*>(&vl.reconCIs[0]), vl.reconCIs.size() * sizeof(int));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
+
+        vl.useInputs = false;
+        vl.needsUpdate = true;
     }
 }
 
@@ -451,5 +463,8 @@ void Encoder::readState(
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIs[0]), vl.inputCIs.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&vl.reconCIs[0]), vl.reconCIs.size() * sizeof(int));
+
+        vl.useInputs = false;
+        vl.needsUpdate = true;
     }
 }

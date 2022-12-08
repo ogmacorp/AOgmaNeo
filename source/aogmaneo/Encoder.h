@@ -32,16 +32,20 @@ public:
     struct VisibleLayer {
         FloatBuffer protos;
 
+        FloatBuffer partialActs;
+
         IntBuffer inputCIs;
         IntBuffer reconCIs;
 
         bool useInputs;
+        bool needsUpdate;
 
         float importance;
 
         VisibleLayer()
         :
         useInputs(false),
+        needsUpdate(true),
         importance(1.0f)
         {}
     };
@@ -103,6 +107,7 @@ public:
         if (inputCIs != nullptr) {
             visibleLayers[vli].inputCIs = *inputCIs;
             visibleLayers[vli].useInputs = true;
+            visibleLayers[vli].needsUpdate = true;
         }
         else
             visibleLayers[vli].useInputs = false;
