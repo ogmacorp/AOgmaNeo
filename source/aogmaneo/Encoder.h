@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Helpers.h"
+#include <iostream>
 
 namespace aon {
 // Sparse coder
@@ -64,7 +65,7 @@ private:
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
 
-    // --- Kernels ---
+// --- Kernels ---
     
     void forward(
         const Int2 &columnPos
@@ -103,15 +104,7 @@ public:
     void setInputCIs(
         const IntBuffer* inputCIs,
         int vli
-    ) {
-        if (inputCIs != nullptr) {
-            visibleLayers[vli].inputCIs = *inputCIs;
-            visibleLayers[vli].useInputs = true;
-            visibleLayers[vli].needsUpdate = true;
-        }
-        else
-            visibleLayers[vli].useInputs = false;
-    }
+    );
 
     // Activate the sparse coder (perform sparse coding)
     void activate();

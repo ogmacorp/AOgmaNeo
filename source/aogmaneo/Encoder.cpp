@@ -69,7 +69,6 @@ void Encoder::forward(
                     }
 
                 vl.partialActs[hiddenCellIndex] = subSum;
-                vl.needsUpdate = false;
             }
 
             sum += vl.partialActs[hiddenCellIndex] * vl.importance;
@@ -284,6 +283,19 @@ void Encoder::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
+void Encoder::setInputCIs(
+    const IntBuffer* inputCIs,
+    int vli
+) {
+    if (inputCIs != nullptr) {
+        visibleLayers[vli].inputCIs = *inputCIs;
+        visibleLayers[vli].useInputs = true;
+        visibleLayers[vli].needsUpdate = true;
+    }
+    else
+        visibleLayers[vli].useInputs = false;
+}
+
 void Encoder::activate() {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
@@ -291,6 +303,14 @@ void Encoder::activate() {
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         forward(Int2(i / hiddenSize.y, i % hiddenSize.y));
+
+    // Clear updated layers
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+
+        if (vl.useInputs)
+            vl.needsUpdate = false;
+    }
 }
 
 void Encoder::learn() {
