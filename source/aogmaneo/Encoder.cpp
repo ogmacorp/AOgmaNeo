@@ -220,7 +220,10 @@ void Encoder::reconstruct(
             Int2 hiddenPos = Int2(ix, iy);
 
             int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-            int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+
+            int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
+
+            int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
             Int2 visibleCenter = project(hiddenPos, hToV);
 
