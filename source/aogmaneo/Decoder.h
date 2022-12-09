@@ -60,12 +60,14 @@ private:
 
 public:
     float scale;
+    float threshold; // Thresholded updates
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
     scale(8.0f),
+    threshold(0.01f),
     lr(0.1f)
     {}
 
