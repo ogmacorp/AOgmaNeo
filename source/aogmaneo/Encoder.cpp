@@ -50,6 +50,7 @@ void Encoder::forward(
                 Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
                 float subSum = 0.0f;
+                int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
                 for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -67,6 +68,8 @@ void Encoder::forward(
 
                         subSum -= delta * delta;
                     }
+
+                subSum /= subCount;
 
                 vl.partialActs[hiddenCellIndex] = subSum;
             }
@@ -281,7 +284,7 @@ void Encoder::initRandom(
     }
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
 
