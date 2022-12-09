@@ -65,32 +65,23 @@ void Hierarchy::initRandom(
 
             aLayers.resize(numActions);
 
-            iIndices.resize(ioSizes.size() * 2);
-            dIndices = IntBuffer(ioSizes.size(), -1);
-
-            eVisibleLayerDescs.resize(ioSizes.size() * layerDescs[l].temporalHorizon + ioDescs.size() + (l < eLayers.size() - 1 ? 1 : 0));
+            eVisibleLayerDescs.resize(ioDescs.size() * layerDescs[l].temporalHorizon + ioDescs.size() + (l < eLayers.size() - 1 ? 1 : 0));
 
             for (int i = 0; i < ioSizes.size(); i++) {
                 for (int t = 0; t < layerDescs[l].temporalHorizon; t++) {
-                    int index = t + layerDescs[l].temporalHorizon * i;
+                    int vli = t + layerDescs[l].temporalHorizon * i;
 
-                    eVisibleLayerDescs[index].size = ioSizes[i];
-                    eVisibleLayerDescs[index].radius = ioDescs[i].ffRadius;
+                    eVisibleLayerDescs[vli].size = ioSizes[i];
+                    eVisibleLayerDescs[vli].radius = ioDescs[i].ffRadius;
                 }
             }
 
-            // Create
-            int dIndex = 0;
-
+            // Predictions
             for (int i = 0; i < ioSizes.size(); i++) {
-                int vli = ioSizes.size() * layerDescs[l].temporalHorizon + dIndex;
+                int vli = ioSizes.size() * layerDescs[l].temporalHorizon + i;
 
                 eVisibleLayerDescs[vli].size = ioSizes[i];
                 eVisibleLayerDescs[vli].radius = ioDescs[i].ffRadius;
-
-                iIndices[dIndex] = i;
-                dIndices[i] = dIndex;
-                dIndex++;
             }
 
             if (l < eLayers.size() - 1) {
@@ -98,7 +89,10 @@ void Hierarchy::initRandom(
                 eVisibleLayerDescs[eVisibleLayerDescs.size() - 1].radius = layerDescs[l].fbRadius;
             }
 
-            dIndex = 0;
+            int dIndex = 0;
+
+            iIndices.resize(ioSizes.size());
+            aIndices = IntBuffer(ioSizes.size(), -1);
 
             for (int i = 0; i < ioSizes.size(); i++) {
                 if (ioDescs[i].type == action) {
@@ -113,8 +107,8 @@ void Hierarchy::initRandom(
 
                     aLayers[dIndex].initRandom(ioSizes[i], ioDescs[i].historyCapacity, aVisibleLayerDescs);
 
-                    iIndices[ioSizes.size() + dIndex] = i;
-                    dIndices[i] = dIndex;
+                    iIndices[dIndex] = i;
+                    aIndices[i] = dIndex;
                     dIndex++;
                 }
             }
@@ -200,9 +194,8 @@ void Hierarchy::step(
                 int numPredictions = eLayers[l].getNumVisibleLayers() - numInputs - (l < eLayers.size() - 1 ? 1 : 0);
 
                 for (int i = 0; i < numPredictions; i++)
-                    eLayers[l].setInputCIs(&histories[l][l == 0 ? iIndices[i] : 0][l == 0 ? 0 : i], numInputs + i);
+                    eLayers[l].setInputCIs(&histories[l][l == 0 ? i : 0][l == 0 ? 0 : i], numInputs + i);
 
-                // Learn
                 eLayers[l].activate();
 
                 eLayers[l].learn();
@@ -213,12 +206,11 @@ void Hierarchy::step(
                 eLayers[l].setInputCIs(nullptr, i);
 
             // Set feed forward inputs
-            int index = 0;
-
             for (int i = 0; i < histories[l].size(); i++) {
                 for (int t = 0; t < histories[l][i].size(); t++) {
-                    eLayers[l].setInputCIs(&histories[l][i][t], index);
-                    index++;
+                    int vli = t + histories[l][i].size() * i;
+
+                    eLayers[l].setInputCIs(&histories[l][i][t], vli);
                 }
             }
 
@@ -277,7 +269,7 @@ void Hierarchy::clearState() {
 }
 
 int Hierarchy::size() const {
-    int size = 3 * sizeof(int) + ioSizes.size() * sizeof(Int3) + ioTypes.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + iIndices.size() * sizeof(int) + dIndices.size() * sizeof(int);
+    int size = 3 * sizeof(int) + ioSizes.size() * sizeof(Int3) + ioTypes.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + iIndices.size() * sizeof(int) + aIndices.size() * sizeof(int);
 
     for (int l = 0; l < eLayers.size(); l++) {
         size += sizeof(int);
@@ -343,7 +335,7 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&iIndices[0]), iIndices.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&dIndices[0]), dIndices.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&aIndices[0]), aIndices.size() * sizeof(int));
 
     for (int l = 0; l < numLayers; l++) {
         int numLayerInputs = histories[l].size();
@@ -409,11 +401,11 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticksPerUpdate[0]), ticksPerUpdate.size() * sizeof(int));
 
-    iIndices.resize(numIO * 2);
-    dIndices.resize(numIO);
+    iIndices.resize(numIO);
+    aIndices.resize(numIO);
 
     reader.read(reinterpret_cast<void*>(&iIndices[0]), iIndices.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&dIndices[0]), dIndices.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&aIndices[0]), aIndices.size() * sizeof(int));
     
     for (int l = 0; l < numLayers; l++) {
         int numLayerInputs;

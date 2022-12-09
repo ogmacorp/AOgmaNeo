@@ -79,7 +79,7 @@ private:
 
     // For mapping first layer decoders
     IntBuffer iIndices;
-    IntBuffer dIndices;
+    IntBuffer aIndices;
 
     // Histories
     Array<Array<CircleBuffer<IntBuffer>>> histories;
@@ -156,7 +156,7 @@ public:
     bool ioLayerExists(
         int i
     ) const {
-        return dIndices[i] != -1;
+        return aIndices[i] != -1;
     }
 
     // Importance control
@@ -179,9 +179,9 @@ public:
         int i
     ) const {
         if (ioTypes[i] == action)
-            return aLayers[dIndices[i]].getHiddenCIs();
+            return aLayers[aIndices[i]].getHiddenCIs();
 
-        return eLayers[0].getReconCIs(histories[0].size() * histories[0][0].size() + dIndices[i]);
+        return eLayers[0].getReconCIs(histories[0].size() * histories[0][0].size() + i);
     }
 
     // Whether this layer received on update this timestep
@@ -250,13 +250,13 @@ public:
     Actor &getALayer(
         int i
     ) {
-        return aLayers[dIndices[i]];
+        return aLayers[aIndices[i]];
     }
 
     const Actor &getALayer(
         int i
     ) const {
-        return aLayers[dIndices[i]];
+        return aLayers[aIndices[i]];
     }
 
     const IntBuffer &getIIndices() const {
@@ -264,7 +264,7 @@ public:
     }
 
     const IntBuffer &getDIndices() const {
-        return dIndices;
+        return aIndices;
     }
 
     const Array<CircleBuffer<IntBuffer>> &getHistories(
