@@ -64,7 +64,7 @@ void Decoder::forward(
 
         sum /= count * 127.0f;
 
-        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, scale * sum));
+        hiddenActs[hiddenCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -90,9 +90,9 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float diff = min(1.0f, max(0.0f, (hc == targetCI) - (hiddenActs[hiddenCellIndex] * (1.0f + 2.0f * threshold) - threshold)));
+        float diff = (hc == targetCI) - hiddenActs[hiddenCellIndex];
 
-        int delta = roundf(lr * 127.0f * diff);
+        int delta = roundf(lr * 127.0f * (max(0.0f, abs(diff) - threshold) * ((diff > 0.0f) * 2.0f - 1.0f)));
             
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -235,7 +235,6 @@ void Decoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&threshold), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
@@ -266,7 +265,6 @@ void Decoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&threshold), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
