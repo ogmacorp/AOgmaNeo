@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Hierarchy.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -152,16 +151,17 @@ void Hierarchy::initRandom(
         eLayers[l].initRandom(layerDescs[l].hiddenSize, eVisibleLayerDescs);
 
         // Adjust importances
-        //int numInputs = histories[l].size() * histories[l][0].size();
-        //int numPredictions = eLayers[l].getNumVisibleLayers() - numInputs - (l < eLayers.size() - 1 ? 1 : 0);
+        int numInputs = histories[l].size() * histories[l][0].size();
+        int numPredictions = eLayers[l].getNumVisibleLayers() - numInputs - (l < eLayers.size() - 1 ? 1 : 0);
 
-        //float numInputsInv = 1.0f / numInputs;
+        float numInputsInv = 1.0f / numInputs;
+        float numPredictionsInv = 1.0f / numPredictions;
 
-        //for (int i = 0; i < numInputs; i++)
-        //    eLayers[l].getVisibleLayer(i).importance = numInputsInv;
+        for (int i = 0; i < numInputs; i++)
+            eLayers[l].getVisibleLayer(i).importance = numInputsInv;
 
-        //for (int i = 0; i < numPredictions; i++)
-        //    eLayers[l].getVisibleLayer(numInputs + i).importance = 0.0001f;
+        for (int i = 0; i < numPredictions; i++)
+            eLayers[l].getVisibleLayer(numInputs + i).importance = numPredictionsInv;
     }
 }
 
