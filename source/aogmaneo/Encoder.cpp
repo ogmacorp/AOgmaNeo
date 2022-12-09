@@ -146,6 +146,8 @@ learn:
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
+            assert(vl.useInputs);
+
             int diam = vld.radius * 2 + 1;
 
             // Projection
