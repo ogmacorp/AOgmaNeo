@@ -246,6 +246,21 @@ void Hierarchy::step(
 
             for (int i = 0; i < numPredictions; i++)
                 eLayers[l].reconstruct(numInputs + i);
+
+            if (l == 0) {
+                Array<const IntBuffer*> aInputCIs(l < eLayers.size() - 1 ? 2 : 1);
+
+                aInputCIs[0] = &eLayers[l].getHiddenCIs();
+
+                if (aInputCIs.size() == 2) {
+                    int numInputsNext = histories[l + 1].size() * histories[l + 1][0].size();
+
+                    aInputCIs[1] = &eLayers[l + 1].getReconCIs(numInputsNext + ticksPerUpdate[l + 1] - 1 - ticks[l + 1]);
+                }
+
+                for (int i = 0; i < aLayers.size(); i++)
+                    aLayers[i].step(aInputCIs, inputCIs[iIndices[i]], reward, learnEnabled, mimic);
+            }
         }
     }
 }
