@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        FloatBuffer protos;
 
         float importance;
 
