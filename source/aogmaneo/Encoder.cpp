@@ -21,8 +21,6 @@ void Encoder::forward(
     int maxIndex = -1;
     float maxActivation = -999999.0f;
 
-    const float scale = 1.0f / 255.0f;
-
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -61,7 +59,7 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    float delta = inValue - vl.protos[wi] * scale;
+                    float delta = inValue - vl.protos[wi];
 
                     subSum -= delta * delta;
                 }
@@ -169,7 +167,7 @@ learn:
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    vl.protos[wi] = min(255, max(0, roundf(vl.protos[wi] + rate * (inValue * 255.0f - vl.protos[wi]))));
+                    vl.protos[wi] += rate * (inValue - vl.protos[wi]);
                 }
         }
 
@@ -205,7 +203,7 @@ void Encoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = rand() % 256;
+            vl.protos[i] = randf(0.0f, 1.0f);
     }
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
@@ -244,7 +242,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(float) + sizeof(float);
     }
 
     return size;
@@ -276,7 +274,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
@@ -325,7 +323,7 @@ void Encoder::read(
 
         vl.protos.resize(numHiddenCells * area);
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
