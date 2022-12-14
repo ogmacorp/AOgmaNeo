@@ -30,8 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
-        ByteBuffer recons;
+        FloatBuffer protos;
+        FloatBuffer recons;
 
         ByteBuffer reconstruction;
     };
@@ -55,6 +55,12 @@ private:
         bool learnEnabled
     );
 
+    void learnRecon(
+        const Int2 &columnPos,
+        const ByteBuffer* inputs,
+        int vli
+    );
+
     void reconstruct(
         const Int2 &columnPos,
         const IntBuffer* reconCIs,
@@ -63,11 +69,13 @@ private:
 
 public:
     float lr;
+    float rr;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.1f)
+    lr(0.1f),
+    rr(0.1f)
     {}
 
     void initRandom(
