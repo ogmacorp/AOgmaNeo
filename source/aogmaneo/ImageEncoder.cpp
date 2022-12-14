@@ -129,6 +129,9 @@ void ImageEncoder::forward(
                             float input = (*inputs[vli])[vc + iStart];
 
                             vl.protos[wi] = min(255, max(0, roundf(vl.protos[wi] + rate * (input - maxActivation * vl.protos[wi]))));
+
+                            if (dhc == 0)
+                                vl.recons[wi] = min(255, max(0, roundf(vl.recons[wi] + rate * 2.0f * (input - vl.recons[wi]))));
                         }
                     }
             }
@@ -196,7 +199,7 @@ void ImageEncoder::reconstruct(
 
                     float strength = min(1.0f - distX, 1.0f - distY);
 
-                    sum += strength * vl.protos[wi];
+                    sum += strength * vl.recons[wi];
                     total += strength;
                 }
             }
@@ -231,6 +234,7 @@ void ImageEncoder::initRandom(
         int area = diam * diam;
 
         vl.protos.resize(numHiddenCells * area * vld.size.z);
+        vl.recons = ByteBuffer(vl.protos.size(), 0);
 
         // Initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
@@ -277,7 +281,7 @@ int ImageEncoder::size() const {
         const VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.protos.size() * sizeof(Byte);
     }
 
     return size;
@@ -305,6 +309,7 @@ void ImageEncoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
         writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.recons[0]), vl.recons.size() * sizeof(Byte));
     }
 }
 
@@ -346,8 +351,10 @@ void ImageEncoder::read(
         int area = diam * diam;
 
         vl.protos.resize(numHiddenCells * area * vld.size.z);
+        vl.recons.resize(vl.protos.size());
 
         reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.recons[0]), vl.recons.size() * sizeof(Byte));
 
         vl.reconstruction = ByteBuffer(numVisibleCells, 0.0f);
     }
