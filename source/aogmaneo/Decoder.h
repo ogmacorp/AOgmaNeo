@@ -30,13 +30,15 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
 private:
     Int3 hiddenSize; // Size of the output/hidden/prediction
+
+    FloatBuffer hiddenActs;
 
     IntBuffer hiddenCIs; // Hidden state
 
@@ -62,7 +64,7 @@ public:
     // Defaults
     Decoder()
     :
-    lr(0.1f)
+    lr(1.0f)
     {}
 
     // Create with random initialization
