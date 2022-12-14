@@ -15,9 +15,8 @@ namespace aon {
 class ImageEncoder {
 public:
     enum Mode {
-        commit = 0,
-        update = 1,
-        ignore = 2
+        update = 0,
+        ignore = 1
     };
 
     // Visible layer descriptor
@@ -36,8 +35,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights0;
-        ByteBuffer weights1;
+        FloatBuffer weights0;
+        FloatBuffer weights1;
 
         FloatBuffer weightsRecon;
 
@@ -59,8 +58,6 @@ private:
     FloatBuffer hiddenMaxActs;
 
     IntBuffer hiddenCIs;
-
-    IntBuffer hiddenCommits;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -176,11 +173,6 @@ public:
     // Get the hidden states
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
-    }
-
-    // Get the hidden commits
-    const IntBuffer &getHiddenCommits() const {
-        return hiddenCommits;
     }
 
     // Get the hidden size
