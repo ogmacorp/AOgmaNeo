@@ -213,7 +213,7 @@ void ImageEncoder::learnRecon(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.recons[wi] += delta;
+                    vl.recons[wi] += delta * hiddenRates[hiddenCellIndex];
                 }
             }
     }
