@@ -135,7 +135,7 @@ void Encoder::learn(
 
     int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-    float rate = (hiddenTotals[hiddenCellIndexMax] == 1.0f ? 1.0f : lr);
+    float rate = (hiddenTotals[hiddenCellIndexMax] == 0.0f ? 1.0f : lr);
 
     float total = 0.0f;
     float totalImportance = 0.0f;
@@ -159,9 +159,8 @@ void Encoder::learn(
         Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-        int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
-
         float subTotal = 0.0f;
+        int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -231,7 +230,7 @@ void Encoder::initRandom(
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
-    hiddenTotals = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenTotals = FloatBuffer(numHiddenCells, 0.0f);
 }
 
 void Encoder::step(
