@@ -214,7 +214,6 @@ void Hierarchy::clearState() {
 
     for (int d = 0; d < aLayers.size(); d++)
         aLayers[d].clearState();
-
 }
 
 int Hierarchy::size() const {
