@@ -425,7 +425,7 @@ void Actor::initRandom(
             vl.actionWeights[i] = randf(-0.01f, 0.01f);
     }
 
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
     hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
 
@@ -511,7 +511,7 @@ void Actor::step(
 }
 
 void Actor::clearState() {
-    hiddenCIs.fill(0);
+    hiddenCIs.fill(hiddenSize.z / 2);
     hiddenValues.fill(0.0f);
 
     historySize = 0;

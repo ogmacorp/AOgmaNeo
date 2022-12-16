@@ -94,7 +94,7 @@ public:
     );
 
     void clearState() {
-        hiddenCIs.fill(0);
+        hiddenCIs.fill(hiddenSize.z / 2);
     }
 
     // Serialization

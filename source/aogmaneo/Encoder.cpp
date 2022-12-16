@@ -214,7 +214,7 @@ void Encoder::initRandom(
 
     hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
 
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 }
 
 void Encoder::step(
