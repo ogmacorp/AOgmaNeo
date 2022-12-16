@@ -209,7 +209,7 @@ void Hierarchy::clearState() {
         for (int d = 0; d < dLayers[l].size(); d++)
             dLayers[l][d].clearState();
 
-        hiddenCIsPrev[l].fill(eLayers[l].getHiddenSize().z / 2);
+        hiddenCIsPrev[l] = eLayers[l].getHiddenCIs();
     }
 
     for (int d = 0; d < aLayers.size(); d++)
