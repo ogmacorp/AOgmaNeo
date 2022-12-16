@@ -237,7 +237,7 @@ void ImageEncoder::initRandom(
     }
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
 
     hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
