@@ -47,6 +47,8 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
+    FloatBuffer hiddenActsTemp;
+
     IntBuffer hiddenCIs; // Hidden states
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
@@ -71,6 +73,7 @@ private:
 
 public:
     float lr; // Learning rate
+    float cons; // Conservative-ness
     float discount;
     int nSteps;
     int historyIters;
@@ -79,6 +82,7 @@ public:
     Actor()
     :
     lr(0.01f),
+    cons(0.1f),
     discount(0.99f),
     nSteps(8),
     historyIters(16)
