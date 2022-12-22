@@ -154,16 +154,12 @@ void Actor::learn(
 
     float scale = 1.0f / max(0.0001f, total);
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
-
-        hiddenActsTemp[hiddenCellIndex] *= scale;
-    }
-
     float newValue = q + g * maxActivation;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActsTemp[hiddenCellIndex] *= scale;
 
         float delta = lr * (cons * ((hc == targetCI) - hiddenActsTemp[hiddenCellIndex]) + (hc == targetCI) * (newValue - targetActivationPrev));
 
