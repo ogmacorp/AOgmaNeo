@@ -67,8 +67,8 @@ private:
     void learn(
         const Int2 &columnPos,
         int t,
-        float q,
-        float g
+        float r,
+        float d
     );
 
 public:
@@ -84,7 +84,7 @@ public:
     lr(0.01f),
     cons(0.1f),
     discount(0.99f),
-    nSteps(5),
+    nSteps(3),
     historyIters(16)
     {}
 

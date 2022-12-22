@@ -71,8 +71,8 @@ void Actor::forward(
 void Actor::learn(
     const Int2 &columnPos,
     int t,
-    float q,
-    float g
+    float r,
+    float d
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -154,16 +154,12 @@ void Actor::learn(
 
     float scale = 1.0f / max(0.0001f, total);
 
+    float newValue = r + d * maxActivation;
+
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         hiddenActsTemp[hiddenCellIndex] *= scale;
-    }
-
-    float newValue = q + g * maxActivation;
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float delta = lr * (cons * ((hc == targetCI) - hiddenActsTemp[hiddenCellIndex]) + (hc == targetCI) * (newValue - targetActivationPrev));
 
@@ -298,18 +294,18 @@ void Actor::step(
             int t = rand() % (historySize - nSteps) + nSteps;
 
             // Compute (partial) values, rest is completed in the kernel
-            float q = 0.0f;
-            float g = 1.0f;
+            float r = 0.0f;
+            float d = 1.0f;
 
             for (int t2 = t - 1; t2 >= t - nSteps; t2--) {
-                q += historySamples[t2].reward * g;
+                r += historySamples[t2].reward * d;
 
-                g *= discount;
+                d *= discount;
             }
 
             #pragma omp parallel for
             for (int i = 0; i < numHiddenColumns; i++)
-                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, q, g);
+                learn(Int2(i / hiddenSize.y, i % hiddenSize.y), t, r, d);
         }
     }
 }
