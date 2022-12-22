@@ -167,6 +167,9 @@ void Actor::learn(
 
         float delta = lr * (cons * ((hc == targetCI) - hiddenActsTemp[hiddenCellIndex]) + (hc == targetCI) * (newValue - targetActivationPrev));
 
+        if (delta == 0.0f)
+            continue;
+
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
