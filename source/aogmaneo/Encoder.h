@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -14,11 +14,6 @@ namespace aon {
 // Sparse coder
 class Encoder {
 public:
-    enum Mode {
-        update = 0,
-        ignore = 1
-    };
-
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -37,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        FloatBuffer reconActsTemp;
+
         float importance;
 
         VisibleLayer()
@@ -48,13 +45,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<Mode> hiddenModes;
-
-    FloatBuffer hiddenMaxActs;
-
     IntBuffer hiddenCIs;
-
-    FloatBuffer hiddenTotals;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -64,27 +55,21 @@ private:
     
     void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        unsigned int* state
+        const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
-    float gap;
-    float vigilance;
     float lr; // Learning rate
-    int lRadius;
 
     Encoder()
     :
-    gap(0.1f),
-    vigilance(0.9f),
-    lr(0.1f),
-    lRadius(2)
+    lr(0.2f)
     {}
 
     // Create a sparse coding layer with random initialization
