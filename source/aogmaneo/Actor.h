@@ -30,7 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        FloatBuffer valueWeights; // Value function weights
+        FloatBuffer actionWeights; // Action function weights
     };
 
     // History sample for delayed updates
@@ -47,9 +48,11 @@ private:
     // Current history size - fixed after initialization. Determines length of wait before updating
     int historySize;
 
-    FloatBuffer hiddenActsTemp;
+    FloatBuffer hiddenActs; // Temporary buffer
 
     IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenValues; // Hidden value function output buffer
 
     CircleBuffer<HistorySample> historySamples; // History buffer, fixed length
 
@@ -61,30 +64,36 @@ private:
 
     void forward(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
         const Int2 &columnPos,
         int t,
         float r,
-        float d
+        float d,
+        float mimic
     );
 
 public:
-    float lr; // Learning rate
-    float cons; // Conservative-ness
-    float discount;
-    int nSteps;
-    int historyIters;
+    float vlr; // Value learning rate
+    float alr; // Action learning rate
+    float bias; // Bias towards positive updates
+    float discount; // Discount factor
+    float temperature; // Exploration amount
+    int minSteps; // Minimum steps before sample can be used
+    int historyIters; // Number of iterations over samples
 
     // Defaults
     Actor()
     :
-    lr(0.01f),
-    cons(0.1f),
+    vlr(0.01f),
+    alr(0.01f),
+    bias(0.5f),
     discount(0.99f),
-    nSteps(8),
+    temperature(1.0f),
+    minSteps(16),
     historyIters(16)
     {}
 
@@ -100,7 +109,8 @@ public:
         const Array<const IntBuffer*> &inputCIs,
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
-        bool learnEnabled
+        bool learnEnabled,
+        float mimic
     );
 
     void clearState();
