@@ -161,7 +161,7 @@ void Actor::learn(
 
         hiddenActsTemp[hiddenCellIndex] *= scale;
 
-        float delta = lr * (cons * ((hc == targetCI) - hiddenActsTemp[hiddenCellIndex]) + (hc == targetCI) * (newValue - targetActivationPrev));
+        float delta = lr * (cons * ((hc == targetCI) - hiddenActsTemp[hiddenCellIndex]) + (hc == targetCI) * tanhf(newValue - targetActivationPrev));
 
         if (delta == 0.0f)
             continue;
