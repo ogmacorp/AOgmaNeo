@@ -169,7 +169,7 @@ void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
     float reward,
-    bool mimic
+    float mimic
 ) {
     // First tick is always 0
     ticks[0] = 0;
