@@ -87,7 +87,7 @@ public:
     // Defaults
     Encoder()
     :
-    gap(0.0001f),
+    gap(0.1f),
     vigilance(0.7f),
     lr(0.1f),
     groupRadius(2)
