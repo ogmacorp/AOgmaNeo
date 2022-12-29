@@ -26,8 +26,6 @@ void Encoder::forward(
         float sum = 0.0f;
         float totalImportance = 0.0f;
 
-        bool allVigilant = true;
-
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
 
@@ -76,9 +74,6 @@ void Encoder::forward(
                 vl.partialActs[hiddenCellIndex] = subSum;
             }
 
-            if (vl.partialActs[hiddenCellIndex] < vl.vigilance)
-                allVigilant = false;
-
             sum += vl.partialActs[hiddenCellIndex] * vl.importance;
             totalImportance += vl.importance;
         }
@@ -87,7 +82,7 @@ void Encoder::forward(
 
         float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
 
-        if (allVigilant) {
+        if (sum >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
                 maxActivation = activation;
                 maxIndex = hc;
@@ -127,7 +122,7 @@ void Encoder::learn(
             }
         }
 
-    int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
+    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     float rate = (hiddenTotals[hiddenColumnIndex] == 1.0f ? 1.0f : lr); // Fast commit
 
@@ -166,7 +161,7 @@ void Encoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
@@ -186,7 +181,7 @@ void Encoder::learn(
 
     total /= max(0.0001f, totalImportance);
 
-    hiddenTotals[hiddenCellIndex] = total;
+    hiddenTotals[hiddenCellIndexMax] = total;
 }
 
 void Encoder::reconstruct(

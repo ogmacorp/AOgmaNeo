@@ -43,14 +43,11 @@ public:
 
         float importance;
 
-        float vigilance;
-
         VisibleLayer()
         :
         useInputs(false),
         needsUpdate(true),
-        importance(1.0f),
-        vigilance(0.95f)
+        importance(1.0f)
         {}
     };
 
@@ -83,6 +80,7 @@ private:
 
 public:
     float gap;
+    float vigilance;
     float lr;
     int groupRadius;
 
@@ -90,6 +88,7 @@ public:
     Encoder()
     :
     gap(0.001f),
+    vigilance(0.9f),
     lr(0.5f),
     groupRadius(2)
     {}
