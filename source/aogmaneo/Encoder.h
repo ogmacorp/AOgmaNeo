@@ -56,6 +56,7 @@ private:
 
     FloatBuffer hiddenMaxActs;
     FloatBuffer hiddenTotals;
+    ByteBuffer hiddenLearns;
 
     IntBuffer hiddenCIs; // Hidden states
 
@@ -87,8 +88,8 @@ public:
     // Defaults
     Encoder()
     :
-    gap(0.01f),
-    vigilance(0.9f),
+    gap(0.1f),
+    vigilance(0.8f),
     lr(0.1f),
     groupRadius(2)
     {}
