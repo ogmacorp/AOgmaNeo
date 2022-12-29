@@ -31,7 +31,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        FloatBuffer weights;
 
         FloatBuffer partialActs;
 
@@ -55,9 +55,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenMaxActs;
-    FloatBuffer hiddenRates;
-
-    ByteBuffer hiddenPeaksTemp;
+    FloatBuffer hiddenTotals;
 
     IntBuffer hiddenCIs; // Hidden states
 
@@ -65,13 +63,9 @@ private:
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
 
-// --- Kernels ---
+    // --- Kernels ---
     
     void forward(
-        const Int2 &columnPos
-    );
-
-    void inhibit(
         const Int2 &columnPos
     );
 
@@ -85,12 +79,16 @@ private:
     );
 
 public:
+    float gap;
+    float vigilance;
     float lr;
     int groupRadius;
 
     // Defaults
     Encoder()
     :
+    gap(0.01f),
+    vigilance(0.9f),
     lr(0.1f),
     groupRadius(2)
     {}
