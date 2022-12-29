@@ -154,8 +154,13 @@ void Hierarchy::initRandom(
         for (int i = 0; i < numInputs; i++)
             eLayers[l].getVisibleLayer(i).importance = numInputsInv;
 
-        for (int i = 0; i < numPredictions; i++)
+        for (int i = 0; i < numPredictions; i++) {
             eLayers[l].getVisibleLayer(numInputs + i).importance = numPredictionsInv;
+            eLayers[l].getVisibleLayer(numInputs + i).vigilance = 0.0f;
+        }
+
+        // Set feed back vigilance to 0
+        eLayers[l].getVisibleLayer(eLayers[l].getNumVisibleLayers() - 1).vigilance = 0.0f;
     }
 }
 

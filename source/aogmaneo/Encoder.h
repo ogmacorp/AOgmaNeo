@@ -43,11 +43,14 @@ public:
 
         float importance;
 
+        float vigilance;
+
         VisibleLayer()
         :
         useInputs(false),
         needsUpdate(true),
-        importance(1.0f)
+        importance(1.0f),
+        vigilance(0.95f)
         {}
     };
 
@@ -56,7 +59,6 @@ private:
 
     FloatBuffer hiddenMaxActs;
     FloatBuffer hiddenTotals;
-    ByteBuffer hiddenLearns;
 
     IntBuffer hiddenCIs; // Hidden states
 
@@ -81,16 +83,14 @@ private:
 
 public:
     float gap;
-    float vigilance;
     float lr;
     int groupRadius;
 
     // Defaults
     Encoder()
     :
-    gap(0.1f),
-    vigilance(0.8f),
-    lr(0.1f),
+    gap(0.001f),
+    lr(0.5f),
     groupRadius(2)
     {}
 

@@ -170,9 +170,12 @@ void Actor::forward(
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                         int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                         int inCI = (*inputCIs[vli])[visibleColumnIndex];
+
+                        if (inCI == -1)
+                            continue;
+
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                         sum += vl.actionWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     }
