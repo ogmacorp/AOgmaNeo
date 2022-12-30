@@ -44,6 +44,8 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenMaxActs;
+    FloatBuffer hiddenRates;
+
     ByteBuffer hiddenPeaksTemp;
 
     IntBuffer hiddenCIs; // Hidden states
@@ -75,7 +77,7 @@ public:
     // Defaults
     Encoder()
     :
-    lr(1.0f),
+    lr(0.1f),
     groupRadius(2)
     {}
 
