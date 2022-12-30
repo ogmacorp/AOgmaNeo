@@ -173,13 +173,13 @@ void Decoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(-0.0001f, 0.0001f);
 
-        vl.inputCIsPrev = IntBuffer(numVisibleColumns, vld.size.z / 2);
+        vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
 void Decoder::activate(
@@ -212,11 +212,11 @@ void Decoder::learn(
 }
 
 void Decoder::clearState() {
-    hiddenCIs.fill(hiddenSize.z / 2);
+    hiddenCIs.fill(0);
     hiddenActs.fill(0.0f);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++)
-        visibleLayers[vli].inputCIsPrev.fill(visibleLayerDescs[vli].size.z / 2);
+        visibleLayers[vli].inputCIsPrev.fill(0);
 }
 
 int Decoder::size() const {

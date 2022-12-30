@@ -73,7 +73,7 @@ private:
         int t,
         float r,
         float d,
-        bool mimic
+        float mimic
     );
 
 public:
@@ -110,7 +110,7 @@ public:
         const IntBuffer* hiddenTargetCIsPrev,
         float reward,
         bool learnEnabled,
-        bool mimic
+        float mimic
     );
 
     void clearState();
