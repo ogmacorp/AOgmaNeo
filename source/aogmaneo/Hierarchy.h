@@ -100,7 +100,7 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reward
-        bool mimic = false // Mimicry mode
+        float mimic = 0.0f // Mimicry mode
     );
 
     void clearState();
