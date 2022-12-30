@@ -14,6 +14,11 @@ namespace aon {
 // Sparse coder
 class Encoder {
 public:
+    enum Mode {
+        update = 0,
+        ignore = 1
+    };
+
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -30,7 +35,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        FloatBuffer weights;
 
         float importance;
 
@@ -43,26 +48,24 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    Array<Mode> hiddenModes;
+
     FloatBuffer hiddenMaxActs;
-    FloatBuffer hiddenRates;
 
-    ByteBuffer hiddenPeaksTemp;
+    IntBuffer hiddenCIs;
 
-    IntBuffer hiddenCIs; // Hidden states
+    FloatBuffer hiddenTotals;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-
+    
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void inhibit(
-        const Int2 &columnPos
+        const Array<const IntBuffer*> &inputCIs,
+        unsigned int* state
     );
 
     void learn(
@@ -71,14 +74,17 @@ private:
     );
 
 public:
-    float lr;
-    int groupRadius;
+    float gap;
+    float vigilance;
+    float lr; // Learning rate
+    int lRadius;
 
-    // Defaults
     Encoder()
     :
-    lr(0.1f),
-    groupRadius(2)
+    gap(0.0001f),
+    vigilance(0.9f),
+    lr(0.5f),
+    lRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -87,14 +93,13 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
     );
 
     void clearState() {
-        hiddenCIs.fill(hiddenSize.z / 2);
+        hiddenCIs.fill(0);
     }
 
     // Serialization

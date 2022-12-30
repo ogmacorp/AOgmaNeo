@@ -138,7 +138,7 @@ void Hierarchy::step(
     const Array<const IntBuffer*> &inputCIs,
     bool learnEnabled,
     float reward,
-    bool mimic
+    float mimic
 ) {
     // Forward
     for (int l = 0; l < eLayers.size(); l++) {
