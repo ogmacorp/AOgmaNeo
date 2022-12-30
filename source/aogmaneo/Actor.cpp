@@ -170,12 +170,9 @@ void Actor::forward(
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                         int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                        int inCI = (*inputCIs[vli])[visibleColumnIndex];
-
-                        if (inCI == -1)
-                            continue;
-
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                        int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                         sum += vl.actionWeights[inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex))];
                     }
@@ -196,7 +193,7 @@ void Actor::learn(
     int t,
     float r,
     float d,
-    bool mimic
+    float mimic
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -353,7 +350,7 @@ void Actor::learn(
 
         float shift = (tdErrorValue > 0.0f ? 1.0f : 1.0f - bias);
 
-        float deltaAction = (mimic ? alr : alr * tanhf(tdErrorValue) * shift) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
+        float deltaAction = (alr * (mimic + (1.0f - mimic) * tanhf(tdErrorValue) * shift)) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -458,7 +455,7 @@ void Actor::step(
     const IntBuffer* hiddenTargetCIsPrev,
     float reward,
     bool learnEnabled,
-    bool mimic
+    float mimic
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
