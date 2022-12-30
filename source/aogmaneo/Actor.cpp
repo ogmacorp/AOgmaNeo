@@ -193,7 +193,7 @@ void Actor::learn(
     int t,
     float r,
     float d,
-    bool mimic
+    float mimic
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -350,7 +350,7 @@ void Actor::learn(
 
         float shift = (tdErrorValue > 0.0f ? 1.0f : 1.0f - bias);
 
-        float deltaAction = (mimic ? alr : alr * tanhf(tdErrorValue) * shift) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
+        float deltaAction = (alr * (mimic + (1.0f - mimic) * tanhf(tdErrorValue) * shift)) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -425,7 +425,7 @@ void Actor::initRandom(
             vl.actionWeights[i] = randf(-0.01f, 0.01f);
     }
 
-    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
     hiddenValues = FloatBuffer(numHiddenColumns, 0.0f);
 
@@ -455,7 +455,7 @@ void Actor::step(
     const IntBuffer* hiddenTargetCIsPrev,
     float reward,
     bool learnEnabled,
-    bool mimic
+    float mimic
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
@@ -511,7 +511,7 @@ void Actor::step(
 }
 
 void Actor::clearState() {
-    hiddenCIs.fill(hiddenSize.z / 2);
+    hiddenCIs.fill(0);
     hiddenValues.fill(0.0f);
 
     historySize = 0;
