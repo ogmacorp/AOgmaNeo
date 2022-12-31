@@ -33,6 +33,8 @@ public:
         FloatBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
+
+        IntBuffer reconCIsTemp;
     };
 
 private:
@@ -51,6 +53,11 @@ private:
     void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
+    );
+
+    void backward(
+        const Int2 &columnPos,
+        int vli
     );
 
     void learn(
