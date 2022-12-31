@@ -241,28 +241,6 @@ public:
         return eLayers[l];
     }
 
-    // Retrieve deocder layer(s)
-    Array<Decoder> &getDLayers(
-        int l
-    ) {
-        return dLayers[l];
-    }
-
-    const Array<Decoder> &getDLayers(
-        int l
-    ) const {
-        return dLayers[l];
-    }
-
-    // Retrieve actor layer(s)
-    Array<Actor> &getALayers() {
-        return aLayers;
-    }
-
-    const Array<Actor> &getALayers() const {
-        return aLayers;
-    }
-
     // Retrieve by index
     Decoder &getDLayer(
         int l,
