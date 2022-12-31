@@ -125,6 +125,8 @@ void Decoder::backward(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
+    float maxActivation = -999999.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
 
@@ -153,7 +155,29 @@ void Decoder::backward(
 
         sum /= max(1, count);
 
-        vl.reconActsTemp[visibleCellIndex] = sigmoidf(sum * stability);
+        sum *= -stability;
+
+        vl.reconActsTemp[visibleCellIndex] = sum;
+
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        vl.reconActsTemp[visibleCellIndex] = expf(vl.reconActsTemp[visibleCellIndex] - maxActivation);
+
+        total += vl.reconActsTemp[visibleCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        vl.reconActsTemp[visibleCellIndex] *= scale;
     }
 }
 
@@ -205,7 +229,7 @@ void Decoder::learn(
 
                     int visibleCellIndex = inCIPrev + visibleCellsStart;
 
-                    vl.weights[wi] += delta * vl.reconActsTemp[visibleCellIndex];
+                    vl.weights[wi] += delta * (1.0f - vl.reconActsTemp[visibleCellIndex]);
                 }
         }
     }
