@@ -34,7 +34,7 @@ public:
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
 
-        IntBuffer reconCIsTemp;
+        FloatBuffer reconActsTemp;
     };
 
 private:
@@ -57,6 +57,7 @@ private:
 
     void backward(
         const Int2 &columnPos,
+        const IntBuffer* hiddenTargetCIs,
         int vli
     );
 

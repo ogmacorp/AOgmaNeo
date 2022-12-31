@@ -95,6 +95,7 @@ void Decoder::forward(
 
 void Decoder::backward(
     const Int2 &columnPos,
+    const IntBuffer* hiddenTargetCIs,
     int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
@@ -124,13 +125,13 @@ void Decoder::backward(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
-    int maxIndex = -1;
     float maxActivation = -999999.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -141,23 +142,41 @@ void Decoder::backward(
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
                 if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
-                    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
+                    int hiddenCellIndexMax = (*hiddenTargetCIs)[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
                     sum += vl.weights[wi];
+                    count++;
                 }
             }
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = vc;
-        }
+        sum /= max(1, count);
+
+        vl.reconActsTemp[visibleCellIndex] = sum;
+
+        maxActivation = max(maxActivation, sum);
     }
 
-    vl.reconCIsTemp[visibleColumnIndex] = maxIndex;
+    float total = 0.0f;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        vl.reconActsTemp[visibleCellIndex] = expf(vl.reconActsTemp[visibleCellIndex] - maxActivation);
+
+        total += vl.reconActsTemp[visibleCellIndex];
+    }
+
+    float scale = 1.0f / max(0.0001f, total);
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        vl.reconActsTemp[visibleCellIndex] *= scale;
+    }
 }
 
 void Decoder::learn(
@@ -198,16 +217,17 @@ void Decoder::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+                    int visibleCellsStart = visibleColumnIndex * vld.size.z;
 
-                    if (inCIPrev == vl.reconCIsTemp[visibleColumnIndex])
-                        continue;
+                    int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.weights[wi] += delta;
+                    int visibleCellIndex = inCIPrev + visibleCellsStart;
+
+                    vl.weights[wi] += delta * vl.reconActsTemp[visibleCellIndex];
                 }
         }
     }
@@ -245,7 +265,7 @@ void Decoder::initRandom(
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
 
-        vl.reconCIsTemp = IntBuffer(numVisibleColumns, 0);
+        vl.reconActsTemp = FloatBuffer(numVisibleCells, 0.0f);
     }
 
     hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
@@ -284,7 +304,7 @@ void Decoder::learn(
 
         #pragma omp parallel for
         for (int i = 0; i < numVisibleColumns; i++)
-            backward(Int2(i / vld.size.y, i % vld.size.y), vli);
+            backward(Int2(i / vld.size.y, i % vld.size.y), hiddenTargetCIs, vli);
     }
 
     // Learn kernel
@@ -395,7 +415,7 @@ void Decoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.inputCIsPrev[0]), vl.inputCIsPrev.size() * sizeof(int));
 
-        vl.reconCIsTemp = IntBuffer(numVisibleColumns, 0);
+        vl.reconActsTemp = FloatBuffer(numVisibleCells, 0.0f);
     }
 }
 
