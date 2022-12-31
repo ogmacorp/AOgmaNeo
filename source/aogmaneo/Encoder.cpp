@@ -219,8 +219,6 @@ void Encoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
-    unsigned int baseState = rand();
-
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
         activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
