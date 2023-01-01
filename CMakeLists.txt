@@ -35,6 +35,7 @@ set(SOURCES
     "${SOURCE_PATH}/aogmaneo/Actor.cpp"
     "${SOURCE_PATH}/aogmaneo/Hierarchy.cpp"
     "${SOURCE_PATH}/aogmaneo/ImageEncoder.cpp"
+    "${SOURCE_PATH}/aogmaneo/LocationInvariant.cpp"
 )
 
 find_package(OpenMP REQUIRED)
