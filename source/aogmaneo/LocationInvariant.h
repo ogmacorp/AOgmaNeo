@@ -10,7 +10,7 @@
 
 #include "Helpers.h"
 
-#include "ImageEncoder.h"
+#include "Encoder.h"
 
 namespace aon {
 class LocationInvariant {
@@ -18,10 +18,11 @@ private:
     Int3 sensorSize;
     Int3 whereSize;
 
-    ImageEncoder enc;
+    Encoder enc;
 
     // Fast associative memory
-    ByteBuffer memory;
+    FloatBuffer memoryActs;
+    IntBuffer memoryCIs; // Inhibited
 
 public:
     float decay;
@@ -45,7 +46,8 @@ public:
     );
 
     void clearState() {
-        memory.fill(0);
+        memoryActs.fill(0.0f);
+        memoryCIs.fill(0);
     }
 
     // Serialization
@@ -80,11 +82,11 @@ public:
         return whereSize;
     }
 
-    ImageEncoder &getEnc() {
+    Encoder &getEnc() {
         return enc;
     }
 
-    const ImageEncoder &getEnc() const {
+    const Encoder &getEnc() const {
         return enc;
     }
 
@@ -92,8 +94,12 @@ public:
         return enc.getHiddenCIs();
     }
 
-    const ByteBuffer &getMemory() const {
-        return memory;
+    const FloatBuffer &getMemoryActs() const {
+        return memoryActs;
+    }
+
+    const IntBuffer &getMemoryCIs() const {
+        return memoryCIs;
     }
 };
 }

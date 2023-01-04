@@ -19,14 +19,16 @@ void LocationInvariant::initRandom(
     this->sensorSize = sensorSize;
     this->whereSize = whereSize;
 
-    int numSensorCells = sensorSize.x * sensorSize.y * sensorSize.z; 
+    int numSensorColumns = sensorSize.x * sensorSize.y;
+    int numSensorCells = numSensorColumns * sensorSize.z; 
     int numWhereCells = whereSize.x * whereSize.y * whereSize.z; 
 
-    memory = ByteBuffer(numWhereCells * numSensorCells, 0);
+    memoryActs = FloatBuffer(numWhereCells * numSensorCells, 0.0f);
+    memoryCIs = IntBuffer(numWhereCells * numSensorColumns, 0); 
 
-    Array<ImageEncoder::VisibleLayerDesc> visibleLayerDescs(1);
+    Array<Encoder::VisibleLayerDesc> visibleLayerDescs(1);
 
-    visibleLayerDescs[0].size = Int3(numWhereCells, numSensorCells, 1);
+    visibleLayerDescs[0].size = Int3(numWhereCells, numSensorColumns, sensorSize.z);
     visibleLayerDescs[0].radius = radius;
 
     enc.initRandom(hiddenSize, visibleLayerDescs);
@@ -42,10 +44,6 @@ void LocationInvariant::step(
 
     int numSensorCells = numSensorColumns * sensorSize.z; 
 
-    // Decay
-    for (int i = 0; i < memory.size(); i++)
-        memory[i] = max(0, static_cast<int>(memory[i] * (1.0f - decay)));
-
     // Update memory
     for (int i = 0; i < numWhereColumns; i++) {
         int whereCI = (*whereCIs)[i];
@@ -57,28 +55,40 @@ void LocationInvariant::step(
         for (int j = 0; j < numSensorColumns; j++) {
             int sensorCI = (*sensorCIs)[j];
 
-            int sensorCellIndex = sensorCI + j * sensorSize.z;
+            int maxIndex = -1;
+            float maxActivation = -999999.0f;
 
-            int mi = sensorCellIndex + sensorCellsStart;
+            for (int k = 0; k < sensorSize.z; k++) {
+                int sensorCellIndex = k + j * sensorSize.z;
 
-            memory[mi] = 255;
+                int mi = sensorCellIndex + sensorCellsStart;
+
+                memoryActs[mi] += decay * ((k == sensorCI) - memoryActs[mi]);
+
+                if (memoryActs[mi] > maxActivation || maxIndex == -1) {
+                    maxActivation = memoryActs[mi];
+                    maxIndex = k;
+                }
+            }
+
+            memoryCIs[j + numSensorColumns * whereCellIndex] = maxIndex;
         }
     }
 
     // Learn on memory
-    Array<const ByteBuffer*> inputs(1);
+    Array<const IntBuffer*> inputs(1);
 
-    inputs[0] = &memory;
+    inputs[0] = &memoryCIs;
 
     enc.step(inputs, learnEnabled);
 }
 
 int LocationInvariant::size() const {
-    return 2 * sizeof(Int3) + sizeof(float) + enc.size() + memory.size() * sizeof(Byte);
+    return 2 * sizeof(Int3) + sizeof(float) + enc.size() + memoryActs.size() * sizeof(float) + memoryCIs.size() * sizeof(int);
 }
 
 int LocationInvariant::stateSize() const {
-    return memory.size() * sizeof(Byte);
+    return memoryActs.size() * sizeof(float) + memoryCIs.size() * sizeof(int);
 }
 
 void LocationInvariant::write(
@@ -91,7 +101,8 @@ void LocationInvariant::write(
 
     enc.write(writer);
     
-    writer.write(reinterpret_cast<const void*>(&memory[0]), memory.size() * sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&memoryActs[0]), memoryActs.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&memoryCIs[0]), memoryCIs.size() * sizeof(int));
 }
 
 void LocationInvariant::read(
@@ -100,26 +111,33 @@ void LocationInvariant::read(
     reader.read(reinterpret_cast<void*>(&sensorSize), sizeof(Int3));
     reader.read(reinterpret_cast<void*>(&whereSize), sizeof(Int3));
 
-    int numSensorCells = sensorSize.x * sensorSize.y * sensorSize.z; 
-    int numWhereCells = whereSize.x * whereSize.y * whereSize.z; 
+    int numSensorColumns = sensorSize.x * sensorSize.y;
+    int numWhereColumns = whereSize.x * whereSize.y; 
+
+    int numSensorCells = numSensorColumns * sensorSize.z; 
+    int numWhereCells = numWhereColumns * whereSize.z; 
 
     reader.read(reinterpret_cast<void*>(&decay), sizeof(float));
 
     enc.read(reader);
 
-    memory.resize(numWhereCells * numSensorCells);
+    memoryActs.resize(numWhereCells * numSensorCells);
+    memoryCIs.resize(numWhereCells * numSensorColumns);
 
-    reader.read(reinterpret_cast<void*>(&memory[0]), memory.size() * sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&memoryActs[0]), memoryActs.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&memoryCIs[0]), memoryCIs.size() * sizeof(int));
 }
 
 void LocationInvariant::writeState(
     StreamWriter &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&memory[0]), memory.size() * sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&memoryActs[0]), memoryActs.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&memoryCIs[0]), memoryCIs.size() * sizeof(int));
 }
 
 void LocationInvariant::readState(
     StreamReader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&memory[0]), memory.size() * sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&memoryActs[0]), memoryActs.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&memoryCIs[0]), memoryCIs.size() * sizeof(int));
 }
