@@ -227,6 +227,12 @@ public:
         return static_cast<IOType>(ioTypes[i]);
     }
 
+    int getNumEncoderVisibleLayers(
+        int l
+    ) const {
+        return eLayers[l].getNumVisibleLayers();
+    }
+
     // Retrieve a sparse coding layer
     Encoder &getELayer(
         int l
@@ -239,6 +245,12 @@ public:
         int l
     ) const {
         return eLayers[l];
+    }
+
+    int getNumDecoders(
+        int l
+    ) const {
+        return dLayers[l].size();
     }
 
     // Retrieve by index
