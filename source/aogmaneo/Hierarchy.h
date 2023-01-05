@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -227,6 +227,12 @@ public:
         return static_cast<IOType>(ioTypes[i]);
     }
 
+    int getNumEncoderVisibleLayers(
+        int l
+    ) const {
+        return eLayers[l].getNumVisibleLayers();
+    }
+
     // Retrieve a sparse coding layer
     Encoder &getELayer(
         int l
@@ -239,6 +245,12 @@ public:
         int l
     ) const {
         return eLayers[l];
+    }
+
+    int getNumDecoders(
+        int l
+    ) const {
+        return dLayers[l].size();
     }
 
     // Retrieve by index
