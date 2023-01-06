@@ -51,11 +51,11 @@ void Encoder::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                     float inValue = static_cast<float>(inCI) / static_cast<float>(vld.size.z - 1);
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
@@ -159,11 +159,11 @@ learn:
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
-
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                     float inValue = static_cast<float>(inCI) / static_cast<float>(vld.size.z - 1);
+
+                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
@@ -207,7 +207,7 @@ void Encoder::initRandom(
     }
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
 
