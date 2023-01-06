@@ -63,7 +63,10 @@ void LocationInvariant::step(
 
                 int mi = sensorCellIndex + sensorCellsStart;
 
-                memoryActs[mi] += decay * ((k == sensorCI) - memoryActs[mi]);
+                if (k == sensorCI)
+                    memoryActs[mi] += 1.0f;
+                else
+                    memoryActs[mi] *= 1.0f - decay;
 
                 if (memoryActs[mi] > maxActivation || maxIndex == -1) {
                     maxActivation = memoryActs[mi];

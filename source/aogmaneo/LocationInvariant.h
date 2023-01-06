@@ -29,7 +29,7 @@ public:
 
     LocationInvariant()
     :
-    decay(0.01f)
+    decay(0.1f)
     {}
 
     void initRandom(
