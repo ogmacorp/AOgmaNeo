@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -59,7 +59,7 @@ public:
         LayerDesc(
             const Int3 &hiddenSize = Int3(4, 4, 16),
             int eRadius = 2,
-            int rRadius = 0,
+            int rRadius = 2,
             int dRadius = 2
         )
         :

@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -28,6 +28,7 @@ void ImageEncoder::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
+        float total = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -63,12 +64,13 @@ void ImageEncoder::forward(
 
                         float input = (*inputs[vli])[vc + iStart] * scale;
 
-                        float delta = input - vl.protos[wi];
-
-                        sum -= delta * delta;
+                        sum += input * vl.protos[wi];
+                        total += vl.protos[wi] * vl.protos[wi];
                     }
                 }
         }
+
+        sum /= max(0.0001f, sqrtf(total));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -237,7 +239,7 @@ void ImageEncoder::initRandom(
     }
 
     // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, hiddenSize.z / 2);
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
 
     hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 }
