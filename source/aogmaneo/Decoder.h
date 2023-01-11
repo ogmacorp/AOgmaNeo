@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -60,11 +60,13 @@ private:
 
 public:
     float lr; // Learning rate
+    float stability;
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(0.2f),
+    stability(4.0f)
     {}
 
     // Create with random initialization
