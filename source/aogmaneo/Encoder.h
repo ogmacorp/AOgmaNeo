@@ -30,7 +30,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        FloatBuffer fWeights;
+        FloatBuffer bWeights;
+
+        FloatBuffer reconActsTemp;
 
         float importance;
 
@@ -56,10 +59,15 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void learn(
+    void bLearn(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
         int vli
+    );
+
+    void fLearn(
+        const Int2 &columnPos,
+        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
