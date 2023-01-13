@@ -220,7 +220,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(1.0f, 1.0001f);
+            vl.weights[i] = randf(0.999f, 1.0f);
     }
 
     hiddenModes = Array<Mode>(numHiddenColumns);
