@@ -61,7 +61,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    subSum -= delta * delta;
+                    subSum -= abs(delta);
                 }
 
             sum += subSum * vl.importance;
@@ -207,7 +207,7 @@ void Encoder::initRandom(
     }
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
-    hiddenRates = FloatBuffer(numHiddenCells, 1.0f);
+    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
 
