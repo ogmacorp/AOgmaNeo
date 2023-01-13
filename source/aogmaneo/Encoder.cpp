@@ -137,7 +137,7 @@ learn:
 
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float rate = lr * sqrtf(-hiddenMaxActs[hiddenColumnIndex]);
+        float rate = 1.0f - expf(hiddenMaxActs[hiddenColumnIndex] / lr);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
