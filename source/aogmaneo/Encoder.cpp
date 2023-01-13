@@ -51,6 +51,9 @@ void Encoder::forward(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                    if (vld.isRecurrent && visibleColumnIndex == hiddenColumnIndex)
+                        continue;
+
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
                     float inValue = static_cast<float>(inCI) / static_cast<float>(vld.size.z - 1);
@@ -134,7 +137,7 @@ learn:
 
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float rate = hiddenRates[hiddenCellIndex];
+        float rate = lr * sqrtf(-hiddenMaxActs[hiddenColumnIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -170,8 +173,6 @@ learn:
                     vl.protos[wi] += rate * (inValue - vl.protos[wi]);
                 }
         }
-
-        hiddenRates[hiddenCellIndex] -= lr * rate;
     }
 }
 
@@ -207,7 +208,6 @@ void Encoder::initRandom(
     }
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
-    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
 
     hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
 
@@ -237,7 +237,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenRates.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + sizeof(int) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -259,8 +259,6 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&groupRadius), sizeof(int));
-
-    writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
@@ -292,10 +290,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&groupRadius), sizeof(int));
 
     hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
-
-    hiddenRates.resize(numHiddenCells);
-
-    reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
 
     hiddenPeaksTemp = ByteBuffer(numHiddenColumns, false);
 

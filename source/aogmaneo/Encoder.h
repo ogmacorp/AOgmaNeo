@@ -20,11 +20,14 @@ public:
 
         int radius; // Radius onto input
 
+        Byte isRecurrent;
+
         // Defaults
         VisibleLayerDesc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        isRecurrent(false)
         {}
     };
 
@@ -44,7 +47,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     FloatBuffer hiddenMaxActs;
-    FloatBuffer hiddenRates;
 
     ByteBuffer hiddenPeaksTemp;
 
