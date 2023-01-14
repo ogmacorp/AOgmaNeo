@@ -32,8 +32,6 @@ public:
     struct VisibleLayer {
         SByteBuffer weights;
 
-        IntBuffer reconActsTemp;
-
         float importance;
 
         VisibleLayer()
@@ -58,25 +56,13 @@ private:
         const Array<const IntBuffer*> &inputCIs
     );
 
-    void bLearn(
+    void learn(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
         int vli
     );
 
-    void fLearn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
 public:
-    float lr; // Learning rate
-
-    Encoder()
-    :
-    lr(0.1f)
-    {}
-
     // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
