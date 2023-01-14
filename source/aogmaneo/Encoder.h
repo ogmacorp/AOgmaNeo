@@ -30,10 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer fWeights;
-        FloatBuffer bWeights;
+        SByteBuffer weights;
 
-        FloatBuffer reconActsTemp;
+        IntBuffer reconActsTemp;
 
         float importance;
 
