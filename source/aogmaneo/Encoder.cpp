@@ -182,7 +182,10 @@ void Encoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights = SByteBuffer(numHiddenCells * area * vld.size.z, 0);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
+
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = rand() % 3 - 1;
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
