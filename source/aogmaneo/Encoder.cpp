@@ -61,7 +61,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    subSum -= abs(delta);
+                    subSum -= delta * delta;
                 }
 
             sum += subSum * vl.importance;
