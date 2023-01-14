@@ -65,7 +65,7 @@ public:
 
     Encoder()
     :
-    vigilance(0.9f)
+    vigilance(0.8f)
     {}
 
     // Create a sparse coding layer with random initialization

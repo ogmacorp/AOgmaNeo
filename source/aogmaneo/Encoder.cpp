@@ -80,12 +80,12 @@ void Encoder::forward(
     }
 
     // If no existing data, randomize
-    if (learnEnabled && maxActivation < vigilance)
-        hiddenCIs[hiddenColumnIndex] = rand(state) % hiddenSize.z;
-    else
-        hiddenCIs[hiddenColumnIndex] = maxIndex;
+    hiddenCIs[hiddenColumnIndex] = maxIndex;
 
-    if (learnEnabled) {
+    if (learnEnabled && maxActivation < vigilance) {
+        // Randomize
+        hiddenCIs[hiddenColumnIndex] = rand(state) % hiddenSize.z;
+
         int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
