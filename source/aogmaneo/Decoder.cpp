@@ -145,7 +145,10 @@ void Decoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights = SByteBuffer(numHiddenCells * area * vld.size.z, 0);
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
+
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = static_cast<int>(rand() % 5) - 2;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
