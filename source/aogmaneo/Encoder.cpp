@@ -78,6 +78,7 @@ void Encoder::activate(
     }
 
     hiddenMaxActs[hiddenColumnIndex] = maxActivation;
+
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
@@ -136,7 +137,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    sum += vl.weights[wi];
+                    sum += vl.weights[wi] * hiddenMaxActs[hiddenColumnIndex];
                     count++;
                 }
             }
