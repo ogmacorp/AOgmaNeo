@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -100,7 +100,7 @@ public:
         const Array<const IntBuffer*> &inputCIs, // Inputs to remember
         bool learnEnabled = true, // Whether learning is enabled
         float reward = 0.0f, // Reward
-        float mimic = 0.0f
+        float mimic = 0.0f // Mimicry mode
     );
 
     void clearState();
