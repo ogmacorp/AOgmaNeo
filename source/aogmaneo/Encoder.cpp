@@ -104,7 +104,7 @@ void Encoder::activate(
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
-    if (learnEnabled && found) {
+    if (learnEnabled && (found || commit)) {
         int hiddenCellIndexMax = maxIndex + hiddenCellsStart;
 
         float total = 0.0f;
