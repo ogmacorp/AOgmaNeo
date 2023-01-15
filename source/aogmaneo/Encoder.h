@@ -14,11 +14,6 @@ namespace aon {
 // Sparse coder
 class Encoder {
 public:
-    enum Mode {
-        update = 0,
-        ignore = 1
-    };
-
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -48,11 +43,8 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<Mode> hiddenModes;
-
-    FloatBuffer hiddenMaxActs;
-
     IntBuffer hiddenCIs;
+    IntBuffer hiddenCommits;
 
     FloatBuffer hiddenTotals;
 
@@ -64,26 +56,20 @@ private:
     
     void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const Array<const IntBuffer*> &inputCIs,
+        bool learnEnabled
     );
 
 public:
     float gap;
     float vigilance;
     float lr; // Learning rate
-    int lRadius;
 
     Encoder()
     :
     gap(0.0001f),
     vigilance(0.8f),
-    lr(0.5f),
-    lRadius(0)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
