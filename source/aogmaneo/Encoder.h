@@ -43,6 +43,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
+    FloatBuffer hiddenMaxActs;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -67,7 +68,7 @@ public:
 
     Encoder()
     :
-    lr(0.1f)
+    lr(0.01f)
     {}
 
     // Create a sparse coding layer with random initialization

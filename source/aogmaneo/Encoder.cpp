@@ -25,6 +25,7 @@ void Encoder::activate(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
+        float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -65,7 +66,10 @@ void Encoder::activate(
             subSum /= subCount;
 
             sum += subSum * vl.importance;
+            totalImportance += vl.importance;
         }
+
+        sum /= max(0.0001f, totalImportance);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -73,6 +77,7 @@ void Encoder::activate(
         }
     }
 
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 }
 
@@ -155,7 +160,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * vl.weights[wi]));
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * hiddenMaxActs[hiddenColumnIndex]));
                 }
             }
     }
@@ -191,6 +196,8 @@ void Encoder::initRandom(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(0.99f, 1.0f);
     }
+
+    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
@@ -268,6 +275,8 @@ void Encoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+
+    hiddenMaxActs = FloatBuffer(numHiddenColumns, 0.0f);
 
     hiddenCIs.resize(numHiddenColumns);
 
