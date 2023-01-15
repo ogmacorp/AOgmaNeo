@@ -30,7 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        FloatBuffer weights;
+
+        FloatBuffer reconActsTemp;
 
         float importance;
 
@@ -45,27 +47,29 @@ private:
 
     IntBuffer hiddenCIs;
 
-    IntBuffer hiddenTotals;
-
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs,
-        bool learnEnabled,
-        unsigned int* state
+        const Array<const IntBuffer*> &inputCIs
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
-    float vigilance; // Threshold for generation of new random CSDR
+    float lr; // Learning rate
 
     Encoder()
     :
-    vigilance(0.9f)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
