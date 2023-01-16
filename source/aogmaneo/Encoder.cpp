@@ -144,7 +144,7 @@ void Encoder::learn(
 
         sum /= max(1, count);
 
-        float delta = lr * min(0.0f, (vc == targetCI) - sum);
+        float delta = lr * ((vc == targetCI) - sum);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
