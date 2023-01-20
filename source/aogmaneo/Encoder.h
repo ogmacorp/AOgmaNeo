@@ -78,7 +78,7 @@ public:
     Encoder()
     :
     lr(0.2f),
-    groupRadius(2)
+    groupRadius(1)
     {}
 
     // Create a sparse coding layer with random initialization
