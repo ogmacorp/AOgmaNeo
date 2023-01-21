@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        FloatBuffer reconActs;
+
         float importance;
 
         VisibleLayer()
@@ -43,7 +45,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenMaxActs;
     IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
@@ -68,7 +69,7 @@ public:
 
     Encoder()
     :
-    lr(0.01f)
+    lr(0.2f)
     {}
 
     // Create a sparse coding layer with random initialization
