@@ -62,7 +62,7 @@ void Encoder::forward(
 
                     float delta = (inCI - static_cast<int>(vl.protos[wi] * (vld.size.z - 1) + 0.5f)) * visibleSizeZInv;
 
-                    subSum -= abs(delta);
+                    subSum -= delta * delta;
                 }
 
             subSum /= subCount;
