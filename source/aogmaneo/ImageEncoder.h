@@ -30,9 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        ByteBuffer protos;
 
-        ByteBuffer reconstruction;
+        ByteBuffer recons;
     };
 
 private:
@@ -62,13 +62,11 @@ private:
 
 public:
     float lr;
-    float falloff;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.1f),
-    falloff(4.0f)
+    lr(0.1f)
     {}
 
     void initRandom(
@@ -89,7 +87,7 @@ public:
     const ByteBuffer &getReconstruction(
         int vli
     ) const {
-        return visibleLayers[vli].reconstruction;
+        return visibleLayers[vli].recons;
     }
 
     // Serialization
