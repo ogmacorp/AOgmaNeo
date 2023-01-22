@@ -30,9 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
-
-        FloatBuffer reconActs;
+        FloatBuffer protos;
 
         float importance;
 
@@ -45,31 +43,42 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    IntBuffer hiddenCIs;
+    FloatBuffer hiddenMaxActs;
+    FloatBuffer hiddenRates;
+
+    ByteBuffer hiddenPeaksTemp;
+
+    IntBuffer hiddenCIs; // Hidden states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
     Array<VisibleLayerDesc> visibleLayerDescs;
-    
+
     // --- Kernels ---
     
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
 
+    void inhibit(
+        const Int2 &columnPos
+    );
+
     void learn(
         const Int2 &columnPos,
-        const IntBuffer* inputCIs,
-        int vli
+        const Array<const IntBuffer*> &inputCIs
     );
 
 public:
-    float lr; // Learning rate
+    float lr;
+    int groupRadius;
 
+    // Defaults
     Encoder()
     :
-    lr(0.1f)
+    lr(0.1f),
+    groupRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -78,6 +87,7 @@ public:
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
+    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
