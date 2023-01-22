@@ -62,7 +62,7 @@ void Encoder::forward(
 
                     float delta = inValue - vl.protos[wi];
 
-                    subSum -= delta * delta;
+                    subSum -= abs(delta);
                 }
 
             subSum /= subCount;
