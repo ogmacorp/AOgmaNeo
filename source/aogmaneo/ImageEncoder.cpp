@@ -28,7 +28,6 @@ void ImageEncoder::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        float total = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -64,13 +63,12 @@ void ImageEncoder::forward(
 
                         float input = (*inputs[vli])[vc + iStart] * scale;
 
-                        sum += input * vl.protos[wi];
-                        total += vl.protos[wi] * vl.protos[wi];
+                        float delta = input - vl.protos[wi];
+
+                        sum -= delta * delta;
                     }
                 }
         }
-
-        sum /= max(0.0001f, sqrtf(total));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -81,15 +79,10 @@ void ImageEncoder::forward(
     hiddenCIs[hiddenColumnIndex] = maxIndex;
 
     if (learnEnabled) {
-        for (int dhc = -1; dhc <= 1; dhc++) {
-            int hc = maxIndex + dhc;
-
-            if (hc < 0 || hc >= hiddenSize.z)
-                continue;
-
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            float rate = hiddenRates[hiddenCellIndex];
+            float rate = hiddenRates[hiddenCellIndex] * expf(-falloff * abs(hc - maxIndex) / max(0.0001f, hiddenRates[hiddenCellIndex]));
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -270,7 +263,7 @@ void ImageEncoder::reconstruct(
 }
 
 int ImageEncoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -288,6 +281,7 @@ void ImageEncoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&falloff), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
     
@@ -316,6 +310,7 @@ void ImageEncoder::read(
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&falloff), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
