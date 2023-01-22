@@ -48,19 +48,19 @@ void Encoder::forward(
             float subSum = 0.0f;
             int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
-            float visibleSizeZInv = 1.0f / vld.size.z;
-
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
+                    float inValue = static_cast<float>(inCI) / static_cast<float>(vld.size.z - 1);
+
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    float delta = (inCI - static_cast<int>(vl.protos[wi] * (vld.size.z - 1) + 0.5f)) * visibleSizeZInv;
+                    float delta = inValue - vl.protos[wi];
 
                     subSum -= delta * delta;
                 }
