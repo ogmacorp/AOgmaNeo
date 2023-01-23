@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -10,32 +10,35 @@
 
 using namespace aon;
 
-void ImageEncoder::forward(
+void ImageEncoder::activate(
     const Int2 &columnPos,
-    const Array<const ByteBuffer*> &inputs,
-    bool learnEnabled
+    const Array<const ByteBuffer*> &inputs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    float maxActivation = 0.0f;
 
-    const float scale = 1.0f / 255.0f;
+    int backupMaxIndex = -1;
+    float backupMaxActivation = 0.0f;
+
+    const float byteInv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        int count = 0;
+        float weightSum = 0.0f;
+        float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
             const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
             int diam = vld.radius * 2 + 1;
-
+ 
             // Projection
             Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
                 static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
@@ -49,92 +52,213 @@ void ImageEncoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterUpperBound.y + 1) * vld.size.z;
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
+
+            float subSum = 0.0f;
+            float subWeightSum = 0.0f;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                    int visibleCellsStart = visibleColumnIndex * vld.size.z;
+
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    int iStart = vld.size.z * (iy + ix * vld.size.y);
-
                     for (int vc = 0; vc < vld.size.z; vc++) {
+                        int visibleCellIndex = vc + visibleCellsStart;
+
                         int wi = vc + wiStart;
 
-                        float input = (*inputs[vli])[vc + iStart] * scale;
+                        float input = (*inputs[vli])[visibleCellIndex] * byteInv;
 
-                        float proto = vl.protos[wi] * scale;
+                        float w0 = vl.weights0[wi] * byteInv;
+                        float w1 = vl.weights1[wi] * byteInv;
 
-                        sum += proto * input;
+                        subSum += min(input, w0) + min(1.0f - input, w1);
+
+                        subWeightSum += w0 + w1;
                     }
                 }
+
+            subSum /= subCount;
+            subWeightSum /= subCount;
+
+            sum += subSum * vl.importance;
+            weightSum += subWeightSum * vl.importance;
+            totalImportance += vl.importance;
         }
 
-        sum /= count;
+        sum /= max(0.0001f, totalImportance);
+        weightSum /= max(0.0001f, totalImportance);
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = hc;
+        float activation = sum / (gap + weightSum);
+
+        if (sum >= vigilance) {
+            if (activation > maxActivation || maxIndex == -1) {
+                maxActivation = activation;
+                maxIndex = hc;
+            }
+        }
+
+        if (activation > backupMaxActivation || backupMaxIndex == -1) {
+            backupMaxActivation = activation;
+            backupMaxIndex = hc;
         }
     }
 
+    hiddenModes[hiddenColumnIndex] = update;
+
+    bool found = maxIndex != -1;
+
+    if (!found) {
+        maxIndex = backupMaxIndex;
+        hiddenModes[hiddenColumnIndex] = ignore;
+    }
+
     hiddenCIs[hiddenColumnIndex] = maxIndex;
+}
 
-    if (learnEnabled) {
-        for (int dhc = -1; dhc <= 1; dhc++) {
-            int hc = maxIndex + dhc;
+void ImageEncoder::learn(
+    const Int2 &columnPos,
+    const Array<const ByteBuffer*> &inputs
+) {
+    int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-            if (hc < 0 || hc >= hiddenSize.z)
-                continue;
+    int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-            int hiddenCellIndex = hc + hiddenCellsStart;
+    if (hiddenModes[hiddenColumnIndex] == ignore)
+        return;
 
-            float rate = hiddenRates[hiddenCellIndex];
+    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
-            for (int vli = 0; vli < visibleLayers.size(); vli++) {
-                VisibleLayer &vl = visibleLayers[vli];
-                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+    const float byteInv = 1.0f / 255.0f;
 
-                int diam = vld.radius * 2 + 1;
+    for (int vli = 0; vli < visibleLayers.size(); vli++) {
+        VisibleLayer &vl = visibleLayers[vli];
+        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-                // Projection
-                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+        int diam = vld.radius * 2 + 1;
 
-                Int2 visibleCenter = project(columnPos, hToV);
+        // Projection
+        Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-                // Lower corner
-                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+        Int2 visibleCenter = project(columnPos, hToV);
 
-                // Bounds of receptive field, clamped to input size
-                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+        // Lower corner
+        Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+        // Bounds of receptive field, clamped to input size
+        Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+        Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                        int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                int visibleCellsStart = visibleColumnIndex * vld.size.z;
 
-                        int iStart = vld.size.z * (iy + ix * vld.size.y);
+                Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                        for (int vc = 0; vc < vld.size.z; vc++) {
-                            int wi = vc + wiStart;
+                int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                            float input = (*inputs[vli])[vc + iStart];
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int visibleCellIndex = vc + visibleCellsStart;
 
-                            vl.protos[wi] = min(255, max(0, roundf(vl.protos[wi] + rate * (input - maxActivation * vl.protos[wi]))));
-                        }
-                    }
+                    int wi = vc + wiStart;
+
+                    float input = (*inputs[vli])[visibleCellIndex] * byteInv;
+
+                    vl.weights0[wi] = max(0, vl.weights0[wi] + roundf(lr * 255.0f * min(0.0f, input - vl.weights0[wi] * byteInv)));
+                    vl.weights1[wi] = max(0, vl.weights1[wi] + roundf(lr * 255.0f * min(0.0f, 1.0f - input - vl.weights1[wi] * byteInv)));
+                }
+            }
+    }
+}
+
+void ImageEncoder::learnReconstruction(
+    const Int2 &columnPos,
+    const ByteBuffer* inputs,
+    int vli
+) {
+    VisibleLayer &vl = visibleLayers[vli];
+    VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+    int diam = vld.radius * 2 + 1;
+
+    int visibleColumnIndex = address2(columnPos, Int2(vld.size.x, vld.size.y));
+
+    int visibleCellsStart = visibleColumnIndex * vld.size.z;
+
+    // Projection
+    Float2 vToH = Float2(static_cast<float>(hiddenSize.x) / static_cast<float>(vld.size.x),
+        static_cast<float>(hiddenSize.y) / static_cast<float>(vld.size.y));
+
+    Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+        static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+                
+    Int2 reverseRadii(ceilf(vToH.x * (vld.radius * 2 + 1) * 0.5f), ceilf(vToH.y * (vld.radius * 2 + 1) * 0.5f));
+
+    Int2 hiddenCenter = project(columnPos, vToH);
+
+    // Lower corner
+    Int2 fieldLowerBound(hiddenCenter.x - reverseRadii.x, hiddenCenter.y - reverseRadii.y);
+
+    // Bounds of receptive field, clamped to input size
+    Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+    Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
+    
+    const float byteInv = 1.0f / 255.0f;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        float sum = 0.0f;
+        int count = 0;
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 hiddenPos = Int2(ix, iy);
+
+                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+
+                Int2 visibleCenter = project(hiddenPos, hToV);
+
+                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    sum += vl.weightsRecon[wi];
+                    count++;
+                }
             }
 
-            hiddenRates[hiddenCellIndex] -= lr * rate;
-        }
+        sum /= max(1, count) * 255.0f;
+
+        int delta = roundf(rr * 255.0f * ((*inputs)[visibleCellIndex] * byteInv - sum));
+
+        for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+            for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                Int2 hiddenPos = Int2(ix, iy);
+
+                int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
+                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, hiddenCIs[hiddenColumnIndex]), hiddenSize);
+
+                Int2 visibleCenter = project(hiddenPos, hToV);
+
+                if (inBounds(columnPos, Int2(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius), Int2(visibleCenter.x + vld.radius + 1, visibleCenter.y + vld.radius + 1))) {
+                    Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
+
+                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                    vl.weightsRecon[wi] = min(255, max(0, vl.weightsRecon[wi] + delta));
+                }
+            }
     }
 }
 
@@ -175,7 +299,7 @@ void ImageEncoder::reconstruct(
         int visibleCellIndex = vc + visibleCellsStart;
 
         float sum = 0.0f;
-        float total = 0.0f;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -191,17 +315,14 @@ void ImageEncoder::reconstruct(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    float distX = static_cast<float>(abs(columnPos.x - visibleCenter.x)) / static_cast<float>(vld.radius + 1);
-                    float distY = static_cast<float>(abs(columnPos.y - visibleCenter.y)) / static_cast<float>(vld.radius + 1);
-
-                    float strength = min(1.0f - distX, 1.0f - distY);
-
-                    sum += strength * vl.protos[wi];
-                    total += strength;
+                    sum += vl.weightsRecon[wi];
+                    count++;
                 }
             }
 
-        vl.reconstruction[visibleCellIndex] = roundf(sum / max(0.0001f, total));
+        sum /= max(1, count);
+
+        vl.reconstruction[visibleCellIndex] = roundf(sum);
     }
 }
 
@@ -230,30 +351,52 @@ void ImageEncoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.protos.resize(numHiddenCells * area * vld.size.z);
+        vl.weights0.resize(numHiddenCells * area * vld.size.z);
+        vl.weights1.resize(vl.weights0.size());
 
-        // Initialize to random values
-        for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = rand() % 256;
+        vl.weightsRecon = ByteBuffer(vl.weights0.size(), 0.0f);
+
+        for (int i = 0; i < vl.weights0.size(); i++) {
+            vl.weights0[i] = 255 - rand() % 5;
+            vl.weights1[i] = 255 - rand() % 5;
+        }
 
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
 
-    // Hidden CIs
-    hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    hiddenModes = Array<Mode>(numHiddenColumns);
 
-    hiddenRates = FloatBuffer(numHiddenCells, 0.5f);
+    hiddenCIs = IntBuffer(numHiddenColumns, 0);
 }
 
 void ImageEncoder::step(
     const Array<const ByteBuffer*> &inputs,
-    bool learnEnabled
+    bool learnEnabled,
+    bool learnRecon
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++)
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputs, learnEnabled);
+        activate(Int2(i / hiddenSize.y, i % hiddenSize.y), inputs);
+
+    if (learnEnabled) {
+        #pragma omp parallel for
+        for (int i = 0; i < numHiddenColumns; i++)
+            learn(Int2(i / hiddenSize.y, i % hiddenSize.y), inputs);
+
+        if (learnRecon) {
+            for (int vli = 0; vli < visibleLayers.size(); vli++) {
+                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+                int numVisibleColumns = vld.size.x * vld.size.y;
+            
+                #pragma omp parallel for
+                for (int i = 0; i < numVisibleColumns; i++)
+                    learnReconstruction(Int2(i / vld.size.y, i % vld.size.y), inputs[vli], vli);
+            }
+        }
+    }
 }
 
 void ImageEncoder::reconstruct(
@@ -271,16 +414,19 @@ void ImageEncoder::reconstruct(
 }
 
 int ImageEncoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + hiddenRates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
-        const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.protos.size() * sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(float) + vl.weightsRecon.size() * sizeof(float) + vl.reconstruction.size() * sizeof(Byte) + sizeof(float);
     }
 
     return size;
+}
+
+int ImageEncoder::stateSize() const {
+    return hiddenCIs.size() * sizeof(int);
 }
 
 void ImageEncoder::write(
@@ -288,12 +434,13 @@ void ImageEncoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
+    writer.write(reinterpret_cast<const void*>(&gap), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&rr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
-    
-    writer.write(reinterpret_cast<const void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
-    
+
     int numVisibleLayers = visibleLayers.size();
 
     writer.write(reinterpret_cast<const void*>(&numVisibleLayers), sizeof(int));
@@ -304,7 +451,14 @@ void ImageEncoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
+
+        writer.write(reinterpret_cast<const void*>(&vl.weightsRecon[0]), vl.weightsRecon.size() * sizeof(ByteBuffer));
+
+        writer.write(reinterpret_cast<const void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
+
+        writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
@@ -316,17 +470,18 @@ void ImageEncoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
+    reader.read(reinterpret_cast<void*>(&gap), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&rr), sizeof(float));
+
+    hiddenModes = Array<Mode>(numHiddenColumns);
 
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
-    hiddenRates.resize(numHiddenCells);
-
-    reader.read(reinterpret_cast<void*>(&hiddenRates[0]), hiddenRates.size() * sizeof(float));
-
-    int numVisibleLayers;
+    int numVisibleLayers = visibleLayers.size();
 
     reader.read(reinterpret_cast<void*>(&numVisibleLayers), sizeof(int));
 
@@ -345,11 +500,31 @@ void ImageEncoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.protos.resize(numHiddenCells * area * vld.size.z);
+        vl.weights0.resize(numHiddenCells * area * vld.size.z);
+        vl.weights1.resize(vl.weights0.size());
+        vl.weightsRecon.resize(vl.weights0.size());
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
 
-        vl.reconstruction = ByteBuffer(numVisibleCells, 0.0f);
+        reader.read(reinterpret_cast<void*>(&vl.weightsRecon[0]), vl.weightsRecon.size() * sizeof(Byte));
+
+        vl.reconstruction.resize(numVisibleCells);
+
+        reader.read(reinterpret_cast<void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
+
+        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 
+void ImageEncoder::writeState(
+    StreamWriter &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+}
+
+void ImageEncoder::readState(
+    StreamReader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+}

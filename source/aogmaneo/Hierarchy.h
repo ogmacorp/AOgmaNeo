@@ -153,7 +153,7 @@ public:
         return updates[updates.size() - 1];
     }
 
-    bool ioLayerExists(
+    bool aLayerExists(
         int i
     ) const {
         return aIndices[i] != -1;
