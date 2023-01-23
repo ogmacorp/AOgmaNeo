@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -11,9 +11,14 @@
 #include "Helpers.h"
 
 namespace aon {
-// Image coder
+// Sparse coder
 class ImageEncoder {
 public:
+    enum Mode {
+        update = 0,
+        ignore = 1
+    };
+
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -30,17 +35,27 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer protos;
+        ByteBuffer weights0;
+        ByteBuffer weights1;
+
+        ByteBuffer weightsRecon;
 
         ByteBuffer reconstruction;
+
+        float importance;
+
+        VisibleLayer()
+        :
+        importance(1.0f)
+        {}
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    IntBuffer hiddenCIs; // Hidden states
+    Array<Mode> hiddenModes;
 
-    FloatBuffer hiddenRates;
+    IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -48,10 +63,20 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs,
-        bool learnEnabled
+        const Array<const ByteBuffer*> &inputs
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        const Array<const ByteBuffer*> &inputs
+    );
+
+    void learnReconstruction(
+        const Int2 &columnPos,
+        const ByteBuffer* inputs,
+        int vli
     );
 
     void reconstruct(
@@ -61,25 +86,29 @@ private:
     );
 
 public:
-    float lr;
-    float falloff;
+    float gap;
+    float vigilance;
+    float lr; // Learning rate
+    float rr; // Recon rate
 
-    // Defaults
     ImageEncoder()
     :
+    gap(0.01f),
+    vigilance(0.99f),
     lr(0.1f),
-    falloff(4.0f)
+    rr(0.1f)
     {}
 
+    // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const ByteBuffer*> &inputs, // Input states
-        bool learnEnabled // Whether to learn
+        bool learnEnabled = true, // Whether to learn
+        bool learnRecon = true // Learning reconstruction
     );
 
     void reconstruct(
@@ -94,6 +123,7 @@ public:
 
     // Serialization
     int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
 
     void write(
         StreamWriter &writer
@@ -103,23 +133,38 @@ public:
         StreamReader &reader
     );
 
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
+        StreamReader &reader
+    );
+
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
     }
 
     // Get a visible layer
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
+    }
+
+    // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayerDescs[vli];
+        return visibleLayerDescs[i];
     }
 
     // Get the hidden states
