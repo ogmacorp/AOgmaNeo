@@ -61,7 +61,7 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hiddenCellIndex);
 
-                    float delta = (inCI - static_cast<int>(vl.protos[wi] * (vld.size.z - 1) + 0.5f)) * byteInv;
+                    float delta = (inCI - static_cast<int>(vl.protos[wi] * vld.size.z)) * byteInv; // Round to nearest
 
                     subSum -= delta * delta;
                 }
@@ -168,7 +168,7 @@ learn:
 
                     int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-                    float inValue = static_cast<float>(inCI) / static_cast<float>(vld.size.z - 1);
+                    float inValue = (static_cast<float>(inCI) + 0.5f) / static_cast<float>(vld.size.z);
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
