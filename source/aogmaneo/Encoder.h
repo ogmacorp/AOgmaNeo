@@ -89,7 +89,7 @@ public:
     Encoder()
     :
     gap(0.01f),
-    vigilance(0.9f),
+    vigilance(0.99f),
     lr(0.1f),
     groupRadius(2)
     {}
