@@ -61,14 +61,12 @@ private:
 public:
     float scale;
     float lr; // Learning rate
-    float stability;
 
     // Defaults
     Decoder()
     :
-    scale(4.0f),
-    lr(0.5f),
-    stability(8.0f)
+    scale(8.0f),
+    lr(0.5f)
     {}
 
     // Create with random initialization
