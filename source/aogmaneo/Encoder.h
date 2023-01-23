@@ -58,6 +58,7 @@ private:
     FloatBuffer hiddenTotals;
 
     IntBuffer hiddenCIs; // Hidden states
+    IntBuffer learnCIs; // Hidden states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -88,9 +89,9 @@ public:
     Encoder()
     :
     gap(0.01f),
-    vigilance(0.5f),
-    lr(0.01f),
-    groupRadius(1)
+    vigilance(0.9f),
+    lr(0.1f),
+    groupRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
