@@ -54,7 +54,6 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenMaxActs;
     FloatBuffer hiddenTotals;
 
     IntBuffer hiddenCIs; // Hidden states
@@ -83,15 +82,13 @@ public:
     float gap;
     float vigilance;
     float lr;
-    int groupRadius;
 
     // Defaults
     Encoder()
     :
     gap(0.01f),
-    vigilance(0.99f),
-    lr(0.1f),
-    groupRadius(2)
+    vigilance(0.5f),
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
