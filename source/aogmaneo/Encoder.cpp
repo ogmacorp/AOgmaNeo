@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -126,12 +126,9 @@ void Encoder::learn(
     int hiddenCellIndexMax = learnCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     float rate = (hiddenTotals[hiddenCellIndexMax] == 1.0f ? 1.0f : lr);
-    int delta = roundf(rate * 255.0f);
 
     float total = 0.0f;
     float totalImportance = 0.0f;
-
-    const float byteInv = 1.0f / 255.0f;
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
@@ -169,15 +166,13 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc != inCI)
-                        vl.weights[wi] = max(0, vl.weights[wi] - delta);
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(lr * vl.weights[wi]));
 
-                    float w = vl.weights[wi] * byteInv;
-
-                    subTotal += w * w;
+                    subTotal += vl.weights[wi];
                 }
             }
 
-        subTotal /= subCount;
+        subTotal /= subCount * 255.0f;
 
         total += subTotal * vl.importance;
         totalImportance += vl.importance;
@@ -185,7 +180,7 @@ void Encoder::learn(
 
     total /= max(0.0001f, totalImportance);
 
-    hiddenTotals[hiddenCellIndexMax] = sqrtf(total);
+    hiddenTotals[hiddenCellIndexMax] = total;
 }
 
 void Encoder::initRandom(
