@@ -131,6 +131,8 @@ void Encoder::learn(
     float total = 0.0f;
     float totalImportance = 0.0f;
 
+    const float byteInv = 1.0f / 255.0f;
+
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         VisibleLayer &vl = visibleLayers[vli];
         const VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -169,11 +171,13 @@ void Encoder::learn(
                     if (vc != inCI)
                         vl.weights[wi] = max(0, vl.weights[wi] - delta);
 
-                    subTotal += vl.weights[wi];
+                    float w = vl.weights[wi] * byteInv;
+
+                    subTotal += w * w;
                 }
             }
 
-        subTotal /= subCount * 255.0f;
+        subTotal /= subCount;
 
         total += subTotal * vl.importance;
         totalImportance += vl.importance;
@@ -181,7 +185,7 @@ void Encoder::learn(
 
     total /= max(0.0001f, totalImportance);
 
-    hiddenTotals[hiddenCellIndexMax] = total;
+    hiddenTotals[hiddenCellIndexMax] = sqrtf(total);
 }
 
 void Encoder::initRandom(
