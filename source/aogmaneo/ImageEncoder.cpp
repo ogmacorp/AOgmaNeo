@@ -125,7 +125,7 @@ void ImageEncoder::learn(
     if (learnCIs[hiddenColumnIndex] == -1)
         return;
 
-    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
+    int hiddenCellIndexMax = learnCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     const float byteInv = 1.0f / 255.0f;
 
