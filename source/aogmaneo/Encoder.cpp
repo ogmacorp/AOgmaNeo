@@ -166,7 +166,7 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc != inCI)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(lr * vl.weights[wi]));
+                        vl.weights[wi] = max(0, vl.weights[wi] - roundf(rate * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
                 }
