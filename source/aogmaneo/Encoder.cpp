@@ -222,7 +222,6 @@ void Encoder::reconstruct(
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         float sum = 0.0f;
-        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -242,11 +241,8 @@ void Encoder::reconstruct(
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum += vl.weights[wi];
-                    count++;
                 }
             }
-
-        sum /= count;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
