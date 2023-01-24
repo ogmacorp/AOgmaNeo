@@ -89,9 +89,9 @@ public:
     Encoder()
     :
     gap(0.1f),
-    vigilance(0.6f),
+    vigilance(0.5f),
     lr(0.5f),
-    lRadius(0)
+    lRadius(1)
     {}
 
     // Create a sparse coding layer with random initialization

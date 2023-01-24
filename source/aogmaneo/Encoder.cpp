@@ -97,9 +97,9 @@ void Encoder::forward(
 
     learnCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenCIs[hiddenColumnIndex] = maxBackupIndex;
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
-    hiddenMaxActs[hiddenColumnIndex] = maxBackupActivation;
+    hiddenCIs[hiddenColumnIndex] = maxBackupIndex;
 }
 
 void Encoder::learn(
@@ -183,7 +183,7 @@ void Encoder::learn(
 
     total /= max(0.0001f, totalImportance);
 
-    hiddenTotals[hiddenCellIndexMax] = sqrtf(total);
+    hiddenTotals[hiddenCellIndexMax] = total;
 }
 
 void Encoder::reconstruct(
@@ -285,7 +285,7 @@ void Encoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.partialActs = FloatBuffer(numHiddenCells, 0.0f);
 
