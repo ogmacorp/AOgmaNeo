@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,10 +30,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights0;
-        FloatBuffer weights1;
+        ByteBuffer weights0;
+        ByteBuffer weights1;
 
-        FloatBuffer weightsRecon;
+        ByteBuffer weightsRecon;
 
         ByteBuffer reconstruction;
 
@@ -49,7 +49,7 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs;
-    IntBuffer hiddenCommits;
+    IntBuffer learnCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -59,8 +59,12 @@ private:
     
     void activate(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs,
-        bool learnEnabled
+        const Array<const ByteBuffer*> &inputs
+    );
+
+    void learn(
+        const Int2 &columnPos,
+        const Array<const ByteBuffer*> &inputs
     );
 
     void learnReconstruction(
@@ -83,7 +87,7 @@ public:
 
     ImageEncoder()
     :
-    gap(0.1f),
+    gap(0.01f),
     vigilance(0.99f),
     lr(0.1f),
     rr(0.1f)
