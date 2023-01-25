@@ -49,7 +49,7 @@ void Encoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
             float subSum = 0.0f;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -72,6 +72,8 @@ void Encoder::activate(
         }
 
         sum /= max(0.0001f, totalImportance);
+
+        sum = hiddenTotals[hiddenCellIndex] - sum;
 
         float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
 
@@ -165,7 +167,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    if (vc != inCI)
+                    if (vc == inCI)
                         vl.weights[wi] = max(0, vl.weights[wi] - roundf(rate * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
