@@ -73,7 +73,7 @@ void Encoder::activate(
 
         sum /= max(0.0001f, totalImportance);
 
-        float activation = sum - hiddenTotals[hiddenCellIndex];
+        float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
 
         if (sum >= vigilance) { // Match
             if (activation > maxActivation || maxIndex == -1) {
