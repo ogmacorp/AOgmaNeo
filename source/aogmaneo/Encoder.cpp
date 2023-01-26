@@ -129,8 +129,6 @@ void Encoder::learn(
 
     float rate = (hiddenTotals[hiddenCellIndexMax] == 1.0f ? 1.0f : lr);
 
-    int delta = roundf(rate * 255.0f);
-
     float total = 0.0f;
     float totalImportance = 0.0f;
 
@@ -170,7 +168,7 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc == inCI)
-                        vl.weights[wi] = max(0, vl.weights[wi] - delta);
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
                 }
