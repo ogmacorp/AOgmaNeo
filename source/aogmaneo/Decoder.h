@@ -66,8 +66,8 @@ public:
     // Defaults
     Decoder()
     :
-    scale(4.0f),
-    lr(0.2f),
+    scale(2.0f),
+    lr(0.1f),
     stability(4.0f)
     {}
 
