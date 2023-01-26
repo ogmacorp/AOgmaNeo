@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -109,16 +109,9 @@ void ImageEncoder::activate(
         }
     }
 
-    hiddenModes[hiddenColumnIndex] = update;
+    learnCIs[hiddenColumnIndex] = maxIndex;
 
-    bool found = maxIndex != -1;
-
-    if (!found) {
-        maxIndex = backupMaxIndex;
-        hiddenModes[hiddenColumnIndex] = ignore;
-    }
-
-    hiddenCIs[hiddenColumnIndex] = maxIndex;
+    hiddenCIs[hiddenColumnIndex] = backupMaxIndex;
 }
 
 void ImageEncoder::learn(
@@ -129,10 +122,10 @@ void ImageEncoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    if (hiddenModes[hiddenColumnIndex] == ignore)
+    if (learnCIs[hiddenColumnIndex] == -1)
         return;
 
-    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
+    int hiddenCellIndexMax = learnCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     const float byteInv = 1.0f / 255.0f;
 
@@ -364,9 +357,8 @@ void ImageEncoder::initRandom(
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
     }
 
-    hiddenModes = Array<Mode>(numHiddenColumns);
-
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    learnCIs = IntBuffer(numHiddenColumns, -1);
 }
 
 void ImageEncoder::step(
@@ -475,11 +467,11 @@ void ImageEncoder::read(
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&rr), sizeof(float));
 
-    hiddenModes = Array<Mode>(numHiddenColumns);
-
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+
+    learnCIs = IntBuffer(numHiddenColumns, -1);
 
     int numVisibleLayers = visibleLayers.size();
 

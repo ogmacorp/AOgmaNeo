@@ -14,11 +14,6 @@ namespace aon {
 // Sparse coder
 class ImageEncoder {
 public:
-    enum Mode {
-        update = 0,
-        ignore = 1
-    };
-
     // Visible layer descriptor
     struct VisibleLayerDesc {
         Int3 size; // Size of input
@@ -53,9 +48,8 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    Array<Mode> hiddenModes;
-
     IntBuffer hiddenCIs;
+    IntBuffer learnCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
