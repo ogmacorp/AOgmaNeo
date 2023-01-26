@@ -66,9 +66,9 @@ public:
     // Defaults
     Decoder()
     :
-    scale(4.0f),
+    scale(8.0f),
     lr(0.1f),
-    stability(8.0f)
+    stability(4.0f)
     {}
 
     // Create with random initialization
