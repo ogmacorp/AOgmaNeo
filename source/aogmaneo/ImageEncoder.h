@@ -89,7 +89,7 @@ public:
     :
     gap(0.01f),
     vigilance(0.99f),
-    lr(0.1f),
+    lr(0.5f),
     rr(0.1f)
     {}
 
