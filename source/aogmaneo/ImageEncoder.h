@@ -49,7 +49,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs;
-    IntBuffer learnCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -59,12 +58,8 @@ private:
     
     void activate(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
+        const Array<const ByteBuffer*> &inputs,
+        bool learnEnabled
     );
 
     void learnReconstruction(
