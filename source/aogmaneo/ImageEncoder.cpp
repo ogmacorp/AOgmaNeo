@@ -153,8 +153,8 @@ void ImageEncoder::activate(
 
                         float input = (*inputs[vli])[visibleCellIndex] * byteInv;
 
-                        vl.weights0[wi] = max(0, vl.weights0[wi] + roundf(lr * 255.0f * min(0.0f, input - vl.weights0[wi] * byteInv)));
-                        vl.weights1[wi] = max(0, vl.weights1[wi] + roundf(lr * 255.0f * min(0.0f, 1.0f - input - vl.weights1[wi] * byteInv)));
+                        vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(lr * 255.0f * min(0.0f, input - vl.weights0[wi] * byteInv)));
+                        vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(lr * 255.0f * min(0.0f, 1.0f - input - vl.weights1[wi] * byteInv)));
                     }
                 }
         }
