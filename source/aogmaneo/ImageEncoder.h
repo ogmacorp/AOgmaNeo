@@ -76,7 +76,7 @@ public:
     ImageEncoder()
     :
     gap(0.0001f),
-    vigilance(0.97f),
+    vigilance(0.99f),
     lr(0.5f)
     {}
 
