@@ -62,12 +62,6 @@ private:
         bool learnEnabled
     );
 
-    void learnReconstruction(
-        const Int2 &columnPos,
-        const ByteBuffer* inputs,
-        int vli
-    );
-
     void reconstruct(
         const Int2 &columnPos,
         const IntBuffer* reconCIs,
@@ -78,14 +72,12 @@ public:
     float gap;
     float vigilance;
     float lr; // Learning rate
-    float rr; // Recon rate
 
     ImageEncoder()
     :
-    gap(0.01f),
-    vigilance(0.99f),
-    lr(0.5f),
-    rr(0.1f)
+    gap(0.0001f),
+    vigilance(0.97f),
+    lr(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -96,8 +88,7 @@ public:
 
     void step(
         const Array<const ByteBuffer*> &inputs, // Input states
-        bool learnEnabled = true, // Whether to learn
-        bool learnRecon = true // Learning reconstruction
+        bool learnEnabled = true // Whether to learn
     );
 
     void reconstruct(
