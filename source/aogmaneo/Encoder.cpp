@@ -168,7 +168,7 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc == inCI)
-                        vl.weights[wi] = max(0, vl.weights[wi] - roundf(rate * vl.weights[wi]));
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
                 }
@@ -213,7 +213,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 3;
+            vl.weights[i] = 255 - static_cast<int>(rand() % 5);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
