@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -11,7 +11,7 @@
 #include "Helpers.h"
 
 namespace aon {
-// Sparse coder
+// Image coder
 class ImageEncoder {
 public:
     // Visible layer descriptor
@@ -30,25 +30,17 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights0;
-        ByteBuffer weights1;
-
-        ByteBuffer weightsRecon;
+        FloatBuffer protos;
 
         ByteBuffer reconstruction;
-
-        float importance;
-
-        VisibleLayer()
-        :
-        importance(1.0f)
-        {}
     };
 
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    IntBuffer hiddenCIs;
+    IntBuffer hiddenCIs; // Hidden states
+
+    FloatBuffer hiddenRates;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -56,7 +48,7 @@ private:
     
     // --- Kernels ---
     
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const Array<const ByteBuffer*> &inputs,
         bool learnEnabled
@@ -69,26 +61,23 @@ private:
     );
 
 public:
-    float gap;
-    float vigilance;
-    float lr; // Learning rate
+    float lr;
 
+    // Defaults
     ImageEncoder()
     :
-    gap(0.01f),
-    vigilance(0.99f),
-    lr(0.5f)
+    lr(0.1f)
     {}
 
-    // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
+    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const ByteBuffer*> &inputs, // Input states
-        bool learnEnabled = true // Whether to learn
+        bool learnEnabled // Whether to learn
     );
 
     void reconstruct(
@@ -103,7 +92,6 @@ public:
 
     // Serialization
     int size() const; // Returns size in bytes
-    int stateSize() const; // Returns size of state in bytes
 
     void write(
         StreamWriter &writer
@@ -113,38 +101,23 @@ public:
         StreamReader &reader
     );
 
-    void writeState(
-        StreamWriter &writer
-    ) const;
-
-    void readState(
-        StreamReader &reader
-    );
-
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
     }
 
     // Get a visible layer
-    VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
-    ) {
-        return visibleLayers[i];
-    }
-
-    // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayers[i];
+        return visibleLayers[vli];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int i // Index of visible layer
+        int vli // Index of visible layer
     ) const {
-        return visibleLayerDescs[i];
+        return visibleLayerDescs[vli];
     }
 
     // Get the hidden states
