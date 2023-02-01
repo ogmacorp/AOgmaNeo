@@ -49,7 +49,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs;
-    IntBuffer learnCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -59,18 +58,8 @@ private:
     
     void activate(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
-    );
-
-    void learnReconstruction(
-        const Int2 &columnPos,
-        const ByteBuffer* inputs,
-        int vli
+        const Array<const ByteBuffer*> &inputs,
+        bool learnEnabled
     );
 
     void reconstruct(
@@ -83,14 +72,12 @@ public:
     float gap;
     float vigilance;
     float lr; // Learning rate
-    float rr; // Recon rate
 
     ImageEncoder()
     :
     gap(0.01f),
     vigilance(0.99f),
-    lr(0.1f),
-    rr(0.1f)
+    lr(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -101,8 +88,7 @@ public:
 
     void step(
         const Array<const ByteBuffer*> &inputs, // Input states
-        bool learnEnabled = true, // Whether to learn
-        bool learnRecon = true // Learning reconstruction
+        bool learnEnabled = true // Whether to learn
     );
 
     void reconstruct(
