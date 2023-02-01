@@ -73,8 +73,6 @@ void Encoder::activate(
 
         sum /= max(0.0001f, totalImportance);
 
-        sum = hiddenTotals[hiddenCellIndex] - sum;
-
         float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
 
         if (sum >= vigilance) { // Match
@@ -167,8 +165,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    if (vc == inCI)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(rate * ((vc == inCI) * 255.0f - vl.weights[wi]))));
 
                     subTotal += vl.weights[wi];
                 }
