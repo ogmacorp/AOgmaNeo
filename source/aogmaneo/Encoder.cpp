@@ -165,7 +165,8 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(rate * ((vc == inCI) * 255.0f - vl.weights[wi]))));
+                    if (vc != inCI)
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
                 }
