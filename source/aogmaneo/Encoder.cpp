@@ -75,6 +75,8 @@ void Encoder::activate(
 
         sum = hiddenTotals[hiddenCellIndex] - sum;
 
+        assert(sum >= 0.0f);
+
         float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
 
         if (sum >= vigilance) { // Match
