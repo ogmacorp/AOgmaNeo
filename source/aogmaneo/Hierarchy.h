@@ -142,20 +142,6 @@ public:
         return eLayers.size();
     }
 
-    // Get state of highest layer (less verbose when dealing with goal-driven learning)
-    const IntBuffer &getTopHiddenCIs() const {
-        return eLayers[eLayers.size() - 1].getHiddenCIs();
-    }
-
-    // Get size of highest layer (less verbose when dealing with goal-driven learning)
-    const Int3 &getTopHiddenSize() const {
-        return eLayers[eLayers.size() - 1].getHiddenSize();
-    }
-
-    bool getTopUpdate() const {
-        return updates[updates.size() - 1];
-    }
-
     bool ioLayerExists(
         int i
     ) const {
