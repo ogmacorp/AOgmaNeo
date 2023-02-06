@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        FloatBuffer weights;
 
         float importance;
 
@@ -73,9 +73,9 @@ public:
 
     Encoder()
     :
-    gap(1.0f),
-    vigilance(0.9f),
-    lr(0.5f),
+    gap(0.01f),
+    vigilance(0.95f),
+    lr(0.1f),
     lRadius(2)
     {}
 
