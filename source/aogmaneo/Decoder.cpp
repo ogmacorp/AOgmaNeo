@@ -23,9 +23,6 @@ void Decoder::forward(
     int maxIndex = -1;
     float maxActivation = 0.0f;
 
-    int backupMaxIndex = -1;
-    float backupMaxActivation = 0.0f;
-
     for (int hc = 0; hc < numCellsPerColumn; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
@@ -71,24 +68,15 @@ void Decoder::forward(
 
         float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
 
-        if (sum >= vigilance) {
-            hiddenActs[hiddenCellIndex] = activation;
+        hiddenActs[hiddenCellIndex] = (sum <= vigilance ? activation : 0.0f);
 
-            if (activation > maxActivation || maxIndex == -1) {
-                maxActivation = activation;
-                maxIndex = hc;
-            }
-        }
-        else
-            hiddenActs[hiddenCellIndex] = 0.0f;
-
-        if (activation > backupMaxActivation || backupMaxIndex == -1) {
-            backupMaxActivation = activation;
-            backupMaxIndex = hc;
+        if (activation > maxActivation || maxIndex == -1) {
+            maxActivation = activation;
+            maxIndex = hc;
         }
     }
 
-    hiddenCIs[hiddenColumnIndex] = backupMaxIndex / numDendrites;
+    hiddenCIs[hiddenColumnIndex] = maxIndex / numDendrites;
 }
 
 void Decoder::learn(
@@ -105,7 +93,7 @@ void Decoder::learn(
 
     // Select strongest dendrite
     int dendriteIndex = -1;
-    float dendriteActivation = -999999.0f;
+    float dendriteActivation = 0.0f;
 
     for (int di = 0; di < numDendrites; di++) {
         int hiddenCellIndex = (targetCI * numDendrites + di) + hiddenCellsStart;
@@ -115,6 +103,9 @@ void Decoder::learn(
             dendriteIndex = di;
         }
     }
+
+    if (dendriteIndex == -1)
+        return;
 
     int hiddenCellIndexTarget = (targetCI * numDendrites + dendriteIndex) + hiddenCellsStart;
 
@@ -157,8 +148,8 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    if (vc != inCIPrev)
-                        vl.weights[wi] -= rate * vl.weights[wi];
+                    if (vc == inCIPrev)
+                        vl.weights[wi] += rate * (1.0f - vl.weights[wi]);
                     
                     total += vl.weights[wi];
                 }
@@ -199,7 +190,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.99f, 1.0f);
+            vl.weights[i] = randf(0.0f, 0.01f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
