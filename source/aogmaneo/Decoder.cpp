@@ -125,7 +125,9 @@ void Decoder::learn(
 
                     int visibleCellIndex = inCIPrev + visibleCellsStart;
 
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + ceilf(delta * expf(-max(0.0f, vl.weights[wi] * halfByteInv) * stability))));
+                    float w = vl.weights[wi] * halfByteInv;
+
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * expf(-w * w * stability))));
                 }
         }
     }
