@@ -135,6 +135,7 @@ void Encoder::learn(
     float rate = (hiddenTotals[hiddenCellIndexMax] == 1.0f ? 1.0f : lr);
 
     float total = 0.0f;
+    float count = 0.0f;
     float totalImportance = 0.0f;
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -181,13 +182,15 @@ void Encoder::learn(
                 }
             }
 
-        subTotal /= subCount;
-
         total += subTotal * vl.importance;
+        count += subCount * vl.importance;
         totalImportance += vl.importance;
     }
 
     total /= max(0.0001f, totalImportance);
+    count /= max(0.0001f, totalImportance);
+
+    total /= max(0.0001f, count);
 
     hiddenTotals[hiddenCellIndexMax] = total;
 }
