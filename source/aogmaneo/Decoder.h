@@ -36,11 +36,13 @@ public:
     };
 
 private:
-    Int3 hiddenSize; // Size of the output/hidden/prediction
+    Int3 hiddenSize; // Size of the hidden/hidden/prediction
+    int numDendrites;
 
     FloatBuffer hiddenActs;
+    FloatBuffer hiddenTotals;
 
-    IntBuffer hiddenCIs; // Hidden state
+    IntBuffer hiddenCIs;
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -59,17 +61,22 @@ private:
     );
 
 public:
+    float choice;
+    float vigilance;
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
+    choice(0.01f),
+    vigilance(0.9f),
     lr(0.1f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Int3 &hiddenSize, // Hidden/hidden/prediction size
+        int numDendrites,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
