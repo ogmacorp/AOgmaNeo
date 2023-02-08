@@ -68,7 +68,7 @@ void Decoder::forward(
 
         float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
 
-        hiddenActs[hiddenCellIndex] = (sum <= vigilance ? activation : 0.0f);
+        hiddenActs[hiddenCellIndex] = (sum < vigilance ? activation : 0.0f);
 
         if (activation > maxActivation || maxIndex == -1) {
             maxActivation = activation;
@@ -104,7 +104,7 @@ void Decoder::learn(
         }
     }
 
-    if (dendriteIndex == -1)
+    if (dendriteActivation == 0.0f)
         return;
 
     int hiddenCellIndexTarget = (targetCI * numDendrites + dendriteIndex) + hiddenCellsStart;
