@@ -28,6 +28,7 @@ void Encoder::activate(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
+        float count = 0.0f;
         float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -49,8 +50,8 @@ void Encoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * (vld.size.z - 1);
             float subSum = 0.0f;
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -65,17 +66,19 @@ void Encoder::activate(
                     subSum += vl.weights[wi];
                 }
 
-            subSum /= subCount * 255.0f;
+            subSum /= 255.0f;
 
             sum += subSum * vl.importance;
+            count += subCount * vl.importance;
             totalImportance += vl.importance;
         }
 
         sum /= max(0.0001f, totalImportance);
+        count /= max(0.0001f, totalImportance);
 
-        sum = hiddenTotals[hiddenCellIndex] - sum;
+        sum /= max(0.0001f, count);
 
-        float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
+        float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
 
         if (sum >= vigilance) { // Match
             if (activation > maxActivation || maxIndex == -1) {
@@ -92,7 +95,7 @@ void Encoder::activate(
 
     learnCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
+    hiddenMaxActs[hiddenColumnIndex] = backupMaxActivation;
 
     hiddenCIs[hiddenColumnIndex] = backupMaxIndex;
 }
@@ -130,6 +133,7 @@ void Encoder::learn(
     float rate = (hiddenTotals[hiddenCellIndexMax] == 1.0f ? 1.0f : lr);
 
     float total = 0.0f;
+    float count = 0.0f;
     float totalImportance = 0.0f;
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -167,20 +171,24 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    if (vc == inCI)
+                    if (vc != inCI)
                         vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
                 }
             }
 
-        subTotal /= subCount * 255.0f;
+        subTotal /= 255.0f;
 
         total += subTotal * vl.importance;
+        count += subCount * vl.importance;
         totalImportance += vl.importance;
     }
 
     total /= max(0.0001f, totalImportance);
+    count /= max(0.0001f, totalImportance);
+
+    total /= max(0.0001f, count);
 
     hiddenTotals[hiddenCellIndexMax] = total;
 }
@@ -213,7 +221,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - static_cast<int>(rand() % 5);
+            vl.weights[i] = 255 - rand() % 5;
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -262,7 +270,7 @@ void Encoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&gap), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&choice), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lRadius), sizeof(int));
@@ -295,7 +303,7 @@ void Encoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&gap), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&choice), sizeof(float));
     reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lRadius), sizeof(int));
