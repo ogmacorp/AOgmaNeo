@@ -20,6 +20,7 @@ void Encoder::activate(
 
     int maxIndex = -1;
     float maxActivation = 0.0f;
+    float maxMatch = 0.0f;
 
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
@@ -87,6 +88,8 @@ void Encoder::activate(
             }
         }
 
+        maxMatch = max(maxMatch, sum);
+
         if (activation > backupMaxActivation || backupMaxIndex == -1) {
             backupMaxActivation = activation;
             backupMaxIndex = hc;
@@ -95,7 +98,7 @@ void Encoder::activate(
 
     learnCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenMaxActs[hiddenColumnIndex] = backupMaxActivation;
+    hiddenMaxs[hiddenColumnIndex] = maxMatch;
 
     hiddenCIs[hiddenColumnIndex] = backupMaxIndex;
 }
@@ -111,7 +114,7 @@ void Encoder::learn(
     if (learnCIs[hiddenColumnIndex] == -1)
         return;
 
-    float maxActivation = hiddenMaxActs[hiddenColumnIndex];
+    float maxActivation = hiddenMaxs[hiddenColumnIndex];
 
     for (int dcx = -lRadius; dcx <= lRadius; dcx++)
         for (int dcy = -lRadius; dcy <= lRadius; dcy++) {
@@ -123,7 +126,7 @@ void Encoder::learn(
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenMaxActs[otherHiddenColumnIndex] >= maxActivation)
+                if (hiddenMaxs[otherHiddenColumnIndex] >= maxActivation)
                     return;
             }
         }
@@ -229,7 +232,7 @@ void Encoder::initRandom(
 
     hiddenTotals = FloatBuffer(numHiddenCells, 1.0f);
 
-    hiddenMaxActs = FloatBuffer(numHiddenColumns);
+    hiddenMaxs = FloatBuffer(numHiddenColumns);
 }
 
 void Encoder::step(
@@ -318,7 +321,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hiddenTotals[0]), hiddenTotals.size() * sizeof(float));
 
-    hiddenMaxActs = FloatBuffer(numHiddenColumns);
+    hiddenMaxs = FloatBuffer(numHiddenColumns);
 
     int numVisibleLayers = visibleLayers.size();
 

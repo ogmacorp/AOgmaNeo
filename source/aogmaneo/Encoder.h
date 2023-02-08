@@ -47,7 +47,7 @@ private:
     IntBuffer learnCIs;
 
     FloatBuffer hiddenTotals;
-    FloatBuffer hiddenMaxActs;
+    FloatBuffer hiddenMaxs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -73,8 +73,8 @@ public:
 
     Encoder()
     :
-    choice(0.1f),
-    vigilance(0.9f),
+    choice(0.01f),
+    vigilance(0.8f),
     lr(0.1f),
     lRadius(2)
     {}
