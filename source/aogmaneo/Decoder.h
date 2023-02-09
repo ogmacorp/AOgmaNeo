@@ -60,11 +60,13 @@ private:
 
 public:
     float lr; // Learning rate
+    float stability;
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    lr(1.0f),
+    stability(1.0f)
     {}
 
     // Create with random initialization
@@ -131,7 +133,7 @@ public:
         return visibleLayerDescs[i];
     }
 
-    // Get the hidden states (predictions)
+    // Get the hidden activations (predictions)
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
