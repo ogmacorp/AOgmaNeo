@@ -109,9 +109,6 @@ void Encoder::learn(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
-    int maxIndex = -1;
-    float maxActivation = -999999.0f;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
 
@@ -140,7 +137,7 @@ void Encoder::learn(
 
         sum /= max(1, count);
 
-        float delta = lr * ((vc == targetCI) - sum);
+        float delta = lr * ((vc == targetCI) - sigmoidf(sum));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -157,7 +154,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * vl.weights[wi]));
+                    vl.weights[wi] += delta;
                 }
             }
     }
@@ -191,7 +188,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.99f, 1.0f);
+            vl.weights[i] = randf(1.0f, 2.0f);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);

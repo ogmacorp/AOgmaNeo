@@ -64,10 +64,12 @@ private:
 
 public:
     float lr; // Learning rate
+    float scale;
 
     Encoder()
     :
-    lr(0.01f)
+    lr(0.1f),
+    scale(8.0f)
     {}
 
     // Create a sparse coding layer with random initialization
