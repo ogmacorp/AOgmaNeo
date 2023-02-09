@@ -173,6 +173,16 @@ public:
         return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
+    // Retrieve prediction probabilities
+    const FloatBuffer &getPredictionActs(
+        int i
+    ) const {
+        if (ioTypes[i] == action)
+            return aLayers[dIndices[i]].getHiddenActs();
+
+        return dLayers[0][dIndices[i]].getHiddenActs();
+    }
+
     // Whether this layer received on update this timestep
     bool getUpdate(
         int l

@@ -159,6 +159,11 @@ public:
         return hiddenCIs;
     }
 
+    // Get hidden activations (probabilities) for actions
+    const FloatBuffer &getHiddenActs() const {
+        return hiddenActs;
+    }
+
     // Get the hidden size
     const Int3 &getHiddenSize() const {
         return hiddenSize;
