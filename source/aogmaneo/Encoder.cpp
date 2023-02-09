@@ -20,7 +20,6 @@ void Encoder::activate(
 
     int maxIndex = -1;
     float maxActivation = 0.0f;
-    float maxMatch = 0.0f;
 
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
@@ -88,8 +87,6 @@ void Encoder::activate(
             }
         }
 
-        maxMatch = max(maxMatch, sum);
-
         if (activation > backupMaxActivation || backupMaxIndex == -1) {
             backupMaxActivation = activation;
             backupMaxIndex = hc;
@@ -98,7 +95,7 @@ void Encoder::activate(
 
     learnCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenMaxs[hiddenColumnIndex] = maxMatch;
+    hiddenMaxs[hiddenColumnIndex] = backupMaxActivation;
 
     hiddenCIs[hiddenColumnIndex] = backupMaxIndex;
 }
