@@ -337,12 +337,12 @@ void Actor::learn(
         total += hiddenActs[hiddenCellIndex];
     }
 
-    float scale = 1.0f / max(0.0001f, total);
+    float totalInv = 1.0f / max(0.0001f, total);
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        hiddenActs[hiddenCellIndex] *= scale;
+        hiddenActs[hiddenCellIndex] *= totalInv;
     }
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
