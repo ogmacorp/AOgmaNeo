@@ -203,6 +203,16 @@ public:
         return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
+    // Retrieve prediction activations
+    const FloatBuffer &getPredictionActs(
+        int i
+    ) const {
+        if (ioTypes[i] == action)
+            return aLayers[dIndices[i]].getHiddenActs();
+
+        return dLayers[0][dIndices[i]].getHiddenActs();
+    }
+
     // Number of IO layers
     int getNumIO() const {
         return ioSizes.size();

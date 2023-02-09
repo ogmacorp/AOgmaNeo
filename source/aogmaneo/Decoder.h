@@ -135,9 +135,14 @@ public:
         return visibleLayerDescs[i];
     }
 
-    // Get the hidden activations (predictions)
+    // Get the hidden states (predictions)
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
+    }
+
+    // Get the hidden activations
+    const FloatBuffer &getHiddenActs() const {
+        return hiddenActs;
     }
 
     // Get the hidden size
