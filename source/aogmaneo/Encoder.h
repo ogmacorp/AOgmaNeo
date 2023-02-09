@@ -32,6 +32,8 @@ public:
     struct VisibleLayer {
         FloatBuffer weights;
 
+        FloatBuffer reconActs;
+
         float importance;
 
         VisibleLayer()
@@ -64,12 +66,10 @@ private:
 
 public:
     float lr; // Learning rate
-    float scale;
 
     Encoder()
     :
-    lr(0.1f),
-    scale(8.0f)
+    lr(1.0f)
     {}
 
     // Create a sparse coding layer with random initialization

@@ -109,6 +109,8 @@ void Encoder::learn(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
+    float maxActivation = -999999.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
 
@@ -137,7 +139,29 @@ void Encoder::learn(
 
         sum /= max(1, count);
 
-        float delta = lr * ((vc == targetCI) - sigmoidf(sum));
+        vl.reconActs[visibleCellIndex] = sum;
+
+        maxActivation = max(maxActivation, sum);
+    }
+
+    float total = 0.0f;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        vl.reconActs[visibleCellIndex] = expf(vl.reconActs[visibleCellIndex] - maxActivation);
+
+        total += vl.reconActs[visibleCellIndex];
+    }
+
+    float totalInv = 1.0f / max(0.0001f, total);
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visibleCellIndex = vc + visibleCellsStart;
+
+        vl.reconActs[visibleCellIndex] *= totalInv;
+
+        float delta = lr * min(0.0f, (vc == targetCI) - vl.reconActs[visibleCellIndex]);
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -188,7 +212,9 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(1.0f, 2.0f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
+
+        vl.reconActs = FloatBuffer(numVisibleCells);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -294,6 +320,8 @@ void Encoder::read(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+
+        vl.reconActs = FloatBuffer(numVisibleCells);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
