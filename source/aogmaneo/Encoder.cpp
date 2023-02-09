@@ -51,7 +51,7 @@ void Encoder::activate(
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
             float subSum = 0.0f;
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * (vld.size.z - 1);
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -78,8 +78,6 @@ void Encoder::activate(
 
         sum /= max(0.0001f, count);
 
-        sum = hiddenTotals[hiddenCellIndex] - sum;
-
         float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
 
         if (sum >= vigilance) { // Match
@@ -97,7 +95,7 @@ void Encoder::activate(
 
     learnCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenMaxs[hiddenColumnIndex] = backupMaxActivation;
+    hiddenMaxs[hiddenColumnIndex] = maxActivation;
 
     hiddenCIs[hiddenColumnIndex] = backupMaxIndex;
 }
@@ -173,7 +171,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    if (vc == inCI)
+                    if (vc != inCI)
                         vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
 
                     subTotal += vl.weights[wi];
