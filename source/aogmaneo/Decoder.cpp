@@ -64,12 +64,30 @@ void Decoder::forward(
 
         sum /= count;
 
-        hiddenActs[hiddenCellIndex] = max(0.0f, tanhf(sum));
+        hiddenActs[hiddenCellIndex] = sum;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
+
+        total += hiddenActs[hiddenCellIndex];
+    }
+
+    float totalInv = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] *= totalInv;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -123,7 +141,7 @@ void Decoder::learn(
 
                     int visibleCellIndex = inCIPrev + visibleCellsStart;
 
-                    vl.weights[wi] += delta * expf(-stability * max(0.0f, vl.weights[wi]));
+                    vl.weights[wi] += delta * expf(-stability * vl.weights[wi] * vl.weights[wi]);
                 }
         }
     }
@@ -157,7 +175,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 0.01f);
+            vl.weights[i] = randf(-0.0001f, 0.0001f);
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
