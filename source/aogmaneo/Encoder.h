@@ -38,6 +38,8 @@ public:
         IntBuffer inputCIs;
         IntBuffer reconCIs;
 
+        FloatBuffer reconsTemp;
+
         bool useInputs;
         bool needsUpdate;
 
@@ -54,11 +56,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenTotals;
-    FloatBuffer hiddenMaxActs;
-
     IntBuffer hiddenCIs; // Hidden states
-    IntBuffer learnCIs; // Hidden states
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -71,7 +69,8 @@ private:
     );
 
     void learn(
-        const Int2 &columnPos
+        const Int2 &columnPos,
+        int vli
     );
 
     void reconstruct(
@@ -80,18 +79,12 @@ private:
     );
 
 public:
-    float gap;
-    float vigilance;
     float lr;
-    int lRadius;
 
     // Defaults
     Encoder()
     :
-    gap(0.1f),
-    vigilance(0.9f),
-    lr(0.5f),
-    lRadius(2)
+    lr(0.1f)
     {}
 
     // Create a sparse coding layer with random initialization
