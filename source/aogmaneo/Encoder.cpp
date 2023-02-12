@@ -154,11 +154,11 @@ void Encoder::learn(
         }
     }
 
-    if (maxIndex != targetCI) {
+    if (true) {
         for (int vc = 0; vc < vld.size.z; vc++) {
             int visibleCellIndex = vc + visibleCellsStart;
 
-            float delta = lr * ((vc == targetCI) - sigmoidf(vl.reconsTemp[visibleCellIndex]));
+            float delta = lr * ((vc == targetCI) - vl.reconsTemp[visibleCellIndex]);
       
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -278,7 +278,7 @@ void Encoder::initRandom(
 
         // Initialize to random values
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.partialActs = FloatBuffer(numHiddenCells, 0.0f);
 
