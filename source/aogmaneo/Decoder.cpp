@@ -131,15 +131,11 @@ void Decoder::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int visibleCellsStart = visibleColumnIndex * vld.size.z;
-
                     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
-
-                    int visibleCellIndex = inCIPrev + visibleCellsStart;
 
                     vl.weights[wi] += delta * expf(-stability * vl.weights[wi] * vl.weights[wi]);
                 }
