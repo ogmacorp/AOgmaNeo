@@ -69,13 +69,13 @@ private:
     );
 
 public:
-    float gap;
+    float choice;
     float vigilance;
     float lr; // Learning rate
 
     ImageEncoder()
     :
-    gap(0.1f),
+    choice(0.1f),
     vigilance(0.9f),
     lr(0.1f)
     {}

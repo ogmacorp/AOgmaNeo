@@ -94,7 +94,7 @@ void ImageEncoder::activate(
         sum /= max(0.0001f, totalImportance);
         weightSum /= max(0.0001f, totalImportance);
 
-        float activation = sum / (gap + weightSum);
+        float activation = sum / (choice + weightSum);
 
         if (sum >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
@@ -309,7 +309,7 @@ void ImageEncoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&gap), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&choice), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
@@ -342,7 +342,7 @@ void ImageEncoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&gap), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&choice), sizeof(float));
     reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
