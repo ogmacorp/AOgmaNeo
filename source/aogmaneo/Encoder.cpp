@@ -84,6 +84,8 @@ void Encoder::forward(
 
         sum /= max(0.0001f, count);
 
+        sum = hiddenTotals[hiddenCellIndex] - sum;
+
         float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
 
         if (sum >= vigilance) {
