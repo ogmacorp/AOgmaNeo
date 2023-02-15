@@ -82,7 +82,6 @@ public:
     float bias; // Bias towards positive updates
     float discount; // Discount factor
     float temperature; // Exploration amount
-    float stability; // Resistance to forgetting
     int minSteps; // Minimum steps before sample can be used
     int historyIters; // Number of iterations over samples
 
@@ -94,7 +93,6 @@ public:
     bias(0.5f),
     discount(0.99f),
     temperature(1.0f),
-    stability(1.0f),
     minSteps(16),
     historyIters(16)
     {}

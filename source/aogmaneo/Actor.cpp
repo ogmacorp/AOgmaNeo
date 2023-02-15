@@ -381,7 +381,7 @@ void Actor::learn(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    vl.actionWeights[wi] += deltaAction * expf(-stability * vl.actionWeights[wi] * vl.actionWeights[wi]);
+                    vl.actionWeights[wi] += deltaAction;
                 }
         }
     }
@@ -518,7 +518,7 @@ void Actor::clearState() {
 }
 
 int Actor::size() const {
-    int size = sizeof(Int3) + 6 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + 5 * sizeof(float) + 2 * sizeof(int) + hiddenCIs.size() * sizeof(int) + hiddenValues.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -570,7 +570,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&bias), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&discount), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&temperature), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&stability), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&minSteps), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&historyIters), sizeof(int));
 
@@ -626,7 +625,6 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&bias), sizeof(float));
     reader.read(reinterpret_cast<void*>(&discount), sizeof(float));
     reader.read(reinterpret_cast<void*>(&temperature), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&stability), sizeof(float));
     reader.read(reinterpret_cast<void*>(&minSteps), sizeof(int));
     reader.read(reinterpret_cast<void*>(&historyIters), sizeof(int));
 
