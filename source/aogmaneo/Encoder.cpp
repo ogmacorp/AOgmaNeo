@@ -19,6 +19,7 @@ void Encoder::forward(
 
     int maxIndex = -1;
     float maxActivation = 0.0f;
+    float maxMatch = 0.0f;
 
     int maxBackupIndex = -1;
     float maxBackupActivation = 0.0f;
@@ -53,7 +54,7 @@ void Encoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * (vld.size.z - 1);
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
             if (vl.needsUpdate) {
                 float subSum = 0.0f;
@@ -84,8 +85,6 @@ void Encoder::forward(
 
         sum /= max(0.0001f, count);
 
-        sum = hiddenTotals[hiddenCellIndex] - sum;
-
         float activation = sum / (gap + hiddenTotals[hiddenCellIndex]);
 
         if (sum >= vigilance) {
@@ -95,6 +94,8 @@ void Encoder::forward(
             }
         }
 
+        maxMatch = max(maxMatch, sum);
+
         if (activation > maxBackupActivation || maxBackupIndex == -1) {
             maxBackupActivation = activation;
             maxBackupIndex = hc;
@@ -103,7 +104,7 @@ void Encoder::forward(
 
     learnCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
+    hiddenMaxActs[hiddenColumnIndex] = maxMatch;
 
     hiddenCIs[hiddenColumnIndex] = maxBackupIndex;
 }
@@ -120,12 +121,15 @@ void Encoder::learn(
 
     for (int dcx = -lRadius; dcx <= lRadius; dcx++)
         for (int dcy = -lRadius; dcy <= lRadius; dcy++) {
+            if (dcx == 0 || dcy == 0)
+                continue;
+
             Int2 otherColumnPos(columnPos.x + dcx, columnPos.y + dcy);
 
             if (inBounds0(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y))) {
                 int otherHiddenColumnIndex = address2(otherColumnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenMaxActs[otherHiddenColumnIndex] > maxActivation)
+                if (hiddenMaxActs[otherHiddenColumnIndex] >= maxActivation)
                     return;
             }
         }
@@ -177,7 +181,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wiStart;
 
-                    if (vc == inCI)
+                    if (vc != inCI)
                         vl.weights[wi] -= rate * vl.weights[wi];
 
                     subTotal += vl.weights[wi];
@@ -228,11 +232,12 @@ void Encoder::reconstruct(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
     
-    int minIndex = -1;
-    float minActivation = 1.0f;
+    int maxIndex = -1;
+    float maxActivation = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         float sum = 0.0f;
+        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -252,16 +257,19 @@ void Encoder::reconstruct(
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum += vl.weights[wi];
+                    count++;
                 }
             }
 
-        if (sum < minActivation || minIndex == -1) {
-            minActivation = sum;
-            minIndex = vc;
+        sum /= max(1, count);
+
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
+            maxIndex = vc;
         }
     }
 
-    vl.reconCIs[visibleColumnIndex] = minIndex;
+    vl.reconCIs[visibleColumnIndex] = maxIndex;
 }
 
 void Encoder::initRandom(
