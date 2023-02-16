@@ -68,7 +68,7 @@ public:
     :
     scale(8.0f),
     lr(0.1f),
-    stability(2.0f)
+    stability(1.5f)
     {}
 
     // Create with random initialization
