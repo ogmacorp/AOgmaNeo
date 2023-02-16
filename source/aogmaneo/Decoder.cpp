@@ -85,7 +85,8 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    const float halfByteInv = 1.0f / 127.0f;
+    if (hiddenCIs[hiddenColumnIndex] == targetCI)
+        return;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -115,17 +116,15 @@ void Decoder::learn(
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int visibleCellsStart = visibleColumnIndex * vld.size.z;
-
                     int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    int visibleCellIndex = inCIPrev + visibleCellsStart;
+                    int subDelta = roundf(delta / (1.0f + stability * abs(vl.weights[wi])));
 
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * expf(-max(0.0f, vl.weights[wi] * halfByteInv) * stability))));
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + subDelta));
                 }
         }
     }
@@ -208,7 +207,7 @@ void Decoder::clearState() {
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenActs.size() * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
