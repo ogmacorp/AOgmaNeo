@@ -16,8 +16,6 @@ void Decoder::forward(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    int numCellsPerColumn = hiddenSize.z * numDendrites;
-
     int hiddenModulesStart = hiddenColumnIndex * hiddenSize.z;
 
     int backupMaxIndex = -1;
@@ -73,6 +71,8 @@ void Decoder::forward(
             }
 
             sum /= count * 255.0f;
+
+            sum = hiddenTotals[hiddenCellIndex] - sum;
 
             float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
 
