@@ -61,14 +61,16 @@ private:
     );
 
 public:
+    float choice;
     float vigilance;
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
+    choice(1.0f),
     vigilance(0.9f),
-    lr(0.1f)
+    lr(0.01f)
     {}
 
     // Create with random initialization

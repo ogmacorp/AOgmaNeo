@@ -54,7 +54,7 @@ void Decoder::forward(
                 Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
                 Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
+                count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
                 for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -72,11 +72,9 @@ void Decoder::forward(
 
             sum /= count * 255.0f;
 
-            sum = hiddenTotals[hiddenCellIndex] - sum;
+            float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
 
-            float activation = sum / max(0.0001f, hiddenTotals[hiddenCellIndex]);
-
-            if (sum >= vigilance) {
+            if (sum < vigilance) {
                 if (activation > maxActivation || maxIndex == -1) {
                     maxActivation = activation;
                     maxIndex = di;
@@ -113,8 +111,6 @@ void Decoder::learn(
         return;
 
     int hiddenCellIndexTarget = (learnDendrites[hiddenModuleIndexTarget] + targetCI * numDendrites) + hiddenCellsStart;
-
-    float rate = (hiddenTotals[hiddenCellIndexTarget] == 1.0f ? 1.0f : lr);
 
     float total = 0.0f;
     int count = 0;
@@ -154,7 +150,7 @@ void Decoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc == inCIPrev)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
+                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(lr * (255.0f - vl.weights[wi])));
 
                     total += vl.weights[wi];
                 }
@@ -196,7 +192,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 5;
+            vl.weights[i] = rand() % 5;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -246,7 +242,7 @@ void Decoder::clearState() {
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + 2 * sizeof(float) + hiddenTotals.size() * sizeof(float) + learnDendrites.size() * sizeof(int) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + 3 * sizeof(float) + hiddenTotals.size() * sizeof(float) + learnDendrites.size() * sizeof(int) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -276,6 +272,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&numDendrites), sizeof(int));
 
+    writer.write(reinterpret_cast<const void*>(&choice), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
@@ -309,6 +306,7 @@ void Decoder::read(
     int numHiddenModules = numHiddenColumns * hiddenSize.z;
     int numHiddenCells = numHiddenModules * numDendrites;
 
+    reader.read(reinterpret_cast<void*>(&choice), sizeof(float));
     reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
