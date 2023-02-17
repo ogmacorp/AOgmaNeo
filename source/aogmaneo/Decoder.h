@@ -68,7 +68,7 @@ public:
     // Defaults
     Decoder()
     :
-    choice(1.0f),
+    choice(32.0f),
     vigilance(0.9f),
     lr(0.01f)
     {}
