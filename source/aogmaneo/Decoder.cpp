@@ -103,9 +103,7 @@ void Decoder::learn(
 
     int hiddenModulesStart = hiddenColumnIndex * hiddenSize.z;
 
-    int numCellsPerColumn = hiddenSize.z * numDendrites;
-
-    int hiddenCellsStart = hiddenColumnIndex * numCellsPerColumn;
+    int hiddenCellsStart = hiddenModulesStart * numDendrites;
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
@@ -165,9 +163,9 @@ void Decoder::learn(
 
     hiddenTotals[hiddenCellIndexTarget] = total;
 
-    if (hiddenCIs[hiddenColumnIndex] != targetCI) {
-        int hiddenModuleIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenModulesStart;
+    int hiddenModuleIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenModulesStart;
 
+    if (hiddenCIs[hiddenColumnIndex] != targetCI && learnDendrites[hiddenModuleIndexMax] != -1) {
         int hiddenCellIndexMax = (learnDendrites[hiddenModuleIndexMax] + hiddenCIs[hiddenColumnIndex] * numDendrites) + hiddenCellsStart;
 
         float total = 0.0f;
