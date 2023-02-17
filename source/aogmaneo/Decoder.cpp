@@ -18,7 +18,7 @@ void Decoder::forward(
 
     int numCellsPerColumn = hiddenSize.z * numDendrites;
 
-    int hiddenCellsStart = hiddenColumnIndex * numCellsPerColumn;
+    int hiddenModulesStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
     float maxActivation = 0.0f;
@@ -26,65 +26,71 @@ void Decoder::forward(
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
 
-    for (int hc = 0; hc < numCellsPerColumn; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    for (int mi = 0; mi < hiddenSize.z; mi++) {
+        int hiddenModuleIndex = mi + hiddenModulesStart;
 
-        float sum = 0.0f;
-        int count = 0;
+        int hiddenCellsStart = hiddenModuleIndex * numDendrites;
 
-        for (int vli = 0; vli < visibleLayers.size(); vli++) {
-            VisibleLayer &vl = visibleLayers[vli];
-            const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+        for (int di = 0; di < numDendrites; di++) {
+            int hiddenCellIndex = di + hiddenCellsStart;
 
-            int diam = vld.radius * 2 + 1;
+            float sum = 0.0f;
+            int count = 0;
 
-            // Projection
-            Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+            for (int vli = 0; vli < visibleLayers.size(); vli++) {
+                VisibleLayer &vl = visibleLayers[vli];
+                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
 
-            Int2 visibleCenter = project(columnPos, hToV);
+                int diam = vld.radius * 2 + 1;
 
-            // Lower corner
-            Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+                // Projection
+                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
 
-            // Bounds of receptive field, clamped to input size
-            Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
-            Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+                Int2 visibleCenter = project(columnPos, hToV);
 
-            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+                // Lower corner
+                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
 
-            for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
-                for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
-                    int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                // Bounds of receptive field, clamped to input size
+                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                    Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+                count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
-                    int inCI = (*inputCIs[vli])[visibleColumnIndex];
+                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
 
-                    int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    sum += vl.weights[wi];
-                }
-        }
+                        int inCI = (*inputCIs[vli])[visibleColumnIndex];
 
-        sum /= count * 255.0f;
+                        int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-        float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
-
-        if (sum >= vigilance) {
-            if (activation > maxActivation || maxIndex == -1) {
-                maxActivation = activation;
-                maxIndex = hc;
+                        sum += vl.weights[wi];
+                    }
             }
-        }
 
-        if (activation > backupMaxActivation || backupMaxIndex == -1) {
-            backupMaxActivation = activation;
-            backupMaxIndex = hc;
+            sum /= count * 255.0f;
+
+            float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
+
+            if (sum >= vigilance) {
+                if (activation > maxActivation || maxIndex == -1) {
+                    maxActivation = activation;
+                    maxIndex = di;
+                }
+            }
+
+            if (activation > backupMaxActivation || backupMaxIndex == -1) {
+                backupMaxActivation = activation;
+                backupMaxIndex = mi;
+            }
         }
     }
 
-    hiddenCIs[hiddenColumnIndex] = backupMaxIndex / numDendrites;
+    hiddenCIs[hiddenColumnIndex] = backupMaxIndex;
 }
 
 void Decoder::learn(
@@ -104,7 +110,7 @@ void Decoder::learn(
     if (learnDendrites[hiddenModuleIndexTarget] == -1)
         return;
 
-    int hiddenCellIndexTarget = (targetCI * numDendrites + learnDendrites[hiddenModuleIndexTarget]) + hiddenCellsStart;
+    int hiddenCellIndexTarget = (learnDendrites[hiddenModuleIndexTarget] + targetCI * numDendrites) + hiddenCellsStart;
 
     float rate = (hiddenTotals[hiddenCellIndexTarget] == 1.0f ? 1.0f : lr);
 
