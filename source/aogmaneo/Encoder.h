@@ -30,7 +30,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        ByteBuffer weights0;
+        ByteBuffer weights1;
+
+        FloatBuffer hiddenWeightSums1;
 
         float importance;
 
@@ -47,7 +50,7 @@ private:
     IntBuffer learnCIs;
 
     FloatBuffer hiddenTotals;
-    FloatBuffer hiddenMaxs;
+    FloatBuffer hiddenMaxActs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
