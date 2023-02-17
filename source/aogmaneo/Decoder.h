@@ -68,9 +68,9 @@ public:
     // Defaults
     Decoder()
     :
-    choice(1.0f),
+    choice(0.1f),
     vigilance(0.9f),
-    lr(0.01f)
+    lr(0.1f)
     {}
 
     // Create with random initialization
