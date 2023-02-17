@@ -27,6 +27,8 @@ public:
         Int3 size;
         IOType type;
 
+        int numDendrites;
+
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
@@ -35,6 +37,7 @@ public:
         IODesc(
             const Int3 &size = Int3(4, 4, 16),
             IOType type = prediction,
+            int numDendrites = 4,
             int eRadius = 2,
             int dRadius = 2,
             int historyCapacity = 64
@@ -42,6 +45,7 @@ public:
         :
         size(size),
         type(type),
+        numDendrites(numDendrites),
         eRadius(eRadius),
         dRadius(dRadius),
         historyCapacity(historyCapacity)
@@ -52,6 +56,8 @@ public:
     struct LayerDesc {
         Int3 hiddenSize; // Size of hidden layer
 
+        int numDendrites;
+
         int eRadius; // Encoder radius
         int dRadius; // Decoder radius
 
@@ -60,6 +66,7 @@ public:
 
         LayerDesc(
             const Int3 &hiddenSize = Int3(4, 4, 16),
+            int numDendrites = 4,
             int eRadius = 2,
             int dRadius = 2,
             int ticksPerUpdate = 2,
@@ -67,6 +74,7 @@ public:
         )
         :
         hiddenSize(hiddenSize),
+        numDendrites(numDendrites),
         eRadius(eRadius),
         dRadius(dRadius),
         ticksPerUpdate(ticksPerUpdate),

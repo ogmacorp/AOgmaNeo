@@ -30,17 +30,19 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        SByteBuffer weights;
+        ByteBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
 
 private:
-    Int3 hiddenSize; // Size of the output/hidden/prediction
+    Int3 hiddenSize; // Size of the hidden/hidden/prediction
+    int numDendrites;
 
-    FloatBuffer hiddenActs;
+    FloatBuffer hiddenTotals;
 
-    IntBuffer hiddenCIs; // Hidden state
+    IntBuffer learnDendrites;
+    IntBuffer hiddenCIs;
 
     // Visible layers and descs
     Array<VisibleLayer> visibleLayers;
@@ -59,19 +61,22 @@ private:
     );
 
 public:
-    float scale;
+    float choice;
+    float vigilance;
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
-    scale(4.0f),
-    lr(0.1f)
+    choice(0.1f),
+    vigilance(0.9f),
+    lr(0.5f)
     {}
 
     // Create with random initialization
     void initRandom(
-        const Int3 &hiddenSize, // Hidden/output/prediction size
+        const Int3 &hiddenSize, // Hidden/hidden/prediction size
+        int numDendrites,
         const Array<VisibleLayerDesc> &visibleLayerDescs
     );
 
@@ -133,14 +138,9 @@ public:
         return visibleLayerDescs[i];
     }
 
-    // Get the hidden states (predictions)
+    // Get the hidden activations (predictions)
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
-    }
-
-    // Get the hidden activations
-    const FloatBuffer &getHiddenActs() const {
-        return hiddenActs;
     }
 
     // Get the hidden size
