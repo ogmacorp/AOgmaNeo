@@ -20,9 +20,6 @@ void Decoder::forward(
 
     int hiddenModulesStart = hiddenColumnIndex * hiddenSize.z;
 
-    int maxIndex = -1;
-    float maxActivation = 0.0f;
-
     int backupMaxIndex = -1;
     float backupMaxActivation = 0.0f;
 
@@ -30,6 +27,9 @@ void Decoder::forward(
         int hiddenModuleIndex = mi + hiddenModulesStart;
 
         int hiddenCellsStart = hiddenModuleIndex * numDendrites;
+
+        int maxIndex = -1;
+        float maxActivation = 0.0f;
 
         for (int di = 0; di < numDendrites; di++) {
             int hiddenCellIndex = di + hiddenCellsStart;
@@ -88,6 +88,8 @@ void Decoder::forward(
                 backupMaxIndex = mi;
             }
         }
+
+        learnDendrites[hiddenModuleIndex] = maxIndex;
     }
 
     hiddenCIs[hiddenColumnIndex] = backupMaxIndex;
