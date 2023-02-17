@@ -69,7 +69,7 @@ public:
     Decoder()
     :
     choice(0.1f),
-    vigilance(0.9f),
+    vigilance(0.8f),
     lr(0.5f)
     {}
 
