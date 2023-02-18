@@ -33,8 +33,6 @@ public:
         ByteBuffer weights0;
         ByteBuffer weights1;
 
-        ByteBuffer weightsRecon;
-
         ByteBuffer reconstruction;
 
         float importance;

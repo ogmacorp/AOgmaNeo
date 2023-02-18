@@ -31,7 +31,8 @@ void ImageEncoder::activate(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        float weightSum = 0.0f;
+        float total = 0.0f;
+        float count = 0.0f;
         float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -56,7 +57,7 @@ void ImageEncoder::activate(
             int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
             float subSum = 0.0f;
-            float subWeightSum = 0.0f;
+            float subTotal = 0.0f;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -79,22 +80,24 @@ void ImageEncoder::activate(
                         float w1 = vl.weights1[wi] * byteInv;
 
                         subSum += min(input, w0) + min(1.0f - input, w1);
-                        subWeightSum += w0 + w1;
+                        subTotal += w0 + w1;
                     }
                 }
 
-            subSum /= subCount;
-            subWeightSum /= 2.0f * subCount;
-
             sum += subSum * vl.importance;
-            weightSum += subWeightSum * vl.importance;
+            total += subTotal * vl.importance;
+            count += subCount * vl.importance;
             totalImportance += vl.importance;
         }
 
         sum /= max(0.0001f, totalImportance);
-        weightSum /= max(0.0001f, totalImportance);
+        total /= max(0.0001f, totalImportance);
+        count /= max(0.0001f, totalImportance);
 
-        float activation = sum / (choice + weightSum);
+        sum /= max(0.0001f, count);
+        total /= max(0.0001f, count);
+
+        float activation = sum / (choice + total);
 
         if (sum >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
@@ -113,8 +116,6 @@ void ImageEncoder::activate(
 
     if (learnEnabled && maxIndex != -1) {
         int hiddenCellIndexMax = maxIndex + hiddenCellsStart;
-
-        const float byteInv = 1.0f / 255.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -213,7 +214,7 @@ void ImageEncoder::reconstruct(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += (vl.weights0[wi] + (255 - vl.weights1[wi])) * 0.5f;
+                    sum += (vl.weights0[wi] + (255.0f - vl.weights1[wi])) * 0.5f;
                     count++;
                 }
             }
@@ -253,8 +254,8 @@ void ImageEncoder::initRandom(
         vl.weights1.resize(vl.weights0.size());
 
         for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = 255 - static_cast<int>(rand() % 5);
-            vl.weights1[i] = 255 - static_cast<int>(rand() % 5);
+            vl.weights0[i] = 255 - rand() % 5;
+            vl.weights1[i] = 255 - rand() % 5;
         }
 
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
