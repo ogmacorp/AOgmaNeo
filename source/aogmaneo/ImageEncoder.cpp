@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "ImageEncoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -32,8 +33,7 @@ void ImageEncoder::activate(
 
         float sum = 0.0f;
         float total = 0.0f;
-        float count = 0.0f;
-        float totalImportance = 0.0f;
+        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -54,10 +54,7 @@ void ImageEncoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
-
-            float subSum = 0.0f;
-            float subTotal = 0.0f;
+            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -79,23 +76,14 @@ void ImageEncoder::activate(
                         float w0 = vl.weights0[wi] * byteInv;
                         float w1 = vl.weights1[wi] * byteInv;
 
-                        subSum += min(input, w0) + min(1.0f - input, w1);
-                        subTotal += w0 + w1;
+                        sum += min(input, w0) + min(1.0f - input, w1);
+                        total += w0 + w1;
                     }
                 }
-
-            sum += subSum * vl.importance;
-            total += subTotal * vl.importance;
-            count += subCount * vl.importance;
-            totalImportance += vl.importance;
         }
 
-        sum /= max(0.0001f, totalImportance);
-        total /= max(0.0001f, totalImportance);
-        count /= max(0.0001f, totalImportance);
-
-        sum /= max(0.0001f, count);
-        total /= max(0.0001f, count);
+        sum /= max(1, count);
+        total /= max(1, count);
 
         float activation = sum / (choice + total);
 
@@ -295,7 +283,7 @@ int ImageEncoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(float) + vl.reconstruction.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(float) + vl.reconstruction.size() * sizeof(Byte);
     }
 
     return size;
@@ -330,8 +318,6 @@ void ImageEncoder::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
-
-        writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
@@ -379,8 +365,6 @@ void ImageEncoder::read(
         vl.reconstruction.resize(numVisibleCells);
 
         reader.read(reinterpret_cast<void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
-
-        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 

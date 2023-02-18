@@ -34,13 +34,6 @@ public:
         ByteBuffer weights1;
 
         ByteBuffer reconstruction;
-
-        float importance;
-
-        VisibleLayer()
-        :
-        importance(1.0f)
-        {}
     };
 
 private:
