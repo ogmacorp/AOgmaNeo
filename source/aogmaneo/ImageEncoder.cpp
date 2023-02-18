@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "ImageEncoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -72,8 +71,6 @@ void ImageEncoder::activate(
                         int wi = vc + wiStart;
 
                         float input = (*inputs[vli])[visibleCellIndex] * byteInv;
-
-                        std::cout << input << std::endl;
 
                         float w0 = vl.weights0[wi] * byteInv;
                         float w1 = vl.weights1[wi] * byteInv;
