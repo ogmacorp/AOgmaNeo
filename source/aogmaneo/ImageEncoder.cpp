@@ -1,13 +1,12 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
 #include "ImageEncoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -283,7 +282,7 @@ int ImageEncoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(float) + vl.reconstruction.size() * sizeof(Byte);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(Byte) + vl.reconstruction.size() * sizeof(Byte);
     }
 
     return size;
