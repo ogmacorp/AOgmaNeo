@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "ImageEncoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -71,6 +72,8 @@ void ImageEncoder::activate(
                         int wi = vc + wiStart;
 
                         float input = (*inputs[vli])[visibleCellIndex] * byteInv;
+
+                        std::cout << input << std::endl;
 
                         float w0 = vl.weights0[wi] * byteInv;
                         float w1 = vl.weights1[wi] * byteInv;
@@ -192,7 +195,8 @@ void ImageEncoder::reconstruct(
                 Int2 hiddenPos = Int2(ix, iy);
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, (*reconCIs)[hiddenColumnIndex]), hiddenSize);
+
+                int hiddenCellIndex = (*reconCIs)[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
