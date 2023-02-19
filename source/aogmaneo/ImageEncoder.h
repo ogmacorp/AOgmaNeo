@@ -66,9 +66,9 @@ public:
 
     ImageEncoder()
     :
-    choice(0.1f),
+    choice(0.0001f),
     vigilance(0.99f),
-    lr(0.1f)
+    lr(0.5f)
     {}
 
     // Create a sparse coding layer with random initialization
