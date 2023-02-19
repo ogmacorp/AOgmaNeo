@@ -66,7 +66,7 @@ public:
 
     ImageEncoder()
     :
-    choice(0.0001f),
+    choice(0.1f),
     vigilance(0.99f),
     lr(0.5f)
     {}
