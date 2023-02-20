@@ -31,7 +31,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        ByteBuffer weights;
 
         FloatBuffer partialActs;
 
@@ -80,7 +80,7 @@ private:
     );
 
 public:
-    float gap;
+    float choice;
     float vigilance;
     float lr;
     int lRadius;
@@ -88,8 +88,8 @@ public:
     // Defaults
     Encoder()
     :
-    gap(0.1f),
-    vigilance(0.8f),
+    choice(0.1f),
+    vigilance(0.9f),
     lr(0.1f),
     lRadius(2)
     {}
