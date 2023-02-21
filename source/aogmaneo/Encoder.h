@@ -68,14 +68,12 @@ private:
 public:
     float choice;
     float vigilance;
-    float lr; // Learning rate
     int lRadius;
 
     Encoder()
     :
     choice(0.1f),
     vigilance(0.9f),
-    lr(0.5f),
     lRadius(2)
     {}
 

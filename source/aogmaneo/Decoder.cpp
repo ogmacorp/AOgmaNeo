@@ -19,12 +19,13 @@ void Decoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    int maxActivation = 0;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         int sum = 0;
+        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -45,6 +46,8 @@ void Decoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
+            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
                     int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
@@ -55,7 +58,10 @@ void Decoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += vl.weights[wi];
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    sum += ((vl.weights[byi] & (0x1 << bi)) != 0);
                 }
         }
 
@@ -112,13 +118,22 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                int wiTarget = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
-                int wiMax = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
+                // Randomly forget a bit
+                if (randf(state) < forget) {
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                vl.weights[wiTarget] = 1;
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                if (randf(state) < forget)
-                    vl.weights[wiMax] = 0;
+                    vl.weights[byi] &= ~(0x1 << bi);
+                }
+
+                int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+
+                int byi = wi / 8;
+                int bi = wi % 8;
+
+                vl.weights[byi] |= (0x1 << bi);
             }
     }
 }
@@ -148,10 +163,7 @@ void Decoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHiddenCells * area * vld.size.z);
-
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 0;
+        vl.weights = ByteBuffer((numHiddenCells * area * vld.size.z + 7) / 8, 0); // Ceil
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
@@ -183,9 +195,9 @@ void Decoder::learn(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
 
+    // Learn kernel
     unsigned int baseState = rand();
 
-    // Learn kernel
     #pragma omp parallel for
     for (int i = 0; i < numHiddenColumns; i++) {
         unsigned int state = baseState + i * 12345;
@@ -256,10 +268,10 @@ void Decoder::read(
 ) {
     reader.read(reinterpret_cast<void*>(&hiddenSize), sizeof(Int3));
 
-    reader.read(reinterpret_cast<void*>(&forget), sizeof(float));
-
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
+
+    reader.read(reinterpret_cast<void*>(&forget), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
@@ -284,7 +296,7 @@ void Decoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(numHiddenCells * area * vld.size.z);
+        vl.weights.resize((numHiddenCells * area * vld.size.z + 7) / 8); // Ceil
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
