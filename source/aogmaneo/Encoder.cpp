@@ -51,7 +51,7 @@ void Encoder::activate(
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
             int subSum = 0;
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -78,8 +78,6 @@ void Encoder::activate(
         count /= max(0.0001f, totalImportance);
 
         sum /= max(0.0001f, count);
-
-        sum = hiddenTotals[hiddenCellIndex] - sum;
 
         float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
 
@@ -175,7 +173,7 @@ void Encoder::learn(
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    if (vc == inCI)
+                    if (vc != inCI)
                         vl.weights[byi] &= ~(0x1 << bi);
 
                     subTotal += ((vl.weights[byi] & (0x1 << bi)) != 0);
@@ -220,7 +218,10 @@ void Encoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights = ByteBuffer((numHiddenCells * area * vld.size.z + 7) / 8, 0xff); // Ceil
+        vl.weights = ByteBuffer((numHiddenCells * area * vld.size.z + 7) / 8); // Ceil
+
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = rand() % 0xff; // Random byte
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
