@@ -229,7 +229,7 @@ void Encoder::initRandom(
     hiddenTotals = FloatBuffer(numHiddenCells);
 
     for (int i = 0; i < hiddenTotals.size(); i++)
-        hiddenTotals[i] = randf(1.0f, 1.01f); // Slight randomness
+        hiddenTotals[i] = randf(0.99f, 1.0f); // Slight randomness
 
     hiddenMaxs = FloatBuffer(numHiddenColumns);
 }
