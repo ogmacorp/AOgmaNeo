@@ -50,7 +50,7 @@ void Encoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            float subSum = 0.0f;
+            int subSum = 0;
             int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -66,9 +66,7 @@ void Encoder::activate(
                     subSum += vl.weights[wi];
                 }
 
-            subSum /= 255.0f;
-
-            sum += subSum * vl.importance;
+            sum += (subSum / 255.0f) * vl.importance;
             count += subCount * vl.importance;
             totalImportance += vl.importance;
         }
@@ -157,7 +155,7 @@ void Encoder::learn(
         Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-        float subTotal = 0.0f;
+        int subTotal = 0;
         int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -180,9 +178,7 @@ void Encoder::learn(
                 }
             }
 
-        subTotal /= 255.0f;
-
-        total += subTotal * vl.importance;
+        total += (subTotal / 255.0f) * vl.importance;
         count += subCount * vl.importance;
         totalImportance += vl.importance;
     }
