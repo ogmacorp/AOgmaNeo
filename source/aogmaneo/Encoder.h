@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         ByteBuffer weights;
 
-        IntBuffer hiddenSums;
+        IntBuffer hiddenWeightSums;
 
         float importance;
 
@@ -74,8 +74,8 @@ public:
 
     Encoder()
     :
-    choice(0.0001f),
-    vigilance(0.99f),
+    choice(0.01f),
+    vigilance(0.9f),
     lRadius(2)
     {}
 
