@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,7 +32,7 @@ public:
     struct VisibleLayer {
         ByteBuffer weights;
 
-        IntBuffer hiddenSums;
+        IntBuffer hiddenWeightSums;
 
         float importance;
 
@@ -49,7 +49,7 @@ private:
     IntBuffer learnCIs;
 
     FloatBuffer hiddenTotals;
-    FloatBuffer hiddenMaxs;
+    FloatBuffer hiddenMaxActs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
