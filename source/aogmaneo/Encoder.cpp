@@ -228,10 +228,10 @@ void Encoder::initRandom(
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     learnCIs = IntBuffer(numHiddenColumns, -1);
 
-    hiddenTotals = FloatBuffer(numHiddenCells);
+    hiddenTotals.resize(numHiddenCells);
 
     for (int i = 0; i < numHiddenCells; i++)
-        hiddenTotals[i] = randf(0.99f, 1.0f);
+        hiddenTotals[i] = randf(1.0f, 1.01f);
 
     hiddenMaxs = FloatBuffer(numHiddenColumns);
 
