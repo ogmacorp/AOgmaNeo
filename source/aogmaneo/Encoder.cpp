@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -15,6 +16,8 @@ void Encoder::activate(
     const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
+
+    unsigned int state = 123456 + hiddenColumnIndex * 12345;
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
@@ -50,8 +53,8 @@ void Encoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subSum = 0;
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
+            float subSum = vl.hiddenSums[hiddenCellIndex];
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * (vld.size.z - 1);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -66,7 +69,7 @@ void Encoder::activate(
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    subSum += ((vl.weights[byi] & (0x1 << bi)) != 0);
+                    subSum -= ((vl.weights[byi] & (0x1 << bi)) != 0) * randf(0.99f, 1.0f, &state);
                 }
 
             sum += subSum * vl.importance;
@@ -78,8 +81,6 @@ void Encoder::activate(
         count /= max(0.0001f, totalImportance);
 
         sum /= max(0.0001f, count);
-
-        sum = hiddenTotals[hiddenCellIndex] - sum;
 
         float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
 
@@ -220,19 +221,15 @@ void Encoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights = ByteBuffer((numHiddenCells * area * vld.size.z + 7) / 8); // Ceil
+        vl.weights = ByteBuffer((numHiddenCells * area * vld.size.z + 7) / 8, 0xff); // Ceil
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 0xff; // Random byte
+        vl.hiddenSums.resize(numHiddenCells);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     learnCIs = IntBuffer(numHiddenColumns, -1);
 
-    hiddenTotals = FloatBuffer(numHiddenCells);
-
-    for (int i = 0; i < hiddenTotals.size(); i++)
-        hiddenTotals[i] = randf(0.99f, 1.0f); // Slight randomness
+    hiddenTotals = FloatBuffer(numHiddenCells, 1.0f);
 
     hiddenMaxs = FloatBuffer(numHiddenColumns);
 }

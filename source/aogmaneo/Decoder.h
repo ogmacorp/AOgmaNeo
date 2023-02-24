@@ -58,12 +58,12 @@ private:
     );
 
 public:
-    float forget;
+    float lr;
 
     // Defaults
     Decoder()
     :
-    forget(0.1f)
+    lr(0.1f)
     {}
 
     // Create with random initialization
