@@ -50,8 +50,8 @@ void Encoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subSum = vl.hiddenWeightSums[hiddenCellIndex];
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * (vld.size.z - 1);
+            int subSum = vl.hiddenWeightSums1[hiddenCellIndex];
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -66,7 +66,8 @@ void Encoder::activate(
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    subSum -= ((vl.weights[byi] & (0x1 << bi)) != 0);
+                    subSum += ((vl.weights0[byi] & (0x1 << bi)) != 0);
+                    subSum -= ((vl.weights1[byi] & (0x1 << bi)) != 0);
                 }
 
             sum += subSum * vl.importance;
@@ -174,13 +175,15 @@ void Encoder::learn(
                     int bi = wi % 8;
 
                     if (vc == inCI)
-                        vl.weights[byi] &= ~(0x1 << bi);
+                        vl.weights1[byi] &= ~(0x1 << bi);
+                    else
+                        vl.weights0[byi] &= ~(0x1 << bi);
 
-                    subTotal += ((vl.weights[byi] & (0x1 << bi)) != 0);
+                    subTotal += ((vl.weights0[byi] & (0x1 << bi)) != 0) + ((vl.weights1[byi] & (0x1 << bi)) != 0);
                 }
             }
 
-        vl.hiddenWeightSums[hiddenCellIndexMax] = subTotal;
+        vl.hiddenWeightSums1[hiddenCellIndexMax] = subTotal;
 
         total += subTotal * vl.importance;
         count += subCount * vl.importance;
@@ -220,18 +223,20 @@ void Encoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights = ByteBuffer((numHiddenCells * area * vld.size.z + 7) / 8, 0xff); // Ceil
+        vl.weights0 = ByteBuffer((numHiddenCells * area * vld.size.z + 7) / 8); // Ceil
 
-        vl.hiddenWeightSums.resize(numHiddenCells);
+        for (int i = 0; i < vl.weights0.size(); i++)
+            vl.weights0[i] = rand() % 0xff; // Random bits
+                                            //
+        vl.weights1 = ByteBuffer(vl.weights0.size(), 0xff); // Ceil
+
+        vl.hiddenWeightSums1.resize(numHiddenCells);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     learnCIs = IntBuffer(numHiddenColumns, -1);
 
-    hiddenTotals.resize(numHiddenCells);
-
-    for (int i = 0; i < numHiddenCells; i++)
-        hiddenTotals[i] = randf(1.0f, 1.01f);
+    hiddenTotals.resize(numHiddenCells, 1.0f);
 
     hiddenMaxs = FloatBuffer(numHiddenColumns);
 
@@ -263,7 +268,7 @@ void Encoder::initRandom(
                 Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
                 Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-                vl.hiddenWeightSums[hiddenCellIndex] = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
+                vl.hiddenWeightSums1[hiddenCellIndex] = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
             }
         }
     }
@@ -292,7 +297,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + vl.weights.size() * sizeof(Byte) + vl.hiddenWeightSums.size() * sizeof(int) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(Byte) + vl.hiddenWeightSums1.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
@@ -325,9 +330,10 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(VisibleLayerDesc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
 
-        writer.write(reinterpret_cast<const void*>(&vl.hiddenWeightSums[0]), vl.hiddenWeightSums.size() * sizeof(int));
+        writer.write(reinterpret_cast<const void*>(&vl.hiddenWeightSums1[0]), vl.hiddenWeightSums1.size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
@@ -376,13 +382,15 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize((numHiddenCells * area * vld.size.z + 7) / 8);
+        vl.weights0.resize((numHiddenCells * area * vld.size.z + 7) / 8);
+        vl.weights1.resize(vl.weights0.size());
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
 
-        vl.hiddenWeightSums.resize(numHiddenCells);
+        vl.hiddenWeightSums1.resize(numHiddenCells);
 
-        reader.read(reinterpret_cast<void*>(&vl.hiddenWeightSums[0]), vl.hiddenWeightSums.size() * sizeof(int));
+        reader.read(reinterpret_cast<void*>(&vl.hiddenWeightSums1[0]), vl.hiddenWeightSums1.size() * sizeof(int));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
