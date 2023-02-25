@@ -78,11 +78,11 @@ void Encoder::activate(
         sum /= max(0.0001f, totalImportance);
         count /= max(0.0001f, totalImportance);
 
-        sum /= max(0.0001f, count);
+        float match = sum / max(0.0001f, count);
 
-        float activation = sum / (choice + hiddenTotals[hiddenCellIndex]);
+        float activation = match / (choice + hiddenTotals[hiddenCellIndex]);
 
-        if (sum >= vigilance) { // Match
+        if (match >= vigilance) { // Match
             if (activation > maxActivation || maxIndex == -1) {
                 maxActivation = activation;
                 maxIndex = hc;
@@ -156,6 +156,7 @@ void Encoder::learn(
         Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
         int subTotal = 0;
+        int sum1 = 0;
         int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
@@ -180,10 +181,11 @@ void Encoder::learn(
                         vl.weights0[byi] &= ~(0x1 << bi);
 
                     subTotal += ((vl.weights0[byi] & (0x1 << bi)) != 0) + ((vl.weights1[byi] & (0x1 << bi)) != 0);
+                    sum1 += ((vl.weights1[byi] & (0x1 << bi)) != 0);
                 }
             }
 
-        vl.hiddenWeightSums1[hiddenCellIndexMax] = subTotal;
+        vl.hiddenWeightSums1[hiddenCellIndexMax] = sum1;
 
         total += subTotal * vl.importance;
         count += subCount * vl.importance;
@@ -193,7 +195,7 @@ void Encoder::learn(
     total /= max(0.0001f, totalImportance);
     count /= max(0.0001f, totalImportance);
 
-    total /= max(0.0001f, count);
+    total /= max(0.0001f, count * 2);
 
     hiddenTotals[hiddenCellIndexMax] = total;
 }
@@ -227,7 +229,7 @@ void Encoder::initRandom(
 
         for (int i = 0; i < vl.weights0.size(); i++)
             vl.weights0[i] = rand() % 0xff; // Random bits
-                                            //
+
         vl.weights1 = ByteBuffer(vl.weights0.size(), 0xff); // Ceil
 
         vl.hiddenWeightSums1.resize(numHiddenCells);
