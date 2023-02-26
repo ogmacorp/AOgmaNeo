@@ -128,14 +128,12 @@ void Decoder::learn(
                     vl.weights[byi] &= ~(0x1 << bi);
                 }
 
-                if (randf(state) < lr) {
-                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+                int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
+                int byi = wi / 8;
+                int bi = wi % 8;
 
-                    vl.weights[byi] |= (0x1 << bi);
-                }
+                vl.weights[byi] |= (0x1 << bi);
             }
     }
 }

@@ -12,9 +12,7 @@ using namespace aon;
 
 void Encoder::forward(
     const Int2 &columnPos,
-    const Array<const IntBuffer*> &inputCIs,
-    bool learnEnabled,
-    unsigned int* state
+    const Array<const IntBuffer*> &inputCIs
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
@@ -27,7 +25,6 @@ void Encoder::forward(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         float sum = 0.0f;
-        float totalImportance = 0.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -68,10 +65,7 @@ void Encoder::forward(
                 }
 
             sum += static_cast<float>(subSum) / static_cast<float>(subCount) * vl.importance;
-            totalImportance += vl.importance;
         }
-
-        sum /= max(0.0001f, totalImportance);
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -171,16 +165,6 @@ void Encoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                // Randomly lr a bit
-                if (randf(state) < lr) {
-                    int wi = maxIndex + wiStart;
-
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    vl.weights[byi] &= ~(0x1 << bi);
-                }
-
                 if (randf(state) < lr) {
                     int wi = targetCI + wiStart;
 
@@ -189,6 +173,13 @@ void Encoder::learn(
 
                     vl.weights[byi] |= (0x1 << bi);
                 }
+
+                int wi = maxIndex + wiStart;
+
+                int byi = wi / 8;
+                int bi = wi % 8;
+
+                vl.weights[byi] &= ~(0x1 << bi);
             }
         }
 }
@@ -233,14 +224,9 @@ void Encoder::step(
 ) {
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     
-    unsigned int baseState = rand();
-
     #pragma omp parallel for
-    for (int i = 0; i < numHiddenColumns; i++) {
-        unsigned int state = baseState + i * 12345;
-
-        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs, learnEnabled, &state);
-    }
+    for (int i = 0; i < numHiddenColumns; i++)
+        forward(Int2(i / hiddenSize.y, i % hiddenSize.y), inputCIs);
 
     if (learnEnabled) {
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -248,7 +234,7 @@ void Encoder::step(
 
             int numVisibleColumns = vld.size.x * vld.size.y;
 
-            baseState = rand();
+            unsigned int baseState = rand();
 
             #pragma omp parallel for
             for (int i = 0; i < numVisibleColumns; i++) {
