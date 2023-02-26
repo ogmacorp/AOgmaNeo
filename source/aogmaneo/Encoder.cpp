@@ -165,7 +165,7 @@ void Encoder::learn(
 
                 int wiStart = vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                if (randf(state) < lr) {
+                {
                     int wi = targetCI + wiStart;
 
                     int byi = wi / 8;
@@ -174,12 +174,14 @@ void Encoder::learn(
                     vl.weights[byi] |= (0x1 << bi);
                 }
 
-                int wi = maxIndex + wiStart;
+                {
+                    int wi = maxIndex + wiStart;
 
-                int byi = wi / 8;
-                int bi = wi % 8;
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                vl.weights[byi] &= ~(0x1 << bi);
+                    vl.weights[byi] &= ~(0x1 << bi);
+                }
             }
         }
 }

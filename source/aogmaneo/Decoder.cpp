@@ -118,6 +118,15 @@ void Decoder::learn(
 
                 Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
+                {
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
+
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    vl.weights[byi] |= (0x1 << bi);
+                }
+
                 // Randomly learn a bit
                 if (randf(state) < lr) {
                     int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
@@ -127,13 +136,6 @@ void Decoder::learn(
 
                     vl.weights[byi] &= ~(0x1 << bi);
                 }
-
-                int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
-
-                int byi = wi / 8;
-                int bi = wi % 8;
-
-                vl.weights[byi] |= (0x1 << bi);
             }
     }
 }
