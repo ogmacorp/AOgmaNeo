@@ -76,7 +76,7 @@ public:
     Encoder()
     :
     choice(0.01f),
-    vigilance(0.97f),
+    vigilance(0.95f),
     lr(0.5f),
     lRadius(1)
     {}
