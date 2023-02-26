@@ -45,8 +45,8 @@ void Encoder::forward(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
             int subSum = 0;
+            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1);
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -58,10 +58,7 @@ void Encoder::forward(
 
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    subSum += ((vl.weights[byi] & (0x1 << bi)) != 0);
+                    subSum += vl.weights[wi];
                 }
 
             sum += static_cast<float>(subSum) / static_cast<float>(subCount) * vl.importance;
@@ -131,10 +128,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    sum += ((vl.weights[byi] & (0x1 << bi)) != 0);
+                    sum += vl.weights[wi];
                 }
             }
 
@@ -167,19 +161,13 @@ void Encoder::learn(
                 {
                     int wi = targetCI + wiStart;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    vl.weights[byi] |= (0x1 << bi);
+                    vl.weights[wi] = min(255, vl.weights[wi] + ceilf(lr * (255.0f - vl.weights[wi])));
                 }
 
                 {
                     int wi = maxIndex + wiStart;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    vl.weights[byi] &= ~(0x1 << bi);
+                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(lr * vl.weights[wi]));
                 }
             }
         }
@@ -210,10 +198,10 @@ void Encoder::initRandom(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize((numHiddenCells * area * vld.size.z + 7) / 8); // Ceil
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 256; // Random bits
+            vl.weights[i] = 255 - rand() % 5;
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -312,7 +300,7 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize((numHiddenCells * area * vld.size.z + 7) / 8); // Ceil
+        vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
