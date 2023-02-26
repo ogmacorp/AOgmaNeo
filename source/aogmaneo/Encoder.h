@@ -78,7 +78,7 @@ public:
     choice(0.01f),
     vigilance(0.97f),
     lr(0.5f),
-    lRadius(2)
+    lRadius(1)
     {}
 
     // Create a sparse coding layer with random initialization
