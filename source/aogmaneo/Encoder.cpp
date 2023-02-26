@@ -249,7 +249,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -268,8 +268,6 @@ void Encoder::write(
     StreamWriter &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
-
-    writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -296,8 +294,6 @@ void Encoder::read(
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
-
-    reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
     hiddenCIs.resize(numHiddenColumns);
 
