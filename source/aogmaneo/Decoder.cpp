@@ -176,7 +176,7 @@ void Decoder::initRandom(
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenActs = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenActs = FloatBuffer(numHiddenCells, 1.0f / hiddenSize.z);
 
     // Hidden CIs
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -213,7 +213,7 @@ void Decoder::learn(
 
 void Decoder::clearState() {
     hiddenCIs.fill(0);
-    hiddenActs.fill(0.0f);
+    hiddenActs.fill(1.0f / hiddenSize.z);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++)
         visibleLayers[vli].inputCIsPrev.fill(0);
