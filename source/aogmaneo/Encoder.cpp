@@ -143,6 +143,8 @@ void Encoder::learn(
     if (maxIndex == targetCI)
         return;
 
+    int delta = ceilf(lr * 255.0f);
+
     for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
         for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
             Int2 hiddenPos = Int2(ix, iy);
@@ -161,13 +163,13 @@ void Encoder::learn(
                 {
                     int wi = targetCI + wiStart;
 
-                    vl.weights[wi] = min(255, vl.weights[wi] + ceilf(lr * (255.0f - vl.weights[wi])));
+                    vl.weights[wi] = min(255, vl.weights[wi] + delta);
                 }
 
                 {
                     int wi = maxIndex + wiStart;
 
-                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(lr * vl.weights[wi]));
+                    vl.weights[wi] = max(0, vl.weights[wi] - delta);
                 }
             }
         }
