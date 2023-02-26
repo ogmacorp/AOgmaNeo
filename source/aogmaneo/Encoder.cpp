@@ -79,8 +79,7 @@ void Encoder::forward(
 void Encoder::learn(
     const Int2 &columnPos,
     const IntBuffer* inputCIs,
-    int vli,
-    unsigned int* state
+    int vli
 ) {
     VisibleLayer &vl = visibleLayers[vli];
     VisibleLayerDesc &vld = visibleLayerDescs[vli];
@@ -236,14 +235,9 @@ void Encoder::step(
 
             int numVisibleColumns = vld.size.x * vld.size.y;
 
-            unsigned int baseState = rand();
-
             #pragma omp parallel for
-            for (int i = 0; i < numVisibleColumns; i++) {
-                unsigned int state = baseState + i * 12345;
-
-                learn(Int2(i / vld.size.y, i % vld.size.y), inputCIs[vli], vli, &state);
-            }
+            for (int i = 0; i < numVisibleColumns; i++)
+                learn(Int2(i / vld.size.y, i % vld.size.y), inputCIs[vli], vli);
         }
     }
 }

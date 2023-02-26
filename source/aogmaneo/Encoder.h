@@ -59,8 +59,7 @@ private:
     void learn(
         const Int2 &columnPos,
         const IntBuffer* inputCIs,
-        int vli,
-        unsigned int* state
+        int vli
     );
 
 public:
