@@ -30,7 +30,7 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        SByteBuffer weights;
 
         IntBuffer inputCIsPrev; // Previous timestep (prev) input states
     };
@@ -59,12 +59,14 @@ private:
     );
 
 public:
+    float scale;
     float lr; // Learning rate
 
     // Defaults
     Decoder()
     :
-    lr(1.0f)
+    scale(4.0f),
+    lr(0.05f)
     {}
 
     // Create with random initialization
@@ -131,12 +133,12 @@ public:
         return visibleLayerDescs[i];
     }
 
-    // Get the hidden activations (predictions)
+    // Get the hidden states (predictions)
     const IntBuffer &getHiddenCIs() const {
         return hiddenCIs;
     }
 
-    // Get the hidden activations (predictions probabilities)
+    // Get the hidden activations
     const FloatBuffer &getHiddenActs() const {
         return hiddenActs;
     }

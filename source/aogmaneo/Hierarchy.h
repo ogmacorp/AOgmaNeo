@@ -173,7 +173,7 @@ public:
         return dLayers[0][dIndices[i]].getHiddenCIs();
     }
 
-    // Retrieve prediction probabilities
+    // Retrieve prediction activations
     const FloatBuffer &getPredictionActs(
         int i
     ) const {

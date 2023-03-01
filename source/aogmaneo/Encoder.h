@@ -30,8 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
-
+        SByteBuffer weights;
+        
         FloatBuffer reconActs;
 
         float importance;
@@ -53,7 +53,7 @@ private:
     
     // --- Kernels ---
     
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
@@ -64,19 +64,14 @@ private:
         int vli
     );
 
-    void reconstruct(
-        const Int2 &columnPos,
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
-    );
-
 public:
-    float lr; // Learning rate
+    float scale;
+    float lr;
 
     Encoder()
     :
-    lr(0.1f)
+    scale(4.0f),
+    lr(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
@@ -88,12 +83,6 @@ public:
     void step(
         const Array<const IntBuffer*> &inputCIs, // Input states
         bool learnEnabled // Whether to learn
-    );
-
-    void reconstruct(
-        const IntBuffer* hiddenCIs,
-        IntBuffer* reconCIs,
-        int vli
     );
 
     void clearState() {
