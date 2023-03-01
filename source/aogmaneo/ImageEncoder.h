@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -33,16 +33,7 @@ public:
         ByteBuffer weights0;
         ByteBuffer weights1;
 
-        ByteBuffer weightsRecon;
-
         ByteBuffer reconstruction;
-
-        float importance;
-
-        VisibleLayer()
-        :
-        importance(1.0f)
-        {}
     };
 
 private:
@@ -69,14 +60,14 @@ private:
     );
 
 public:
-    float gap;
+    float choice;
     float vigilance;
     float lr; // Learning rate
 
     ImageEncoder()
     :
-    gap(0.1f),
-    vigilance(0.9f),
+    choice(0.1f),
+    vigilance(0.99f),
     lr(0.1f)
     {}
 

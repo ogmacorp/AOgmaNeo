@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2022 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,10 +30,9 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights0;
-        ByteBuffer weights1;
-
-        FloatBuffer hiddenWeightSums1;
+        SByteBuffer weights;
+        
+        FloatBuffer reconActs;
 
         float importance;
 
@@ -47,10 +46,6 @@ private:
     Int3 hiddenSize; // Size of hidden/output layer
 
     IntBuffer hiddenCIs;
-    IntBuffer learnCIs;
-
-    FloatBuffer hiddenTotals;
-    FloatBuffer hiddenMaxActs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -58,28 +53,25 @@ private:
     
     // --- Kernels ---
     
-    void activate(
+    void forward(
         const Int2 &columnPos,
         const Array<const IntBuffer*> &inputCIs
     );
 
     void learn(
         const Int2 &columnPos,
-        const Array<const IntBuffer*> &inputCIs
+        const IntBuffer* inputCIs,
+        int vli
     );
 
 public:
-    float choice;
-    float vigilance;
-    float lr; // Learning rate
-    int lRadius;
+    float scale;
+    float lr;
 
     Encoder()
     :
-    choice(0.1f),
-    vigilance(0.9f),
-    lr(0.1f),
-    lRadius(2)
+    scale(4.0f),
+    lr(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization

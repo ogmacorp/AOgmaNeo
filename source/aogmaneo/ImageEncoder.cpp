@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2021 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,8 +32,7 @@ void ImageEncoder::activate(
 
         float sum = 0.0f;
         float total = 0.0f;
-        float count = 0.0f;
-        float totalImportance = 0.0f;
+        int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -54,10 +53,7 @@ void ImageEncoder::activate(
             Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
             Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
 
-            int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
-
-            float subSum = 0.0f;
-            float subTotal = 0.0f;
+            count += (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
             for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                 for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -79,23 +75,16 @@ void ImageEncoder::activate(
                         float w0 = vl.weights0[wi] * byteInv;
                         float w1 = vl.weights1[wi] * byteInv;
 
-                        subSum += min(input, w0) + min(1.0f - input, w1);
+                        sum += min(input, w0) + min(1.0f - input, w1);
                         total += w0 + w1;
                     }
                 }
-
-            sum += subSum * vl.importance;
-            total += subTotal * vl.importance;
-            count += subCount * vl.importance;
-            totalImportance += vl.importance;
         }
 
-        sum /= max(0.0001f, totalImportance);
-        total /= max(0.0001f, totalImportance);
+        sum /= max(1, count);
+        total /= max(1, count);
 
-        sum /= max(0.0001f, count);
-
-        float activation = sum / (gap + total);
+        float activation = sum / (choice + total);
 
         if (sum >= vigilance) {
             if (activation > maxActivation || maxIndex == -1) {
@@ -114,8 +103,6 @@ void ImageEncoder::activate(
 
     if (learnEnabled && maxIndex != -1) {
         int hiddenCellIndexMax = maxIndex + hiddenCellsStart;
-
-        const float byteInv = 1.0f / 255.0f;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -153,8 +140,11 @@ void ImageEncoder::activate(
 
                         float input = (*inputs[vli])[visibleCellIndex] * byteInv;
 
-                        vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(lr * 255.0f * min(0.0f, input - vl.weights0[wi] * byteInv)));
-                        vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(lr * 255.0f * min(0.0f, 1.0f - input - vl.weights1[wi] * byteInv)));
+                        float w0 = vl.weights0[wi] * byteInv;
+                        float w1 = vl.weights1[wi] * byteInv;
+
+                        vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(lr * 255.0f * min(0.0f, input - w0)));
+                        vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(lr * 255.0f * min(0.0f, 1.0f - input - w1)));
                     }
                 }
         }
@@ -205,7 +195,8 @@ void ImageEncoder::reconstruct(
                 Int2 hiddenPos = Int2(ix, iy);
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
-                int hiddenCellIndex = address3(Int3(hiddenPos.x, hiddenPos.y, (*reconCIs)[hiddenColumnIndex]), hiddenSize);
+
+                int hiddenCellIndex = (*reconCIs)[hiddenColumnIndex] + hiddenColumnIndex * hiddenSize.z;
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
@@ -214,7 +205,7 @@ void ImageEncoder::reconstruct(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
-                    sum += (vl.weights0[wi] + (255 - vl.weights1[wi])) * 0.5f;
+                    sum += (vl.weights0[wi] + (255.0f - vl.weights1[wi])) * 0.5f;
                     count++;
                 }
             }
@@ -254,8 +245,8 @@ void ImageEncoder::initRandom(
         vl.weights1.resize(vl.weights0.size());
 
         for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = 255 - static_cast<int>(rand() % 5);
-            vl.weights1[i] = 255 - static_cast<int>(rand() % 5);
+            vl.weights0[i] = 255 - rand() % 5;
+            vl.weights1[i] = 255 - rand() % 5;
         }
 
         vl.reconstruction = ByteBuffer(numVisibleCells, 0);
@@ -295,7 +286,7 @@ int ImageEncoder::size() const {
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
 
-        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(float) + vl.reconstruction.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(VisibleLayerDesc) + 2 * vl.weights0.size() * sizeof(Byte) + vl.reconstruction.size() * sizeof(Byte);
     }
 
     return size;
@@ -310,7 +301,7 @@ void ImageEncoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hiddenSize), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&gap), sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&choice), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&vigilance), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
 
@@ -330,8 +321,6 @@ void ImageEncoder::write(
         writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
-
-        writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
 }
 
@@ -343,7 +332,7 @@ void ImageEncoder::read(
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
 
-    reader.read(reinterpret_cast<void*>(&gap), sizeof(float));
+    reader.read(reinterpret_cast<void*>(&choice), sizeof(float));
     reader.read(reinterpret_cast<void*>(&vigilance), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
 
@@ -379,8 +368,6 @@ void ImageEncoder::read(
         vl.reconstruction.resize(numVisibleCells);
 
         reader.read(reinterpret_cast<void*>(&vl.reconstruction[0]), vl.reconstruction.size() * sizeof(Byte));
-
-        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 
