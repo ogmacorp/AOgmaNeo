@@ -24,7 +24,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        float sum = 0.0f;
+        int sum = 0;
         int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -62,9 +62,7 @@ void Decoder::forward(
                 }
         }
 
-        sum /= count * 127.0f;
-
-        hiddenActs[hiddenCellIndex] = 1.0f - expf(min(0.0f, -sum * scale));
+        hiddenActs[hiddenCellIndex] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * scale));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
