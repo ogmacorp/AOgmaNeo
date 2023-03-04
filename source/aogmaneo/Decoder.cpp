@@ -62,7 +62,7 @@ void Decoder::forward(
                 }
         }
 
-        hiddenActs[hiddenCellIndex] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * scale));
+        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, (sum / 127.0f) / count * scale));
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
@@ -151,7 +151,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 5;
+            vl.weights[i] = rand() % 5 - 2;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }
