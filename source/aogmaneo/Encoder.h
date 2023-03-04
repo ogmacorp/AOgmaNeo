@@ -31,14 +31,14 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        FloatBuffer weights;
+        SByteBuffer weights;
 
         FloatBuffer partialActs;
 
         IntBuffer inputCIs;
         IntBuffer reconCIs;
 
-        FloatBuffer reconsTemp;
+        FloatBuffer reconActs;
 
         bool useInputs;
         bool needsUpdate;
@@ -79,12 +79,14 @@ private:
     );
 
 public:
+    float scale;
     float lr;
 
     // Defaults
     Encoder()
     :
-    lr(1.0f)
+    scale(8.0f),
+    lr(0.05f)
     {}
 
     // Create a sparse coding layer with random initialization
