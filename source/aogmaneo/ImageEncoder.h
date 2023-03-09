@@ -11,7 +11,7 @@
 #include "Helpers.h"
 
 namespace aon {
-// Image coder
+// Sparse coder
 class ImageEncoder {
 public:
     // Visible layer descriptor
@@ -30,7 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer protos;
+        ByteBuffer weights0;
+        ByteBuffer weights1;
 
         ByteBuffer reconstruction;
     };
@@ -38,12 +39,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenMaxActs;
-    FloatBuffer hiddenRates;
-
-    ByteBuffer hiddenPeaksTemp;
-
-    IntBuffer hiddenCIs; // Hidden states
+    IntBuffer hiddenCIs;
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
@@ -51,18 +47,10 @@ private:
     
     // --- Kernels ---
     
-    void forward(
+    void activate(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
-    );
-
-    void inhibit(
-        const Int2 &columnPos
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
+        const Array<const ByteBuffer*> &inputs,
+        bool learnEnabled
     );
 
     void reconstruct(
@@ -72,25 +60,26 @@ private:
     );
 
 public:
-    float lr;
-    int lRadius;
+    float choice;
+    float vigilance;
+    float lr; // Learning rate
 
-    // Defaults
     ImageEncoder()
     :
-    lr(0.1f),
-    lRadius(0)
+    choice(0.1f),
+    vigilance(0.95f),
+    lr(0.5f)
     {}
 
+    // Create a sparse coding layer with random initialization
     void initRandom(
         const Int3 &hiddenSize, // Hidden/output size
         const Array<VisibleLayerDesc> &visibleLayerDescs // Descriptors for visible layers
     );
 
-    // Activate the sparse coder (perform sparse coding)
     void step(
         const Array<const ByteBuffer*> &inputs, // Input states
-        bool learnEnabled // Whether to learn
+        bool learnEnabled = true // Whether to learn
     );
 
     void reconstruct(
@@ -105,6 +94,7 @@ public:
 
     // Serialization
     int size() const; // Returns size in bytes
+    int stateSize() const; // Returns size of state in bytes
 
     void write(
         StreamWriter &writer
@@ -114,23 +104,38 @@ public:
         StreamReader &reader
     );
 
+    void writeState(
+        StreamWriter &writer
+    ) const;
+
+    void readState(
+        StreamReader &reader
+    );
+
     // Get the number of visible layers
     int getNumVisibleLayers() const {
         return visibleLayers.size();
     }
 
     // Get a visible layer
+    VisibleLayer &getVisibleLayer(
+        int i // Index of visible layer
+    ) {
+        return visibleLayers[i];
+    }
+
+    // Get a visible layer
     const VisibleLayer &getVisibleLayer(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayers[vli];
+        return visibleLayers[i];
     }
 
     // Get a visible layer descriptor
     const VisibleLayerDesc &getVisibleLayerDesc(
-        int vli // Index of visible layer
+        int i // Index of visible layer
     ) const {
-        return visibleLayerDescs[vli];
+        return visibleLayerDescs[i];
     }
 
     // Get the hidden states
