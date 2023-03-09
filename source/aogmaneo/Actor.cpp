@@ -343,10 +343,6 @@ void Actor::learn(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         hiddenActs[hiddenCellIndex] *= totalInv;
-    }
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float deltaAction = (alr * (mimic + (1.0f - mimic) * tanhf(tdErrorValue))) * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
