@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -19,6 +20,7 @@ void Encoder::forward(
 
     int maxIndex = -1;
     float maxActivation = 0.0f;
+    float maxMatch = 0.0f;
 
     int maxBackupIndex = -1;
     float maxBackupActivation = 0.0f;
@@ -91,6 +93,8 @@ void Encoder::forward(
             }
         }
 
+        maxMatch = max(maxMatch, sum);
+
         if (activation > maxBackupActivation || maxBackupIndex == -1) {
             maxBackupActivation = activation;
             maxBackupIndex = hc;
@@ -99,7 +103,7 @@ void Encoder::forward(
 
     hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
-    hiddenCIs[hiddenColumnIndex] = maxIndex;
+    hiddenCIs[hiddenColumnIndex] = (maxIndex == -1 ? maxBackupIndex : maxIndex);
 }
 
 void Encoder::learn(
