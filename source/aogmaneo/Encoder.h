@@ -9,7 +9,6 @@
 #pragma once
 
 #include "Helpers.h"
-#include <iostream>
 
 namespace aon {
 // Sparse coder
