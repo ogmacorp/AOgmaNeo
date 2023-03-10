@@ -155,7 +155,7 @@ void Hierarchy::initRandom(
             eLayers[l].getVisibleLayer(i).importance = numInputsInv;
 
         for (int i = 0; i < numPredictions; i++)
-            eLayers[l].getVisibleLayer(numInputs + i).importance = numPredictionsInv;
+            eLayers[l].getVisibleLayer(numInputs + i).importance = 0.0f;
     }
 }
 
@@ -207,8 +207,8 @@ void Hierarchy::step(
 
             // Set feed forward inputs
             for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++) {
-                    int vli = t + histories[l][i].size() * i;
+                for (int t = 0; t < histories[l][0].size(); t++) {
+                    int vli = t + histories[l][0].size() * i;
 
                     eLayers[l].setInputCIs(&histories[l][i][t], vli);
                 }
