@@ -90,9 +90,9 @@ public:
     Encoder()
     :
     choice(0.01f),
-    vigilance(0.9f),
+    vigilance(0.95f),
     lr(0.1f),
-    lRadius(1)
+    lRadius(2)
     {}
 
     // Create a sparse coding layer with random initialization
