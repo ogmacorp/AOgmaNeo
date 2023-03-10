@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "Encoder.h"
-#include <iostream>
 
 using namespace aon;
 
