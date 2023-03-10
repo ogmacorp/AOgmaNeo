@@ -30,10 +30,8 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights0;
-        ByteBuffer weights1;
+        ByteBuffer weights;
 
-        IntBuffer hiddenSums1;
         FloatBuffer partialActs;
 
         IntBuffer inputCIs;
