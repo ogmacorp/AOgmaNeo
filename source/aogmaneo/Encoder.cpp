@@ -240,6 +240,9 @@ void Encoder::reconstruct(
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
+                if (hiddenCIs[hiddenColumnIndex] == -1)
+                    continue;
+
                 int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
                 int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
@@ -322,8 +325,6 @@ void Encoder::initRandom(
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
                 const VisibleLayerDesc &vld = visibleLayerDescs[vli];
-
-                assert(vl.useInputs);
 
                 int diam = vld.radius * 2 + 1;
 
