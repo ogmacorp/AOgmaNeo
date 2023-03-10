@@ -242,12 +242,9 @@ void Encoder::reconstruct(
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (learnCIs[hiddenColumnIndex] == -1)
-                    continue;
-
                 int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-                int hiddenCellIndex = learnCIs[hiddenColumnIndex] + hiddenCellsStart;
+                int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
 
                 Int2 visibleCenter = project(hiddenPos, hToV);
 
