@@ -104,7 +104,7 @@ void Encoder::forward(
 
     hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
-    hiddenCIs[hiddenColumnIndex] = maxBackupIndex;
+    hiddenCIs[hiddenColumnIndex] = (maxIndex == -1 ? maxBackupIndex : maxIndex);
 }
 
 void Encoder::learn(
