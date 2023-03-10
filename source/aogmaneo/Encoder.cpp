@@ -54,7 +54,7 @@ void Encoder::forward(
 
             if (vl.needsUpdate) {
                 int subSum = vl.hiddenSums1[hiddenCellIndex];
-                int subCount = 0;
+                int subCount = (iterUpperBound.x - iterLowerBound.x + 1) * (iterUpperBound.y - iterLowerBound.y + 1) * vld.size.z;
 
                 for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
                     for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -62,11 +62,8 @@ void Encoder::forward(
 
                         int inCI = vl.inputCIs[visibleColumnIndex];
 
-                        if (inCI == -1) {
-                            subCount += vld.size.z - 1;
-
+                        if (inCI == -1)
                             continue;
-                        }
 
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
@@ -74,7 +71,6 @@ void Encoder::forward(
 
                         subSum += vl.weights0[wi];
                         subSum -= vl.weights1[wi];
-                        subCount += vld.size.z;
                     }
 
                 vl.partialActs[hiddenCellIndex] = (subSum / 255.0f) / max(1, subCount);
