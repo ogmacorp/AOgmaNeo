@@ -238,11 +238,10 @@ void Encoder::reconstruct(
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
     
     int maxIndex = -1;
-    float maxActivation = 0.0f;
+    int maxActivation = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int sum = 0;
-        int count = 0;
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -262,14 +261,11 @@ void Encoder::reconstruct(
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum += vl.weights0[wi];
-                    count++;
                 }
             }
 
-        float act = (sum / 255.0f) / max(1, count);
-
-        if (act > maxActivation || maxIndex == -1) {
-            maxActivation = act;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
             maxIndex = vc;
         }
     }
