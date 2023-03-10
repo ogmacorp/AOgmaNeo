@@ -188,7 +188,7 @@ void Encoder::learn(
 
         vl.hiddenSums1[hiddenCellIndexMax] = sum1;
 
-        total += (subTotal / 255.0f) / subCount * vl.importance;
+        total += (subTotal / 255.0f) / (subCount * 2.0f) * vl.importance;
         totalImportance += vl.importance;
     }
 
