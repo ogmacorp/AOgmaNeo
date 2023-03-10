@@ -62,8 +62,11 @@ void Encoder::forward(
 
                         int inCI = vl.inputCIs[visibleColumnIndex];
 
-                        if (inCI == -1)
+                        if (inCI == -1) {
+                            subCount += vld.size.z - 1;
+
                             continue;
+                        }
 
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
