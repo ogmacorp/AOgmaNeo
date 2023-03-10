@@ -102,7 +102,7 @@ void Encoder::forward(
 
     learnCIs[hiddenColumnIndex] = maxIndex;
 
-    hiddenMaxActs[hiddenColumnIndex] = maxBackupActivation;
+    hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
     hiddenCIs[hiddenColumnIndex] = maxBackupIndex;
 }
@@ -135,6 +135,8 @@ void Encoder::learn(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int hiddenCellIndexMax = learnCIs[hiddenColumnIndex] + hiddenCellsStart;
+
+    float rate = (hiddenTotals[hiddenCellIndexMax] == 1.0f ? 1.0f : lr);
 
     float total = 0.0f;
     float count = 0.0f;
@@ -179,9 +181,9 @@ void Encoder::learn(
                     int wi = vc + wiStart;
 
                     if (vc == inCI)
-                        vl.weights1[wi] = max(0, vl.weights1[wi] - ceilf(lr * vl.weights1[wi]));
+                        vl.weights1[wi] = max(0, vl.weights1[wi] - ceilf(rate * vl.weights1[wi]));
                     else
-                        vl.weights0[wi] = max(0, vl.weights0[wi] - ceilf(lr * vl.weights0[wi]));
+                        vl.weights0[wi] = max(0, vl.weights0[wi] - ceilf(rate * vl.weights0[wi]));
 
                     subTotal += vl.weights0[wi];
                     subTotal += vl.weights1[wi];
@@ -236,7 +238,7 @@ void Encoder::reconstruct(
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
     
     int maxIndex = -1;
-    int maxActivation = 0;
+    int maxActivation = -999999;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int sum = 0;
@@ -259,6 +261,7 @@ void Encoder::reconstruct(
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum += vl.weights0[wi];
+                    sum -= vl.weights1[wi];
                 }
             }
 
@@ -311,13 +314,13 @@ void Encoder::initRandom(
         vl.reconCIs = IntBuffer(numVisibleColumns, 0);
     }
 
-    hiddenTotals = FloatBuffer(numHiddenCells, 0.0f);
+    hiddenTotals = FloatBuffer(numHiddenCells, 1.0f);
     hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
     learnCIs = IntBuffer(numHiddenColumns, -1);
 
-    // Initialize hiddenSums1 and hiddenTotals
+    // Initialize hiddenSums1 
     for (int i = 0; i < numHiddenColumns; i++) {
         Int2 columnPos(i / hiddenSize.y, i % hiddenSize.y);
 
@@ -325,10 +328,6 @@ void Encoder::initRandom(
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
-
-            float total = 0.0f;
-            float count = 0.0f;
-            float totalImportance = 0.0f;
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
@@ -375,18 +374,7 @@ void Encoder::initRandom(
                     }
 
                 vl.hiddenSums1[hiddenCellIndex] = sum1;
-
-                total += (subTotal / 255.0f) * vl.importance;
-                count += subCount * vl.importance;
-                totalImportance += vl.importance;
             }
-
-            total /= max(0.0001f, totalImportance);
-            count /= max(0.0001f, totalImportance);
-
-            total /= max(0.0001f, count * 2.0f);
-
-            hiddenTotals[hiddenCellIndex] = total;
         }
     }
 }
