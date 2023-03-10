@@ -64,9 +64,6 @@ void Encoder::forward(
 
                         int inCI = vl.inputCIs[visibleColumnIndex];
 
-                        if (inCI == -1)
-                            continue;
-
                         Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
                         int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
@@ -101,9 +98,11 @@ void Encoder::forward(
         }
     }
 
+    learnCIs[hiddenColumnIndex] = maxIndex;
+
     hiddenMaxActs[hiddenColumnIndex] = maxActivation;
 
-    hiddenCIs[hiddenColumnIndex] = (maxIndex == -1 ? maxBackupIndex : maxIndex);
+    hiddenCIs[hiddenColumnIndex] = maxBackupIndex;
 }
 
 void Encoder::learn(
@@ -111,7 +110,7 @@ void Encoder::learn(
 ) {
     int hiddenColumnIndex = address2(columnPos, Int2(hiddenSize.x, hiddenSize.y));
 
-    if (hiddenCIs[hiddenColumnIndex] == -1)
+    if (learnCIs[hiddenColumnIndex] == -1)
         return;
 
     float maxActivation = hiddenMaxActs[hiddenColumnIndex];
@@ -133,7 +132,7 @@ void Encoder::learn(
 
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
-    int hiddenCellIndexMax = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
+    int hiddenCellIndexMax = learnCIs[hiddenColumnIndex] + hiddenCellsStart;
 
     float rate = (hiddenTotals[hiddenCellIndexMax] == 1.0f ? 1.0f : lr);
 
@@ -243,9 +242,6 @@ void Encoder::reconstruct(
 
                 int hiddenColumnIndex = address2(hiddenPos, Int2(hiddenSize.x, hiddenSize.y));
 
-                if (hiddenCIs[hiddenColumnIndex] == -1)
-                    continue;
-
                 int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
                 int hiddenCellIndex = hiddenCIs[hiddenColumnIndex] + hiddenCellsStart;
@@ -315,6 +311,7 @@ void Encoder::initRandom(
     hiddenMaxActs = FloatBuffer(numHiddenColumns);
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
+    learnCIs = IntBuffer(numHiddenColumns, -1);
 
     // Initialize hiddenSums1 
     for (int i = 0; i < numHiddenColumns; i++) {
@@ -501,6 +498,8 @@ void Encoder::read(
     hiddenCIs.resize(numHiddenColumns);
 
     reader.read(reinterpret_cast<void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
+
+    learnCIs = IntBuffer(numHiddenColumns, -1);
 
     int numVisibleLayers;
 
