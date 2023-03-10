@@ -30,8 +30,10 @@ public:
 
     // Visible layer
     struct VisibleLayer {
-        ByteBuffer weights;
+        ByteBuffer weights0;
+        ByteBuffer weights1;
 
+        IntBuffer hiddenSums1;
         FloatBuffer partialActs;
 
         IntBuffer inputCIs;
@@ -87,8 +89,8 @@ public:
     // Defaults
     Encoder()
     :
-    choice(0.1f),
-    vigilance(0.9f),
+    choice(0.01f),
+    vigilance(0.95f),
     lr(0.5f),
     lRadius(2)
     {}
