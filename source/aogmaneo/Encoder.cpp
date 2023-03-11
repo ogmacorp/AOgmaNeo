@@ -19,7 +19,6 @@ void Encoder::forward(
 
     int maxIndex = -1;
     float maxActivation = 0.0f;
-    float maxMatch = 0.0f;
 
     int maxBackupIndex = -1;
     float maxBackupActivation = 0.0f;
@@ -89,8 +88,6 @@ void Encoder::forward(
                 maxIndex = hc;
             }
         }
-
-        maxMatch = max(maxMatch, sum);
 
         if (activation > maxBackupActivation || maxBackupIndex == -1) {
             maxBackupActivation = activation;
