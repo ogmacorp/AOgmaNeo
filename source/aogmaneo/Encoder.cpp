@@ -105,6 +105,8 @@ void Encoder::learn(
     Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
     Int2 iterUpperBound(min(hiddenSize.x - 1, hiddenCenter.x + reverseRadii.x), min(hiddenSize.y - 1, hiddenCenter.y + reverseRadii.y));
 
+    int targetCI = (*inputCIs)[visibleColumnIndex];
+
     int maxIndex = -1;
     int maxActivation = -999999;
 
@@ -141,8 +143,6 @@ void Encoder::learn(
             maxIndex = vc;
         }
     }
-
-    int targetCI = (*inputCIs)[visibleColumnIndex];
 
     if (maxIndex == targetCI)
         return;
