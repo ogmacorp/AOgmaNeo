@@ -57,7 +57,6 @@ private:
     FloatBuffer hiddenMaxActs;
 
     IntBuffer hiddenCIs; // Hidden states (inference)
-    IntBuffer learnCIs; // Hidden states (learning)
 
     // Visible layers and associated descriptors
     Array<VisibleLayer> visibleLayers;
