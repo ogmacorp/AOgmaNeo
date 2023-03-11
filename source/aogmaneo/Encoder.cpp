@@ -142,21 +142,9 @@ void Encoder::learn(
                 }
             }
 
-        vl.reconActs[visibleCellIndex] = (sum / 127.0f) / max(1, count);
+        float act = (sum / 127.0f) / max(1, count);
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
-            maxIndex = vc;
-        }
-    }
-
-    if (maxIndex == targetCI)
-        return;
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visibleCellIndex = vc + visibleCellsStart;
-
-        int delta = roundf(lr * 127.0f * ((vc == targetCI) - min(1.0f, max(0.0f, 1.0f + vl.reconActs[visibleCellIndex] * scale))));
+        int delta = roundf(lr * 127.0f * ((vc == targetCI) - min(1.0f, max(0.0f, 1.0f + act * scale))));
   
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -281,8 +269,6 @@ void Encoder::initRandom(
 
         vl.inputCIs = IntBuffer(numVisibleColumns, 0);
         vl.reconCIs = IntBuffer(numVisibleColumns, 0);
-
-        vl.reconActs = FloatBuffer(numVisibleCells, 0.0f);
     }
 
     hiddenCIs = IntBuffer(numHiddenColumns, 0);
@@ -446,8 +432,6 @@ void Encoder::read(
         reader.read(reinterpret_cast<void*>(&vl.reconCIs[0]), vl.reconCIs.size() * sizeof(int));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
-
-        vl.reconActs = FloatBuffer(numVisibleCells, 0.0f);
 
         vl.useInputs = false;
         vl.needsUpdate = true;

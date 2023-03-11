@@ -37,8 +37,6 @@ public:
         IntBuffer inputCIs;
         IntBuffer reconCIs;
 
-        FloatBuffer reconActs;
-
         bool useInputs;
         bool needsUpdate;
 
@@ -84,7 +82,7 @@ public:
     // Defaults
     Encoder()
     :
-    scale(8.0f),
+    scale(16.0f),
     lr(0.05f)
     {}
 
