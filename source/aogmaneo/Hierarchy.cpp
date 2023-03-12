@@ -76,9 +76,11 @@ void Hierarchy::initRandom(
                 }
             }
 
+            int numInputs = ioSizes.size() * layerDescs[l].temporalHorizon;
+
             // Predictions
             for (int i = 0; i < ioSizes.size(); i++) {
-                int vli = ioSizes.size() * layerDescs[l].temporalHorizon + i;
+                int vli = numInputs + i;
 
                 eVisibleLayerDescs[vli].size = ioSizes[i];
                 eVisibleLayerDescs[vli].radius = ioDescs[i].ffRadius;
@@ -155,7 +157,7 @@ void Hierarchy::initRandom(
             eLayers[l].getVisibleLayer(i).importance = numInputsInv;
 
         for (int i = 0; i < numPredictions; i++)
-            eLayers[l].getVisibleLayer(numInputs + i).importance = numPredictionsInv;
+            eLayers[l].getVisibleLayer(numInputs + i).importance = 0.0f;
     }
 }
 
