@@ -86,8 +86,8 @@ public:
     // Defaults
     Encoder()
     :
-    choice(0.1f),
-    vigilance(0.95f),
+    choice(1.0f),
+    vigilance(0.9f),
     lr(0.1f),
     lRadius(2)
     {}
