@@ -69,7 +69,7 @@ void Encoder::forward(
                         subSum += vl.weights[wi];
                     }
 
-                vl.partialActs[hiddenCellIndex] = (subSum / 255.0f) / max(1, subCount);
+                vl.partialActs[hiddenCellIndex] = (subSum / 255.0f) / subCount;
             }
 
             sum += vl.partialActs[hiddenCellIndex] * vl.importance;
