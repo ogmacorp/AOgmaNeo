@@ -34,6 +34,8 @@ public:
 
         FloatBuffer partialActs;
 
+        IntBuffer hiddenWeightSums;
+
         IntBuffer inputCIs;
         IntBuffer reconCIs;
 
@@ -87,7 +89,7 @@ public:
     // Defaults
     Encoder()
     :
-    choice(1.0f),
+    choice(0.1f),
     vigilance(0.9f),
     lr(0.1f),
     lRadius(2)
