@@ -67,11 +67,13 @@ private:
 public:
     float scale;
     float lr;
+    float stability;
 
     Encoder()
     :
     scale(8.0f),
-    lr(0.05f)
+    lr(0.05f),
+    stability(8.0f)
     {}
 
     // Create a sparse coding layer with random initialization
