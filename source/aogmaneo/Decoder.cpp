@@ -139,7 +139,7 @@ void Decoder::learn(
 
                     float w = vl.weights[wi] * halfByteInv;
 
-                    int subDelta = roundf(delta * expf(-stability * abs(w)));
+                    int subDelta = roundf(delta / (1.0f + stability * w * w));
 
                     vl.weights[wi] = min(127, max(-127, vl.weights[wi] + subDelta));
                 }
