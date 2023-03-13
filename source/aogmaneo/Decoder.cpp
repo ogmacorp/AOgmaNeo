@@ -62,12 +62,30 @@ void Decoder::forward(
                 }
         }
 
-        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, 0.5f + ((sum / 127.0f) / count * scale)));
+        hiddenActs[hiddenCellIndex] = (sum / 127.0f) / count * scale;
 
         if (sum > maxActivation || maxIndex == -1) {
             maxActivation = sum;
             maxIndex = hc;
         }
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] = expf(hiddenActs[hiddenCellIndex] - maxActivation);
+
+        total += hiddenActs[hiddenCellIndex];
+    }
+
+    float totalInv = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hiddenSize.z; hc++) {
+        int hiddenCellIndex = hc + hiddenCellsStart;
+
+        hiddenActs[hiddenCellIndex] *= totalInv;
     }
 
     hiddenCIs[hiddenColumnIndex] = maxIndex;
@@ -88,7 +106,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]));
+        float delta = lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -121,7 +139,9 @@ void Decoder::learn(
 
                     float w = vl.weights[wi] * halfByteInv;
 
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
+                    int subDelta = roundf(delta * expf(-stability * abs(w)));
+
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + subDelta));
                 }
         }
     }

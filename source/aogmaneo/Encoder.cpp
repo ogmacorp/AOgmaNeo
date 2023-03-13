@@ -147,12 +147,10 @@ void Encoder::learn(
     if (maxIndex == targetCI)
         return;
 
-    const float halfByteInv = 1.0f / 127.0f;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
 
-        int delta = roundf(lr * 127.0f * ((vc == targetCI) - min(1.0f, max(0.0f, 0.5f + vl.reconActs[visibleCellIndex] * scale))));
+        int delta = roundf(lr * 127.0f * ((vc == targetCI) - expf(min(0.0f, vl.reconActs[visibleCellIndex] * scale))));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -168,8 +166,6 @@ void Encoder::learn(
                     Int2 offset(columnPos.x - visibleCenter.x + vld.radius, columnPos.y - visibleCenter.y + vld.radius);
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexMax));
-
-                    float w = vl.weights[wi] * halfByteInv;
 
                     vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
                 }
