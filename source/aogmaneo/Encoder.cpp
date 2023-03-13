@@ -152,7 +152,7 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
 
-        float delta = lr * 127.0f * ((vc == targetCI) - expf(min(0.0f, vl.reconActs[visibleCellIndex] * scale)));
+        int delta = roundf(lr * 127.0f * ((vc == targetCI) - min(1.0f, max(0.0f, 0.5f + vl.reconActs[visibleCellIndex] * scale))));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -171,9 +171,7 @@ void Encoder::learn(
 
                     float w = vl.weights[wi] * halfByteInv;
 
-                    int subDelta = roundf(delta * expf(-stability * abs(w)));
-
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + subDelta));
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
                 }
             }
     }
@@ -239,7 +237,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + 3 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + 2 * sizeof(float) + hiddenCIs.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visibleLayers.size(); vli++) {
         const VisibleLayer &vl = visibleLayers[vli];
@@ -261,7 +259,6 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&scale), sizeof(float));
     writer.write(reinterpret_cast<const void*>(&lr), sizeof(float));
-    writer.write(reinterpret_cast<const void*>(&stability), sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&hiddenCIs[0]), hiddenCIs.size() * sizeof(int));
 
@@ -288,7 +285,6 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&scale), sizeof(float));
     reader.read(reinterpret_cast<void*>(&lr), sizeof(float));
-    reader.read(reinterpret_cast<void*>(&stability), sizeof(float));
 
     int numHiddenColumns = hiddenSize.x * hiddenSize.y;
     int numHiddenCells = numHiddenColumns * hiddenSize.z;
