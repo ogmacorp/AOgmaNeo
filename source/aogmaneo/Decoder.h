@@ -67,7 +67,7 @@ public:
     Decoder()
     :
     scale(8.0f),
-    lr(0.05f),
+    lr(0.1f),
     stability(16.0f)
     {}
 
