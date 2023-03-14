@@ -64,8 +64,8 @@ void Decoder::forward(
 
         hiddenActs[hiddenCellIndex] = (sum / 127.0f) / count * scale;
 
-        if (sum > maxActivation || maxIndex == -1) {
-            maxActivation = sum;
+        if (hiddenActs[hiddenCellIndex] > maxActivation || maxIndex == -1) {
+            maxActivation = hiddenActs[hiddenCellIndex];
             maxIndex = hc;
         }
     }
