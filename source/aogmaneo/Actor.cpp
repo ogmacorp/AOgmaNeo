@@ -343,10 +343,6 @@ void Actor::learn(
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         hiddenActs[hiddenCellIndex] *= totalInv;
-    }
-
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
 
         float shift = (tdErrorValue > 0.0f ? 1.0f : 1.0f - bias);
 
