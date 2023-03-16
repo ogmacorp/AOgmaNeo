@@ -150,7 +150,7 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
 
-        int delta = roundf(lr * 127.0f * ((vc == targetCI) - expf(min(0.0f, vl.reconActs[visibleCellIndex] * scale))));
+        int delta = roundf(lr * 127.0f * ((vc == targetCI) - min(1.0f, max(0.0f, 0.5f + vl.reconActs[visibleCellIndex] * scale))));
 
         for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
             for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
@@ -201,7 +201,7 @@ void Encoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = -(rand() % 5);
+            vl.weights[i] = rand() % 5;
 
         vl.reconActs.resize(numVisibleCells);
     }

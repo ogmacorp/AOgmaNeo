@@ -64,7 +64,7 @@ void Decoder::forward(
 
         float act = (sum / 127.0f) / count * scale;
 
-        hiddenActs[hiddenCellIndex] = 1.0f - expf(min(0.0f, -act));
+        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, act));
 
         if (act > maxActivation || maxIndex == -1) {
             maxActivation = act;
