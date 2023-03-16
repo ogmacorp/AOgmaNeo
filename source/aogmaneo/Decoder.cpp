@@ -19,7 +19,7 @@ void Decoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    int maxActivation = -999999;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -62,12 +62,10 @@ void Decoder::forward(
                 }
         }
 
-        float act = (sum / 127.0f) / count * scale;
+        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, (sum / 127.0f) / count * scale));
 
-        hiddenActs[hiddenCellIndex] = min(1.0f, max(0.0f, act));
-
-        if (act > maxActivation || maxIndex == -1) {
-            maxActivation = act;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
