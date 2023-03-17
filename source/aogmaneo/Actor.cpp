@@ -64,7 +64,7 @@ void Actor::forward(
     // --- Action ---
 
     if (temperature > 0.0f) {
-        float maxActivation = -999999.0f;
+        float maxActivation = limitMin;
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
@@ -140,7 +140,7 @@ void Actor::forward(
     }
     else { // Deterministic
         int maxIndex = -1;
-        float maxActivation = -999999.0f;
+        float maxActivation = limitMin;
 
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
@@ -282,7 +282,7 @@ void Actor::learn(
 
     // --- Action ---
 
-    float maxActivation = -999999.0f;
+    float maxActivation = limitMin;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;

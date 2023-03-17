@@ -22,6 +22,8 @@ const int logIters = 3;
 const int sinIters = 5;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
+const float limitMin = -999999.0f;
+const float limitMax = 999999.0f;
 
 inline float modf(
     float x,

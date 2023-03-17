@@ -19,7 +19,7 @@ void Encoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    float maxActivation = -999999.0f;
+    float maxActivation = limitMin;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
@@ -108,7 +108,7 @@ void Encoder::learn(
     int targetCI = (*inputCIs)[visibleColumnIndex];
 
     int maxIndex = -1;
-    int maxActivation = -999999;
+    int maxActivation = limitMin;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visibleCellIndex = vc + visibleCellsStart;
