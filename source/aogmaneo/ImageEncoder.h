@@ -38,10 +38,7 @@ public:
 private:
     Int3 hiddenSize; // Size of hidden/output layer
 
-    FloatBuffer hiddenMaxActs;
     FloatBuffer hiddenRates;
-
-    ByteBuffer hiddenPeaksTemp;
 
     IntBuffer hiddenCIs; // Hidden states
 
@@ -53,16 +50,8 @@ private:
     
     void forward(
         const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
-    );
-
-    void inhibit(
-        const Int2 &columnPos
-    );
-
-    void learn(
-        const Int2 &columnPos,
-        const Array<const ByteBuffer*> &inputs
+        const Array<const ByteBuffer*> &inputs,
+        bool learnEnabled
     );
 
     void reconstruct(
@@ -73,13 +62,11 @@ private:
 
 public:
     float lr;
-    int lRadius;
 
     // Defaults
     ImageEncoder()
     :
-    lr(0.1f),
-    lRadius(0)
+    lr(0.25f)
     {}
 
     void initRandom(
