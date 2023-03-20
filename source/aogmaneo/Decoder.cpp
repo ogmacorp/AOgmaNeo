@@ -86,7 +86,7 @@ void Decoder::learn(
     if (hiddenCIs[hiddenColumnIndex] == targetCI) {
         int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
-        int delta = roundf(lr * 127.0f * (1.0f - hiddenActs[hiddenCellIndexTarget]) * hiddenActs[hiddenCellIndexTarget] * (1.0f - hiddenActs[hiddenCellIndexTarget]));
+        int delta = roundf(lr * 127.0f * (1.0f - hiddenActs[hiddenCellIndexTarget]) * hiddenActs[hiddenCellIndexTarget]);
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -125,7 +125,7 @@ void Decoder::learn(
         for (int hc = 0; hc < hiddenSize.z; hc++) {
             int hiddenCellIndex = hc + hiddenCellsStart;
 
-            int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]) * hiddenActs[hiddenCellIndex] * (1.0f - hiddenActs[hiddenCellIndex]));
+            int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]) * (1.0f - hiddenActs[hiddenCellIndex]));
 
             for (int vli = 0; vli < visibleLayers.size(); vli++) {
                 VisibleLayer &vl = visibleLayers[vli];
