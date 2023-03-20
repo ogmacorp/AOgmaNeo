@@ -19,13 +19,12 @@ void Decoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    int maxActivation = 0;
+    int maxActivation = limitMin;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         int sum = 0;
-        int sumThresh = 0;
         int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -60,14 +59,13 @@ void Decoder::forward(
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum += vl.weights[wi];
-                    sumThresh += (vl.weights[wi] > 0);
                 }
         }
 
         hiddenActs[hiddenCellIndex] = sigmoidf((sum / 127.0f) / count * scale);
 
-        if (sumThresh > maxActivation || maxIndex == -1) {
-            maxActivation = sumThresh;
+        if (sum > maxActivation || maxIndex == -1) {
+            maxActivation = sum;
             maxIndex = hc;
         }
     }
@@ -85,10 +83,10 @@ void Decoder::learn(
 
     int targetCI = (*hiddenTargetCIs)[hiddenColumnIndex];
 
-    for (int hc = 0; hc < hiddenSize.z; hc++) {
-        int hiddenCellIndex = hc + hiddenCellsStart;
+    if (hiddenCIs[hiddenColumnIndex] == targetCI) {
+        int hiddenCellIndexTarget = targetCI + hiddenCellsStart;
 
-        int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]) * hiddenActs[hiddenCellIndex] * (1.0f - hiddenActs[hiddenCellIndex]));
+        int delta = roundf(lr * 127.0f * (1.0f - hiddenActs[hiddenCellIndexTarget]) * hiddenActs[hiddenCellIndexTarget] * (1.0f - hiddenActs[hiddenCellIndexTarget]));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -117,10 +115,50 @@ void Decoder::learn(
 
                     Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
 
-                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+                    int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndexTarget));
 
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
+                    vl.weights[wi] = min(127, vl.weights[wi] + delta);
                 }
+        }
+    }
+    else {
+        for (int hc = 0; hc < hiddenSize.z; hc++) {
+            int hiddenCellIndex = hc + hiddenCellsStart;
+
+            int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]) * hiddenActs[hiddenCellIndex] * (1.0f - hiddenActs[hiddenCellIndex]));
+
+            for (int vli = 0; vli < visibleLayers.size(); vli++) {
+                VisibleLayer &vl = visibleLayers[vli];
+                const VisibleLayerDesc &vld = visibleLayerDescs[vli];
+
+                int diam = vld.radius * 2 + 1;
+
+                // Projection
+                Float2 hToV = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hiddenSize.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hiddenSize.y));
+
+                Int2 visibleCenter = project(columnPos, hToV);
+
+                // Lower corner
+                Int2 fieldLowerBound(visibleCenter.x - vld.radius, visibleCenter.y - vld.radius);
+
+                // Bounds of receptive field, clamped to input size
+                Int2 iterLowerBound(max(0, fieldLowerBound.x), max(0, fieldLowerBound.y));
+                Int2 iterUpperBound(min(vld.size.x - 1, visibleCenter.x + vld.radius), min(vld.size.y - 1, visibleCenter.y + vld.radius));
+
+                for (int ix = iterLowerBound.x; ix <= iterUpperBound.x; ix++)
+                    for (int iy = iterLowerBound.y; iy <= iterUpperBound.y; iy++) {
+                        int visibleColumnIndex = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                        int inCIPrev = vl.inputCIsPrev[visibleColumnIndex];
+
+                        Int2 offset(ix - fieldLowerBound.x, iy - fieldLowerBound.y);
+
+                        int wi = inCIPrev + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
+
+                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
+                    }
+            }
         }
     }
 }
