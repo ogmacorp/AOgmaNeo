@@ -19,12 +19,13 @@ void Decoder::forward(
     int hiddenCellsStart = hiddenColumnIndex * hiddenSize.z;
 
     int maxIndex = -1;
-    float maxActivation = limitMin;
+    int maxActivation = 0;
 
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
         int sum = 0;
+        int sumThresh = 0;
         int count = 0;
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
@@ -59,15 +60,14 @@ void Decoder::forward(
                     int wi = inCI + vld.size.z * (offset.y + diam * (offset.x + diam * hiddenCellIndex));
 
                     sum += vl.weights[wi];
+                    sumThresh += (vl.weights[wi] > 0);
                 }
         }
 
-        float act = (sum / 127.0f) / count * scale;
+        hiddenActs[hiddenCellIndex] = sigmoidf((sum / 127.0f) / count * scale);
 
-        hiddenActs[hiddenCellIndex] = 1.0f - expf(min(0.0f, -act));
-
-        if (act > maxActivation || maxIndex == -1) {
-            maxActivation = act;
+        if (sumThresh > maxActivation || maxIndex == -1) {
+            maxActivation = sumThresh;
             maxIndex = hc;
         }
     }
@@ -88,7 +88,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hiddenSize.z; hc++) {
         int hiddenCellIndex = hc + hiddenCellsStart;
 
-        int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]));
+        int delta = roundf(lr * 127.0f * ((hc == targetCI) - hiddenActs[hiddenCellIndex]) * hiddenActs[hiddenCellIndex] * (1.0f - hiddenActs[hiddenCellIndex]));
 
         for (int vli = 0; vli < visibleLayers.size(); vli++) {
             VisibleLayer &vl = visibleLayers[vli];
@@ -153,7 +153,7 @@ void Decoder::initRandom(
         vl.weights.resize(numHiddenCells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 5;
+            vl.weights[i] = rand() % 5 - 2;
 
         vl.inputCIsPrev = IntBuffer(numVisibleColumns, 0);
     }

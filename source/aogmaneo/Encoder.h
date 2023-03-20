@@ -67,10 +67,11 @@ private:
 public:
     float scale;
     float lr;
+    float forget;
 
     Encoder()
     :
-    scale(8.0f),
+    scale(2.0f),
     lr(0.05f)
     {}
 
