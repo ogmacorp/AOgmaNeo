@@ -163,6 +163,10 @@ void Hierarchy::init_random(
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
     }
+
+    // initialize params
+    params.ios = Array<IO_Params>(io_descs.size());
+    params.layers = Array<Layer_Params>(layer_descs.size());
 }
 
 void Hierarchy::step(
