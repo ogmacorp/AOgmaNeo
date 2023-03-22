@@ -12,16 +12,16 @@
 
 namespace aon {
 // image coder
-class image_encoder {
+class Image_Encoder {
 public:
     // visible layer descriptor
-    struct visible_layer_desc {
-        int3 size; // size of input
+    struct Visible_Layer_Desc {
+        Int3 size; // size of input
 
         int radius; // radius onto input
 
         // defaults
-        visible_layer_desc()
+        Visible_Layer_Desc()
         :
         size(4, 4, 16),
         radius(2)
@@ -29,62 +29,65 @@ public:
     };
 
     // visible layer
-    struct visible_layer {
-        byte_buffer protos;
+    struct Visible_Layer {
+        Byte_Buffer protos;
 
-        byte_buffer reconstruction;
+        Byte_Buffer reconstruction;
+    };
+
+    struct Params {
+        float lr; // learning rate
+        
+        Params()
+        :
+        lr(0.05f)
+        {}
     };
 
 private:
-    int3 hidden_size; // size of hidden/output layer
+    Int3 hidden_size; // size of hidden/output layer
 
-    float_buffer hidden_rates;
+    Float_Buffer hidden_rates;
 
-    int_buffer hidden_cis; // hidden states
+    Int_Buffer hidden_cis; // hidden states
 
     // visible layers and associated descriptors
-    array<visible_layer> visible_layers;
-    array<visible_layer_desc> visible_layer_descs;
+    Array<Visible_Layer> visible_layers;
+    Array<Visible_Layer_Desc> visible_layer_descs;
     
     // --- kernels ---
     
     void forward(
-        const int2 &column_pos,
-        const array<const byte_buffer*> &inputs,
+        const Int2 &column_pos,
+        const Array<const Byte_Buffer*> &inputs,
         bool learn_enabled
     );
 
     void reconstruct(
-        const int2 &column_pos,
-        const int_buffer* recon_cis,
+        const Int2 &column_pos,
+        const Int_Buffer* recon_cis,
         int vli
     );
 
 public:
-    float lr;
-
-    // defaults
-    image_encoder()
-    :
-    lr(0.05f)
-    {}
+    Params params;
 
     void init_random(
-        const int3 &hidden_size, // hidden/output size
-        const array<visible_layer_desc> &visible_layer_descs // descriptors for visible layers
+        const Int3 &hidden_size, // hidden/output size
+        const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
     // activate the sparse coder (perform sparse coding)
     void step(
-        const array<const byte_buffer*> &inputs, // input states
+        const Array<const Byte_Buffer*> &inputs, // input states
         bool learn_enabled // whether to learn
     );
 
     void reconstruct(
-        const int_buffer* recon_cis
+        const Int_Buffer* recon_cis
     );
 
-    const byte_buffer &get_reconstruction(
+    const Byte_Buffer &get_reconstruction(
         int vli
     ) const {
         return visible_layers[vli].reconstruction;
@@ -94,11 +97,11 @@ public:
     int size() const; // returns size in bytes
 
     void write(
-        stream_writer &writer
+        Stream_Writer &writer
     ) const;
 
     void read(
-        stream_reader &reader
+        Stream_Reader &reader
     );
 
     // get the number of visible layers
@@ -107,26 +110,26 @@ public:
     }
 
     // get a visible layer
-    const visible_layer &get_visible_layer(
+    const Visible_Layer &get_visible_layer(
         int vli // index of visible layer
     ) const {
         return visible_layers[vli];
     }
 
     // get a visible layer descriptor
-    const visible_layer_desc &get_visible_layer_desc(
+    const Visible_Layer_Desc &get_visible_layer_desc(
         int vli // index of visible layer
     ) const {
         return visible_layer_descs[vli];
     }
 
     // get the hidden states
-    const int_buffer &get_hidden_cis() const {
+    const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
     }
 
     // get the hidden size
-    const int3 &get_hidden_size() const {
+    const Int3 &get_hidden_size() const {
         return hidden_size;
     }
 };
