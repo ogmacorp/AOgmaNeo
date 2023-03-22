@@ -1,9 +1,9 @@
 // ----------------------------------------------------------------------------
-//  aogma_neo
-//  copyright(c) 2020-2023 ogma intelligent systems corp. all rights reserved.
+//  AOgmaNeo
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
-//  this copy of aogma_neo is licensed to you under the terms described
-//  in the aogmaneo_license.md file included in this distribution.
+//  This copy of AOgmaNeo is licensed to you under the terms described
+//  in the AOGMANEO_LICENSE.md file included in this distribution.
 // ----------------------------------------------------------------------------
 
 #include "image_encoder.h"
