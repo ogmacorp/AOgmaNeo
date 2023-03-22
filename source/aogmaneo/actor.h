@@ -181,4 +181,4 @@ public:
         return history_size;
     }
 };
-} // namespace aon
+}

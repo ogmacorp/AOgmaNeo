@@ -154,4 +154,4 @@ public:
         return hidden_size;
     }
 };
-} // namespace aon
+}
