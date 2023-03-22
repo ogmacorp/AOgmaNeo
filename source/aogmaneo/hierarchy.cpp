@@ -175,7 +175,10 @@ void Hierarchy::step(
     float reward,
     float mimic
 ) {
-    // set importances
+    assert(params.layers.size() == encoders.size());
+    assert(params.ios.size() == io_sizes.size());
+
+    // set importances from params
     for (int i = 0; i < io_sizes.size(); i++)
         set_input_importance(i, params.ios[i].importance);
 
