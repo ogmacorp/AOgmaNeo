@@ -117,7 +117,7 @@ void swap(
     right = temp;
 }
 
-// open_mp stuff, does nothing if use_omp is not set
+// open_mp stuff, does nothing if USE_OMP is not set
 void set_num_threads(
     int num_threads
 );

@@ -8,7 +8,7 @@
 
 #include "helpers.h"
 
-#ifdef use_omp
+#ifdef USE_OMP
 #include <omp.h>
 #endif
 
@@ -135,7 +135,7 @@ float aon::powf(
 #endif
 }
 
-#ifdef use_omp
+#ifdef USE_OMP
 void aon::set_num_threads(
     int num_threads
 ) {
