@@ -165,8 +165,8 @@ void Hierarchy::init_random(
     }
 
     // initialize params
-    params.ios = Array<IO_Params>(io_descs.size());
     params.layers = Array<Layer_Params>(layer_descs.size());
+    params.ios = Array<IO_Params>(io_descs.size());
 }
 
 void Hierarchy::step(
