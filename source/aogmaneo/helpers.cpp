@@ -155,12 +155,12 @@ int aon::get_num_threads() {
 }
 #endif
 
-int2 aon::min_overhang(
-    const int2 &pos,
-    const int2 &size,
-    const int2 &radii
+Int2 aon::min_overhang(
+    const Int2 &pos,
+    const Int2 &size,
+    const Int2 &radii
 ) {
-    int2 new_pos = pos;
+    Int2 new_pos = pos;
 
     bool overhang_px = (new_pos.x + radii.x >= size.x);
     bool overhang_nx = (new_pos.x - radii.x < 0);
