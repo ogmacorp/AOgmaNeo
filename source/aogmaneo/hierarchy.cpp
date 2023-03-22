@@ -397,7 +397,7 @@ void Hierarchy::write(
     for (int l = 0; l < encoders.size(); l++)
         writer.write(reinterpret_cast<const void*>(&params.layers[l]), sizeof(Layer_Params));
 
-    for (int i = 0; i < encoders.size(); i++)
+    for (int i = 0; i < io_sizes.size(); i++)
         writer.write(reinterpret_cast<const void*>(&params.ios[i]), sizeof(IO_Params));
 }
 
