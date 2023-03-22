@@ -59,7 +59,7 @@ float aon::logf(
     return std::log(x);
 #else
     if (x <= 0.0f)
-        return -999999.0f;
+        return limit_min;
 
     float res = 1.0f; // initial guess
 
