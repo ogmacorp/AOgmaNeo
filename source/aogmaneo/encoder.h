@@ -43,12 +43,12 @@ public:
     };
 
     struct Params {
-        float scale;
-        float lr;
+        float scale; // scale of squashing
+        float lr; // learning rate
 
         Params()
         :
-        scale(8.0f),
+        scale(4.0f),
         lr(0.05f)
         {}
     };
