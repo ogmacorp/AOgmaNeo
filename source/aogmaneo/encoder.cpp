@@ -292,9 +292,13 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
+    learn_cis.resize(num_hidden_columns);
+
     hidden_totals.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_totals[0]), hidden_totals.size() * sizeof(float));
+
+    hidden_max_acts.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
