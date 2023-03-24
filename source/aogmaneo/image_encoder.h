@@ -30,24 +30,27 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer protos;
+        Byte_Buffer weights0;
+        Byte_Buffer weights1;
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
+        float choice;
+        float vigilance;
         float lr; // learning rate
         
         Params()
         :
-        lr(0.05f)
+        choice(1.0f),
+        vigilance(0.95f),
+        lr(0.1f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
-
-    Float_Buffer hidden_rates;
 
     Int_Buffer hidden_cis; // hidden states
 
