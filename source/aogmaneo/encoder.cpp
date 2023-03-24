@@ -13,6 +13,7 @@ using namespace aon;
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
+    unsigned int* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -29,51 +30,56 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         float sum = 0.0f;
-        float total_importance = 0.0f;
 
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        if (hidden_totals[hidden_cell_index] == 1.0f)
+            sum = 1.0f;
+        else {
+            float total_importance = 0.0f;
 
-            int diam = vld.radius * 2 + 1;
- 
-            // projection
-            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+            for (int vli = 0; vli < visible_layers.size(); vli++) {
+                Visible_Layer &vl = visible_layers[vli];
+                const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            Int2 visible_center = project(column_pos, h_to_v);
+                int diam = vld.radius * 2 + 1;
+     
+                // projection
+                Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-            // lower corner
-            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+                Int2 visible_center = project(column_pos, h_to_v);
 
-            // bounds of receptive field, clamped to input size
-            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+                // lower corner
+                Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
 
-            int sub_sum = 0;
-            int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+                // bounds of receptive field, clamped to input size
+                Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+                Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                    int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+                int sub_sum = 0;
+                int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-                    int in_ci = (*input_cis[vli])[visible_column_index];
+                for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+                    for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                        int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+                        int in_ci = (*input_cis[vli])[visible_column_index];
 
-                    int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
+                        Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    if (vl.weight_indices[wi] == in_ci || vl.weight_indices[wi] == -1)
-                        sub_sum += vl.weights[wi];
-                }
+                        int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-            sum += (sub_sum / 255.0f) / sub_count * vl.importance;
-            total_importance += vl.importance;
+                        if (vl.weight_indices[wi] == in_ci || vl.weight_indices[wi] == -1)
+                            sub_sum += vl.weights[wi];
+                    }
+
+                sum += (sub_sum / 255.0f) / sub_count * vl.importance;
+                total_importance += vl.importance;
+            }
+
+            sum /= max(0.0001f, total_importance);
         }
 
-        sum /= max(0.0001f, total_importance);
-
-        float activation = sum / (params.choice + hidden_totals[hidden_cell_index]);
+        float activation = sum / (params.choice + hidden_totals[hidden_cell_index]) + randf(state) * 0.0001f;
 
         if (sum >= params.vigilance) {
             if (activation > max_activation || max_index == -1) {
@@ -151,7 +157,7 @@ void Encoder::learn(
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
         int sub_total = 0;
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -224,10 +230,15 @@ void Encoder::step(
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
+
+    unsigned int base_state = rand();
     
     #pragma omp parallel for
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned int state = base_state + i * 12345;
+
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
+    }
 
     if (learn_enabled) {
         #pragma omp parallel for
