@@ -68,8 +68,7 @@ void Encoder::forward(
 
                         int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                        if (vl.weight_indices[wi] == in_ci)
-                            sub_sum += vl.weights[wi];
+                        sub_sum += (vl.weight_indices[wi] == in_ci) * vl.weights[wi];
                     }
 
                 sum += (sub_sum / 255.0f) / sub_count * vl.importance;
