@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer protos;
         
         float importance;
 
@@ -55,6 +55,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    Float_Buffer hidden_rates;
 
     Float_Buffer hidden_max_acts;
 
