@@ -12,7 +12,9 @@ using namespace aon;
 
 void Encoder::forward(
     const Int2 &column_pos,
-    const Array<const Int_Buffer*> &input_cis
+    const Array<const Int_Buffer*> &input_cis,
+    bool learn_enabled,
+    const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
@@ -25,6 +27,7 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         float sum = 0.0f;
+        float total_importance = 0.0f;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -62,10 +65,18 @@ void Encoder::forward(
                 }
 
             sum += static_cast<float>(sub_sum) / sub_count * vl.importance;
+            total_importance += vl.importance;
         }
 
-        if (sum > max_activation || max_index == -1) {
-            max_activation = sum;
+        sum /= max(0.0001f, total_importance);
+
+        float act = sum + hidden_biases[hidden_cell_index];
+
+        if (learn_enabled)
+            hidden_biases[hidden_cell_index] += params.br * (-sum - hidden_biases[hidden_cell_index]);
+
+        if (act > max_activation || max_index == -1) {
+            max_activation = act;
             max_index = hc;
         }
     }
@@ -208,6 +219,8 @@ void Encoder::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
+
+    hidden_biases = Float_Buffer(num_hidden_cells, 0.0f);
 }
 
 void Encoder::step(
@@ -219,7 +232,7 @@ void Encoder::step(
     
     #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, learn_enabled, params);
 
     if (learn_enabled) {
         for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -235,7 +248,7 @@ void Encoder::step(
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_biases.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -247,7 +260,7 @@ int Encoder::size() const {
 }
 
 int Encoder::state_size() const {
-    return hidden_cis.size() * sizeof(int);
+    return hidden_cis.size() * sizeof(int) + hidden_biases.size() * sizeof(float);
 }
 
 void Encoder::write(
@@ -256,6 +269,8 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    writer.write(reinterpret_cast<const void*>(&hidden_biases[0]), hidden_biases.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -284,6 +299,10 @@ void Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    hidden_biases.resize(num_hidden_cells);
+
+    reader.read(reinterpret_cast<void*>(&hidden_biases[0]), hidden_biases.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -318,10 +337,14 @@ void Encoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    writer.write(reinterpret_cast<const void*>(&hidden_biases[0]), hidden_biases.size() * sizeof(float));
 }
 
 void Encoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    reader.read(reinterpret_cast<void*>(&hidden_biases[0]), hidden_biases.size() * sizeof(float));
 }

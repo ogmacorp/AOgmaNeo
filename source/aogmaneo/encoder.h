@@ -45,11 +45,13 @@ public:
     struct Params {
         float scale; // scale of squashing
         float lr; // learning rate
+        float br; // bias rate
 
         Params()
         :
         scale(8.0f),
-        lr(0.05f)
+        lr(0.05f),
+        br(0.01f)
         {}
     };
 
@@ -57,6 +59,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    Float_Buffer hidden_biases;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -66,7 +70,9 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis
+        const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
+        const Params &params
     );
 
     void learn(
