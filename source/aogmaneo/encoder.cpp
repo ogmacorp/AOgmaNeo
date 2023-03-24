@@ -136,7 +136,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + ceilf(params.lr * ((vc == in_ci) * 255.0f - vl.weights[wi]))));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + (vc == in_ci) * (vld.size.z + 1) - 1));
                 }
             }
     }
