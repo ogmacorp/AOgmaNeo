@@ -172,7 +172,7 @@ void Encoder::learn(
                 }
             }
 
-        total += static_cast<float>(sub_total) / sub_count * vl.importance;
+        total += (sub_total / 255.0f) / sub_count * vl.importance;
         total_importance += vl.importance;
     }
 
