@@ -41,15 +41,11 @@ public:
     };
 
     struct Params {
-        float choice; // Choice parameter
-        float vigilance; // ART vigilance
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        choice(1.0f),
-        vigilance(0.9f),
         lr(0.1f),
         l_radius(2)
         {}
@@ -59,10 +55,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Int_Buffer learn_cis;
-
-    Float_Buffer hidden_totals;
 
     Float_Buffer hidden_max_acts;
 
