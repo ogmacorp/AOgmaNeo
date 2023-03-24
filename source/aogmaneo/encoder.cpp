@@ -61,9 +61,10 @@ void Encoder::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    sub_sum += vl.weights[wi];
+                    if (vl.weight_indices[wi] == in_ci || vl.weight_indices[wi] == -1)
+                        sub_sum += vl.weights[wi];
                 }
 
             sum += (sub_sum / 255.0f) / sub_count * vl.importance;
@@ -125,6 +126,8 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
+    bool commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
+
     float total = 0.0f;
     float total_importance = 0.0f;
 
@@ -148,7 +151,7 @@ void Encoder::learn(
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
         int sub_total = 0;
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -158,16 +161,14 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wi_start;
+                if (commit)
+                    vl.weight_indices[wi] = in_ci;
+                else if (vl.weight_indices[wi] != in_ci)
+                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
-                    if (vc != in_ci)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
-
-                    sub_total += vl.weights[wi];
-                }
+                sub_total += vl.weights[wi];
             }
 
         total += (sub_total / 255.0f) / sub_count * vl.importance;
@@ -204,10 +205,8 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
-
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % 5;
+        vl.weight_indices = Int_Buffer(num_hidden_cells * area, -1);
+        vl.weights = Byte_Buffer(vl.weight_indices.size(), 255);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -243,7 +242,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weight_indices.size() * sizeof(int) + vl.weights.size() * sizeof(Byte) + sizeof(float);
     }
 
     return size;
@@ -272,6 +271,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
+        writer.write(reinterpret_cast<const void*>(&vl.weight_indices[0]), vl.weight_indices.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
@@ -317,8 +317,10 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.weight_indices.resize(num_hidden_cells * area);
+        vl.weights.resize(vl.weight_indices.size());
 
+        reader.read(reinterpret_cast<void*>(&vl.weight_indices[0]), vl.weight_indices.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
