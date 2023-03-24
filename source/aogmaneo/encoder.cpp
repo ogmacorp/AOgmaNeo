@@ -75,8 +75,8 @@ void Encoder::forward(
         if (learn_enabled)
             hidden_biases[hidden_cell_index] += params.br * (-sum - hidden_biases[hidden_cell_index]);
 
-        if (act > max_activation || max_index == -1) {
-            max_activation = act;
+        if (sum > max_activation || max_index == -1) {
+            max_activation = sum;
             max_index = hc;
         }
     }
