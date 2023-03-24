@@ -125,8 +125,6 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
-    float rate = (hidden_totals[hidden_cell_index_max] == 1.0f ? 1.0f : params.lr);
-
     float total = 0.0f;
     float total_importance = 0.0f;
 
@@ -166,7 +164,7 @@ void Encoder::learn(
                     int wi = vc + wi_start;
 
                     if (vc != in_ci)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                     sub_total += vl.weights[wi];
                 }
