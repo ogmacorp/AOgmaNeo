@@ -315,11 +315,11 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_totals[0]), hidden_totals.size() * sizeof(float));
 
-    hidden_commits.resize(num_hidden_cells);
+    hidden_max_acts.resize(num_hidden_columns);
+
+    hidden_commits.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(int));
-
-    hidden_max_acts.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
