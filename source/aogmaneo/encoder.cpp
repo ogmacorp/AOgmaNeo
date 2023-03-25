@@ -23,7 +23,7 @@ void Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
-    int max_backup_index = -1;
+    int max_backup_index = 0;
     float max_backup_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
@@ -91,7 +91,6 @@ void Encoder::forward(
     if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         // commit
         max_index = hidden_commits[hidden_column_index];
-        max_backup_index = hidden_commits[hidden_column_index];
 
         max_activation = randf(state) * 0.0001f;
     }
