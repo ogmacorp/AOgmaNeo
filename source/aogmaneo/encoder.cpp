@@ -80,14 +80,13 @@ void Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 }
 
-void Encoder::learn(
+void Encoder::inhibit(
     const Int2 &column_pos,
-    const Array<const Int_Buffer*> &input_cis,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
+    hidden_peaks[hidden_column_index] = true;
 
     float max_activation = hidden_max_acts[hidden_column_index];
 
@@ -101,11 +100,37 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_max_acts[other_hidden_column_index] >= max_activation)
+                if (hidden_max_acts[other_hidden_column_index] >= max_activation) {
+                    hidden_peaks[hidden_column_index] = false;
                     return;
+                }
+            }
+        }
+}
+
+void Encoder::learn(
+    const Int2 &column_pos,
+    const Array<const Int_Buffer*> &input_cis,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    // Search for peaks in range
+    for (int dx = -1; dx <= 1; dx++)
+        for (int dy = -1; dy <= 1; dy++) {
+            Int2 search_pos(column_pos.x + dx, column_pos.y + dy);
+
+            if (in_bounds0(search_pos, Int2(hidden_size.x, hidden_size.y))) {
+                if (hidden_peaks[address2(search_pos, Int2(hidden_size.x, hidden_size.y))])
+                    goto learn;
             }
         }
 
+    return;
+
+learn:
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
 
@@ -191,6 +216,8 @@ void Encoder::init_random(
     hidden_max_acts.resize(num_hidden_columns);
 
     hidden_rates = Float_Buffer(num_hidden_cells, 0.5f);
+
+    hidden_peaks.resize(num_hidden_columns);
 }
 
 void Encoder::step(
@@ -205,6 +232,10 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
+        #pragma omp parallel for
+        for (int i = 0; i < num_hidden_columns; i++)
+            inhibit(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
         #pragma omp parallel for
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
@@ -269,6 +300,8 @@ void Encoder::read(
     hidden_rates.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
+
+    hidden_peaks.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 

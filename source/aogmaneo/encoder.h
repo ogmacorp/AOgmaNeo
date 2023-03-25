@@ -60,6 +60,8 @@ private:
 
     Float_Buffer hidden_max_acts;
 
+    Byte_Buffer hidden_peaks;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -73,6 +75,10 @@ private:
     );
 
     void inhibit(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
     void learn(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
