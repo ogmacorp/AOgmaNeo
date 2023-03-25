@@ -156,6 +156,11 @@ public:
         return hidden_cis;
     }
 
+    // get the number of committed cells per column
+    const Int_Buffer &get_hidden_commits() const {
+        return hidden_commits;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;

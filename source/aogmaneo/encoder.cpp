@@ -82,7 +82,7 @@ void Encoder::forward(
             }
         }
 
-        if (activation > max_backup_activation || max_backup_index == -1) {
+        if (activation > max_backup_activation) {
             max_backup_activation = activation;
             max_backup_index = hc;
         }
