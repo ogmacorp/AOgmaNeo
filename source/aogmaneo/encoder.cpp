@@ -64,7 +64,7 @@ void Encoder::forward(
                     sub_sum += vl.weights[wi];
                 }
 
-            sum += static_cast<float>(sub_sum) / sub_count * vl.importance;
+            sum += (sub_sum / 127.0f) / sub_count * vl.importance;
             total_importance += vl.importance;
         }
 
