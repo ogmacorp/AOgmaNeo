@@ -28,8 +28,6 @@ void Encoder::forward(
         float sum = 0.0f;
         float total_importance = 0.0f;
 
-        bool all_vigilant = true;
-
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
 
@@ -77,19 +75,13 @@ void Encoder::forward(
                 vl.hidden_partial_acts[hidden_cell_index] = (sub_sum / 255.0f) / max(1, sub_count);
             }
 
-            if (vl.hidden_partial_acts[hidden_cell_index] < params.vigilance) {
-                all_vigilant = false;
-
-                break;
-            }
-
             sum += vl.hidden_partial_acts[hidden_cell_index] * vl.importance;
             total_importance += vl.importance;
         }
 
-        if (all_vigilant) {
-            sum /= max(0.0001f, total_importance);
+        sum /= max(0.0001f, total_importance);
 
+        if (sum >= params.vigilance) {
             float activation = sum / (params.choice + hidden_totals[hidden_cell_index]);
 
             if (activation > max_activation || max_index == -1) {
@@ -308,11 +300,11 @@ void Encoder::init_random(
 
         vl.hidden_partial_acts.resize(num_hidden_cells, 0.0f);
 
-        vl.input_cis = Int_Buffer(num_visible_columns, 0);
-        vl.recon_cis = Int_Buffer(num_visible_columns, 0);
+        vl.input_cis = Int_Buffer(num_visible_columns, -1);
+        vl.recon_cis = Int_Buffer(num_visible_columns, -1);
     }
 
-    hidden_cis = Int_Buffer(num_hidden_columns, 0);
+    hidden_cis = Int_Buffer(num_hidden_columns, -1);
 
     hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
 

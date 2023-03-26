@@ -285,8 +285,8 @@ void Hierarchy::step(
                     a_input_cis[1] = &encoders[l + 1].get_visible_layer(num_inputs_next + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis;
                 }
 
-                for (int d = 0; d < actors.size(); d++)
-                    actors[d].step(a_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, mimic, params.ios[d].actor);
+                for (int i = 0; i < actors.size(); i++)
+                    actors[i].step(a_input_cis, input_cis[i_indices[i]], reward, learn_enabled, mimic, params.ios[i_indices[i]].actor);
             }
         }
     }
