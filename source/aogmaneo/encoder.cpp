@@ -298,7 +298,7 @@ void Encoder::init_random(
         vl.weight_indices = Int_Buffer(num_hidden_cells * area, -1);
         vl.weights = Byte_Buffer(vl.weight_indices.size(), 255);
 
-        vl.hidden_partial_acts.resize(num_hidden_cells);
+        vl.hidden_partial_acts.resize(num_hidden_cells, 0.0f);
 
         vl.input_cis = Int_Buffer(num_visible_columns, 0);
         vl.recon_cis = Int_Buffer(num_visible_columns, 0);
@@ -361,6 +361,13 @@ void Encoder::learn(
     #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
         learn(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
+    // reset update flags
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        vl.needs_update = true;
+    }
 }
 
 void Encoder::reconstruct(
