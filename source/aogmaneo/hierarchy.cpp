@@ -165,13 +165,13 @@ void Hierarchy::init_random(
 
         // Adjust importances
         int num_inputs = histories[l].size() * histories[l][0].size();
-        int num_predictions = encoders[l].get_num_visible_layers() - num_inputs - (l < encoders.size() - 1 ? 1 : 0);
+        //int num_predictions = encoders[l].get_num_visible_layers() - num_inputs - (l < encoders.size() - 1 ? 1 : 0);
 
         for (int i = 0; i < num_predictions; i++)
             encoders[l].get_visible_layer(num_inputs + i).importance = 0.0f;
 
-        if (l < encoders.size() - 1)
-            encoders[l].get_visible_layer(encoders[l].get_num_visible_layers() - 1).importance = num_inputs;
+        //if (l < encoders.size() - 1)
+        //    encoders[l].get_visible_layer(encoders[l].get_num_visible_layers() - 1).importance = 1.0f;
     }
 
     // initialize params
