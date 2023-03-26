@@ -299,6 +299,9 @@ void Encoder::init_random(
         vl.weights = Byte_Buffer(vl.weight_indices.size(), 255);
 
         vl.hidden_partial_acts.resize(num_hidden_cells);
+
+        vl.input_cis = Int_Buffer(num_visible_columns, 0);
+        vl.recon_cis = Int_Buffer(num_visible_columns, 0);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
