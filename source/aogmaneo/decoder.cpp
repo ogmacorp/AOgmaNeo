@@ -13,17 +13,14 @@ using namespace aon;
 void Decoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    bool learn_enabled,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int max_index = 0;
-    int max_activation = 0;
-
-    Byte min_weight = 255;
+    int max_index = -1;
+    float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -63,22 +60,94 @@ void Decoder::forward(
                     int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     sum += vl.weights[wi];
-                    min_weight = min(min_weight, vl.weights[wi]);
                 }
         }
 
-        if (sum > max_activation || max_index == -1) {
-            max_activation = sum;
+        float act = (sum / 127.0f) / count * params.scale;
+
+        hidden_acts[hidden_cell_index] = act;
+
+        if (act > max_activation || max_index == -1) {
+            max_activation = act;
             max_index = hc;
         }
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    float total = 0.0f;
 
-    // create more weight room (repacking) if learning is enabled and if possible (min_weight > 0)
-    if (learn_enabled && min_weight != 0) {
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
+    }
+
+    hidden_cis[hidden_column_index] = max_index;
+}
+
+void Decoder::learn(
+    const Int2 &column_pos,
+    const Int_Buffer* hidden_target_cis,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    int target_ci = (*hidden_target_cis)[hidden_column_index];
+
+    if (hidden_cis[hidden_column_index] == target_ci) {
+        int hidden_cell_index_target = target_ci + hidden_cells_start;
+
+        int delta = roundf(params.lr * 127.0f * (1.0f - hidden_acts[hidden_cell_index_target]));
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            int diam = vld.radius * 2 + 1;
+
+            // projection
+            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+
+            Int2 visible_center = project(column_pos, h_to_v);
+
+            // lower corner
+            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+
+            // bounds of receptive field, clamped to input size
+            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+
+            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                    int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                    int in_ciprev = vl.input_cis_prev[visible_column_index];
+
+                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+
+                    int wi = in_ciprev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
+
+                    vl.weights[wi] = min(127, vl.weights[wi] + delta);
+                }
+        }
+    }
+    else {
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
+
+            int delta = roundf(params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]));
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -101,70 +170,18 @@ void Decoder::forward(
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                        int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                        int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                        int in_ci = (*input_cis[vli])[visible_column_index];
+                        int in_ciprev = vl.input_cis_prev[visible_column_index];
 
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                        int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                        int wi = in_ciprev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                        vl.weights[wi] -= min_weight;
+                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
                     }
             }
         }
-    }
-}
-
-void Decoder::learn(
-    const Int2 &column_pos,
-    const Int_Buffer* hidden_target_cis,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    int target_ci = (*hidden_target_cis)[hidden_column_index];
-
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
-    if (hidden_cis[hidden_column_index] == target_ci)
-        return;
-
-    int delta = roundf(params.lr * 255.0f);
-
-    for (int vli = 0; vli < visible_layers.size(); vli++) {
-        Visible_Layer &vl = visible_layers[vli];
-        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-        int diam = vld.radius * 2 + 1;
-
-        // projection
-        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
-
-        Int2 visible_center = project(column_pos, h_to_v);
-
-        // lower corner
-        Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
-
-        // bounds of receptive field, clamped to input size
-        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-        Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
-
-                int in_ci_prev = vl.input_cis_prev[visible_column_index];
-
-                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
-
-                int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
-
-                vl.weights[wi] = min(255, vl.weights[wi] + delta);
-            }
     }
 }
 
@@ -201,13 +218,14 @@ void Decoder::init_random(
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
 
+    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 }
 
 void Decoder::activate(
     const Array<const Int_Buffer*> &input_cis,
-    bool learn_enabled,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -215,7 +233,7 @@ void Decoder::activate(
     // forward kernel
     #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, learn_enabled, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     // copy to prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -239,26 +257,27 @@ void Decoder::learn(
 
 void Decoder::clear_state() {
     hidden_cis.fill(0);
+    hidden_acts.fill(0.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++)
         visible_layers[vli].input_cis_prev.fill(0);
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hidden_acts.size() * sizeof(float) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(S_Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
 }
 
 int Decoder::state_size() const {
-    int size = hidden_cis.size() * sizeof(int);
+    int size = hidden_acts.size() * sizeof(float) + hidden_cis.size() * sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -274,6 +293,7 @@ void Decoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
 
+    writer.write(reinterpret_cast<const void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     
     int num_visible_layers = visible_layers.size();
@@ -286,7 +306,7 @@ void Decoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
@@ -300,8 +320,10 @@ void Decoder::read(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
+    hidden_acts.resize(num_hidden_cells);
     hidden_cis.resize(num_hidden_columns);
 
+    reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     int num_visible_layers;
@@ -325,7 +347,7 @@ void Decoder::read(
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
 
         vl.input_cis_prev.resize(num_visible_columns);
 
@@ -336,6 +358,7 @@ void Decoder::read(
 void Decoder::write_state(
     Stream_Writer &writer
 ) const {
+    writer.write(reinterpret_cast<const void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -348,6 +371,7 @@ void Decoder::write_state(
 void Decoder::read_state(
     Stream_Reader &reader
 ) {
+    reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
