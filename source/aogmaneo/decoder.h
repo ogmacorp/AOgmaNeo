@@ -50,8 +50,6 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Float_Buffer hidden_acts;
-
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;

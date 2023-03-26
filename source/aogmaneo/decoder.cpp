@@ -67,10 +67,6 @@ void Decoder::forward(
                 }
         }
 
-        float act = (sum / 255.0f) / count;
-
-        hidden_acts[hidden_cell_index] = act;
-
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
             max_index = hc;
@@ -207,8 +203,6 @@ void Decoder::init_random(
 
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-
-    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 }
 
 void Decoder::activate(
@@ -309,8 +303,6 @@ void Decoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-
-    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
     int num_visible_layers;
 
