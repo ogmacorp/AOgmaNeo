@@ -373,7 +373,7 @@ void Encoder::reconstruct(
 
     #pragma omp parallel for
     for (int i = 0; i < num_visible_columns; i++)
-        reconstruct(Int2(i / hidden_size.y, i % hidden_size.y), vli);
+        reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli);
 }
 
 int Encoder::size() const {
