@@ -28,6 +28,8 @@ void Encoder::forward(
         float sum = 0.0f;
         float total_importance = 0.0f;
 
+        bool all_vigilant = true;
+
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
 
@@ -75,15 +77,21 @@ void Encoder::forward(
                 vl.hidden_partial_acts[hidden_cell_index] = (sub_sum / 255.0f) / max(1, sub_count);
             }
 
+            if (vl.hidden_partial_acts[hidden_cell_index] < params.vigilance) {
+                all_vigilant = false;
+
+                break;
+            }
+
             sum += vl.hidden_partial_acts[hidden_cell_index] * vl.importance;
             total_importance += vl.importance;
         }
 
-        sum /= max(0.0001f, total_importance);
+        if (all_vigilant) {
+            sum /= max(0.0001f, total_importance);
 
-        float activation = sum / (params.choice + hidden_totals[hidden_cell_index]);
+            float activation = sum / (params.choice + hidden_totals[hidden_cell_index]);
 
-        if (sum >= params.vigilance) {
             if (activation > max_activation || max_index == -1) {
                 max_activation = activation;
                 max_index = hc;
