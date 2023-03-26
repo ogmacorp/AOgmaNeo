@@ -148,7 +148,7 @@ void Hierarchy::init_random(
                 int vli = num_inputs + t;
 
                 e_visible_layer_descs[vli].size = layer_descs[l - 1].hidden_size;
-                e_visible_layer_descs[vli].radius = layer_descs[vli].up_radius;
+                e_visible_layer_descs[vli].radius = layer_descs[l].up_radius;
             }
 
             // feedback
