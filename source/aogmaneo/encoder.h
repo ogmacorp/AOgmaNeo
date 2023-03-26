@@ -59,7 +59,7 @@ public:
 
         Params()
         :
-        choice(0.0001f),
+        choice(0.1f),
         vigilance(0.9f),
         lr(0.1f),
         l_radius(2)
@@ -70,8 +70,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Int_Buffer predict_cis;
 
     Float_Buffer hidden_totals;
 
