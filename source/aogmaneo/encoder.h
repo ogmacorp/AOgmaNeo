@@ -59,8 +59,8 @@ public:
 
         Params()
         :
-        choice(0.1f),
-        vigilance(0.9f),
+        choice(0.0001f),
+        vigilance(0.99f),
         lr(0.1f),
         l_radius(2)
         {}
@@ -71,7 +71,7 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
+    Int_Buffer predict_cis;
 
     Float_Buffer hidden_totals;
 
