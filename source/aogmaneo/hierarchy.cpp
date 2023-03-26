@@ -16,7 +16,6 @@ void Hierarchy::init_random(
 ) {
     // create layers
     encoders.resize(layer_descs.size());
-    decoders.resize(layer_descs.size());
 
     ticks.resize(layer_descs.size(), 0);
 
@@ -55,17 +54,6 @@ void Hierarchy::init_random(
 
         // if first layer
         if (l == 0) {
-            e_visible_layer_descs.resize(io_sizes.size() * layer_descs[l].temporal_horizon);
-
-            for (int i = 0; i < io_sizes.size(); i++) {
-                for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
-                    int index = t + layer_descs[l].temporal_horizon * i;
-
-                    e_visible_layer_descs[index].size = io_sizes[i];
-                    e_visible_layer_descs[index].radius = io_descs[i].up_radius;
-                }
-            }
-            
             // initialize history buffers
             histories[l].resize(io_sizes.size());
 
@@ -78,35 +66,43 @@ void Hierarchy::init_random(
                     histories[l][i][t] = Int_Buffer(in_size, 0);
             }
 
-            decoders[l].resize(num_predictions);
-            actors.resize(num_actions);
+            e_visible_layer_descs.resize(io_descs.size() * layer_descs[l].temporal_horizon + io_descs.size() + (l < encoders.size() - 1 ? 1 : 0));
 
-            i_indices.resize(io_sizes.size() * 2);
-            d_indices = Int_Buffer(io_sizes.size(), -1);
-
-            // create decoders and actors
-            int d_index = 0;
-
+            // inputs
             for (int i = 0; i < io_sizes.size(); i++) {
-                if (io_descs[i].type == prediction) {
-                    // decoder visible layer descriptors
-                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
+                for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
+                    int vli = t + layer_descs[l].temporal_horizon * i;
 
-                    d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
-                    d_visible_layer_descs[0].radius = io_descs[i].down_radius;
-
-                    if (l < encoders.size() - 1)
-                        d_visible_layer_descs[1] = d_visible_layer_descs[0];
-
-                    decoders[l][d_index].init_random(io_sizes[i], d_visible_layer_descs);
-
-                    i_indices[d_index] = i;
-                    d_indices[i] = d_index;
-                    d_index++;
+                    e_visible_layer_descs[vli].size = io_sizes[i];
+                    e_visible_layer_descs[vli].radius = io_descs[i].up_radius;
                 }
             }
 
-            d_index = 0;
+            int num_inputs = io_sizes.size() * layer_descs[l].temporal_horizon;
+
+            // predictions
+            for (int i = 0; i < io_sizes.size(); i++) {
+                int vli = num_inputs + i;
+
+                e_visible_layer_descs[vli].size = io_sizes[i];
+                e_visible_layer_descs[vli].radius = io_descs[i].up_radius;
+            }
+
+            // feedback
+            if (l < encoders.size() - 1) {
+                int vli = e_visible_layer_descs.size() - 1;
+
+                e_visible_layer_descs[vli].size = layer_descs[l].hidden_size;
+                e_visible_layer_descs[vli].radius = layer_descs[l].down_radius;
+            }
+
+            actors.resize(num_actions);
+
+            i_indices.resize(io_sizes.size());
+            a_indices = Int_Buffer(io_sizes.size(), -1);
+
+            // create decoders and actors
+            int a_index = 0;
 
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == action) {
@@ -119,22 +115,15 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         a_visible_layer_descs[1] = a_visible_layer_descs[0];
 
-                    actors[d_index].init_random(io_sizes[i], io_descs[i].history_capacity, a_visible_layer_descs);
+                    actors[a_index].init_random(io_sizes[i], io_descs[i].history_capacity, a_visible_layer_descs);
 
-                    i_indices[io_sizes.size() + d_index] = i;
-                    d_indices[i] = d_index;
-                    d_index++;
+                    i_indices[a_index] = i;
+                    a_indices[i] = a_index;
+                    a_index++;
                 }
             }
         }
         else {
-            e_visible_layer_descs.resize(layer_descs[l].temporal_horizon);
-
-            for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
-                e_visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
-                e_visible_layer_descs[t].radius = layer_descs[l].up_radius;
-            }
-
             histories[l].resize(1);
 
             int in_size = layer_descs[l - 1].hidden_size.x * layer_descs[l - 1].hidden_size.y;
@@ -144,24 +133,47 @@ void Hierarchy::init_random(
             for (int t = 0; t < histories[l][0].size(); t++)
                 histories[l][0][t] = Int_Buffer(in_size, 0);
 
-            decoders[l].resize(layer_descs[l].ticks_per_update);
+            e_visible_layer_descs.resize(layer_descs[l].temporal_horizon + layer_descs[l].ticks_per_update + (l < encoders.size() - 1 ? 1 : 0));
 
-            // decoder visible layer descriptors
-            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
+            // inputs
+            for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
+                e_visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
+                e_visible_layer_descs[t].radius = layer_descs[l].up_radius;
+            }
 
-            d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
-            d_visible_layer_descs[0].radius = layer_descs[l].down_radius;
+            int num_inputs = layer_descs[l].temporal_horizon;
 
-            if (l < encoders.size() - 1)
-                d_visible_layer_descs[1] = d_visible_layer_descs[0];
+            // predictions
+            for (int t = 0; t < layer_descs[l].ticks_per_update; t++) {
+                int vli = num_inputs + t;
 
-            // create decoders
-            for (int t = 0; t < decoders[l].size(); t++)
-                decoders[l][t].init_random(layer_descs[l - 1].hidden_size, d_visible_layer_descs);
+                e_visible_layer_descs[vli].size = layer_descs[l - 1].hidden_size;
+                e_visible_layer_descs[vli].radius = layer_descs[vli].up_radius;
+            }
+
+            // feedback
+            if (l < encoders.size() - 1) {
+                int vli = e_visible_layer_descs.size() - 1;
+
+                e_visible_layer_descs[vli].size = layer_descs[l].hidden_size;
+                e_visible_layer_descs[vli].radius = layer_descs[l].down_radius;
+            }
         }
         
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
+
+        // Adjust importances
+        int num_inputs = histories[l].size() * histories[l][0].size();
+        int num_predictions = encoders[l].get_num_visible_layers() - num_inputs - (l < encoders.size() - 1 ? 1 : 0);
+
+        float prediction_importance = static_cast<float>(num_inputs) / static_cast<float>(num_predictions);
+
+        for (int i = 0; i < num_predictions; i++)
+            encoders[l].get_visible_layer(num_inputs + i).importance = prediction_importance;
+
+        if (l < encoders.size() - 1)
+            encoders[l].get_visible_layer(encoders[l].get_num_visible_layers() - 1).importance = num_inputs;
     }
 
     // initialize params
@@ -205,17 +217,34 @@ void Hierarchy::step(
             // updated
             updates[l] = true;
 
-            Array<const Int_Buffer*> layer_input_cis(encoders[l].get_num_visible_layers());
+            // complete for learning
+            if (learn_enabled && encoders[l].get_visible_layer(0).use_input) { // Also check if ran once before
+                int num_inputs = histories[l].size() * histories[l][0].size();
+                int num_predictions = encoders[l].get_num_visible_layers() - num_inputs - (l < encoders.size() - 1 ? 1 : 0);
 
-            int index = 0;
+                for (int i = 0; i < num_predictions; i++)
+                    encoders[l].set_input_cis(&histories[l][l == 0 ? i : 0][l == 0 ? 0 : i], num_inputs + i);
 
+                encoders[l].activate(params.layers[l].encoder);
+
+                encoders[l].learn(params.layers[l].encoder);
+            }
+
+            // clear to null
+            for (int i = 0; i < encoders[l].get_num_visible_layers(); i++)
+                encoders[l].set_input_cis(nullptr, i);
+
+            // set feed forward inputs
             for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    layer_input_cis[index++] = &histories[l][i][t];
+                for (int t = 0; t < histories[l][0].size(); t++) {
+                    int vli = i * histories[l][0].size() + t;
+
+                    encoders[l].set_input_cis(&histories[l][i][t], vli);
+                }
             }
 
             // activate sparse coder
-            encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
+            encoders[l].activate(params.layers[l].encoder);
 
             // add to next layer's history
             if (l < encoders.size() - 1) {
@@ -231,25 +260,35 @@ void Hierarchy::step(
     }
 
     // backward
-    for (int l = decoders.size() - 1; l >= 0; l--) {
+    for (int l = encoders.size() - 1; l >= 0; l--) {
         if (updates[l]) {
-            Array<const Int_Buffer*> layer_input_cis(l < encoders.size() - 1 ? 2 : 1);
+            int num_inputs = histories[l].size() * histories[l][0].size();
+            int num_predictions = encoders[l].get_num_visible_layers() - num_inputs - (l < encoders.size() - 1 ? 1 : 0);
 
-            layer_input_cis[0] = &encoders[l].get_hidden_cis();
-            
-            if (l < encoders.size() - 1)
-                layer_input_cis[1] = &decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
+            if (l < encoders.size() - 1) {
+                int num_inputs_next = histories[l + 1].size() * histories[l + 1][0].size();
 
-            for (int d = 0; d < decoders[l].size(); d++) {
-                if (learn_enabled)
-                    decoders[l][d].learn(&histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+                encoders[l].set_input_cis(&encoders[l + 1].get_visible_layer(num_inputs_next + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis, encoders[l].get_num_visible_layers() - 1);
 
-                decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+                encoders[l].activate(params.layers[l].encoder);
             }
 
+            for (int i = 0; i < num_predictions; i++)
+                encoders[l].reconstruct(num_inputs + i);
+
             if (l == 0) {
+                Array<const Int_Buffer*> a_input_cis(l < encoders.size() - 1 ? 2 : 1);
+
+                a_input_cis[0] = &encoders[l].get_hidden_cis();
+
+                if (a_input_cis.size() == 2) {
+                    int num_inputs_next = histories[l + 1].size() * histories[l + 1][0].size();
+
+                    a_input_cis[1] = &encoders[l + 1].get_visible_layer(num_inputs_next + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis;
+                }
+
                 for (int d = 0; d < actors.size(); d++)
-                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, mimic, params.ios[d].actor);
+                    actors[d].step(a_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, mimic, params.ios[d].actor);
             }
         }
     }
@@ -278,7 +317,7 @@ void Hierarchy::clear_state() {
 }
 
 int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + a_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += sizeof(int);
@@ -357,7 +396,7 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&ticks_per_update[0]), ticks_per_update.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&i_indices[0]), i_indices.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&d_indices[0]), d_indices.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&a_indices[0]), a_indices.size() * sizeof(int));
 
     for (int l = 0; l < num_layers; l++) {
         int num_layer_inputs = histories[l].size();
@@ -437,11 +476,11 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticks_per_update[0]), ticks_per_update.size() * sizeof(int));
 
-    i_indices.resize(num_io * 2);
-    d_indices.resize(num_io);
+    i_indices.resize(num_io);
+    a_indices.resize(num_io);
 
     reader.read(reinterpret_cast<void*>(&i_indices[0]), i_indices.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&d_indices[0]), d_indices.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&a_indices[0]), a_indices.size() * sizeof(int));
     
     for (int l = 0; l < num_layers; l++) {
         int num_layer_inputs;

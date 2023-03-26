@@ -99,9 +99,9 @@ private:
     Array<Encoder> encoders;
     Array<Actor> actors;
 
-    // for mapping first layer Decoders
+    // for mapping first layer actors
     Int_Buffer i_indices;
-    Int_Buffer d_indices;
+    Int_Buffer a_indices;
 
     // histories
     Array<Array<Circle_Buffer<Int_Buffer>>> histories;
@@ -183,7 +183,7 @@ public:
     bool io_layer_exists(
         int i
     ) const {
-        return d_indices[i] != -1;
+        return a_indices[i] != -1;
     }
 
     // retrieve predictions
@@ -191,19 +191,9 @@ public:
         int i
     ) const {
         if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_cis();
+            return actors[a_indices[i]].get_hidden_cis();
 
-        return decoders[0][d_indices[i]].get_hidden_cis();
-    }
-
-    // retrieve prediction activations
-    const Float_Buffer &get_prediction_acts(
-        int i
-    ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
-
-        return decoders[0][d_indices[i]].get_hidden_acts();
+        return encoders[0].get_visible_layer(histories[0].size() * histories[0][0].size() + i).recon_cis;
     }
 
     // whether this layer received on update this timestep
@@ -266,51 +256,24 @@ public:
         return encoders[l];
     }
 
-    int get_num_decoders(
-        int l
-    ) const {
-        return decoders[l].size();
-    }
-
-    // retrieve by index
-    Decoder &get_decoder(
-        int l,
-        int i
-    ) {
-        if (l == 0)
-            return decoders[l][d_indices[i]];
-
-        return decoders[l][i];
-    }
-
-    const Decoder &get_decoder(
-        int l,
-        int i
-    ) const {
-        if (l == 0)
-            return decoders[l][d_indices[i]];
-
-        return decoders[l][i];
-    }
-
     Actor &get_actor(
         int i
     ) {
-        return actors[d_indices[i]];
+        return actors[a_indices[i]];
     }
 
     const Actor &get_actor(
         int i
     ) const {
-        return actors[d_indices[i]];
+        return actors[a_indices[i]];
     }
 
     const Int_Buffer &get_i_indices() const {
         return i_indices;
     }
 
-    const Int_Buffer &get_d_indices() const {
-        return d_indices;
+    const Int_Buffer &get_a_indices() const {
+        return a_indices;
     }
 
     const Array<Circle_Buffer<Int_Buffer>> &get_histories(
