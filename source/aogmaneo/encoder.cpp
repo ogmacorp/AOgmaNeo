@@ -226,7 +226,7 @@ void Encoder::reconstruct(
     
     // find current max
     int max_index = -1;
-    float max_activation = limit_min;
+    float max_activation = 0.0f;
 
     int num_commits = (other_commits == nullptr ? vld.size.z : (*other_commits)[visible_column_index]);
 
