@@ -95,8 +95,6 @@ void Encoder::forward(
         }
     }
 
-    hidden_cis[hidden_column_index] = max_index;
-
     if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         // commit
         max_index = hidden_commits[hidden_column_index];
@@ -104,7 +102,7 @@ void Encoder::forward(
         max_activation = randf(state) * 0.0001f;
     }
 
-    learn_cis[hidden_column_index] = max_index;
+    hidden_cis[hidden_column_index] = max_index;
 
     hidden_max_acts[hidden_column_index] = max_activation;
 }
@@ -117,7 +115,7 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    if (learn_cis[hidden_column_index] == -1)
+    if (hidden_cis[hidden_column_index] == -1)
         return;
 
     float max_activation = hidden_max_acts[hidden_column_index];
@@ -137,7 +135,7 @@ void Encoder::learn(
             }
         }
 
-    int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
     bool fast_commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
 
@@ -194,7 +192,7 @@ void Encoder::learn(
 
     hidden_totals[hidden_cell_index_max] = total;
 
-    if (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index])
+    if (hidden_cis[hidden_column_index] == hidden_commits[hidden_column_index])
         hidden_commits[hidden_column_index]++;
 }
 
@@ -308,8 +306,6 @@ void Encoder::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-
-    learn_cis.resize(num_hidden_columns);
 
     hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
 
@@ -452,8 +448,6 @@ void Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-
-    learn_cis.resize(num_hidden_columns);
 
     hidden_totals.resize(num_hidden_cells);
 
