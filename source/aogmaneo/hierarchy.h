@@ -9,7 +9,6 @@
 #pragma once
 
 #include "encoder.h"
-#include "decoder.h"
 #include "actor.h"
 
 namespace aon {
@@ -75,12 +74,10 @@ public:
     };
 
     struct Layer_Params {
-        Decoder::Params decoder;
         Encoder::Params encoder;
     };
 
     struct IO_Params {
-        Decoder::Params decoder;
         Actor::Params actor;
 
         // additional
@@ -100,7 +97,6 @@ public:
 private:
     // layers
     Array<Encoder> encoders;
-    Array<Array<Decoder>> decoders;
     Array<Actor> actors;
 
     // for mapping first layer Decoders
