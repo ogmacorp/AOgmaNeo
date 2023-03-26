@@ -272,7 +272,7 @@ void Hierarchy::step(
             }
 
             for (int i = 0; i < num_predictions; i++)
-                encoders[l].reconstruct(num_inputs + i);
+                encoders[l].reconstruct((l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits()), num_inputs + i);
 
             if (l == 0) {
                 Array<const Int_Buffer*> a_input_cis(l < encoders.size() - 1 ? 2 : 1);

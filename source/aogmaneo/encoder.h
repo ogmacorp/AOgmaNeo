@@ -96,6 +96,7 @@ private:
 
     void reconstruct(
         const Int2 &column_pos,
+        const Int_Buffer* other_commits,
         int vli
     );
 
@@ -120,6 +121,7 @@ public:
     );
 
     void reconstruct(
+        const Int_Buffer* other_commits, // can be nullptr for no effect
         int vli
     );
 
