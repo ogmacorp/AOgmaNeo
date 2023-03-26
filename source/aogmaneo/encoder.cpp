@@ -22,6 +22,9 @@ void Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
+    int max_backup_index = 0;
+    float max_backup_activation = 0.0f;
+
     for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -85,7 +88,14 @@ void Encoder::forward(
                 max_index = hc;
             }
         }
+
+        if (activation > max_backup_activation) {
+            max_backup_activation = activation;
+            max_backup_index = hc;
+        }
     }
+
+    hidden_cis[hidden_column_index] = max_index;
 
     if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         // commit
@@ -94,7 +104,7 @@ void Encoder::forward(
         max_activation = randf(state) * 0.0001f;
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    learn_cis[hidden_column_index] = max_index;
 
     hidden_max_acts[hidden_column_index] = max_activation;
 }
@@ -107,7 +117,7 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    if (hidden_cis[hidden_column_index] == -1)
+    if (learn_cis[hidden_column_index] == -1)
         return;
 
     float max_activation = hidden_max_acts[hidden_column_index];
@@ -127,7 +137,7 @@ void Encoder::learn(
             }
         }
 
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
     bool fast_commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
 
@@ -184,7 +194,7 @@ void Encoder::learn(
 
     hidden_totals[hidden_cell_index_max] = total;
 
-    if (hidden_cis[hidden_column_index] == hidden_commits[hidden_column_index])
+    if (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index])
         hidden_commits[hidden_column_index]++;
 }
 
@@ -238,7 +248,7 @@ void Encoder::reconstruct(
                 if (hidden_cis[hidden_column_index] == -1)
                     continue;
 
-                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
@@ -297,7 +307,9 @@ void Encoder::init_random(
         vl.recon_cis = Int_Buffer(num_visible_columns, 0);
     }
 
-    hidden_cis = Int_Buffer(num_hidden_columns, -1);
+    hidden_cis = Int_Buffer(num_hidden_columns, 0);
+
+    learn_cis.resize(num_hidden_columns);
 
     hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
 
@@ -440,6 +452,8 @@ void Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    learn_cis.resize(num_hidden_columns);
 
     hidden_totals.resize(num_hidden_cells);
 
