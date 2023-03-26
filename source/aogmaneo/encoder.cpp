@@ -252,7 +252,7 @@ void Encoder::reconstruct(
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                    int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
                     sum += (vc == vl.weight_indices[wi]) * vl.weights[wi];
                     count++;
