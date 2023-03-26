@@ -248,7 +248,7 @@ void Encoder::reconstruct(
                 if (hidden_cis[hidden_column_index] == -1)
                     continue;
 
-                int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
