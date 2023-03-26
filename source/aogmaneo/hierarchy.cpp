@@ -305,10 +305,6 @@ void Hierarchy::clear_state() {
         }
 
         encoders[l].clear_state();
-        
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].clear_state();
     }
 
     // actors
@@ -317,7 +313,7 @@ void Hierarchy::clear_state() {
 }
 
 int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + a_indices.size() * sizeof(int);
+    int size = 3 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + a_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += sizeof(int);
@@ -330,9 +326,6 @@ int Hierarchy::size() const {
         }
 
         size += encoders[l].size();
-
-        for (int d = 0; d < decoders[l].size(); d++)
-            size += decoders[l][d].size();
     }
 
     // actors
@@ -358,10 +351,6 @@ int Hierarchy::state_size() const {
         }
 
         size += encoders[l].state_size();
-        
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            size += decoders[l][d].state_size();
     }
 
     // actors
@@ -382,10 +371,8 @@ void Hierarchy::write(
 
     writer.write(reinterpret_cast<const void*>(&num_io), sizeof(int));
 
-    int num_predictions = decoders[0].size();
     int num_actions = actors.size();
 
-    writer.write(reinterpret_cast<const void*>(&num_predictions), sizeof(int));
     writer.write(reinterpret_cast<const void*>(&num_actions), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&io_sizes[0]), num_io * sizeof(Int3));
@@ -422,10 +409,6 @@ void Hierarchy::write(
         }
 
         encoders[l].write(writer);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].write(writer);
     }
     
     // actors
@@ -451,10 +434,8 @@ void Hierarchy::read(
 
     reader.read(reinterpret_cast<void*>(&num_io), sizeof(int));
 
-    int num_predictions;
     int num_actions;
 
-    reader.read(reinterpret_cast<void*>(&num_predictions), sizeof(int));
     reader.read(reinterpret_cast<void*>(&num_actions), sizeof(int));
 
     io_sizes.resize(num_io);
@@ -464,7 +445,6 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&io_types[0]), num_io * sizeof(Byte));
 
     encoders.resize(num_layers);
-    decoders.resize(num_layers);
 
     histories.resize(num_layers);
     
@@ -513,12 +493,6 @@ void Hierarchy::read(
         }
 
         encoders[l].read(reader);
-        
-        decoders[l].resize(l == 0 ? num_predictions : ticks_per_update[l]);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].read(reader);
     }
 
     actors.resize(num_actions);
@@ -554,10 +528,6 @@ void Hierarchy::write_state(
         }
 
         encoders[l].write_state(writer);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].write_state(writer);
     }
 
     for (int d = 0; d < actors.size(); d++)
@@ -583,10 +553,6 @@ void Hierarchy::read_state(
         }
 
         encoders[l].read_state(reader);
-        
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].read_state(reader);
     }
 
     // actors
