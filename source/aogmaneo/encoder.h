@@ -62,7 +62,7 @@ public:
         choice(0.01f),
         vigilance(0.9f),
         lr(0.1f),
-        l_radius(1)
+        l_radius(2)
         {}
     };
 
