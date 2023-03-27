@@ -108,12 +108,12 @@ void Encoder::forward(
 
     hidden_cis[hidden_column_index] = max_complete_index;
 
-    learn_cis[hidden_column_index] = max_index;
+    predict_cis[hidden_column_index] = max_index;
 
     hidden_max_acts[hidden_column_index] = max_activation;
 }
 
-void Encoder::inhibit(
+void Encoder::learn(
     const Int2 &column_pos,
     const Params &params
 ) {
@@ -121,7 +121,7 @@ void Encoder::inhibit(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    if (learn_cis[hidden_column_index] == -1)
+    if (predict_cis[hidden_column_index] == -1)
         return;
 
     float max_activation = hidden_max_acts[hidden_column_index];
@@ -136,26 +136,12 @@ void Encoder::inhibit(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_max_acts[other_hidden_column_index] >= max_activation) {
-                    learn_cis[hidden_column_index] = -1;
+                if (hidden_max_acts[other_hidden_column_index] >= max_activation)
                     return;
-                }
             }
         }
-}
 
-void Encoder::learn(
-    const Int2 &column_pos,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    if (learn_cis[hidden_column_index] == -1)
-        return;
-
-    int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_cell_index_max = predict_cis[hidden_column_index] + hidden_cells_start;
 
     bool fast_commit = (hidden_totals[hidden_cell_index_max] == limit_max);
 
@@ -211,7 +197,7 @@ void Encoder::learn(
 
     hidden_totals[hidden_cell_index_max] = total;
 
-    if (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index])
+    if (predict_cis[hidden_column_index] == hidden_commits[hidden_column_index])
         hidden_commits[hidden_column_index]++;
 }
 
@@ -270,7 +256,10 @@ void Encoder::reconstruct(
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                    if (predict_cis[hidden_column_index] == -1)
+                        continue;
+
+                    int hidden_cell_index_max = predict_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
@@ -328,7 +317,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    learn_cis = Int_Buffer(num_hidden_columns, -1);
+    predict_cis = Int_Buffer(num_hidden_columns, -1);
 
     hidden_totals = Float_Buffer(num_hidden_cells, limit_max);
 
@@ -365,10 +354,6 @@ void Encoder::activate(
 
         forward(Int2(i / hidden_size.y, i % hidden_size.y), &state, params);
     }
-
-    #pragma omp parallel for
-    for (int i = 0; i < num_hidden_columns; i++)
-        inhibit(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
     // clear update flags
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -477,7 +462,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    learn_cis = Int_Buffer(num_hidden_columns, -1);
+    predict_cis = Int_Buffer(num_hidden_columns, -1);
 
     hidden_totals.resize(num_hidden_cells);
 
