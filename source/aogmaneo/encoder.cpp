@@ -185,8 +185,12 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (fast_commit)
+                if (fast_commit) {
                     vl.weight_indices[wi] = in_ci;
+
+                    if (in_ci == -1)
+                        vl.weights[wi] = 0;
+                }
                 else if (vl.weight_indices[wi] != in_ci)
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
