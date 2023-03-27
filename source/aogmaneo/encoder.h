@@ -54,15 +54,17 @@ public:
     struct Params {
         float choice; // Choice parameter
         float vigilance; // ART vigilance
+        float min_recon; // minimum reconstruction activation
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
         choice(0.0001f),
-        vigilance(0.95f),
+        vigilance(0.9f),
+        min_recon(0.01f),
         lr(0.1f),
-        l_radius(2)
+        l_radius(1)
         {}
     };
 
@@ -102,7 +104,8 @@ private:
     void reconstruct(
         const Int2 &column_pos,
         const Int_Buffer* other_commits,
-        int vli
+        int vli,
+        const Params &params
     );
 
 public:
@@ -127,7 +130,8 @@ public:
 
     void reconstruct(
         const Int_Buffer* other_commits, // can be nullptr for no effect
-        int vli
+        int vli,
+        const Params &params // parameters
     );
 
     void clear_state() {

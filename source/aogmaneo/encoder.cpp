@@ -212,7 +212,8 @@ void Encoder::learn(
 void Encoder::reconstruct(
     const Int2 &column_pos,
     const Int_Buffer* other_commits,
-    int vli
+    int vli,
+    const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
     Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -243,7 +244,7 @@ void Encoder::reconstruct(
     
     // find current max
     int max_index = -1;
-    int max_activation = 0;
+    float max_activation = 0.0f;
 
     int num_commits = (other_commits == nullptr ? vld.size.z : (*other_commits)[visible_column_index]);
 
@@ -277,9 +278,13 @@ void Encoder::reconstruct(
             }
 
         if (count != 0) {
-            if (sum > max_activation || max_index == -1) {
-                max_activation = sum;
-                max_index = vc;
+            float recon = (sum / 255.0f) / count;
+
+            if (recon >= params.min_recon) {
+                if (recon > max_activation || max_index == -1) {
+                    max_activation = recon;
+                    max_index = vc;
+                }
             }
         }
     }
@@ -391,7 +396,8 @@ void Encoder::learn(
 
 void Encoder::reconstruct(
     const Int_Buffer* other_commits,
-    int vli
+    int vli,
+    const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -400,7 +406,7 @@ void Encoder::reconstruct(
 
     #pragma omp parallel for
     for (int i = 0; i < num_visible_columns; i++)
-        reconstruct(Int2(i / vld.size.y, i % vld.size.y), other_commits, vli);
+        reconstruct(Int2(i / vld.size.y, i % vld.size.y), other_commits, vli, params);
 }
 
 int Encoder::size() const {
