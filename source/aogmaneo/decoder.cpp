@@ -19,7 +19,7 @@ void Decoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int max_index = 0;
+    int max_index = -1;
     float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -173,7 +173,7 @@ void Decoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 5;
+            vl.weights[i] = rand() % 5 - 2;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
