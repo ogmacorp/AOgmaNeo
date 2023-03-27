@@ -98,7 +98,7 @@ void Encoder::forward(
 
     hidden_cis[hidden_column_index] = max_complete_index;
 
-    learn_cis[hidden_column_index] = max_index;
+    predict_cis[hidden_column_index] = max_index;
 
     hidden_max_acts[hidden_column_index] = max_activation + randf(state) * 0.0001f; // small tie breaker randomness
 }
@@ -111,7 +111,7 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int learn_ci = learn_cis[hidden_column_index];
+    int learn_ci = predict_cis[hidden_column_index];
 
     float max_activation = hidden_max_acts[hidden_column_index];
 
@@ -253,10 +253,10 @@ void Encoder::reconstruct(
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
-
-                    if (hidden_totals[hidden_cell_index_max] == limit_max)
+                    if (predict_cis[hidden_column_index] == -1)
                         continue;
+
+                    int hidden_cell_index_max = predict_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
@@ -314,7 +314,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    learn_cis = Int_Buffer(num_hidden_columns, -1);
+    predict_cis = Int_Buffer(num_hidden_columns, -1);
 
     hidden_totals = Float_Buffer(num_hidden_cells, limit_max);
 
@@ -459,7 +459,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    learn_cis = Int_Buffer(num_hidden_columns, -1);
+    predict_cis = Int_Buffer(num_hidden_columns, -1);
 
     hidden_totals.resize(num_hidden_cells);
 
