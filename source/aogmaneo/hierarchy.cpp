@@ -171,7 +171,7 @@ void Hierarchy::init_random(
             encoders[l].get_visible_layer(num_inputs + i).importance = 0.0f;
 
         if (l < encoders.size() - 1)
-            encoders[l].get_visible_layer(encoders[l].get_num_visible_layers() - 1).importance = 1.0f;
+            encoders[l].get_visible_layer(encoders[l].get_num_visible_layers() - 1).importance = num_inputs;
     }
 
     // initialize params
