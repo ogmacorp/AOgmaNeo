@@ -55,6 +55,9 @@ void Decoder::forward(
 
                     int in_ci = (*input_cis[vli])[visible_column_index];
 
+                    if (in_ci == -1)
+                        continue;
+
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                     int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
@@ -133,11 +136,14 @@ void Decoder::learn(
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int in_ciprev = vl.input_cis_prev[visible_column_index];
+                    int in_ci_prev = vl.input_cis_prev[visible_column_index];
+
+                    if (in_ci_prev == -1)
+                        continue;
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = in_ciprev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
                 }

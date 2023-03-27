@@ -23,9 +23,6 @@ void Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
-    int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
-
     for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -52,7 +49,7 @@ void Encoder::forward(
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
             int sub_sum = 0;
-            int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+            int sub_count = 0;
 
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -60,14 +57,18 @@ void Encoder::forward(
 
                     int in_ci = (*input_cis[vli])[visible_column_index];
 
+                    if (in_ci == -1)
+                        continue;
+
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
                     sub_sum += (vl.weight_indices[wi] == in_ci) * vl.weights[wi];
+                    sub_count++;
                 }
 
-            sum += (sub_sum / 255.0f) / sub_count * vl.importance;
+            sum += (sub_sum / 255.0f) / max(1, sub_count) * vl.importance;
             total_importance += vl.importance;
         }
 
@@ -81,12 +82,9 @@ void Encoder::forward(
                 max_index = hc;
             }
         }
-
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
-            max_complete_index = hc;
-        }
     }
+
+    hidden_cis[hidden_column_index] = max_index;
 
     if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         // commit
@@ -98,8 +96,6 @@ void Encoder::forward(
     learn_cis[hidden_column_index] = max_index;
 
     hidden_max_acts[hidden_column_index] = max_activation;
-
-    hidden_cis[hidden_column_index] = max_complete_index;
 }
 
 void Encoder::learn(
@@ -133,7 +129,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
-    bool fast_commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
+    bool fast_commit = (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index]);
 
     float total = 0.0f;
     float total_importance = 0.0f;
@@ -186,7 +182,7 @@ void Encoder::learn(
 
     hidden_totals[hidden_cell_index_max] = total;
 
-    if (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index])
+    if (fast_commit)
         hidden_commits[hidden_column_index]++;
 }
 
