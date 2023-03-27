@@ -48,8 +48,8 @@ public:
 
         Params()
         :
-        choice(0.1f),
-        vigilance(0.9f),
+        choice(0.0001f),
+        vigilance(0.95f),
         lr(0.1f),
         l_radius(2)
         {}
