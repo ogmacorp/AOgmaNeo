@@ -100,7 +100,7 @@ void Encoder::forward(
 
     predict_cis[hidden_column_index] = max_index;
 
-    hidden_max_acts[hidden_column_index] = max_activation + randf(state) * 0.0001f; // small tie breaker randomness
+    hidden_max_acts[hidden_column_index] = max_activation - randf(state) * 0.0001f; // small tie breaker randomness
 }
 
 void Encoder::learn(
