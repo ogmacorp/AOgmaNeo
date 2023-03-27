@@ -97,6 +97,7 @@ private:
     // layers
     Array<Encoder> encoders;
     Array<Actor> actors;
+    Array<Int_Buffer> hidden_cis;
 
     // for mapping first layer actors
     Int_Buffer i_indices;
@@ -193,6 +194,12 @@ public:
             return actors[a_indices[i]].get_hidden_cis();
 
         return encoders[0].get_visible_layer(histories[0].size() * histories[0][0].size() + i).recon_cis;
+    }
+
+    const Int_Buffer &get_hidden_cis(
+        int l
+    ) {
+        return hidden_cis[l];
     }
 
     // whether this layer received on update this timestep
