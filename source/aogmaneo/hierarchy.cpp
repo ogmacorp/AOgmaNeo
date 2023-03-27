@@ -263,17 +263,6 @@ void Hierarchy::step(
             int num_inputs = histories[l].size() * histories[l][0].size();
             int num_predictions = encoders[l].get_num_visible_layers() - num_inputs - (l < encoders.size() - 1 ? 1 : 0);
 
-            if (l < encoders.size() - 1) {
-                int num_inputs_next = histories[l + 1].size() * histories[l + 1][0].size();
-
-                encoders[l].set_input_cis(&encoders[l + 1].get_visible_layer(num_inputs_next + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis, encoders[l].get_num_visible_layers() - 1);
-
-                encoders[l].activate(params.layers[l].encoder);
-            }
-
-            for (int i = 0; i < num_predictions; i++)
-                encoders[l].reconstruct((l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits()), num_inputs + i);
-
             if (l == 0) {
                 Array<const Int_Buffer*> a_input_cis(l < encoders.size() - 1 ? 2 : 1);
 
@@ -288,6 +277,17 @@ void Hierarchy::step(
                 for (int i = 0; i < actors.size(); i++)
                     actors[i].step(a_input_cis, input_cis[i_indices[i]], reward, learn_enabled, mimic, params.ios[i_indices[i]].actor);
             }
+
+            if (l < encoders.size() - 1) {
+                int num_inputs_next = histories[l + 1].size() * histories[l + 1][0].size();
+
+                encoders[l].set_input_cis(&encoders[l + 1].get_visible_layer(num_inputs_next + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis, encoders[l].get_num_visible_layers() - 1);
+
+                encoders[l].activate(params.layers[l].encoder);
+            }
+
+            for (int i = 0; i < num_predictions; i++)
+                encoders[l].reconstruct((l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits()), num_inputs + i);
         }
     }
 }
