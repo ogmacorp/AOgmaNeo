@@ -33,8 +33,8 @@ public:
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
-            int up_radius = 4,
-            int down_radius = 4,
+            int up_radius = 2,
+            int down_radius = 2,
             int history_capacity = 64
         )
         :
@@ -58,8 +58,8 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
-            int up_radius = 4,
-            int down_radius = 4,
+            int up_radius = 2,
+            int down_radius = 2,
             int ticks_per_update = 2,
             int temporal_horizon = 2
         )
