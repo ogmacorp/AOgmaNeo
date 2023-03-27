@@ -63,7 +63,7 @@ void Hierarchy::init_random(
                 histories[l][i].resize(layer_descs[l].temporal_horizon);
                 
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = Int_Buffer(in_size, -1);
+                    histories[l][i][t] = Int_Buffer(in_size, 0);
             }
 
             e_visible_layer_descs.resize(io_descs.size() * layer_descs[l].temporal_horizon + io_descs.size() + (l < encoders.size() - 1 ? 1 : 0));
@@ -131,7 +131,7 @@ void Hierarchy::init_random(
             histories[l][0].resize(layer_descs[l].temporal_horizon);
 
             for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = Int_Buffer(in_size, -1);
+                histories[l][0][t] = Int_Buffer(in_size, 0);
 
             e_visible_layer_descs.resize(layer_descs[l].temporal_horizon + layer_descs[l].ticks_per_update + (l < encoders.size() - 1 ? 1 : 0));
 
@@ -287,7 +287,7 @@ void Hierarchy::step(
             }
 
             for (int i = 0; i < num_predictions; i++)
-                encoders[l].reconstruct((l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits()), num_inputs + i, params.layers[l].encoder);
+                encoders[l].reconstruct((l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits()), num_inputs + i);
         }
     }
 }

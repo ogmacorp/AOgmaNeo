@@ -54,17 +54,15 @@ public:
     struct Params {
         float choice; // Choice parameter
         float vigilance; // ART vigilance
-        float min_recon; // minimum reconstruction activation
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
         choice(0.0001f),
-        vigilance(0.9f),
-        min_recon(0.01f),
+        vigilance(0.95f),
         lr(0.1f),
-        l_radius(1)
+        l_radius(2)
         {}
     };
 
@@ -72,6 +70,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    Int_Buffer learn_cis;
 
     Float_Buffer hidden_totals;
 
@@ -104,8 +104,7 @@ private:
     void reconstruct(
         const Int2 &column_pos,
         const Int_Buffer* other_commits,
-        int vli,
-        const Params &params
+        int vli
     );
 
 public:
@@ -130,8 +129,7 @@ public:
 
     void reconstruct(
         const Int_Buffer* other_commits, // can be nullptr for no effect
-        int vli,
-        const Params &params // parameters
+        int vli
     );
 
     void clear_state() {
