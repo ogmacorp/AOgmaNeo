@@ -59,8 +59,8 @@ public:
 
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.99f),
+        choice(0.01f),
+        vigilance(0.5f),
         lr(0.1f),
         l_radius(2)
         {}
@@ -70,8 +70,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Int_Buffer predict_cis;
 
     Float_Buffer hidden_totals;
 
@@ -88,6 +86,11 @@ private:
     void forward(
         const Int2 &column_pos,
         unsigned int* state,
+        const Params &params
+    );
+    
+    void inhibit(
+        const Int2 &column_pos,
         const Params &params
     );
 
