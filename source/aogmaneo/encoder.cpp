@@ -279,7 +279,7 @@ void Encoder::reconstruct(
             float recon = (sum / 255.0f) / count;
 
             if (recon >= params.min_recon) {
-                if (recon > max_activation) {
+                if (recon > max_activation || max_index == -1) {
                     max_activation = recon;
                     max_index = vc;
                 }
