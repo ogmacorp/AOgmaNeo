@@ -42,7 +42,7 @@ public:
         // Defaults
         Params()
         :
-        scale(32.0f),
+        scale(16.0f),
         lr(0.05f)
         {}
     };
