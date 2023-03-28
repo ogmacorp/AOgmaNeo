@@ -57,6 +57,9 @@ void Encoder::forward(
 
                     int in_ci = (*input_cis[vli])[visible_column_index];
 
+                    if (in_ci == -1)
+                        continue;
+
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
