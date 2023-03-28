@@ -75,7 +75,10 @@ void Encoder::forward(
                         sub_count++;
                     }
 
-                vl.hidden_partial_acts[hidden_cell_index] = (sub_sum / 255.0f) / max(1, sub_count);
+                if (sub_count == 0) // No input, assume it's fine
+                    vl.hidden_partial_acts[hidden_cell_index] = 1.0f;
+                else
+                    vl.hidden_partial_acts[hidden_cell_index] = (sub_sum / 255.0f) / max(1, sub_count);
             }
 
             sum += vl.hidden_partial_acts[hidden_cell_index] * vl.importance;
@@ -152,7 +155,6 @@ void Encoder::learn(
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
-
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
         int diam = vld.radius * 2 + 1;
@@ -183,14 +185,16 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (commit) {
-                    vl.weight_indices[wi] = in_ci;
+                if (vl.use_input) {
+                    if (commit) {
+                        vl.weight_indices[wi] = in_ci;
 
-                    if (in_ci == -1)
-                        vl.weights[wi] = 0;
+                        if (in_ci == -1)
+                            vl.weights[wi] = 0;
+                    }
+                    else if (vl.weight_indices[wi] != in_ci || in_ci == -1)
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
                 }
-                else if (vl.weight_indices[wi] != in_ci || in_ci == -1)
-                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                 sub_total += vl.weights[wi];
             }
