@@ -76,7 +76,7 @@ void Decoder::forward(
         }
     }
 
-    hidden_cis[hidden_column_index] = (max_activation > params.min_act ? max_index : -1);
+    hidden_cis[hidden_column_index] = (max_activation >= params.min_act ? max_index : -1);
 }
 
 void Decoder::learn(
