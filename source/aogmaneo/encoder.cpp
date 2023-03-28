@@ -145,7 +145,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
-    bool fast_commit = (hidden_totals[hidden_cell_index_max] == limit_max);
+    bool commit = (hidden_totals[hidden_cell_index_max] == limit_max);
 
     float total = 0.0f;
     float total_importance = 0.0f;
@@ -183,7 +183,7 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (fast_commit) {
+                if (commit) {
                     vl.weight_indices[wi] = in_ci;
 
                     if (in_ci == -1)
@@ -203,7 +203,7 @@ void Encoder::learn(
 
     hidden_totals[hidden_cell_index_max] = total;
 
-    if (fast_commit)
+    if (commit)
         hidden_commits[hidden_column_index]++;
 }
 
