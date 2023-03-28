@@ -61,8 +61,6 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
-
     Float_Buffer hidden_totals;
 
     Float_Buffer hidden_max_acts;
@@ -79,6 +77,11 @@ private:
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
         unsigned int* state,
+        const Params &params
+    );
+
+    void inhibit(
+        const Int2 &column_pos,
         const Params &params
     );
 
