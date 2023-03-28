@@ -78,7 +78,7 @@ void Encoder::forward(
                 if (sub_count == 0) // No input, assume it's fine
                     vl.hidden_partial_acts[hidden_cell_index] = 1.0f;
                 else
-                    vl.hidden_partial_acts[hidden_cell_index] = (sub_sum / 255.0f) / max(1, sub_count);
+                    vl.hidden_partial_acts[hidden_cell_index] = (sub_sum / 255.0f) / sub_count;
             }
 
             sum += vl.hidden_partial_acts[hidden_cell_index] * vl.importance;
@@ -175,7 +175,7 @@ void Encoder::learn(
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
         int sub_total = 0;
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -332,7 +332,7 @@ void Encoder::init_random(
 
     learn_cis = Int_Buffer(num_hidden_columns, -1);
 
-    hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_totals = Float_Buffer(num_hidden_cells, limit_max);
 
     hidden_max_acts.resize(num_hidden_columns);
 
