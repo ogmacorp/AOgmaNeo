@@ -71,7 +71,7 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer predict_cis;
+    Int_Buffer learn_cis;
 
     Float_Buffer hidden_totals;
 
