@@ -23,9 +23,6 @@ void Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
-    int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
-
     for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -52,22 +49,30 @@ void Encoder::forward(
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
             int sub_sum = 0;
-            int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+            int sub_count = 0;
 
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                     int in_ci = (*input_cis[vli])[visible_column_index];
+                    
+                    if (in_ci == -1)
+                        continue;
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
                     sub_sum += (vl.weight_indices[wi] == in_ci) * vl.weights[wi];
+                    sub_count++;
                 }
 
-            sum += (sub_sum / 255.0f) / sub_count * vl.importance;
+            if (sub_count == 0)
+                sum += vl.importance;
+            else
+                sum += (sub_sum / 255.0f) / sub_count * vl.importance;
+
             total_importance += vl.importance;
         }
 
@@ -81,14 +86,9 @@ void Encoder::forward(
                 max_index = hc;
             }
         }
-
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
-            max_complete_index = hc;
-        }
     }
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+    hidden_cis[hidden_column_index] = max_index;
 
     if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         // commit
@@ -223,7 +223,7 @@ void Encoder::init_random(
         vl.weights = Byte_Buffer(vl.weight_indices.size(), 255);
     }
 
-    hidden_cis = Int_Buffer(num_hidden_columns, 0);
+    hidden_cis = Int_Buffer(num_hidden_columns, -1);
 
     learn_cis.resize(num_hidden_columns);
 
