@@ -246,7 +246,7 @@ void Encoder::reconstruct(
 
     int num_commits = (other_commits == nullptr ? vld.size.z : (*other_commits)[visible_column_index]);
 
-    for (int vc = -1; vc < num_commits; vc++) {
+    for (int vc = 0; vc < num_commits; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int sum = 0;
