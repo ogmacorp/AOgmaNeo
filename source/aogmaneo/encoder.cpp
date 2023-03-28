@@ -177,12 +177,8 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (fast_commit) {
+                if (fast_commit)
                     vl.weight_indices[wi] = in_ci;
-
-                    if (in_ci == -1)
-                        vl.weights[wi] = 0;
-                }
                 else if (vl.weight_indices[wi] != in_ci)
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
@@ -234,12 +230,12 @@ void Encoder::reconstruct(
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
     
     // find current max
-    int max_index = 0;
+    int max_index = -1;
     float max_activation = 0.0f;
 
     int num_commits = (other_commits == nullptr ? vld.size.z : (*other_commits)[visible_column_index]);
 
-    for (int vc = 0; vc < num_commits; vc++) {
+    for (int vc = -1; vc < num_commits; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int sum = 0;
