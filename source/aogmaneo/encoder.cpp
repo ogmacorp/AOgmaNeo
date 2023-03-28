@@ -157,6 +157,8 @@ void Encoder::learn(
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
+        assert(vl.use_input);
+
         int diam = vld.radius * 2 + 1;
 
         // projection
@@ -185,16 +187,14 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (vl.use_input) {
-                    if (commit) {
-                        vl.weight_indices[wi] = in_ci;
+                if (commit) {
+                    vl.weight_indices[wi] = in_ci;
 
-                        if (in_ci == -1)
-                            vl.weights[wi] = 0;
-                    }
-                    else if (vl.weight_indices[wi] != in_ci || in_ci == -1)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+                    if (in_ci == -1)
+                        vl.weights[wi] = 0;
                 }
+                else if (vl.weight_indices[wi] != in_ci || in_ci == -1)
+                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                 sub_total += vl.weights[wi];
             }
