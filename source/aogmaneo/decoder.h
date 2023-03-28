@@ -30,27 +30,29 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        S_Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
+        float scale; // Scale of squashing
         float lr; // Learning rate
 
         // Defaults
         Params()
         :
-        lr(0.02f)
+        scale(16.0f),
+        lr(0.05f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
 
-    Int_Buffer hidden_cis; // hidden state
-
     Float_Buffer hidden_acts;
+
+    Int_Buffer hidden_cis; // hidden state
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -61,7 +63,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
         const Params &params
     );
 
@@ -81,7 +82,6 @@ public:
     // activate the predictor (predict values)
     void activate(
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
         const Params &params
     );
 
@@ -142,6 +142,11 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
+    }
+
+    // get the hidden activations
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
     }
 
     // get the hidden size

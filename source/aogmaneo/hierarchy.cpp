@@ -244,12 +244,12 @@ void Hierarchy::step(
                 if (learn_enabled)
                     decoders[l][d].learn(&histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
 
-                decoders[l][d].activate(layer_input_cis, learn_enabled, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+                decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
             }
 
             if (l == 0) {
                 for (int d = 0; d < actors.size(); d++)
-                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, mimic, params.ios[d].actor);
+                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, mimic, params.ios[i_indices[d + io_sizes.size()]].actor);
             }
         }
     }
