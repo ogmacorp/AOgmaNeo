@@ -148,7 +148,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
-    bool commit = (hidden_totals[hidden_cell_index_max] == limit_max);
+    bool commit = (learn_ci == hidden_commits[hidden_column_index]);
 
     float total = 0.0f;
     float total_importance = 0.0f;
@@ -332,7 +332,7 @@ void Encoder::init_random(
 
     learn_cis = Int_Buffer(num_hidden_columns, -1);
 
-    hidden_totals = Float_Buffer(num_hidden_cells, limit_max);
+    hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
 
     hidden_max_acts.resize(num_hidden_columns);
 
