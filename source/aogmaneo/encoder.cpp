@@ -98,9 +98,16 @@ void Encoder::forward(
 
     hidden_cis[hidden_column_index] = max_complete_index;
 
+    if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
+        // commit
+        max_index = hidden_commits[hidden_column_index];
+
+        max_activation = randf(state) * 0.0001f;
+    }
+
     predict_cis[hidden_column_index] = max_index;
 
-    hidden_max_acts[hidden_column_index] = max_activation - randf(state) * 0.0001f; // small tie breaker randomness
+    hidden_max_acts[hidden_column_index] = max_activation;
 }
 
 void Encoder::learn(
@@ -112,6 +119,9 @@ void Encoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int learn_ci = predict_cis[hidden_column_index];
+
+    if (learn_ci == -1)
+        return;
 
     float max_activation = hidden_max_acts[hidden_column_index];
 
@@ -129,17 +139,6 @@ void Encoder::learn(
                     return;
             }
         }
-
-    // check if can commit
-    if (learn_ci == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
-        learn_ci = hidden_commits[hidden_column_index];
-
-        hidden_commits[hidden_column_index]++;
-    }
-
-    // if still can't learn
-    if (learn_ci == -1)
-        return;
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
@@ -196,6 +195,9 @@ void Encoder::learn(
     total /= max(0.0001f, total_importance);
 
     hidden_totals[hidden_cell_index_max] = total;
+
+    if (fast_commit)
+        hidden_commits[hidden_column_index]++;
 }
 
 void Encoder::reconstruct(
