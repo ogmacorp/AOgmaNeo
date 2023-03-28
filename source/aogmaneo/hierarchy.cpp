@@ -292,7 +292,7 @@ void Hierarchy::step(
             }
 
             for (int i = 0; i < num_predictions; i++)
-                encoders[l].reconstruct((l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits()), num_inputs + i);
+                encoders[l].reconstruct((l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits()), num_inputs + i, params.layers[l].encoder);
         }
     }
 }

@@ -64,6 +64,9 @@ void Encoder::forward(
 
                         int in_ci = vl.input_cis[visible_column_index];
 
+                        if (in_ci == -1)
+                            continue;
+
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                         int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
@@ -177,8 +180,12 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (fast_commit)
+                if (fast_commit) {
                     vl.weight_indices[wi] = in_ci;
+
+                    if (in_ci == -1)
+                        vl.weights[wi] = 0;
+                }
                 else if (vl.weight_indices[wi] != in_ci)
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
@@ -200,7 +207,8 @@ void Encoder::learn(
 void Encoder::reconstruct(
     const Int2 &column_pos,
     const Int_Buffer* other_commits,
-    int vli
+    int vli,
+    const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
     Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -267,9 +275,11 @@ void Encoder::reconstruct(
         if (count != 0) {
             float recon = (sum / 255.0f) / count;
 
-            if (recon > max_activation) {
-                max_activation = recon;
-                max_index = vc;
+            if (recon >= params.min_recon) {
+                if (recon > max_activation) {
+                    max_activation = recon;
+                    max_index = vc;
+                }
             }
         }
     }
@@ -379,7 +389,8 @@ void Encoder::learn(
 
 void Encoder::reconstruct(
     const Int_Buffer* other_commits,
-    int vli
+    int vli,
+    const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -388,7 +399,7 @@ void Encoder::reconstruct(
 
     #pragma omp parallel for
     for (int i = 0; i < num_visible_columns; i++)
-        reconstruct(Int2(i / vld.size.y, i % vld.size.y), other_commits, vli);
+        reconstruct(Int2(i / vld.size.y, i % vld.size.y), other_commits, vli, params);
 }
 
 int Encoder::size() const {
