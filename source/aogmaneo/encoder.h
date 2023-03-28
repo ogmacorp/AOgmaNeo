@@ -62,8 +62,8 @@ public:
         :
         choice(0.0001f),
         vigilance(0.9f),
-        min_recon(0.0001f),
-        lr(0.5f),
+        min_recon(0.1f),
+        lr(0.1f),
         l_radius(2)
         {}
     };
