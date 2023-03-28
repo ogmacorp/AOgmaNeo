@@ -23,6 +23,9 @@ void Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
+    int max_complete_index = -1;
+    float max_complete_activation = 0.0f;
+
     for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -82,9 +85,14 @@ void Encoder::forward(
                 max_index = hc;
             }
         }
+
+        if (activation > max_complete_activation || max_complete_index == -1) {
+            max_complete_activation = activation;
+            max_complete_index = hc;
+        }
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    hidden_cis[hidden_column_index] = max_complete_index;
 
     if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         // commit

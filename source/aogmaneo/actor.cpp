@@ -52,9 +52,6 @@ void Actor::forward(
 
                 int in_ci = (*input_cis[vli])[visible_column_index];
 
-                if (in_ci == -1)
-                    continue;
-
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 value += vl.value_weights[in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index))];
@@ -99,9 +96,6 @@ void Actor::forward(
                         int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                         int in_ci = (*input_cis[vli])[visible_column_index];
-
-                        if (in_ci == -1)
-                            continue;
 
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -179,9 +173,6 @@ void Actor::forward(
 
                         int in_ci = (*input_cis[vli])[visible_column_index];
 
-                        if (in_ci == -1)
-                            continue;
-
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                         sum += vl.action_weights[in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index))];
@@ -246,9 +237,6 @@ void Actor::learn(
 
                 int in_ci = history_samples[t].input_cis[vli][visible_column_index];
 
-                if (in_ci == -1)
-                    continue;
-
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 value += vl.value_weights[in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index))];
@@ -285,9 +273,6 @@ void Actor::learn(
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 int in_ci = history_samples[t].input_cis[vli][visible_column_index];
-
-                if (in_ci == -1)
-                    continue;
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -330,9 +315,6 @@ void Actor::learn(
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                     int in_ci = history_samples[t].input_cis[vli][visible_column_index];
-
-                    if (in_ci == -1)
-                        continue;
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -392,9 +374,6 @@ void Actor::learn(
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                     int in_ci = history_samples[t].input_cis[vli][visible_column_index];
-
-                    if (in_ci == -1)
-                        continue;
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 

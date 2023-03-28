@@ -37,14 +37,12 @@ public:
 
     struct Params {
         float scale; // Scale of squashing
-        float min_act; // minimum activity
         float lr; // Learning rate
 
         // Defaults
         Params()
         :
         scale(16.0f),
-        min_act(0.1f),
         lr(0.05f)
         {}
     };
