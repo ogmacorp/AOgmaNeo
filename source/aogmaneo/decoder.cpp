@@ -63,9 +63,7 @@ void Decoder::forward(
                 }
         }
 
-        float act = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
-
-        hidden_acts[hidden_cell_index] = act;
+        hidden_acts[hidden_cell_index] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
 
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
