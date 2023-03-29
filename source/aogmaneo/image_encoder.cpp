@@ -183,7 +183,11 @@ void Image_Encoder::reconstruct(
                 Int2 hidden_pos = Int2(ix, iy);
 
                 int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
-                int hidden_cell_index = address3(Int3(hidden_pos.x, hidden_pos.y, (*recon_cis)[hidden_column_index]), hidden_size);
+
+                if ((*recon_cis)[hidden_column_index] == -1)
+                    continue;
+
+                int hidden_cell_index = (*recon_cis)[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
