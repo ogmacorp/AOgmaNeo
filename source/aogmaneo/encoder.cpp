@@ -167,7 +167,7 @@ void Encoder::learn(
 
                 if (vl.weight_indices[wi] == -1)
                     vl.weight_indices[wi] = in_ci;
-                else if (vl.weight_indices[wi] != in_ci || in_ci == -1)
+                else if (vl.weight_indices[wi] != in_ci)
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                 sub_total += vl.weights[wi];
