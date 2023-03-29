@@ -170,10 +170,12 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (vl.weight_indices[wi] == -1 && in_ci != -1)
-                    vl.weight_indices[wi] = in_ci;
-                else if (vl.weight_indices[wi] != in_ci)
-                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+                if (in_ci != -1) {
+                    if (vl.weight_indices[wi] == -1)
+                        vl.weight_indices[wi] = in_ci;
+                    else if (vl.weight_indices[wi] != in_ci)
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+                }
 
                 if (vl.weight_indices[wi] != -1) {
                     sub_total += vl.weights[wi];
