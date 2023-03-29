@@ -49,7 +49,7 @@ public:
 
         Params()
         :
-        choice(0.01f),
+        choice(0.0001f),
         vigilance(0.9f),
         lr(0.1f),
         l_radius(2)
@@ -79,6 +79,11 @@ private:
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
         unsigned int* state,
+        const Params &params
+    );
+
+    void inhibit(
+        const Int2 &column_pos,
         const Params &params
     );
 
