@@ -93,8 +93,11 @@ void Encoder::forward(
     learn_cis[hidden_column_index] = max_index;
 
     // commit
-    if (learn_cis[hidden_column_index] == -1 && hidden_commits[hidden_column_index] < hidden_size.z)
+    if (learn_cis[hidden_column_index] == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
+
+        max_activation = randf(state) * 0.0001f;
+    }
 
     hidden_max_acts[hidden_column_index] = max_activation;
 }
