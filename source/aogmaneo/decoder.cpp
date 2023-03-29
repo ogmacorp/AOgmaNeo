@@ -20,7 +20,7 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int max_index = -1;
-    float max_activation = limit_min;
+    int max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -63,32 +63,12 @@ void Decoder::forward(
                 }
         }
 
-        float act = (sum / 127.0f) / count * params.scale;
+        hidden_acts[hidden_cell_index] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
 
-        hidden_acts[hidden_cell_index] = act;
-
-        if (act > max_activation || max_index == -1) {
-            max_activation = act;
+        if (sum > max_activation || max_index == -1) {
+            max_activation = sum;
             max_index = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-
-        total += hidden_acts[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -133,11 +113,11 @@ void Decoder::learn(
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int in_ciprev = vl.input_cis_prev[visible_column_index];
+                    int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = in_ciprev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     vl.weights[wi] = min(127, max(-127, vl.weights[wi] + delta));
                 }
