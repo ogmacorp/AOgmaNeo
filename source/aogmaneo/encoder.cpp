@@ -88,17 +88,20 @@ void Encoder::forward(
         }
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    hidden_cis[hidden_column_index] = max_complete_index;
+
+    learn_cis[hidden_column_index] = max_index;
 
     // commit
-    if (hidden_cis[hidden_column_index] == -1 && hidden_commits[hidden_column_index] < hidden_size.z)
-        hidden_cis[hidden_column_index] = hidden_commits[hidden_column_index];
+    if (learn_cis[hidden_column_index] == -1 && hidden_commits[hidden_column_index] < hidden_size.z)
+        learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
 
     hidden_max_acts[hidden_column_index] = max_activation;
 }
 
-void Encoder::inhibit(
+void Encoder::learn(
     const Int2 &column_pos,
+    const Array<const Int_Buffer*> &input_cis,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -127,19 +130,6 @@ void Encoder::inhibit(
                 }
             }
         }
-}
-
-void Encoder::learn(
-    const Int2 &column_pos,
-    const Array<const Int_Buffer*> &input_cis,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    if (hidden_cis[hidden_column_index] == -1)
-        return;
 
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
