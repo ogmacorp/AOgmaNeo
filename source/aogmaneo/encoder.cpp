@@ -64,6 +64,9 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
+                    if (vl.weight_indices[wi] == -1)
+                        continue;
+
                     sub_sum += (vl.weight_indices[wi] == in_ci) * vl.weights[wi];
                     sub_count++;
                 }
@@ -127,8 +130,6 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
-    bool commit = (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index]);
-
     float total = 0.0f;
     float total_importance = 0.0f;
 
@@ -164,12 +165,8 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (commit) {
+                if (vl.weight_indices[wi] == -1)
                     vl.weight_indices[wi] = in_ci;
-
-                    if (in_ci == -1)
-                        vl.weights[wi] = 0;
-                }
                 else if (vl.weight_indices[wi] != in_ci || in_ci == -1)
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
@@ -184,8 +181,7 @@ void Encoder::learn(
 
     hidden_totals[hidden_cell_index_max] = total;
 
-    if (commit)
-        hidden_commits[hidden_column_index]++;
+    hidden_commits[hidden_column_index] = max(hidden_commits[hidden_column_index], learn_cis[hidden_column_index] + 1);
 }
 
 void Encoder::init_random(
@@ -243,10 +239,6 @@ void Encoder::step(
 
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
     }
-
-    #pragma omp parallel for
-    for (int i = 0; i < num_hidden_columns; i++)
-        inhibit(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
     if (learn_enabled) {
         #pragma omp parallel for
