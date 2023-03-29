@@ -29,7 +29,6 @@ void Decoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         int sum = 0;
-        int count = 0;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -64,11 +63,10 @@ void Decoder::forward(
                     int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     sum += vl.weights[wi];
-                    count++;
                 }
         }
 
-        float act = 1.0f - expf(min(0.0f, -(sum / 127.0f) / max(1, count) * params.scale));
+        float act = 1.0f - expf(min(0.0f, -(sum / 127.0f) * params.scale));
 
         hidden_acts[hidden_cell_index] = act;
 
