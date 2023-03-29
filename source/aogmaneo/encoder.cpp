@@ -82,7 +82,7 @@ void Encoder::forward(
             }
         }
 
-        if (activation > max_complete_activation || max_complete_index == -1) {
+        if (activation > max_complete_activation) {
             max_complete_activation = activation;
             max_complete_index = hc;
         }
@@ -90,14 +90,14 @@ void Encoder::forward(
 
     hidden_cis[hidden_column_index] = max_complete_index;
 
-    learn_cis[hidden_column_index] = max_index;
-
     // commit
-    if (learn_cis[hidden_column_index] == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
-        learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
+    if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
+        max_index = hidden_commits[hidden_column_index];
 
         max_activation = randf(state) * 0.0001f;
     }
+
+    learn_cis[hidden_column_index] = max_index;
 
     hidden_max_acts[hidden_column_index] = max_activation;
 }
