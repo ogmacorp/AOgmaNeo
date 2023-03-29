@@ -82,11 +82,6 @@ private:
         const Params &params
     );
 
-    void inhibit(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
