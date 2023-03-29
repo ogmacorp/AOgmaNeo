@@ -153,7 +153,7 @@ void Encoder::learn(
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
         int sub_total = 0;
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
+        int sub_count = 0;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -170,10 +170,13 @@ void Encoder::learn(
                 else if (vl.weight_indices[wi] != in_ci)
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
-                sub_total += vl.weights[wi];
+                if (vl.weight_indices[wi] != -1) {
+                    sub_total += vl.weights[wi];
+                    sub_count++;
+                }
             }
 
-        total += (sub_total / 255.0f) / sub_count * vl.importance;
+        total += (sub_total / 255.0f) / max(1, sub_count) * vl.importance;
         total_importance += vl.importance;
     }
 
