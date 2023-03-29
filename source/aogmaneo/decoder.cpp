@@ -20,7 +20,7 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int max_index = -1;
-    float max_activation = limit_min;
+    int max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -55,9 +55,6 @@ void Decoder::forward(
 
                     int in_ci = (*input_cis[vli])[visible_column_index];
 
-                    if (in_ci == -1)
-                        continue;
-
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                     int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
@@ -66,17 +63,15 @@ void Decoder::forward(
                 }
         }
 
-        float act = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
+        hidden_acts[hidden_cell_index] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
 
-        hidden_acts[hidden_cell_index] = act;
-
-        if (act > max_activation || max_index == -1) {
-            max_activation = act;
+        if (sum > max_activation || max_index == -1) {
+            max_activation = sum;
             max_index = hc;
         }
     }
 
-    hidden_cis[hidden_column_index] = (max_activation > params.min_act ? max_index : -1);
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Decoder::learn(
@@ -120,9 +115,6 @@ void Decoder::learn(
 
                     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-                    if (in_ci_prev == -1)
-                        continue;
-
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
@@ -163,13 +155,13 @@ void Decoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5;
 
-        vl.input_cis_prev = Int_Buffer(num_visible_columns, -1);
+        vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
 
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
     // hidden cis
-    hidden_cis = Int_Buffer(num_hidden_columns, -1);
+    hidden_cis = Int_Buffer(num_hidden_columns, 0);
 }
 
 void Decoder::activate(

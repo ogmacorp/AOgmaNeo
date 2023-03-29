@@ -75,7 +75,7 @@ void Hierarchy::init_random(
                 histories[l][i].resize(layer_descs[l].temporal_horizon);
                 
                 for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = Int_Buffer(in_size, -1);
+                    histories[l][i][t] = Int_Buffer(in_size, 0);
             }
 
             decoders[l].resize(num_predictions);
@@ -142,7 +142,7 @@ void Hierarchy::init_random(
             histories[l][0].resize(layer_descs[l].temporal_horizon);
 
             for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = Int_Buffer(in_size, -1);
+                histories[l][0][t] = Int_Buffer(in_size, 0);
 
             decoders[l].resize(layer_descs[l].ticks_per_update);
 
