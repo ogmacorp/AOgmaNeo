@@ -102,7 +102,7 @@ public:
     );
 
     void clear_state() {
-        hidden_cis.fill(0);
+        hidden_cis.fill(-1);
     }
 
     // serialization
