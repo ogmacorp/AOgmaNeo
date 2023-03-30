@@ -92,7 +92,7 @@ void Encoder::forward(
                 max_index_learn = hc;
             }
         }
-
+        
         if (sum >= params.vigilance_low) {
             if (activation > max_activation || max_index == -1) {
                 max_activation = activation;
@@ -104,8 +104,11 @@ void Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     // commit
-    if (max_index_learn == -1 && hidden_commits[hidden_column_index] < hidden_size.z)
+    if (max_index_learn == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
+
+        max_activation_learn = max_activation;
+    }
     else
         learn_cis[hidden_column_index] = max_index_learn;
 
