@@ -67,10 +67,7 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    if (vl.weight_indices[wi] == -1)
-                        continue;
-
-                    sub_sum += (vl.weight_indices[wi] == in_ci) * vl.weights[wi];
+                    sub_sum += (vl.weight_indices[wi] == in_ci || vl.weight_indices[wi] == -1) * vl.weights[wi];
                     sub_count++;
                 }
 
@@ -143,6 +140,8 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
+    bool commit = (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index]);
+
     float total = 0.0f;
     float total_importance = 0.0f;
 
@@ -166,7 +165,7 @@ void Encoder::learn(
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
         int sub_total = 0;
-        int sub_count = 0;
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -178,17 +177,14 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (in_ci != -1) {
-                    if (vl.weight_indices[wi] == -1)
-                        vl.weight_indices[wi] = in_ci;
-                    else if (vl.weight_indices[wi] != in_ci)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
-                }
+                if (commit) {
+                    vl.weight_indices[wi] = in_ci;
 
-                if (vl.weight_indices[wi] != -1) {
-                    sub_total += vl.weights[wi];
-                    sub_count++;
+                    if (in_ci == -1)
+                        vl.weights[wi] = 0;
                 }
+                else if (vl.weight_indices[wi] != in_ci)
+                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
             }
 
         total += (sub_total / 255.0f) / max(1, sub_count) * vl.importance;
@@ -199,7 +195,8 @@ void Encoder::learn(
 
     hidden_totals[hidden_cell_index_max] = total;
 
-    hidden_commits[hidden_column_index] = max(hidden_commits[hidden_column_index], learn_cis[hidden_column_index] + 1);
+    if (commit)
+        hidden_commits[hidden_column_index]++;
 }
 
 void Encoder::init_random(
