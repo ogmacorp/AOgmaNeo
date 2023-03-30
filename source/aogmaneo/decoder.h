@@ -43,9 +43,9 @@ public:
         // Defaults
         Params()
         :
-        scale(8.0f),
-        min_act(0.05f),
-        lr(0.05f)
+        scale(16.0f),
+        min_act(0.1f),
+        lr(0.1f)
         {}
     };
 
