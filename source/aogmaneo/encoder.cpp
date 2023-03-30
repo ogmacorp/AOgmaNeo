@@ -184,6 +184,7 @@ void Encoder::learn(
 
                 if (vl.weight_indices[wi] != -1) {
                     sub_total += vl.weights[wi];
+                    sub_count++;
                 }
             }
 
