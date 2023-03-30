@@ -30,7 +30,6 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Int_Buffer weight_indices;
         Byte_Buffer weights;
         
         float importance;
