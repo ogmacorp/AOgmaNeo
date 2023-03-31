@@ -125,9 +125,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
-    bool fast_commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
-
-    float rate = (fast_commit ? 1.0f : params.lr);
+    float rate = (hidden_totals[hidden_cell_index_max] == 1.0f ? 1.0f : params.lr);
 
     float total = 0.0f;
     float total_importance = 0.0f;
