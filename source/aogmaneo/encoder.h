@@ -50,7 +50,7 @@ public:
         :
         choice(0.0001f),
         vigilance(0.9f),
-        lr(0.1f),
+        lr(1.0f),
         l_radius(2)
         {}
     };
