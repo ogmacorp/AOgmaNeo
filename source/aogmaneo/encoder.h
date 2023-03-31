@@ -65,8 +65,6 @@ private:
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_totals;
-
     Float_Buffer hidden_max_acts;
 
     Int_Buffer hidden_commits;
