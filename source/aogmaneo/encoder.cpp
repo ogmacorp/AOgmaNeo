@@ -75,15 +75,12 @@ void Encoder::forward(
                     sub_count++;
                 }
 
-            if (sub_count == 0) {
+            if (sub_count == 0)
                 sum += vl.importance;
-                weight_total += vl.importance;
-            }
-            else {
+            else
                 sum += (sub_sum / 255.0f) / sub_count * vl.importance;
-                weight_total += (sub_weight_total / 255.0f) / sub_count * vl.importance;
-            }
 
+            weight_total += (sub_weight_total / 255.0f) * vl.importance;
             total_importance += vl.importance;
         }
 
