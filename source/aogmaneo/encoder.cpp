@@ -186,7 +186,7 @@ void Encoder::learn(
                     if (in_ci == -1)
                         vl.weights[wi] = 0;
                 }
-                else if (vl.weight_indices[wi] != in_ci)
+                else if (vl.weight_indices[wi] != in_ci || in_ci == -1)
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
             }
     }
