@@ -130,8 +130,7 @@ void Image_Encoder::forward(
                     }
             }
 
-            if (dhc == 0)
-                hidden_rates[hidden_cell_index] -= params.lr * rate;
+            hidden_rates[hidden_cell_index] *= 1.0f - params.lr;
         }
     }
 }

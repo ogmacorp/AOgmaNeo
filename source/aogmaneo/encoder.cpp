@@ -176,8 +176,7 @@ learn:
                 }
         }
 
-        if (dhc == 0)
-            hidden_rates[hidden_cell_index] *= 1.0f - params.lr;
+        hidden_rates[hidden_cell_index] *= 1.0f - params.lr;
     }
 }
 
