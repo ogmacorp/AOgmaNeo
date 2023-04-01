@@ -205,7 +205,7 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.protos.resize(num_hidden_cells * area * vld.size.z);
+        vl.protos.resize(num_hidden_cells * area);
 
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = randf(0.0f, 1.0f);
