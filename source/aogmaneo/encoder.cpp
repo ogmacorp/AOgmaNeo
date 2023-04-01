@@ -116,7 +116,6 @@ void Encoder::learn(
         int visible_cell_index = vc + visible_cells_start;
 
         int sum = 0;
-        int count = 0;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -134,11 +133,10 @@ void Encoder::learn(
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
                     sum += vl.weights[wi];
-                    count++;
                 }
             }
 
-        vl.recon_acts[visible_cell_index] = (sum / 127.0f) / max(1, count) * params.scale;
+        vl.recon_acts[visible_cell_index] = (sum / 127.0f) * params.scale;
 
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
