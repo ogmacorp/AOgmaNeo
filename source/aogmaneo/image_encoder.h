@@ -36,11 +36,13 @@ public:
     };
 
     struct Params {
+        float scale;
         float lr; // learning rate
         
         Params()
         :
-        lr(1.0f)
+        scale(8.0f),
+        lr(0.1f)
         {}
     };
 

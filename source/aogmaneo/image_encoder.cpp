@@ -94,7 +94,7 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = hidden_rates[hidden_cell_index] * expf(params.lr * max_activation);
+            float rate = hidden_rates[hidden_cell_index];
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -135,7 +135,7 @@ void Image_Encoder::forward(
                     }
             }
 
-            hidden_rates[hidden_cell_index] -= rate;
+            hidden_rates[hidden_cell_index] -= params.lr * (1.0f - expf(params.scale * max_activation)) * rate;
         }
     }
 }
