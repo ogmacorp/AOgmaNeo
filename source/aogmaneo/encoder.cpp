@@ -60,7 +60,7 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    float in_value = static_cast<float>(in_ci) / (vld.size.z - 1);
+                    float in_value = (in_ci + 0.5f) / vld.size.z;
 
                     float delta = in_value - vl.protos[wi];
 
@@ -174,7 +174,7 @@ learn:
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    float in_value = static_cast<float>(in_ci) / (vld.size.z - 1);
+                    float in_value = (in_ci + 0.5f) / vld.size.z;
 
                     vl.protos[wi] += rate * (in_value - vl.protos[wi]);
                 }
