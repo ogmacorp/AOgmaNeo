@@ -41,14 +41,12 @@ public:
     };
 
     struct Params {
-        float scale;
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        scale(16.0f),
-        lr(0.1f),
+        lr(0.5f),
         l_radius(2)
         {}
     };

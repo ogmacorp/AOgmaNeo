@@ -180,7 +180,7 @@ learn:
                 }
         }
 
-        hidden_rates[hidden_cell_index] -= params.lr * (1.0f - expf(params.scale * hidden_max_acts[hidden_column_index])) * rate;
+        hidden_rates[hidden_cell_index] -= params.lr * min(1.0f, max(0.0f, sqrtf(-hidden_max_acts[hidden_column_index]))) * rate;
     }
 }
 
