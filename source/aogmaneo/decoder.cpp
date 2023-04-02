@@ -20,13 +20,12 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int max_index = -1;
-    float max_activation = limit_min;
+    int max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         int sum = 0;
-        int count = 0;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -47,8 +46,6 @@ void Decoder::forward(
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-            count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
@@ -63,30 +60,12 @@ void Decoder::forward(
                 }
         }
 
-        hidden_acts[hidden_cell_index] = (sum / 127.0f) / count * params.scale;
+        hidden_acts[hidden_cell_index] = 1.0f - expf(min(0.0f, -(sum / 127.0f) * params.scale));
 
-        if (hidden_acts[hidden_cell_index] > max_activation || max_index == -1) {
-            max_activation = hidden_acts[hidden_cell_index];
+        if (sum > max_activation || max_index == -1) {
+            max_activation = sum;
             max_index = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-
-        total += hidden_acts[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
