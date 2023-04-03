@@ -137,7 +137,7 @@ void Encoder::learn(
                 }
             }
 
-        vl.recon_acts[visible_cell_index] = (sum / 127.0f) / max(1, count) * params.scale;
+        vl.recon_acts[visible_cell_index] = (sum / 127.0f) / max(1, count);
 
         max_activation = max(max_activation, vl.recon_acts[visible_cell_index]);
     }
@@ -145,7 +145,7 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        int delta = roundf(params.lr * 127.0f * ((vc == target_ci) - expf(vl.recon_acts[visible_cell_index] - max_activation)));
+        int delta = roundf(params.lr * 127.0f * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - max_activation) * params.scale) - vl.recon_acts[visible_cell_index]));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
