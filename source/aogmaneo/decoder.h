@@ -32,30 +32,27 @@ public:
     struct Visible_Layer {
         S_Byte_Buffer weights;
 
-        Byte_Buffer rates;
+        Byte_Buffer usages;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
         float scale; // Scale of squashing
-        float lr; // Learning rate
-        int lookup_res; // lookup resolution for rates
+        float lr; // learning rate
+        float ur; // usage rate
 
         // Defaults
         Params()
         :
         scale(16.0f),
-        lr(2.0f),
-        lookup_res(64)
+        lr(0.5f),
+        ur(0.1f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
-
-    float lr_lookup;
-    Float_Buffer rate_lookup;
 
     Float_Buffer hidden_acts;
 

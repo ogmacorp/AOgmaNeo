@@ -49,7 +49,7 @@ public:
 
         Params()
         :
-        code_iters(4),
+        code_iters(1),
         scale(16.0f),
         lr(0.05f)
         {}

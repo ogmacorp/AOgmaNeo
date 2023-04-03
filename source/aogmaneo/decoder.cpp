@@ -85,12 +85,14 @@ void Decoder::learn(
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    const float byte_inv = 1.0f / 256.0f;
+    int hidden_cell_index_target = target_ci + hidden_cells_start;
+
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float delta = 63.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        float delta = params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -119,20 +121,52 @@ void Decoder::learn(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
+                    int ui = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    // Interpolated table lookup
-                    float index_lookupf = vl.rates[wi] * byte_inv * (params.lookup_res - 1);
-                    int index_lookup = static_cast<int>(index_lookupf); 
-                    float fraction = index_lookupf - index_lookup;
+                    float u = vl.usages[ui] * byte_inv;
 
-                    float rate = rate_lookup[index_lookup] * (1.0f - fraction) + rate_lookup[index_lookup + 1] * fraction;
-
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * rate)));
-
-                    vl.rates[wi] = max(0, vl.rates[wi] - 1);
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * max(0.0f, u - 0.5f))));
                 }
         }
+    }
+
+    // increase usages for unused
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+        int diam = vld.radius * 2 + 1;
+
+        // projection
+        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+
+        Int2 visible_center = project(column_pos, h_to_v);
+
+        // lower corner
+        Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+
+        // bounds of receptive field, clamped to input size
+        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+        Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+
+        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                int in_ci_prev = vl.input_cis_prev[visible_column_index];
+
+                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+
+                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
+
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int wi = vc + wi_start;
+
+                    vl.usages[wi] = min(255, max(0, vl.usages[wi] + ceilf(params.ur * ((vc == in_ci_prev) * 255.0f - vl.usages[wi]))));
+                }
+            }
     }
 }
 
@@ -166,7 +200,7 @@ void Decoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5 - 2;
 
-        vl.rates = Byte_Buffer(vl.weights.size(), 255);
+        vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -175,8 +209,6 @@ void Decoder::init_random(
 
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-
-    lr_lookup = -1.0f; // flag
 }
 
 void Decoder::activate(
@@ -204,20 +236,6 @@ void Decoder::learn(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    // Pre-compute lookup if needed
-    if (lr_lookup != params.lr || rate_lookup.size() != params.lookup_res) {
-        if (rate_lookup.size() != params.lookup_res)
-            rate_lookup.resize(params.lookup_res);
-
-        lr_lookup = params.lr;
-
-        for (int i = 0; i < params.lookup_res; i++) {
-            float x = (i + 0.5f) / params.lookup_res;
-
-            rate_lookup[i] = powf(x, params.lr);
-        }
-    }
-
     // learn kernel
     #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
@@ -239,7 +257,7 @@ int Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(S_Byte) + vl.rates.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(S_Byte) + vl.usages.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -277,7 +295,7 @@ void Decoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
 
-        writer.write(reinterpret_cast<const void*>(&vl.rates[0]), vl.rates.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
@@ -320,9 +338,9 @@ void Decoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
 
-        vl.rates.resize(vl.weights.size());
+        vl.usages.resize(vl.weights.size());
 
-        reader.read(reinterpret_cast<void*>(&vl.rates[0]), vl.rates.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
         vl.input_cis_prev.resize(num_visible_columns);
 
