@@ -31,21 +31,31 @@ public:
     // visible layer
     struct Visible_Layer {
         S_Byte_Buffer weights;
+
+        Float_Buffer recon_acts;
+        
+        Int_Buffer input_cis;
+        Int_Buffer recon_cis;
         
         float importance;
 
+        Byte use_input;
+
         Visible_Layer()
         :
-        importance(1.0f)
+        importance(1.0f),
+        use_input(false)
         {}
     };
 
     struct Params {
-        float scale; // scale of squashing
+        int code_iters; // Sparse coding iterations
+        float scale; // squashing scale
         float lr; // learning rate
 
         Params()
         :
+        code_iters(4),
         scale(16.0f),
         lr(0.05f)
         {}
@@ -56,6 +66,8 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Float_Buffer hidden_acts;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -64,15 +76,24 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void backward(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
-        const Int_Buffer* input_cis,
         int vli,
         const Params &params
+    );
+
+    void reconstruct(
+        const Int2 &column_pos,
+        int vli
     );
 
 public:
@@ -82,10 +103,21 @@ public:
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
-    void step(
-        const Array<const Int_Buffer*> &input_cis, // input states
-        bool learn_enabled, // whether to learn
+    void set_input_cis(
+        const Int_Buffer* input_cis,
+        int vli
+    );
+
+    void activate(
         const Params &params // parameters
+    );
+
+    void learn(
+        const Params &params // parameters
+    );
+
+    void reconstruct(
+        int vli
     );
 
     void clear_state() {
