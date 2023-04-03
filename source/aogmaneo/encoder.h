@@ -31,26 +31,20 @@ public:
     // visible layer
     struct Visible_Layer {
         S_Byte_Buffer weights;
-
+        
         Float_Buffer recon_acts;
-        
-        Int_Buffer input_cis;
-        Int_Buffer recon_cis;
-        
-        float importance;
 
-        Byte use_input;
+        float importance;
 
         Visible_Layer()
         :
-        importance(1.0f),
-        use_input(false)
+        importance(1.0f)
         {}
     };
 
     struct Params {
-        int code_iters; // Sparse coding iterations
-        float scale; // squashing scale
+        int code_iters; // sparse coding iterations
+        float scale; // scale of squashing
         float lr; // learning rate
 
         Params()
@@ -76,24 +70,22 @@ private:
     
     void forward(
         const Int2 &column_pos,
+        const Array<const Int_Buffer*> &input_cis,
         const Params &params
     );
 
     void backward(
         const Int2 &column_pos,
+        const Int_Buffer* input_cis,
         int vli,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
+        const Int_Buffer* input_cis,
         int vli,
         const Params &params
-    );
-
-    void reconstruct(
-        const Int2 &column_pos,
-        int vli
     );
 
 public:
@@ -103,21 +95,10 @@ public:
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
-    void set_input_cis(
-        const Int_Buffer* input_cis,
-        int vli
-    );
-
-    void activate(
+    void step(
+        const Array<const Int_Buffer*> &input_cis, // input states
+        bool learn_enabled, // whether to learn
         const Params &params // parameters
-    );
-
-    void learn(
-        const Params &params // parameters
-    );
-
-    void reconstruct(
-        int vli
     );
 
     void clear_state() {
