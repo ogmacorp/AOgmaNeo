@@ -121,9 +121,7 @@ void Decoder::learn(
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    int visible_cell_index = in_ci_prev + visible_column_index * vld.size.z;
-
-                    float r = powf(vl.rates[visible_cell_index] * byte_inv, params.lr);
+                    float r = powf(vl.rates[wi] * byte_inv, params.lr);
 
                     vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * r)));
 
