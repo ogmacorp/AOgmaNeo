@@ -85,7 +85,7 @@ void Decoder::learn(
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    const float byte_inv = 1.0f / 255.0f;
+    const float byte_inv = 1.0f / 256.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -121,9 +121,14 @@ void Decoder::learn(
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    float r = powf(vl.rates[wi] * byte_inv, params.lr);
+                    // Interpolated table lookup
+                    float index_lookupf = vl.rates[wi] * byte_inv * (params.lookup_res - 1);
+                    int index_lookup = static_cast<int>(index_lookupf); 
+                    float fraction = index_lookupf - index_lookup;
 
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * r)));
+                    float rate = rate_lookup[index_lookup] * (1.0f - fraction) + rate_lookup[index_lookup + 1] * fraction;
+
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * rate)));
 
                     vl.rates[wi] = max(0, vl.rates[wi] - 1);
                 }
@@ -170,6 +175,8 @@ void Decoder::init_random(
 
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
+
+    lr_lookup = -1.0f; // flag
 }
 
 void Decoder::activate(
@@ -196,6 +203,20 @@ void Decoder::learn(
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
+
+    // Pre-compute lookup if needed
+    if (lr_lookup != params.lr || rate_lookup.size() != params.lookup_res) {
+        if (rate_lookup.size() != params.lookup_res)
+            rate_lookup.resize(params.lookup_res);
+
+        lr_lookup = params.lr;
+
+        for (int i = 0; i < params.lookup_res; i++) {
+            float x = (i + 0.5f) / params.lookup_res;
+
+            rate_lookup[i] = powf(x, params.lr);
+        }
+    }
 
     // learn kernel
     #pragma omp parallel for

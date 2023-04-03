@@ -40,17 +40,22 @@ public:
     struct Params {
         float scale; // Scale of squashing
         float lr; // Learning rate
+        int lookup_res; // lookup resolution for rates
 
         // Defaults
         Params()
         :
         scale(16.0f),
-        lr(0.05f)
+        lr(2.0f),
+        lookup_res(64)
         {}
     };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
+
+    float lr_lookup;
+    Float_Buffer rate_lookup;
 
     Float_Buffer hidden_acts;
 
