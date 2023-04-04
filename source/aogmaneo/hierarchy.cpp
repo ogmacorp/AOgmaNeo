@@ -143,7 +143,7 @@ void Hierarchy::step(
 
     // set importances from params
     for (int i = 0; i < io_sizes.size(); i++)
-        set_input_importance(i, params.ios[i].importance);
+        encoders[0].get_visible_layer(i).importance = params.ios[i].importance;
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {

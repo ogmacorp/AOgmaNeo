@@ -115,14 +115,6 @@ private:
     Array<Int3> io_sizes;
     Array<Byte> io_types;
 
-    // importance control
-    void set_input_importance(
-        int i,
-        float importance
-    ) {
-        encoders[0].get_visible_layer(i).importance = importance;
-    }
-
 public:
     // parameters
     Params params;
