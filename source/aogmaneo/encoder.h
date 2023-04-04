@@ -30,11 +30,10 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
-
-        Byte_Buffer usages;
+        Byte_Buffer weights0;
+        Byte_Buffer weights1;
         
-        Float_Buffer recon_acts;
+        Int_Buffer hidden_sums1;
 
         float importance;
 
@@ -45,17 +44,17 @@ public:
     };
 
     struct Params {
-        int code_iters; // sparse coding iterations
-        float scale; // scale of squashing
+        float choice; // Choice parameter
+        float vigilance; // ART vigilance
         float lr; // learning rate
-        float curve; // usage curve
+        int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        code_iters(4),
-        scale(8.0f),
-        lr(0.05f),
-        curve(2.0f)
+        choice(0.01f),
+        vigilance(0.95f),
+        lr(0.1f),
+        l_radius(2)
         {}
     };
 
@@ -64,38 +63,27 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_acts;
+    Int_Buffer learn_cis;
 
-    Float_Buffer hidden_gates;
+    Float_Buffer hidden_totals;
+
+    Float_Buffer hidden_max_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
     // --- kernels ---
-
+    
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
         const Params &params
     );
 
-    void backward(
-        const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
+        const Array<const Int_Buffer*> &input_cis,
         const Params &params
     );
 
