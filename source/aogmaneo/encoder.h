@@ -52,7 +52,7 @@ public:
 
         Params()
         :
-        code_iters(4),
+        code_iters(3),
         scale(16.0f),
         lr(0.1f),
         curve(2.0f)
