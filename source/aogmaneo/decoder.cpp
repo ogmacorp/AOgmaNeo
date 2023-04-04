@@ -10,6 +10,68 @@
 
 using namespace aon;
 
+void Decoder::update_gates(
+    const Int2 &column_pos,
+    const Int_Buffer* input_cis,
+    int vli
+) {
+    Visible_Layer &vl = visible_layers[vli];
+    Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+    int diam = vld.radius * 2 + 1;
+
+    int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
+
+    int visible_cells_start = visible_column_index * vld.size.z;
+
+    // projection
+    Float2 v_to_h = Float2(static_cast<float>(hidden_size.x) / static_cast<float>(vld.size.x),
+        static_cast<float>(hidden_size.y) / static_cast<float>(vld.size.y));
+
+    Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+        static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+                
+    Int2 reverse_radii(ceilf(v_to_h.x * (vld.radius * 2 + 1) * 0.5f), ceilf(v_to_h.y * (vld.radius * 2 + 1) * 0.5f));
+
+    Int2 hidden_center = project(column_pos, v_to_h);
+
+    // lower corner
+    Int2 field_lower_bound(hidden_center.x - reverse_radii.x, hidden_center.y - reverse_radii.y);
+
+    // bounds of receptive field, clamped to input size
+    Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+    Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
+    
+    int input_ci = (*input_cis)[visible_column_index];
+
+    Byte m = 0;
+
+    for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+        for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+            Int2 hidden_pos = Int2(ix, iy);
+
+            int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
+
+            Int2 visible_center = project(hidden_pos, h_to_v);
+
+            if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
+                int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+                Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
+
+                for (int hc =  0; hc < hidden_size.z; hc++) {
+                    int hidden_cell_index = hc + hidden_cells_start;
+
+                    int wi = input_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+
+                    m = max(m, vl.usages[wi]);
+                }
+            }
+        }
+
+    vl.gates[visible_column_index] = 255 - m;
+}
+
 void Decoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
@@ -21,6 +83,8 @@ void Decoder::forward(
 
     int max_index = -1;
     int max_activation = limit_min;
+
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -85,14 +149,10 @@ void Decoder::learn(
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float delta = params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        float delta = params.lr * 0.5f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -121,17 +181,16 @@ void Decoder::learn(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int ui = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    float u = vl.usages[ui] * byte_inv;
-
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * max(0.0f, u - 0.5f))));
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * vl.gates[visible_column_index])));
                 }
         }
     }
 
     // increase usages for unused
+    int hidden_cell_index_target = target_ci + hidden_cells_start;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -159,13 +218,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
+                int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wi_start;
-
-                    vl.usages[wi] = min(255, max(0, vl.usages[wi] + ceilf(params.ur * ((vc == in_ci_prev) * 255.0f - vl.usages[wi]))));
-                }
+                vl.usages[wi] = min(255, vl.usages[wi] + ceilf(params.ur * (255.0f - vl.usages[wi])));
             }
     }
 }
@@ -202,6 +257,8 @@ void Decoder::init_random(
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
+        vl.gates.resize(num_visible_columns);
+
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
 
@@ -216,6 +273,18 @@ void Decoder::activate(
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
+
+    // update gates
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+        int num_visible_columns = vld.size.x * vld.size.y;
+
+        #pragma omp parallel for
+        for (int i = 0; i < num_visible_columns; i++)
+            update_gates(Int2(i / vld.size.y, i % vld.size.y), input_cis[vli], vli);
+    }
 
     // forward kernel
     #pragma omp parallel for
@@ -341,6 +410,8 @@ void Decoder::read(
         vl.usages.resize(vl.weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
+
+        vl.gates.resize(num_visible_columns);
 
         vl.input_cis_prev.resize(num_visible_columns);
 

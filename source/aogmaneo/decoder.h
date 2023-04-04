@@ -34,6 +34,8 @@ public:
 
         Byte_Buffer usages;
 
+        Byte_Buffer gates;
+
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
@@ -46,8 +48,8 @@ public:
         Params()
         :
         scale(16.0f),
-        lr(0.5f),
-        ur(0.1f)
+        lr(0.1f),
+        ur(0.01f)
         {}
     };
 
@@ -63,6 +65,12 @@ private:
     Array<Visible_Layer_Desc> visible_layer_descs;
 
     // --- kernels ---
+
+    void update_gates(
+        const Int2 &column_pos,
+        const Int_Buffer* input_cis,
+        int vli
+    );
 
     void forward(
         const Int2 &column_pos,
