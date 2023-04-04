@@ -222,9 +222,6 @@ void Encoder::learn(
 
     int target_ci = (*input_cis)[visible_column_index];
 
-    int max_index = -1;
-    float max_activation = limit_min;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
