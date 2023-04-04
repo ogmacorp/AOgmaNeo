@@ -134,9 +134,7 @@ void Encoder::backward(
             }
         }
 
-    float recon = (sum / 127.0f) / max(1, count) * params.scale;
-
-    vl.recon_acts[visible_column_index] = expf(min(0.0f, recon));
+    vl.recon_acts[visible_column_index] = expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale));
 }
 
 void Encoder::update_gates(
@@ -186,9 +184,7 @@ void Encoder::update_gates(
             }
     }
 
-    const float byte_inv = 1.0f / 255.0f;
-
-    hidden_gates[hidden_column_index] = powf(1.0f - m * byte_inv, params.curve);
+    hidden_gates[hidden_column_index] = powf(1.0f - m / 255.0f, params.curve);
 }
 
 void Encoder::learn(

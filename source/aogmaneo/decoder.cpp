@@ -69,9 +69,7 @@ void Decoder::update_gates(
             }
         }
 
-    const float byte_inv = 1.0f / 255.0f;
-
-    vl.gates[visible_column_index] = powf(1.0f - m * byte_inv, params.curve);
+    vl.gates[visible_column_index] = powf(1.0f - m / 255.0f, params.curve);
 }
 
 void Decoder::forward(
