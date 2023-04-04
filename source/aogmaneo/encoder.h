@@ -54,7 +54,7 @@ public:
         :
         code_iters(4),
         scale(16.0f),
-        lr(0.1f),
+        lr(0.2f),
         ur(0.01f)
         {}
     };

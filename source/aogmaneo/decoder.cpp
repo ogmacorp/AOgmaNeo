@@ -83,8 +83,6 @@ void Decoder::forward(
     int max_index = -1;
     int max_activation = limit_min;
 
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
