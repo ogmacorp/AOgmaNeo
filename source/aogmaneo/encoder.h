@@ -53,7 +53,7 @@ public:
         Params()
         :
         code_iters(4),
-        scale(16.0f),
+        scale(8.0f),
         lr(0.05f),
         curve(2.0f)
         {}
