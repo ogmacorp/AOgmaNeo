@@ -186,7 +186,11 @@ void Encoder::update_gates(
             }
     }
 
-    hidden_gates[hidden_column_index] = 255 - m;
+    const float byte_inv = 1.0f / 255.0f;
+
+    float mf = m * byte_inv;
+
+    hidden_gates[hidden_column_index] = 1.0f - powf(mf, params.curve);
 }
 
 void Encoder::learn(
@@ -253,7 +257,7 @@ void Encoder::learn(
                 }
             }
 
-        float delta = params.lr * 0.5f * ((vc == target_ci) - expf((sum / 127.0f) / max(1, count) * params.scale));
+        float delta = params.lr * 127.0f * ((vc == target_ci) - expf((sum / 127.0f) / max(1, count) * params.scale));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -290,7 +294,7 @@ void Encoder::learn(
 
                 int wi = target_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                vl.usages[wi] = min(255, vl.usages[wi] + ceilf(params.ur * (255.0f - vl.usages[wi])));
+                vl.usages[wi] = min(255, vl.usages[wi] + 1);
             }
         }
 }

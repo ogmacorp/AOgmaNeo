@@ -34,7 +34,7 @@ public:
 
         Byte_Buffer usages;
 
-        Byte_Buffer gates;
+        Float_Buffer gates;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
@@ -42,14 +42,14 @@ public:
     struct Params {
         float scale; // Scale of squashing
         float lr; // learning rate
-        float ur; // usage rate
+        float curve; // usage curve
 
         // Defaults
         Params()
         :
         scale(16.0f),
         lr(0.1f),
-        ur(0.01f)
+        curve(2.0f)
         {}
     };
 
@@ -68,7 +68,8 @@ private:
 
     void update_gates(
         const Int2 &column_pos,
-        int vli
+        int vli,
+        const Params &params
     );
 
     void forward(

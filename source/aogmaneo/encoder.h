@@ -48,14 +48,14 @@ public:
         int code_iters; // sparse coding iterations
         float scale; // scale of squashing
         float lr; // learning rate
-        float ur; // usage rate
+        float curve; // usage curve
 
         Params()
         :
         code_iters(4),
         scale(16.0f),
         lr(0.1f),
-        ur(0.01f)
+        curve(2.0f)
         {}
     };
 
@@ -66,7 +66,7 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Byte_Buffer hidden_gates;
+    Float_Buffer hidden_gates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

@@ -12,7 +12,8 @@ using namespace aon;
 
 void Decoder::update_gates(
     const Int2 &column_pos,
-    int vli
+    int vli,
+    const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
     Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -68,7 +69,11 @@ void Decoder::update_gates(
             }
         }
 
-    vl.gates[visible_column_index] = 255 - m;
+    const float byte_inv = 1.0f / 255.0f;
+
+    float mf = m * byte_inv;
+
+    vl.gates[visible_column_index] = 1.0f - powf(mf, params.curve);
 }
 
 void Decoder::forward(
@@ -149,7 +154,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float delta = params.lr * 0.5f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        float delta = params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -217,7 +222,7 @@ void Decoder::learn(
 
                 int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
 
-                vl.usages[wi] = min(255, vl.usages[wi] + ceilf(params.ur * (255.0f - vl.usages[wi])));
+                vl.usages[wi] = min(255, vl.usages[wi] + 1);
             }
     }
 }
@@ -299,7 +304,7 @@ void Decoder::learn(
 
         #pragma omp parallel for
         for (int i = 0; i < num_visible_columns; i++)
-            update_gates(Int2(i / vld.size.y, i % vld.size.y), vli);
+            update_gates(Int2(i / vld.size.y, i % vld.size.y), vli, params);
     }
 
     // learn kernel
