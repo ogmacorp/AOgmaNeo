@@ -184,6 +184,12 @@ public:
         return d_indices[i] != -1;
     }
 
+    bool is_layer_recurrent(
+        int l
+    ) const {
+        return (l == 0 ? encoders[l].get_num_visible_layers() > io_sizes.size() : encoders[l].get_num_visible_layers() > 1);
+    }
+
     // retrieve predictions
     const Int_Buffer &get_prediction_cis(
         int i
