@@ -188,9 +188,9 @@ void Encoder::update_gates(
 
     const float byte_inv = 1.0f / 255.0f;
 
-    float mf = m * byte_inv;
+    float m_inv = 1.0f - m * byte_inv;
 
-    hidden_gates[hidden_column_index] = 1.0f - powf(mf, params.curve);
+    hidden_gates[hidden_column_index] = powf(m_inv, params.curve);
 }
 
 void Encoder::learn(
