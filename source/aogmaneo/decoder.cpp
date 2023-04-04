@@ -12,7 +12,6 @@ using namespace aon;
 
 void Decoder::update_gates(
     const Int2 &column_pos,
-    const Int_Buffer* input_cis,
     int vli
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -42,7 +41,7 @@ void Decoder::update_gates(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
     
-    int input_ci = (*input_cis)[visible_column_index];
+    int input_ci = vl.input_cis_prev[visible_column_index];
 
     Byte m = 0;
 
@@ -274,18 +273,6 @@ void Decoder::activate(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    // update gates
-    for (int vli = 0; vli < visible_layers.size(); vli++) {
-        Visible_Layer &vl = visible_layers[vli];
-        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-        int num_visible_columns = vld.size.x * vld.size.y;
-
-        #pragma omp parallel for
-        for (int i = 0; i < num_visible_columns; i++)
-            update_gates(Int2(i / vld.size.y, i % vld.size.y), input_cis[vli], vli);
-    }
-
     // forward kernel
     #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
@@ -304,6 +291,18 @@ void Decoder::learn(
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
+
+    // update gates
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+        int num_visible_columns = vld.size.x * vld.size.y;
+
+        #pragma omp parallel for
+        for (int i = 0; i < num_visible_columns; i++)
+            update_gates(Int2(i / vld.size.y, i % vld.size.y), vli);
+    }
 
     // learn kernel
     #pragma omp parallel for

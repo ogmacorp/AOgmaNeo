@@ -386,6 +386,10 @@ void Encoder::step(
     }
 
     if (learn_enabled) {
+        #pragma omp parallel for
+        for (int i = 0; i < num_hidden_columns; i++)
+            update_gates(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
