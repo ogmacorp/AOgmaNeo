@@ -157,12 +157,18 @@ void Hierarchy::step(
 
             if (layer_input_cis.size() > io_sizes.size())
                 layer_input_cis[io_sizes.size()] = &hidden_cis_prev[l];
+
+            // set importance
+            encoders[l].get_visible_layer(io_sizes.size()).importance = params.layers[l].recurrent_importance;
         }
         else {
             layer_input_cis[0] = &encoders[l - 1].get_hidden_cis();
 
             if (layer_input_cis.size() > 1)
                 layer_input_cis[1] = &hidden_cis_prev[l];
+
+            // set importance
+            encoders[l].get_visible_layer(1).importance = params.layers[l].recurrent_importance;
         }
 
         // activate sparse coder

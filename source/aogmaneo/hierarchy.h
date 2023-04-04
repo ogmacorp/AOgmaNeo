@@ -72,6 +72,13 @@ public:
     struct Layer_Params {
         Decoder::Params decoder;
         Encoder::Params encoder;
+
+        float recurrent_importance;
+
+        Layer_Params()
+        :
+        recurrent_importance(1.0f)
+        {}
     };
 
     struct IO_Params {
@@ -197,27 +204,6 @@ public:
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
-    // whether this layer received on update this timestep
-    bool get_update(
-        int l
-    ) const {
-        return updates[l];
-    }
-
-    // get current layer ticks, relative to previous layer
-    int get_ticks(
-        int l
-    ) const {
-        return ticks[l];
-    }
-
-    // get layer ticks per update, relative to previous layer
-    int get_ticks_per_update(
-        int l
-    ) const {
-        return ticks_per_update[l];
-    }
-
     // number of io layers
     int get_num_io() const {
         return io_sizes.size();
@@ -302,12 +288,6 @@ public:
 
     const Int_Buffer &get_d_indices() const {
         return d_indices;
-    }
-
-    const Array<Circle_Buffer<Int_Buffer>> &get_histories(
-        int l
-    ) const {
-        return histories[l];
     }
 };
 }
