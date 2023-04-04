@@ -30,11 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0;
-        Byte_Buffer weights1;
+        Float_Buffer protos;
         
-        Int_Buffer hidden_sums1;
-
         float importance;
 
         Visible_Layer()
@@ -44,17 +41,11 @@ public:
     };
 
     struct Params {
-        float choice; // Choice parameter
-        float vigilance; // ART vigilance
         float lr; // learning rate
-        int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.95f),
-        lr(0.1f),
-        l_radius(2)
+        lr(0.2f)
         {}
     };
 
@@ -63,11 +54,7 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
-
-    Float_Buffer hidden_totals;
-
-    Float_Buffer hidden_max_acts;
+    Float_Buffer hidden_rates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -78,12 +65,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -153,6 +135,11 @@ public:
     // get the hidden states
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
+    }
+
+    // get hidden rates
+    const Float_Buffer &get_hidden_rates() const {
+        return hidden_rates;
     }
 
     // get the hidden size
