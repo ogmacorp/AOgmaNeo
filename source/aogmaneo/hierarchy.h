@@ -53,24 +53,19 @@ public:
         Int3 hidden_size; // size of hidden layer
 
         int up_radius; // encoder radius
+        int recurrent_radius; // encoder onto self radius, -1 to disable
         int down_radius; // decoder radius, also shared with actor if there is one
-
-        int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
-        int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
-            int down_radius = 2,
-            int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int recurrent_radius = 0,
+            int down_radius = 2
         )
         :
         hidden_size(hidden_size),
         up_radius(up_radius),
-        down_radius(down_radius),
-        ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon)
+        down_radius(down_radius)
         {}
     };
 
@@ -103,18 +98,11 @@ private:
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
 
+    Array<Int_Buffer> hidden_cis_prev;
+
     // for mapping first layer Decoders
     Int_Buffer i_indices;
     Int_Buffer d_indices;
-
-    // histories
-    Array<Array<Circle_Buffer<Int_Buffer>>> histories;
-
-    // per-layer values
-    Byte_Buffer updates;
-
-    Int_Buffer ticks;
-    Int_Buffer ticks_per_update;
 
     // input dimensions
     Array<Int3> io_sizes;
@@ -125,8 +113,7 @@ private:
         int i,
         float importance
     ) {
-        for (int t = 0; t < histories[0][i].size(); t++)
-            encoders[0].get_visible_layer(i * histories[0][i].size() + t).importance = importance;
+        encoders[0].get_visible_layer(i).importance = importance;
     }
 
 public:
