@@ -363,7 +363,6 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
-
         writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
@@ -404,11 +403,9 @@ void Decoder::read(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
-
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
-
         vl.usages.resize(vl.weights.size());
 
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
         reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
         vl.gates.resize(num_visible_columns);

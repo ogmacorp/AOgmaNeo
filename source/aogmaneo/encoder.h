@@ -31,6 +31,8 @@ public:
     // visible layer
     struct Visible_Layer {
         S_Byte_Buffer weights;
+
+        Byte_Buffer usages;
         
         Float_Buffer recon_acts;
 
@@ -46,12 +48,14 @@ public:
         int code_iters; // sparse coding iterations
         float scale; // scale of squashing
         float lr; // learning rate
+        float ur; // usage rate
 
         Params()
         :
         code_iters(4),
         scale(16.0f),
-        lr(0.05f)
+        lr(0.05f),
+        ur(0.05f)
         {}
     };
 
@@ -62,12 +66,14 @@ private:
 
     Float_Buffer hidden_acts;
 
+    Byte_Buffer hidden_gates;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
     // --- kernels ---
-    
+
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
@@ -78,6 +84,11 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
         const Params &params
     );
 
