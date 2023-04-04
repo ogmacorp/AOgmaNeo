@@ -71,9 +71,9 @@ void Decoder::update_gates(
 
     const float byte_inv = 1.0f / 255.0f;
 
-    float mf = m * byte_inv;
+    float m_rev = 1.0f - m * byte_inv;
 
-    vl.gates[visible_column_index] = 1.0f - powf(mf, params.curve);
+    vl.gates[visible_column_index] = powf(m_rev, params.curve);
 }
 
 void Decoder::forward(
