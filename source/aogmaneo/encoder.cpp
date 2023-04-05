@@ -139,6 +139,7 @@ void Encoder::backward(
 
 void Encoder::update_gates(
     const Int2 &column_pos,
+    const Array<const Int_Buffer*> &input_cis,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -177,6 +178,9 @@ void Encoder::update_gates(
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
+                    if (vc == (*input_cis[vli])[visible_column_index])
+                        continue;
+
                     int wi = vc + wi_start;
 
                     m = max(m, vl.usages[wi]);
@@ -368,7 +372,7 @@ void Encoder::step(
     if (learn_enabled) {
         #pragma omp parallel for
         for (int i = 0; i < num_hidden_columns; i++)
-            update_gates(Int2(i / hidden_size.y, i % hidden_size.y), params);
+            update_gates(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];

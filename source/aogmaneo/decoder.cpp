@@ -12,6 +12,7 @@ using namespace aon;
 
 void Decoder::update_gates(
     const Int2 &column_pos,
+    const Int_Buffer* hidden_target_cis,
     int vli,
     const Params &params
 ) {
@@ -59,7 +60,12 @@ void Decoder::update_gates(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
+                int target_ci = (*hidden_target_cis)[hidden_column_index];
+
                 for (int hc =  0; hc < hidden_size.z; hc++) {
+                    if (hc == target_ci)
+                        continue;
+
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
@@ -300,7 +306,7 @@ void Decoder::learn(
 
         #pragma omp parallel for
         for (int i = 0; i < num_visible_columns; i++)
-            update_gates(Int2(i / vld.size.y, i % vld.size.y), vli, params);
+            update_gates(Int2(i / vld.size.y, i % vld.size.y), hidden_target_cis, vli, params);
     }
 
     // learn kernel

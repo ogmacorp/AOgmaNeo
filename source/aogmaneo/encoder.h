@@ -89,6 +89,7 @@ private:
 
     void update_gates(
         const Int2 &column_pos,
+        const Array<const Int_Buffer*> &input_cis,
         const Params &params
     );
 

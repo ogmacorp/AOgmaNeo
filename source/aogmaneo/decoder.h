@@ -68,6 +68,7 @@ private:
 
     void update_gates(
         const Int2 &column_pos,
+        const Int_Buffer* hidden_target_cis,
         int vli,
         const Params &params
     );
