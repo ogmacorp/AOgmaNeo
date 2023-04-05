@@ -134,9 +134,7 @@ void Encoder::backward(
             }
         }
 
-    float recon = (sum / 127.0f) / max(1, count) * params.scale;
-
-    vl.recon_acts[visible_column_index] = expf(min(0.0f, recon));
+    vl.recon_acts[visible_column_index] = expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale));
 }
 
 void Encoder::update_gates(
@@ -186,9 +184,7 @@ void Encoder::update_gates(
             }
     }
 
-    const float byte_inv = 1.0f / 255.0f;
-
-    hidden_gates[hidden_column_index] = powf(1.0f - m * byte_inv, params.curve);
+    hidden_gates[hidden_column_index] = powf(1.0f - m / 255.0f, params.curve);
 }
 
 void Encoder::learn(
@@ -226,9 +222,6 @@ void Encoder::learn(
 
     int target_ci = (*input_cis)[visible_column_index];
 
-    int max_index = -1;
-    float max_activation = limit_min;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -255,7 +248,7 @@ void Encoder::learn(
                 }
             }
 
-        float delta = params.lr * 127.0f * ((vc == target_ci) - expf((sum / 127.0f) / max(1, count) * params.scale));
+        float delta = params.lr * 127.0f * ((vc == target_ci) - expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale)));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
