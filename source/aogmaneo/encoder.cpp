@@ -134,7 +134,7 @@ void Encoder::backward(
             }
         }
 
-    vl.recon_acts[visible_column_index] = expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale));
+    vl.recon_acts[visible_column_index] = sigmoidf((sum / 127.0f) / max(1, count) * params.scale);
 }
 
 void Encoder::update_gates(
@@ -248,7 +248,7 @@ void Encoder::learn(
                 }
             }
 
-        float delta = params.lr * 127.0f * ((vc == target_ci) - expf((sum / 127.0f) / max(1, count) * params.scale));
+        float delta = params.lr * 127.0f * ((vc == target_ci) - sigmoidf((sum / 127.0f) / max(1, count) * params.scale));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -318,7 +318,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 5 - 2;
+            vl.weights[i] = rand() % 255 - 127;
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
