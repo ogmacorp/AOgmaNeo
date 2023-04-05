@@ -47,8 +47,8 @@ public:
         // Defaults
         Params()
         :
-        scale(8.0f),
-        lr(0.05f),
+        scale(16.0f),
+        lr(0.1f),
         curve(2.0f)
         {}
     };
