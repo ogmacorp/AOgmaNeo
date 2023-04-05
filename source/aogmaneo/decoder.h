@@ -49,7 +49,7 @@ public:
         :
         scale(16.0f),
         lr(0.1f),
-        curve(4.0f)
+        curve(2.0f)
         {}
     };
 
