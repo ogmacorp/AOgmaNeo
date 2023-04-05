@@ -60,15 +60,18 @@ void Decoder::update_gates(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
+                Byte m = 0;
+
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int wi = input_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    sum += vl.usages[wi];
+                    m = max(m, vl.usages[wi]);
                 }
 
-                count += hidden_size.z;
+                sum += m;
+                count++;
             }
         }
 
@@ -87,7 +90,7 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int max_index = -1;
-    int max_activation = limit_min;
+    float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -130,12 +133,30 @@ void Decoder::forward(
                 }
         }
 
-        hidden_acts[hidden_cell_index] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
+        hidden_acts[hidden_cell_index] = (sum / 127.0f) / count * params.scale;
 
-        if (sum > max_activation || max_index == -1) {
-            max_activation = sum;
+        if (hidden_acts[hidden_cell_index] > max_activation || max_index == -1) {
+            max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
+    }
+
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(0.0001f, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
