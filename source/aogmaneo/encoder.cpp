@@ -178,10 +178,12 @@ void Encoder::update_gates(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
+                int in_ci = (*input_cis[vli])[visible_column_index];
+
                 Byte m = 0;
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    if (vc == (*input_cis[vli])[visible_column_index])
+                    if (vc == in_ci)
                         continue;
 
                     int wi = vc + wi_start;
