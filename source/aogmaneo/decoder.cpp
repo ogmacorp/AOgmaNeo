@@ -42,7 +42,7 @@ void Decoder::update_gates(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
     
-    int input_ci = vl.input_cis_prev[visible_column_index];
+    int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
     Byte m = 0;
 
@@ -62,7 +62,7 @@ void Decoder::update_gates(
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = input_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     m = max(m, vl.usages[wi]);
                 }
@@ -125,30 +125,12 @@ void Decoder::forward(
                 }
         }
 
-        hidden_acts[hidden_cell_index] = (sum / 127.0f) / count * params.scale;
+        hidden_acts[hidden_cell_index] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
 
         if (hidden_acts[hidden_cell_index] > max_activation || max_index == -1) {
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-
-        total += hidden_acts[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
