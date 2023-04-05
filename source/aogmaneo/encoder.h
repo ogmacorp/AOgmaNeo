@@ -48,6 +48,7 @@ public:
         int code_iters; // sparse coding iterations
         float scale; // scale of squashing
         float lr; // learning rate
+        float ur; // usage rate
         float curve; // usage curve
 
         Params()
@@ -55,7 +56,8 @@ public:
         code_iters(4),
         scale(16.0f),
         lr(0.1f),
-        curve(2.0f)
+        ur(0.1f),
+        curve(1.0f)
         {}
     };
 

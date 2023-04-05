@@ -246,9 +246,16 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
+                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
 
-                vl.usages[wi] = min(255, vl.usages[wi] + 1);
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int wi = vc + wi_start;
+
+                    if (vc == in_ci_prev)
+                        vl.usages[wi] = min(255, vl.usages[wi] + roundf(params.ur * (255.0f - vl.usages[wi])));
+                    else
+                        vl.usages[wi] = max(0, vl.usages[wi] + roundf(params.ur * -vl.usages[wi]));
+                }
             }
     }
 }

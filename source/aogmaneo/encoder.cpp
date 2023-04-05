@@ -295,9 +295,18 @@ void Encoder::learn(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                int wi = target_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-                vl.usages[wi] = min(255, vl.usages[wi] + 1);
+                for (int hc = 0; hc < hidden_size.z; hc++) {
+                    int hidden_cell_index = hc + hidden_cells_start;
+
+                    int wi = target_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+
+                    if (hc == hidden_cis[hidden_column_index])
+                        vl.usages[wi] = min(255, vl.usages[wi] + roundf(params.ur * (255.0f - vl.usages[wi])));
+                    else
+                        vl.usages[wi] = max(0, vl.usages[wi] + roundf(params.ur * -vl.usages[wi]));
+                }
             }
         }
 }
