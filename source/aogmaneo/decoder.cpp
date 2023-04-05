@@ -63,6 +63,8 @@ void Decoder::update_gates(
 
                 int target_ci = (*hidden_target_cis)[hidden_column_index];
 
+                Byte m = 0;
+
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     if (hc == target_ci)
                         continue;
@@ -71,9 +73,11 @@ void Decoder::update_gates(
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    sum += vl.usages[wi];
-                    count++;
+                    m = max(m, vl.usages[wi]);
                 }
+
+                sum += m;
+                count++;
             }
         }
 
