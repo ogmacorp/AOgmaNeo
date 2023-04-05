@@ -45,7 +45,8 @@ void Decoder::update_gates(
     
     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-    Byte m = 0;
+    int sum = 0;
+    int count = 0;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -70,12 +71,13 @@ void Decoder::update_gates(
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    m = max(m, vl.usages[wi]);
+                    sum += vl.usages[wi];
+                    count++;
                 }
             }
         }
 
-    vl.gates[visible_column_index] = powf(1.0f - m / 255.0f, params.curve);
+    vl.gates[visible_column_index] = powf(1.0f - (sum / 255.0f) / max(1, count), params.curve);
 }
 
 void Decoder::forward(

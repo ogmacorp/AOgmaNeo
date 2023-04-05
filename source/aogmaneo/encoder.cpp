@@ -148,7 +148,8 @@ void Encoder::update_gates(
 
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-    Byte m = 0;
+    int sum = 0;
+    int count = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -183,12 +184,13 @@ void Encoder::update_gates(
 
                     int wi = vc + wi_start;
 
-                    m = max(m, vl.usages[wi]);
+                    sum += vl.weights[wi];
+                    count++;
                 }
             }
     }
 
-    hidden_gates[hidden_column_index] = powf(1.0f - m / 255.0f, params.curve);
+    hidden_gates[hidden_column_index] = powf(1.0f - (sum / 255.0f) / max(1, count), params.curve);
 }
 
 void Encoder::learn(
