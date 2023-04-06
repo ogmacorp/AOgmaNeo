@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "decoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -138,30 +137,12 @@ void Decoder::forward(
                 }
         }
 
-        hidden_acts[hidden_cell_index] = (sum / 127.0f) / count * params.scale;
+        hidden_acts[hidden_cell_index] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
 
         if (hidden_acts[hidden_cell_index] > max_activation || max_index == -1) {
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-
-        total += hidden_acts[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
