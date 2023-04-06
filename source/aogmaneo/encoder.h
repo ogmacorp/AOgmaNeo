@@ -57,7 +57,7 @@ public:
         scale(16.0f),
         lr(0.1f),
         ur(0.1f),
-        curve(1.0f)
+        curve(16.0f)
         {}
     };
 

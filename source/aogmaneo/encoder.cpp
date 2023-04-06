@@ -303,9 +303,9 @@ void Encoder::learn(
                     int wi = target_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     if (hc == hidden_cis[hidden_column_index])
-                        vl.usages[wi] = min(255, vl.usages[wi] + roundf(params.ur * (255.0f - vl.usages[wi])));
+                        vl.usages[wi] = min(255, vl.usages[wi] + ceilf(params.ur * (255.0f - vl.usages[wi])));
                     else
-                        vl.usages[wi] = max(0, vl.usages[wi] + roundf(params.ur * -vl.usages[wi]));
+                        vl.usages[wi] = max(0, vl.usages[wi] + ceilf(params.ur * -vl.usages[wi]));
                 }
             }
         }
