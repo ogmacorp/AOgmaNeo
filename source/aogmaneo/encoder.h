@@ -55,9 +55,9 @@ public:
         :
         code_iters(4),
         scale(16.0f),
-        lr(0.1f),
-        ur(0.1f),
-        curve(2.0f)
+        lr(0.05f),
+        ur(0.05f),
+        curve(8.0f)
         {}
     };
 
