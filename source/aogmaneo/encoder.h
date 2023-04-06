@@ -55,7 +55,7 @@ public:
         code_iters(4),
         scale(16.0f),
         lr(0.05f),
-        gcurve(4.0f)
+        gcurve(1.0f)
         {}
     };
 
@@ -89,7 +89,6 @@ private:
 
     void update_gates(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
         const Params &params
     );
 

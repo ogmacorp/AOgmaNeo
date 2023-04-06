@@ -49,7 +49,7 @@ public:
         :
         scale(16.0f),
         lr(0.05f),
-        gcurve(4.0f)
+        gcurve(1.0f)
         {}
     };
 
@@ -68,7 +68,6 @@ private:
 
     void update_gates(
         const Int2 &column_pos,
-        const Int_Buffer* hidden_target_cis,
         int vli,
         const Params &params
     );
