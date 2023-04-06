@@ -81,7 +81,7 @@ void Decoder::update_gates(
             }
         }
 
-    vl.gates[visible_column_index] = powf(1.0f - (sum / 255.0f) / max(1, count), params.curve);
+    vl.gates[visible_column_index] = powf(1.0f - (sum / 255.0f) / max(1, count), params.gcurve);
 }
 
 void Decoder::forward(
@@ -137,30 +137,12 @@ void Decoder::forward(
                 }
         }
 
-        hidden_acts[hidden_cell_index] = (sum / 127.0f) / count * params.scale;
+        hidden_acts[hidden_cell_index] = 1.0f - expf(min(0.0f, -(sum / 127.0f) / count * params.scale));
 
         if (hidden_acts[hidden_cell_index] > max_activation || max_index == -1) {
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-
-        total += hidden_acts[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(0.0001f, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -246,16 +228,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
+                int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wi_start;
-
-                    if (vc == in_ci_prev)
-                        vl.usages[wi] = min(255, vl.usages[wi] + ceilf(params.ur * (255.0f - vl.usages[wi])));
-                    else
-                        vl.usages[wi] = max(0, vl.usages[wi] + ceilf(params.ur * -vl.usages[wi]));
-                }
+                vl.usages[wi] = min(255, vl.usages[wi] + 1);
             }
     }
 }
