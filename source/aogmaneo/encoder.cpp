@@ -134,7 +134,7 @@ void Encoder::backward(
             }
         }
 
-    vl.recon_acts[visible_column_index] = sigmoidf((sum / 127.0f) / max(1, count) * params.scale);
+    vl.recon_acts[visible_column_index] = expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale));
 }
 
 void Encoder::update_gates(
@@ -147,7 +147,8 @@ void Encoder::update_gates(
 
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-    Byte m = 0;
+    int sum = 0;
+    int count = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -176,15 +177,20 @@ void Encoder::update_gates(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
+                Byte m = 0;
+
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
                     m = max(m, vl.usages[wi]);
                 }
+
+                sum += m;
+                count++;
             }
     }
 
-    hidden_gates[hidden_column_index] = powf(1.0f - m / 255.0f, params.curve);
+    hidden_gates[hidden_column_index] = powf(1.0f - (sum / 255.0f) / max(1, count), params.gcurve);
 }
 
 void Encoder::learn(
@@ -248,7 +254,7 @@ void Encoder::learn(
                 }
             }
 
-        float delta = params.lr * 127.0f * ((vc == target_ci) - sigmoidf((sum / 127.0f) / max(1, count) * params.scale));
+        float delta = params.lr * 127.0f * ((vc == target_ci) - expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale)));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -318,7 +324,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 255 - 127;
+            vl.weights[i] = rand() % 5 - 2;
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 

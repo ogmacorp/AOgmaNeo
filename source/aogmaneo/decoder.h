@@ -42,14 +42,14 @@ public:
     struct Params {
         float scale; // Scale of squashing
         float lr; // learning rate
-        float curve; // usage curve
+        float gcurve; // gain curve
 
         // Defaults
         Params()
         :
-        scale(8.0f),
-        lr(0.05f),
-        curve(2.0f)
+        scale(16.0f),
+        lr(0.1f),
+        gcurve(4.0f)
         {}
     };
 
