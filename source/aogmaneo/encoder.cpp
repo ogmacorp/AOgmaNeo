@@ -83,7 +83,7 @@ void Encoder::backward(
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
-    Visible_Layer_Desc &vld = visible_layer_descs[vli];
+    const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
     int diam = vld.radius * 2 + 1;
 
@@ -200,7 +200,7 @@ void Encoder::learn(
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
-    Visible_Layer_Desc &vld = visible_layer_descs[vli];
+    const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
     int diam = vld.radius * 2 + 1;
 
