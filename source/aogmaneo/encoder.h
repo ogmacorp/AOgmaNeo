@@ -45,7 +45,7 @@ public:
 
         Params()
         :
-        lr(0.2f)
+        lr(0.1f)
         {}
     };
 
