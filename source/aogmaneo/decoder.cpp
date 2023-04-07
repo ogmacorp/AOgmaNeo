@@ -60,18 +60,15 @@ void Decoder::update_gates(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                Byte m = 0;
-
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    m = max(m, vl.usages[wi]);
+                    sum += vl.usages[wi];
                 }
 
-                sum += m;
-                count++;
+                count += hidden_size.z;
             }
         }
 

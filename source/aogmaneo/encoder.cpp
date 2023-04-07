@@ -177,16 +177,13 @@ void Encoder::update_gates(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                Byte m = 0;
-
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    m = max(m, vl.usages[wi]);
+                    sum += vl.usages[wi];
                 }
 
-                sum += m;
-                count++;
+                count += vld.size.z;
             }
     }
 
