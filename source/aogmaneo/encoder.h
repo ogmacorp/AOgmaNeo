@@ -53,9 +53,9 @@ public:
         Params()
         :
         code_iters(4),
-        scale(8.0f),
-        lr(0.1f),
-        gcurve(3.0f)
+        scale(16.0f),
+        lr(0.05f),
+        gcurve(4.0f)
         {}
     };
 
