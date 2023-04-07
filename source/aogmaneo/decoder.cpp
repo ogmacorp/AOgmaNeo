@@ -131,11 +131,9 @@ void Decoder::update_gates(
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    m = max(m, vl.usages[wi]);
+                    sum += vl.usages[wi];
+                    count++;
                 }
-
-                sum += m;
-                count++;
             }
         }
 

@@ -182,11 +182,9 @@ void Encoder::update_gates(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    m = max(m, vl.usages[wi]);
+                    sum += vl.usages[wi];
+                    count++;
                 }
-
-                sum += m;
-                count++;
             }
     }
 
