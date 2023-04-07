@@ -22,9 +22,7 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
-
-    int max_index_learn = -1;
-    float max_activation_learn = 0.0f;
+    float max_match = 0.0f;
 
     for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -89,16 +87,10 @@ void Encoder::forward(
 
         float activation = sum / (params.choice + weight_total);
 
-        if (sum >= params.vigilance_high) {
-            if (activation > max_activation_learn || max_index_learn == -1) {
-                max_activation_learn = activation;
-                max_index_learn = hc;
-            }
-        }
-        
         if (sum >= params.vigilance_low) {
             if (activation > max_activation || max_index == -1) {
                 max_activation = activation;
+                max_match = sum;
                 max_index = hc;
             }
         }
@@ -107,15 +99,15 @@ void Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     // commit
-    if (max_index_learn == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
-        learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
+    if (max_match < params.vigilance_high && hidden_commits[hidden_column_index] < hidden_size.z) {
+        max_index = hidden_commits[hidden_column_index];
 
-        max_activation_learn = max_activation;
+        max_match = 1.0f;
     }
-    else
-        learn_cis[hidden_column_index] = max_index_learn;
 
-    hidden_max_acts[hidden_column_index] = max_activation_learn + randf(state) * 0.0001f;
+    learn_cis[hidden_column_index] = max_index;
+
+    hidden_max_acts[hidden_column_index] = max_match + randf(state) * 0.0001f;
 }
 
 void Encoder::learn(
