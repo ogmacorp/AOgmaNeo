@@ -66,15 +66,15 @@ private:
 
     // --- kernels ---
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
