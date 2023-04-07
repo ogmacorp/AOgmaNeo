@@ -42,10 +42,12 @@ public:
 
     struct Params {
         float lr; // learning rate
+        int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        lr(0.1f)
+        lr(0.5f),
+        l_radius(2)
         {}
     };
 
@@ -56,6 +58,10 @@ private:
 
     Float_Buffer hidden_rates;
 
+    Float_Buffer hidden_max_acts;
+
+    Byte_Buffer hidden_peaks;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -65,7 +71,17 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
+        const Params &params
+    );
+
+    void inhibit(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        const Array<const Int_Buffer*> &input_cis,
         const Params &params
     );
 
@@ -135,11 +151,6 @@ public:
     // get the hidden states
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
-    }
-
-    // get hidden rates
-    const Float_Buffer &get_hidden_rates() const {
-        return hidden_rates;
     }
 
     // get the hidden size
