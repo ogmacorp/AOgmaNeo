@@ -385,7 +385,7 @@ void Encoder::read(
         int area = diam * diam;
 
         vl.weights0.resize(num_hidden_cells * area * vld.size.z);
-        vl.weights1.resize(vl.weights1.size());
+        vl.weights1.resize(vl.weights0.size());
 
         reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
         reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
