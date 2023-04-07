@@ -90,7 +90,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_max_acts[hidden_column_index] = (max_index == -1 ? max_complete_activation : max_activation);
+    hidden_max_acts[hidden_column_index] = max_complete_activation;
 
     hidden_cis[hidden_column_index] = max_complete_index;
 }
