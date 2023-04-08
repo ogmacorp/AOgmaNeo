@@ -62,6 +62,7 @@ private:
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
         const Int_Buffer* other_commits,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -82,6 +83,7 @@ public:
     void activate(
         const Array<const Int_Buffer*> &input_cis,
         const Int_Buffer* other_commits,
+        bool learn_enabled,
         const Params &params
     );
 
