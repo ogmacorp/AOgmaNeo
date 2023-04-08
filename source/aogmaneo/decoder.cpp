@@ -196,6 +196,9 @@ void Decoder::learn(
         }
     }
 
+    if (target_ci == -1)
+        return;
+
     // increase usages for unused
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
