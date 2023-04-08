@@ -69,11 +69,13 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Int_Buffer* other_commits,
         const Params &params
     );
 
     void update_gates(
         const Int2 &column_pos,
+        const Int_Buffer* other_commits,
         int vli,
         const Params &params
     );
@@ -81,6 +83,7 @@ private:
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
+        const Int_Buffer* other_commits,
         const Params &params
     );
 
@@ -94,12 +97,14 @@ public:
     // activate the predictor (predict values)
     void activate(
         const Array<const Int_Buffer*> &input_cis,
+        const Int_Buffer* other_commits,
         const Params &params
     );
 
     // learning predictions (update weights)
     void learn(
         const Int_Buffer* hidden_target_cis,
+        const Int_Buffer* other_commits,
         const Params &params
     );
 
