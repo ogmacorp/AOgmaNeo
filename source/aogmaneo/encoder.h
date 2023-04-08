@@ -52,9 +52,9 @@ public:
 
         Params()
         :
-        code_iters(1),
+        code_iters(3),
         scale(8.0f),
-        lr(0.05f),
+        lr(0.1f),
         gcurve(4.0f)
         {}
     };
