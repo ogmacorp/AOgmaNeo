@@ -244,7 +244,7 @@ void Hierarchy::step(
                 const Int_Buffer* other_commits = (l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits());
 
                 if (learn_enabled)
-                    decoders[l][d].learn(&histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], other_commits, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+                    decoders[l][d].learn(&histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
 
                 decoders[l][d].activate(layer_input_cis, other_commits, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
             }

@@ -30,26 +30,18 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
-
-        Byte_Buffer usages;
-
-        Float_Buffer gates;
+        Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
-        float scale; // Scale of squashing
         float lr; // learning rate
-        float gcurve; // gain curve
 
         // Defaults
         Params()
         :
-        scale(16.0f),
-        lr(0.1f),
-        gcurve(4.0f)
+        lr(0.01f)
         {}
     };
 
@@ -73,17 +65,9 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        const Int_Buffer* other_commits,
-        int vli,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        const Int_Buffer* other_commits,
         const Params &params
     );
 
@@ -104,7 +88,6 @@ public:
     // learning predictions (update weights)
     void learn(
         const Int_Buffer* hidden_target_cis,
-        const Int_Buffer* other_commits,
         const Params &params
     );
 
