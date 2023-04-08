@@ -93,7 +93,6 @@ void Encoder::forward(
         if (sum >= params.vigilance_low) {
             if (activation > max_activation || max_index == -1) {
                 max_activation = activation;
-                max_match = sum;
                 max_index = hc;
             }
         }
