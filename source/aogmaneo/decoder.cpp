@@ -21,7 +21,7 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int max_index = -1;
-    Byte max_activation = 0;
+    int max_activation = 0;
 
     int num_commits = (other_commits == nullptr ? hidden_size.z : (*other_commits)[hidden_column_index]);
 
@@ -89,7 +89,9 @@ void Decoder::learn(
     if (target_ci == -1)
         return;
 
-    // increase usages for unused
+    if (hidden_cis[hidden_column_index] == target_ci)
+        return;
+
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -119,13 +121,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
+                int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wi_start;
-
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(params.lr * ((vc == in_ci_prev) * 255.0f - vl.weights[wi]))));
-                }
+                vl.weights[wi] = min(255, vl.weights[wi] + 1);
             }
     }
 }
