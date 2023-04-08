@@ -22,6 +22,9 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
+
+    int max_index_learn = -1;
+    float max_activation_learn = 0.0f;
     float max_match = 0.0f;
 
     for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
@@ -94,18 +97,26 @@ void Encoder::forward(
                 max_index = hc;
             }
         }
+
+        if (sum >= params.vigilance_high) {
+            if (activation > max_activation_learn || max_index_learn == -1) {
+                max_activation_learn = activation;
+                max_match = sum;
+                max_index_learn = hc;
+            }
+        }
     }
 
     hidden_cis[hidden_column_index] = max_index;
 
     // commit
-    if (max_match < params.vigilance_high && hidden_commits[hidden_column_index] < hidden_size.z) {
-        max_index = hidden_commits[hidden_column_index];
+    if (max_index_learn == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
+        max_index_learn = hidden_commits[hidden_column_index];
 
         max_match = 1.0f;
     }
 
-    learn_cis[hidden_column_index] = max_index;
+    learn_cis[hidden_column_index] = max_index_learn;
 
     hidden_max_acts[hidden_column_index] = max_match + randf(state) * 0.0001f;
 }
@@ -175,8 +186,10 @@ void Encoder::learn(
                     if (in_ci == -1)
                         vl.weights[wi] = 0;
                 }
-                else if (vl.weight_indices[wi] != in_ci || in_ci == -1)
-                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+                else {
+                    if (vl.weight_indices[wi] != in_ci || in_ci == -1)
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+                }
             }
     }
 
