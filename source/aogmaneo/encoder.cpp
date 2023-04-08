@@ -222,7 +222,7 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weight_indices = Int_Buffer(num_hidden_cells * area, -1);
+        vl.weight_indices = Int_Buffer(num_hidden_cells * area, vld.size.z); // all flag
         vl.weights = Byte_Buffer(vl.weight_indices.size(), 255);
     }
 
