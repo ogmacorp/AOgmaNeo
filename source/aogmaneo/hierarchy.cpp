@@ -185,12 +185,10 @@ void Hierarchy::step(
             layer_input_cis[1] = &decoders[l + 1][0].get_hidden_cis();
 
         for (int d = 0; d < decoders[l].size(); d++) {
-            const Int_Buffer* other_commits = (l == 0 ? nullptr : &encoders[l - 1].get_hidden_commits());
-
             if (learn_enabled)
-                decoders[l][d].learn((l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), other_commits, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+                decoders[l][d].learn((l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
 
-            decoders[l][d].activate(layer_input_cis, other_commits, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
         }
 
         if (l == 0) {

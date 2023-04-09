@@ -30,9 +30,11 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Int_Buffer weight_indices;
-        Byte_Buffer weights;
+        Byte_Buffer weights0;
+        Byte_Buffer weights1;
         
+        Int_Buffer hidden_sums1;
+
         float importance;
 
         Visible_Layer()
@@ -43,16 +45,14 @@ public:
 
     struct Params {
         float choice; // Choice parameter
-        float vigilance_low; // ART vigilance for inference
-        float vigilance_high; // ART vigilance for learning
+        float vigilance; // ART vigilance
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
         choice(0.01f),
-        vigilance_low(0.1f),
-        vigilance_high(0.9f),
+        vigilance(0.95f),
         lr(0.1f),
         l_radius(2)
         {}
@@ -65,9 +65,9 @@ private:
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_max_acts;
+    Float_Buffer hidden_totals;
 
-    Int_Buffer hidden_commits;
+    Float_Buffer hidden_max_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -78,7 +78,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        unsigned int* state,
         const Params &params
     );
 
@@ -102,7 +101,7 @@ public:
     );
 
     void clear_state() {
-        hidden_cis.fill(-1);
+        hidden_cis.fill(0);
     }
 
     // serialization
@@ -154,11 +153,6 @@ public:
     // get the hidden states
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
-    }
-
-    // get the number of committed cells per column
-    const Int_Buffer &get_hidden_commits() const {
-        return hidden_commits;
     }
 
     // get the hidden size

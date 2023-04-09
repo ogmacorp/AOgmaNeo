@@ -13,7 +13,6 @@ using namespace aon;
 void Decoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    const Int_Buffer* other_commits,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -23,9 +22,7 @@ void Decoder::forward(
     int max_index = -1;
     int max_activation = 0;
 
-    int num_commits = (other_commits == nullptr ? hidden_size.z : (*other_commits)[hidden_column_index]);
-
-    for (int hc = -1; hc < num_commits; hc++) {
+    for (int hc = -1; hc < hidden_size.z; hc++) {
         int hidden_cell_index = (hc + 1) + hidden_cells_start;
 
         int sum = 0;
@@ -80,7 +77,6 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* hidden_target_cis,
-    const Int_Buffer* other_commits,
     unsigned int* state,
     const Params &params
 ) {
@@ -94,8 +90,6 @@ void Decoder::learn(
     int hidden_cell_index_max = (hidden_cis[hidden_column_index] + 1) + hidden_cells_start;
 
     float diff = (hidden_acts[hidden_cell_index_target] - hidden_acts[hidden_cell_index_max]) / 255.0f;
-
-    int num_commits = (other_commits == nullptr ? hidden_size.z : (*other_commits)[hidden_column_index]);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -213,7 +207,6 @@ void Decoder::init_random(
 
 void Decoder::activate(
     const Array<const Int_Buffer*> &input_cis,
-    const Int_Buffer* other_commits,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -221,7 +214,7 @@ void Decoder::activate(
     // forward kernel
     #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, other_commits, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     // copy to prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -233,7 +226,6 @@ void Decoder::activate(
 
 void Decoder::learn(
     const Int_Buffer* hidden_target_cis,
-    const Int_Buffer* other_commits,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -245,7 +237,7 @@ void Decoder::learn(
     for (int i = 0; i < num_hidden_columns; i++) {
         unsigned int state = base_state + i * 12345;
 
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, other_commits, &state, params);
+        learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, &state, params);
     }
 }
 
