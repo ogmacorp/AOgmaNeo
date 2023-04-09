@@ -30,33 +30,15 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
-
-        Byte_Buffer usages;
-
-        Float_Buffer gates;
+        Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
-    struct Params {
-        float scale; // Scale of squashing
-        float lr; // learning rate
-        float gcurve; // gain curve
-
-        // Defaults
-        Params()
-        :
-        scale(16.0f),
-        lr(0.1f),
-        gcurve(4.0f)
-        {}
-    };
+    struct Params {};
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
-
-    Float_Buffer hidden_acts;
 
     Int_Buffer hidden_cis; // hidden state
 
@@ -69,12 +51,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
         const Params &params
     );
 
@@ -154,11 +130,6 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
-    }
-
-    // get the hidden activations
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
     }
 
     // get the hidden size

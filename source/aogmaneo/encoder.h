@@ -32,8 +32,6 @@ public:
     struct Visible_Layer {
         S_Byte_Buffer weights;
 
-        Byte_Buffer usages;
-        
         Float_Buffer recon_acts;
 
         float importance;
@@ -48,14 +46,12 @@ public:
         int code_iters; // sparse coding iterations
         float scale; // scale of squashing
         float lr; // learning rate
-        float gcurve; // gain curve
 
         Params()
         :
-        code_iters(3),
+        code_iters(1),
         scale(8.0f),
-        lr(0.1f),
-        gcurve(4.0f)
+        lr(0.1f)
         {}
     };
 
