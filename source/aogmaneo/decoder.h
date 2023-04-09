@@ -66,7 +66,6 @@ private:
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        unsigned int* state,
         const Params &params
     );
 

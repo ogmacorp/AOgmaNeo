@@ -17,13 +17,13 @@ void Decoder::forward(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * (hidden_size.z + 1); // +1 for null class
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int max_index = -1;
+    int max_index = 0;
     int max_activation = 0;
 
-    for (int hc = -1; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = (hc + 1) + hidden_cells_start;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
         int sum = 0;
 
@@ -77,17 +77,16 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* hidden_target_cis,
-    unsigned int* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * (hidden_size.z + 1); // +1 for null class
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    int hidden_cell_index_target = (target_ci + 1) + hidden_cells_start;
-    int hidden_cell_index_max = (hidden_cis[hidden_column_index] + 1) + hidden_cells_start;
+    int hidden_cell_index_target = target_ci + hidden_cells_start;
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
     float diff = (hidden_acts[hidden_cell_index_target] - hidden_acts[hidden_cell_index_max]) / 255.0f;
 
@@ -178,8 +177,8 @@ void Decoder::init_random(
 
     // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
-    int num_hidden_cells = num_hidden_columns * (hidden_size.z + 1); // +1 for null class
-    
+    int num_hidden_cells = num_hidden_columns * hidden_size.z;
+
     // create layers
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -230,15 +229,10 @@ void Decoder::learn(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    unsigned int base_state = rand();
-
     // learn kernel
     #pragma omp parallel for
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned int state = base_state + i * 12345;
-
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, params);
 }
 
 void Decoder::clear_state() {
@@ -304,7 +298,7 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_size), sizeof(Int3));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
-    int num_hidden_cells = num_hidden_columns * (hidden_size.z + 1); // +1 for null class
+    int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
     hidden_cis.resize(num_hidden_columns);
     hidden_acts.resize(num_hidden_cells);
