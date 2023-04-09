@@ -21,14 +21,14 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * (hidden_size.z + 1); // +1 for null class
 
     int max_index = -1;
-    Byte max_activation = 0;
+    int max_activation = 0;
 
     int num_commits = (other_commits == nullptr ? hidden_size.z : (*other_commits)[hidden_column_index]);
 
     for (int hc = -1; hc < num_commits; hc++) {
         int hidden_cell_index = (hc + 1) + hidden_cells_start;
 
-        Byte act = 255;
+        int sum = 0;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -62,12 +62,12 @@ void Decoder::forward(
 
                     int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    act = min(act, vl.weights[wi]);
+                    sum += vl.weights[wi];
                 }
         }
 
-        if (act > max_activation) {
-            max_activation = act;
+        if (sum > max_activation) {
+            max_activation = sum;
             max_index = hc;
         }
     }
