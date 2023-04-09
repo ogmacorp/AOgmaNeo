@@ -25,8 +25,6 @@ void Decoder::forward(
 
     int num_commits = (other_commits == nullptr ? hidden_size.z : (*other_commits)[hidden_column_index]);
 
-    Byte m_all = 255;
-
     for (int hc = -1; hc < num_commits; hc++) {
         int hidden_cell_index = (hc + 1) + hidden_cells_start;
 
