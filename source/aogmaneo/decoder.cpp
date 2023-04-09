@@ -18,7 +18,7 @@ void Decoder::forward(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
+    int hidden_cells_start = hidden_column_index * (hidden_size.z + 1); // +1 for null class
 
     int max_index = -1;
     int max_activation = 0;
@@ -27,8 +27,8 @@ void Decoder::forward(
 
     Byte m_all = 255;
 
-    for (int hc = 0; hc < num_commits; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+    for (int hc = -1; hc < num_commits; hc++) {
+        int hidden_cell_index = (hc + 1) + hidden_cells_start;
 
         int sum = 0;
 
@@ -68,7 +68,7 @@ void Decoder::forward(
                 }
         }
 
-        if (sum > max_activation || max_index == -1) {
+        if (sum > max_activation) {
             max_activation = sum;
             max_index = hc;
         }
@@ -84,14 +84,11 @@ void Decoder::learn(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
+    int hidden_cells_start = hidden_column_index * (hidden_size.z + 1); // +1 for null class
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    if (target_ci == -1)
-        return;
-
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
+    int hidden_cell_index_target = (target_ci + 1) + hidden_cells_start;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -118,6 +115,9 @@ void Decoder::learn(
 
                 int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
+                if (in_ci_prev == -1)
+                    continue;
+
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
@@ -139,7 +139,7 @@ void Decoder::init_random(
 
     // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
-    int num_hidden_cells = num_hidden_columns * hidden_size.z;
+    int num_hidden_cells = num_hidden_columns * (hidden_size.z + 1); // +1 for null class
     
     // create layers
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -157,11 +157,11 @@ void Decoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5;
 
-        vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
+        vl.input_cis_prev = Int_Buffer(num_visible_columns, -1);
     }
 
     // hidden cis
-    hidden_cis = Int_Buffer(num_hidden_columns, 0);
+    hidden_cis = Int_Buffer(num_hidden_columns, -1);
 }
 
 void Decoder::activate(
@@ -197,10 +197,10 @@ void Decoder::learn(
 }
 
 void Decoder::clear_state() {
-    hidden_cis.fill(0);
+    hidden_cis.fill(-1);
 
     for (int vli = 0; vli < visible_layers.size(); vli++)
-        visible_layers[vli].input_cis_prev.fill(0);
+        visible_layers[vli].input_cis_prev.fill(-1);
 }
 
 int Decoder::size() const {
@@ -257,7 +257,7 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_size), sizeof(Int3));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
-    int num_hidden_cells = num_hidden_columns * hidden_size.z;
+    int num_hidden_cells = num_hidden_columns * (hidden_size.z + 1); // +1 for null class
 
     hidden_cis.resize(num_hidden_columns);
 
