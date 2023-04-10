@@ -80,6 +80,11 @@ void Decoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    int target_ci = (*hidden_target_cis)[hidden_column_index];
+
+    if (hidden_cis[hidden_column_index] == target_ci)
+        return;
+
     // count number of inputs
     int count = 0;
 
@@ -104,8 +109,6 @@ void Decoder::learn(
 
         count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
     }
-
-    int target_ci = (*hidden_target_cis)[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
