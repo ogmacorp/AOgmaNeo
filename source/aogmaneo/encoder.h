@@ -30,9 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
-
-        Float_Buffer recon_acts;
+        Byte_Buffer weights;
 
         float importance;
 
@@ -43,15 +41,13 @@ public:
     };
 
     struct Params {
-        int code_iters; // sparse coding iterations
         float scale; // scale of squashing
         float lr; // learning rate
 
         Params()
         :
-        code_iters(1),
-        scale(8.0f),
-        lr(0.05f)
+        scale(16.0f),
+        lr(0.1f)
         {}
     };
 
@@ -59,8 +55,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
