@@ -172,6 +172,9 @@ void Encoder::learn(
 
     int target_ci = (*input_cis)[visible_column_index];
 
+    int max_index = 0;
+    float max_activation = limit_min;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -198,7 +201,21 @@ void Encoder::learn(
                 }
             }
 
-        int delta = roundf(params.lr * 127.0f * ((vc == target_ci) - expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale))));
+        vl.recon_acts[visible_cell_index] = (sum / 127.0f) / max(1, count) * params.scale;
+
+        if (vl.recon_acts[visible_cell_index] > max_activation) {
+            max_activation = vl.recon_acts[visible_cell_index];
+            max_index = vc;
+        }
+    }
+
+    if (max_index == target_ci)
+        return;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+
+        int delta = roundf(params.lr * 127.0f * ((vc == target_ci) - expf(min(0.0f, vl.recon_acts[visible_cell_index]))));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -251,7 +268,7 @@ void Encoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5 - 2;
 
-        vl.recon_acts.resize(num_visible_columns);
+        vl.recon_acts.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -381,7 +398,7 @@ void Encoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
 
-        vl.recon_acts.resize(num_visible_columns);
+        vl.recon_acts.resize(num_visible_cells);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
