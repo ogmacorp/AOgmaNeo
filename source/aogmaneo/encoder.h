@@ -41,10 +41,12 @@ public:
     };
 
     struct Params {
+        float vigilance; // minimum activity for learning
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
+        vigilance(0.5f),
         l_radius(2)
         {}
     };

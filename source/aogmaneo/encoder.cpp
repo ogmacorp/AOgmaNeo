@@ -26,6 +26,7 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         float sum = 0.0f;
+        float total_importance = 0.0f;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -63,7 +64,10 @@ void Encoder::forward(
                 }
 
             sum += (sub_sum / 255.0f) / sub_count * vl.importance;
+            total_importance += vl.importance;
         }
+
+        sum /= max(0.0001f, total_importance);
 
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
@@ -86,6 +90,9 @@ void Encoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float max_activation = hidden_max_acts[hidden_column_index];
+
+    if (hidden_max_acts[hidden_column_index] < params.vigilance)
+        return;
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
