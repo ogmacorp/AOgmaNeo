@@ -35,14 +35,7 @@ public:
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
-    struct Params {
-        int gap;
-
-        Params()
-        :
-        gap(32)
-        {}
-    };
+    struct Params {};
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
