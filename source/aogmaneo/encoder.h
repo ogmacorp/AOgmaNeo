@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer protos;
+        Byte_Buffer weights;
         
         float importance;
 
@@ -41,12 +41,10 @@ public:
     };
 
     struct Params {
-        float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        lr(0.5f),
         l_radius(2)
         {}
     };
@@ -56,11 +54,7 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_rates;
-
     Float_Buffer hidden_max_acts;
-
-    Byte_Buffer hidden_peaks;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -71,11 +65,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void inhibit(
-        const Int2 &column_pos,
         const Params &params
     );
 
