@@ -35,14 +35,23 @@ public:
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
-    struct Params {};
+    struct Params {
+        float scale;
+        float lr;
+
+        Params()
+        :
+        scale(4.0f),
+        lr(0.01f)
+        {}
+    };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer hidden_acts;
+    Float_Buffer hidden_acts;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;

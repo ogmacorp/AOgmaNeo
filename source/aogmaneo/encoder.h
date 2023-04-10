@@ -68,13 +68,6 @@ private:
         const Params &params
     );
 
-    void backward(
-        const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
