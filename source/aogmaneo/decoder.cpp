@@ -80,6 +80,9 @@ void Decoder::learn(
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
+    if (hidden_cis[hidden_column_index] == target_ci)
+        return;
+
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
