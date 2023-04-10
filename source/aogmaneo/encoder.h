@@ -41,13 +41,11 @@ public:
     };
 
     struct Params {
-        float vigilance; // minimum activity for learning
-        int l_radius; // Second stage inhibition radius
+        float min_act; // minimum activity, otherwise fires randomly
 
         Params()
         :
-        vigilance(0.5f),
-        l_radius(2)
+        min_act(0.7f)
         {}
     };
 
@@ -67,12 +65,8 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
+        unsigned int* state,
         const Params &params
     );
 
