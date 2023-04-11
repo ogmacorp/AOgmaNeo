@@ -80,6 +80,8 @@ void Encoder::forward(
         }
     }
 
+    hidden_cis[hidden_column_index] = max_index;
+
     if (learn_enabled && max_activation < params.min_act) {
         int hidden_cell_index_rand = rand(state) % hidden_size.z + hidden_cells_start;
 
@@ -119,10 +121,6 @@ void Encoder::forward(
                 }
         }
     }
-
-    hidden_max_acts[hidden_column_index] = max_activation;
-
-    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Encoder::init_random(
@@ -154,8 +152,6 @@ void Encoder::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-
-    hidden_max_acts.resize(num_hidden_columns);
 }
 
 void Encoder::step(
@@ -225,8 +221,6 @@ void Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-
-    hidden_max_acts.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
