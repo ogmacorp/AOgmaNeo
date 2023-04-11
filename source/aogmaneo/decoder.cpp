@@ -86,6 +86,7 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
     int count = 0;
 
@@ -142,9 +143,17 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
+                {
+                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
 
-                vl.weights[wi] = min(255, vl.weights[wi] + delta);
+                    vl.weights[wi] = min(255, vl.weights[wi] + delta);
+                }
+
+                if (hidden_cis[hidden_column_index] != target_ci) {
+                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+
+                    vl.weights[wi] = max(0, vl.weights[wi] - 1);
+                }
             }
     }
 }
