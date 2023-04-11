@@ -114,7 +114,7 @@ void Encoder::reconstruct(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
     
-    int max_index = 0;
+    int max_index = -1;
     int max_activation = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {

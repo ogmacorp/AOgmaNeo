@@ -40,7 +40,7 @@ public:
 
         Params()
         :
-        min_act(0.1f)
+        min_act(0.5f)
         {}
     };
 
