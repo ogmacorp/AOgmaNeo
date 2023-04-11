@@ -135,7 +135,10 @@ void Encoder::reconstruct(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    sum += vl.weights[wi];
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    sum += ((vl.weights[byi] & (0x1 << bi)) != 0);
                 }
             }
 
