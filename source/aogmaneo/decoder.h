@@ -40,7 +40,7 @@ public:
 
         Params()
         :
-        min_gap(0.03f)
+        min_gap(0.02f)
         {}
     };
 
