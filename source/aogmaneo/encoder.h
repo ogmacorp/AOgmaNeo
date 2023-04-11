@@ -45,7 +45,7 @@ public:
 
         Params()
         :
-        min_act(0.8f)
+        min_act(0.3f)
         {}
     };
 
