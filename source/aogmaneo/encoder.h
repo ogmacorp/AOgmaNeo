@@ -48,8 +48,8 @@ public:
 
         Params()
         :
-        min_act(0.9f),
-        min_recon(0.9f)
+        min_act(0.95f),
+        min_recon(0.95f)
         {}
     };
 
