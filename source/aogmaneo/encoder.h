@@ -45,11 +45,13 @@ public:
     struct Params {
         float min_act; // minimum activity, otherwise fires randomly
         float min_recon;
+        int num_connections_grow;
 
         Params()
         :
         min_act(0.9f),
-        min_recon(0.9f)
+        min_recon(0.9f),
+        num_connections_grow(4)
         {}
     };
 
