@@ -32,6 +32,8 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
         
+        Int_Buffer recon_cis;
+
         float importance;
 
         Visible_Layer()
@@ -45,7 +47,7 @@ public:
 
         Params()
         :
-        min_act(0.3f)
+        min_act(0.9f)
         {}
     };
 
@@ -63,7 +65,17 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
+        const Params &params
+    );
+
+    void reconstruct(
+        const Int2 &column_pos,
+        int vli
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        const Array<const Int_Buffer*> &input_cis,
         unsigned int* state,
         const Params &params
     );
