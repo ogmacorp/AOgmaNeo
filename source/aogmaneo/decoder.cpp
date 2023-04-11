@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "decoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -86,28 +85,7 @@ void Decoder::learn(
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    int second_max_index = 0;
-    float second_max_activation = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        if (hc == target_ci)
-            continue;
-
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        if (hidden_acts[hidden_cell_index] > second_max_activation) {
-            second_max_activation = hidden_acts[hidden_cell_index];
-            second_max_index = hc;
-        }
-    }
-
-    float gap = hidden_acts[target_ci + hidden_cells_start] - second_max_activation;
-
-    if (hidden_cis[hidden_column_index] == target_ci && gap >= params.min_gap)
-        return;
-
     int hidden_cell_index_target = target_ci + hidden_cells_start;
-    int hidden_cell_index_second = second_max_index + hidden_cells_start;
 
     int count = 0;
 
@@ -135,7 +113,7 @@ void Decoder::learn(
 
     float max_activation = hidden_acts[hidden_cis[hidden_column_index] + hidden_cells_start];
 
-    int delta = ceilf((max_activation + 0.0001f - hidden_acts[hidden_cell_index_target]) * 255.0f);
+    int delta = max(1, ceilf((max_activation - hidden_acts[hidden_cell_index_target]) * 255.0f));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
