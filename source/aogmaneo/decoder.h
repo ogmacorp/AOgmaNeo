@@ -53,6 +53,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -72,6 +73,7 @@ public:
     // activate the predictor (predict values)
     void activate(
         const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
