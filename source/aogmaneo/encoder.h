@@ -49,8 +49,8 @@ public:
 
         Params()
         :
-        min_act(0.9f),
-        min_recon(0.9f),
+        min_act(0.7f),
+        min_recon(0.8f),
         num_connections_grow(3)
         {}
     };
