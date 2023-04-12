@@ -36,11 +36,11 @@ public:
     };
 
     struct Params {
-        float min_act; // minimum activity before starts decreasing
+        float min_gap; // minimum activity before starts decreasing
 
         Params()
         :
-        min_act(0.9f)
+        min_gap(0.05f)
         {}
     };
 

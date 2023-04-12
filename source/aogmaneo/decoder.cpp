@@ -89,33 +89,12 @@ void Decoder::learn(
     int hidden_cell_index_target = target_ci + hidden_cells_start;
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-    int count = 0;
+    float gap = hidden_acts[hidden_cell_index_target] - hidden_acts[hidden_cell_index_max];
 
-    for (int vli = 0; vli < visible_layers.size(); vli++) {
-        Visible_Layer &vl = visible_layers[vli];
-        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+    if (hidden_cis[hidden_column_index] == target_ci)
+        return;
 
-        int diam = vld.radius * 2 + 1;
-
-        // projection
-        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
-
-        Int2 visible_center = project(column_pos, h_to_v);
-
-        // lower corner
-        Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
-
-        // bounds of receptive field, clamped to input size
-        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-        Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-        count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-    }
-
-    int delta_target = roundf((hidden_acts[hidden_cell_index_max] + 1.0f / count - hidden_acts[hidden_cell_index_target]) * 255.0f);
-
-    bool decrease = (hidden_cis[hidden_column_index] != target_ci && hidden_acts[hidden_cell_index_max] > params.min_act);
+    int delta_target = roundf((params.min_gap - gap) * 255.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -144,17 +123,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                {
-                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
+                int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
 
-                    vl.weights[wi] = min(255, vl.weights[wi] + delta_target);
-                }
-
-                if (decrease) {
-                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
-
-                    vl.weights[wi] = max(0, vl.weights[wi] - 1);
-                }
+                vl.weights[wi] = min(255, vl.weights[wi] + delta_target);
             }
     }
 }
