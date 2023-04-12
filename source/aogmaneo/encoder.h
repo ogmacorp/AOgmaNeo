@@ -51,7 +51,7 @@ public:
         :
         min_act(0.9f),
         min_recon(0.9f),
-        num_connections_grow(4)
+        num_connections_grow(3)
         {}
     };
 
