@@ -35,7 +35,16 @@ public:
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
-    struct Params {};
+    struct Params {
+        float scale; // scale of squashing
+        float lr; // learning rate
+
+        Params()
+        :
+        scale(4.0f),
+        lr(0.02f)
+        {}
+    };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
@@ -53,13 +62,13 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
+        int vli,
         const Params &params
     );
 
