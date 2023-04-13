@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
+        Float_Buffer weights;
 
         Byte_Buffer usages;
 
@@ -40,16 +40,14 @@ public:
     };
 
     struct Params {
-        float scale; // Scale of squashing
         float lr; // learning rate
         float gcurve; // gain curve
 
         // Defaults
         Params()
         :
-        scale(16.0f),
-        lr(0.05f),
-        gcurve(4.0f)
+        lr(0.5f),
+        gcurve(8.0f)
         {}
     };
 
@@ -66,15 +64,15 @@ private:
 
     // --- kernels ---
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 

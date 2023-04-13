@@ -62,7 +62,7 @@ void Encoder::forward(
                     sub_sum += vl.weights[wi] * (1.0f - vl.recon_acts[visible_column_index]);
                 }
 
-            sum += (sub_sum / 127.0f) / sub_count * vl.importance;
+            sum += sub_sum / sub_count * vl.importance;
         }
 
         hidden_acts[hidden_cell_index] += sum;
@@ -83,7 +83,7 @@ void Encoder::backward(
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
-    Visible_Layer_Desc &vld = visible_layer_descs[vli];
+    const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
     int diam = vld.radius * 2 + 1;
 
@@ -111,7 +111,7 @@ void Encoder::backward(
 
     int target_ci = (*input_cis)[visible_column_index];
 
-    int sum = 0;
+    float sum = 0.0f;
     int count = 0;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -134,7 +134,9 @@ void Encoder::backward(
             }
         }
 
-    vl.recon_acts[visible_column_index] = expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale));
+    sum /= max(1, count);
+
+    vl.recon_acts[visible_column_index] = expf(min(0.0f, sum));
 }
 
 void Encoder::update_gates(
@@ -177,20 +179,16 @@ void Encoder::update_gates(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                Byte m = 0;
-
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    m = max(m, vl.usages[wi]);
+                    sum += vl.usages[wi];
+                    count++;
                 }
-
-                sum += m;
-                count++;
             }
     }
 
-    hidden_gates[hidden_column_index] = powf(1.0f - (sum / 255.0f) / max(1, count), params.gcurve);
+    hidden_gates[hidden_column_index] = expf(-(sum / 255.0f) / max(1, count) * params.gcurve);
 }
 
 void Encoder::learn(
@@ -200,7 +198,7 @@ void Encoder::learn(
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
-    Visible_Layer_Desc &vld = visible_layer_descs[vli];
+    const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
     int diam = vld.radius * 2 + 1;
 
@@ -231,7 +229,7 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        int sum = 0;
+        float sum = 0.0f;
         int count = 0;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -254,7 +252,9 @@ void Encoder::learn(
                 }
             }
 
-        float delta = params.lr * 127.0f * ((vc == target_ci) - expf(min(0.0f, (sum / 127.0f) / max(1, count) * params.scale)));
+        sum /= max(1, count);
+
+        float delta = params.lr * ((vc == target_ci) - expf(min(0.0f, sum)));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -271,7 +271,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(delta * hidden_gates[hidden_column_index])));
+                    vl.weights[wi] += delta * hidden_gates[hidden_column_index];
                 }
             }
     }
@@ -324,7 +324,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 5 - 2;
+            vl.weights[i] = randf(-1.0f, 0.0f);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
@@ -394,7 +394,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(S_Byte) + vl.usages.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float) + vl.usages.size() * sizeof(Byte) + sizeof(float);
     }
 
     return size;
@@ -421,7 +421,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
@@ -464,7 +464,7 @@ void Encoder::read(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
         vl.usages.resize(vl.weights.size());
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
         vl.recon_acts.resize(num_visible_columns);
