@@ -200,6 +200,8 @@ void Decoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5;
 
+        vl.recon_acts.resize(num_visible_cells);
+
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
 
@@ -331,6 +333,8 @@ void Decoder::read(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+
+        vl.recon_acts.resize(num_visible_cells);
 
         vl.input_cis_prev.resize(num_visible_columns);
 
