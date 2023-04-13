@@ -122,7 +122,7 @@ void Decoder::learn(
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                    int hidden_cell_index_max = (*hidden_target_cis)[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -158,7 +158,7 @@ void Decoder::learn(
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                    int hidden_cell_index_max = (*hidden_target_cis)[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
