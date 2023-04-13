@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        S_Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
