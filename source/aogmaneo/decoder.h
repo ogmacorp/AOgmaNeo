@@ -30,19 +30,17 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
+        Float_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
-        float scale; // scale of squashing
         float lr; // learning rate
 
         Params()
         :
-        scale(8.0f),
-        lr(0.01f)
+        lr(0.1f)
         {}
     };
 
@@ -80,7 +78,6 @@ public:
     // activate the predictor (predict values)
     void activate(
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
         const Params &params
     );
 
