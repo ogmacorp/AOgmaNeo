@@ -104,9 +104,6 @@ void Decoder::learn(
 
     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-    int max_index = 0;
-    float max_activation = 0.0f;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -133,21 +130,9 @@ void Decoder::learn(
                 }
             }
 
-        vl.recon_acts[visible_cell_index] = (sum / 255.0f) / max(1, count);
+        float act = (sum / 255.0f) / max(1, count);
 
-        if (vl.recon_acts[visible_cell_index] > max_activation) {
-            max_activation = vl.recon_acts[visible_cell_index];
-            max_index = vc;
-        }
-    }
-
-    if (max_index == in_ci_prev)
-        return;
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        int delta = roundf(params.lr * 255.0f * ((vc == in_ci_prev) - expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale)));
+        int delta = roundf(params.lr * 255.0f * ((vc == in_ci_prev) - expf((act - 1.0f) * params.scale)));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -199,8 +184,6 @@ void Decoder::init_random(
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = rand() % 5;
-
-        vl.recon_acts.resize(num_visible_cells);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -333,8 +316,6 @@ void Decoder::read(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
-
-        vl.recon_acts.resize(num_visible_cells);
 
         vl.input_cis_prev.resize(num_visible_columns);
 
