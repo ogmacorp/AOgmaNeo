@@ -132,7 +132,7 @@ void Decoder::learn(
 
         sum /= max(1, count);
 
-        float delta = params.lr * ((vc == in_ci_prev) - expf(sum));
+        float delta = params.lr * ((vc == in_ci_prev) - tanhf(sum));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
