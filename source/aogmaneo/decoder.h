@@ -35,21 +35,14 @@ public:
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
-    struct Params {
-        float scale; // scale of squashing
-        float lr; // learning rate
-
-        Params()
-        :
-        scale(4.0f),
-        lr(0.02f)
-        {}
-    };
+    struct Params {};
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
 
     Int_Buffer hidden_cis; // hidden state
+
+    Float_Buffer hidden_acts;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -60,13 +53,13 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        int vli,
         const Params &params
     );
 
@@ -80,6 +73,7 @@ public:
     // activate the predictor (predict values)
     void activate(
         const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
