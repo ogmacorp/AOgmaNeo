@@ -32,6 +32,8 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
+        Float_Buffer recon_acts;
+
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
@@ -50,8 +52,6 @@ private:
     Int3 hidden_size; // size of the output/hidden/prediction
 
     Int_Buffer hidden_cis; // hidden state
-
-    Float_Buffer hidden_acts;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;

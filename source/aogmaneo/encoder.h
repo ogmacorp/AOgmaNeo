@@ -32,6 +32,8 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
+        Float_Buffer recon_acts;
+
         float importance;
 
         Visible_Layer()
@@ -47,7 +49,7 @@ public:
         Params()
         :
         scale(4.0f),
-        lr(0.02f)
+        lr(0.01f)
         {}
     };
 

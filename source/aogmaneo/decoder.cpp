@@ -104,6 +104,9 @@ void Decoder::learn(
 
     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
+    int max_index = 0;
+    float max_activation = 0.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -119,7 +122,7 @@ void Decoder::learn(
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    int hidden_cell_index_max = (*hidden_target_cis)[hidden_column_index] + hidden_column_index * hidden_size.z;
+                    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -130,9 +133,21 @@ void Decoder::learn(
                 }
             }
 
-        float act = (sum / 255.0f) / max(1, count);
+        vl.recon_acts[visible_cell_index] = (sum / 255.0f) / max(1, count);
 
-        int delta = roundf(params.lr * 255.0f * ((vc == in_ci_prev) - expf((act - 1.0f) * params.scale)));
+        if (vl.recon_acts[visible_cell_index] > max_activation) {
+            max_activation = vl.recon_acts[visible_cell_index];
+            max_index = vc;
+        }
+    }
+
+    if (max_index == in_ci_prev)
+        return;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+
+        int delta = roundf(params.lr * 255.0f * ((vc == in_ci_prev) - expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale)));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -143,7 +158,7 @@ void Decoder::learn(
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    int hidden_cell_index_max = (*hidden_target_cis)[hidden_column_index] + hidden_column_index * hidden_size.z;
+                    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -190,8 +205,6 @@ void Decoder::init_random(
 
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-
-    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 }
 
 void Decoder::activate(
@@ -295,8 +308,6 @@ void Decoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-
-    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
     int num_visible_layers;
 
