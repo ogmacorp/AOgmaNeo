@@ -135,7 +135,7 @@ void Image_Encoder::forward(
                     }
             }
 
-            hidden_rates[hidden_cell_index] -= min(1.0f, max(0.0f, params.lr * sqrtf(-max_activation))) * rate;
+            hidden_rates[hidden_cell_index] -= (1.0f - expf(-params.lr * sqrtf(-max_activation))) * rate;
         }
     }
 }
