@@ -48,8 +48,8 @@ public:
         Params()
         :
         scale(16.0f),
-        lr(0.05f),
-        gcurve(4.0f)
+        lr(0.1f),
+        gcurve(8.0f)
         {}
     };
 
@@ -66,15 +66,15 @@ private:
 
     // --- kernels ---
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
