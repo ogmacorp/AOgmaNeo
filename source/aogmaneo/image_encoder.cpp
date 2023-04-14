@@ -184,11 +184,12 @@ void Image_Encoder::reconstruct(
                 Int2 hidden_pos = Int2(ix, iy);
 
                 int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
-                int hidden_cell_index = address3(Int3(hidden_pos.x, hidden_pos.y, (*recon_cis)[hidden_column_index]), hidden_size);
 
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
+                    int hidden_cell_index = (*recon_cis)[hidden_column_index] + hidden_column_index * hidden_size.z;
+
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
