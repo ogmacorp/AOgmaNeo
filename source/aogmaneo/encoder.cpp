@@ -143,7 +143,12 @@ void Encoder::learn(
 learn:
     bool max_not_close = (sqrtf(-max_peak) > params.threshold);
 
-    for (int dhc = -1; dhc <= 1; dhc++) {
+    if (!hidden_peaks[hidden_column_index] && !max_not_close)
+        return;
+
+    int scan_rad = max_not_close;
+
+    for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
 
         if (hc < 0 || hc >= hidden_size.z)
@@ -151,7 +156,7 @@ learn:
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = ((dhc == 0 && hidden_peaks[hidden_column_index]) || max_not_close) * hidden_rates[hidden_cell_index];
+        float rate = hidden_rates[hidden_cell_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
