@@ -165,11 +165,9 @@ void Encoder::learn(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    float rate = vl.rates[wi];
+                    vl.protos[wi] = min(1.0f, max(0.0f, vl.protos[wi] + delta * vl.rates[wi]));
 
-                    vl.protos[wi] = min(1.0f, max(0.0f, vl.protos[wi] + delta * rate));
-
-                    vl.rates[wi] -= params.lr * rate;
+                    vl.rates[wi] *= 1.0f - params.lr;
                 }
             }
         }
