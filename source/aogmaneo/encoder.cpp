@@ -84,34 +84,6 @@ void Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 }
 
-void Encoder::inhibit(
-    const Int2 &column_pos,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    hidden_peaks[hidden_column_index] = true;
-
-    float max_activation = hidden_max_acts[hidden_column_index];
-
-    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
-        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            if (dcx == 0 && dcy == 0)
-                continue;
-
-            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
-
-            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
-                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
-
-                if (hidden_max_acts[other_hidden_column_index] >= max_activation) {
-                    hidden_peaks[hidden_column_index] = false;
-                    return;
-                }
-            }
-        }
-}
-
 void Encoder::learn(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
@@ -121,30 +93,26 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    float max_peak;
+    float max_activation = hidden_max_acts[hidden_column_index];
 
-    // Search for peaks in range
-    for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++) {
-            Int2 search_pos(column_pos.x + dx, column_pos.y + dy);
+    float modulation = 1.0f;
+    float max_in_radius = max_activation;
 
-            if (in_bounds0(search_pos, Int2(hidden_size.x, hidden_size.y))) {
-                int search_hidden_column_index = address2(search_pos, Int2(hidden_size.x, hidden_size.y));
+    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
 
-                if (hidden_peaks[search_hidden_column_index]) {
-                    max_peak = hidden_max_acts[search_hidden_column_index];
-                    goto learn;
+            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                if (hidden_max_acts[other_hidden_column_index] > max_activation) {
+                    modulation = params.boost;
+                    max_in_radius = max(max_in_radius, hidden_max_acts[other_hidden_column_index]);
                 }
             }
         }
 
-    return;
-
-learn:
-    bool max_not_close = (sqrtf(-max_peak) > params.threshold);
-
-    if (!hidden_peaks[hidden_column_index] && !max_not_close)
-        return;
+    bool max_not_close = (sqrtf(-max_in_radius) > params.threshold);
 
     int scan_rad = max_not_close;
 
@@ -233,8 +201,6 @@ void Encoder::init_random(
     hidden_max_acts.resize(num_hidden_columns);
 
     hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
-
-    hidden_peaks.resize(num_hidden_columns);
 }
 
 void Encoder::step(
@@ -249,10 +215,6 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        #pragma omp parallel for
-        for (int i = 0; i < num_hidden_columns; i++)
-            inhibit(Int2(i / hidden_size.y, i % hidden_size.y), params);
-
         #pragma omp parallel for
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
@@ -317,8 +279,6 @@ void Encoder::read(
     hidden_rates.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
-
-    hidden_peaks.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
