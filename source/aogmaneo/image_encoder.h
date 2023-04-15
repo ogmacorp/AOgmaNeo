@@ -36,20 +36,24 @@ public:
     };
 
     struct Params {
+        float radius; // attaction radius for cells
         float lr; // learning rate
         
         Params()
         :
-        lr(32.0f)
+        radius(1.0f),
+        lr(0.1f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
 
+    Int_Buffer hidden_cis; // hidden states
+
     Float_Buffer hidden_rates;
 
-    Int_Buffer hidden_cis; // hidden states
+    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

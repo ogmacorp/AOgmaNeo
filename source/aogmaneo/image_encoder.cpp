@@ -77,6 +77,8 @@ void Image_Encoder::forward(
 
         sum /= count;
 
+        hidden_acts[hidden_cell_index] = sum;
+
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
             max_index = hc;
@@ -94,9 +96,7 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float modulation = expf(-params.lr * sqrtf(-max_activation));
-
-            float rate = modulation * hidden_rates[hidden_cell_index];
+            float rate = max(0.0f, params.radius - sqrtf(-hidden_acts[hidden_cell_index])) / params.radius * hidden_rates[hidden_cell_index];
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -137,7 +137,7 @@ void Image_Encoder::forward(
                     }
             }
 
-            hidden_rates[hidden_cell_index] -= rate;
+            hidden_rates[hidden_cell_index] -= params.lr * rate;
         }
     }
 }
@@ -246,9 +246,11 @@ void Image_Encoder::init_random(
         vl.reconstruction = Byte_Buffer(num_visible_cells, 0);
     }
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 0.5f);
-
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
+
+    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
+
+    hidden_acts.resize(num_hidden_cells);
 }
 
 void Image_Encoder::step(
