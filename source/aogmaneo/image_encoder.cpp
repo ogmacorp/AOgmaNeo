@@ -94,7 +94,9 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = (1.0f - expf(-params.lr * sqrtf(-max_activation))) * hidden_rates[hidden_cell_index];
+            float modulation = expf(-params.lr * sqrtf(-max_activation));
+
+            float rate = modulation * hidden_rates[hidden_cell_index];
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];

@@ -41,12 +41,14 @@ public:
     };
 
     struct Params {
+        float radius; // attaction radius for cells
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        lr(1.0f),
+        radius(0.3f),
+        lr(0.1f),
         l_radius(2)
         {}
     };
@@ -58,6 +60,7 @@ private:
 
     Float_Buffer hidden_rates;
 
+    Float_Buffer hidden_acts;
     Float_Buffer hidden_max_acts;
 
     Byte_Buffer hidden_peaks;
