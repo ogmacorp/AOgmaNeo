@@ -36,14 +36,12 @@ public:
     };
 
     struct Params {
-        float radius_local; // local attaction radius for cells
-        float radius_max; // radius where max slows things down
+        float threshold; // min distance for learning
         float lr; // learning rate
         
         Params()
         :
-        radius_local(1.0f),
-        radius_max(0.5f),
+        threshold(0.01f),
         lr(0.1f)
         {}
     };
@@ -54,8 +52,6 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_rates;
-
-    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

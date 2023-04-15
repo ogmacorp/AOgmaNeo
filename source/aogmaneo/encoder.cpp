@@ -73,8 +73,6 @@ void Encoder::forward(
 
         sum /= max(0.0001f, total_importance);
 
-        hidden_acts[hidden_cell_index] = sum;
-
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
             max_index = hc;
@@ -145,10 +143,7 @@ learn:
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float term_local = max(0.0f, params.radius_local - sqrtf(-hidden_acts[hidden_cell_index])) / params.radius_local;
-        float term_max = min(params.radius_max, sqrtf(-hidden_max_acts[hidden_column_index])) / params.radius_max;
-
-        float rate = min(term_local, term_max) * hidden_rates[hidden_cell_index];
+        float rate = (sqrtf(-hidden_max_acts[hidden_column_index]) > params.threshold) * hidden_rates[hidden_cell_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -222,7 +217,6 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_acts.resize(num_hidden_cells);
     hidden_max_acts.resize(num_hidden_columns);
 
     hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
@@ -305,7 +299,6 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    hidden_acts.resize(num_hidden_cells);
     hidden_max_acts.resize(num_hidden_columns);
 
     hidden_rates.resize(num_hidden_cells);

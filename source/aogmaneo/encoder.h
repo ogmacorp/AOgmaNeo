@@ -41,15 +41,13 @@ public:
     };
 
     struct Params {
-        float radius_local; // local attaction radius for cells
-        float radius_max; // radius where max slows things down
+        float threshold; // min distance for learning
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        radius_local(0.5f),
-        radius_max(0.1f),
+        threshold(0.05f),
         lr(0.1f),
         l_radius(2)
         {}
@@ -62,7 +60,6 @@ private:
 
     Float_Buffer hidden_rates;
 
-    Float_Buffer hidden_acts;
     Float_Buffer hidden_max_acts;
 
     Byte_Buffer hidden_peaks;
