@@ -42,8 +42,8 @@ public:
         
         Params()
         :
-        radius_local(0.5f),
-        radius_max(0.1f),
+        radius_local(1.0f),
+        radius_max(0.5f),
         lr(0.1f)
         {}
     };
