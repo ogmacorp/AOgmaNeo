@@ -124,7 +124,7 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = hidden_rates[hidden_cell_index];
+        float rate = modulation * hidden_rates[hidden_cell_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
