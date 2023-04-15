@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer protos;
+        Float_Buffer rates;
         
         float importance;
 
@@ -41,15 +42,13 @@ public:
     };
 
     struct Params {
-        float threshold; // min distance for learning
+        float threshold; // threshold where reconstruction is good enough to stop recruiting cells
         float lr; // learning rate
-        int l_radius; // Second stage inhibition radius
 
         Params()
         :
         threshold(0.01f),
-        lr(0.1f),
-        l_radius(2)
+        lr(0.1f)
         {}
     };
 
@@ -57,12 +56,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_rates;
-
-    Float_Buffer hidden_max_acts;
-
-    Byte_Buffer hidden_peaks;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -76,14 +69,10 @@ private:
         const Params &params
     );
 
-    void inhibit(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
+        const Int_Buffer* input_cis,
+        int vli,
         const Params &params
     );
 
