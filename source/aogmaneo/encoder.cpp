@@ -140,7 +140,7 @@ void Encoder::learn(
 
     float delta = target_value - sum;
 
-    int radius = (abs(delta) > params.threshold);
+    int radius = (abs(delta) >= params.threshold);
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
