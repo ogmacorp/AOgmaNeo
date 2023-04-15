@@ -121,20 +121,28 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    float max_peak;
+
     // Search for peaks in range
     for (int dx = -1; dx <= 1; dx++)
         for (int dy = -1; dy <= 1; dy++) {
             Int2 search_pos(column_pos.x + dx, column_pos.y + dy);
 
             if (in_bounds0(search_pos, Int2(hidden_size.x, hidden_size.y))) {
-                if (hidden_peaks[address2(search_pos, Int2(hidden_size.x, hidden_size.y))])
+                int search_hidden_column_index = address2(search_pos, Int2(hidden_size.x, hidden_size.y));
+
+                if (hidden_peaks[search_hidden_column_index]) {
+                    max_peak = hidden_max_acts[search_hidden_column_index];
                     goto learn;
+                }
             }
         }
 
     return;
 
 learn:
+    bool max_not_close = (sqrtf(-max_peak) > params.threshold);
+
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
 
@@ -143,7 +151,7 @@ learn:
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = (dhc == 0 || sqrtf(-hidden_max_acts[hidden_column_index]) > params.threshold) * hidden_rates[hidden_cell_index];
+        float rate = ((dhc == 0 && hidden_peaks[hidden_column_index]) || max_not_close) * hidden_rates[hidden_cell_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
