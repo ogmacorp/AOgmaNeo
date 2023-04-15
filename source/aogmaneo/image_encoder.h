@@ -36,12 +36,14 @@ public:
     };
 
     struct Params {
-        float radius; // attaction radius for cells
+        float radius_local; // local attaction radius for cells
+        float radius_max; // radius where max slows things down
         float lr; // learning rate
         
         Params()
         :
-        radius(1.0f),
+        radius_local(0.5f),
+        radius_max(0.1f),
         lr(0.1f)
         {}
     };
