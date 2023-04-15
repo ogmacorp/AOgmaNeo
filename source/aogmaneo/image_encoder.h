@@ -36,11 +36,13 @@ public:
     };
 
     struct Params {
+        float scale; // closeness falloff to prevent forgetting
         float lr; // learning rate
         
         Params()
         :
-        lr(1.0f)
+        scale(4.0f),
+        lr(0.5f)
         {}
     };
 
