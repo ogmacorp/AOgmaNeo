@@ -155,6 +155,10 @@ void Encoder::learn(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
+                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+
+                int wi_max = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
+
                 for (int dhc = -radius; dhc <= radius; dhc++) {
                     int hc = dhc + hidden_cis[hidden_column_index];
 
@@ -165,7 +169,10 @@ void Encoder::learn(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    vl.protos[wi] = min(1.0f, max(0.0f, vl.protos[wi] + delta * vl.rates[wi]));
+                    if (dhc == 0)
+                        vl.protos[wi] = min(1.0f, max(0.0f, vl.protos[wi] + delta * vl.rates[wi]));
+                    else
+                        vl.protos[wi] += (vl.protos[wi_max] - vl.protos[wi]) * vl.rates[wi];
 
                     vl.rates[wi] *= 1.0f - params.lr;
                 }
