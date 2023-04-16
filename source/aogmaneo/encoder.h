@@ -43,14 +43,12 @@ public:
     struct Params {
         float threshold; // min distance for learning
         float lr; // learning rate
-        float boost; // non-maximal column learning
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
         threshold(0.01f),
         lr(0.1f),
-        boost(0.01f),
         l_radius(2)
         {}
     };

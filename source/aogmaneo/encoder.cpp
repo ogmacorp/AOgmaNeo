@@ -95,9 +95,6 @@ void Encoder::learn(
 
     float max_activation = hidden_max_acts[hidden_column_index];
 
-    float modulation = 1.0f;
-    float max_in_radius = max_activation;
-
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
             Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
@@ -105,14 +102,12 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_max_acts[other_hidden_column_index] > max_activation) {
-                    modulation = params.boost;
-                    max_in_radius = max(max_in_radius, hidden_max_acts[other_hidden_column_index]);
-                }
+                if (hidden_max_acts[other_hidden_column_index] > max_activation)
+                    return;
             }
         }
 
-    bool max_not_close = (sqrtf(-max_in_radius) > params.threshold);
+    bool max_not_close = (sqrtf(-max_activation) > params.threshold);
 
     int scan_rad = max_not_close;
 
@@ -124,7 +119,7 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = modulation * hidden_rates[hidden_cell_index];
+        float rate = hidden_rates[hidden_cell_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
