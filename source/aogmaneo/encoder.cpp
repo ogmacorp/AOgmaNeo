@@ -50,6 +50,8 @@ void Encoder::forward(
             float sub_sum = 0.0f;
             int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
+            const float size_z_inv = 1.0f / vld.size.z;
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -60,7 +62,7 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    float in_value = (in_ci + 0.5f) / vld.size.z;
+                    float in_value = (in_ci + 0.5f) * size_z_inv;
 
                     float delta = in_value - vl.protos[wi];
 
@@ -84,34 +86,6 @@ void Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 }
 
-void Encoder::inhibit(
-    const Int2 &column_pos,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    hidden_peaks[hidden_column_index] = true;
-
-    float max_activation = hidden_max_acts[hidden_column_index];
-
-    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
-        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            if (dcx == 0 && dcy == 0)
-                continue;
-
-            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
-
-            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
-                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
-
-                if (hidden_max_acts[other_hidden_column_index] >= max_activation) {
-                    hidden_peaks[hidden_column_index] = false;
-                    return;
-                }
-            }
-        }
-}
-
 void Encoder::learn(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
@@ -121,29 +95,28 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    // Search for peaks in range
-    for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++) {
-            Int2 search_pos(column_pos.x + dx, column_pos.y + dy);
+    float max_activation = hidden_max_acts[hidden_column_index];
 
-            if (in_bounds0(search_pos, Int2(hidden_size.x, hidden_size.y))) {
-                if (hidden_peaks[address2(search_pos, Int2(hidden_size.x, hidden_size.y))])
-                    goto learn;
+    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
+
+            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                if (hidden_max_acts[other_hidden_column_index] > max_activation)
+                    return;
             }
         }
 
-    return;
+    float dist = sqrtf(-max_activation);
 
-learn:
-    for (int dhc = -1; dhc <= 1; dhc++) {
-        int hc = hidden_cis[hidden_column_index] + dhc;
-
-        if (hc < 0 || hc >= hidden_size.z)
-            continue;
-
+    for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = hidden_rates[hidden_cell_index];
+        float diff = static_cast<float>(hidden_cis[hidden_column_index] - hc) / hidden_size.z;
+
+        float rate = hidden_rates[hidden_cell_index] * expf(-params.falloff * diff * diff / max(limit_small, dist));
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -164,6 +137,8 @@ learn:
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+            const float size_z_inv = 1.0f / vld.size.z;
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -174,13 +149,13 @@ learn:
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    float in_value = (in_ci + 0.5f) / vld.size.z;
+                    float in_value = (in_ci + 0.5f) * size_z_inv;
 
                     vl.protos[wi] += rate * (in_value - vl.protos[wi]);
                 }
         }
 
-        hidden_rates[hidden_cell_index] -= (1.0f - expf(-params.lr * sqrtf(-hidden_max_acts[hidden_column_index]))) * rate;
+        hidden_rates[hidden_cell_index] -= params.lr * rate;
     }
 }
 
@@ -219,9 +194,7 @@ void Encoder::init_random(
 
     hidden_max_acts.resize(num_hidden_columns);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 0.5f);
-
-    hidden_peaks.resize(num_hidden_columns);
+    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
 }
 
 void Encoder::step(
@@ -236,10 +209,6 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        #pragma omp parallel for
-        for (int i = 0; i < num_hidden_columns; i++)
-            inhibit(Int2(i / hidden_size.y, i % hidden_size.y), params);
-
         #pragma omp parallel for
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
@@ -304,8 +273,6 @@ void Encoder::read(
     hidden_rates.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
-
-    hidden_peaks.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 

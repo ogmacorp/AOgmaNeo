@@ -41,12 +41,14 @@ public:
     };
 
     struct Params {
+        float falloff; // som falloff radius
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        lr(1.0f),
+        falloff(4.0f),
+        lr(0.01f),
         l_radius(2)
         {}
     };
@@ -60,8 +62,6 @@ private:
 
     Float_Buffer hidden_max_acts;
 
-    Byte_Buffer hidden_peaks;
-
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -71,11 +71,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void inhibit(
-        const Int2 &column_pos,
         const Params &params
     );
 
