@@ -50,6 +50,8 @@ void Encoder::forward(
             float sub_sum = 0.0f;
             int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
+            const float size_z_inv = 1.0f / vld.size.z;
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -60,7 +62,7 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    float in_value = (in_ci + 0.5f) / vld.size.z;
+                    float in_value = (in_ci + 0.5f) * size_z_inv;
 
                     float delta = in_value - vl.protos[wi];
 
@@ -107,9 +109,7 @@ void Encoder::learn(
             }
         }
 
-    bool max_not_close = (sqrtf(-max_activation) > params.threshold);
-
-    int scan_rad = max_not_close;
+    int scan_rad = (sqrtf(-max_activation) > params.threshold);
 
     for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
@@ -140,6 +140,8 @@ void Encoder::learn(
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+            const float size_z_inv = 1.0f / vld.size.z;
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -150,7 +152,7 @@ void Encoder::learn(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
 
-                    float in_value = (in_ci + 0.5f) / vld.size.z;
+                    float in_value = (in_ci + 0.5f) * size_z_inv;
 
                     vl.protos[wi] += rate * (in_value - vl.protos[wi]);
                 }
