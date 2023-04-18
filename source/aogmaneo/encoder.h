@@ -49,7 +49,7 @@ public:
         :
         threshold(0.01f),
         lr(0.1f),
-        l_radius(1)
+        l_radius(2)
         {}
     };
 
