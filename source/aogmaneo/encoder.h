@@ -30,10 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
+        Byte_Buffer weights;
 
-        Byte_Buffer usages;
-        
         Float_Buffer recon_acts;
 
         float importance;
@@ -45,17 +43,13 @@ public:
     };
 
     struct Params {
-        int code_iters; // sparse coding iterations
         float scale; // scale of squashing
         float lr; // learning rate
-        float gcurve; // gain curve
 
         Params()
         :
-        code_iters(3),
-        scale(8.0f),
-        lr(0.1f),
-        gcurve(4.0f)
+        scale(4.0f),
+        lr(0.02f)
         {}
     };
 
@@ -63,10 +57,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_gates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -77,18 +67,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void backward(
-        const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
         const Params &params
     );
 
@@ -112,9 +90,7 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state() {
-        hidden_cis.fill(0);
-    }
+    void clear_state();
 
     // serialization
     int size() const; // returns size in bytes
