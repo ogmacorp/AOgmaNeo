@@ -208,7 +208,7 @@ void Encoder::init_random(
         int area = diam * diam;
 
         vl.protos.resize(num_hidden_cells * area);
-        vl.rates = Float_Buffer(vl.protos.size(), 0.5f);
+        vl.rates = Float_Buffer(vl.protos.size(), 1.0f);
 
         for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = randf(0.0f, 1.0f);
