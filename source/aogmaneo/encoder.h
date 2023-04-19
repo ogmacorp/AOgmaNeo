@@ -41,14 +41,14 @@ public:
     };
 
     struct Params {
-        float falloff; // som falloff radius
+        float threshold; // min distance for learning
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        falloff(4.0f),
-        lr(0.01f),
+        threshold(0.02f),
+        lr(0.02f),
         l_radius(2)
         {}
     };

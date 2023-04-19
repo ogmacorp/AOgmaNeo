@@ -73,7 +73,7 @@ void Encoder::forward(
             total_importance += vl.importance;
         }
 
-        sum /= max(0.0001f, total_importance);
+        sum /= max(limit_small, total_importance);
 
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
@@ -97,6 +97,8 @@ void Encoder::learn(
 
     float max_activation = hidden_max_acts[hidden_column_index];
 
+    int num_higher = 0;
+
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
             Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
@@ -105,18 +107,24 @@ void Encoder::learn(
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
                 if (hidden_max_acts[other_hidden_column_index] > max_activation)
-                    return;
+                    num_higher++;
             }
         }
 
-    float dist = sqrtf(-max_activation);
+    if (num_higher > 1) // first and second highest, forming a neural-gas like system across columns
+        return;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    int scan_rad = (sqrtf(-max_activation) > params.threshold);
+
+    for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
+        int hc = hidden_cis[hidden_column_index] + dhc;
+
+        if (hc < 0 || hc >= hidden_size.z)
+            continue;
+
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float diff = static_cast<float>(hidden_cis[hidden_column_index] - hc) / hidden_size.z;
-
-        float rate = hidden_rates[hidden_cell_index] * expf(-params.falloff * diff * diff / max(limit_small, dist));
+        float rate = hidden_rates[hidden_cell_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
