@@ -121,6 +121,11 @@ void Hierarchy::init_random(
             decoders[l][0].init_random(layer_descs[l - 1].hidden_size, d_visible_layer_descs);
         }
         
+        if (layer_descs[l].recurrent_radius >= 0) {
+            e_visible_layer_descs[e_visible_layer_descs.size() - 1].size = layer_descs[l].hidden_size;
+            e_visible_layer_descs[e_visible_layer_descs.size() - 1].radius = layer_descs[l].recurrent_radius;
+        }
+
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
@@ -155,20 +160,22 @@ void Hierarchy::step(
             for (int i = 0; i < io_sizes.size(); i++)
                 layer_input_cis[i] = input_cis[i];
 
-            if (layer_input_cis.size() > io_sizes.size())
+            if (layer_input_cis.size() > io_sizes.size()) {
                 layer_input_cis[io_sizes.size()] = &hidden_cis_prev[l];
 
-            // set importance
-            encoders[l].get_visible_layer(io_sizes.size()).importance = params.layers[l].recurrent_importance;
+                // set importance
+                encoders[l].get_visible_layer(io_sizes.size()).importance = params.layers[l].recurrent_importance;
+            }
         }
         else {
             layer_input_cis[0] = &encoders[l - 1].get_hidden_cis();
 
-            if (layer_input_cis.size() > 1)
+            if (layer_input_cis.size() > 1) {
                 layer_input_cis[1] = &hidden_cis_prev[l];
 
-            // set importance
-            encoders[l].get_visible_layer(1).importance = params.layers[l].recurrent_importance;
+                // set importance
+                encoders[l].get_visible_layer(1).importance = params.layers[l].recurrent_importance;
+            }
         }
 
         // activate sparse coder
