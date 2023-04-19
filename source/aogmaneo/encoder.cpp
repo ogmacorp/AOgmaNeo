@@ -73,7 +73,7 @@ void Encoder::forward(
             total_importance += vl.importance;
         }
 
-        sum /= max(0.0001f, total_importance);
+        sum /= max(limit_small, total_importance);
 
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
