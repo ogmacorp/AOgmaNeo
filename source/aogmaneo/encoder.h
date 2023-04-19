@@ -48,7 +48,7 @@ public:
         Params()
         :
         threshold(0.05f),
-        lr(0.05f),
+        lr(0.1f),
         l_radius(2)
         {}
     };

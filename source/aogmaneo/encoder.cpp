@@ -66,7 +66,7 @@ void Encoder::forward(
 
                     float delta = in_value - vl.protos[wi];
 
-                    sub_sum -= abs(delta);
+                    sub_sum -= delta * delta;
                 }
 
             sum += sub_sum / sub_count * vl.importance;
@@ -114,7 +114,7 @@ void Encoder::learn(
     if (num_higher > 1) // first and second highest, forming a neural-gas like system across columns
         return;
 
-    int scan_rad = (-max_activation > params.threshold);
+    int scan_rad = (sqrtf(-max_activation) > params.threshold);
 
     for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
