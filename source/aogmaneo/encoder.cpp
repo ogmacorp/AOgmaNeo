@@ -140,7 +140,7 @@ void Encoder::learn(
 
         float act = (sum / 255.0f) / max(1, count);
 
-        int delta = roundf(params.lr * 255.0f * ((vc == target_ci) - expf((act - 1.0f) * params.scale)));
+        float delta = params.lr * 255.0f * ((vc == target_ci) - expf((act - 1.0f) * params.scale));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -157,7 +157,7 @@ void Encoder::learn(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + delta));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(delta * vl.weights[wi])));
                 }
             }
     }
