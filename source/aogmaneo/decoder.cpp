@@ -63,10 +63,12 @@ void Decoder::forward(
                 }
         }
 
-        hidden_acts[hidden_cell_index] = (sum / 127.0f) / count * params.scale;
+        float act = (sum / 127.0f) / count * params.scale;
 
-        if (hidden_acts[hidden_cell_index] > max_activation || max_index == -1) {
-            max_activation = hidden_acts[hidden_cell_index];
+        hidden_acts[hidden_cell_index] = act;
+
+        if (act > max_activation || max_index == -1) {
+            max_activation = act;
             max_index = hc;
         }
     }
