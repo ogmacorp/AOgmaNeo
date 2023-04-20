@@ -163,8 +163,7 @@ void Encoder::learn(
                 }
         }
 
-        if (dhc == 0)
-            hidden_rates[hidden_cell_index] -= params.lr * rate;
+        hidden_rates[hidden_cell_index] -= params.lr * rate;
     }
 }
 
