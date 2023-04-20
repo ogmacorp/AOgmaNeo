@@ -65,6 +65,7 @@ public:
         :
         hidden_size(hidden_size),
         up_radius(up_radius),
+        recurrent_radius(recurrent_radius),
         down_radius(down_radius)
         {}
     };
