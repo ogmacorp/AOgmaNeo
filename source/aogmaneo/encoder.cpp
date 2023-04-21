@@ -148,9 +148,6 @@ void Encoder::learn(
         }
     }
 
-    if (max_index == target_ci)
-        return;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
