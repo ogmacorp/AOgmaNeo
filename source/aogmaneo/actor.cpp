@@ -339,7 +339,7 @@ void Actor::learn(
         total += hidden_acts[hidden_cell_index];
     }
 
-    float total_inv = 1.0f / max(0.0001f, total);
+    float total_inv = 1.0f / max(limit_small, total);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;

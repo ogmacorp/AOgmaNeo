@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights;
 
         float importance;
 
@@ -41,12 +41,10 @@ public:
     };
 
     struct Params {
-        float scale; // scale of squashing
         float lr; // learning rate
 
         Params()
         :
-        scale(8.0f),
         lr(0.1f)
         {}
     };
