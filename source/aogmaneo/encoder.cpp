@@ -109,6 +109,9 @@ void Encoder::learn(
 
     int target_ci = (*input_cis)[visible_column_index];
 
+    int max_index = 0;
+    float max_activation = limit_min;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -137,7 +140,21 @@ void Encoder::learn(
 
         sum /= max(1, count);
 
-        float delta = params.lr * ((vc == target_ci) - expf(sum - 1.0f));
+        vl.recon_acts[visible_cell_index] = sum;
+
+        if (sum > max_activation) {
+            max_activation = sum;
+            max_index = vc;
+        }
+    }
+
+    if (max_index == target_ci)
+        return;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+
+        float delta = params.lr * ((vc == target_ci) - expf(vl.recon_acts[visible_cell_index] - 1.0f));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -189,6 +206,8 @@ void Encoder::init_random(
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(0.99f, 1.0f);
+
+        vl.recon_acts.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -295,6 +314,8 @@ void Encoder::read(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+
+        vl.recon_acts.resize(num_visible_cells);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
