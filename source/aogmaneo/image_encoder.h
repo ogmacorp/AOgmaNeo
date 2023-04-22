@@ -36,20 +36,22 @@ public:
     };
 
     struct Params {
+        float threshold; // min distance for learning
         float lr; // learning rate
         
         Params()
         :
-        lr(1.0f)
+        threshold(0.01f),
+        lr(0.05f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
 
-    Float_Buffer hidden_rates;
-
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer hidden_rates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
