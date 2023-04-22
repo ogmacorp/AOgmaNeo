@@ -202,7 +202,7 @@ void Image_Encoder::reconstruct(
                 }
             }
 
-        sum /= max(0.0001f, total);
+        sum /= max(limit_small, total);
 
         vl.reconstruction[visible_cell_index] = roundf(sum);
     }
