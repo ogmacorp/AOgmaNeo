@@ -88,6 +88,10 @@ void Image_Encoder::forward(
     if (learn_enabled) {
         int scan_rad = (sqrtf(-max_activation) > params.threshold);
 
+        float rate = hidden_rates[max_index + hidden_cells_start];
+
+        hidden_rates[max_index + hidden_cells_start] *= 1.0f - params.lr;
+
         for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
             int hc = hidden_cis[hidden_column_index] + dhc;
 
@@ -95,8 +99,6 @@ void Image_Encoder::forward(
                 continue;
 
             int hidden_cell_index = hc + hidden_cells_start;
-
-            float rate = hidden_rates[hidden_cell_index];
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -136,8 +138,6 @@ void Image_Encoder::forward(
                         }
                     }
             }
-
-            hidden_rates[hidden_cell_index] -= params.lr * rate;
         }
     }
 }
