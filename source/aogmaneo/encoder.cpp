@@ -116,10 +116,6 @@ void Encoder::learn(
 
     int scan_rad = (sqrtf(-max_activation) > params.threshold);
 
-    float rate = hidden_rates[hidden_cis[hidden_column_index] + hidden_cells_start];
-
-    hidden_rates[hidden_cis[hidden_column_index] + hidden_cells_start] *= 1.0f - params.lr;
-
     for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
 
@@ -127,6 +123,8 @@ void Encoder::learn(
             continue;
 
         int hidden_cell_index = hc + hidden_cells_start;
+
+        float rate = hidden_rates[hidden_cell_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -164,6 +162,8 @@ void Encoder::learn(
                     vl.protos[wi] += rate * (in_value - vl.protos[wi]);
                 }
         }
+
+        hidden_rates[hidden_cell_index] -= params.lr * rate;
     }
 }
 
@@ -202,7 +202,7 @@ void Encoder::init_random(
 
     hidden_max_acts.resize(num_hidden_columns);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_rates = Float_Buffer(num_hidden_cells, 0.5f);
 }
 
 void Encoder::step(
