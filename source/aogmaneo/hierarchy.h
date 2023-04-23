@@ -130,7 +130,7 @@ private:
     }
 
 public:
-    // parameters
+// parameters
     Params params;
 
     // default
@@ -153,8 +153,7 @@ public:
     void step(
         const Array<const Int_Buffer*> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        float reward = 0.0f // reward
     );
 
     void clear_state();
@@ -198,16 +197,6 @@ public:
             return actors[d_indices[i]].get_hidden_cis();
 
         return decoders[0][d_indices[i]].get_hidden_cis();
-    }
-
-    // retrieve prediction activations
-    const Float_Buffer &get_prediction_acts(
-        int i
-    ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
-
-        return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
     // whether this layer received on update this timestep
