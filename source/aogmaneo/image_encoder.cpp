@@ -77,7 +77,7 @@ void Image_Encoder::forward(
 
         sum /= count;
 
-        if (sum > max_activation || max_index == -1) {
+        if (sum > max_activation) {
             max_activation = sum;
             max_index = hc;
         }

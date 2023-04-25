@@ -75,7 +75,7 @@ void Encoder::forward(
 
         sum /= max(limit_small, total_importance);
 
-        if (sum > max_activation || max_index == -1) {
+        if (sum > max_activation) {
             max_activation = sum;
             max_index = hc;
         }
