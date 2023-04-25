@@ -80,13 +80,13 @@ void Image_Encoder::forward(
         float activation = match / (params.choice + (total / 255.0f) / (count * 2));
 
         if (match >= params.vigilance) {
-            if (activation > max_activation || max_index == -1) {
+            if (activation > max_activation) {
                 max_activation = activation;
                 max_index = hc;
             }
         }
 
-        if (activation > max_backup_activation || max_backup_index == -1) {
+        if (activation > max_backup_activation) {
             max_backup_activation = activation;
             max_backup_index = hc;
         }
