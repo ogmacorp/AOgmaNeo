@@ -22,7 +22,7 @@ void Image_Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
-    int max_backup_index = -1;
+    int max_backup_index = 0;
     float max_backup_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
