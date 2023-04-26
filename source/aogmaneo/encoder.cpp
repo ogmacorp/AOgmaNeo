@@ -458,6 +458,8 @@ void Encoder::read(
 
     hidden_acts.resize(num_hidden_cells);
 
+    hidden_gates.resize(num_hidden_columns);
+
     int num_visible_layers = visible_layers.size();
 
     reader.read(reinterpret_cast<void*>(&num_visible_layers), sizeof(int));
