@@ -26,7 +26,7 @@ void Encoder::forward(
 
         int hidden_cell_index_prev = hidden_ci_prev + hidden_cells_start;
 
-        float delta = params.lr * (*errors)[hidden_column_index] * hidden_gates[hidden_column_index];
+        float delta = params.lr * (*errors)[hidden_column_index] * hidden_gates[hidden_column_index] * hidden_acts[hidden_cell_index_prev] * (1.0f - hidden_acts[hidden_cell_index_prev]);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -46,9 +46,6 @@ void Encoder::forward(
             // bounds of receptive field, clamped to input size
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-            float sub_sum = 0.0f;
-            int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -72,6 +69,7 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         float sum = 0.0f;
+        float total_importance = 0.0f;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -109,9 +107,12 @@ void Encoder::forward(
                 }
 
             sum += sub_sum / sub_count * vl.importance;
+            total_importance += vl.importance;
         }
 
-        hidden_acts[hidden_cell_index] = sum;
+        sum /= max(0.0001f, total_importance);
+
+        hidden_acts[hidden_cell_index] = sigmoidf(sum);
 
         if (sum > max_activation || max_index == -1) {
             max_activation = sum;
