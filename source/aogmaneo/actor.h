@@ -32,6 +32,8 @@ public:
     struct Visible_Layer {
         Float_Buffer weights;
         Float_Buffer traces;
+
+        Int_Buffer input_cis_prev;
     };
 
     struct Params {
@@ -51,9 +53,6 @@ public:
 private:
     Int3 hidden_size; // Hidden/output/action size
 
-    // Current history size - fixed after initialization. Determines length of wait before updating
-    int history_size;
-
     Int_Buffer hidden_cis; // Hidden states
 
     Float_Buffer hidden_values;
@@ -66,14 +65,10 @@ private:
 
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        int t,
-        float r,
-        float d,
+        const Array<const Int_Buffer*> &input_cis,
+        const Int_Buffer* hidden_target_cis,
+        float reward,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -81,14 +76,13 @@ public:
     // Initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
     // Step (get actions and update)
     void step(
         const Array<const Int_Buffer*> &input_cis,
-        const Int_Buffer* hidden_target_cis_prev,
+        const Int_Buffer* hidden_target_cis,
         float reward,
         bool learn_enabled,
         const Params &params
@@ -143,14 +137,6 @@ public:
     // Get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
-    }
-
-    int get_history_capacity() const {
-        return history_samples.size();
-    }
-
-    int get_history_size() const {
-        return history_size;
     }
 };
 }
