@@ -84,7 +84,7 @@ void Actor::forward(
 
     float td_error = reward + params.discount * max_activation - value_prev;
 
-    float delta = params.lr * tanhf(td_error);
+    float delta = params.lr * td_error;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
