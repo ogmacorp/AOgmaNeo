@@ -30,33 +30,21 @@ public:
 
     // Visible layer
     struct Visible_Layer {
-        Float_Buffer weights_value;
-        Float_Buffer weights_advantage;
-    };
-
-    // History sample for delayed updates
-    struct History_Sample {
-        Array<Int_Buffer> input_cis;
-        Int_Buffer hidden_target_cis_prev;
-
-        float reward;
+        Float_Buffer weights;
+        Float_Buffer traces;
     };
 
     struct Params {
-        float vlr; // Value learning rate
-        float alr; // Advantage learning rate
+        float lr;
         float discount;
-        int n_steps;
-        int history_iters;
+        float trace_decay;
 
         // Defaults
         Params()
         :
-        vlr(0.01f),
-        alr(0.01f),
+        lr(0.01f),
         discount(0.99f),
-        n_steps(8),
-        history_iters(16)
+        trace_decay(0.9f)
         {}
     };
 
@@ -68,9 +56,7 @@ private:
 
     Int_Buffer hidden_cis; // Hidden states
 
-    Float_Buffer hidden_advantages;
-
-    Circle_Buffer<History_Sample> history_samples; // History buffer, fixed length
+    Float_Buffer hidden_values;
 
     // Visible layers and descriptors
     Array<Visible_Layer> visible_layers;
