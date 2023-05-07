@@ -121,8 +121,8 @@ void Actor::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        if (hc == target_ci && vc == in_ci_prev)
-                            vl.traces[wi] = 1.0f;
+                        if (vc == in_ci_prev)
+                            vl.traces[wi] = (hc == target_ci);
                         else
                             vl.traces[wi] *= params.trace_decay;
 
