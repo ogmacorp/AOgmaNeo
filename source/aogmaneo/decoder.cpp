@@ -383,6 +383,22 @@ void Decoder::learn(
         learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, params);
 }
 
+void Decoder::generate_errors(
+    const Int_Buffer *hidden_target_cis,
+    Float_Buffer *errors,
+    int vli,
+    const Params &params
+) {
+    Visible_Layer &vl = visible_layers[vli];
+    const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+    int num_visible_columns = vld.size.x * vld.size.y;
+
+    #pragma omp parallel for
+    for (int i = 0; i < num_visible_columns; i++)
+        generate_errors(Int2(i / vld.size.y, i % vld.size.y), hidden_target_cis, errors, vli, params);
+}
+
 void Decoder::clear_state() {
     hidden_cis.fill(0);
     hidden_acts.fill(0.0f);
