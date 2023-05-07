@@ -49,11 +49,11 @@ void Encoder::forward(
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int in_ci = vl.input_cis_prev[visible_column_index];
+                    int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_prev));
+                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_prev));
 
                     vl.weights[wi] += delta;
                     vl.usages[wi] = min(255, vl.usages[wi] + 1);

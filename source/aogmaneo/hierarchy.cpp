@@ -45,8 +45,10 @@ void Hierarchy::init_random(
 
         if (io_descs[i].type == prediction)
             num_predictions++;
-        else if (io_descs[i].type == action)
+        else if (io_descs[i].type == action) {
+            num_predictions++;
             num_actions++;
+        }
     }
 
     // iterate through layers
@@ -89,7 +91,7 @@ void Hierarchy::init_random(
             int d_index = 0;
 
             for (int i = 0; i < io_sizes.size(); i++) {
-                if (io_descs[i].type == prediction) {
+                if (io_descs[i].type == prediction || io_descs[i].type == action) {
                     // decoder visible layer descriptors
                     Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
 
@@ -224,10 +226,10 @@ void Hierarchy::step(
                     decoders[l][d].generate_errors(&histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], &errors[l], 0, params.layers[l].decoder);
 
                 // Rescale
-                float scale = 1.0f / decoders[l].size();
+                float decoders_inv = 1.0f / decoders[l].size();
 
                 for (int i = 0; i < errors[l].size(); i++)
-                    errors[l][i] *= scale;
+                    errors[l][i] *= decoders_inv;
             }
 
             // activate sparse coder
