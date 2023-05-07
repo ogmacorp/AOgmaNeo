@@ -44,7 +44,7 @@ public:
         // Defaults
         Params()
         :
-        lr(0.01f),
+        lr(0.1f),
         discount(0.99f),
         trace_decay(0.9f)
         {}

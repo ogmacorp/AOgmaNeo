@@ -22,6 +22,12 @@ void Actor::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    int target_ci = (*hidden_target_cis)[hidden_column_index];
+
+    int hidden_cell_index_target = target_ci + hidden_cells_start;
+
+    float value_prev = hidden_values[hidden_cell_index_target];
+
     int max_index = -1;
     float max_activation = limit_min;
 
@@ -76,13 +82,9 @@ void Actor::forward(
 
     hidden_cis[hidden_column_index] = max_index;
 
-    int target_ci = (*hidden_target_cis)[hidden_column_index];
+    float td_error = reward + params.discount * max_activation - value_prev;
 
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
-    float td_error = reward + params.discount * max_activation - hidden_values[hidden_cell_index_target];
-
-    float delta = params.lr * td_error;
+    float delta = params.lr * tanhf(td_error);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
