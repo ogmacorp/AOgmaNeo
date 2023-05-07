@@ -184,6 +184,13 @@ void Actor::step(
     #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, reward, learn_enabled, params);
+
+    // copy to prevs
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        vl.input_cis_prev = *input_cis[vli];
+    }
 }
 
 void Actor::clear_state() {
