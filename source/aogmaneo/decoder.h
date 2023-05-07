@@ -111,7 +111,7 @@ public:
 
     void generate_errors(
         const Int_Buffer* hidden_target_cis,
-        const Float_Buffer* errors,
+        Float_Buffer* errors,
         int vli,
         const Params &params
     );

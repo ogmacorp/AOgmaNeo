@@ -217,8 +217,21 @@ void Hierarchy::step(
                     layer_input_cis[index++] = &histories[l][i][t];
             }
 
+            if (learn_enabled) {
+                errors[l].fill(0.0f);
+
+                for (int d = 0; d < decoders[l].size(); d++)
+                    decoders[l][d].generate_errors(&histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], &errors[l], 0, params.layers[l].decoder);
+
+                // Rescale
+                float scale = 1.0f / decoders[l].size();
+
+                for (int i = 0; i < errors[l].size(); i++)
+                    errors[l][i] *= scale;
+            }
+
             // activate sparse coder
-            encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
+            encoders[l].step(layer_input_cis, &errors[l], learn_enabled, params.layers[l].encoder);
 
             // add to next layer's history
             if (l < encoders.size() - 1) {
