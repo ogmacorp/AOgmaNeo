@@ -22,11 +22,9 @@ void Encoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     if (learn_enabled) {
-        int hidden_ci_prev = hidden_cis[hidden_column_index];
+        int hidden_cell_index_prev = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-        int hidden_cell_index_prev = hidden_ci_prev + hidden_cells_start;
-
-        float delta = params.lr * (*errors)[hidden_column_index] * hidden_gates[hidden_column_index] * hidden_acts[hidden_cell_index_prev] * (1.0f - hidden_acts[hidden_cell_index_prev]);
+        float delta = params.lr * tanhf((*errors)[hidden_column_index]) * hidden_gates[hidden_column_index] * hidden_acts[hidden_cell_index_prev] * (1.0f - hidden_acts[hidden_cell_index_prev]);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -58,6 +56,7 @@ void Encoder::forward(
                     int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_prev));
 
                     vl.weights[wi] += delta;
+                    vl.usages[wi] = min(255, vl.usages[wi] + 1);
                 }
         }
     }
