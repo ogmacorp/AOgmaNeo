@@ -102,6 +102,7 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
+    Array<Float_Buffer> errors;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;

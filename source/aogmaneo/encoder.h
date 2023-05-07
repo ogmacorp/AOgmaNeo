@@ -33,9 +33,9 @@ public:
         Float_Buffer weights;
 
         Byte_Buffer usages;
-        
-        Float_Buffer recon_acts;
 
+        Int_Buffer input_cis_prev;
+        
         float importance;
 
         Visible_Layer()
@@ -45,13 +45,11 @@ public:
     };
 
     struct Params {
-        int code_iters; // sparse coding iterations
         float lr; // learning rate
         float gcurve; // gain curve
 
         Params()
         :
-        code_iters(3),
         lr(1.0f),
         gcurve(8.0f)
         {}
@@ -75,25 +73,13 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void backward(
-        const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
+        const Float_Buffer* errors,
+        bool learn_enabled,
         const Params &params
     );
 
     void update_gates(
         const Int2 &column_pos,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
         const Params &params
     );
 
@@ -106,13 +92,12 @@ public:
 
     void step(
         const Array<const Int_Buffer*> &input_cis, // input states
+        const Float_Buffer* errors,
         bool learn_enabled, // whether to learn
         const Params &params // parameters
     );
 
-    void clear_state() {
-        hidden_cis.fill(0);
-    }
+    void clear_state();
 
     // serialization
     int size() const; // returns size in bytes

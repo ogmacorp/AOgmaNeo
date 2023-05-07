@@ -82,6 +82,14 @@ private:
         const Params &params
     );
 
+    void generate_errors(
+        const Int2 &column_pos,
+        const Int_Buffer* hidden_target_cis,
+        Float_Buffer* errors,
+        int vli,
+        const Params &params
+    );
+
 public:
     // create with random initialization
     void init_random(
@@ -98,6 +106,13 @@ public:
     // learning predictions (update weights)
     void learn(
         const Int_Buffer* hidden_target_cis,
+        const Params &params
+    );
+
+    void generate_errors(
+        const Int_Buffer* hidden_target_cis,
+        const Float_Buffer* errors,
+        int vli,
         const Params &params
     );
 

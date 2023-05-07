@@ -17,6 +17,7 @@ void Hierarchy::init_random(
     // create layers
     encoders.resize(layer_descs.size());
     decoders.resize(layer_descs.size());
+    errors.resize(layer_descs.size());
 
     ticks.resize(layer_descs.size(), 0);
 
@@ -162,6 +163,8 @@ void Hierarchy::init_random(
         
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
+
+        errors[l].resize(encoders[l].get_hidden_cis().size());
     }
 
     // initialize params
@@ -426,6 +429,7 @@ void Hierarchy::read(
 
     encoders.resize(num_layers);
     decoders.resize(num_layers);
+    errors.resize(num_layers);
 
     histories.resize(num_layers);
     
@@ -480,6 +484,8 @@ void Hierarchy::read(
         // decoders
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].read(reader);
+
+        errors[l].resize(encoders[l].get_hidden_cis().size());
     }
 
     actors.resize(num_actions);
