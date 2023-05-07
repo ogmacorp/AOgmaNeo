@@ -86,9 +86,7 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        int scan_rad = (sqrtf(-max_activation) > params.threshold);
-
-        for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
+        for (int dhc = -1; dhc <= 1; dhc++) {
             int hc = hidden_cis[hidden_column_index] + dhc;
 
             if (hc < 0 || hc >= hidden_size.z)

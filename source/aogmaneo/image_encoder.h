@@ -36,12 +36,10 @@ public:
     };
 
     struct Params {
-        float threshold; // min distance for learning
         float lr; // learning rate
         
         Params()
         :
-        threshold(0.01f),
         lr(0.05f)
         {}
     };
