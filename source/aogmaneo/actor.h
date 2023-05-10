@@ -55,7 +55,7 @@ public:
         :
         vlr(0.01f),
         alr(0.01f),
-        bias(0.5f),
+        bias(0.9f),
         discount(0.99f),
         temperature(1.0f),
         min_steps(16),
