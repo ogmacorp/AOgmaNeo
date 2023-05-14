@@ -41,13 +41,11 @@ public:
     };
 
     struct Params {
-        float threshold; // min distance for learning
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        threshold(0.01f),
         lr(0.1f),
         l_radius(2)
         {}
