@@ -66,9 +66,7 @@ void Image_Encoder::forward(
 
                         float input = (*inputs[vli])[vc + i_start] * byte_inv;
 
-                        float w = vl.protos[wi] * byte_inv;
-
-                        float delta = input - w;
+                        float delta = input - vl.protos[wi];
 
                         sum -= delta * delta;
                     }
@@ -86,9 +84,7 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        int scan_rad = (sqrtf(-max_activation) > params.threshold);
-
-        for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
+        for (int dhc = -1; dhc <= 1; dhc++) {
             int hc = hidden_cis[hidden_column_index] + dhc;
 
             if (hc < 0 || hc >= hidden_size.z)
@@ -130,9 +126,9 @@ void Image_Encoder::forward(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = vc + wi_start;
 
-                            float input = (*inputs[vli])[vc + i_start];
+                            float input = (*inputs[vli])[vc + i_start] * byte_inv;
 
-                            vl.protos[wi] = min(255, max(0, vl.protos[wi] + roundf(rate * (input - vl.protos[wi]))));
+                            vl.protos[wi] += rate * (input - vl.protos[wi]);
                         }
                     }
             }
@@ -208,7 +204,7 @@ void Image_Encoder::reconstruct(
 
         sum /= max(limit_small, total);
 
-        vl.reconstruction[visible_cell_index] = roundf(sum);
+        vl.reconstruction[visible_cell_index] = roundf(sum * 255.0f);
     }
 }
 
@@ -241,14 +237,14 @@ void Image_Encoder::init_random(
 
         // initialize to random values
         for (int i = 0; i < vl.protos.size(); i++)
-            vl.protos[i] = rand() % 256;
+            vl.protos[i] = randf();
 
         vl.reconstruction = Byte_Buffer(num_visible_cells, 0);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_rates = Float_Buffer(num_hidden_cells, 0.5f);
 }
 
 void Image_Encoder::step(
@@ -283,7 +279,7 @@ int Image_Encoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.protos.size() * sizeof(Byte);
+        size += sizeof(Visible_Layer_Desc) + vl.protos.size() * sizeof(float);
     }
 
     return size;
@@ -310,7 +306,7 @@ void Image_Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
     }
 }
 
@@ -353,7 +349,7 @@ void Image_Encoder::read(
 
         vl.protos.resize(num_hidden_cells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(float));
 
         vl.reconstruction = Byte_Buffer(num_visible_cells, 0);
     }
