@@ -346,9 +346,7 @@ void Actor::learn(
 
         hidden_acts[hidden_cell_index] *= total_inv;
 
-        float shift = (td_error_value > 0.0f ? 1.0f : 1.0f - params.bias);
-
-        float delta_action = (params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * shift)) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        float delta_action = (params.alr * (mimic + (1.0f - mimic) * (td_error_value > 0.0f ? 1.0f : -(1.0f - params.bias)))) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
