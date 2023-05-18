@@ -140,7 +140,7 @@ void Actor::forward(
         hidden_cis[hidden_column_index] = select_index;
     }
     else { // deterministic
-        int max_index = -1;
+        int max_index = 0;
         float max_activation = limit_min;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -179,7 +179,7 @@ void Actor::forward(
                     }
             }
 
-            if (sum > max_activation || max_index == -1) {
+            if (sum > max_activation) {
                 max_activation = sum;
                 max_index = hc;
             }
