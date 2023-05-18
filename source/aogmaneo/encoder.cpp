@@ -52,7 +52,7 @@ void Encoder::forward(
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
             float sub_sum = 0.0f;
-            int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * (vld.size.z - 1);
+            int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -72,9 +72,6 @@ void Encoder::forward(
         }
 
         sum /= max(limit_small, total_importance);
-
-        // invert
-        sum = hidden_totals[hidden_cell_index] - sum;
 
         float activation = sum / (params.choice + hidden_totals[hidden_cell_index]);
 
@@ -170,7 +167,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    if (vc == in_ci)
+                    if (vc != in_ci)
                         vl.weights[wi] -= rate * vl.weights[wi];
 
                     sub_total += vl.weights[wi];
