@@ -25,7 +25,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float sum = 0.0f;
+        float m = limit_max;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -64,10 +64,10 @@ void Encoder::forward(
 
             sub_sum /= sub_count;
 
-            sum += sub_sum * vl.importance;
+            m = min(m, sub_sum);
         }
 
-        hidden_acts[hidden_cell_index] += sum;
+        hidden_acts[hidden_cell_index] += m;
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
