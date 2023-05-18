@@ -244,6 +244,10 @@ void Encoder::step(
     }
 }
 
+void Encoder::clear_state() {
+    hidden_cis.fill(0);
+}
+
 int Encoder::size() const {
     int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_totals.size() * sizeof(float) + sizeof(int);
 

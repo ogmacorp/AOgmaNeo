@@ -97,9 +97,7 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state() {
-        hidden_cis.fill(0);
-    }
+    void clear_state();
 
     // serialization
     int size() const; // returns size in bytes
