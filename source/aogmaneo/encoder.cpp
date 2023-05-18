@@ -19,7 +19,7 @@ void Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -62,12 +62,14 @@ void Encoder::forward(
                     sub_sum += vl.weights[wi] * (1.0f - vl.recon_acts[visible_column_index]);
                 }
 
-            sum += sub_sum / sub_count * vl.importance;
+            sub_sum /= sub_count;
+
+            sum += sub_sum * vl.importance;
         }
 
         hidden_acts[hidden_cell_index] += sum;
 
-        if (hidden_acts[hidden_cell_index] > max_activation || max_index == -1) {
+        if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
@@ -389,6 +391,10 @@ void Encoder::step(
                 learn(Int2(i / vld.size.y, i % vld.size.y), input_cis[vli], vli, params);
         }
     }
+}
+
+void Encoder::clear_state() {
+    hidden_cis.fill(0);
 }
 
 int Encoder::size() const {
