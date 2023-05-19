@@ -200,7 +200,7 @@ void Encoder::init_random(
 
     hidden_max_acts.resize(num_hidden_columns);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 0.5f);
+    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
 }
 
 void Encoder::step(
