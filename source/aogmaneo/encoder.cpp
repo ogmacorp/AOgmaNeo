@@ -90,9 +90,9 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_max_acts[hidden_column_index] = max_complete_match;
+    hidden_max_acts[hidden_column_index] = max_activation;
 
-    hidden_cis[hidden_column_index] = max_complete_index;//(max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
 
 void Encoder::learn(
