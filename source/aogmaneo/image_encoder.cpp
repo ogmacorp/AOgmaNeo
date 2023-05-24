@@ -244,7 +244,7 @@ void Image_Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_rates = Float_Buffer(num_hidden_cells, 0.5f);
 }
 
 void Image_Encoder::step(
