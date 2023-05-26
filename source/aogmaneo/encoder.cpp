@@ -23,7 +23,6 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
-    float max_complete_activation = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_match = 0.0f;
