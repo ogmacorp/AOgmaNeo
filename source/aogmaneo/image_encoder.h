@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer protos;
+        Float_Buffer weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
@@ -61,6 +62,12 @@ private:
         const Int2 &column_pos,
         const Array<const Byte_Buffer*> &inputs,
         bool learn_enabled
+    );
+
+    void learn_reconstruction(
+        const Int2 &column_pos,
+        const Byte_Buffer* inputs,
+        int vli
     );
 
     void reconstruct(
