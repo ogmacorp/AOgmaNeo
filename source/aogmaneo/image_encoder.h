@@ -38,10 +38,12 @@ public:
 
     struct Params {
         float lr; // learning rate
+        float rr; // reconstruction rate
         
         Params()
         :
-        lr(0.05f)
+        lr(0.01f),
+        rr(0.01f)
         {}
     };
 
