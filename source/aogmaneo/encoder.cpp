@@ -139,8 +139,6 @@ void Encoder::learn(
 
     bool commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
 
-    float rate = (commit ? 1.0f : params.lr);
-
     float total = 0.0f;
     float total_importance = 0.0f;
 
@@ -186,7 +184,7 @@ void Encoder::learn(
                     vl.weights[wi] = randf(weight_init_lower, 1.0f, &state);
                 }
                 else if (vl.indices[wi] != in_ci)
-                    vl.weights[wi] -= rate * vl.weights[wi];
+                    vl.weights[wi] -= params.lr * vl.weights[wi];
 
                 sub_total += vl.weights[wi];
             }
