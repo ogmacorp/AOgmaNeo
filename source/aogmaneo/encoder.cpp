@@ -194,7 +194,7 @@ void Encoder::learn(
 
         sum /= max(1, count);
 
-        float delta = params.lr * ((vc == target_ci) - sigmoidf(sum));
+        float delta = params.lr * ((vc == target_ci) - expf(sum - 1.0f));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -264,7 +264,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 2.0f);
+            vl.weights[i] = randf(0.0f, 1.0f);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
     }
