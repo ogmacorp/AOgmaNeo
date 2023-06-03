@@ -19,7 +19,7 @@ void Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -75,7 +75,7 @@ void Encoder::forward(
 
         sum /= max(limit_small, total_importance);
 
-        if (sum > max_activation || max_index == -1) {
+        if (sum > max_activation) {
             max_activation = sum;
             max_index = hc;
         }
