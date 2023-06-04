@@ -41,7 +41,7 @@ public:
         
         Params()
         :
-        threshold(0.05f),
+        threshold(0.02f),
         lr(0.1f)
         {}
     };
