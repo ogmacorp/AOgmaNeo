@@ -19,7 +19,7 @@ void Image_Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = limit_min;
 
     const float byte_inv = 1.0f / 255.0f;
@@ -77,7 +77,7 @@ void Image_Encoder::forward(
 
         sum /= count;
 
-        if (sum > max_activation || max_index == -1) {
+        if (sum > max_activation) {
             max_activation = sum;
             max_index = hc;
         }
