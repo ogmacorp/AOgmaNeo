@@ -30,17 +30,19 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer protos;
+        Byte_Buffer protos;
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
+        float threshold; // min distance for learning
         float lr; // learning rate
         
         Params()
         :
-        lr(0.05f)
+        threshold(0.01f),
+        lr(0.1f)
         {}
     };
 

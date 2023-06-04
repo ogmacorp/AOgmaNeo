@@ -114,7 +114,9 @@ void Encoder::learn(
     if (num_higher > 1) // first and second highest, forming a neural-gas like system across columns
         return;
 
-    for (int dhc = -1; dhc <= 1; dhc++) {
+    int scan_rad = (sqrtf(-max_activation) > params.threshold);
+
+    for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
 
         if (hc < 0 || hc >= hidden_size.z)
@@ -200,7 +202,7 @@ void Encoder::init_random(
 
     hidden_max_acts.resize(num_hidden_columns);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 0.5f);
+    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
 }
 
 void Encoder::step(
