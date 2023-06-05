@@ -97,6 +97,8 @@ void Encoder::learn(
 
     float max_activation = hidden_max_acts[hidden_column_index];
 
+    int scan_rad = (sqrtf(-max_activation) > params.threshold);
+
     int num_higher = 0;
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
@@ -111,10 +113,8 @@ void Encoder::learn(
             }
         }
 
-    if (num_higher > 1) // first and second highest, forming a neural-gas like system across columns
+    if (num_higher > scan_rad) // first and second highest, forming a neural-gas like system across columns, only if not close already
         return;
-
-    int scan_rad = (sqrtf(-max_activation) > params.threshold);
 
     for (int dhc = -scan_rad; dhc <= scan_rad; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
