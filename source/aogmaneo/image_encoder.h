@@ -37,11 +37,13 @@ public:
 
     struct Params {
         float threshold; // min distance for learning
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         
         Params()
         :
         threshold(0.02f),
+        falloff(0.5f),
         lr(0.1f)
         {}
     };
