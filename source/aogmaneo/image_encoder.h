@@ -37,11 +37,13 @@ public:
     };
 
     struct Params {
+        float threshold;
         float lr; // learning rate
         float rr; // reconstruction rate
         
         Params()
         :
+        threshold(0.01f),
         lr(0.01f),
         rr(0.01f)
         {}
