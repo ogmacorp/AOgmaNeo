@@ -20,12 +20,12 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int max_index = 0;
-    float max_activation = limit_min;
+    int max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float sum = 0.0f;
+        int sum = 0;
         int count = 0;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -63,9 +63,7 @@ void Decoder::forward(
                 }
         }
 
-        sum /= count * 127;
-
-        hidden_acts[hidden_cell_index] = sigmoidf(sum * params.scale);
+        hidden_acts[hidden_cell_index] = sigmoidf(static_cast<float>(sum) / (count * 127) * params.scale);
 
         if (sum > max_activation) {
             max_activation = sum;
