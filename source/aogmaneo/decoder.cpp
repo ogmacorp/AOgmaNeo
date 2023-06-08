@@ -65,30 +65,12 @@ void Decoder::forward(
 
         sum /= count;
 
-        hidden_acts[hidden_cell_index] = sum;
+        hidden_acts[hidden_cell_index] = sigmoidf(sum);
 
         if (sum > max_activation) {
             max_activation = sum;
             max_index = hc;
         }
-    }
-
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-
-        total += hidden_acts[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(limit_small, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -150,12 +132,13 @@ void Decoder::update_gates(
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     sum += vl.usages[wi];
-                    count++;
                 }
+
+                count++;
             }
         }
 
-    vl.gates[visible_column_index] = expf(-(sum / 255.0f) / max(1, count) * params.gcurve);
+    vl.gates[visible_column_index] = expf(-(sum / 255.0f) / max(1, count * hidden_size.z) * params.gcurve);
 }
 
 void Decoder::learn(
