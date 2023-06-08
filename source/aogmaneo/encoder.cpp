@@ -69,7 +69,7 @@ void Encoder::forward(
 
                         unsigned int state = weight_base_state + full_wi;
 
-                        vl.weights[wi] = 255 - rand(&state) % 5;
+                        vl.weights[wi] = 255 - rand(&state) % noise_amount_byte;
 
                         sub_sum += vl.weights[wi];
                     }
