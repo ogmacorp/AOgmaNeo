@@ -34,8 +34,6 @@ public:
 
         Byte_Buffer usages;
         
-        Float_Buffer recon_acts;
-
         float importance;
 
         Visible_Layer()
@@ -50,7 +48,7 @@ public:
 
         Params()
         :
-        lr(0.1f),
+        lr(1.0f),
         gcurve(8.0f)
         {}
     };
