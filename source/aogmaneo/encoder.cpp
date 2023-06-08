@@ -71,7 +71,9 @@ void Encoder::forward(
 
                         unsigned int state = weight_base_state + full_wi;
 
-                        sub_sum += randf(weight_init_lower, 1.0f, &state);
+                        vl.weights[wi] = randf(weight_init_lower, 1.0f, &state);
+
+                        sub_sum += vl.weights[wi];
                     }
                     else if (vl.indices[wi] == in_ci)
                         sub_sum += vl.weights[wi];
@@ -174,15 +176,8 @@ void Encoder::learn(
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
 
-                if (commit) {
+                if (commit)
                     vl.indices[wi] = in_ci;
-
-                    int full_wi = in_ci + vld.size.z * wi;
-
-                    unsigned int state = weight_base_state + full_wi;
-
-                    vl.weights[wi] = randf(weight_init_lower, 1.0f, &state);
-                }
                 else if (vl.indices[wi] != in_ci)
                     vl.weights[wi] -= params.lr * vl.weights[wi];
 
