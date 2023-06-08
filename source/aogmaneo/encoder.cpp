@@ -177,7 +177,7 @@ void Encoder::learn(
                 if (commit)
                     vl.indices[wi] = in_ci;
                 else if (vl.indices[wi] != in_ci)
-                    vl.weights[wi] -= params.lr * vl.weights[wi];
+                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                 sub_total += vl.weights[wi];
             }
