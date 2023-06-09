@@ -16,6 +16,8 @@
 #include <algorithm>
 #endif
 
+#define PARALLEL_LOOP _Pragma("omp parallel for")
+
 namespace aon {
 const int exp_iters = 5;
 const int log_iters = 3;
