@@ -317,16 +317,16 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    PARALLEL_LOOP
+    PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        PARALLEL_LOOP
+        PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             update_gates(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
-        PARALLEL_LOOP
+        PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
