@@ -38,14 +38,16 @@ public:
 
     struct Params {
         float threshold;
+        float falloff;
         float lr; // learning rate
         float rr; // reconstruction rate
         
         Params()
         :
-        threshold(0.01f),
+        threshold(0.001f),
+        falloff(0.5f),
         lr(0.01f),
-        rr(0.1f)
+        rr(0.01f)
         {}
     };
 

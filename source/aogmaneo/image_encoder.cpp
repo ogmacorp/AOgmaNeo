@@ -19,7 +19,7 @@ void Image_Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = limit_min;
 
     const float byte_inv = 1.0f / 255.0f;
@@ -94,7 +94,7 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = hidden_rates[hidden_cell_index] * (dhc == 0 ? 1.0f : 0.5f);
+            float rate = hidden_rates[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -339,8 +339,8 @@ void Image_Encoder::step(
     bool learn_enabled
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
-
-    PARALLEL_FOR
+    
+    #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled);
 
@@ -350,7 +350,7 @@ void Image_Encoder::step(
 
             int num_visible_columns = vld.size.x * vld.size.y;
 
-            PARALLEL_FOR
+            #pragma omp parallel for
             for (int i = 0; i < num_visible_columns; i++)
                 learn_reconstruction(Int2(i / vld.size.y, i % vld.size.y), inputs[vli], vli);
         }
@@ -365,7 +365,7 @@ void Image_Encoder::reconstruct(
 
         int num_visible_columns = vld.size.x * vld.size.y;
 
-        PARALLEL_FOR
+        #pragma omp parallel for
         for (int i = 0; i < num_visible_columns; i++)
             reconstruct(Int2(i / vld.size.y, i % vld.size.y), recon_cis, vli);
     }
