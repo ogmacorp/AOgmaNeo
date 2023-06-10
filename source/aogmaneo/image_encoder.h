@@ -45,7 +45,7 @@ public:
         :
         threshold(0.01f),
         lr(0.01f),
-        rr(0.01f)
+        rr(0.1f)
         {}
     };
 
