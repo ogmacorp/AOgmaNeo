@@ -276,7 +276,7 @@ void Decoder::activate(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
     // forward kernel
-    #pragma omp parallel for
+    PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
@@ -301,13 +301,13 @@ void Decoder::learn(
 
         int num_visible_columns = vld.size.x * vld.size.y;
 
-        #pragma omp parallel for
+        PARALLEL_FOR
         for (int i = 0; i < num_visible_columns; i++)
             update_gates(Int2(i / vld.size.y, i % vld.size.y), vli, params);
     }
 
     // learn kernel
-    #pragma omp parallel for
+    PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, params);
 }

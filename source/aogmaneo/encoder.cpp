@@ -238,12 +238,12 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    #pragma omp parallel for
+    PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        #pragma omp parallel for
+        PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
     }
