@@ -439,6 +439,9 @@ void Decoder::read(
         reader.read(reinterpret_cast<void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
 
+    // generate helper buffers for parallelization
+    visible_pos_vlis.resize(total_num_visible_columns);
+
     int index = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
