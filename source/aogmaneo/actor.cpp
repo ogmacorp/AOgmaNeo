@@ -461,7 +461,7 @@ void Actor::step(
     // forward kernel
     unsigned int base_state = rand();
 
-    #pragma omp parallel for
+    PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++) {
         unsigned int state = base_state + i * 12345;
 
@@ -502,7 +502,7 @@ void Actor::step(
                 d *= params.discount;
             }
 
-            #pragma omp parallel for
+            PARALLEL_FOR
             for (int i = 0; i < num_hidden_columns; i++)
                 learn(Int2(i / hidden_size.y, i % hidden_size.y), t, r, d, mimic, params);
         }
