@@ -34,6 +34,8 @@ public:
 
         Byte_Buffer usages;
         
+        Float_Buffer recon_acts;
+
         float importance;
 
         Visible_Layer()
@@ -63,6 +65,8 @@ private:
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
+    
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
     // --- kernels ---
 
