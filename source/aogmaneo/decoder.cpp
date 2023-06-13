@@ -75,14 +75,12 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= count;
-
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
 
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] / count - max_activation);
 
         total += hidden_acts[hidden_cell_index];
     }
