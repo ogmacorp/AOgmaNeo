@@ -60,6 +60,8 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Float_Buffer hidden_acts;
+
     Float_Buffer hidden_gates;
 
     // visible layers and associated descriptors
