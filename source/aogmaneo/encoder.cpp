@@ -219,6 +219,8 @@ void Encoder::learn(
             max_activation = vl.recon_acts[visible_cell_index];
             max_index = vc;
         }
+
+        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] - 1.0f);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -240,7 +242,7 @@ void Encoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int visible_cell_index = vc + visible_cells_start;
 
-                        float delta = params.lr * ((vc == target_ci) - expf(vl.recon_acts[visible_cell_index] - 1.0f));
+                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
 
                         int wi = vc + wi_start;
 
