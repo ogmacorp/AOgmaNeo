@@ -49,6 +49,8 @@ void Decoder::forward(
 
         count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
+        int hidden_cell_stride = vld.size.z * diam * diam;
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
@@ -57,10 +59,12 @@ void Decoder::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
+                int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi = wi_offset + hidden_cell_index * hidden_cell_stride;
 
                     hidden_acts[hidden_cell_index] += vl.weights[wi];
                 }
@@ -133,6 +137,8 @@ void Decoder::update_gates(
     // bounds of receptive field, clamped to input size
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
+
+    int hidden_cell_stride = vld.size.z * diam * diam;
     
     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
@@ -152,10 +158,12 @@ void Decoder::update_gates(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
+                int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
+
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi = wi_offset + hidden_cell_index * hidden_cell_stride;
 
                     sum += vl.usages[wi];
                 }
@@ -199,6 +207,8 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+        int hidden_cell_stride = vld.size.z * diam * diam;
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -207,12 +217,14 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
+                int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     float delta = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
-                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi = wi_offset + hidden_cell_index * hidden_cell_stride;
 
                     vl.weights[wi] += delta * vl.gates[visible_column_index];
                 }
