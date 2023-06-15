@@ -69,7 +69,7 @@ public:
 
             s = other.s;
 
-            p = new T[s];
+            p = new T[static_cast<unsigned int>(s)];
         }
 
         for (int i = 0; i < s; i++)
@@ -90,7 +90,7 @@ public:
         s = size;
 
         if (s != 0) {
-            p = new T[s];
+            p = new T[static_cast<unsigned int>(s)];
 
             int ms = old_size < s ? old_size : s;
 
