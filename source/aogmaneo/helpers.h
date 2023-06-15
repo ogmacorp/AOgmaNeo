@@ -188,6 +188,9 @@ typedef unsigned char Byte;
 typedef signed char S_Byte;
 typedef Array<Byte> Byte_Buffer;
 typedef Array<S_Byte> S_Byte_Buffer;
+typedef Array<unsigned short> U_Short_Buffer;
+typedef Array<short> Short_Buffer;
+typedef Array<unsigned int> U_Int_Buffer;
 typedef Array<int> Int_Buffer;
 typedef Array<float> Float_Buffer;
 
