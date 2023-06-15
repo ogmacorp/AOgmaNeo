@@ -30,6 +30,9 @@ void Encoder::forward(
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
+        if (vl.importance == 0.0f)
+            continue;
+
         int diam = vld.radius * 2 + 1;
 
         // projection
