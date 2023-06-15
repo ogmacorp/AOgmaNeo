@@ -51,7 +51,7 @@ public:
         Params()
         :
         lr(1.0f),
-        gcurve(8.0f)
+        gcurve(16.0f)
         {}
     };
 
@@ -59,6 +59,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_gates;
 
