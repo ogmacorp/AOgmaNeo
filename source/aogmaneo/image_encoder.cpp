@@ -254,7 +254,7 @@ void Image_Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    #pragma omp parallel for
+    PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled);
 }
@@ -267,7 +267,7 @@ void Image_Encoder::reconstruct(
 
         int num_visible_columns = vld.size.x * vld.size.y;
 
-        #pragma omp parallel for
+        PARALLEL_FOR
         for (int i = 0; i < num_visible_columns; i++)
             reconstruct(Int2(i / vld.size.y, i % vld.size.y), recon_cis, vli);
     }
