@@ -28,10 +28,6 @@ const float limit_min = -999999.0f;
 const float limit_max = 999999.0f;
 const float limit_small = 0.0001f;
 
-// for weight noise
-const int noise_amount_byte = 5;
-const int noise_amount_byte_half = 2;
-
 inline float modf(
     float x,
     float y

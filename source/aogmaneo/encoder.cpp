@@ -10,6 +10,8 @@
 
 using namespace aon;
 
+const float init_weight_lower = 0.99f;
+
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
@@ -53,12 +55,12 @@ void Encoder::forward(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_sum = 0;
+        float sub_sum = 0.0f;
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float scale = 1.0f / (sub_count * 255) * vl.importance;
+        float scale = 1.0f / sub_count * vl.importance;
 
         total_importance += vl.importance;
 
@@ -80,7 +82,7 @@ void Encoder::forward(
 
                         unsigned int state = weight_base_state + full_wi;
 
-                        vl.weights[wi] = 255 - rand(&state) % noise_amount_byte;
+                        vl.weights[wi] = randf(init_weight_lower, 1.0f, &state);
 
                         hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                     }
@@ -173,7 +175,7 @@ void Encoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_total = 0;
+        float sub_total = 0.0f;
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -189,12 +191,12 @@ void Encoder::learn(
                 if (commit)
                     vl.indices[wi] = in_ci;
                 else if (vl.indices[wi] != in_ci)
-                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+                    vl.weights[wi] -= params.lr * vl.weights[wi];
 
                 sub_total += vl.weights[wi];
             }
 
-        total += static_cast<float>(sub_total) / (sub_count * 255) * vl.importance;
+        total += sub_total / sub_count * vl.importance;
         total_importance += vl.importance;
     }
 
@@ -230,7 +232,7 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights = Byte_Buffer(num_hidden_cells * area, 255);
+        vl.weights = Float_Buffer(num_hidden_cells * area, 1.0f);
         vl.indices = Int_Buffer(vl.weights.size(), -1);
     }
 
@@ -273,7 +275,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.indices.size() * sizeof(int) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float) + vl.indices.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
@@ -304,7 +306,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.indices[0]), vl.indices.size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
@@ -357,7 +359,7 @@ void Encoder::read(
         vl.weights.resize(num_hidden_cells * area);
         vl.indices.resize(vl.weights.size());
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.indices[0]), vl.indices.size() * sizeof(int));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
