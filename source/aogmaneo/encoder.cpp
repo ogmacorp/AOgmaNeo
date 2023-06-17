@@ -58,9 +58,9 @@ void Encoder::forward(
         float sub_sum = 0.0f;
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        int hidden_stride = vld.size.z * diam * diam;
+        float scale = vl.importance / sub_count;
 
-        float scale = 1.0f / sub_count * vl.importance;
+        int hidden_stride = diam * diam;
 
         total_importance += vl.importance;
 
@@ -72,10 +72,12 @@ void Encoder::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
+                int wi_offset = offset.y + diam * offset.x;
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = offset.y + diam * (offset.x + diam * hidden_cell_index);
+                    int wi = wi_offset + hidden_cell_index * hidden_stride;
 
                     if (vl.indices[wi] == -1) {
                         int full_wi = in_ci + vld.size.z * wi;
@@ -95,7 +97,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= total_importance;
+        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
         float activation = hidden_acts[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
@@ -117,7 +119,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_match;
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;
 }
 
 void Encoder::learn(
