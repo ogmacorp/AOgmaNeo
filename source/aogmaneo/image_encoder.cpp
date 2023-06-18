@@ -22,7 +22,7 @@ void Image_Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
-    int max_backup_index = -1;
+    int max_backup_index = 0;
     float max_backup_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -80,13 +80,13 @@ void Image_Encoder::forward(
         float activation = match / (params.choice + (total / 255.0f) / (count * 2));
 
         if (match >= params.vigilance) {
-            if (activation > max_activation || max_index == -1) {
+            if (activation > max_activation) {
                 max_activation = activation;
                 max_index = hc;
             }
         }
 
-        if (activation > max_backup_activation || max_backup_index == -1) {
+        if (activation > max_backup_activation) {
             max_backup_activation = activation;
             max_backup_index = hc;
         }
@@ -254,7 +254,7 @@ void Image_Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    PARALLEL_FOR
+    #pragma omp parallel for
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled);
 }
@@ -267,7 +267,7 @@ void Image_Encoder::reconstruct(
 
         int num_visible_columns = vld.size.x * vld.size.y;
 
-        PARALLEL_FOR
+        #pragma omp parallel for
         for (int i = 0; i < num_visible_columns; i++)
             reconstruct(Int2(i / vld.size.y, i % vld.size.y), recon_cis, vli);
     }
