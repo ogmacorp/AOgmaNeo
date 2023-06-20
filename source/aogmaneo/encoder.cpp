@@ -220,8 +220,6 @@ void Encoder::learn(
             max_activation = vl.recon_acts[visible_cell_index];
             max_index = vc;
         }
-
-        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] - 1.0f);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -239,16 +237,14 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                if (max_index != target_ci) {
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int visible_cell_index = vc + visible_cells_start;
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int visible_cell_index = vc + visible_cells_start;
 
-                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
+                    float delta = params.lr * ((vc == target_ci) - (vl.recon_acts[visible_cell_index] > 0.0f));
 
-                        int wi = vc + wi_start;
+                    int wi = vc + wi_start;
 
-                        vl.weights[wi] += delta * hidden_gates[hidden_column_index];
-                    }
+                    vl.weights[wi] += delta * hidden_gates[hidden_column_index];
                 }
 
                 int wi = target_ci + wi_start;
@@ -290,7 +286,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.99f, 1.0f);
+            vl.weights[i] = randf(-1.0f, 1.0f);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
