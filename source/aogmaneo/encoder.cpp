@@ -295,14 +295,16 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                if (max_index != target_ci) {
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int visible_cell_index = vc + visible_cells_start;
 
-                    float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
+                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
 
-                    int wi = vc + wi_start;
+                        int wi = vc + wi_start;
 
-                    vl.weights[wi] += delta * hidden_gates[hidden_column_index];
+                        vl.weights[wi] += delta * hidden_gates[hidden_column_index];
+                    }
                 }
 
                 int wi = target_ci + wi_start;
@@ -383,12 +385,6 @@ void Encoder::step(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
     hidden_acts.fill(0.0f);
-
-    for (int vli = 0; vli < visible_layers.size(); vli++) {
-        Visible_Layer &vl = visible_layers[vli];
-
-        vl.recon_acts.fill(0.0f);
-    }
 
     for (int it = 0; it < params.code_iters; it++) {
         PARALLEL_FOR
