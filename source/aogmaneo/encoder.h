@@ -52,7 +52,7 @@ public:
         Params()
         :
         code_iters(2),
-        lr(0.5f),
+        lr(0.1f),
         gcurve(8.0f)
         {}
     };
