@@ -51,7 +51,7 @@ public:
 
         Params()
         :
-        code_iters(5),
+        code_iters(2),
         lr(0.5f),
         gcurve(8.0f)
         {}
