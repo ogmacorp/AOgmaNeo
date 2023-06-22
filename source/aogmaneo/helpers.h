@@ -16,6 +16,8 @@
 #include <algorithm>
 #endif
 
+#define PARALLEL_FOR _Pragma("omp parallel for")
+
 namespace aon {
 const int exp_iters = 5;
 const int log_iters = 3;
@@ -186,6 +188,9 @@ typedef unsigned char Byte;
 typedef signed char S_Byte;
 typedef Array<Byte> Byte_Buffer;
 typedef Array<S_Byte> S_Byte_Buffer;
+typedef Array<unsigned short> U_Short_Buffer;
+typedef Array<short> Short_Buffer;
+typedef Array<unsigned int> U_Int_Buffer;
 typedef Array<int> Int_Buffer;
 typedef Array<float> Float_Buffer;
 
