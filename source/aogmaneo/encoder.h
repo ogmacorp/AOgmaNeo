@@ -52,7 +52,7 @@ public:
         Params()
         :
         code_iters(3),
-        lr(0.5f),
+        lr(1.0f),
         gcurve(8.0f)
         {}
     };
@@ -77,6 +77,13 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void backward(
+        const Int2 &column_pos,
+        const Int_Buffer* input_cis,
+        int vli,
         const Params &params
     );
 
