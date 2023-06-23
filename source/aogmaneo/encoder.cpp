@@ -374,7 +374,11 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
+    // clear
     hidden_acts.fill(0.0f);
+
+    for (int vli = 0; vli < visible_layers.size(); vli++)
+        visible_layers[vli].recon_acts.fill(0.0f);
 
     for (int it = 0; it < params.code_iters; it++) {
         PARALLEL_FOR
