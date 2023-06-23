@@ -267,7 +267,7 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] / max(1, count));
+        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] / max(1, count) - 1.0f);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
