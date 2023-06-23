@@ -20,11 +20,14 @@ public:
 
         int radius; // radius onto input
 
+        Byte ignore_self;
+
         // defaults
         Visible_Layer_Desc()
         :
         size(4, 4, 16),
-        radius(2)
+        radius(2),
+        ignore_self(false)
         {}
     };
 

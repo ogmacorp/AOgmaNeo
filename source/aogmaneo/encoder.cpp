@@ -47,6 +47,9 @@ void Encoder::forward(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                if (vld.ignore_self && visible_column_index == hidden_column_index)
+                    continue;
+
                 int in_ci = (*input_cis[vli])[visible_column_index];
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
@@ -138,7 +141,7 @@ void Encoder::backward(
 
     sum /= max(1, count);
 
-    vl.recon_acts[visible_column_index] = expf(min(0.0f, sum - 1.0f));
+    vl.recon_acts[visible_column_index] = sigmoidf(sum);
 }
 
 void Encoder::update_gates(
@@ -267,7 +270,9 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] / max(1, count) - 1.0f);
+        vl.recon_acts[visible_cell_index] /= max(1, count);
+
+        vl.recon_acts[visible_cell_index] = sigmoidf(vl.recon_acts[visible_cell_index]);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -334,7 +339,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.99f, 1.0f);
+            vl.weights[i] = randf(0.0f, 1.0f);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
