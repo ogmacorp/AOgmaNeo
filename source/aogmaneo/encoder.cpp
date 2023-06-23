@@ -138,7 +138,7 @@ void Encoder::backward(
 
     sum /= max(1, count);
 
-    vl.recon_acts[visible_column_index] = expf(min(0.0f, sum - 1.0f));
+    vl.recon_acts[visible_column_index] = min(1.0f, max(0.0f, sum));
 }
 
 void Encoder::update_gates(
@@ -268,8 +268,6 @@ void Encoder::learn(
         int visible_cell_index = vc + visible_cells_start;
 
         vl.recon_acts[visible_cell_index] /= max(1, count);
-
-        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] - 1.0f);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
