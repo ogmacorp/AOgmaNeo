@@ -134,7 +134,8 @@ void Decoder::learn(
                     int ii = wi_offset + (i + hidden_indices_start) * hidden_stride;
 
                     if (vl.indices[ii] == target_ci) {
-                        vl.weights[ii] = min(0xfffe, vl.weights[ii] + 1);
+                        if (vl.weights[ii] < 0xffff)
+                            vl.weights[ii]++;
 
                         break;
                     }
@@ -142,7 +143,7 @@ void Decoder::learn(
                         if (vl.weights[ii] <= 1)
                             vl.weights[ii] = 0;
                         else
-                            vl.weights[ii] = max(1, vl.weights[ii] - 1);
+                            vl.weights[ii]--;
 
                         break;
                     }
