@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Int_Buffer indices;
+        Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
@@ -48,8 +49,6 @@ private:
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 
