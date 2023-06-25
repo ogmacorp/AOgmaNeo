@@ -30,31 +30,18 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
-
-        Byte_Buffer usages;
-
-        Float_Buffer gates;
+        Int_Buffer indices;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
-    struct Params {
-        float lr; // learning rate
-        float gcurve; // gain curve
-
-        // Defaults
-        Params()
-        :
-        lr(4.0f),
-        gcurve(8.0f)
-        {}
-    };
+    struct Params {};
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
+    int num_indices;
 
-    Float_Buffer hidden_acts;
+    Int_Buffer hidden_acts;
 
     Int_Buffer hidden_cis; // hidden state
 
@@ -72,12 +59,6 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
@@ -88,6 +69,7 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output/prediction size
+        int num_indices,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
