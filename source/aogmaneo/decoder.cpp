@@ -22,7 +22,7 @@ void Decoder::forward(
     int hidden_indices_start = hidden_column_index * num_indices;
 
     int max_index = 0;
-    int max_activation = 0;
+    unsigned int max_activation = 0;
 
     // clear
     for (int hc = 0; hc < hidden_size.z; hc++) {
