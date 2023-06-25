@@ -185,7 +185,7 @@ void Decoder::init_random(
         int area = diam * diam;
 
         vl.indices = Int_Buffer(num_hidden_indices * area * vld.size.z, -1);
-        vl.weights = Byte_Buffer(vl.indices.size(), 255);
+        vl.weights = Byte_Buffer(vl.indices.size(), 128);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
