@@ -50,8 +50,6 @@ void Decoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        int hidden_offset = hidden_column_index * hidden_stride;
-
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
@@ -63,7 +61,7 @@ void Decoder::forward(
                 int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
 
                 for (int i = 0; i < num_indices; i++) {
-                    int ii = wi_offset + hidden_offset;
+                    int ii = wi_offset + (i + num_indices * hidden_column_index) * hidden_stride;
 
                     if (vl.indices[ii] == -1)
                         break;
@@ -120,8 +118,6 @@ void Decoder::learn(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        int hidden_offset = hidden_column_index * hidden_stride;
-
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -133,7 +129,7 @@ void Decoder::learn(
                 int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
 
                 for (int i = 0; i < num_indices; i++) {
-                    int ii = wi_offset + hidden_offset;
+                    int ii = wi_offset + (i + num_indices * hidden_column_index) * hidden_stride;
 
                     if (vl.indices[ii] != -1)
                         continue;
