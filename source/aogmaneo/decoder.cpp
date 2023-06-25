@@ -99,8 +99,6 @@ void Decoder::learn(
 
     int hidden_indices_start = hidden_column_index * num_indices;
 
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -134,9 +132,6 @@ void Decoder::learn(
 
                 for (int i = 0; i < num_indices; i++) {
                     int ii = wi_offset + (i + hidden_indices_start) * hidden_stride;
-
-                    if (vl.indices[ii] == target_ci)
-                        break;
 
                     if (vl.indices[ii] != -1)
                         continue;
