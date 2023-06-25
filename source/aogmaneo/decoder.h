@@ -42,7 +42,7 @@ private:
     Int3 hidden_size; // size of the output/hidden/prediction
     int num_indices;
 
-    Int_Buffer hidden_acts;
+    U_Int_Buffer hidden_acts;
 
     Int_Buffer hidden_cis; // hidden state
 
@@ -138,7 +138,7 @@ public:
     }
 
     // get the hidden activations
-    const Int_Buffer &get_hidden_acts() const {
+    const U_Int_Buffer &get_hidden_acts() const {
         return hidden_acts;
     }
 

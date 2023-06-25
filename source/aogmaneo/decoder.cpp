@@ -190,7 +190,7 @@ void Decoder::init_random(
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
 
-    hidden_acts = Int_Buffer(num_hidden_cells, 0);
+    hidden_acts = U_Int_Buffer(num_hidden_cells, 0);
 
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -236,7 +236,7 @@ void Decoder::clear_state() {
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + hidden_acts.size() * sizeof(int) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + hidden_acts.size() * sizeof(unsigned int) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -249,7 +249,7 @@ int Decoder::size() const {
 }
 
 int Decoder::state_size() const {
-    int size = hidden_acts.size() * sizeof(int) + hidden_cis.size() * sizeof(int);
+    int size = hidden_acts.size() * sizeof(unsigned int) + hidden_cis.size() * sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -266,7 +266,7 @@ void Decoder::write(
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&num_indices), sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(unsigned int));
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     
     int num_visible_layers = visible_layers.size();
@@ -299,7 +299,7 @@ void Decoder::read(
     hidden_acts.resize(num_hidden_cells);
     hidden_cis.resize(num_hidden_columns);
 
-    reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(unsigned int));
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     int num_visible_layers;
