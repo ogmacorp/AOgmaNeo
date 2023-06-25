@@ -92,10 +92,10 @@ void Decoder::learn(
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    if (hidden_cis[hidden_column_index] == target_ci)
-        return;
-
     int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    if (hidden_cis[hidden_column_index] == target_ci && hidden_acts[target_ci + hidden_cells_start] > 0)
+        return;
 
     int hidden_indices_start = hidden_column_index * num_indices;
 
