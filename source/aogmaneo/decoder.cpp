@@ -139,6 +139,8 @@ void Decoder::learn(
                         continue;
 
                     vl.indices[ii] = target_ci;
+
+                    break;
                 }
             }
     }

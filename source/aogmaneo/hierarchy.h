@@ -27,6 +27,8 @@ public:
         Int3 size;
         IO_Type type;
 
+        int num_indices;
+
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
@@ -35,6 +37,7 @@ public:
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
+            int num_indices = 16,
             int up_radius = 2,
             int down_radius = 2,
             int history_capacity = 64
@@ -42,6 +45,7 @@ public:
         :
         size(size),
         type(type),
+        num_indices(num_indices),
         up_radius(up_radius),
         down_radius(down_radius),
         history_capacity(history_capacity)
@@ -52,18 +56,22 @@ public:
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
 
+        int num_indices;
+
         int up_radius; // encoder radius
         int recurrent_radius; // encoder onto self radius, -1 to disable
         int down_radius; // decoder radius, also shared with actor if there is one
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
+            int num_indices = 16,
             int up_radius = 2,
             int recurrent_radius = 0,
             int down_radius = 2
         )
         :
         hidden_size(hidden_size),
+        num_indices(num_indices),
         up_radius(up_radius),
         recurrent_radius(recurrent_radius),
         down_radius(down_radius)
@@ -191,16 +199,6 @@ public:
             return actors[d_indices[i]].get_hidden_cis();
 
         return decoders[0][d_indices[i]].get_hidden_cis();
-    }
-
-    // retrieve prediction activations
-    const Float_Buffer &get_prediction_acts(
-        int i
-    ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
-
-        return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
     // number of io layers

@@ -139,7 +139,7 @@ public:
     }
 
     // get the hidden activations
-    const Float_Buffer &get_hidden_acts() const {
+    const Int_Buffer &get_hidden_acts() const {
         return hidden_acts;
     }
 
