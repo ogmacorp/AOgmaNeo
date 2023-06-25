@@ -130,7 +130,7 @@ void Decoder::learn(
 
                 int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
 
-                bool incremented = false;
+                bool has_target = false;
 
                 for (int i = 0; i < num_indices; i++) {
                     int ii = wi_offset + (i + hidden_indices_start) * hidden_stride;
@@ -139,14 +139,14 @@ void Decoder::learn(
                         if (vl.weights[ii] < 255)
                             vl.weights[ii]++;
 
-                        incremented = true;
+                        has_target = true;
                     }
                     else if (vl.indices[ii] == hidden_cis[hidden_column_index]) {
                         if (vl.weights[ii] > 0)
                             vl.weights[ii]--;
                     }
 
-                    if (vl.indices[ii] == -1 && !incremented) {
+                    if (vl.indices[ii] == -1 && !has_target) {
                         vl.indices[ii] = target_ci;
 
                         break;
