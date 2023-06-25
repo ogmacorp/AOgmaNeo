@@ -136,7 +136,7 @@ void Decoder::learn(
                     int ii = wi_offset + (i + hidden_indices_start) * hidden_stride;
 
                     if (vl.indices[ii] == target_ci) {
-                        if (vl.weights[ii] < 0xff)
+                        if (vl.weights[ii] < 255)
                             vl.weights[ii]++;
 
                         incremented = true;
@@ -184,7 +184,7 @@ void Decoder::init_random(
         int area = diam * diam;
 
         vl.indices = Int_Buffer(num_hidden_indices * area * vld.size.z, -1);
-        vl.weights = Byte_Buffer(vl.indices.size(), 1);
+        vl.weights = Byte_Buffer(vl.indices.size(), 255);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
