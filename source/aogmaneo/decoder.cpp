@@ -134,15 +134,13 @@ void Decoder::learn(
                     int ii = wi_offset + (i + hidden_indices_start) * hidden_stride;
 
                     if (vl.indices[ii] == target_ci) {
-                        if (vl.weights[ii] < 0xffff)
+                        if (vl.weights[ii] < 0xff)
                             vl.weights[ii]++;
 
                         break;
                     }
                     else if (vl.indices[ii] == hidden_cis[hidden_column_index]) {
-                        if (vl.weights[ii] <= 1)
-                            vl.weights[ii] = 0;
-                        else
+                        if (vl.weights[ii] > 0)
                             vl.weights[ii]--;
 
                         break;
@@ -186,7 +184,7 @@ void Decoder::init_random(
         int area = diam * diam;
 
         vl.indices = Int_Buffer(num_hidden_indices * area * vld.size.z, -1);
-        vl.weights = U_Short_Buffer(vl.indices.size(), 1);
+        vl.weights = Byte_Buffer(vl.indices.size(), 1);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -243,7 +241,7 @@ int Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.indices.size() * sizeof(int) + vl.weights.size() * sizeof(unsigned short) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + vl.indices.size() * sizeof(int) + vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -281,7 +279,7 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.indices[0]), vl.indices.size() * sizeof(int));
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned short));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
@@ -330,7 +328,7 @@ void Decoder::read(
         vl.weights.resize(vl.indices.size());
 
         reader.read(reinterpret_cast<void*>(&vl.indices[0]), vl.indices.size() * sizeof(int));
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(unsigned short));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         vl.input_cis_prev.resize(num_visible_columns);
 
