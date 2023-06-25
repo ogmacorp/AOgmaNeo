@@ -19,6 +19,8 @@ void Decoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    int hidden_indices_start = hidden_column_index * num_indices;
+
     int max_index = 0;
     int max_activation = 0;
 
@@ -61,7 +63,7 @@ void Decoder::forward(
                 int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
 
                 for (int i = 0; i < num_indices; i++) {
-                    int ii = wi_offset + (i + num_indices * hidden_column_index) * hidden_stride;
+                    int ii = wi_offset + (i + hidden_indices_start) * hidden_stride;
 
                     if (vl.indices[ii] == -1)
                         break;
@@ -88,12 +90,14 @@ void Decoder::learn(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
     if (hidden_cis[hidden_column_index] == target_ci)
         return;
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    int hidden_indices_start = hidden_column_index * num_indices;
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
@@ -129,7 +133,10 @@ void Decoder::learn(
                 int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
 
                 for (int i = 0; i < num_indices; i++) {
-                    int ii = wi_offset + (i + num_indices * hidden_column_index) * hidden_stride;
+                    int ii = wi_offset + (i + hidden_indices_start) * hidden_stride;
+
+                    if (vl.indices[ii] == target_ci)
+                        break;
 
                     if (vl.indices[ii] != -1)
                         continue;
