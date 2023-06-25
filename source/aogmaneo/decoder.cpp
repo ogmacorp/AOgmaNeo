@@ -139,12 +139,11 @@ void Decoder::learn(
                         break;
                     }
 
-                    if (vl.indices[ii] != -1)
-                        continue;
+                    if (vl.indices[ii] == -1) {
+                        vl.indices[ii] = target_ci;
 
-                    vl.indices[ii] = target_ci;
-
-                    break;
+                        break;
+                    }
                 }
             }
     }
