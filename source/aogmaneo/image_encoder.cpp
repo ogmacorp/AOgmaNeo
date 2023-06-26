@@ -22,8 +22,8 @@ void Image_Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
-    int max_backup_index = 0;
-    float max_backup_activation = 0.0f;
+    int max_complete_index = 0;
+    float max_complete_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -66,9 +66,9 @@ void Image_Encoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        Byte input = (*inputs[vli])[vc + i_start];
+                        int input = (*inputs[vli])[vc + i_start];
 
-                        sum += min(input, vl.weights0[wi]) + min(255 - input, static_cast<int>(vl.weights1[wi]));
+                        sum += min(input, static_cast<int>(vl.weights0[wi])) + min(255 - input, static_cast<int>(vl.weights1[wi]));
                         total += vl.weights0[wi];
                         total += vl.weights1[wi];
                     }
@@ -86,13 +86,13 @@ void Image_Encoder::forward(
             }
         }
 
-        if (activation > max_backup_activation) {
-            max_backup_activation = activation;
-            max_backup_index = hc;
+        if (activation > max_complete_activation) {
+            max_complete_activation = activation;
+            max_complete_index = hc;
         }
     }
 
-    hidden_cis[hidden_column_index] = max_backup_index;
+    hidden_cis[hidden_column_index] = max_complete_index;
 
     if (learn_enabled && max_index != -1) {
         int hidden_cell_index_max = max_index + hidden_cells_start;
@@ -129,9 +129,9 @@ void Image_Encoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        Byte input = (*inputs[vli])[vc + i_start];
+                        int input = (*inputs[vli])[vc + i_start];
 
-                        vl.weights0[wi] = max(0, vl.weights0[wi] + roundf(params.lr * (min(input, vl.weights0[wi]) - vl.weights0[wi])));
+                        vl.weights0[wi] = max(0, vl.weights0[wi] + roundf(params.lr * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
                         vl.weights1[wi] = max(0, vl.weights1[wi] + roundf(params.lr * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
                     }
                 }
@@ -254,7 +254,7 @@ void Image_Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    #pragma omp parallel for
+    PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled);
 }
@@ -267,7 +267,7 @@ void Image_Encoder::reconstruct(
 
         int num_visible_columns = vld.size.x * vld.size.y;
 
-        #pragma omp parallel for
+        PARALLEL_FOR
         for (int i = 0; i < num_visible_columns; i++)
             reconstruct(Int2(i / vld.size.y, i % vld.size.y), recon_cis, vli);
     }

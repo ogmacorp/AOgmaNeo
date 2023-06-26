@@ -41,14 +41,15 @@ void Encoder::forward(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+
         int hidden_stride = vld.size.z * diam * diam;
+
+        float scale = vl.importance / sub_count;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
-
-                if (vld.ignore_self && visible_column_index == hidden_column_index)
-                    continue;
 
                 int in_ci = (*input_cis[vli])[visible_column_index];
 
@@ -61,7 +62,7 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi] * (1.0f - vl.recon_acts[visible_column_index]) * vl.importance;
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * (1.0f - vl.recon_acts[visible_column_index]) * scale;
                 }
             }
     }
@@ -141,7 +142,7 @@ void Encoder::backward(
 
     sum /= max(1, count);
 
-    vl.recon_acts[visible_column_index] = min(1.0f, max(0.0f, sum));
+    vl.recon_acts[visible_column_index] = expf(min(0.0f, sum - 1.0f));
 }
 
 void Encoder::update_gates(
@@ -279,6 +280,8 @@ void Encoder::learn(
             max_activation = vl.recon_acts[visible_cell_index];
             max_index = vc;
         }
+
+        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] - 1.0f);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -351,12 +354,12 @@ void Encoder::init_random(
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
-        vl.recon_acts = Float_Buffer(num_visible_cells, 0.0f);
+        vl.recon_acts.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+    hidden_acts.resize(num_hidden_cells);
 
     hidden_gates.resize(num_hidden_columns);
 
@@ -385,6 +388,7 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
+    // clear
     hidden_acts.fill(0.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++)
