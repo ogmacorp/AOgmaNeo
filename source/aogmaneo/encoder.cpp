@@ -138,7 +138,7 @@ void Encoder::backward(
 
     sum /= max(1, count);
 
-    vl.recon_acts[visible_column_index] = min(1.0f, max(0.0f, sum));
+    vl.recon_acts[visible_column_index] = expf(min(0.0f, sum - 1.0f));
 }
 
 void Encoder::update_gates(
@@ -264,10 +264,20 @@ void Encoder::learn(
             }
         }
 
+    int max_index = 0;
+    float max_activation = 0.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         vl.recon_acts[visible_cell_index] /= max(1, count);
+
+        if (vl.recon_acts[visible_cell_index] > max_activation) {
+            max_activation = vl.recon_acts[visible_cell_index];
+            max_index = vc;
+        }
+
+        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] - 1.0f);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -285,14 +295,16 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                if (max_index != target_ci) {
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int visible_cell_index = vc + visible_cells_start;
 
-                    float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
+                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
 
-                    int wi = vc + wi_start;
+                        int wi = vc + wi_start;
 
-                    vl.weights[wi] += delta * hidden_gates[hidden_column_index];
+                        vl.weights[wi] += delta * hidden_gates[hidden_column_index];
+                    }
                 }
 
                 int wi = target_ci + wi_start;
