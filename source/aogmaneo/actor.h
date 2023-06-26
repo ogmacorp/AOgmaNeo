@@ -32,12 +32,6 @@ public:
     struct Visible_Layer {
         Float_Buffer value_weights; // value function weights
         Float_Buffer action_weights; // action function weights
-
-        Byte_Buffer value_usages;
-        Byte_Buffer action_usages;
-
-        Float_Buffer value_gates;
-        Float_Buffer action_gates;
     };
 
     // history sample for delayed updates
@@ -54,20 +48,16 @@ public:
         float bias; // bias towards positive updates
         float discount; // discount fActor
         float temperature; // exploration amount
-        float value_gcurve;
-        float action_gcurve;
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
         vlr(0.01f),
-        alr(1.0f),
+        alr(0.01f),
         bias(0.5f),
         discount(0.99f),
         temperature(1.0f),
-        value_gcurve(0.0f),
-        action_gcurve(8.0f),
         min_steps(16),
         history_iters(16)
         {}
@@ -91,21 +81,12 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-
     // --- kernels ---
 
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
         unsigned int* state,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
-        int t,
-        int vli,
         const Params &params
     );
 
@@ -116,10 +97,6 @@ private:
         float d,
         float mimic,
         const Params &params
-    );
-
-    void update_usages(
-        const Int2 &column_pos
     );
 
 public:
