@@ -90,7 +90,7 @@ void Hierarchy::init_random(
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == prediction) {
                     // decoder visible layer descriptors
-                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
+                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
 
                     d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     d_visible_layer_descs[0].radius = io_descs[i].down_radius;
@@ -111,7 +111,7 @@ void Hierarchy::init_random(
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == action) {
                     // decoder visible layer descriptors
-                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
+                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(1 + (l < encoders.size() - 1));
 
                     a_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     a_visible_layer_descs[0].radius = io_descs[i].down_radius;
@@ -147,7 +147,7 @@ void Hierarchy::init_random(
             decoders[l].resize(layer_descs[l].ticks_per_update);
 
             // decoder visible layer descriptors
-            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
+            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
 
             d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
             d_visible_layer_descs[0].radius = layer_descs[l].down_radius;
@@ -233,7 +233,7 @@ void Hierarchy::step(
     // backward
     for (int l = decoders.size() - 1; l >= 0; l--) {
         if (updates[l]) {
-            Array<const Int_Buffer*> layer_input_cis(l < encoders.size() - 1 ? 2 : 1);
+            Array<const Int_Buffer*> layer_input_cis(1 + (l < encoders.size() - 1));
 
             layer_input_cis[0] = &encoders[l].get_hidden_cis();
             
