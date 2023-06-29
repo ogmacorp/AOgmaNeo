@@ -7,10 +7,9 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
-
-const float init_weight_lower = 0.99f;
 
 void Encoder::forward(
     const Int2 &column_pos,
@@ -79,16 +78,7 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    if (vl.indices[wi] == -1) {
-                        int full_wi = in_ci + vld.size.z * wi;
-
-                        unsigned int state = base_state + full_wi;
-
-                        vl.weights[wi] = randf(init_weight_lower, 1.0f, &state);
-
-                        hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
-                    }
-                    else if (vl.indices[wi] == in_ci)
+                    if (vl.indices[wi] == in_ci)
                         hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
@@ -119,13 +109,12 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_match;
 
-    if (max_index == -1) {
+    if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
         unsigned int state = base_state + hidden_column_index * 12345;
 
-        hidden_maxs[hidden_column_index] += randf(&state) * limit_small;
+        hidden_maxs[hidden_column_index] = params.vigilance + randf(&state) * limit_small;
 
-        if (hidden_commits[hidden_column_index] < hidden_size.z)
-            learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
+        learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
     }
 
     hidden_cis[hidden_column_index] = max_complete_index;
@@ -160,9 +149,9 @@ void Encoder::learn(
             }
         }
 
-    int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
-
     bool commit = (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index]);
+
+    int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
     float total = 0.0f;
     float total_importance = 0.0f;
