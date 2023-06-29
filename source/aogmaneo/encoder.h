@@ -59,11 +59,13 @@ public:
 private:
     Int3 hidden_size; // size of hidden/output layer
 
-    unsigned int weight_base_state;
+    unsigned int base_state;
 
     Int_Buffer hidden_cis;
 
     Int_Buffer learn_cis;
+
+    Int_Buffer hidden_commits;
 
     Float_Buffer hidden_acts;
 

@@ -21,7 +21,7 @@ void Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] = 0.0f;
@@ -74,7 +74,7 @@ void Encoder::forward(
 
                 int wi_offset = offset.y + diam * offset.x;
 
-                for (int hc = 0; hc < hidden_size.z; hc++) {
+                for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
@@ -82,7 +82,7 @@ void Encoder::forward(
                     if (vl.indices[wi] == -1) {
                         int full_wi = in_ci + vld.size.z * wi;
 
-                        unsigned int state = weight_base_state + full_wi;
+                        unsigned int state = base_state + full_wi;
 
                         vl.weights[wi] = randf(init_weight_lower, 1.0f, &state);
 
@@ -94,7 +94,7 @@ void Encoder::forward(
             }
     }
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    for (int hc = 0; hc < hidden_commits[hidden_column_index]; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
@@ -118,6 +118,15 @@ void Encoder::forward(
     learn_cis[hidden_column_index] = max_index;
 
     hidden_maxs[hidden_column_index] = max_match;
+
+    if (max_index == -1) {
+        unsigned int state = base_state + hidden_column_index * 12345;
+
+        hidden_maxs[hidden_column_index] += randf(&state) * limit_small;
+
+        if (hidden_commits[hidden_column_index] < hidden_size.z)
+            learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
+    }
 
     hidden_cis[hidden_column_index] = max_complete_index;
 }
@@ -153,7 +162,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
-    bool commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
+    bool commit = (learn_cis[hidden_column_index] == hidden_commits[hidden_column_index]);
 
     float total = 0.0f;
     float total_importance = 0.0f;
@@ -205,6 +214,9 @@ void Encoder::learn(
     total /= max(limit_small, total_importance);
 
     hidden_totals[hidden_cell_index_max] = total;
+
+    if (commit)
+        hidden_commits[hidden_column_index]++;
 }
 
 void Encoder::init_random(
@@ -215,7 +227,7 @@ void Encoder::init_random(
 
     this->hidden_size = hidden_size;
 
-    weight_base_state = rand();
+    base_state = rand();
 
     visible_layers.resize(visible_layer_descs.size());
 
@@ -241,6 +253,8 @@ void Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     learn_cis.resize(num_hidden_columns);
+
+    hidden_commits = Int_Buffer(num_hidden_columns, 0);
 
     hidden_acts.resize(num_hidden_cells);
 
@@ -272,7 +286,7 @@ void Encoder::clear_state() {
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(unsigned int) + hidden_cis.size() * sizeof(int) + hidden_totals.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(unsigned int) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(int) + hidden_totals.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -292,9 +306,11 @@ void Encoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&weight_base_state), sizeof(unsigned int));
+    writer.write(reinterpret_cast<const void*>(&base_state), sizeof(unsigned int));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    writer.write(reinterpret_cast<const void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hidden_totals[0]), hidden_totals.size() * sizeof(float));
 
@@ -320,7 +336,7 @@ void Encoder::read(
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_size), sizeof(Int3));
 
-    reader.read(reinterpret_cast<void*>(&weight_base_state), sizeof(unsigned int));
+    reader.read(reinterpret_cast<void*>(&base_state), sizeof(unsigned int));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
@@ -330,6 +346,10 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     learn_cis.resize(num_hidden_columns);
+
+    hidden_commits.resize(num_hidden_columns);
+
+    reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(int));
 
     hidden_acts.resize(num_hidden_cells);
 
