@@ -157,6 +157,11 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden commits
+    const Int_Buffer &get_hidden_commits() const {
+        return hidden_commits;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;

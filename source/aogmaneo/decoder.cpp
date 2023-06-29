@@ -13,14 +13,17 @@ using namespace aon;
 void Decoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
+    const Int_Buffer* hidden_commits,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    int num_commits = (hidden_commits == nullptr ? hidden_size.z : (*hidden_commits)[hidden_column_index]);
+
     // clear
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    for (int hc = 0; hc < num_commits; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] = 0.0f;
@@ -61,7 +64,7 @@ void Decoder::forward(
 
                 int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
 
-                for (int hc = 0; hc < hidden_size.z; hc++) {
+                for (int hc = 0; hc < num_commits; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
@@ -74,7 +77,7 @@ void Decoder::forward(
     int max_index = 0;
     float max_activation = limit_min;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    for (int hc = 0; hc < num_commits; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] /= count;
@@ -83,24 +86,8 @@ void Decoder::forward(
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
-    }
 
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-
-        total += hidden_acts[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(limit_small, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] *= total_inv;
+        hidden_acts[hidden_cell_index] = tanhf(max(0.0f, hidden_acts[hidden_cell_index]));
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -178,6 +165,7 @@ void Decoder::update_gates(
 void Decoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* hidden_target_cis,
+    const Int_Buffer* hidden_commits,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -187,6 +175,8 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
+
+    int num_commits = (hidden_commits == nullptr ? hidden_size.z : (*hidden_commits)[hidden_column_index]);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -219,7 +209,7 @@ void Decoder::learn(
 
                 int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
 
-                for (int hc = 0; hc < hidden_size.z; hc++) {
+                for (int hc = 0; hc < num_commits; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     float delta = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
@@ -267,7 +257,7 @@ void Decoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.01f);
+            vl.weights[i] = randf(-limit_small, limit_small);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
@@ -301,6 +291,7 @@ void Decoder::init_random(
 
 void Decoder::activate(
     const Array<const Int_Buffer*> &input_cis,
+    const Int_Buffer* hidden_commits,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -308,7 +299,7 @@ void Decoder::activate(
     // forward kernel
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_commits, params);
 
     // copy to prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -320,6 +311,7 @@ void Decoder::activate(
 
 void Decoder::learn(
     const Int_Buffer* hidden_target_cis,
+    const Int_Buffer* hidden_commits,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -336,7 +328,7 @@ void Decoder::learn(
     // learn kernel
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, params);
+        learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, hidden_commits, params);
 }
 
 void Decoder::clear_state() {
