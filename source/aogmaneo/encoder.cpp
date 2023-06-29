@@ -225,7 +225,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] - 1.0f);
+        vl.recon_acts[visible_cell_index] = expf(min(0.0f, vl.recon_acts[visible_cell_index] - 1.0f));
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
