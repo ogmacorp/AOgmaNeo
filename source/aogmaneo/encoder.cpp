@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -107,15 +106,15 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = max_match;
+    unsigned int state = base_state + hidden_column_index * 12345;
 
     if (max_index == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
-        unsigned int state = base_state + hidden_column_index * 12345;
-
-        hidden_maxs[hidden_column_index] = params.vigilance + randf(&state) * limit_small;
+        hidden_maxs[hidden_column_index] = 1.0f / params.choice + randf(&state) * limit_small;
 
         learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
     }
+    else
+        hidden_maxs[hidden_column_index] = max_activation + randf(&state) * limit_small;
 
     hidden_cis[hidden_column_index] = max_complete_index;
 }
