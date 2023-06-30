@@ -87,7 +87,7 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float activation = hidden_acts[hidden_cell_index] + 1.0f - hidden_totals[hidden_cell_index];
+        float activation = (1.0f - params.choice) * hidden_acts[hidden_cell_index] + params.choice * (1.0f - hidden_totals[hidden_cell_index]);
 
         if (hidden_acts[hidden_cell_index] >= params.vigilance) {
             if (activation > max_activation) {
@@ -151,6 +151,8 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
+    float rate = (commit ? 1.0f : params.lr);
+
     float total = 0.0f;
     float total_importance = 0.0f;
 
@@ -186,10 +188,7 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                if (commit)
-                    vl.weights[in_ci + wi_start] = 1.0f;
-                else
-                    vl.weights[in_ci + wi_start] += params.lr * (1.0f - vl.weights[in_ci + wi_start]);
+                vl.weights[in_ci + wi_start] += rate * (1.0f - vl.weights[in_ci + wi_start]);
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
