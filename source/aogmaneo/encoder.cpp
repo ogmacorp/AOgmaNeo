@@ -55,7 +55,7 @@ void Encoder::forward(
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_prev));
 
-                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta));
+                    vl.weights[wi] += delta;
 
                     vl.usages[wi] = min(255, vl.usages[wi] + 1);
                 }
@@ -67,6 +67,8 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] = 0.0f;
     }
+
+    float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -114,6 +116,8 @@ void Encoder::forward(
                     hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
+
+        total_importance += vl.importance;
     }
 
     int max_index = 0;
@@ -126,6 +130,8 @@ void Encoder::forward(
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
+
+        hidden_acts[hidden_cell_index] = 1.0f - expf(-hidden_acts[hidden_cell_index] / max(limit_small, total_importance));
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -212,7 +218,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.99f, 1.0f);
+            vl.weights[i] = randf(0.0f, 1.0f);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
