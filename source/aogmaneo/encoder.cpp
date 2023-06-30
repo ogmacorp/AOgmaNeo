@@ -114,7 +114,7 @@ void Encoder::forward(
         learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
     }
     else
-        hidden_maxs[hidden_column_index] = max_activation + randf(&state) * limit_small;
+        hidden_maxs[hidden_column_index] = max_match + randf(&state) * limit_small;
 
     hidden_cis[hidden_column_index] = max_full_index;
 }
