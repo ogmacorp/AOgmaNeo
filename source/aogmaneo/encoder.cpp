@@ -24,7 +24,7 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_cell_index_prev = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-        float delta = params.lr * (*errors)[hidden_column_index] * hidden_gates[hidden_column_index];
+        float delta = params.lr * (*errors)[hidden_column_index] * (1.0f - hidden_acts[hidden_cell_index_prev]) * hidden_gates[hidden_column_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -67,6 +67,8 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
+    float total_importance = 0.0f;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -89,6 +91,10 @@ void Encoder::forward(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+
+        float scale = vl.importance / sub_count;
+
         int hidden_stride = vld.size.z * diam * diam;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -106,9 +112,11 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi] * vl.importance;
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
+
+        total_importance += vl.importance;
     }
 
     int max_index = 0;
@@ -121,6 +129,8 @@ void Encoder::forward(
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
+
+        hidden_acts[hidden_cell_index] = sigmoidf(hidden_acts[hidden_cell_index] / max(limit_small, total_importance));
     }
 
     hidden_cis[hidden_column_index] = max_index;
