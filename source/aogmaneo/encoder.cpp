@@ -26,12 +26,8 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
-
-    int max_full_index = 0;
-    float max_full_activation = 0.0f;
 
     float total_importance = 0.0f;
 
@@ -88,35 +84,24 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float match = hidden_acts[hidden_cell_index] + max(0.0f, 1.0f - params.choice * hidden_totals[hidden_cell_index]);
-
-        if (match >= params.vigilance) {
-            if (hidden_acts[hidden_cell_index] > max_activation) {
-                max_activation = hidden_acts[hidden_cell_index];
-                max_match = match;
-                max_index = hc;
-            }
-        }
-
-        if (hidden_acts[hidden_cell_index] > max_full_activation) {
-            max_full_activation = hidden_acts[hidden_cell_index];
-            max_full_index = hc;
+        if (hidden_acts[hidden_cell_index] > max_activation) {
+            max_activation = hidden_acts[hidden_cell_index];
+            max_index = hc;
         }
     }
 
-    learn_cis[hidden_column_index] = max_index;
+    float match = (1.0f - max_activation) / (1.0f + params.choice * hidden_totals[max_index + hidden_cells_start]);
+
+    learn_cis[hidden_column_index] = (match >= params.vigilance ? max_index : -1);
 
     unsigned int state = base_state + hidden_column_index * 12345;
 
-    if (learn_cis[hidden_column_index] == -1 && hidden_commits[hidden_column_index] < hidden_size.z) {
-        hidden_maxs[hidden_column_index] = 1.0f + randf(&state) * limit_small;
+    hidden_maxs[hidden_column_index] = match + randf(&state) * limit_small;
 
+    if (learn_cis[hidden_column_index] == -1 && hidden_commits[hidden_column_index] < hidden_size.z)
         learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
-    }
-    else
-        hidden_maxs[hidden_column_index] = max_match + randf(&state) * limit_small;
 
-    hidden_cis[hidden_column_index] = max_full_index;
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Encoder::learn(
@@ -176,6 +161,8 @@ void Encoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
+
         float sub_total = 0.0f;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -197,7 +184,7 @@ void Encoder::learn(
                 }
             }
 
-        total += sub_total * vl.importance;
+        total += sub_total / sub_count * vl.importance;
         total_importance += vl.importance;
     }
 
