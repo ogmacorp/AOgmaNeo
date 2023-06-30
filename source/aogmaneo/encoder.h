@@ -50,8 +50,8 @@ public:
 
         Params()
         :
-        lr(1.0f),
-        gcurve(1.0f)
+        lr(0.01f),
+        gcurve(8.0f)
         {}
     };
 
