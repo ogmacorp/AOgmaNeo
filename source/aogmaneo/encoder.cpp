@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -25,8 +26,12 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
-    int max_index = 0;
+    int max_index = -1;
     float max_activation = 0.0f;
+    float max_match = 0.0f;
+
+    int max_full_index = 0;
+    float max_full_activation = 0.0f;
 
     float total_importance = 0.0f;
 
@@ -83,15 +88,23 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float activation = (1.0f - params.choice) * hidden_acts[hidden_cell_index] + params.choice * (1.0f - hidden_totals[hidden_cell_index]);
+        float match = hidden_acts[hidden_cell_index] + max(0.0f, 1.0f - params.choice * hidden_totals[hidden_cell_index]);
 
-        if (activation > max_activation) {
-            max_activation = activation;
-            max_index = hc;
+        if (match >= params.vigilance) {
+            if (hidden_acts[hidden_cell_index] > max_activation) {
+                max_activation = hidden_acts[hidden_cell_index];
+                max_match = match;
+                max_index = hc;
+            }
+        }
+
+        if (hidden_acts[hidden_cell_index] > max_full_activation) {
+            max_full_activation = hidden_acts[hidden_cell_index];
+            max_full_index = hc;
         }
     }
 
-    learn_cis[hidden_column_index] = (max_activation >= params.vigilance ? max_index : -1);
+    learn_cis[hidden_column_index] = max_index;
 
     unsigned int state = base_state + hidden_column_index * 12345;
 
@@ -103,7 +116,7 @@ void Encoder::forward(
     else
         hidden_maxs[hidden_column_index] = max_activation + randf(&state) * limit_small;
 
-    hidden_cis[hidden_column_index] = max_index;
+    hidden_cis[hidden_column_index] = max_full_index;
 }
 
 void Encoder::learn(
@@ -164,7 +177,6 @@ void Encoder::learn(
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
         float sub_total = 0.0f;
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -185,7 +197,7 @@ void Encoder::learn(
                 }
             }
 
-        total += sub_total / sub_count * vl.importance;
+        total += sub_total * vl.importance;
         total_importance += vl.importance;
     }
 
