@@ -60,7 +60,7 @@ void Encoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * ((vc == in_ci_prev) - size_z_inv)));
+                        vl.weights[wi] += delta * ((vc == in_ci_prev) - size_z_inv);
                     }
 
                     int wi = in_ci_prev + wi_start;
