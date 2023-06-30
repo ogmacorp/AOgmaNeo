@@ -88,7 +88,7 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float activation = hidden_acts[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        float activation = hidden_acts[hidden_cell_index] / (params.choice + 1.0f - hidden_totals[hidden_cell_index]);
 
         if (hidden_acts[hidden_cell_index] >= params.vigilance) {
             if (activation > max_activation) {
@@ -204,7 +204,7 @@ void Encoder::learn(
                 }
             }
 
-        total += sub_total * vl.importance;
+        total += sub_total / sub_count * vl.importance;
         total_importance += vl.importance;
     }
 
