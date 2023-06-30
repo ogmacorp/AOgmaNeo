@@ -41,14 +41,14 @@ public:
     };
 
     struct Params {
-        float alloc_prob; // allocation probability
+        float choice;
         float vigilance; // ART threshold
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        alloc_prob(0.5f),
+        choice(0.01f),
         vigilance(0.8f),
         lr(0.5f),
         l_radius(2)
