@@ -83,8 +83,24 @@ void Decoder::forward(
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
+    }
 
-        hidden_acts[hidden_cell_index] = min(1.0f, max(0.0f, hidden_acts[hidden_cell_index]));
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -321,7 +337,7 @@ void Decoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 0.01f);
+            vl.weights[i] = randf(-0.01f, 0.01f);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 

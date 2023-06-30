@@ -45,13 +45,11 @@ public:
     };
 
     struct Params {
-        float bias;
         float lr; // learning rate
         float gcurve; // gain curve
 
         Params()
         :
-        bias(0.5f),
         lr(0.1f),
         gcurve(8.0f)
         {}

@@ -24,11 +24,7 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_cell_index_prev = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-        float error = (*errors)[hidden_column_index];
-
-        float mult = (error > 0.0f ? 1.0f - params.bias : 1.0f);
-
-        float delta = params.lr * mult * error * hidden_gates[hidden_column_index];
+        float delta = params.lr * tanhf((*errors)[hidden_column_index]) * hidden_gates[hidden_column_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -49,6 +45,8 @@ void Encoder::forward(
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+            float size_z_inv = 1.0f / vld.size.z;
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -57,9 +55,15 @@ void Encoder::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_prev));
+                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_prev));
 
-                    vl.weights[wi] = min(1.0f, vl.weights[wi] + delta);
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wi_start;
+
+                        vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * ((vc == in_ci_prev) - size_z_inv)));
+                    }
+
+                    int wi = in_ci_prev + wi_start;
 
                     vl.usages[wi] = min(255, vl.usages[wi] + 1);
                 }
@@ -216,7 +220,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.0f, 1.0f);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
