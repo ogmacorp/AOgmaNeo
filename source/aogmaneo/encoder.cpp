@@ -131,7 +131,7 @@ void Encoder::forward(
             max_index = hc;
         }
 
-        hidden_acts[hidden_cell_index] = 1.0f - expf(-hidden_acts[hidden_cell_index] / max(limit_small, total_importance));
+        hidden_acts[hidden_cell_index] = 1.0f - expf(-max(0.0f, hidden_acts[hidden_cell_index] / max(limit_small, total_importance)));
     }
 
     hidden_cis[hidden_column_index] = max_index;
