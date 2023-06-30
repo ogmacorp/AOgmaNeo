@@ -24,7 +24,11 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_cell_index_prev = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-        float delta = params.lr * (*errors)[hidden_column_index] * (1.0f - hidden_acts[hidden_cell_index_prev]) * hidden_gates[hidden_column_index];
+        float error = (*errors)[hidden_column_index];
+
+        float mult = (error > 0.0f ? 1.0f - params.bias : 1.0f);
+
+        float delta = params.lr * mult * error * hidden_gates[hidden_column_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -55,7 +59,7 @@ void Encoder::forward(
 
                     int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_prev));
 
-                    vl.weights[wi] += delta;
+                    vl.weights[wi] = min(1.0f, vl.weights[wi] + delta);
 
                     vl.usages[wi] = min(255, vl.usages[wi] + 1);
                 }
@@ -67,8 +71,6 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] = 0.0f;
     }
-
-    float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -116,8 +118,6 @@ void Encoder::forward(
                     hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
-
-        total_importance += vl.importance;
     }
 
     int max_index = 0;
@@ -130,8 +130,6 @@ void Encoder::forward(
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
-
-        hidden_acts[hidden_cell_index] = 1.0f - expf(-max(0.0f, hidden_acts[hidden_cell_index] / max(limit_small, total_importance)));
     }
 
     hidden_cis[hidden_column_index] = max_index;
