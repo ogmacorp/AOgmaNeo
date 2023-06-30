@@ -41,15 +41,15 @@ public:
     };
 
     struct Params {
-        float choice; // Choice parameter
-        float vigilance; // ART vigilance
+        float alloc_prob; // allocation probability
+        float vigilance; // ART threshold
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        choice(1.0f),
-        vigilance(0.5f),
+        alloc_prob(0.5f),
+        vigilance(0.8f),
         lr(0.5f),
         l_radius(2)
         {}
@@ -81,6 +81,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        unsigned int* state,
         const Params &params
     );
 

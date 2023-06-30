@@ -14,6 +14,7 @@ using namespace aon;
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
+    unsigned int* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -26,7 +27,7 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
-    int max_index = 0;
+    int max_index = -1;
     float max_activation = 0.0f;
 
     float total_importance = 0.0f;
@@ -90,18 +91,25 @@ void Encoder::forward(
         }
     }
 
-    float match = (1.0f - max_activation) / (1.0f + params.choice * hidden_totals[max_index + hidden_cells_start]);
+    if (max_index == -1 || max_activation < params.vigilance) {
+        if (randf(state) < params.alloc_prob && hidden_commits[hidden_column_index] < hidden_size.z) {
+            learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
 
-    learn_cis[hidden_column_index] = (match >= params.vigilance ? max_index : -1);
+            hidden_maxs[hidden_column_index] = 1.0f + randf(state) * limit_small;
+        }
+        else {
+            learn_cis[hidden_column_index] = max_index;
 
-    unsigned int state = base_state + hidden_column_index * 12345;
+            hidden_maxs[hidden_column_index] = max_activation + randf(state) * limit_small;
+        }
+    }
+    else {
+        learn_cis[hidden_column_index] = -1;
 
-    hidden_maxs[hidden_column_index] = match + randf(&state) * limit_small;
+        hidden_maxs[hidden_column_index] = 0.0f;
+    }
 
-    if (learn_cis[hidden_column_index] == -1 && hidden_commits[hidden_column_index] < hidden_size.z)
-        learn_cis[hidden_column_index] = hidden_commits[hidden_column_index];
-
-    hidden_cis[hidden_column_index] = max_index;
+    hidden_cis[hidden_column_index] = max(0, max_index);
 }
 
 void Encoder::learn(
@@ -184,7 +192,7 @@ void Encoder::learn(
                 }
             }
 
-        total += sub_total / sub_count * vl.importance;
+        total += sub_total * vl.importance;
         total_importance += vl.importance;
     }
 
@@ -246,9 +254,14 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
+    unsigned int base_state = rand();
+
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned int state = base_state + i * 12345;
+
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
+    }
 
     if (learn_enabled) {
         PARALLEL_FOR
