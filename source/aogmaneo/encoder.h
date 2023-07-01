@@ -45,13 +45,11 @@ public:
     };
 
     struct Params {
-        int code_iters;
         float lr; // learning rate
         float gcurve; // gain curve
 
         Params()
         :
-        code_iters(3),
         lr(0.5f),
         gcurve(8.0f)
         {}

@@ -19,6 +19,12 @@ void Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] = 0.0f;
+    }
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -62,7 +68,7 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi] * (1.0f - vl.recon_acts[visible_column_index]) * scale;
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
     }
@@ -389,27 +395,9 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    // clear
-    hidden_acts.fill(0.0f);
-
-    for (int vli = 0; vli < visible_layers.size(); vli++)
-        visible_layers[vli].recon_acts.fill(0.0f);
-
-    for (int it = 0; it < params.code_iters; it++) {
-        PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
-
-        if (it < params.code_iters - 1) {
-            PARALLEL_FOR
-            for (int i = 0; i < visible_pos_vlis.size(); i++) {
-                Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
-                int vli = visible_pos_vlis[i].z;
-
-                backward(pos, input_cis[vli], vli, params);
-            }
-        }
-    }
+    PARALLEL_FOR
+    for (int i = 0; i < num_hidden_columns; i++)
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
         PARALLEL_FOR
