@@ -111,9 +111,7 @@ void Encoder::forward(
     }
 
     int max_index = 0;
-    int learn_index = 0;
     float max_activation = limit_min;
-    float learn_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -126,11 +124,6 @@ void Encoder::forward(
         if (mod_activation > max_activation) {
             max_activation = mod_activation;
             max_index = hc;
-        }
-
-        if (hidden_acts[hidden_cell_index] > learn_activation) {
-            learn_activation = hidden_acts[hidden_cell_index];
-            learn_index = hc;
         }
     }
 
