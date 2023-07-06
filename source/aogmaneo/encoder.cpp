@@ -121,7 +121,7 @@ void Encoder::forward(
         float mod_activation;
 
         if (recurrent_radius >= 0)
-            mod_activation = expf(hidden_acts[hidden_cell_index] - 1.0f) * hidden_mods[hidden_cell_index];
+            mod_activation = hidden_acts[hidden_cell_index] + hidden_mods[hidden_cell_index];
         else
             mod_activation = hidden_acts[hidden_cell_index];
 
