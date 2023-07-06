@@ -106,8 +106,6 @@ private:
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
 
-    Array<Int_Buffer> hidden_cis_prev;
-
     // for mapping first layer Decoders
     Int_Buffer i_indices;
     Int_Buffer d_indices;

@@ -20,14 +20,11 @@ public:
 
         int radius; // radius onto input
 
-        Byte learnable;
-
         // defaults
         Visible_Layer_Desc()
         :
         size(4, 4, 16),
-        radius(2),
-        learnable(true)
+        radius(2)
         {}
     };
 
@@ -53,19 +50,24 @@ public:
 
         Params()
         :
-        lr(0.1f),
+        lr(0.25f),
         gcurve(6.0f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int recurrent_radius;
 
     Int_Buffer hidden_cis;
+    Int_Buffer hidden_cis_prev;
 
     Float_Buffer hidden_acts;
+    Float_Buffer hidden_mods;
 
     Float_Buffer hidden_gates;
+
+    Float_Buffer recurrent_weights;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -97,6 +99,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
