@@ -283,6 +283,7 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
+                if (max_index != target_ci) {
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int visible_cell_index = vc + visible_cells_start;
 
@@ -292,6 +293,7 @@ void Encoder::learn(
 
                         vl.weights[wi] += delta * hidden_gates[hidden_column_index];
                     }
+                }
 
                 int wi = target_ci + wi_start;
 
