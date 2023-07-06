@@ -47,13 +47,13 @@ public:
     struct Params {
         float lr; // learning rate
         float gcurve; // gain curve
-        float recurrent_importance;
+        int refractory_ticks;
 
         Params()
         :
         lr(1.0f),
-        gcurve(8.0f),
-        recurrent_importance(4.0f)
+        gcurve(4.0f),
+        refractory_ticks(5)
         {}
     };
 
