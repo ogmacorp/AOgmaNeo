@@ -66,8 +66,6 @@ private:
     Int_Buffer hidden_cis;
     Int_Buffer hidden_cis_prev;
 
-    Int_Buffer learn_cis;
-
     Int_Buffer hidden_refractories;
 
     Float_Buffer hidden_acts;

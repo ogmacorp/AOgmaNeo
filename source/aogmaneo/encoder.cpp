@@ -141,7 +141,6 @@ void Encoder::forward(
     }
 
     hidden_cis[hidden_column_index] = max_index;
-    learn_cis[hidden_column_index] = learn_index;
 
     hidden_refractories[max_index + hidden_cells_start] = params.refractory_ticks;
 }
@@ -154,7 +153,7 @@ void Encoder::update_gates(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
     int sum = 0;
     int count = 0;
@@ -252,7 +251,7 @@ void Encoder::learn(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -295,7 +294,7 @@ void Encoder::learn(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -363,8 +362,6 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
     hidden_cis_prev.resize(num_hidden_columns);
-
-    learn_cis.resize(num_hidden_columns);
 
     hidden_refractories = Int_Buffer(num_hidden_cells, 0);
 
@@ -498,8 +495,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_refractories[0]), hidden_refractories.size() * sizeof(int));
 
     hidden_cis_prev.resize(num_hidden_columns);
-
-    learn_cis.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
     hidden_mods.resize(num_hidden_cells);
