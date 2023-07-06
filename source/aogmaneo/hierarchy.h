@@ -73,13 +73,6 @@ public:
     struct Layer_Params {
         Decoder::Params decoder;
         Encoder::Params encoder;
-
-        float recurrent_importance;
-
-        Layer_Params()
-        :
-        recurrent_importance(1.0f)
-        {}
     };
 
     struct IO_Params {
@@ -178,7 +171,7 @@ public:
     bool is_layer_recurrent(
         int l
     ) const {
-        return (l == 0 ? encoders[l].get_num_visible_layers() > io_sizes.size() : encoders[l].get_num_visible_layers() > 1);
+        return (encoders[l].get_recurrent_radius() >= 0);
     }
 
     // retrieve predictions

@@ -47,11 +47,13 @@ public:
     struct Params {
         float lr; // learning rate
         float gcurve; // gain curve
+        float recurrent_importance;
 
         Params()
         :
-        lr(0.25f),
-        gcurve(8.0f)
+        lr(0.5f),
+        gcurve(8.0f),
+        recurrent_importance(3.0f)
         {}
     };
 
@@ -167,6 +169,10 @@ public:
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    int get_recurrent_radius() const {
+        return recurrent_radius;
     }
 };
 }

@@ -118,10 +118,10 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float mod_activation = hidden_acts[hidden_cell_index];
+        float mod_activation = expf(hidden_acts[hidden_cell_index] - 1.0f);
 
         if (recurrent_radius >= 0)
-            mod_activation += hidden_mods[hidden_cell_index];
+            mod_activation += params.recurrent_importance * hidden_mods[hidden_cell_index];
 
         if (mod_activation > max_activation) {
             max_activation = mod_activation;
