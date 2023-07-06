@@ -118,6 +118,12 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
+        if (hidden_refractories[hidden_cell_index] > 0) {
+            hidden_refractories[hidden_cell_index]--;
+
+            continue;
+        }
+
         float mod_activation = sigmoidf(hidden_acts[hidden_cell_index]);
 
         if (recurrent_radius >= 0)
@@ -136,6 +142,8 @@ void Encoder::forward(
 
     hidden_cis[hidden_column_index] = max_index;
     learn_cis[hidden_column_index] = learn_index;
+
+    hidden_refractories[max_index + hidden_cells_start] = params.refractory_ticks;
 }
 
 void Encoder::update_gates(
@@ -358,6 +366,8 @@ void Encoder::init_random(
 
     learn_cis.resize(num_hidden_columns);
 
+    hidden_refractories = Int_Buffer(num_hidden_cells, 0);
+
     hidden_acts.resize(num_hidden_cells);
     hidden_mods.resize(num_hidden_cells);
 
@@ -422,10 +432,11 @@ void Encoder::step(
 
 void Encoder::clear_state() {
     hidden_cis.fill(0);
+    hidden_refractories.fill(0);
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_refractories.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -433,11 +444,13 @@ int Encoder::size() const {
         size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float) + vl.usages.size() * sizeof(Byte) + sizeof(float);
     }
 
+    size += recurrent_weights.size() * sizeof(float);
+
     return size;
 }
 
 int Encoder::state_size() const {
-    return hidden_cis.size() * sizeof(int);
+    return hidden_cis.size() * sizeof(int) + hidden_refractories.size() * sizeof(int);
 }
 
 void Encoder::write(
@@ -447,6 +460,7 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&recurrent_radius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_refractories[0]), hidden_refractories.size() * sizeof(int));
 
     int num_visible_layers = visible_layers.size();
 
@@ -478,8 +492,10 @@ void Encoder::read(
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
     hidden_cis.resize(num_hidden_columns);
+    hidden_refractories.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hidden_refractories[0]), hidden_refractories.size() * sizeof(int));
 
     hidden_cis_prev.resize(num_hidden_columns);
 
@@ -555,10 +571,12 @@ void Encoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_refractories[0]), hidden_refractories.size() * sizeof(int));
 }
 
 void Encoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hidden_refractories[0]), hidden_refractories.size() * sizeof(int));
 }

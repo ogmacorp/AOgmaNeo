@@ -47,13 +47,15 @@ public:
     struct Params {
         float lr; // learning rate
         float gcurve; // gain curve
+        float recurrent_importance;
         int refractory_ticks;
 
         Params()
         :
-        lr(1.0f),
+        lr(0.5f),
         gcurve(4.0f),
-        refractory_ticks(5)
+        recurrent_importance(1.0f),
+        refractory_ticks(0)
         {}
     };
 
@@ -65,6 +67,8 @@ private:
     Int_Buffer hidden_cis_prev;
 
     Int_Buffer learn_cis;
+
+    Int_Buffer hidden_refractories;
 
     Float_Buffer hidden_acts;
     Float_Buffer hidden_mods;
