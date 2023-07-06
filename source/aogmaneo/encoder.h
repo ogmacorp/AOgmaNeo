@@ -50,7 +50,7 @@ public:
 
         Params()
         :
-        lr(0.5f),
+        lr(0.25f),
         gcurve(8.0f)
         {}
     };
@@ -61,6 +61,8 @@ private:
 
     Int_Buffer hidden_cis;
     Int_Buffer hidden_cis_prev;
+
+    Int_Buffer learn_cis;
 
     Float_Buffer hidden_acts;
     Float_Buffer hidden_mods;

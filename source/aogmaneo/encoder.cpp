@@ -111,21 +111,33 @@ void Encoder::forward(
     }
 
     int max_index = 0;
+    int learn_index = 0;
     float max_activation = limit_min;
+    float learn_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        if (recurrent_radius >= 0)
-            hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - 1.0f) * hidden_mods[hidden_cell_index];
+        float mod_activation;
 
-        if (hidden_acts[hidden_cell_index] > max_activation) {
-            max_activation = hidden_acts[hidden_cell_index];
+        if (recurrent_radius >= 0)
+            mod_activation = expf(hidden_acts[hidden_cell_index] - 1.0f) * hidden_mods[hidden_cell_index];
+        else
+            mod_activation = hidden_acts[hidden_cell_index];
+
+        if (mod_activation > max_activation) {
+            max_activation = mod_activation;
             max_index = hc;
+        }
+
+        if (hidden_acts[hidden_cell_index] > learn_activation) {
+            learn_activation = hidden_acts[hidden_cell_index];
+            learn_index = hc;
         }
     }
 
     hidden_cis[hidden_column_index] = max_index;
+    learn_cis[hidden_column_index] = learn_index;
 }
 
 void Encoder::update_gates(
@@ -136,7 +148,7 @@ void Encoder::update_gates(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
 
     int sum = 0;
     int count = 0;
@@ -234,7 +246,7 @@ void Encoder::learn(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -277,7 +289,7 @@ void Encoder::learn(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -344,7 +356,9 @@ void Encoder::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-    hidden_cis_prev.resize(hidden_cis.size());
+    hidden_cis_prev.resize(num_hidden_columns);
+
+    learn_cis.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
     hidden_mods.resize(num_hidden_cells);
@@ -470,6 +484,8 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     hidden_cis_prev.resize(num_hidden_columns);
+
+    learn_cis.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
     hidden_mods.resize(num_hidden_cells);
