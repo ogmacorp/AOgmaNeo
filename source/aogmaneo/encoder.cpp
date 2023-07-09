@@ -117,7 +117,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = max_activation;
+    hidden_maxs[hidden_column_index] = max_match;
 
     hidden_cis[hidden_column_index] = max_complete_index;
 }
@@ -134,7 +134,7 @@ void Encoder::learn(
     if (learn_cis[hidden_column_index] == -1)
         return;
 
-    float max_activation = hidden_maxs[hidden_column_index];
+    float max_match = hidden_maxs[hidden_column_index];
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
@@ -146,7 +146,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_maxs[other_hidden_column_index] >= max_activation)
+                if (hidden_maxs[other_hidden_column_index] >= max_match)
                     return;
             }
         }
