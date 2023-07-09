@@ -88,7 +88,7 @@ void Encoder::forward(
 
         int hidden_stride = hidden_size.z * diam * diam;
 
-        float scale = 1.0f / sub_count;
+        float scale = params.recurrent_importance / sub_count;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -119,7 +119,7 @@ void Encoder::forward(
         float mod_activation = expf(hidden_acts[hidden_cell_index] - 1.0f);
 
         if (recurrent_radius >= 0)
-            mod_activation += params.recurrent_importance * hidden_mods[hidden_cell_index];
+            mod_activation += hidden_mods[hidden_cell_index];
 
         if (mod_activation > max_activation) {
             max_activation = mod_activation;
