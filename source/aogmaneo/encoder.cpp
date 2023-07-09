@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-const float init_weight_lower = 0.99f;
+const float init_weight_lower = 0.9999f;
 
 void Encoder::forward(
     const Int2 &column_pos,
