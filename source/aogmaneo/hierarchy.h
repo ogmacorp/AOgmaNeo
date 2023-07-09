@@ -55,21 +55,18 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
-        int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
+        int temporal_horizon; // temporal distance into the past addressed by the layer
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
             int down_radius = 2,
-            int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int temporal_horizon = 4
         )
         :
         hidden_size(hidden_size),
         up_radius(up_radius),
         down_radius(down_radius),
-        ticks_per_update(ticks_per_update),
         temporal_horizon(temporal_horizon)
         {}
     };
@@ -109,12 +106,6 @@ private:
 
     // histories
     Array<Array<Circle_Buffer<Int_Buffer>>> histories;
-
-    // per-layer values
-    Byte_Buffer updates;
-
-    Int_Buffer ticks;
-    Int_Buffer ticks_per_update;
 
     // input dimensions
     Array<Int3> io_sizes;
@@ -208,27 +199,6 @@ public:
             return actors[d_indices[i]].get_hidden_acts();
 
         return decoders[0][d_indices[i]].get_hidden_acts();
-    }
-
-    // whether this layer received on update this timestep
-    bool get_update(
-        int l
-    ) const {
-        return updates[l];
-    }
-
-    // get current layer ticks, relative to previous layer
-    int get_ticks(
-        int l
-    ) const {
-        return ticks[l];
-    }
-
-    // get layer ticks per update, relative to previous layer
-    int get_ticks_per_update(
-        int l
-    ) const {
-        return ticks_per_update[l];
     }
 
     // number of io layers
