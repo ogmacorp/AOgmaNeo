@@ -46,7 +46,7 @@ public:
         // Defaults
         Params()
         :
-        lr(0.5f),
+        lr(2.0f),
         gcurve(8.0f)
         {}
     };
