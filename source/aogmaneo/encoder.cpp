@@ -23,8 +23,9 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] = 0.0f;
-        hidden_mods[hidden_cell_index] = 0.0f;
     }
+
+    float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -72,8 +73,19 @@ void Encoder::forward(
                     hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
+
+        total_importance += vl.importance;
     }
 
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
+
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - 1.0f);
+    }
+
+    // add recurrent component if enabled
     if (recurrent_radius >= 0) {
         int diam = recurrent_radius * 2 + 1;
 
@@ -105,7 +117,7 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_mods[hidden_cell_index] += recurrent_weights[wi] * scale;
+                    hidden_acts[hidden_cell_index] += recurrent_weights[wi] * scale;
                 }
             }
     }
@@ -116,13 +128,8 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float mod_activation = expf(hidden_acts[hidden_cell_index] - 1.0f);
-
-        if (recurrent_radius >= 0)
-            mod_activation += hidden_mods[hidden_cell_index];
-
-        if (mod_activation > max_activation) {
-            max_activation = mod_activation;
+        if (hidden_acts[hidden_cell_index] > max_activation) {
+            max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
     }
@@ -349,7 +356,6 @@ void Encoder::init_random(
     hidden_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
-    hidden_mods.resize(num_hidden_cells);
 
     hidden_gates.resize(num_hidden_columns);
 
@@ -476,7 +482,6 @@ void Encoder::read(
     hidden_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
-    hidden_mods.resize(num_hidden_cells);
 
     hidden_gates.resize(num_hidden_columns);
 

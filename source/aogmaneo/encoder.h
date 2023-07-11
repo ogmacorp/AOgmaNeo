@@ -65,7 +65,6 @@ private:
     Int_Buffer hidden_cis_prev;
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_mods;
 
     Float_Buffer hidden_gates;
 
