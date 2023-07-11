@@ -55,6 +55,8 @@ void Encoder::forward(
 
         float scale = vl.importance / sub_count;
 
+        total_importance += vl.importance;
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -73,8 +75,6 @@ void Encoder::forward(
                     hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
-
-        total_importance += vl.importance;
     }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
