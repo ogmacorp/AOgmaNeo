@@ -53,7 +53,7 @@ public:
         :
         lr(0.5f),
         gcurve(8.0f),
-        memory(0.9f)
+        memory(0.5f)
         {}
     };
 
@@ -61,7 +61,7 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-    Int_Buffer hidden_cis_prev;
+    Int_Buffer learn_cis;
 
     Float_Buffer hidden_acts;
     Float_Buffer hidden_memories;
