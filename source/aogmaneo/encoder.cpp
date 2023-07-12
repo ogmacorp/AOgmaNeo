@@ -53,7 +53,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float scale = vl.importance * sqrtf(1.0f / sub_count);
+        float scale = vl.importance / sub_count;
 
         total_importance += vl.importance;
 
@@ -77,51 +77,16 @@ void Encoder::forward(
             }
     }
 
-    // add recurrent component if enabled
-    if (recurrent_radius >= 0) {
-        int diam = recurrent_radius * 2 + 1;
-
-        // lower corner
-        Int2 field_lower_bound(column_pos.x - recurrent_radius, column_pos.y - recurrent_radius);
-
-        // bounds of receptive field, clamped to input size
-        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-        Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
-
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
-        int hidden_stride = hidden_size.z * diam * diam;
-
-        float scale = params.recurrent_importance * sqrtf(1.0f / sub_count);
-
-        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                int visible_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
-
-                int in_ci_prev = hidden_cis_prev[visible_column_index];
-
-                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
-
-                int wi_offset = in_ci_prev + hidden_size.z * (offset.y + diam * offset.x);
-
-                for (int hc = 0; hc < hidden_size.z; hc++) {
-                    int hidden_cell_index = hc + hidden_cells_start;
-
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
-
-                    hidden_acts[hidden_cell_index] += recurrent_weights[wi] * scale;
-                }
-            }
-    }
-
     int max_index = 0;
     float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        if (hidden_acts[hidden_cell_index] > max_activation) {
-            max_activation = hidden_acts[hidden_cell_index];
+        hidden_memories[hidden_cell_index] = max(hidden_memories[hidden_cell_index] * params.memory, expf(hidden_acts[hidden_cell_index] - 1.0f));
+
+        if (hidden_memories[hidden_cell_index] > max_activation) {
+            max_activation = hidden_memories[hidden_cell_index];
             max_index = hc;
         }
     }
@@ -305,13 +270,11 @@ void Encoder::learn(
 
 void Encoder::init_random(
     const Int3 &hidden_size,
-    int recurrent_radius,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
 
     this->hidden_size = hidden_size;
-    this->recurrent_radius = recurrent_radius;
 
     visible_layers.resize(visible_layer_descs.size());
 
@@ -348,19 +311,9 @@ void Encoder::init_random(
     hidden_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_memories = Float_Buffer(num_hidden_cells, 0.0f);
 
     hidden_gates.resize(num_hidden_columns);
-
-    // recurrence
-    if (recurrent_radius >= 0) {
-        int diam = recurrent_radius * 2 + 1;
-        int area = diam * diam;
-
-        recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
-
-        for (int i = 0; i < recurrent_weights.size(); i++)
-            recurrent_weights[i] = randf(-1.0f, 1.0f);
-    }
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -413,7 +366,7 @@ void Encoder::clear_state() {
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_memories.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -421,22 +374,21 @@ int Encoder::size() const {
         size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float) + vl.usages.size() * sizeof(Byte) + sizeof(float);
     }
 
-    size += recurrent_weights.size() * sizeof(float);
-
     return size;
 }
 
 int Encoder::state_size() const {
-    return hidden_cis.size() * sizeof(int);
+    return hidden_cis.size() * sizeof(int) + hidden_memories.size() * sizeof(float);
 }
 
 void Encoder::write(
     Stream_Writer &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
-    writer.write(reinterpret_cast<const void*>(&recurrent_radius), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    writer.write(reinterpret_cast<const void*>(&hidden_memories[0]), hidden_memories.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -453,16 +405,12 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
-
-    if (recurrent_radius >= 0)
-        writer.write(reinterpret_cast<const void*>(&recurrent_weights[0]), recurrent_weights.size() * sizeof(float));
 }
 
 void Encoder::read(
     Stream_Reader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_size), sizeof(Int3));
-    reader.read(reinterpret_cast<void*>(&recurrent_radius), sizeof(int));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
@@ -474,6 +422,10 @@ void Encoder::read(
     hidden_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
+
+    hidden_memories.resize(num_hidden_cells);
+
+    reader.read(reinterpret_cast<void*>(&hidden_memories[0]), hidden_memories.size() * sizeof(float));
 
     hidden_gates.resize(num_hidden_columns);
 
@@ -511,15 +463,6 @@ void Encoder::read(
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 
-    if (recurrent_radius >= 0) {
-        int diam = recurrent_radius * 2 + 1;
-        int area = diam * diam;
-
-        recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
-
-        reader.read(reinterpret_cast<void*>(&recurrent_weights[0]), recurrent_weights.size() * sizeof(float));
-    }
-
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
 
@@ -542,10 +485,12 @@ void Encoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_memories[0]), hidden_memories.size() * sizeof(float));
 }
 
 void Encoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hidden_memories[0]), hidden_memories.size() * sizeof(float));
 }

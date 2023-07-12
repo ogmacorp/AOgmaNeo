@@ -74,12 +74,10 @@ void Decoder::forward(
     int max_index = 0;
     float max_activation = limit_min;
 
-    float scale = sqrtf(1.0f / count);
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] *= scale;
+        hidden_acts[hidden_cell_index] /= count;
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];

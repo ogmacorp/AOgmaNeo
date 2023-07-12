@@ -47,28 +47,26 @@ public:
     struct Params {
         float lr; // learning rate
         float gcurve; // gain curve
-        float recurrent_importance;
+        float memory;
 
         Params()
         :
         lr(0.5f),
         gcurve(8.0f),
-        recurrent_importance(1.0f)
+        memory(0.9f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
-    int recurrent_radius;
 
     Int_Buffer hidden_cis;
     Int_Buffer hidden_cis_prev;
 
     Float_Buffer hidden_acts;
+    Float_Buffer hidden_memories;
 
     Float_Buffer hidden_gates;
-
-    Float_Buffer recurrent_weights;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -100,7 +98,6 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
-        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -166,10 +163,6 @@ public:
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
-    }
-
-    int get_recurrent_radius() const {
-        return recurrent_radius;
     }
 };
 }
