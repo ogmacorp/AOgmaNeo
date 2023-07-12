@@ -126,6 +126,15 @@ void Hierarchy::init_random(
     // initialize params
     params.layers = Array<Layer_Params>(layer_descs.size());
     params.ios = Array<IO_Params>(io_descs.size());
+
+    // defaults
+    float decay = 1.0f;
+
+    for (int l = 0; l < layer_descs.size(); l++) {
+        params.layers[l].encoder.memory = 1.0f - decay;
+
+        decay *= 0.5f;
+    }
 }
 
 void Hierarchy::step(
