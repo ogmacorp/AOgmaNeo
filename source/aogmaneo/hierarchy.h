@@ -61,7 +61,7 @@ public:
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
             int down_radius = 2,
-            int temporal_horizon = 8
+            int temporal_horizon = 4
         )
         :
         hidden_size(hidden_size),
