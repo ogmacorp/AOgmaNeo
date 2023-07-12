@@ -100,7 +100,7 @@ void Encoder::forward(
 
         int hidden_stride = hidden_size.z * diam * diam;
 
-        float scale = params.recurrent_importance * sqrtf(1.0f / sub_count);
+        float scale = params.recurrent_importance * sqrtf(1.0f / sub_count); // Xavier init style rescaling for fixed recurrent weights
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -367,7 +367,7 @@ void Encoder::init_random(
         recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
 
         for (int i = 0; i < recurrent_weights.size(); i++)
-            recurrent_weights[i] = randf(-1.0f, 1.0f);
+            recurrent_weights[i] = randf();
     }
 
     // generate helper buffers for parallelization
