@@ -21,9 +21,10 @@
 namespace aon {
 const int exp_iters = 5;
 const int log_iters = 3;
-const int sin_iters = 5;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
+const float log2_e = 1.44269f;
+const float log2_e_inv = 1.0f / log2_e;
 const float limit_min = -999999.0f;
 const float limit_max = 999999.0f;
 const float limit_small = 0.0001f;
@@ -39,11 +40,11 @@ float expf(
     float x
 );
 
-float logf(
+float log2f(
     float x
 );
 
-float sinf(
+float logf(
     float x
 );
 

@@ -52,56 +52,63 @@ float aon::expf(
 #endif
 }
 
-float aon::logf(
+float aon::log2f(
     float x
 ) {
 #ifdef USE_STD_MATH
-    return std::log(x);
+    return std::log2(x);
 #else
     if (x <= 0.0f)
         return limit_min;
 
-    float res = 1.0f; // initial guess
+    // get exponent
+    union {
+        float x;
+        unsigned int i;
+    } u;
 
-    for (int n = 1; n <= log_iters; n++) {
-        float ey = expf(res);
+    u.x = x;
 
-        res += 2.0f * (x - ey) / (x + ey);
+    int bias = 127;
+
+    if (u.i == 0)
+        bias = 1 - bias;
+
+    int exponent = ((u.i >> 23) & 0xff) - bias;
+
+    float y = x / (1 << exponent);
+
+    if (y == 1.0f)
+        return exponent;
+
+    float res = exponent;
+
+    int m = 0;
+
+    for (int n = 0; n < log_iters; n++) {
+        float z = y;
+
+        while (z < 2.0f) {
+            z *= 2.0f;
+            m++;
+        }
+
+        res += 1.0f / (1 << m);
+
+        y = z * 0.5f;
     }
 
     return res;
 #endif
 }
 
-float aon::sinf(
+float aon::logf(
     float x
 ) {
 #ifdef USE_STD_MATH
-    return std::sin(x);
+    return std::log(x);
 #else
-    x = modf(x, pi2);
-
-    if (x < -pi)
-        x += pi2;
-    else if (x > pi)
-        x -= pi2;
-
-    float p = x;
-    int f = 1;
-
-    float res = x;
-
-    for (int n = 1; n <= sin_iters; n++) {
-        p *= -x * x;
-
-        int f1 = n * 2;
-
-        f *= f1 * (f1 + 1);
-
-        res += p / f;
-    }
-
-    return res;
+    return log2f(x) * log2_e_inv;
 #endif
 }
 
