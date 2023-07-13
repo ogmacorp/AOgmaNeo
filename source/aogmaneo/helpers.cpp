@@ -69,10 +69,7 @@ float aon::log2f(
 
     u.x = x;
 
-    int bias = 127;
-
-    if (u.i == 0)
-        bias = 1 - bias;
+    const int bias = 127;
 
     int exponent = ((u.i >> 23) & 0xff) - bias;
 
