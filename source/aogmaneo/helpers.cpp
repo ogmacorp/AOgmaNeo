@@ -12,8 +12,6 @@
 #include <omp.h>
 #endif
 
-#include <iostream>
-
 using namespace aon;
 
 float aon::expf(
