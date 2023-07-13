@@ -94,6 +94,9 @@ float aon::log2f(
             m++;
         }
 
+        if (m >= 32)
+            break;
+
         res += 1.0f / (1 << m);
 
         y = z * 0.5f;
