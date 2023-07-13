@@ -94,6 +94,7 @@ float aon::log2f(
             m++;
         }
 
+        // if have full precision
         if (m >= 32)
             break;
 
