@@ -12,6 +12,8 @@
 #include <omp.h>
 #endif
 
+#include <iostream>
+
 using namespace aon;
 
 float aon::expf(
@@ -76,20 +78,24 @@ float aon::log2f(
 
     int exponent = ((u.i >> 23) & 0xff) - bias;
 
-    float y = x / (1 << exponent);
-
-    if (y == 1.0f)
-        return exponent;
-
+    float y = x;
     float res = exponent;
+
+    if (exponent > 0)
+        y /= (1 << exponent);
+    else if (exponent < 0)
+        y *= (1 << -exponent);
 
     int m = 0;
 
     for (int n = 0; n < log_iters; n++) {
         float z = y;
 
+        if (z == 1.0f)
+            break;
+
         while (z < 2.0f) {
-            z *= 2.0f;
+            z *= z;
             m++;
         }
 

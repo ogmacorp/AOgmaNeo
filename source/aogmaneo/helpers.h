@@ -20,7 +20,7 @@
 
 namespace aon {
 const int exp_iters = 5;
-const int log_iters = 3;
+const int log_iters = 5;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
 const float log2_e = 1.44269f;
