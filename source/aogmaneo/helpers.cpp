@@ -52,56 +52,68 @@ float aon::expf(
 #endif
 }
 
-float aon::logf(
+float aon::log2f(
     float x
 ) {
 #ifdef USE_STD_MATH
-    return std::log(x);
+    return std::log2(x);
 #else
     if (x <= 0.0f)
         return limit_min;
 
-    float res = 1.0f; // initial guess
+    // get exponent
+    union {
+        float x;
+        unsigned int i;
+    } u;
 
-    for (int n = 1; n <= log_iters; n++) {
-        float ey = expf(res);
+    u.x = x;
 
-        res += 2.0f * (x - ey) / (x + ey);
+    const int bias = 127;
+
+    int exponent = ((u.i >> 23) & 0xff) - bias;
+
+    float y = x;
+    float res = exponent;
+
+    if (exponent > 0)
+        y /= (1 << exponent);
+    else if (exponent < 0)
+        y *= (1 << -exponent);
+
+    int m = 0;
+
+    for (int n = 0; n < log_iters; n++) {
+        float z = y;
+
+        if (z == 1.0f)
+            break;
+
+        while (z < 2.0f) {
+            z *= z;
+            m++;
+        }
+
+        // if have full precision
+        if (m >= 32)
+            break;
+
+        res += 1.0f / (1 << m);
+
+        y = z * 0.5f;
     }
 
     return res;
 #endif
 }
 
-float aon::sinf(
+float aon::logf(
     float x
 ) {
 #ifdef USE_STD_MATH
-    return std::sin(x);
+    return std::log(x);
 #else
-    x = modf(x, pi2);
-
-    if (x < -pi)
-        x += pi2;
-    else if (x > pi)
-        x -= pi2;
-
-    float p = x;
-    int f = 1;
-
-    float res = x;
-
-    for (int n = 1; n <= sin_iters; n++) {
-        p *= -x * x;
-
-        int f1 = n * 2;
-
-        f *= f1 * (f1 + 1);
-
-        res += p / f;
-    }
-
-    return res;
+    return log2f(x) * log2_e_inv;
 #endif
 }
 
@@ -132,6 +144,48 @@ float aon::powf(
     return std::pow(x, y);
 #else
     return expf(y * logf(x));
+#endif
+}
+
+float aon::sinf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::sin(x);
+#else
+    x = modf(x, pi2);
+
+    if (x < -pi)
+        x += pi2;
+    else if (x > pi)
+        x -= pi2;
+
+    float p = x;
+    int f = 1;
+
+    float res = x;
+
+    for (int n = 1; n <= trig_iters; n++) {
+        p *= -x * x;
+
+        int f1 = n * 2;
+
+        f *= f1 * (f1 + 1);
+
+        res += p / f;
+    }
+
+    return res;
+#endif
+}
+
+float aon::cosf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::cos(x);
+#else
+    return sinf(pi_over_2 - x);
 #endif
 }
 
@@ -202,4 +256,13 @@ float aon::randf(
     unsigned int* state
 ) {
     return low + (high - low) * randf(state);
+}
+
+float aon::rand_normalf(
+    unsigned int* state
+) {
+    float u1 = randf(state);
+    float u2 = randf(state);
+
+    return sqrtf(-2.0f * logf(u1)) * cosf(pi2 * u2);
 }
