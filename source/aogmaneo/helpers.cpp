@@ -147,6 +147,48 @@ float aon::powf(
 #endif
 }
 
+float aon::sinf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::sin(x);
+#else
+    x = modf(x, pi2);
+
+    if (x < -pi)
+        x += pi2;
+    else if (x > pi)
+        x -= pi2;
+
+    float p = x;
+    int f = 1;
+
+    float res = x;
+
+    for (int n = 1; n <= trig_iters; n++) {
+        p *= -x * x;
+
+        int f1 = n * 2;
+
+        f *= f1 * (f1 + 1);
+
+        res += p / f;
+    }
+
+    return res;
+#endif
+}
+
+float aon::cosf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::cos(x);
+#else
+    return sinf(pi_over_2 - x);
+#endif
+}
+
 #ifdef USE_OMP
 void aon::set_num_threads(
     int num_threads
@@ -214,4 +256,13 @@ float aon::randf(
     unsigned int* state
 ) {
     return low + (high - low) * randf(state);
+}
+
+float aon::rand_normalf(
+    unsigned int* state
+) {
+    float u1 = randf(state);
+    float u2 = randf(state);
+
+    return sqrtf(-2.0f * logf(u1)) * cosf(pi2 * u2);
 }

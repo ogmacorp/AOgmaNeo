@@ -21,8 +21,10 @@
 namespace aon {
 const int exp_iters = 6;
 const int log_iters = 6;
+const int trig_iters = 6;
 const float pi = 3.14159f;
 const float pi2 = pi * 2.0f;
+const float pi_over_2 = pi * 0.5f;
 const float log2_e = 1.44269f;
 const float log2_e_inv = 1.0f / log2_e;
 const float limit_min = -999999.0f;
@@ -55,6 +57,14 @@ float sqrtf(
 float powf(
     float x,
     float y
+);
+
+float sinf(
+    float x
+);
+
+float cosf(
+    float x
 );
 
 inline int ceilf(
@@ -379,6 +389,10 @@ float randf(
 float randf(
     float low,
     float high,
+    unsigned int* state = &global_state
+);
+
+float rand_normalf(
     unsigned int* state = &global_state
 );
 
