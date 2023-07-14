@@ -10,6 +10,8 @@
 
 using namespace aon;
 
+const float init_weight_low = 0.99f;
+
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
@@ -81,8 +83,6 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - 1.0f);
     }
 
     // add recurrent component if enabled
@@ -345,7 +345,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf();
+            vl.weights[i] = randf(init_weight_low, 1.0f);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
