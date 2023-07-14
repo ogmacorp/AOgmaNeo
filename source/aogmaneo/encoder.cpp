@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-const float init_weight_low = 0.99f;
+const float init_weight_low = 0.0f;
 
 void Encoder::forward(
     const Int2 &column_pos,
@@ -83,6 +83,8 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
+
+        hidden_acts[hidden_cell_index] = sigmoidf(hidden_acts[hidden_cell_index]);
     }
 
     // add recurrent component if enabled
@@ -274,7 +276,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] - 1.0f);
+        vl.recon_acts[visible_cell_index] = sigmoidf(vl.recon_acts[visible_cell_index]);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
