@@ -84,9 +84,7 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        float dist = sqrtf(-max_activation);
-
-        int scan_radius = (dist > params.threshold);
+        int scan_radius = (sqrtf(-max_activation) >= params.threshold);
 
         for (int dhc = -scan_radius; dhc <= scan_radius; dhc++) {
             int hc = hidden_cis[hidden_column_index] + dhc;
@@ -96,7 +94,7 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = hidden_rates[hidden_cell_index] * (1.0f - dist) * (dhc == 0 ? 1.0f : params.falloff);
+            float rate = hidden_rates[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
