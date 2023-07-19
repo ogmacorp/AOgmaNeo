@@ -46,8 +46,8 @@ public:
         :
         threshold(0.01f),
         falloff(0.9f),
-        lr(0.2f),
-        rr(0.2f)
+        lr(0.1f),
+        rr(0.1f)
         {}
     };
 
