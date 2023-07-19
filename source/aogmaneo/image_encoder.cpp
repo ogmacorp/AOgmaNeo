@@ -197,7 +197,7 @@ void Image_Encoder::reconstruct(
 
                     float strength = min(1.0f - dist_x, 1.0f - dist_y);
 
-                    sum += strength * (0.5f * vl.weights0[wi] + 0.5f * (255 - vl.weights1[wi]));
+                    sum += strength * vl.weights0[wi];
                     total += strength;
                 }
             }
