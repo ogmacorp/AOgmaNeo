@@ -203,14 +203,16 @@ void Decoder::learn(
 
                 int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
 
-                for (int hc = 0; hc < hidden_size.z; hc++) {
-                    int hidden_cell_index = hc + hidden_cells_start;
+                if (hidden_cis[hidden_column_index] != target_ci) {
+                    for (int hc = 0; hc < hidden_size.z; hc++) {
+                        int hidden_cell_index = hc + hidden_cells_start;
 
-                    float delta = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+                        float delta = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                        int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    vl.weights[wi] += delta * vl.gates[visible_column_index];
+                        vl.weights[wi] += delta * vl.gates[visible_column_index];
+                    }
                 }
 
                 int wi = wi_offset + hidden_cell_index_target * hidden_stride;
