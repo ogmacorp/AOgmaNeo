@@ -204,7 +204,7 @@ void Image_Encoder::learn_reconstruction(
 
         float target = (*inputs)[visible_cell_index] * byte_inv;
 
-        float delta = params.rr * (target - sigmoidf(sum));
+        float delta = params.rr * (target - sum);
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -288,7 +288,7 @@ void Image_Encoder::reconstruct(
 
         sum /= max(1, count);
 
-        vl.reconstruction[visible_cell_index] = roundf(sigmoidf(sum) * 255.0f);
+        vl.reconstruction[visible_cell_index] = roundf(min(1.0f, max(0.0f, sum)) * 255.0f);
     }
 }
 
