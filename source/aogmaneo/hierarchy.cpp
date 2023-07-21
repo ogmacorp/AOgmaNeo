@@ -145,10 +145,8 @@ void Hierarchy::step(
     for (int l = 0; l < encoders.size(); l++) {
         Array<const Int_Buffer*> layer_input_cis(encoders[l].get_num_visible_layers());
 
-        if (l == 0) {
-            for (int i = 0; i < io_sizes.size(); i++)
-                layer_input_cis[i] = input_cis[i];
-        }
+        if (l == 0)
+            layer_input_cis = input_cis;
         else
             layer_input_cis[0] = &encoders[l - 1].get_hidden_cis();
 
