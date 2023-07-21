@@ -53,7 +53,7 @@ public:
         :
         lr(0.5f),
         gcurve(8.0f),
-        recurrent_importance(1.0f)
+        recurrent_importance(0.5f)
         {}
     };
 

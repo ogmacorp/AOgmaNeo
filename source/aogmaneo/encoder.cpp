@@ -81,8 +81,6 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - 1.0f);
     }
 
     // add recurrent component if enabled
