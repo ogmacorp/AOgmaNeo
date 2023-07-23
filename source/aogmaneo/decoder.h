@@ -17,6 +17,7 @@ public:
     // visible layer descriptor
     struct Visible_Layer_Desc {
         Int3 size; // size of input
+        int num_indices;
 
         int radius; // radius onto input
 
@@ -24,12 +25,14 @@ public:
         Visible_Layer_Desc()
         :
         size(4, 4, 16),
+        num_indices(4),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
+        Int_Buffer indices;
         Float_Buffer weights;
 
         Byte_Buffer usages;
@@ -42,12 +45,14 @@ public:
     struct Params {
         float lr; // learning rate
         float gcurve; // gain curve
+        float min_weight; // minimum weight magnitude
 
         // Defaults
         Params()
         :
         lr(2.0f),
-        gcurve(8.0f)
+        gcurve(8.0f),
+        min_weight(0.01f)
         {}
     };
 

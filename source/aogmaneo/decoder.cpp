@@ -49,24 +49,32 @@ void Decoder::forward(
 
         count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        int hidden_stride = vld.size.z * diam * diam;
+        int hidden_stride = vld.num_indices * diam * diam;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int in_ci = (*input_cis[vli])[visible_column_index];
-
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
+                int in_ci = (*input_cis[vli])[visible_column_index];
+
+                int wi_offset = vld.num_indices * (offset.y + diam * offset.x);
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    int wi_start = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi];
+                    for (int i = 0; i < vld.num_indices; i++) {
+                        int wi = i + wi_offset;
+
+                        if (vl.indices[wi] == -1)
+                            continue;
+
+                        if (vl.indices[wi] == in_ci)
+                            hidden_acts[hidden_cell_index] += vl.weights[wi];
+                    }
                 }
             }
     }
@@ -138,7 +146,7 @@ void Decoder::update_gates(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
-    int hidden_stride = vld.size.z * diam * diam;
+    int hidden_stride = vld.num_indices * diam * diam;
     
     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
@@ -158,21 +166,29 @@ void Decoder::update_gates(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
+                int wi_offset = vld.num_indices * (offset.y + diam * offset.x);
 
-                for (int hc =  0; hc < hidden_size.z; hc++) {
+                for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    int wi_start = wi_offset + hidden_cell_index * hidden_stride;
 
-                    sum += vl.usages[wi];
+                    for (int i = 0; i < vld.num_indices; i++) {
+                        int wi = i + wi_offset;
+
+                        if (vl.indices[wi] == -1)
+                            continue;
+
+                        if (vl.indices[wi] == in_ci_prev)
+                            sum += vl.usages[wi];
+                    }
                 }
 
                 count++;
             }
         }
 
-    vl.gates[visible_column_index] = expf(-(sum / 255.0f) / (max(1, count) * hidden_size.z) * params.gcurve);
+    vl.gates[visible_column_index] = expf(-(sum / 255.0f) / max(1, count) * params.gcurve);
 }
 
 void Decoder::learn(
@@ -217,21 +233,55 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
+                int wi_offset = vld.num_indices * (offset.y + diam * offset.x);
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
+                    int wi_start = wi_offset + hidden_cell_index * hidden_stride;
+
                     float delta = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    bool contained = false;
+                    int empty_index = -1;
 
-                    vl.weights[wi] += delta * vl.gates[visible_column_index];
+                    for (int i = 0; i < vld.num_indices; i++) {
+                        int wi = i + wi_offset;
+
+                        if (vl.indices[wi] == -1) {
+                            if (empty_index == -1)
+                                empty_index = i;
+
+                            continue;
+                        }
+
+                        if (vl.indices[wi] == in_ci_prev) {
+                            contained = true;
+
+                            vl.weights[wi] += delta * vl.gates[visible_column_index];
+
+                            vl.usages[wi] = min(255, vl.usages[wi] + 1);
+
+                            // reset unused weights
+                            if (abs(vl.weights[wi]) < params.min_weight) {
+                                vl.indices[wi] = -1;
+                                vl.weights[wi] = 0.0f;
+                                vl.usages[wi] = 0;
+                            }
+                        }
+                    }
+
+                    // if need connection and have unused space
+                    if (!contained && empty_index != -1) {
+                        // use empty index to spawn a new connection
+                        int wi = empty_index + wi_offset;
+
+                        vl.indices[wi] = in_ci_prev;
+                        vl.weights[wi] += delta * vl.gates[visible_column_index];
+
+                        vl.usages[wi] = min(255, vl.usages[wi] + 1);
+                    }
                 }
-
-                int wi = wi_offset + hidden_cell_index_target * hidden_stride;
-
-                vl.usages[wi] = min(255, vl.usages[wi] + 1);
             }
     }
 }
@@ -264,12 +314,15 @@ void Decoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.indices.resize(num_hidden_cells * area * vld.num_indices);
+        vl.weights.resize(vl.indices.size());
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-0.01f, 0.01f);
+        for (int i = 0; i < vl.indices.size(); i++) {
+            vl.indices[i] = -1;
+            vl.weights[i] = randf(-0.0001f, 0.0001f);
+        }
 
-        vl.usages = Byte_Buffer(vl.weights.size(), 0);
+        vl.usages = Byte_Buffer(vl.indices.size(), 0);
 
         vl.gates.resize(num_visible_columns);
 
@@ -354,7 +407,7 @@ int Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float) + vl.usages.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + vl.indices.size() * sizeof(int) + vl.weights.size() * sizeof(float) + vl.usages.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -390,6 +443,7 @@ void Decoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
+        writer.write(reinterpret_cast<const void*>(&vl.indices[0]), vl.indices.size() * sizeof(int));
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
@@ -434,9 +488,11 @@ void Decoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
-        vl.usages.resize(vl.weights.size());
+        vl.indices.resize(num_hidden_cells * area * vld.num_indices);
+        vl.weights.resize(vl.indices.size());
+        vl.usages.resize(vl.indices.size());
 
+        reader.read(reinterpret_cast<void*>(&vl.indices[0]), vl.indices.size() * sizeof(int));
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
