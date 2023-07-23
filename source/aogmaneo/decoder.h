@@ -46,7 +46,7 @@ public:
         // Defaults
         Params()
         :
-        lr(4.0f),
+        lr(2.0f),
         gcurve(8.0f)
         {}
     };
@@ -61,6 +61,8 @@ private:
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
+
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 
