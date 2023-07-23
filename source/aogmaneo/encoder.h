@@ -62,11 +62,11 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Float_Buffer hidden_biases;
+
     Float_Buffer hidden_acts;
 
     Float_Buffer hidden_gates;
-
-    Float_Buffer hidden_biases;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
