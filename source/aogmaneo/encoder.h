@@ -30,12 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
-
-        Byte_Buffer usages;
+        Float_Buffer protos;
         
-        Float_Buffer recon_acts;
-
         float importance;
 
         Visible_Layer()
@@ -45,13 +41,17 @@ public:
     };
 
     struct Params {
+        float threshold; // distance below which learning ceases
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
-        float gcurve; // gain curve
+        int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        lr(0.5f),
-        gcurve(8.0f)
+        threshold(0.01f),
+        falloff(0.9f),
+        lr(0.2f),
+        l_radius(2)
         {}
     };
 
@@ -62,31 +62,23 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Float_Buffer hidden_gates;
+    Float_Buffer hidden_rates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
     // --- kernels ---
-
+    
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
+        const Array<const Int_Buffer*> &input_cis,
         const Params &params
     );
 
@@ -103,7 +95,9 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state();
+    void clear_state() {
+        hidden_cis.fill(0);
+    }
 
     // serialization
     int size() const; // returns size in bytes
