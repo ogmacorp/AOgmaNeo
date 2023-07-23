@@ -67,7 +67,7 @@ void Decoder::forward(
                     int wi_start = wi_offset + hidden_cell_index * hidden_stride;
 
                     for (int i = 0; i < vld.num_indices; i++) {
-                        int wi = i + wi_offset;
+                        int wi = i + wi_start;
 
                         if (vl.indices[wi] == -1)
                             continue;
@@ -174,7 +174,7 @@ void Decoder::update_gates(
                     int wi_start = wi_offset + hidden_cell_index * hidden_stride;
 
                     for (int i = 0; i < vld.num_indices; i++) {
-                        int wi = i + wi_offset;
+                        int wi = i + wi_start;
 
                         if (vl.indices[wi] == -1)
                             continue;
@@ -223,7 +223,7 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int hidden_stride = vld.size.z * diam * diam;
+        int hidden_stride = vld.num_indices * diam * diam;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -246,7 +246,7 @@ void Decoder::learn(
                     int empty_index = -1;
 
                     for (int i = 0; i < vld.num_indices; i++) {
-                        int wi = i + wi_offset;
+                        int wi = i + wi_start;
 
                         if (vl.indices[wi] == -1) {
                             if (empty_index == -1)
@@ -274,7 +274,7 @@ void Decoder::learn(
                     // if need connection and have unused space
                     if (!contained && empty_index != -1) {
                         // use empty index to spawn a new connection
-                        int wi = empty_index + wi_offset;
+                        int wi = empty_index + wi_start;
 
                         vl.indices[wi] = in_ci_prev;
                         vl.weights[wi] += delta * vl.gates[visible_column_index];
@@ -314,13 +314,8 @@ void Decoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.indices.resize(num_hidden_cells * area * vld.num_indices);
-        vl.weights.resize(vl.indices.size());
-
-        for (int i = 0; i < vl.indices.size(); i++) {
-            vl.indices[i] = -1;
-            vl.weights[i] = randf(-0.0001f, 0.0001f);
-        }
+        vl.indices = Int_Buffer(num_hidden_cells * area * vld.num_indices, -1);
+        vl.weights = Float_Buffer(vl.indices.size(), 0.0f);
 
         vl.usages = Byte_Buffer(vl.indices.size(), 0);
 
