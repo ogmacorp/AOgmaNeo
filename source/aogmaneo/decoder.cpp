@@ -69,11 +69,11 @@ void Decoder::forward(
                     for (int i = 0; i < vld.num_indices; i++) {
                         int wi = i + wi_start;
 
-                        if (vl.indices[wi] == -1)
-                            continue;
-
-                        if (vl.indices[wi] == in_ci)
+                        if (vl.indices[wi] == in_ci) {
                             hidden_acts[hidden_cell_index] += vl.weights[wi];
+
+                            break;
+                        }
                     }
                 }
             }
@@ -176,11 +176,11 @@ void Decoder::update_gates(
                     for (int i = 0; i < vld.num_indices; i++) {
                         int wi = i + wi_start;
 
-                        if (vl.indices[wi] == -1)
-                            continue;
-
-                        if (vl.indices[wi] == in_ci_prev)
+                        if (vl.indices[wi] == in_ci_prev) {
                             sum += vl.usages[wi];
+
+                            break;
+                        }
                     }
                 }
 
@@ -251,11 +251,8 @@ void Decoder::learn(
                         if (vl.indices[wi] == -1) {
                             if (empty_index == -1)
                                 empty_index = i;
-
-                            continue;
                         }
-
-                        if (vl.indices[wi] == in_ci_prev) {
+                        else if (vl.indices[wi] == in_ci_prev) {
                             contained = true;
 
                             vl.weights[wi] += delta * vl.gates[visible_column_index];
@@ -268,6 +265,8 @@ void Decoder::learn(
                                 vl.weights[wi] = 0.0f;
                                 vl.usages[wi] = 0;
                             }
+
+                            break;
                         }
                     }
 
@@ -277,9 +276,7 @@ void Decoder::learn(
                         int wi = empty_index + wi_start;
 
                         vl.indices[wi] = in_ci_prev;
-                        vl.weights[wi] += delta * vl.gates[visible_column_index];
-
-                        vl.usages[wi] = min(255, vl.usages[wi] + 1);
+                        vl.weights[wi] = delta * vl.gates[visible_column_index];
                     }
                 }
             }
