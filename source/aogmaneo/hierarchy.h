@@ -27,6 +27,8 @@ public:
         Int3 size;
         IO_Type type;
 
+        int num_indices; // number of weights per column in decoder
+
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
@@ -35,6 +37,7 @@ public:
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
+            int num_indices = 4,
             int up_radius = 2,
             int down_radius = 2,
             int history_capacity = 64
@@ -42,6 +45,7 @@ public:
         :
         size(size),
         type(type),
+        num_indices(num_indices),
         up_radius(up_radius),
         down_radius(down_radius),
         history_capacity(history_capacity)
@@ -52,6 +56,8 @@ public:
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
 
+        int num_indices; // number of weights per column in decoder
+                         //
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
@@ -59,12 +65,14 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
+            int num_indices = 4,
             int up_radius = 2,
             int down_radius = 2,
             int temporal_horizon = 4
         )
         :
         hidden_size(hidden_size),
+        num_indices(num_indices),
         up_radius(up_radius),
         down_radius(down_radius),
         temporal_horizon(temporal_horizon)

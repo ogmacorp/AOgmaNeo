@@ -83,6 +83,7 @@ void Hierarchy::init_random(
 
                     d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     d_visible_layer_descs[0].radius = io_descs[i].down_radius;
+                    d_visible_layer_descs[0].num_indices = io_descs[i].num_indices;
 
                     if (l < encoders.size() - 1)
                         d_visible_layer_descs[1] = d_visible_layer_descs[0];
@@ -140,6 +141,7 @@ void Hierarchy::init_random(
 
             d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
             d_visible_layer_descs[0].radius = layer_descs[l].down_radius;
+            d_visible_layer_descs[0].num_indices = layer_descs[l].num_indices;
 
             if (l < encoders.size() - 1)
                 d_visible_layer_descs[1] = d_visible_layer_descs[0];
