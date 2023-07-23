@@ -188,7 +188,7 @@ void Decoder::update_gates(
             }
         }
 
-    vl.gates[visible_column_index] = expf(-(sum / 255.0f) / max(1, count) * params.gcurve);
+    vl.gates[visible_column_index] = expf(-(sum / 255.0f) / (max(1, count) * hidden_size.z) * params.gcurve);
 }
 
 void Decoder::learn(
