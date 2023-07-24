@@ -46,13 +46,11 @@ public:
 
     struct Params {
         float lr; // learning rate
-        float br;
         float gcurve; // gain curve
 
         Params()
         :
         lr(0.5f),
-        br(0.1f),
         gcurve(8.0f)
         {}
     };
@@ -61,8 +59,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_biases;
 
     Float_Buffer hidden_acts;
 
@@ -79,7 +75,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
         const Params &params
     );
 
