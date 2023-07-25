@@ -51,7 +51,7 @@ public:
 
         Params()
         :
-        lr(2.0f),
+        lr(1.0f),
         gcurve(8.0f),
         recurrent_importance(1.0f)
         {}
