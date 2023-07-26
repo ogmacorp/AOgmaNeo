@@ -365,7 +365,7 @@ void Encoder::init_random(
         recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
 
         for (int i = 0; i < recurrent_weights.size(); i++)
-            recurrent_weights[i] = rand_normalf();
+            recurrent_weights[i] = randf();
     }
 
     // generate helper buffers for parallelization
