@@ -244,7 +244,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
-                    float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]) * hidden_acts[hidden_cell_index_max];
+                    float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);// * hidden_acts[hidden_cell_index_max];
 
                     int wi = vc + wi_start;
 
