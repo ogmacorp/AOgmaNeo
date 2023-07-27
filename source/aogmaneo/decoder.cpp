@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "decoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -97,6 +98,10 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
+
+    // check if has acts computed (ran at least once) by checking for flag value
+    if (hidden_acts[hidden_cell_index_target] == -1)
+        return;
 
     int max_index = hidden_cis[hidden_column_index];
 
@@ -214,7 +219,7 @@ void Decoder::init_random(
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_acts.resize(num_hidden_cells);
+    hidden_acts = Int_Buffer(num_hidden_cells, -1); // flag
 }
 
 void Decoder::activate(
