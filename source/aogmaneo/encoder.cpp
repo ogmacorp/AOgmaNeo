@@ -162,50 +162,36 @@ void Encoder::learn(
             }
         }
 
-    int max_index = 0;
-    int max_activation = limit_min;
+    for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+        for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+            Int2 hidden_pos = Int2(ix, iy);
 
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
+            int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
 
-        if (vl.recon_acts[visible_cell_index] > max_activation) {
-            max_activation = vl.recon_acts[visible_cell_index];
-            max_index = vc;
-        }
-    }
+            Int2 visible_center = project(hidden_pos, h_to_v);
 
-    if (max_index != target_ci) {
-        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                Int2 hidden_pos = Int2(ix, iy);
+            if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
+                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
-                int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
+                Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                Int2 visible_center = project(hidden_pos, h_to_v);
+                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int visible_cell_index = vc + visible_cells_start;
 
-                    Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
+                    int wi = vc + wi_start;
 
-                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int visible_cell_index = vc + visible_cells_start;
-
-                        int wi = vc + wi_start;
-
-                        int byi = wi / 8;
-                        int bi = wi % 8;
-
-                        if (vc != target_ci) {
-                            if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * expf(vl.recon_acts[visible_cell_index] / params.temperature))
-                                vl.weights[byi] &= ~(0x1 << bi);
-                        }
+                    if (vc != target_ci) {
+                        if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * expf(vl.recon_acts[visible_cell_index] / params.temperature))
+                            vl.weights[byi] &= ~(0x1 << bi);
                     }
                 }
             }
-    }
+        }
 }
 
 void Encoder::init_random(
