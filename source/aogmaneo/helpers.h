@@ -409,6 +409,7 @@ inline int rand_cast(
 
     return i + (randf(state) < rem) * s;
 }
+
 // --- serialization ---
 
 class Stream_Writer {
