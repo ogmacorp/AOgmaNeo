@@ -35,7 +35,14 @@ public:
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
-    struct Params {};
+    struct Params {
+        float lr;
+
+        Params()
+        :
+        lr(0.1f)
+        {}
+    };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
@@ -59,6 +66,7 @@ private:
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
+        unsigned int* state,
         const Params &params
     );
 
