@@ -224,12 +224,6 @@ void Encoder::step(
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, learn_enabled, params);
-
-    if (learn_enabled) {
-        PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
-    }
 }
 
 void Encoder::clear_state() {
