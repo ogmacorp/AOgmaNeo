@@ -140,7 +140,7 @@ void Decoder::learn(
                     int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
 
                     // target
-                    if (randf(state) < params.lr) {
+                    if (randf(state) < expf(-params.lr * hidden_acts[hidden_cell_index_target])) {
                         int wi = wi_offset + hidden_cell_index_target * hidden_stride;
 
                         int byi = wi / 8;
@@ -154,7 +154,7 @@ void Decoder::learn(
                     }
 
                     // max
-                    if (randf(state) < params.lr) {
+                    if (randf(state) < (1.0f - expf(-params.lr * hidden_acts[hidden_cell_index_max]))) {
                         int wi = wi_offset + hidden_cell_index_max * hidden_stride;
 
                         int byi = wi / 8;
