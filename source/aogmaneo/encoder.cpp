@@ -25,6 +25,8 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
+    float total_importance = 0.0f;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -51,7 +53,9 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float scale = vl.importance / sub_count;
+        float scale = vl.importance / (sub_count * 255);
+
+        total_importance += vl.importance;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -68,10 +72,7 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    hidden_acts[hidden_cell_index] += ((vl.weights[byi] & (1 << bi)) != 0) * scale;
+                    hidden_acts[hidden_cell_index] += vl.weights[wi];
                 }
             }
     }
@@ -81,6 +82,8 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -131,7 +134,42 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        vl.recon_acts[visible_cell_index] = 0;
+        vl.recon_acts[visible_cell_index] = 0.0f;
+    }
+
+    int count = 0;
+
+    for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+        for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+            Int2 hidden_pos = Int2(ix, iy);
+
+            int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
+
+            Int2 visible_center = project(hidden_pos, h_to_v);
+
+            if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
+                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+
+                Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
+
+                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int visible_cell_index = vc + visible_cells_start;
+
+                    int wi = vc + wi_start;
+
+                    vl.recon_acts[visible_cell_index] += vl.weights[wi];
+                }
+
+                count++;
+            }
+        }
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+
+        vl.recon_acts[visible_cell_index] /= max(1, count) * 255;
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -154,40 +192,9 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    vl.recon_acts[visible_cell_index] += ((vl.weights[byi] & (1 << bi)) != 0) * 2 - 1;
-                }
-            }
-        }
-
-    for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-        for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-            Int2 hidden_pos = Int2(ix, iy);
-
-            int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
-
-            Int2 visible_center = project(hidden_pos, h_to_v);
-
-            if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
-
-                Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
-
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
-
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
-
-                    int wi = vc + wi_start;
-
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
                     if (vc != target_ci) {
-                        if ((vl.weights[byi] & (1 << bi)) != 0 && randf(state) < params.lr * expf(min(0.0f, vl.recon_acts[visible_cell_index] / params.temperature)))
-                            vl.weights[byi] &= ~(1 << bi);
+                        if (vl.weights[wi] > 0 && randf(state) < params.lr * hidden_acts[hidden_cell_index_max] * expf(min(0.0f, (vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)))
+                            vl.weights[wi]--;
                     }
                 }
             }
@@ -223,10 +230,10 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize((num_hidden_cells * area * vld.size.z + 7) / 8);
+        vl.weights.resize(num_hidden_cells * area * vld.size.z + 7);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 0xff;
+            vl.weights[i] = 255 - rand() % init_weight_noise;
 
         vl.recon_acts.resize(num_visible_cells);
     }
@@ -359,7 +366,7 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize((num_hidden_cells * area * vld.size.z + 7) / 8);
+        vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
