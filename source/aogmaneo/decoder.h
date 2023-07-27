@@ -146,6 +146,11 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden states (predictions)
+    const Float_Buffer &get_hidden_probs() const {
+        return hidden_probs;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;

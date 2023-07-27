@@ -78,32 +78,6 @@ void Decoder::forward(
         }
     }
 
-    hidden_cis[hidden_column_index] = max_index;
-}
-
-void Decoder::learn(
-    const Int2 &column_pos,
-    const Int_Buffer* hidden_target_cis,
-    unsigned int* state,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    int target_ci = (*hidden_target_cis)[hidden_column_index];
-
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
-    // check if has acts computed (ran at least once) by checking for flag value
-    if (hidden_acts[hidden_cell_index_target] == -1)
-        return;
-
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
-
-    int max_index = hidden_cis[hidden_column_index];
-    int max_activation = hidden_acts[hidden_cell_index_max];
-
     // find probabilities
     float total = 0.0f;
 
@@ -122,6 +96,27 @@ void Decoder::learn(
 
         hidden_probs[hidden_cell_index] *= total_inv;
     }
+
+    hidden_cis[hidden_column_index] = max_index;
+}
+
+void Decoder::learn(
+    const Int2 &column_pos,
+    const Int_Buffer* hidden_target_cis,
+    unsigned int* state,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    int target_ci = (*hidden_target_cis)[hidden_column_index];
+
+    // check if has acts computed (ran at least once) by checking for flag value
+    if (hidden_acts[target_ci + hidden_cells_start] == -1)
+        return;
+
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -200,7 +195,7 @@ void Decoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 126 + rand() % 3;
+            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -210,7 +205,7 @@ void Decoder::init_random(
 
     hidden_acts = Int_Buffer(num_hidden_cells, -1); // flag
 
-    hidden_probs.resize(num_hidden_cells);
+    hidden_probs = Float_Buffer(num_hidden_cells, 1.0f / hidden_size.z);
 }
 
 void Decoder::activate(
@@ -252,13 +247,14 @@ void Decoder::learn(
 void Decoder::clear_state() {
     hidden_cis.fill(0);
     hidden_acts.fill(-1); // flag
+    hidden_probs.fill(1.0f / hidden_size.z); // flag
 
     for (int vli = 0; vli < visible_layers.size(); vli++)
         visible_layers[vli].input_cis_prev.fill(0);
 }
 
 int Decoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(int) + hidden_probs.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -271,7 +267,7 @@ int Decoder::size() const {
 }
 
 int Decoder::state_size() const {
-    int size = hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(int);
+    int size = hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(int) + hidden_probs.size() * sizeof(float);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -289,6 +285,7 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_probs[0]), hidden_probs.size() * sizeof(float));
     
     int num_visible_layers = visible_layers.size();
 
@@ -316,9 +313,11 @@ void Decoder::read(
 
     hidden_cis.resize(num_hidden_columns);
     hidden_acts.resize(num_hidden_cells);
+    hidden_probs.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hidden_probs[0]), hidden_probs.size() * sizeof(float));
 
     hidden_probs.resize(num_hidden_cells);
 
@@ -356,6 +355,7 @@ void Decoder::write_state(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_probs[0]), hidden_probs.size() * sizeof(float));
     
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -369,6 +369,7 @@ void Decoder::read_state(
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hidden_probs[0]), hidden_probs.size() * sizeof(float));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
