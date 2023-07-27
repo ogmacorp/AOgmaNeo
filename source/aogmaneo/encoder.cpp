@@ -51,7 +51,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float scale = vl.importance / (sub_count * 255);
+        float scale = vl.importance / sub_count;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -68,7 +68,7 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi];
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
     }
@@ -236,7 +236,7 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z + 7);
+        vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 255 - rand() % init_weight_noise;
