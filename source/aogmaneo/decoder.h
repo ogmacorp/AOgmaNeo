@@ -36,7 +36,7 @@ public:
     };
 
     struct Params {
-        float lr;
+        float lr; // learning rate, MUST be > 0
 
         Params()
         :
