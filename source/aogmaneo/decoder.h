@@ -41,7 +41,7 @@ public:
 
         Params()
         :
-        temperature(10.0f),
+        temperature(0.01f),
         lr(1.0f)
         {}
     };

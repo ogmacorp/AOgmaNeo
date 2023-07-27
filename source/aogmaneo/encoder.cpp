@@ -166,11 +166,22 @@ void Encoder::learn(
             }
         }
 
+    int max_index = 0;
+    float max_activation = 0.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         vl.recon_acts[visible_cell_index] /= max(1, count) * 255;
+
+        if (vl.recon_acts[visible_cell_index] > max_activation) {
+            max_activation = vl.recon_acts[visible_cell_index];
+            max_index = vc;
+        }
     }
+
+    if (max_index == target_ci)
+        return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -188,14 +199,15 @@ void Encoder::learn(
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
+                    if (vc == target_ci)
+                        continue;
+
                     int visible_cell_index = vc + visible_cells_start;
 
                     int wi = vc + wi_start;
 
-                    if (vc != target_ci) {
-                        if (vl.weights[wi] > 0 && randf(state) < params.lr * hidden_acts[hidden_cell_index_max] * expf(min(0.0f, (vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)))
-                            vl.weights[wi]--;
-                    }
+                    if (vl.weights[wi] > 0 && randf(state) < params.lr * expf(min(0.0f, (vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)))
+                        vl.weights[wi]--;
                 }
             }
         }
