@@ -30,10 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
+        Byte_Buffer weights;
 
-        Byte_Buffer usages;
-        
         Float_Buffer recon_acts;
 
         float importance;
@@ -45,14 +43,14 @@ public:
     };
 
     struct Params {
+        float temperature;
         float lr; // learning rate
-        float gcurve; // gain curve
         float recurrent_importance;
 
         Params()
         :
-        lr(0.5f),
-        gcurve(8.0f),
+        temperature(0.01f),
+        lr(1.0f),
         recurrent_importance(1.0f)
         {}
     };
@@ -66,9 +64,7 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Float_Buffer hidden_gates;
-
-    Float_Buffer recurrent_weights;
+    Byte_Buffer recurrent_weights;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -84,15 +80,11 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
+        unsigned int* state,
         const Params &params
     );
 
