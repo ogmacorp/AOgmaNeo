@@ -45,14 +45,12 @@ public:
         float choice; // Choice parameter
         float vigilance; // ART vigilance
         float lr; // learning rate
-        int l_radius; // Second stage inhibition radius
 
         Params()
         :
         choice(0.1f),
         vigilance(0.95f),
-        lr(0.5f),
-        l_radius(2)
+        lr(0.5f)
         {}
     };
 
@@ -63,13 +61,9 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
-
     Float_Buffer hidden_acts;
 
     Float_Buffer hidden_totals;
-
-    Float_Buffer hidden_maxs;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -80,6 +74,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
