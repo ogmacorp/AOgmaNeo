@@ -186,7 +186,7 @@ void Encoder::learn(
                     int bi = wi % 8;
 
                     if (vc != target_ci) {
-                        if ((vl.weights[byi] & (1 << bi)) != 0 && randf(state) < params.lr * expf(vl.recon_acts[visible_cell_index] / params.temperature))
+                        if ((vl.weights[byi] & (1 << bi)) != 0 && randf(state) < params.lr * expf(min(0.0f, vl.recon_acts[visible_cell_index] / params.temperature)))
                             vl.weights[byi] &= ~(1 << bi);
                     }
                 }
