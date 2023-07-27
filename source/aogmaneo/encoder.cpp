@@ -25,8 +25,6 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
-    float total_importance = 0.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -55,8 +53,6 @@ void Encoder::forward(
 
         float scale = vl.importance / (sub_count * 255);
 
-        total_importance += vl.importance;
-
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -82,8 +78,6 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -206,7 +200,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    if (vl.weights[wi] > 0 && randf(state) < params.lr * expf(min(0.0f, (vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)))
+                    if (vl.weights[wi] > 0 && randf(state) < params.lr * expf((vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature))
                         vl.weights[wi]--;
                 }
             }
