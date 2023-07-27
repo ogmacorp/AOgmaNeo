@@ -168,14 +168,14 @@ void Decoder::learn(
                         int bi = wi % 8;
 
                         if (hc == target_ci) {
-                            if ((vl.weights[byi] & (0x1 << bi)) == 0 && randf(state) < expf(-params.lr * hidden_acts[hidden_cell_index])) {
+                            if ((vl.weights[byi] & (0x1 << bi)) == 0 && randf(state) < (1.0f - hidden_probs[hidden_cell_index])) {
                                 vl.weights[byi] |= (0x1 << bi);
 
                                 hidden_acts[hidden_cell_index]++;
                             }
                         }
                         else {
-                            if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < (1.0f - expf(-params.lr * hidden_acts[hidden_cell_index]))) {
+                            if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < hidden_probs[hidden_cell_index]) {
                                 vl.weights[byi] &= ~(0x1 << bi);
 
                                 hidden_acts[hidden_cell_index]--;
