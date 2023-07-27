@@ -105,7 +105,7 @@ void Decoder::learn(
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
     int max_index = hidden_cis[hidden_column_index];
-    int max_activation = hidden_acts[max_index + hidden_cells_start];
+    int max_activation = hidden_acts[hidden_cell_index_max];
 
     // find probabilities
     float total = 0.0f;
