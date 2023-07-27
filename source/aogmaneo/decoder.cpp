@@ -116,8 +116,6 @@ void Decoder::learn(
     if (hidden_acts[target_ci + hidden_cells_start] == -1)
         return;
 
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
