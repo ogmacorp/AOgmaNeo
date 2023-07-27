@@ -71,7 +71,7 @@ void Encoder::forward(
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    hidden_acts[hidden_cell_index] += ((vl.weights[byi] & (0x1 << bi)) != 0) * scale;
+                    hidden_acts[hidden_cell_index] += ((vl.weights[byi] & (1 << bi)) != 0) * scale;
                 }
             }
     }
@@ -157,7 +157,7 @@ void Encoder::learn(
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    vl.recon_acts[visible_cell_index] += ((vl.weights[byi] & (0x1 << bi)) != 0) * 2 - 1;
+                    vl.recon_acts[visible_cell_index] += ((vl.weights[byi] & (1 << bi)) != 0) * 2 - 1;
                 }
             }
         }
@@ -186,8 +186,8 @@ void Encoder::learn(
                     int bi = wi % 8;
 
                     if (vc != target_ci) {
-                        if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * expf(vl.recon_acts[visible_cell_index] / params.temperature))
-                            vl.weights[byi] &= ~(0x1 << bi);
+                        if ((vl.weights[byi] & (1 << bi)) != 0 && randf(state) < params.lr * expf(vl.recon_acts[visible_cell_index] / params.temperature))
+                            vl.weights[byi] &= ~(1 << bi);
                     }
                 }
             }

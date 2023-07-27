@@ -61,10 +61,7 @@ void Decoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    hidden_acts[hidden_cell_index] += ((vl.weights[byi] & (0x1 << bi)) != 0);
+                    hidden_acts[hidden_cell_index] += vl.weights[wi];
                 }
             }
     }
@@ -162,16 +159,13 @@ void Decoder::learn(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
                     if (hc == target_ci) {
-                        if ((vl.weights[byi] & (0x1 << bi)) == 0 && randf(state) < params.lr * (1.0f - hidden_probs[hidden_cell_index]))
-                            vl.weights[byi] |= (0x1 << bi);
+                        if (vl.weights[wi] < 255 && randf(state) < params.lr * (1.0f - hidden_probs[hidden_cell_index]))
+                            vl.weights[wi]++;
                     }
                     else {
-                        if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * hidden_probs[hidden_cell_index])
-                            vl.weights[byi] &= ~(0x1 << bi);
+                        if (vl.weights[wi] > 0 && randf(state) < params.lr * hidden_probs[hidden_cell_index])
+                            vl.weights[wi]--;
                     }
                 }
             }
@@ -203,10 +197,10 @@ void Decoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize((num_hidden_cells * area * vld.size.z + 7) / 8);
+        vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % 0xff;
+            vl.weights[i] = 126 + rand() % 3;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -347,7 +341,7 @@ void Decoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize((num_hidden_cells * area * vld.size.z + 7) / 8);
+        vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
