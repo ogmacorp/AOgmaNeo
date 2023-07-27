@@ -51,7 +51,7 @@ public:
         :
         temperature(0.01f),
         lr(1.0f),
-        recurrent_importance(1.0f)
+        recurrent_importance(0.1f)
         {}
     };
 
