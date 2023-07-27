@@ -68,7 +68,7 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi];
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
                 }
             }
     }
