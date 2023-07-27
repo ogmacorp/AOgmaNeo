@@ -32,7 +32,7 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Int_Buffer recon_acts;
+        Float_Buffer recon_acts;
 
         float importance;
 
@@ -48,8 +48,8 @@ public:
 
         Params()
         :
-        temperature(10.0f),
-        lr(1.0f)
+        temperature(0.01f),
+        lr(0.5f)
         {}
     };
 
