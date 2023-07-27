@@ -36,11 +36,13 @@ public:
     };
 
     struct Params {
+        float temperature; // temperature of softmax
         float lr; // learning rate, MUST be > 0
 
         Params()
         :
-        lr(0.01f)
+        temperature(0.01f),
+        lr(0.5f)
         {}
     };
 
@@ -50,6 +52,8 @@ private:
     Int_Buffer hidden_cis; // hidden state
 
     Int_Buffer hidden_acts;
+
+    Float_Buffer hidden_probs;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
