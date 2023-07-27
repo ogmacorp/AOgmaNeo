@@ -41,7 +41,7 @@ public:
 
         Params()
         :
-        temperature(1.0f),
+        temperature(10.0f),
         lr(1.0f)
         {}
     };
@@ -144,6 +144,11 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
+    }
+
+    // get the hidden states (predictions)
+    const Float_Buffer &get_hidden_probs() const {
+        return hidden_probs;
     }
 
     // get the hidden size

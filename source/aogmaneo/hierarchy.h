@@ -200,6 +200,15 @@ public:
         return decoders[0][d_indices[i]].get_hidden_cis();
     }
 
+    // retrieve prediction activations
+    const Float_Buffer &get_prediction_probs(
+        int i
+    ) const {
+        assert(io_types[i] == prediction);
+
+        return decoders[0][d_indices[i]].get_hidden_probs();
+    }
+
     // whether this layer received on update this timestep
     bool get_update(
         int l
