@@ -30,11 +30,9 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
+        Byte_Buffer weights;
 
-        Byte_Buffer usages;
-        
-        Float_Buffer recon_acts;
+        Int_Buffer recon_acts;
 
         float importance;
 
@@ -44,16 +42,7 @@ public:
         {}
     };
 
-    struct Params {
-        float lr; // learning rate
-        float gcurve; // gain curve
-
-        Params()
-        :
-        lr(0.1f),
-        gcurve(8.0f)
-        {}
-    };
+    struct Params {};
 
 private:
     Int3 hidden_size; // size of hidden/output layer
@@ -61,8 +50,6 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_gates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -78,15 +65,11 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
+        unsigned int* state,
         const Params &params
     );
 
