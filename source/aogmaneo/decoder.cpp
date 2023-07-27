@@ -139,31 +139,27 @@ void Decoder::learn(
 
                     int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
 
-                    // target
-                    if (randf(state) < expf(-params.lr * hidden_acts[hidden_cell_index_target])) {
-                        int wi = wi_offset + hidden_cell_index_target * hidden_stride;
+                    for (int hc = 0; hc < hidden_size.z; hc++) {
+                        int hidden_cell_index = hc + hidden_cells_start;
+
+                        int wi = wi_offset + hidden_cell_index * hidden_stride;
 
                         int byi = wi / 8;
                         int bi = wi % 8;
 
-                        if ((vl.weights[byi] & (0x1 << bi)) == 0) {
-                            vl.weights[byi] |= (0x1 << bi);
+                        if (hc == target_ci) {
+                            if ((vl.weights[byi] & (0x1 << bi)) == 0 && randf(state) < expf(-params.lr * hidden_acts[hidden_cell_index])) {
+                                vl.weights[byi] |= (0x1 << bi);
 
-                            hidden_acts[hidden_cell_index_target]++;
+                                hidden_acts[hidden_cell_index]++;
+                            }
                         }
-                    }
+                        else {
+                            if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < (1.0f - expf(-params.lr * hidden_acts[hidden_cell_index]))) {
+                                vl.weights[byi] &= ~(0x1 << bi);
 
-                    // max
-                    if (randf(state) < (1.0f - expf(-params.lr * hidden_acts[hidden_cell_index_max]))) {
-                        int wi = wi_offset + hidden_cell_index_max * hidden_stride;
-
-                        int byi = wi / 8;
-                        int bi = wi % 8;
-
-                        if ((vl.weights[byi] & (0x1 << bi)) != 0) {
-                            vl.weights[byi] &= ~(0x1 << bi);
-
-                            hidden_acts[hidden_cell_index_max]--;
+                                hidden_acts[hidden_cell_index]--;
+                            }
                         }
                     }
                 }
