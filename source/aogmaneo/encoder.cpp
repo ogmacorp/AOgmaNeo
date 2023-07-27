@@ -200,8 +200,9 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    if (vl.weights[wi] > 0 && randf(state) < params.lr * expf((vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature))
-                        vl.weights[wi]--;
+                    float delta = params.lr * -vl.recon_acts[visible_cell_index];
+
+                    vl.weights[wi] = max(0, rand_cast(vl.weights[wi] + delta, state));
                 }
             }
         }

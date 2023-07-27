@@ -398,6 +398,17 @@ float rand_normalf(
     unsigned int* state = &global_state
 );
 
+inline int rand_cast(
+    float x,
+    unsigned int* state = &global_state
+) {
+    int i = static_cast<int>(x);
+    float rem = x - i;
+
+    int s = (x > 0.0f) * 2 - 1;
+
+    return i + (randf(state) < rem) * s;
+}
 // --- serialization ---
 
 class Stream_Writer {
