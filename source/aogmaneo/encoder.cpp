@@ -95,6 +95,7 @@ void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
     int vli,
+    unsigned int* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -173,7 +174,7 @@ void Encoder::learn(
         }
     }
 
-    if (max_index != target_ci) {
+    while (max_index != target_ci) {
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 Int2 hidden_pos = Int2(ix, iy);
@@ -190,18 +191,42 @@ void Encoder::learn(
                     int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        if (vc == target_ci)
-                            continue;
+                        int visible_cell_index = vc + visible_cells_start;
 
                         int wi = vc + wi_start;
 
                         int byi = wi / 8;
                         int bi = wi % 8;
 
-                        vl.weights[byi] &= ~(0x1 << bi);
+                        if (vc == target_ci) {
+                            if ((vl.weights[byi] & (0x1 << bi)) == 0 && randf(state) < params.lr * expf(-vl.recon_acts[visible_cell_index] / params.temperature)) {
+                                vl.weights[byi] |= (0x1 << bi);
+
+                                vl.recon_acts[visible_cell_index]++;
+                            }
+                        }
+                        else {
+                            if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * (1.0f - expf(-vl.recon_acts[visible_cell_index] / params.temperature))) {
+                                vl.weights[byi] &= ~(0x1 << bi);
+
+                                vl.recon_acts[visible_cell_index]--;
+                            }
+                        }
                     }
                 }
             }
+
+        max_index = 0;
+        max_activation = 0;
+
+        for (int vc = 0; vc < vld.size.z; vc++) {
+            int visible_cell_index = vc + visible_cells_start;
+
+            if (vl.recon_acts[visible_cell_index] > max_activation) {
+                max_activation = vl.recon_acts[visible_cell_index];
+                max_index = vc;
+            }
+        }
     }
 }
 
@@ -276,12 +301,16 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
+        unsigned int base_state = rand();
+
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            learn(pos, input_cis[vli], vli, params);
+            unsigned int state = base_state + i * 12345;
+
+            learn(pos, input_cis[vli], vli, &state, params);
         }
     }
 }

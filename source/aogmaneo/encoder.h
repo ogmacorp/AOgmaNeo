@@ -42,7 +42,16 @@ public:
         {}
     };
 
-    struct Params {};
+    struct Params {
+        float temperature; // temperature of softmax, MUST be > 0
+        float lr; // learning rate
+
+        Params()
+        :
+        temperature(10.0f),
+        lr(1.0f)
+        {}
+    };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
@@ -69,6 +78,7 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
+        unsigned int* state,
         const Params &params
     );
 
