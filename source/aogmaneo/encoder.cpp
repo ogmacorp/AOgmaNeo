@@ -157,13 +157,13 @@ void Encoder::learn(
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    vl.recon_acts[visible_cell_index] += ((vl.weights[byi] & (0x1 << bi)) != 0);
+                    vl.recon_acts[visible_cell_index] += ((vl.weights[byi] & (0x1 << bi)) != 0) * 2 - 1;
                 }
             }
         }
 
     int max_index = 0;
-    int max_activation = 0;
+    int max_activation = limit_min;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
@@ -174,7 +174,7 @@ void Encoder::learn(
         }
     }
 
-    while (max_index != target_ci) {
+    if (max_index != target_ci) {
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 Int2 hidden_pos = Int2(ix, iy);
@@ -198,35 +198,13 @@ void Encoder::learn(
                         int byi = wi / 8;
                         int bi = wi % 8;
 
-                        if (vc == target_ci) {
-                            if ((vl.weights[byi] & (0x1 << bi)) == 0 && randf(state) < params.lr * expf(-vl.recon_acts[visible_cell_index] / params.temperature)) {
-                                vl.weights[byi] |= (0x1 << bi);
-
-                                vl.recon_acts[visible_cell_index]++;
-                            }
-                        }
-                        else {
-                            if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * (1.0f - expf(-vl.recon_acts[visible_cell_index] / params.temperature))) {
+                        if (vc != target_ci) {
+                            if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * expf(vl.recon_acts[visible_cell_index] / params.temperature))
                                 vl.weights[byi] &= ~(0x1 << bi);
-
-                                vl.recon_acts[visible_cell_index]--;
-                            }
                         }
                     }
                 }
             }
-
-        max_index = 0;
-        max_activation = 0;
-
-        for (int vc = 0; vc < vld.size.z; vc++) {
-            int visible_cell_index = vc + visible_cells_start;
-
-            if (vl.recon_acts[visible_cell_index] > max_activation) {
-                max_activation = vl.recon_acts[visible_cell_index];
-                max_index = vc;
-            }
-        }
     }
 }
 
