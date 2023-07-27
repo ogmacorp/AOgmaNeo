@@ -69,7 +69,6 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
-        unsigned int* state,
         const Params &params
     );
 
