@@ -103,99 +103,79 @@ void Decoder::learn(
     if (hidden_acts[hidden_cell_index_target] == -1)
         return;
 
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+
     int max_index = hidden_cis[hidden_column_index];
     int max_activation = hidden_acts[max_index + hidden_cells_start];
 
-    while (max_index != target_ci) {
-        int hidden_cell_index_max = max_index + hidden_cells_start;
+    // find probabilities
+    float total = 0.0f;
 
-        // find probabilities
-        float total = 0.0f;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_probs[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) / params.temperature);
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-        
-            hidden_probs[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) / params.temperature);
+        total += hidden_probs[hidden_cell_index];
+    }
 
-            total += hidden_probs[hidden_cell_index];
-        }
+    float total_inv = 1.0f / max(limit_small, total);
 
-        float total_inv = 1.0f / max(limit_small, total);
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+        hidden_probs[hidden_cell_index] *= total_inv;
+    }
 
-            hidden_probs[hidden_cell_index] *= total_inv;
-        }
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        int diam = vld.radius * 2 + 1;
 
-            int diam = vld.radius * 2 + 1;
+        // projection
+        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-            // projection
-            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+        Int2 visible_center = project(column_pos, h_to_v);
 
-            Int2 visible_center = project(column_pos, h_to_v);
+        // lower corner
+        Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
 
-            // lower corner
-            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+        // bounds of receptive field, clamped to input size
+        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+        Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-            // bounds of receptive field, clamped to input size
-            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+        int hidden_stride = diam * diam * vld.size.z;
 
-            int hidden_stride = diam * diam * vld.size.z;
+        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                    int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+                int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-                    int in_ci_prev = vl.input_cis_prev[visible_column_index];
+                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+                int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
 
-                    int wi_offset = in_ci_prev + vld.size.z * (offset.y + diam * offset.x);
+                for (int hc = 0; hc < hidden_size.z; hc++) {
+                    int hidden_cell_index = hc + hidden_cells_start;
 
-                    for (int hc = 0; hc < hidden_size.z; hc++) {
-                        int hidden_cell_index = hc + hidden_cells_start;
+                    int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                        int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                        int byi = wi / 8;
-                        int bi = wi % 8;
-
-                        if (hc == target_ci) {
-                            if ((vl.weights[byi] & (0x1 << bi)) == 0 && randf(state) < params.lr * (1.0f - hidden_probs[hidden_cell_index])) {
-                                vl.weights[byi] |= (0x1 << bi);
-
-                                hidden_acts[hidden_cell_index]++;
-                            }
-                        }
-                        else {
-                            if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * hidden_probs[hidden_cell_index]) {
-                                vl.weights[byi] &= ~(0x1 << bi);
-
-                                hidden_acts[hidden_cell_index]--;
-                            }
-                        }
+                    if (hc == target_ci) {
+                        if ((vl.weights[byi] & (0x1 << bi)) == 0 && randf(state) < params.lr * (1.0f - hidden_probs[hidden_cell_index]))
+                            vl.weights[byi] |= (0x1 << bi);
+                    }
+                    else {
+                        if ((vl.weights[byi] & (0x1 << bi)) != 0 && randf(state) < params.lr * hidden_probs[hidden_cell_index])
+                            vl.weights[byi] &= ~(0x1 << bi);
                     }
                 }
-        }
-
-        max_index = 0;
-        max_activation = 0;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            if (hidden_acts[hidden_cell_index] > max_activation) {
-                max_activation = hidden_acts[hidden_cell_index];
-                max_index = hc;
             }
-        }
     }
 }
 
