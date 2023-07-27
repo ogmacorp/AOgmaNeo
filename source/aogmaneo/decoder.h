@@ -36,8 +36,8 @@ public:
     };
 
     struct Params {
-        float temperature; // temperature of softmax
-        float lr; // learning rate, MUST be > 0
+        float temperature; // temperature of softmax, MUST be > 0
+        float lr; // learning rate
 
         Params()
         :
