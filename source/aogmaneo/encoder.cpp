@@ -337,6 +337,10 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            update_gates(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
         unsigned int base_state = rand();
 
         PARALLEL_FOR
