@@ -405,9 +405,7 @@ inline int rand_cast(
     int i = static_cast<int>(x);
     float rem = x - i;
 
-    int s = (x > 0.0f) * 2 - 1;
-
-    return i + (randf(state) < rem) * s;
+    return i + (randf(state) < rem);
 }
 
 // --- serialization ---
