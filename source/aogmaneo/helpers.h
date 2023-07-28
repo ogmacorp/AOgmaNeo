@@ -31,6 +31,8 @@ const float limit_min = -999999.0f;
 const float limit_max = 999999.0f;
 const float limit_small = 0.0001f;
 
+const int init_weight_noise = 5;
+
 inline float modf(
     float x,
     float y
@@ -395,6 +397,18 @@ float randf(
 float rand_normalf(
     unsigned int* state = &global_state
 );
+
+inline int rand_cast(
+    float x,
+    unsigned int* state = &global_state
+) {
+    int i = static_cast<int>(x);
+    float rem = x - i;
+
+    int s = (x > 0.0f) * 2 - 1;
+
+    return i + (randf(state) < rem) * s;
+}
 
 // --- serialization ---
 

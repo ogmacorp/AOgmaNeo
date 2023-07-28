@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
+        Byte_Buffer weights;
 
         Byte_Buffer usages;
 
@@ -40,13 +40,14 @@ public:
     };
 
     struct Params {
+        float temperature; // temperature of softmax, MUST be > 0
         float lr; // learning rate
-        float gcurve; // gain curve
+        float gcurve; // gain curve for anti-forget
 
-        // Defaults
         Params()
         :
-        lr(2.0f),
+        temperature(0.01f),
+        lr(4.0f),
         gcurve(8.0f)
         {}
     };
@@ -54,9 +55,9 @@ public:
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
 
-    Float_Buffer hidden_acts;
-
     Int_Buffer hidden_cis; // hidden state
+
+    Float_Buffer hidden_acts;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -81,6 +82,7 @@ private:
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
+        unsigned int* state,
         const Params &params
     );
 
@@ -156,7 +158,7 @@ public:
         return hidden_cis;
     }
 
-    // get the hidden activations
+    // get the hidden states (predictions)
     const Float_Buffer &get_hidden_acts() const {
         return hidden_acts;
     }
