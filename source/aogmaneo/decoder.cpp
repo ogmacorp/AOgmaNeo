@@ -116,9 +116,6 @@ void Decoder::learn(
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    if (hidden_cis[hidden_column_index] == target_ci)
-        return;
-
     // check if has acts computed (ran at least once) by checking for flag value
     if (hidden_acts[target_ci + hidden_cells_start] == -1)
         return;
