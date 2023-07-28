@@ -193,15 +193,13 @@ void Encoder::learn(
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    if (vc == target_ci)
-                        continue;
-
                     int visible_cell_index = vc + visible_cells_start;
 
                     int wi = vc + wi_start;
 
-                    if (vl.weights[wi] > 0 && randf(state) < params.lr * expf((vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature))
-                        vl.weights[wi]--;
+                    float delta = params.lr * ((vc == target_ci) - expf(min(0.0f, (vl.recon_acts[visible_cell_index] - 0.5f) / params.temperature)));
+
+                    vl.weights[wi] = min(255, max(0, rand_cast(vl.weights[wi] + delta, state)));
                 }
             }
         }
@@ -239,7 +237,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % init_weight_noise;
+            vl.weights[i] = 127 - rand() % init_weight_noise;
 
         vl.recon_acts.resize(num_visible_cells);
     }

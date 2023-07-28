@@ -156,14 +156,9 @@ void Decoder::learn(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    if (hc == target_ci) {
-                        if (vl.weights[wi] < 255 && randf(state) < params.lr * (1.0f - hidden_probs[hidden_cell_index]))
-                            vl.weights[wi]++;
-                    }
-                    else {
-                        if (vl.weights[wi] > 0 && randf(state) < params.lr * hidden_probs[hidden_cell_index])
-                            vl.weights[wi]--;
-                    }
+                    float delta = params.lr * ((hc == target_ci) - hidden_probs[hidden_cell_index]);
+
+                    vl.weights[wi] = min(255, max(0, rand_cast(vl.weights[wi] + delta, state)));
                 }
             }
     }
