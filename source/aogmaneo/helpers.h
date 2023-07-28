@@ -398,7 +398,7 @@ float rand_normalf(
     unsigned int* state = &global_state
 );
 
-inline int rand_cast(
+inline int rand_roundf(
     float x,
     unsigned int* state = &global_state
 ) {

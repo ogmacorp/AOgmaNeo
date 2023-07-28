@@ -231,7 +231,7 @@ void Decoder::learn(
 
                     float delta = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * vl.gates[visible_column_index];
 
-                    vl.weights[wi] = min(255, max(0, rand_cast(vl.weights[wi] + delta, state)));
+                    vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
                 }
 
                 int wi = wi_offset + hidden_cell_index_target * hidden_stride;
