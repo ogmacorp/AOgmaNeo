@@ -32,17 +32,23 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
+        Byte_Buffer usages;
+
+        Float_Buffer gates;
+
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
         float temperature; // temperature of softmax, MUST be > 0
         float lr; // learning rate
+        float gcurve; // gain curve for anti-forget
 
         Params()
         :
         temperature(0.1f),
-        lr(16.0f)
+        lr(16.0f),
+        gcurve(8.0f)
         {}
     };
 
@@ -64,6 +70,12 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
