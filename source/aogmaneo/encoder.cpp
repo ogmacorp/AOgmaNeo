@@ -227,8 +227,7 @@ void Encoder::learn(
         }
     }
 
-    if (max_index == target_ci)
-        return;
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -250,9 +249,11 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    float delta = params.lr * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)) * hidden_gates[hidden_column_index];
+                    float curb = vl.weights[wi] * byte_inv;
 
-                    vl.weights[wi] = min(255, max(0, rand_cast(vl.weights[wi] + delta, state)));
+                    float delta = params.lr * curb * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)) * hidden_gates[hidden_column_index];
+
+                    vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
                 }
 
                 int wi = target_ci + wi_start;

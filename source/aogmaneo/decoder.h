@@ -47,7 +47,7 @@ public:
         Params()
         :
         temperature(0.01f),
-        lr(4.0f),
+        lr(16.0f),
         gcurve(8.0f)
         {}
     };
@@ -57,9 +57,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer hidden_acts;
-
-    Float_Buffer hidden_probs;
+    Float_Buffer hidden_acts;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -161,8 +159,8 @@ public:
     }
 
     // get the hidden states (predictions)
-    const Float_Buffer &get_hidden_probs() const {
-        return hidden_probs;
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
     }
 
     // get the hidden size
