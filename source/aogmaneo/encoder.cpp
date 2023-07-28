@@ -250,7 +250,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    float delta = params.lr * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 0.5f) / params.temperature)) * hidden_gates[hidden_column_index];
+                    float delta = params.lr * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)) * hidden_gates[hidden_column_index];
 
                     vl.weights[wi] = min(255, max(0, rand_cast(vl.weights[wi] + delta, state)));
                 }
@@ -294,7 +294,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - rand() % init_weight_noise;
+            vl.weights[i] = 255 - rand() % init_weight_noise;
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
