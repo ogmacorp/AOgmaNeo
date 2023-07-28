@@ -403,9 +403,11 @@ inline int rand_cast(
     unsigned int* state = &global_state
 ) {
     int i = static_cast<int>(x);
-    float rem = x - i;
+    float rem = abs(x - i);
 
-    return i + (randf(state) < rem);
+    int s = (x > 0.0f) * 2 - 1;
+
+    return i + (randf(state) < rem) * s;
 }
 
 // --- serialization ---
