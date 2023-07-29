@@ -250,7 +250,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    float delta = params.lr * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)) * hidden_gates[hidden_column_index];
+                    float delta = params.lr * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale)) * hidden_gates[hidden_column_index];
 
                     vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
                 }
