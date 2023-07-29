@@ -84,13 +84,12 @@ void Decoder::forward(
         }
     }
 
-    // find probabilities
     float total = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
-        hidden_acts[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) / params.temperature);
+        hidden_acts[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) * params.scale);
 
         total += hidden_acts[hidden_cell_index];
     }
@@ -193,8 +192,6 @@ void Decoder::learn(
     if (hidden_acts[hidden_cell_index_target] == -1.0f)
         return;
 
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -231,10 +228,7 @@ void Decoder::learn(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    float curb = vl.weights[wi] * byte_inv;
-                    curb *= 1.0f - curb;
-
-                    float delta = params.lr * curb * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * vl.gates[visible_column_index];
+                    float delta = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * vl.gates[visible_column_index];
 
                     vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
                 }

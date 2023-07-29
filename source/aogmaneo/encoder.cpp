@@ -227,8 +227,6 @@ void Encoder::learn(
         }
     }
 
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 hidden_pos = Int2(ix, iy);
@@ -244,16 +242,16 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                if (max_index != target_ci) {
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int visible_cell_index = vc + visible_cells_start;
 
-                    int wi = vc + wi_start;
+                        int wi = vc + wi_start;
 
-                    float curb = vl.weights[wi] * byte_inv;
+                        float delta = params.lr * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale)) * hidden_gates[hidden_column_index];
 
-                    float delta = params.lr * curb * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 1.0f) / params.temperature)) * hidden_gates[hidden_column_index];
-
-                    vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
+                        vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
+                    }
                 }
 
                 int wi = target_ci + wi_start;

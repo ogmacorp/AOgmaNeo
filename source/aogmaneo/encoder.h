@@ -45,15 +45,15 @@ public:
     };
 
     struct Params {
-        float temperature; // temperature of softmax, MUST be > 0
+        float scale; // scale of softmax
         float lr; // learning rate
         float gcurve; // gain curve for anti-forget
 
         Params()
         :
-        temperature(0.1f),
+        scale(16.0f),
         lr(1.0f),
-        gcurve(8.0f)
+        gcurve(4.0f)
         {}
     };
 
