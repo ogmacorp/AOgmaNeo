@@ -84,7 +84,6 @@ void Decoder::forward(
         }
     }
 
-    // find probabilities
     float total = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {

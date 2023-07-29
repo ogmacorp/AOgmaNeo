@@ -29,7 +29,7 @@ const float log2_e = 1.44269f;
 const float log2_e_inv = 1.0f / log2_e;
 const float limit_min = -999999.0f;
 const float limit_max = 999999.0f;
-const float limit_small = 0.0001f;
+const float limit_small = 0.000001f;
 
 const int init_weight_noise = 5;
 
