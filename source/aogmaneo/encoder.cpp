@@ -225,6 +225,8 @@ void Encoder::learn(
             max_activation = vl.recon_acts[visible_cell_index];
             max_index = vc;
         }
+
+        vl.recon_acts[visible_cell_index] = expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -248,7 +250,7 @@ void Encoder::learn(
 
                         int wi = vc + wi_start;
 
-                        float delta = params.lr * ((vc == target_ci) - expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale)) * hidden_gates[hidden_column_index];
+                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]) * hidden_gates[hidden_column_index];
 
                         vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
                     }
