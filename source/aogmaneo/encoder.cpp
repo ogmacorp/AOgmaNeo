@@ -294,8 +294,14 @@ void Encoder::init_random(
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % init_weight_noise;
+        if (vld.recurrent) {
+            for (int i = 0; i < vl.weights.size(); i++)
+                vl.weights[i] = rand() % 256;
+        }
+        else {
+            for (int i = 0; i < vl.weights.size(); i++)
+                vl.weights[i] = 255 - rand() % init_weight_noise;
+        }
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
@@ -348,6 +354,9 @@ void Encoder::step(
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
+
+            if (visible_layer_descs[vli].recurrent)
+                continue;
 
             unsigned int state = base_state + i * 12345;
 

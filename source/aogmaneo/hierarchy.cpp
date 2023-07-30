@@ -124,6 +124,7 @@ void Hierarchy::init_random(
         if (layer_descs[l].recurrent_radius >= 0) {
             e_visible_layer_descs[e_visible_layer_descs.size() - 1].size = layer_descs[l].hidden_size;
             e_visible_layer_descs[e_visible_layer_descs.size() - 1].radius = layer_descs[l].recurrent_radius;
+            e_visible_layer_descs[e_visible_layer_descs.size() - 1].recurrent = true;
         }
 
         // create the sparse coding layer
