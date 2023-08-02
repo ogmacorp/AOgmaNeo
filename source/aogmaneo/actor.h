@@ -31,7 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer value_weights; // value function weights
-        Float_Buffer action_weights; // action function weights
+        Byte_Buffer action_weights; // action function weights
     };
 
     // history sample for delayed updates
@@ -43,6 +43,7 @@ public:
     };
 
     struct Params {
+        float scale; // softmax scale
         float vlr; // value learning rate
         float alr; // action learning rate
         float bias; // bias towards positive updates
@@ -53,13 +54,14 @@ public:
 
         Params()
         :
+        scale(16.0f),
         vlr(0.01f),
-        alr(0.01f),
+        alr(0.2f),
         bias(0.5f),
         discount(0.99f),
         temperature(1.0f),
         min_steps(16),
-        history_iters(16)
+        history_iters(32)
         {}
     };
 
@@ -96,6 +98,7 @@ private:
         float r,
         float d,
         float mimic,
+        unsigned int* state,
         const Params &params
     );
 

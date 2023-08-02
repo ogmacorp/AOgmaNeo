@@ -45,7 +45,7 @@ public:
     };
 
     struct Params {
-        float scale; // scale of softmax
+        float scale; // scale of exp
         float lr; // learning rate
         float gcurve; // gain curve for anti-forget
 

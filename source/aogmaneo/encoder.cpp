@@ -51,7 +51,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float scale = vl.importance / sub_count;
+        float influence = vl.importance / sub_count;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -68,7 +68,7 @@ void Encoder::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * influence;
                 }
             }
     }
