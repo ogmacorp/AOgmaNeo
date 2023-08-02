@@ -53,11 +53,13 @@ void Actor::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
+        const Int_Buffer &vl_input_cis = *input_cis[vli];
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int in_ci = (*input_cis[vli])[visible_column_index];
+                int in_ci = vl_input_cis[visible_column_index];
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -358,7 +360,7 @@ void Actor::init_random(
         vl.action_weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.action_weights.size(); i++)
-            vl.action_weights[i] = 127 + rand() % init_weight_noise - init_weight_noise / 2;
+            vl.action_weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
