@@ -53,6 +53,8 @@ void Image_Encoder::forward(
 
             count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
+            const Byte_Buffer &vl_inputs = *inputs[vli];
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -66,7 +68,7 @@ void Image_Encoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        int input = (*inputs[vli])[vc + i_start];
+                        int input = vl_inputs[vc + i_start];
 
                         sum += min(input, static_cast<int>(vl.weights0[wi])) + min(255 - input, static_cast<int>(vl.weights1[wi]));
                         total += vl.weights0[wi];
@@ -116,6 +118,8 @@ void Image_Encoder::forward(
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+            const Byte_Buffer &vl_inputs = *inputs[vli];
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -129,7 +133,7 @@ void Image_Encoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        int input = (*inputs[vli])[vc + i_start];
+                        int input = vl_inputs[vc + i_start];
 
                         vl.weights0[wi] = max(0, vl.weights0[wi] + roundf(params.lr * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
                         vl.weights1[wi] = max(0, vl.weights1[wi] + roundf(params.lr * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
