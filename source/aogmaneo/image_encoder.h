@@ -30,22 +30,24 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0;
-        Byte_Buffer weights1;
+        Byte_Buffer protos;
+        Byte_Buffer weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float choice;
-        float vigilance;
+        float scale;
+        float falloff;
         float lr; // learning rate
+        float rr; // reconstruction rate
         
         Params()
         :
-        choice(0.01f),
-        vigilance(0.99f),
-        lr(0.5f)
+        scale(2.0f),
+        falloff(0.9f),
+        lr(0.1f),
+        rr(0.1f)
         {}
     };
 
@@ -53,6 +55,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer hidden_rates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -63,7 +67,15 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Byte_Buffer*> &inputs,
-        bool learn_enabled
+        bool learn_enabled,
+        unsigned int* state
+    );
+
+    void learn_reconstruction(
+        const Int2 &column_pos,
+        const Byte_Buffer* inputs,
+        int vli,
+        unsigned int* state
     );
 
     void reconstruct(
