@@ -54,9 +54,9 @@ public:
 
         Params()
         :
-        scale(16.0f),
+        scale(32.0f),
         vlr(0.01f),
-        alr(0.2f),
+        alr(0.1f),
         bias(0.5f),
         discount(0.99f),
         temperature(1.0f),
