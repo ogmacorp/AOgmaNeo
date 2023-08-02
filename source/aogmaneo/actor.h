@@ -46,7 +46,6 @@ public:
         float scale; // softmax scale
         float vlr; // value learning rate
         float alr; // action learning rate
-        float bias; // bias towards positive updates
         float discount; // discount fActor
         float temperature; // exploration amount
         int min_steps; // minimum steps before sample can be used
@@ -57,11 +56,10 @@ public:
         scale(32.0f),
         vlr(0.01f),
         alr(0.1f),
-        bias(0.5f),
         discount(0.99f),
         temperature(1.0f),
         min_steps(16),
-        history_iters(32)
+        history_iters(16)
         {}
     };
 
