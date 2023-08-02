@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
+        Byte_Buffer weights;
         Int_Buffer indices;
         
         float importance;
@@ -75,6 +75,7 @@ private:
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
         bool learn_enabled,
+        unsigned int* state,
         const Params &params
     );
 
