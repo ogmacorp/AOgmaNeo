@@ -165,8 +165,6 @@ void Actor::learn(
 
     int target_ci = history_samples[t - 1].hidden_target_cis_prev[hidden_column_index];
 
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
     // clear
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -351,12 +349,8 @@ void Actor::learn(
 
                     float delta = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
 
-                    vl.weights[wi] += delta;
+                    vl.weights[wi] += delta * vl.gates[visible_column_index];
                 }
-
-                int wi = wi_offset + hidden_cell_index_target * hidden_stride;
-
-                vl.usages[wi] = min(255, vl.usages[wi] + 1);
             }
     }
 }
