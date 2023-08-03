@@ -31,11 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer value_weights; // value function weights
-        Byte_Buffer action_weights; // action function weights
-
-        Byte_Buffer usages;
-
-        Float_Buffer gates;
+        Float_Buffer action_weights; // action function weights
     };
 
     // history sample for delayed updates
@@ -47,23 +43,19 @@ public:
     };
 
     struct Params {
-        float scale; // softmax scale
         float vlr; // value learning rate
         float alr; // action learning rate
         float discount; // discount fActor
         float temperature; // exploration amount
-        float gcurve; // gain curve
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        scale(32.0f),
-        vlr(0.1f),
-        alr(0.2f),
+        vlr(0.01f),
+        alr(0.01f),
         discount(0.99f),
         temperature(1.0f),
-        gcurve(4.0f),
         min_steps(16),
         history_iters(16)
         {}
@@ -87,8 +79,6 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-
     // --- kernels ---
 
     void forward(
@@ -98,25 +88,12 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        int t,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         int t,
         float r,
         float d,
         float mimic,
-        unsigned int* state,
-        const Params &params
-    );
-
-    void update_usages(
-        const Int2 &column_pos,
         const Params &params
     );
 
