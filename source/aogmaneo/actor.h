@@ -52,7 +52,7 @@ public:
         Params()
         :
         lr(0.01f),
-        cons(1.0f),
+        cons(0.1f),
         discount(0.99f),
         history_iters(16)
         {}
