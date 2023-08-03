@@ -103,7 +103,6 @@ public:
         const Int_Buffer* hidden_target_cis_prev,
         float reward,
         bool learn_enabled,
-        float mimic,
         const Params &params
     );
 
