@@ -32,6 +32,10 @@ public:
     struct Visible_Layer {
         Float_Buffer value_weights; // value function weights
         Byte_Buffer action_weights; // action function weights
+
+        Byte_Buffer usages;
+
+        Float_Buffer gates;
     };
 
     // history sample for delayed updates
@@ -48,16 +52,18 @@ public:
         float alr; // action learning rate
         float discount; // discount fActor
         float temperature; // exploration amount
+        float gcurve; // gain curve
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
         scale(32.0f),
-        vlr(0.01f),
-        alr(0.1f),
+        vlr(0.1f),
+        alr(0.5f),
         discount(0.99f),
         temperature(1.0f),
+        gcurve(2.0f),
         min_steps(16),
         history_iters(16)
         {}
@@ -90,6 +96,13 @@ private:
         const Params &params
     );
 
+    void update_gates(
+        const Int2 &column_pos,
+        int vli,
+        int t,
+        const Params &params
+    );
+
     void learn(
         const Int2 &column_pos,
         int t,
@@ -97,6 +110,11 @@ private:
         float d,
         float mimic,
         unsigned int* state,
+        const Params &params
+    );
+
+    void update_usages(
+        const Int2 &column_pos,
         const Params &params
     );
 
