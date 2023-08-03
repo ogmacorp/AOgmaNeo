@@ -13,7 +13,6 @@ using namespace aon;
 void Actor::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    unsigned int* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -219,6 +218,8 @@ void Actor::learn(
     float value = history_samples[t - 1].reward + params.discount * max_activation_next;
     float value_prev = hidden_acts[target_ci + hidden_cells_start];
 
+    float td_error = value - value_prev;
+
     // softmax
     float total = 0.0f;
 
@@ -274,7 +275,7 @@ void Actor::learn(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    float delta = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * (value - value_prev));
+                    float delta = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
 
                     vl.weights[wi] += delta;
                 }
@@ -347,14 +348,9 @@ void Actor::step(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
     // forward kernel
-    unsigned int base_state = rand();
-
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned int state = base_state + i * 12345;
-
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     history_samples.push_front();
 
