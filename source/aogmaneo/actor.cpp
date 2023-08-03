@@ -82,7 +82,7 @@ void Actor::forward(
     hidden_values[hidden_column_index] = value;
 
     if (params.temperature > 0.0f) {
-        float max_activation = 0.0f;
+        float max_activation = limit_min;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
