@@ -547,9 +547,11 @@ void Actor::step(
                 learn(Int2(i / hidden_size.y, i % hidden_size.y), t, params);
         }
 
-        PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            update_usages(Int2(i / hidden_size.y, i % hidden_size.y), params);
+        if (history_size == history_samples.size()) {
+            PARALLEL_FOR
+            for (int i = 0; i < num_hidden_columns; i++)
+                update_usages(Int2(i / hidden_size.y, i % hidden_size.y), params);
+        }
     }
 }
 
