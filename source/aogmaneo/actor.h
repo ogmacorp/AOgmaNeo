@@ -54,10 +54,10 @@ public:
 
         Params()
         :
-        lr(0.5f),
+        lr(0.1f),
         cons(0.0f),
         discount(0.99f),
-        gcurve(4.0f),
+        gcurve(1.0f),
         history_iters(16)
         {}
     };
