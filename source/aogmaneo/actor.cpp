@@ -388,8 +388,6 @@ void Actor::update_usages(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int hidden_stride = vld.size.z * diam * diam;
-
         const Int_Buffer &vl_input_cis = history_samples[t].input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -400,9 +398,7 @@ void Actor::update_usages(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
-
-                int wi = wi_offset + hidden_cell_index_target * hidden_stride;
+                int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_target));
 
                 vl.usages[wi] = min(255, vl.usages[wi] + 1);
             }
