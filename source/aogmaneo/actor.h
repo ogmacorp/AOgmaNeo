@@ -58,8 +58,8 @@ public:
         lr(0.1f),
         cons(0.0f),
         discount(0.99f),
-        gcurve(2.0f),
-        n_steps(5),
+        gcurve(4.0f),
+        n_steps(4),
         history_iters(16)
         {}
     };
