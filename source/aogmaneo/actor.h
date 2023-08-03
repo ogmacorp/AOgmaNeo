@@ -50,6 +50,7 @@ public:
         float cons; // convervativeness
         float discount; // discount fActor
         float gcurve; // gate gain
+        int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
@@ -57,7 +58,8 @@ public:
         lr(0.1f),
         cons(0.0f),
         discount(0.99f),
-        gcurve(1.0f),
+        gcurve(2.0f),
+        n_steps(5),
         history_iters(16)
         {}
     };

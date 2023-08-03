@@ -198,7 +198,7 @@ void Actor::learn(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        const Int_Buffer &vl_input_cis = history_samples[t - 1].input_cis[vli];
+        const Int_Buffer &vl_input_cis = history_samples[t - params.n_steps].input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -285,7 +285,11 @@ void Actor::learn(
         max_activation = max(max_activation, hidden_acts[hidden_cell_index]);
     }
 
-    float value = history_samples[t - 1].reward + params.discount * max_activation_next;
+    float value = max_activation_next;
+
+    for (int n = params.n_steps; n >= 1; n--)
+        value = history_samples[t - n].reward + params.discount * value;
+
     float value_prev = hidden_acts[target_ci + hidden_cells_start];
 
     float td_error = value - value_prev;
@@ -519,9 +523,9 @@ void Actor::step(
     }
 
     // learn (if have sufficient samples)
-    if (learn_enabled && history_size > 1) {
+    if (learn_enabled && history_size > params.n_steps) {
         for (int it = 0; it < params.history_iters; it++) {
-            int t = rand() % (history_size - 1) + 1;
+            int t = rand() % (history_size - params.n_steps) + params.n_steps;
 
             // update gates
             PARALLEL_FOR
