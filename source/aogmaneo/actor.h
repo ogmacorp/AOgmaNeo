@@ -33,6 +33,8 @@ public:
         Float_Buffer weights;
 
         Byte_Buffer usages;
+
+        Float_Buffer gates;
     };
 
     // history sample for delayed updates
@@ -47,6 +49,7 @@ public:
         float lr; // value learning rate
         float cons; // convervativeness
         float discount; // discount fActor
+        float gcurve; // gate gain
         int history_iters; // number of iterations over samples
 
         Params()
@@ -54,6 +57,7 @@ public:
         lr(0.01f),
         cons(0.0f),
         discount(0.99f),
+        gcurve(4.0f),
         history_iters(16)
         {}
     };
@@ -74,6 +78,8 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
+
     // --- kernels ---
 
     void forward(
@@ -82,9 +88,21 @@ private:
         const Params &params
     );
 
+    void update_gates(
+        const Int2 &column_pos,
+        int vli,
+        int t,
+        const Params &params
+    );
+
     void learn(
         const Int2 &column_pos,
         int t,
+        const Params &params
+    );
+
+    void update_usages(
+        const Int2 &column_pos,
         const Params &params
     );
 
