@@ -70,7 +70,7 @@ void Actor::forward(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.action_weights[wi];
+                    hidden_acts[hidden_cell_index] += vl.weights[wi];
                 }
 
                 value += vl.value_weights[wi_offset + hidden_column_index * hidden_stride];
@@ -242,7 +242,7 @@ void Actor::learn(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    hidden_acts[hidden_cell_index] += vl.action_weights[wi];
+                    hidden_acts[hidden_cell_index] += vl.weights[wi];
                 }
 
                 vl.value_weights[wi_offset + hidden_column_index * hidden_stride] += delta_value;
@@ -319,7 +319,7 @@ void Actor::learn(
 
                     float delta_action = rate * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
-                    vl.action_weights[wi] = min(255, max(0, rand_roundf(vl.action_weights[wi] + delta_action, state)));
+                    vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta_action, state)));
                 }
             }
     }
@@ -357,10 +357,10 @@ void Actor::init_random(
         for (int i = 0; i < vl.value_weights.size(); i++)
             vl.value_weights[i] = randf(-0.01f, 0.01f);
 
-        vl.action_weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        for (int i = 0; i < vl.action_weights.size(); i++)
-            vl.action_weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -428,28 +428,13 @@ void Actor::step(
     }
 
     // learn (if have sufficient samples)
-    if (learn_enabled && history_size > params.min_steps) {
+    if (learn_enabled && history_size > 1) {
         for (int it = 0; it < params.history_iters; it++) {
-            int t = rand() % (history_size - params.min_steps) + params.min_steps;
-
-            // compute (partial) values, rest is completed in the kernel
-            float r = 0.0f;
-            float d = 1.0f;
-
-            for (int t2 = t - 1; t2 >= 0; t2--) {
-                r += history_samples[t2].reward * d;
-
-                d *= params.discount;
-            }
-
-            unsigned int base_state = rand();
+            int t = rand() % (history_size - 1) + 1;
 
             PARALLEL_FOR
-            for (int i = 0; i < num_hidden_columns; i++) {
-                unsigned int state = base_state + i * 12345;
-
-                learn(Int2(i / hidden_size.y, i % hidden_size.y), t, r, d, mimic, &state, params);
-            }
+            for (int i = 0; i < num_hidden_columns; i++)
+                learn(Int2(i / hidden_size.y, i % hidden_size.y), t, params);
         }
     }
 }
@@ -468,7 +453,7 @@ int Actor::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.value_weights.size() * sizeof(float) + vl.action_weights.size() * sizeof(Byte);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float);
     }
 
     size += 3 * sizeof(int);
@@ -522,8 +507,7 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
 
     writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
@@ -583,11 +567,9 @@ void Actor::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.value_weights.resize(num_hidden_columns * area * vld.size.z);
-        vl.action_weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
 
     reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
