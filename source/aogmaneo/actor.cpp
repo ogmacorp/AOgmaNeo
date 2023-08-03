@@ -151,12 +151,12 @@ void Actor::learn(
             }
     }
 
-    float max_activation = 0.0f;
+    float max_activation_next = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        max_activation = max(max_activation, hidden_acts[hidden_cell_index] / count);
+        max_activation_next = max(max_activation_next, hidden_acts[hidden_cell_index] / count);
 
         // clear again
         hidden_acts[hidden_cell_index] = 0.0f;
@@ -182,8 +182,6 @@ void Actor::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
         int hidden_stride = vld.size.z * diam * diam;
 
         const Int_Buffer &vl_input_cis = history_samples[t].input_cis[vli];
@@ -208,7 +206,17 @@ void Actor::learn(
             }
     }
 
-    float value_new = history_samples[t].reward + params.discount * max_activation;
+    float max_activation = limit_min;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] /= count;
+
+        max_activation = max(max_activation, hidden_acts[hidden_cell_index]);
+    }
+
+    float value = history_samples[t - 1].reward + params.discount * max_activation_next;
     float value_prev = hidden_acts[target_ci + hidden_cells_start];
 
     // softmax
@@ -266,7 +274,7 @@ void Actor::learn(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    float delta = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * (value_new - value_prev));
+                    float delta = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * (value - value_prev));
 
                     vl.weights[wi] += delta;
                 }
