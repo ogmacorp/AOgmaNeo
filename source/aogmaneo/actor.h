@@ -45,12 +45,14 @@ public:
 
     struct Params {
         float lr; // value learning rate
+        float cons; // convervativeness
         float discount; // discount fActor
         int history_iters; // number of iterations over samples
 
         Params()
         :
         lr(0.01f),
+        cons(1.0f),
         discount(0.99f),
         history_iters(16)
         {}
@@ -65,8 +67,6 @@ private:
     Float_Buffer hidden_acts; // temporary buffer
 
     Int_Buffer hidden_cis; // hidden states
-
-    Float_Buffer hidden_values; // hidden value function output buffer
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
@@ -86,10 +86,6 @@ private:
     void learn(
         const Int2 &column_pos,
         int t,
-        float r,
-        float d,
-        float mimic,
-        unsigned int* state,
         const Params &params
     );
 
