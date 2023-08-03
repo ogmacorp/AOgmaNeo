@@ -60,7 +60,7 @@ public:
         :
         scale(32.0f),
         vlr(0.1f),
-        alr(1.0f),
+        alr(0.5f),
         discount(0.99f),
         temperature(1.0f),
         gcurve(2.0f),
