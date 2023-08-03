@@ -60,10 +60,10 @@ public:
         :
         scale(32.0f),
         vlr(0.1f),
-        alr(0.5f),
+        alr(1.0f),
         discount(0.99f),
         temperature(1.0f),
-        gcurve(1.0f),
+        gcurve(2.0f),
         min_steps(16),
         history_iters(16)
         {}
