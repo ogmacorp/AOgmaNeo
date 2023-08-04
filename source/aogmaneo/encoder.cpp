@@ -140,7 +140,7 @@ void Encoder::update_gates(
             }
     }
 
-    hidden_gates[hidden_column_index] = expf(-(sum / 255.0f) / max(1, count) * params.gcurve);
+    hidden_gates[hidden_column_index] = expf(-static_cast<float>(sum) / max(1, count) * params.gcurve);
 }
 
 void Encoder::learn(

@@ -48,7 +48,7 @@ public:
         :
         scale(32.0f),
         lr(16.0f),
-        gcurve(4.0f)
+        gcurve(0.02f)
         {}
     };
 

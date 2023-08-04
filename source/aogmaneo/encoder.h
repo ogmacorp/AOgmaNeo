@@ -53,7 +53,7 @@ public:
         :
         scale(16.0f),
         lr(4.0f),
-        gcurve(4.0f)
+        gcurve(0.02f)
         {}
     };
 
