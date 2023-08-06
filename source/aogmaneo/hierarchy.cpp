@@ -193,9 +193,9 @@ void Hierarchy::step(
 
         for (int d = 0; d < decoders[l].size(); d++) {
             if (learn_enabled)
-                decoders[l][d].learn((l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+                decoders[l][d].learn((l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
         }
 
         if (l == 0) {

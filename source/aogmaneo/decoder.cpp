@@ -54,7 +54,7 @@ void Decoder::forward(
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x,  vld.size.y));
+                int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 int in_ci = vl_input_cis[visible_column_index];
 
@@ -173,7 +173,7 @@ void Decoder::update_gates(
             }
         }
 
-    vl.gates[visible_column_index] = expf(-(sum / 255.0f) / (max(1, count) * hidden_size.z) * params.gcurve);
+    vl.gates[visible_column_index] = expf(-static_cast<float>(sum) / (max(1, count) * hidden_size.z) * params.gcurve);
 }
 
 void Decoder::learn(
