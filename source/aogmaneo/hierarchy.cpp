@@ -18,6 +18,8 @@ void Hierarchy::init_random(
     encoders.resize(layer_descs.size());
     decoders.resize(layer_descs.size());
 
+    hidden_cis_prev.resize(layer_descs.size());
+
     // cache input sizes
     io_sizes.resize(io_descs.size());
     io_types.resize(io_descs.size());
@@ -42,7 +44,7 @@ void Hierarchy::init_random(
 
         // if first layer
         if (l == 0) {
-            e_visible_layer_descs.resize(io_sizes.size());
+            e_visible_layer_descs.resize(io_sizes.size() + (layer_descs[l].recurrent_radius >= 0));
 
             for (int i = 0; i < io_sizes.size(); i++) {
                 e_visible_layer_descs[i].size = io_sizes[i];
@@ -99,7 +101,7 @@ void Hierarchy::init_random(
             }
         }
         else {
-            e_visible_layer_descs.resize(1);
+            e_visible_layer_descs.resize(1 + (layer_descs[l].recurrent_radius >= 0));
 
             e_visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
             e_visible_layer_descs[0].radius = layer_descs[l].up_radius;
@@ -118,9 +120,16 @@ void Hierarchy::init_random(
             // create decoders
             decoders[l][0].init_random(layer_descs[l - 1].hidden_size, d_visible_layer_descs);
         }
+        
+        if (layer_descs[l].recurrent_radius >= 0) {
+            e_visible_layer_descs[e_visible_layer_descs.size() - 1].size = layer_descs[l].hidden_size;
+            e_visible_layer_descs[e_visible_layer_descs.size() - 1].radius = layer_descs[l].recurrent_radius;
+        }
 
         // create the sparse coding layer
-        encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].recurrent_radius, e_visible_layer_descs);
+        encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
+
+        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     // initialize params
@@ -143,12 +152,31 @@ void Hierarchy::step(
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
+        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+
         Array<const Int_Buffer*> layer_input_cis(encoders[l].get_num_visible_layers());
 
-        if (l == 0)
-            layer_input_cis = input_cis;
-        else
+        if (l == 0) {
+            for (int i = 0; i < io_sizes.size(); i++)
+                layer_input_cis[i] = input_cis[i];
+
+            if (layer_input_cis.size() > io_sizes.size()) {
+                layer_input_cis[io_sizes.size()] = &hidden_cis_prev[l];
+
+                // set importance
+                encoders[l].get_visible_layer(io_sizes.size()).importance = params.layers[l].recurrent_importance;
+            }
+        }
+        else {
             layer_input_cis[0] = &encoders[l - 1].get_hidden_cis();
+
+            if (layer_input_cis.size() > 1) {
+                layer_input_cis[1] = &hidden_cis_prev[l];
+
+                // set importance
+                encoders[l].get_visible_layer(1).importance = params.layers[l].recurrent_importance;
+            }
+        }
 
         // activate sparse coder
         encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
@@ -165,9 +193,9 @@ void Hierarchy::step(
 
         for (int d = 0; d < decoders[l].size(); d++) {
             if (learn_enabled)
-                decoders[l][d].learn((l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+                decoders[l][d].learn((l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[d].decoder : params.layers[l].decoder));
+            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
         }
 
         if (l == 0) {
@@ -299,6 +327,8 @@ void Hierarchy::read(
     encoders.resize(num_layers);
     decoders.resize(num_layers);
 
+    hidden_cis_prev.resize(num_layers);
+
     i_indices.resize(num_io * 2);
     d_indices.resize(num_io);
 
@@ -313,6 +343,8 @@ void Hierarchy::read(
         // decoders
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].read(reader);
+
+        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     actors.resize(num_actions);

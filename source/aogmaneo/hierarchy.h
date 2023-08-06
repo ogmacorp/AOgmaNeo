@@ -73,6 +73,13 @@ public:
     struct Layer_Params {
         Decoder::Params decoder;
         Encoder::Params encoder;
+
+        float recurrent_importance;
+
+        Layer_Params()
+        :
+        recurrent_importance(1.0f)
+        {}
     };
 
     struct IO_Params {
@@ -98,6 +105,8 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
+
+    Array<Int_Buffer> hidden_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -171,7 +180,7 @@ public:
     bool is_layer_recurrent(
         int l
     ) const {
-        return (encoders[l].get_recurrent_radius() >= 0);
+        return (l == 0 ? encoders[l].get_num_visible_layers() > io_sizes.size() : encoders[l].get_num_visible_layers() > 1);
     }
 
     // retrieve predictions
@@ -185,12 +194,13 @@ public:
     }
 
     // retrieve prediction activations
-    const Float_Buffer &get_prediction_probs(
+    const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        assert(io_types[i] == prediction);
+        if (io_types[i] == action)
+            return actors[d_indices[i]].get_hidden_acts();
 
-        return decoders[0][d_indices[i]].get_hidden_probs();
+        return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
     // number of io layers
