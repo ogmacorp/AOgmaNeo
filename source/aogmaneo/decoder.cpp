@@ -22,7 +22,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] = 0.0f;
+        hidden_sums[hidden_cell_index] = 0.0f;
     }
 
     int count = 0;
@@ -65,7 +65,7 @@ void Decoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi];
+                    hidden_sums[hidden_cell_index] += vl.weights[wi];
                 }
             }
     }
@@ -76,7 +76,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= count * 255;
+        hidden_acts[hidden_cell_index] = static_cast<float>(hidden_sums[hidden_cell_index]) / (count * 255);
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -278,6 +278,7 @@ void Decoder::init_random(
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
+    hidden_sums = Int_Buffer(num_hidden_cells); // flag
     hidden_acts = Float_Buffer(num_hidden_cells, -1.0f); // flag
 
     // generate helper buffers for parallelization
@@ -414,6 +415,8 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
+
+    hidden_sums.resize(num_hidden_cells);
 
     int num_visible_layers;
 
