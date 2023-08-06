@@ -68,7 +68,7 @@ void Encoder::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
@@ -187,7 +187,7 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+                int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
                 if (commit)
                     vl.indices[wi] = in_ci;

@@ -56,8 +56,6 @@ void Decoder::forward(
 
                 int in_ci = vl_input_cis[visible_column_index];
 
-                int visible_cell_index = in_ci + visible_column_index * vld.size.z;
-
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
@@ -155,15 +153,11 @@ void Decoder::update_gates(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cells_start = hidden_column_index * hidden_size.z;
-
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
                 for (int hc =  0; hc < hidden_size.z; hc++) {
-                    int hidden_cell_index = hc + hidden_cells_start;
-
                     int wi = hc + wi_start;
 
                     sum += vl.usages[wi];
