@@ -10,8 +10,6 @@
 
 using namespace aon;
 
-const float init_weight_lower = 0.99f;
-
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
@@ -178,7 +176,7 @@ void Encoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        float sub_total = 0.0f;
+        int sub_total = 0;
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -199,7 +197,7 @@ void Encoder::learn(
                 sub_total += vl.weights[wi];
             }
 
-        total += sub_total / sub_count * vl.importance;
+        total += static_cast<float>(sub_total) / (sub_count * 255) * vl.importance;
         total_importance += vl.importance;
     }
 
