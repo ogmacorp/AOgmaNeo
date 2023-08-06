@@ -58,8 +58,6 @@ void Encoder::forward(
 
         float influence = vl.importance / (sub_count * 255);
 
-        int hidden_stride = diam * diam;
-
         total_importance += vl.importance;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -70,12 +68,12 @@ void Encoder::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_offset = offset.y + diam * offset.x;
+                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    int wi = hc + wi_start;
 
                     if (vl.indices[wi] == -1) {
                         int full_wi = in_ci + vld.size.z * wi;
@@ -130,7 +128,9 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    if (learn_cis[hidden_column_index] == -1)
+    int learn_ci = learn_cis[hidden_column_index];
+
+    if (learn_ci == -1)
         return;
 
     float maximum = hidden_maxs[hidden_column_index];
@@ -150,7 +150,7 @@ void Encoder::learn(
             }
         }
 
-    int hidden_cell_index_max = learn_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
     bool commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
 
@@ -187,7 +187,7 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = offset.y + diam * (offset.x + diam * hidden_cell_index_max);
+                int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 if (commit)
                     vl.indices[wi] = in_ci;
