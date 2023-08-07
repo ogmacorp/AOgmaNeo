@@ -49,6 +49,8 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
+        int hidden_stride = vld.size.z * diam * diam;
+
         float influence = vl.importance / sub_count;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
@@ -61,12 +63,12 @@ void Encoder::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+                int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = hc + wi_start;
+                    int wi = wi_offset + hidden_cell_index * hidden_stride;
 
                     hidden_acts[hidden_cell_index] += vl.weights[wi] * influence;
                 }
