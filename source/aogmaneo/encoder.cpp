@@ -228,7 +228,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        vl.recon_acts[visible_cell_index] = expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale);
+        vl.recon_acts[visible_cell_index] = sigmoidf((vl.recon_acts[visible_cell_index] - 0.5f) * params.scale);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -297,7 +297,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % init_weight_noise;
+            vl.weights[i] = 127 + (rand() % init_weight_noise);
 
         vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
