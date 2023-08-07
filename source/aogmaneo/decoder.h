@@ -57,6 +57,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
+    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
 
     // visible layers and descs
