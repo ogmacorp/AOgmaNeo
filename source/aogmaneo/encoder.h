@@ -31,7 +31,6 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
-        Int_Buffer indices;
         
         float importance;
 
@@ -49,7 +48,7 @@ public:
 
         Params()
         :
-        choice(0.0001f),
+        choice(0.01f),
         vigilance(0.95f),
         lr(0.5f),
         l_radius(2)
@@ -58,8 +57,6 @@ public:
 
 private:
     Int3 hidden_size; // size of hidden/output layer
-
-    unsigned int weight_base_state;
 
     Int_Buffer hidden_cis;
 
