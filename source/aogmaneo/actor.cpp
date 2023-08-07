@@ -51,8 +51,6 @@ void Actor::forward(
 
         count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        int hidden_stride = vld.size.z * diam * diam;
-
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -63,17 +61,18 @@ void Actor::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
+                int value_wi = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_start = hidden_size.z * value_wi;
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    int wi = hc + wi_start;
 
                     hidden_acts[hidden_cell_index] += vl.action_weights[wi];
                 }
 
-                value += vl.value_weights[wi_offset + hidden_column_index * hidden_stride];
+                value += vl.value_weights[value_wi];
             }
     }
 
@@ -188,7 +187,7 @@ void Actor::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                value += vl.value_weights[in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index))];
+                value += vl.value_weights[offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))];
             }
     }
 
@@ -234,17 +233,18 @@ void Actor::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
+                int value_wi = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_start = hidden_size.z * value_wi;
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    int wi = hc + wi_start;
 
                     hidden_acts[hidden_cell_index] += vl.action_weights[wi];
                 }
 
-                vl.value_weights[wi_offset + hidden_column_index * hidden_stride] += delta_value;
+                vl.value_weights[value_wi] += delta_value;
             }
     }
 
@@ -309,12 +309,12 @@ void Actor::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
+                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    int wi = hc + wi_start;
 
                     float delta_action = rate * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
