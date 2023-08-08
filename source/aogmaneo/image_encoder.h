@@ -68,14 +68,14 @@ private:
         const Int2 &column_pos,
         const Array<const Byte_Buffer*> &inputs,
         bool learn_enabled,
-        unsigned int* state
+        unsigned long* state
     );
 
     void learn_reconstruction(
         const Int2 &column_pos,
         const Byte_Buffer* inputs,
         int vli,
-        unsigned int* state
+        unsigned long* state
     );
 
     void reconstruct(
