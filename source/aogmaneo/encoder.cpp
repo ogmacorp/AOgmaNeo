@@ -147,7 +147,7 @@ void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
     int vli,
-    unsigned int* state,
+    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -227,9 +227,9 @@ void Encoder::learn(
             max_activation = vl.recon_acts[visible_cell_index];
             max_index = vc;
         }
-    }
 
-    float byte_inv = 1.0f / 255.0f;
+        vl.recon_acts[visible_cell_index] = expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale);
+    }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -246,14 +246,16 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                if (max_index != target_ci) {
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int visible_cell_index = vc + visible_cells_start;
 
-                    int wi = vc + wi_start;
+                        int wi = vc + wi_start;
 
-                    float delta = params.lr * ((vc == target_ci) - vl.weights[wi] * byte_inv) * vl.recon_acts[visible_cell_index] * hidden_gates[hidden_column_index];
+                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]) * hidden_gates[hidden_column_index];
 
-                    vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
+                        vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
+                    }
                 }
 
                 int wi = target_ci + wi_start;
@@ -349,7 +351,7 @@ void Encoder::step(
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            unsigned int state = base_state + i * 12345;
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
             learn(pos, input_cis[vli], vli, &state, params);
         }

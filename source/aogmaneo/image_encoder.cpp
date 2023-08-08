@@ -14,7 +14,7 @@ void Image_Encoder::forward(
     const Int2 &column_pos,
     const Array<const Byte_Buffer*> &inputs,
     bool learn_enabled,
-    unsigned int* state
+    unsigned long* state
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
@@ -147,7 +147,7 @@ void Image_Encoder::learn_reconstruction(
     const Int2 &column_pos,
     const Byte_Buffer* inputs,
     int vli,
-    unsigned int* state
+    unsigned long* state
 ) {
     Visible_Layer &vl = visible_layers[vli];
     Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -348,7 +348,7 @@ void Image_Encoder::step(
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned int state = base_state + i * 12345;
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
         forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled, &state);
     }
@@ -363,7 +363,7 @@ void Image_Encoder::step(
 
             PARALLEL_FOR
             for (int i = 0; i < num_visible_columns; i++) {
-                unsigned int state = base_state + i * 12345;
+                unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
                 learn_reconstruction(Int2(i / vld.size.y, i % vld.size.y), inputs[vli], vli, &state);
             }
