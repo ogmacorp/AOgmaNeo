@@ -111,7 +111,6 @@ void Encoder::forward(
 void Encoder::learn(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    unsigned int* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -123,7 +122,7 @@ void Encoder::learn(
     if (learn_ci == -1)
         return;
 
-    float maximum = hidden_maxs[hidden_column_index];
+    float hidden_max = hidden_maxs[hidden_column_index];
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
@@ -135,7 +134,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_maxs[other_hidden_column_index] >= maximum)
+                if (hidden_maxs[other_hidden_column_index] >= hidden_max)
                     return;
             }
         }
@@ -179,7 +178,7 @@ void Encoder::learn(
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     if (vc != in_ci)
-                        vl.weights[wi] = max(0, rand_roundf(vl.weights[wi] - params.lr * vl.weights[wi], state));
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                     sub_total += vl.weights[wi];
                 }
@@ -248,14 +247,9 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        unsigned int base_state = rand();
-
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++) {
-            unsigned int state = base_state + i * 12345;
-
-            learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
-        }
+        for (int i = 0; i < num_hidden_columns; i++)
+            learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
     }
 }
 
