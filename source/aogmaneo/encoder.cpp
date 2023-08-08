@@ -153,8 +153,6 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
-    bool commit = (hidden_totals[hidden_cell_index_max] == 1.0f);
-
     float total = 0.0f;
     float total_importance = 0.0f;
 
@@ -192,7 +190,7 @@ void Encoder::learn(
 
                 int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                if (commit)
+                if (vl.indices[wi] == -1)
                     vl.indices[wi] = in_ci;
                 else if (vl.indices[wi] != in_ci)
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
