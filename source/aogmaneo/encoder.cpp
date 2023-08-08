@@ -30,7 +30,7 @@ void Encoder::forward(
     float max_match = 0.0f;
 
     int max_complete_index = 0;
-    float max_complete_match = 0.0f;
+    float max_complete_activation = 0.0f;
 
     float total_importance = 0.0f;
 
@@ -105,8 +105,8 @@ void Encoder::forward(
             }
         }
 
-        if (hidden_matches[hidden_cell_index] > max_complete_match) {
-            max_complete_match = hidden_matches[hidden_cell_index];
+        if (activation > max_complete_activation) {
+            max_complete_activation = activation;
             max_complete_index = hc;
         }
     }
