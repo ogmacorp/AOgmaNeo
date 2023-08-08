@@ -268,7 +268,7 @@ unsigned int aon::rand(
 float aon::randf(
     unsigned long* state
 ) {
-    return static_cast<float>(rand(state)) / static_cast<float>(rand_max);
+    return static_cast<float>(rand(state) % rand_max) / static_cast<float>(rand_max);
 }
 
 float aon::randf(
