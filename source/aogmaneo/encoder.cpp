@@ -105,7 +105,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_match;
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
 
 void Encoder::learn(
