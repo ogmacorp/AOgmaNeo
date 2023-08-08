@@ -13,7 +13,7 @@ using namespace aon;
 void Actor::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    unsigned int* state,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -401,7 +401,7 @@ void Actor::step(
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned int state = base_state + i * 12345;
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
     }

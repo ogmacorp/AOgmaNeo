@@ -79,7 +79,7 @@ void Encoder::forward(
                     if (vl.indices[wi] == -1) {
                         int full_wi = in_ci + vld.size.z * wi;
 
-                        unsigned int state = weight_base_state + full_wi;
+                        unsigned long state = rand_get_state(weight_base_state + full_wi * rand_subseed_offset);
 
                         vl.weights[wi] = 255 - rand(&state) % init_weight_noise;
 

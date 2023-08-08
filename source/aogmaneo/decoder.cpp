@@ -173,7 +173,7 @@ void Decoder::update_gates(
 void Decoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* hidden_target_cis,
-    unsigned int* state,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -338,7 +338,7 @@ void Decoder::learn(
     // learn kernel
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned int state = base_state + i * 12345;
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
         learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, &state, params);
     }
