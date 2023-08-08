@@ -121,7 +121,6 @@ void Encoder::forward(
 void Encoder::learn(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    unsigned int* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -192,7 +191,7 @@ void Encoder::learn(
                 if (commit)
                     vl.indices[wi] = in_ci;
                 else if (vl.indices[wi] != in_ci)
-                    vl.weights[wi] = max(0, rand_roundf(vl.weights[wi] - params.lr * vl.weights[wi], state));
+                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                 sub_total += vl.weights[wi];
             }
@@ -260,14 +259,9 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        unsigned int base_state = rand();
-
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++) {
-            unsigned int state = base_state + i * 12345;
-
-            learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
-        }
+        for (int i = 0; i < num_hidden_columns; i++)
+            learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
     }
 }
 

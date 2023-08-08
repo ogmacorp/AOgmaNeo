@@ -49,8 +49,8 @@ public:
 
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.95f),
+        choice(1.0f),
+        vigilance(0.9f),
         lr(0.5f),
         l_radius(2)
         {}
@@ -86,7 +86,6 @@ private:
     void learn(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        unsigned int* state,
         const Params &params
     );
 
