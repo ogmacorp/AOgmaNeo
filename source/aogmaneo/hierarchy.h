@@ -59,7 +59,7 @@ public:
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
-            int recurrent_radius = 2,
+            int recurrent_radius = 0,
             int down_radius = 2
         )
         :
@@ -78,7 +78,7 @@ public:
 
         Layer_Params()
         :
-        recurrent_importance(0.5f)
+        recurrent_importance(1.0f)
         {}
     };
 
