@@ -76,7 +76,7 @@ void Encoder::forward(
     }
 
     int max_index = 0;
-    float max_activation = 0.0f;
+    float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -147,7 +147,7 @@ void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
     int vli,
-    unsigned long* state,
+    unsigned int* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -216,19 +216,19 @@ void Encoder::learn(
         }
 
     int max_index = 0;
-    float max_activation = 0.0f;
+    float max_activation = limit_min;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        vl.recon_acts[visible_cell_index] /= max(1, count) * 255;
+        vl.recon_acts[visible_cell_index] /= max(1, count);
 
         if (vl.recon_acts[visible_cell_index] > max_activation) {
             max_activation = vl.recon_acts[visible_cell_index];
             max_index = vc;
         }
 
-        vl.recon_acts[visible_cell_index] = expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale);
+        vl.recon_acts[visible_cell_index] = expf(vl.recon_acts[visible_cell_index] - 1.0f);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -254,7 +254,7 @@ void Encoder::learn(
 
                         float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]) * hidden_gates[hidden_column_index];
 
-                        vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
+                        vl.weights[wi] += delta;
                     }
                 }
 
@@ -297,9 +297,9 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - rand() % init_weight_noise_high;
+            vl.weights[i] = randf(0.99f, 1.0f);
 
-        vl.usages = Byte_Buffer(vl.weights.size(), 0);
+        vl.usages = Int_Buffer(vl.weights.size(), 0);
 
         vl.recon_acts.resize(num_visible_cells);
     }
@@ -351,7 +351,7 @@ void Encoder::step(
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+            unsigned int state = base_state + i * 12345;
 
             learn(pos, input_cis[vli], vli, &state, params);
         }
@@ -368,7 +368,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float) + vl.usages.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
@@ -395,8 +395,8 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
@@ -444,8 +444,8 @@ void Encoder::read(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
         vl.usages.resize(vl.weights.size());
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(int));
 
         vl.recon_acts.resize(num_visible_cells);
 

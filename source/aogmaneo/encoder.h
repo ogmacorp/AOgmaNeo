@@ -30,9 +30,9 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights;
 
-        Byte_Buffer usages;
+        Int_Buffer usages;
 
         Float_Buffer recon_acts;
 
@@ -45,14 +45,12 @@ public:
     };
 
     struct Params {
-        float scale; // scale of exp
         float lr; // learning rate
         float gcurve; // gain curve for anti-forget
 
         Params()
         :
-        scale(16.0f),
-        lr(4.0f),
+        lr(1.0f),
         gcurve(0.02f)
         {}
     };
@@ -89,7 +87,7 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
-        unsigned long* state,
+        unsigned int* state,
         const Params &params
     );
 
