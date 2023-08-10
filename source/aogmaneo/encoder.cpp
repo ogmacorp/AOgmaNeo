@@ -22,7 +22,7 @@ void Encoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     if (learn_enabled) {
-        int hidden_cell_index_prev = hidden_cis[hidden_column_index] + hidden_cells_start;
+        int hidden_ci_prev = hidden_cis[hidden_column_index];
 
         float delta = params.lr * (*errors)[hidden_column_index] * hidden_gates[hidden_column_index];
 
@@ -53,11 +53,11 @@ void Encoder::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_prev));
+                    int wi = hidden_ci_prev + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
                     vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta * vl.weights[wi] * (1.0f - vl.weights[wi])));
 
-                    vl.usages[wi] = min(255, vl.usages[wi] + 1);
+                    vl.usages[wi] = min(max_usage, vl.usages[wi] + 1);
                 }
         }
     }
@@ -92,9 +92,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        float scale = vl.importance / sub_count;
-
-        int hidden_stride = vld.size.z * diam * diam;
+        float influence = vl.importance / sub_count;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -104,14 +102,14 @@ void Encoder::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
+                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int wi = wi_offset + hidden_cell_index * hidden_stride;
+                    int wi = hc + wi_start;
 
-                    hidden_acts[hidden_cell_index] += vl.weights[wi] * scale;
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * influence;
                 }
             }
     }
@@ -139,7 +137,7 @@ void Encoder::update_gates(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     int sum = 0;
     int count = 0;
@@ -171,10 +169,8 @@ void Encoder::update_gates(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
-
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wi_start;
+                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     sum += vl.usages[wi];
                 }
@@ -214,7 +210,7 @@ void Encoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf();
 
-        vl.usages = Byte_Buffer(vl.weights.size(), 0);
+        vl.usages = Int_Buffer(vl.weights.size(), 0);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }

@@ -32,7 +32,7 @@ public:
     struct Visible_Layer {
         Float_Buffer weights;
 
-        Byte_Buffer usages;
+        Int_Buffer usages;
 
         Int_Buffer input_cis_prev;
         
