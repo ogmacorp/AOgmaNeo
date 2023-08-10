@@ -177,7 +177,7 @@ void Encoder::update_gates(
             }
     }
 
-    hidden_gates[hidden_column_index] = expf(-(sum / 255.0f) / count * params.gcurve);
+    hidden_gates[hidden_column_index] = expf(-static_cast<float>(sum) / count * params.gcurve);
 }
 
 void Encoder::init_random(
