@@ -292,8 +292,9 @@ void Decoder::generate_errors(
                     int wi = hc + wi_start;
 
                     sum += vl.weights[wi] * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
-                    count++;
                 }
+
+                count++;
             }
         }
 
@@ -436,7 +437,7 @@ int Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float) + vl.usages.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(float) + vl.usages.size() * sizeof(int) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -473,7 +474,7 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(int));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
@@ -520,7 +521,7 @@ void Decoder::read(
         vl.usages.resize(vl.weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(int));
 
         vl.gates.resize(num_visible_columns);
 
