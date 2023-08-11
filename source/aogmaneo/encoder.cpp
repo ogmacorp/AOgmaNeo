@@ -91,8 +91,6 @@ void Encoder::forward(
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
-
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - 1.0f);
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -254,7 +252,7 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                if (hidden_acts[hidden_cell_index_max] > params.vigilance) {
+                if (hidden_acts[hidden_cell_index_max] >= params.vigilance) {
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int visible_cell_index = vc + visible_cells_start;
 
