@@ -91,6 +91,8 @@ void Encoder::forward(
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
+
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - 1.0f);
     }
 
     hidden_cis[hidden_column_index] = max_index;
