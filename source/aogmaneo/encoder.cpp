@@ -153,7 +153,6 @@ void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
     int vli,
-    unsigned int* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -348,16 +347,12 @@ void Encoder::step(
         for (int i = 0; i < num_hidden_columns; i++)
             update_gates(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
-        unsigned int base_state = rand();
-
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            unsigned int state = base_state + i * 12345;
-
-            learn(pos, input_cis[vli], vli, &state, params);
+            learn(pos, input_cis[vli], vli, params);
         }
     }
 }
