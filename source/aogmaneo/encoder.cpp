@@ -25,6 +25,8 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
+    float total_importance = 0.0f;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -53,6 +55,8 @@ void Encoder::forward(
 
         float influence = vl.importance / sub_count;
 
+        total_importance += vl.importance;
+
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -80,6 +84,8 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -246,6 +252,7 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
+                if (hidden_acts[hidden_cell_index_max] > params.vigilance) {
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int visible_cell_index = vc + visible_cells_start;
 
@@ -255,6 +262,7 @@ void Encoder::learn(
 
                         vl.weights[wi] += delta;
                     }
+                }
 
                 int wi = target_ci + wi_start;
 
@@ -295,7 +303,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf();
+            vl.weights[i] = randf(0.99f, 1.0f);
 
         vl.usages = Int_Buffer(vl.weights.size(), 0);
 

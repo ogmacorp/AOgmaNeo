@@ -45,12 +45,14 @@ public:
     };
 
     struct Params {
+        float vigilance; // minimum activity for learning
         float lr; // learning rate
         float gcurve; // gain curve for anti-forget
 
         Params()
         :
-        lr(2.0f),
+        vigilance(0.9f),
+        lr(1.0f),
         gcurve(0.02f)
         {}
     };
