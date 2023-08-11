@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -25,10 +24,7 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
-        float target = expf(-(*errors)[hidden_column_index] * (*errors)[hidden_column_index]);
-        std::cout << target << std::endl;
-
-        float delta = params.lr * (target - hidden_acts[hidden_ci_prev + hidden_cells_start]) * hidden_gates[hidden_column_index];
+        float delta = params.lr * (*errors)[hidden_column_index] * hidden_gates[hidden_column_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
