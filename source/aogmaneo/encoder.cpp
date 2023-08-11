@@ -55,7 +55,7 @@ void Encoder::forward(
 
                     int wi = hidden_ci_prev + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
-                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + delta));
+                    vl.weights[wi] += delta;
 
                     vl.usages[wi] = min(max_usage, vl.usages[wi] + 1);
                 }
@@ -94,11 +94,13 @@ void Encoder::forward(
 
         float influence = vl.importance / sub_count;
 
+        const Int_Buffer &vl_input_cis = *input_cis[vli];
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int in_ci = (*input_cis[vli])[visible_column_index];
+                int in_ci = vl_input_cis[visible_column_index];
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
