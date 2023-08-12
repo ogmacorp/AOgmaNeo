@@ -55,7 +55,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        float influence = vl.importance / sub_count;
+        float influence = vl.importance / (sub_count * 255);
 
         total_importance += vl.importance;
 
@@ -181,13 +181,13 @@ void Encoder::learn(
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     if (vc != in_ci)
-                        vl.weights[wi] -= params.lr * vl.weights[wi];
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                     sub_total += vl.weights[wi];
                 }
             }
 
-        total += static_cast<float>(sub_total) / sub_count * vl.importance;
+        total += static_cast<float>(sub_total) / (sub_count * 255) * vl.importance;
         total_importance += vl.importance;
     }
 
@@ -224,7 +224,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(0.99f, 1.0f);
+            vl.weights[i] = 255 - (rand() % init_weight_noise);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -295,7 +295,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
@@ -344,7 +344,7 @@ void Encoder::read(
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
