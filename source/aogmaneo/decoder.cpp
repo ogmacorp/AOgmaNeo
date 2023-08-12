@@ -121,9 +121,9 @@ void Decoder::update_gates(
 
     int visible_cell_index = in_ci_prev + visible_cells_start;
 
-    vl.usages[visible_cell_index] = min(max_usage, vl.usages[visible_cell_index] + 1);
-
     vl.gates[visible_column_index] = expf(-vl.usages[visible_cell_index] * params.gcurve);
+
+    vl.usages[visible_cell_index] = min(max_usage, vl.usages[visible_cell_index] + 1);
 }
 
 void Decoder::learn(

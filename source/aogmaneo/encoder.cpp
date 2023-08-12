@@ -100,9 +100,9 @@ void Encoder::update_gates(
 
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-    hidden_usages[hidden_cell_index_max] = min(max_usage, hidden_usages[hidden_cell_index_max]);
-
     hidden_gates[hidden_column_index] = expf(-hidden_usages[hidden_cell_index_max] * params.gcurve);
+
+    hidden_usages[hidden_cell_index_max] = min(max_usage, hidden_usages[hidden_cell_index_max] + 1);
 }
 
 void Encoder::learn(
