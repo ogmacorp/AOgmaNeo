@@ -54,6 +54,8 @@ private:
     Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
 
+    Int_Buffer hidden_deltas;
+
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
