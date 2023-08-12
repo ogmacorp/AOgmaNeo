@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Int_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
@@ -41,8 +41,8 @@ public:
 
         Params()
         :
-        scale(64.0f),
-        lr(8.0f)
+        scale(0.03f),
+        lr(16.0f)
         {}
     };
 
