@@ -32,8 +32,6 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Byte_Buffer usages;
-
         Float_Buffer recon_acts;
 
         float importance;
@@ -53,7 +51,7 @@ public:
         :
         scale(16.0f),
         lr(4.0f),
-        gcurve(0.02f)
+        gcurve(0.001f)
         {}
     };
 
@@ -63,6 +61,8 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
+
+    Int_Buffer hidden_usages;
 
     Float_Buffer hidden_gates;
 

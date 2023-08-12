@@ -33,6 +33,7 @@ const float limit_small = 0.000001f;
 
 const int init_weight_noise = 5;
 const int rand_subseed_offset = 12345;
+const int max_usage = 999999;
 
 inline float modf(
     float x,

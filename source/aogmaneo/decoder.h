@@ -32,7 +32,7 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Byte_Buffer usages;
+        Int_Buffer usages;
 
         Float_Buffer gates;
 
@@ -48,7 +48,7 @@ public:
         :
         scale(32.0f),
         lr(16.0f),
-        gcurve(0.02f)
+        gcurve(0.001f)
         {}
     };
 
