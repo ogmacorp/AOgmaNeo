@@ -45,8 +45,8 @@ public:
         Params()
         :
         scale(32.0f),
-        lr(64.0f),
-        decay(0.001f)
+        lr(16.0f),
+        decay(0.0001f)
         {}
     };
 

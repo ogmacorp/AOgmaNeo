@@ -309,7 +309,6 @@ void Encoder::step(
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             update_rates(Int2(i / hidden_size.y, i % hidden_size.y), params);
-
     }
 }
 
