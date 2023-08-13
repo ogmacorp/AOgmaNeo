@@ -26,7 +26,7 @@ void Decoder::forward(
     }
 
     int max_index = 0;
-    float max_activation = 0.0f;
+    float max_match = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -78,10 +78,10 @@ void Decoder::forward(
 
         hidden_matches[hidden_cell_index] /= visible_layers.size();
 
-        float activation = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        float match = hidden_matches[hidden_cell_index];
 
-        if (activation > max_activation) {
-            max_activation = activation;
+        if (match > max_match) {
+            max_match = match;
             max_index = hc;
         }
     }
@@ -101,16 +101,11 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    if (hidden_ci == target_ci)
-        return;
-
     int hidden_cell_index_target = target_ci + hidden_cells_start;
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-    float total_target = 0.0f;
-    float total_max = 0.0f;
-
-    float total_importance = 0.0f;
+    if (hidden_matches[hidden_cell_index_target] >= params.vigilance && hidden_matches[hidden_cell_index_max] < params.vigilance)
+        return;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -131,10 +126,6 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_total_target = 0;
-        int sub_total_max = 0;
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
-
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -151,8 +142,6 @@ void Decoder::learn(
 
                         if (vc == in_ci_prev)
                             vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255 - vl.weights[wi])));
-
-                        sub_total_target += vl.weights[wi];
                     }
 
                     {
@@ -160,18 +149,10 @@ void Decoder::learn(
 
                         if (vc == in_ci_prev)
                             vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
-
-                        sub_total_max += vl.weights[wi];
                     }
                 }
             }
-
-        total_target += static_cast<float>(sub_total_target) / (sub_count * 255);
-        total_max += static_cast<float>(sub_total_max) / (sub_count * 255);
     }
-
-    hidden_totals[hidden_cell_index_target] = total_target;
-    hidden_totals[hidden_cell_index_max] = total_max;
 }
 
 void Decoder::init_random(
@@ -210,8 +191,6 @@ void Decoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_matches.resize(num_hidden_cells);
-
-    hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
 }
 
 void Decoder::activate(
@@ -284,8 +263,6 @@ void Decoder::write(
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hidden_totals[0]), hidden_totals.size() * sizeof(float));
-    
     int num_visible_layers = visible_layers.size();
 
     writer.write(reinterpret_cast<const void*>(&num_visible_layers), sizeof(int));
@@ -311,10 +288,8 @@ void Decoder::read(
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
     hidden_cis.resize(num_hidden_columns);
-    hidden_totals.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hidden_totals[0]), hidden_totals.size() * sizeof(float));
 
     hidden_matches.resize(num_hidden_cells);
 

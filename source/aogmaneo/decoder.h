@@ -36,14 +36,12 @@ public:
     };
 
     struct Params {
-        float choice; // Choice parameter
         float vigilance; // ART vigilance
         float lr; // learning rate
 
         Params()
         :
-        choice(1.0f),
-        vigilance(0.1f),
+        vigilance(0.5f),
         lr(0.01f)
         {}
     };
@@ -54,8 +52,6 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_matches;
-
-    Float_Buffer hidden_totals;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
