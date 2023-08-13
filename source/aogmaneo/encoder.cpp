@@ -86,18 +86,20 @@ void Encoder::forward(
 
         hidden_matches[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float activation = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        float match = hidden_matches[hidden_cell_index];
 
-        if (hidden_matches[hidden_cell_index] >= params.vigilance) {
+        float activation = match / (params.choice + hidden_totals[hidden_cell_index]);
+
+        if (match >= params.vigilance) {
             if (activation > max_activation) {
                 max_activation = activation;
-                max_match = hidden_matches[hidden_cell_index];
+                max_match = match;
                 max_index = hc;
             }
         }
 
-        if (hidden_matches[hidden_cell_index] > max_complete_match) {
-            max_complete_match = hidden_matches[hidden_cell_index];
+        if (match > max_complete_match) {
+            max_complete_match = match;
             max_complete_index = hc;
         }
     }
