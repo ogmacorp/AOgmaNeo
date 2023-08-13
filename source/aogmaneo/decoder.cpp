@@ -98,10 +98,10 @@ void Decoder::learn(
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
-    if (hidden_cis[hidden_column_index] == target_ci)
-        return;
-
     int hidden_cell_index_target = target_ci + hidden_cells_start;
+
+    if (hidden_cis[hidden_column_index] == target_ci && hidden_matches[hidden_cell_index_target] >= params.vigilance)
+        return;
 
     float total = 0.0f;
     float total_importance = 0.0f;
