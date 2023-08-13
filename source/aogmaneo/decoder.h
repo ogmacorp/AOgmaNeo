@@ -46,7 +46,7 @@ public:
         :
         scale(32.0f),
         lr(16.0f),
-        decay(0.0001f)
+        decay(0.001f)
         {}
     };
 
