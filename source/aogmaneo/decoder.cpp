@@ -99,13 +99,17 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
+    int hidden_ci = hidden_cis[hidden_column_index];
 
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
-    if (hidden_cis[hidden_column_index] == target_ci && hidden_matches[hidden_cell_index_target] >= params.vigilance)
+    if (hidden_ci == target_ci)
         return;
 
-    float total = 0.0f;
+    int hidden_cell_index_target = target_ci + hidden_cells_start;
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+
+    float total_target = 0.0f;
+    float total_max = 0.0f;
+
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -127,7 +131,8 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_total = 0;
+        int sub_total_target = 0;
+        int sub_total_max = 0;
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -139,19 +144,34 @@ void Decoder::learn(
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
+                    int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    if (vc == in_ci_prev)
-                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255 - vl.weights[wi])));
+                    {
+                        int wi = target_ci + wi_start;
 
-                    sub_total += vl.weights[wi];
+                        if (vc == in_ci_prev)
+                            vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255 - vl.weights[wi])));
+
+                        sub_total_target += vl.weights[wi];
+                    }
+
+                    {
+                        int wi = hidden_ci + wi_start;
+
+                        if (vc == in_ci_prev)
+                            vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+
+                        sub_total_max += vl.weights[wi];
+                    }
                 }
             }
 
-        total += static_cast<float>(sub_total) / (sub_count * 255);
+        total_target += static_cast<float>(sub_total_target) / (sub_count * 255);
+        total_max += static_cast<float>(sub_total_max) / (sub_count * 255);
     }
 
-    hidden_totals[hidden_cell_index_target] = total;
+    hidden_totals[hidden_cell_index_target] = total_target;
+    hidden_totals[hidden_cell_index_max] = total_max;
 }
 
 void Decoder::init_random(
