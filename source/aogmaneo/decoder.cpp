@@ -76,6 +76,8 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
+        hidden_matches[hidden_cell_index] /= visible_layers.size();
+
         float activation = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
         if (activation > max_activation) {
