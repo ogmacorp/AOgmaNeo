@@ -45,13 +45,13 @@ public:
     struct Params {
         float scale; // scale of exp
         float lr; // learning rate
-        float gcurve; // gain curve for anti-forget
+        float decay; // learning decay
 
         Params()
         :
         scale(16.0f),
         lr(4.0f),
-        gcurve(0.001f)
+        decay(0.001f)
         {}
     };
 
@@ -62,9 +62,7 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Int_Buffer hidden_usages;
-
-    Float_Buffer hidden_gates;
+    Float_Buffer hidden_rates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -80,16 +78,16 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
         unsigned long* state,
+        const Params &params
+    );
+
+    void update_rates(
+        const Int2 &column_pos,
         const Params &params
     );
 

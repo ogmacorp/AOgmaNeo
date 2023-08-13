@@ -90,21 +90,6 @@ void Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 }
 
-void Encoder::update_gates(
-    const Int2 &column_pos,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
-
-    hidden_gates[hidden_column_index] = expf(-hidden_usages[hidden_cell_index_max] * params.gcurve);
-
-    hidden_usages[hidden_cell_index_max] = min(max_usage, hidden_usages[hidden_cell_index_max] + 1);
-}
-
 void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
@@ -214,13 +199,26 @@ void Encoder::learn(
 
                         int wi = vc + wi_start;
 
-                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]) * hidden_gates[hidden_column_index];
+                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]) * hidden_rates[hidden_cell_index_max];
 
                         vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
                     }
                 }
             }
         }
+}
+
+void Encoder::update_rates(
+    const Int2 &column_pos,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+
+    hidden_rates[hidden_cell_index_max] *= 1.0f - params.decay;
 }
 
 void Encoder::init_random(
@@ -264,9 +262,7 @@ void Encoder::init_random(
 
     hidden_acts.resize(num_hidden_cells);
 
-    hidden_usages = Int_Buffer(num_hidden_cells, 0);
-
-    hidden_gates.resize(num_hidden_columns);
+    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -298,10 +294,6 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            update_gates(Int2(i / hidden_size.y, i % hidden_size.y), params);
-
         unsigned int base_state = rand();
 
         PARALLEL_FOR
@@ -313,6 +305,11 @@ void Encoder::step(
 
             learn(pos, input_cis[vli], vli, &state, params);
         }
+
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            update_rates(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
     }
 }
 
@@ -321,12 +318,12 @@ void Encoder::clear_state() {
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_rates.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + sizeof(float);
     }
 
     return size;
@@ -343,7 +340,7 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hidden_usages[0]), hidden_usages.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -375,11 +372,9 @@ void Encoder::read(
 
     hidden_acts.resize(num_hidden_cells);
 
-    hidden_usages.resize(num_hidden_cells);
+    hidden_rates.resize(num_hidden_cells);
 
-    reader.read(reinterpret_cast<void*>(&hidden_usages[0]), hidden_usages.size() * sizeof(int));
-
-    hidden_gates.resize(num_hidden_columns);
+    reader.read(reinterpret_cast<void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
