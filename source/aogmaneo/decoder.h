@@ -32,7 +32,7 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Float_Buffer rates;
+        Byte_Buffer usages;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
@@ -46,7 +46,7 @@ public:
         :
         scale(32.0f),
         lr(16.0f),
-        decay(0.001f)
+        decay(0.5f)
         {}
     };
 
@@ -76,12 +76,6 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
         unsigned long* state,
-        const Params &params
-    );
-
-    void update_rates(
-        const Int2 &column_pos,
-        int vli,
         const Params &params
     );
 
