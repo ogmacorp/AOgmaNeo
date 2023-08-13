@@ -25,12 +25,8 @@ void Decoder::forward(
         hidden_matches[hidden_cell_index] = 0.0f;
     }
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
-
-    int max_complete_index = 0;
-    float max_complete_match = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -82,21 +78,13 @@ void Decoder::forward(
 
         float activation = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-        if (hidden_matches[hidden_cell_index] >= params.vigilance) {
-            if (activation > max_activation) {
-                max_activation = activation;
-                max_match = hidden_matches[hidden_cell_index];
-                max_index = hc;
-            }
-        }
-
-        if (hidden_matches[hidden_cell_index] > max_complete_match) {
-            max_complete_match = hidden_matches[hidden_cell_index];
-            max_complete_index = hc;
+        if (activation > max_activation) {
+            max_activation = activation;
+            max_index = hc;
         }
     }
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Decoder::learn(
