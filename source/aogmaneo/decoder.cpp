@@ -102,10 +102,9 @@ void Decoder::learn(
     int hidden_ci = hidden_cis[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
-    if (hidden_matches[hidden_cell_index_target] >= params.vigilance && hidden_matches[hidden_cell_index_max] < params.vigilance)
-        return;
+    bool decrease = (hidden_matches[hidden_cell_index_max] >= params.vigilance);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -144,7 +143,7 @@ void Decoder::learn(
                             vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255 - vl.weights[wi])));
                     }
 
-                    {
+                    if (decrease) {
                         int wi = hidden_ci + wi_start;
 
                         if (vc == in_ci_prev)

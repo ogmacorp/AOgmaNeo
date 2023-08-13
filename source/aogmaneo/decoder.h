@@ -42,7 +42,7 @@ public:
         Params()
         :
         vigilance(0.5f),
-        lr(0.01f)
+        lr(0.02f)
         {}
     };
 
