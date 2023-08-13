@@ -41,7 +41,7 @@ public:
 
         Params()
         :
-        choice(1.0f),
+        choice(0.1f),
         lr(0.01f)
         {}
     };
