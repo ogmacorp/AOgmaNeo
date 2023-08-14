@@ -133,22 +133,18 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
+                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
-                    {
-                        int wi = target_ci + wi_start;
+                {
+                    int wi = target_ci + wi_start;
 
-                        if (vc == in_ci_prev)
-                            vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255 - vl.weights[wi])));
-                    }
+                    vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255 - vl.weights[wi])));
+                }
 
-                    if (decrease) {
-                        int wi = hidden_ci + wi_start;
+                if (decrease) {
+                    int wi = hidden_ci + wi_start;
 
-                        if (vc == in_ci_prev)
-                            vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
-                    }
+                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
                 }
             }
     }
