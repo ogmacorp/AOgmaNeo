@@ -90,6 +90,9 @@ void Decoder::forward(
         int max_index = -1;
         float max_match = 0.0f;
 
+        int max_complete_index = -1;
+        float max_complete_match = 0.0f;
+
         for (int di = 0; di < num_dendrites; di++) {
             int hidden_dendritic_index = di + hidden_dendrites_start;
 
@@ -101,12 +104,17 @@ void Decoder::forward(
                     max_index = di;
                 }
             }
+
+            if (match > max_complete_match) {
+                max_complete_match = match;
+                max_complete_index = di;
+            }
         }
 
         learn_dis[hidden_cell_index] = max_index;
 
-        if (max_match > max_overall_match) {
-            max_overall_match = max_match;
+        if (max_complete_match > max_overall_match) {
+            max_overall_match = max_complete_match;
             max_overall_index = hc;
         }
     }
