@@ -143,9 +143,6 @@ void Decoder::learn(
 
     int learn_di_target = learn_dis[hidden_cell_index_target];
 
-    if (learn_di_target == -1)
-        return;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
