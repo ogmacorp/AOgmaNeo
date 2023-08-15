@@ -25,13 +25,6 @@ void Encoder::forward(
         hidden_matches[hidden_cell_index] = 0.0f;
     }
 
-    int max_index = -1;
-    float max_activation = 0.0f;
-    float max_match = 0.0f;
-
-    int max_complete_index = 0;
-    float max_complete_match = 0.0f;
-
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -81,6 +74,13 @@ void Encoder::forward(
             }
     }
 
+    int max_index = -1;
+    float max_activation = 0.0f;
+    float max_match = 0.0f;
+
+    int max_complete_index = 0;
+    float max_complete_match = 0.0f;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -108,7 +108,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_match;
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;
 }
 
 void Encoder::learn(
