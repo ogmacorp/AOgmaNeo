@@ -241,7 +241,7 @@ void Decoder::init_random(
 
     hidden_matches.resize(num_hidden_dendrites);
 
-    hidden_totals = Float_Buffer(num_hidden_dendrites, 99999.0f);
+    hidden_totals = Float_Buffer(num_hidden_dendrites, 1.0f);
 }
 
 void Decoder::activate(
