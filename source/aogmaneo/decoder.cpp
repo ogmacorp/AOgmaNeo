@@ -90,7 +90,7 @@ void Decoder::forward(
         int max_index = -1;
         float max_match = 0.0f;
 
-        int max_complete_index = -1;
+        int max_complete_index = 0;
         float max_complete_match = 0.0f;
 
         for (int di = 0; di < num_dendrites; di++) {
