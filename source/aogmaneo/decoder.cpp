@@ -20,10 +20,10 @@ void Decoder::forward(
     int num_dendrites_per_column = hidden_size.z * num_dendrites;
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
-    int hidden_dendrites_start = hidden_column_index * num_dendrites_per_column;
+    int hidden_all_dendrites_start = hidden_column_index * num_dendrites_per_column;
 
     for (int di = 0; di < num_dendrites_per_column; di++) {
-        int hidden_dendritic_index = di + hidden_dendrites_start;
+        int hidden_dendritic_index = di + hidden_all_dendrites_start;
 
         hidden_matches[hidden_dendritic_index] = 0.0f;
     }
@@ -64,7 +64,7 @@ void Decoder::forward(
                 int wi_start = num_dendrites_per_column * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 for (int di = 0; di < num_dendrites_per_column; di++) {
-                    int hidden_dendritic_index = di + hidden_dendrites_start;
+                    int hidden_dendritic_index = di + hidden_all_dendrites_start;
 
                     int wi = di + wi_start;
 
@@ -74,7 +74,7 @@ void Decoder::forward(
     }
 
     for (int di = 0; di < num_dendrites_per_column; di++) {
-        int hidden_dendritic_index = di + hidden_dendrites_start;
+        int hidden_dendritic_index = di + hidden_all_dendrites_start;
 
         hidden_matches[hidden_dendritic_index] /= visible_layers.size();
     }
@@ -85,7 +85,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        int hidden_dendritic_cells_start = num_dendrites * hidden_cell_index;
+        int hidden_dendrites_start = num_dendrites * hidden_cell_index;
 
         int max_index = -1;
         float max_activation = 0.0f;
@@ -94,7 +94,7 @@ void Decoder::forward(
         float max_complete_activation = 0.0f;
 
         for (int di = 0; di < num_dendrites; di++) {
-            int hidden_dendritic_index = di + hidden_dendritic_cells_start;
+            int hidden_dendritic_index = di + hidden_dendrites_start;
 
             float match = hidden_matches[hidden_dendritic_index];
 
@@ -134,7 +134,6 @@ void Decoder::learn(
     int num_dendrites_per_column = hidden_size.z * num_dendrites;
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
-    int hidden_dendrites_start = hidden_column_index * num_dendrites_per_column;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
