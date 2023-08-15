@@ -136,12 +136,17 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    if (hidden_ci == target_ci)
-        return;
-
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
     int learn_di_target = learn_dis[hidden_cell_index_target];
+
+    if (learn_di_target == -1)
+        return;
+
+    int hidden_dendritic_index = learn_di_target + hidden_cell_index_target * num_dendrites;
+
+    if (hidden_ci == target_ci && hidden_matches[hidden_dendritic_index] >= params.vigilance)
+        return;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
