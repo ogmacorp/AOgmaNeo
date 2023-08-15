@@ -64,7 +64,7 @@ void Decoder::forward(
                 int wi_start = num_dendrites_per_column * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 for (int di = 0; di < num_dendrites_per_column; di++) {
-                    int hidden_dendritic_index = di + hidden_cells_start;
+                    int hidden_dendritic_index = di + hidden_dendrites_start;
 
                     int wi = di + wi_start;
 
@@ -117,7 +117,7 @@ void Decoder::forward(
 
         if (max_complete_match > max_overall_match) {
             max_overall_match = max_complete_match;
-            max_overall_index = max_complete_index;
+            max_overall_index = hc;
         }
     }
 
