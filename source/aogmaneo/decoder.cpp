@@ -80,7 +80,7 @@ void Decoder::forward(
     }
 
     int max_overall_index = 0;
-    float max_overall_match = 0.0f;
+    float max_overall_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -91,7 +91,7 @@ void Decoder::forward(
         float max_activation = 0.0f;
 
         int max_complete_index = 0;
-        float max_complete_match = 0.0f;
+        float max_complete_activation = 0.0f;
 
         for (int di = 0; di < num_dendrites; di++) {
             int hidden_dendritic_index = di + hidden_dendritic_cells_start;
@@ -107,16 +107,16 @@ void Decoder::forward(
                 }
             }
 
-            if (match > max_complete_match) {
-                max_complete_match = match;
+            if (activation > max_complete_activation) {
+                max_complete_activation = activation;
                 max_complete_index = di;
             }
         }
 
         learn_dis[hidden_cell_index] = max_index;
 
-        if (max_complete_match > max_overall_match) {
-            max_overall_match = max_complete_match;
+        if (max_complete_activation > max_overall_activation) {
+            max_overall_activation = max_complete_activation;
             max_overall_index = hc;
         }
     }
@@ -145,7 +145,7 @@ void Decoder::learn(
     if (learn_di == -1)
         return;
 
-    int hidden_dendritic_index = learn_di + hidden_dendrites_start;
+    int hidden_dendritic_index = learn_di + num_dendrites * hidden_cell_index_target;
 
     float total = 0.0f;
     float total_importance = 0.0f;
@@ -237,7 +237,7 @@ void Decoder::init_random(
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    learn_dis.resize(num_hidden_cells);
+    learn_dis = Int_Buffer(num_hidden_cells, -1);
 
     hidden_matches.resize(num_hidden_dendrites);
 
@@ -347,7 +347,7 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    learn_dis.resize(num_hidden_cells);
+    learn_dis = Int_Buffer(num_hidden_cells, -1);
 
     hidden_matches.resize(num_hidden_dendrites);
 
