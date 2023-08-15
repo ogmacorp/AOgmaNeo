@@ -111,7 +111,7 @@ void Decoder::forward(
             }
         }
 
-        learn_dis[hidden_cell_index] = max_index;
+        learn_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
 
         if (max_complete_match > max_overall_match) {
             max_overall_match = max_complete_match;
@@ -134,12 +134,16 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
+    int hidden_ci = hidden_cis[hidden_column_index];
+
+    if (hidden_ci == target_ci)
+        return;
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
-    int learn_di = learn_dis[hidden_cell_index_target];
+    int learn_di_target = learn_dis[hidden_cell_index_target];
 
-    if (learn_di == -1)
+    if (learn_di_target == -1)
         return;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -169,7 +173,7 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = learn_di + num_dendrites * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index))));
+                int wi = learn_di_target + num_dendrites * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index))));
 
                 vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255 - vl.weights[wi])));
             }
