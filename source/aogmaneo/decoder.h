@@ -40,13 +40,15 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float decay;
+        float decay_low;
+        float decay_high;
 
         Params()
         :
         scale(32.0f),
-        lr(0.1f),
-        decay(0.01f)
+        lr(0.05f),
+        decay_low(0.0001f),
+        decay_high(0.01f)
         {}
     };
 
@@ -58,7 +60,7 @@ private:
     Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
 
-    Int_Buffer hidden_deltas;
+    Float_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -78,6 +80,12 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
         unsigned long* state,
+        const Params &params
+    );
+
+    void update_traces(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
