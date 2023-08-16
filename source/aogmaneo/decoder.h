@@ -46,8 +46,8 @@ public:
         Params()
         :
         scale(32.0f),
-        lr(0.01f),
-        decay_low(0.0001f),
+        lr(0.1f),
+        decay_low(0.00001f),
         decay_high(0.01f)
         {}
     };
@@ -79,7 +79,6 @@ private:
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
