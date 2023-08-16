@@ -229,7 +229,7 @@ void Decoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
 
-        vl.rates = Float_Buffer(num_visible_cells, 0.0f);
+        vl.rates = Float_Buffer(num_visible_cells, 1.0f);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -301,7 +301,6 @@ void Decoder::clear_state() {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        vl.rates.fill(0.0f);
         vl.input_cis_prev.fill(0);
     }
 }
@@ -325,7 +324,7 @@ int Decoder::state_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.rates.size() * sizeof(float) + vl.input_cis_prev.size() * sizeof(int);
+        size += vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -438,8 +437,6 @@ void Decoder::write_state(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vl.rates[0]), vl.rates.size() * sizeof(float));
-
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
 }
@@ -452,8 +449,6 @@ void Decoder::read_state(
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
-
-        reader.read(reinterpret_cast<void*>(&vl.rates[0]), vl.rates.size() * sizeof(float));
 
         reader.read(reinterpret_cast<void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
