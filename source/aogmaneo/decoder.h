@@ -32,21 +32,17 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Float_Buffer rates;
-
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float decay; // learning decay
 
         Params()
         :
         scale(32.0f),
-        lr(16.0f),
-        decay(0.001f)
+        lr(16.0f)
         {}
     };
 
@@ -69,6 +65,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -76,12 +73,6 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
         unsigned long* state,
-        const Params &params
-    );
-
-    void update_rates(
-        const Int2 &column_pos,
-        int vli,
         const Params &params
     );
 
@@ -93,14 +84,10 @@ public:
     );
 
     // activate the predictor (predict values)
-    void activate(
+    void step(
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    // learning predictions (update weights)
-    void learn(
         const Int_Buffer* hidden_target_cis,
+        bool learn_enabled,
         const Params &params
     );
 
