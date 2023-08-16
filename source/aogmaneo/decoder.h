@@ -31,7 +31,8 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
-        Byte_Buffer rates;
+
+        Float_Buffer rates;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
@@ -39,13 +40,13 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float decay;
+        float decay; // learning decay
 
         Params()
         :
         scale(32.0f),
-        lr(0.1f),
-        decay(0.01f)
+        lr(16.0f),
+        decay(0.001f)
         {}
     };
 
@@ -75,6 +76,12 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
         unsigned long* state,
+        const Params &params
+    );
+
+    void update_rates(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
