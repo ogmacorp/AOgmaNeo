@@ -76,10 +76,12 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] = static_cast<float>(hidden_sums[hidden_cell_index]) / (count * 255);
+        float activation = static_cast<float>(hidden_sums[hidden_cell_index]) / (count * 255);
 
-        if (hidden_acts[hidden_cell_index] > max_activation) {
-            max_activation = hidden_acts[hidden_cell_index];
+        hidden_acts[hidden_cell_index] = activation;
+
+        if (activation > max_activation) {
+            max_activation = activation;
             max_index = hc;
         }
     }
@@ -126,7 +128,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_deltas[hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index_target]), state);
+        hidden_deltas[hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]), state);
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
