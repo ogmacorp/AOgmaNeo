@@ -108,6 +108,7 @@ void Decoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
+        // fix degeneration
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
