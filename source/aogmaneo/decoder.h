@@ -32,23 +32,17 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Float_Buffer rates;
-
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float decay_low;
-        float decay_high;
 
         Params()
         :
         scale(32.0f),
-        lr(0.05f),
-        decay_low(0.00001f),
-        decay_high(0.001f)
+        lr(0.05f)
         {}
     };
 
@@ -65,8 +59,6 @@ private:
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 

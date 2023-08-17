@@ -47,15 +47,11 @@ public:
     struct Params {
         float scale; // scale of exp
         float lr; // learning rate
-        float decay_low;
-        float decay_high;
 
         Params()
         :
         scale(16.0f),
-        lr(0.01f),
-        decay_low(0.00001f),
-        decay_high(0.001f)
+        lr(0.01f)
         {}
     };
 
@@ -65,8 +61,6 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_rates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -87,11 +81,6 @@ private:
         const Int_Buffer* input_cis,
         int vli,
         unsigned long* state,
-        const Params &params
-    );
-
-    void update_rates(
-        const Int2 &column_pos,
         const Params &params
     );
 
