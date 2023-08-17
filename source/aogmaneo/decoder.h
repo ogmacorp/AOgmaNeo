@@ -49,7 +49,7 @@ public:
         scale(32.0f),
         lr_weight(0.1f),
         lr_proto(0.1f),
-        rehearsal_iters(1)
+        rehearsal_iters(3)
         {}
     };
 
