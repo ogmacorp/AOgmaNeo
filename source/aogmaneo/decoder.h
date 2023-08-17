@@ -30,16 +30,15 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights;
 
-        Byte_Buffer protos;
+        Float_Buffer protos;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
         Int_Buffer recon_cis;
     };
 
     struct Params {
-        float scale; // scale of softmax
         float lr_weight; // learning rate
         float lr_proto; // learning rate
         float rehearsal_mut;
@@ -47,8 +46,7 @@ public:
 
         Params()
         :
-        scale(32.0f),
-        lr_weight(0.1f),
+        lr_weight(1.0f),
         lr_proto(0.1f),
         rehearsal_mut(0.8f),
         rehearsal_iters(3)
@@ -61,7 +59,6 @@ private:
     Int_Buffer hidden_cis; // hidden state
     Int_Buffer rand_cis;
 
-    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
 
     Float_Buffer hidden_deltas;
