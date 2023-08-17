@@ -129,7 +129,7 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        vl.recon_acts[visible_cell_index] = 0.0f;
+        vl.recon_sums[visible_cell_index] = 0;
     }
 
     int count = 0;
@@ -154,7 +154,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    vl.recon_acts[visible_cell_index] += vl.weights[wi];
+                    vl.recon_sums[visible_cell_index] += vl.weights[wi];
                 }
 
                 count++;
@@ -162,21 +162,19 @@ void Encoder::learn(
         }
 
     int max_index = 0;
-    float max_activation = 0.0f;
+    int max_activation = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        vl.recon_acts[visible_cell_index] /= max(1, count) * 255;
+        int recon_sum = vl.recon_sums[visible_cell_index];
 
-        if (vl.recon_acts[visible_cell_index] > max_activation) {
-            max_activation = vl.recon_acts[visible_cell_index];
+        if (recon_sum > max_activation) {
+            max_activation = recon_sum;
             max_index = vc;
         }
 
-        vl.recon_acts[visible_cell_index] = expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale);
-
-        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
+        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((vl.recon_sums[visible_cell_index] - 1.0f) * params.scale));
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -259,7 +257,7 @@ void Encoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 255 - (rand() % init_weight_noise);
 
-        vl.recon_acts.resize(num_visible_cells);
+        vl.recon_sums.resize(num_visible_cells);
 
         vl.recon_deltas.resize(num_visible_cells);
     }
@@ -404,7 +402,7 @@ void Encoder::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
-        vl.recon_acts.resize(num_visible_cells);
+        vl.recon_sums.resize(num_visible_cells);
 
         vl.recon_deltas.resize(num_visible_cells);
 

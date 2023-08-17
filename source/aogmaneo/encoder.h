@@ -32,7 +32,7 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Float_Buffer recon_acts;
+        Int_Buffer recon_sums;
 
         Float_Buffer recon_deltas;
 
