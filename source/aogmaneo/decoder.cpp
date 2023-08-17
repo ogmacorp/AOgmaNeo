@@ -161,12 +161,14 @@ void Decoder::learn(
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
+                float rate = vl.rates[visible_cell_index];
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(hidden_deltas[hidden_cell_index] * vl.rates[visible_cell_index])));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(hidden_deltas[hidden_cell_index] * rate)));
                 }
             }
     }
