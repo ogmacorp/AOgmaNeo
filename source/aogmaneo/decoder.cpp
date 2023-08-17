@@ -408,7 +408,7 @@ void Decoder::step(
             for (int i = 0; i < num_hidden_columns; i++) {
                 unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-                randomize(Int2(i / hidden_size.y, i % hidden_size.y), &state, params);
+                randomize(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, &state, params);
             }
 
             PARALLEL_FOR
