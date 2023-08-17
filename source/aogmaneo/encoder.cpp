@@ -176,7 +176,7 @@ void Encoder::learn(
 
         vl.recon_acts[visible_cell_index] = expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale);
 
-        vl.recon_deltas[visible_cell_index] = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
+        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
