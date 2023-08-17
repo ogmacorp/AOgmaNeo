@@ -132,14 +132,14 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
     // check if has acts computed (ran at least once) by checking for flag value
     if (hidden_acts[hidden_cell_index_target] == -1.0f)
         return;
-
-    float delta = params.lr * (1.0f - hidden_acts[hidden_cell_index_target]);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -172,7 +172,7 @@ void Decoder::learn(
 
                 int wi = target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
-                vl.weights[wi] = min(255, vl.weights[wi] + rand_roundf(delta * (255 - vl.weights[wi]), state));
+                vl.weights[wi] = min(255, vl.weights[wi] + rand_roundf(params.lr * (255 - vl.weights[wi]), state));
             }
     }
 }
