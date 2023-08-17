@@ -94,7 +94,6 @@ void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
     int vli,
-    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -176,6 +175,8 @@ void Encoder::learn(
         }
 
         vl.recon_acts[visible_cell_index] = expf((vl.recon_acts[visible_cell_index] - 1.0f) * params.scale);
+
+        vl.recon_deltas[visible_cell_index] = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -199,9 +200,7 @@ void Encoder::learn(
 
                         int wi = vc + wi_start;
 
-                        float delta = params.lr * ((vc == target_ci) - vl.recon_acts[visible_cell_index]) * hidden_rates[hidden_cell_index_max];
-
-                        vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + delta, state)));
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.recon_deltas[visible_cell_index] * hidden_rates[hidden_cell_index_max])));
                     }
                 }
             }
@@ -216,9 +215,14 @@ void Encoder::update_rates(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-    hidden_rates[hidden_cell_index_max] *= 1.0f - params.decay;
+        if (hc == hidden_cis[hidden_column_index])
+            hidden_rates[hidden_cell_index] -= params.decay_high * hidden_rates[hidden_cell_index];
+        else
+            hidden_rates[hidden_cell_index] += params.decay_low * (1.0f - hidden_rates[hidden_cell_index]);
+    }
 }
 
 void Encoder::init_random(
@@ -294,16 +298,12 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        unsigned int base_state = rand();
-
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-            learn(pos, input_cis[vli], vli, &state, params);
+            learn(pos, input_cis[vli], vli, params);
         }
 
         PARALLEL_FOR

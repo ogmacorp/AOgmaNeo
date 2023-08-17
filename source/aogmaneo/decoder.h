@@ -40,13 +40,15 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float decay; // learning decay
+        float decay_low;
+        float decay_high;
 
         Params()
         :
-        scale(32.0f),
-        lr(16.0f),
-        decay(0.001f)
+        scale(16.0f),
+        lr(0.1f),
+        decay_low(0.00001f),
+        decay_high(0.01f)
         {}
     };
 
@@ -57,6 +59,8 @@ private:
 
     Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -75,7 +79,6 @@ private:
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
@@ -93,14 +96,10 @@ public:
     );
 
     // activate the predictor (predict values)
-    void activate(
+    void step(
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    // learning predictions (update weights)
-    void learn(
         const Int_Buffer* hidden_target_cis,
+        bool learn_enabled,
         const Params &params
     );
 

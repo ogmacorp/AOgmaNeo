@@ -76,10 +76,12 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] = static_cast<float>(hidden_sums[hidden_cell_index]) / (count * 255);
+        float activation = static_cast<float>(hidden_sums[hidden_cell_index]) / (count * 255);
 
-        if (hidden_acts[hidden_cell_index] > max_activation) {
-            max_activation = hidden_acts[hidden_cell_index];
+        hidden_acts[hidden_cell_index] = activation;
+
+        if (activation > max_activation) {
+            max_activation = activation;
             max_index = hc;
         }
     }
@@ -108,7 +110,6 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* hidden_target_cis,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -122,6 +123,12 @@ void Decoder::learn(
     // check if has acts computed (ran at least once) by checking for flag value
     if (hidden_acts[hidden_cell_index_target] == -1.0f)
         return;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_deltas[hidden_cell_index] = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+    }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -159,9 +166,7 @@ void Decoder::learn(
 
                     int wi = hc + wi_start;
 
-                    float delta = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * vl.rates[visible_cell_index];
-
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta, state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(hidden_deltas[hidden_cell_index] * vl.rates[visible_cell_index])));
                 }
             }
     }
@@ -177,9 +182,18 @@ void Decoder::update_rates(
 
     int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
 
+    int in_ci_prev = vl.input_cis_prev[visible_column_index];
+
     int visible_cells_start = visible_column_index * vld.size.z;
 
-    vl.rates[vl.input_cis_prev[visible_column_index] + visible_cells_start] *= 1.0f - params.decay;
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+
+        if (vc == in_ci_prev)
+            vl.rates[visible_cell_index] -= params.decay_high * vl.rates[visible_cell_index];
+        else
+            vl.rates[visible_cell_index] += params.decay_low * (1.0f - vl.rates[visible_cell_index]);
+    }
 }
 
 void Decoder::init_random(
@@ -198,7 +212,6 @@ void Decoder::init_random(
     
     int total_num_visible_columns = 0;
 
-    // create layers
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
@@ -227,6 +240,8 @@ void Decoder::init_random(
     hidden_sums.resize(num_hidden_cells);
     hidden_acts = Float_Buffer(num_hidden_cells, -1.0f); // flag
 
+    hidden_deltas.resize(num_hidden_cells);
+
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
 
@@ -245,16 +260,31 @@ void Decoder::init_random(
     }
 }
 
-void Decoder::activate(
+void Decoder::step(
     const Array<const Int_Buffer*> &input_cis,
+    const Int_Buffer* hidden_target_cis,
+    bool learn_enabled,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    // forward kernel
+    if (learn_enabled) {
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, params);
+    }
+
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+    
+    PARALLEL_FOR
+    for (int i = 0; i < visible_pos_vlis.size(); i++) {
+        Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
+        int vli = visible_pos_vlis[i].z;
+
+        update_rates(pos, vli, params);
+    }
 
     // copy to prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -264,37 +294,15 @@ void Decoder::activate(
     }
 }
 
-void Decoder::learn(
-    const Int_Buffer* hidden_target_cis,
-    const Params &params
-) {
-    int num_hidden_columns = hidden_size.x * hidden_size.y;
-
-    unsigned int base_state = rand();
-
-    // learn kernel
-    PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, &state, params);
-    }
-
-    PARALLEL_FOR
-    for (int i = 0; i < visible_pos_vlis.size(); i++) {
-        Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
-        int vli = visible_pos_vlis[i].z;
-
-        update_rates(pos, vli, params);
-    }
-}
-
 void Decoder::clear_state() {
     hidden_cis.fill(0);
     hidden_acts.fill(-1.0f); // flag
 
-    for (int vli = 0; vli < visible_layers.size(); vli++)
-        visible_layers[vli].input_cis_prev.fill(0);
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        vl.input_cis_prev.fill(0);
+    }
 }
 
 int Decoder::size() const {
@@ -364,6 +372,8 @@ void Decoder::read(
 
     hidden_sums.resize(num_hidden_cells);
 
+    hidden_deltas.resize(num_hidden_cells);
+
     int num_visible_layers;
 
     reader.read(reinterpret_cast<void*>(&num_visible_layers), sizeof(int));
@@ -372,7 +382,7 @@ void Decoder::read(
     visible_layer_descs.resize(num_visible_layers);
 
     int total_num_visible_columns = 0;
-    
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         Visible_Layer_Desc &vld = visible_layer_descs[vli];

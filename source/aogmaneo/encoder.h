@@ -34,6 +34,8 @@ public:
 
         Float_Buffer recon_acts;
 
+        Float_Buffer recon_deltas;
+
         float importance;
 
         Visible_Layer()
@@ -45,13 +47,15 @@ public:
     struct Params {
         float scale; // scale of exp
         float lr; // learning rate
-        float decay; // learning decay
+        float decay_low;
+        float decay_high;
 
         Params()
         :
         scale(16.0f),
         lr(4.0f),
-        decay(0.001f)
+        decay_low(0.00001f),
+        decay_high(0.01f)
         {}
     };
 
@@ -82,7 +86,6 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
-        unsigned long* state,
         const Params &params
     );
 
