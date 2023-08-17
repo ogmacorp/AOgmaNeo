@@ -94,6 +94,7 @@ void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
     int vli,
+    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -202,7 +203,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.recon_deltas[visible_cell_index] * rate)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(vl.recon_deltas[visible_cell_index], state)));
                 }
             }
         }
@@ -301,12 +302,16 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
+        unsigned int base_state = rand();
+
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            learn(pos, input_cis[vli], vli, params);
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+            learn(pos, input_cis[vli], vli, &state, params);
         }
 
         PARALLEL_FOR

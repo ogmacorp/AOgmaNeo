@@ -55,7 +55,7 @@ public:
         scale(16.0f),
         lr(0.01f),
         decay_low(0.00001f),
-        decay_high(0.01f)
+        decay_high(0.001f)
         {}
     };
 
@@ -86,6 +86,7 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
+        unsigned long* state,
         const Params &params
     );
 
