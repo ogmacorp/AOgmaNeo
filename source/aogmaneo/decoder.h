@@ -32,19 +32,24 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
+        Byte_Buffer protos;
+
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
+        Int_Buffer recon_cis;
     };
 
     struct Params {
         float scale; // scale of softmax
-        float vigilance;
-        float lr; // learning rate
+        float lr_weight; // learning rate
+        float lr_proto; // learning rate
+        int rehearsal_iters;
 
         Params()
         :
-        scale(0.1f),
-        vigilance(0.9f),
-        lr(0.1f)
+        scale(32.0f),
+        lr_weight(0.1f),
+        lr_proto(0.1f),
+        rehearsal_iters(3)
         {}
     };
 
@@ -52,9 +57,12 @@ private:
     Int3 hidden_size; // size of the output/hidden/prediction
 
     Int_Buffer hidden_cis; // hidden state
+    Int_Buffer rand_cis;
 
     Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -67,14 +75,27 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Int_Buffer* hidden_target_cis,
         bool learn_enabled,
+        unsigned long* state,
+        const Params &params
+    );
+
+    void randomize(
+        const Int2 &column_pos,
+        unsigned long* state,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
-        const Int_Buffer* hidden_target_cis,
         unsigned long* state,
+        const Params &params
+    );
+
+    void reconstruct(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
