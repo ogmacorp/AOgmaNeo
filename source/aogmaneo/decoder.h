@@ -42,6 +42,7 @@ public:
         float scale; // scale of softmax
         float lr_weight; // learning rate
         float lr_proto; // learning rate
+        float rehearsal_mut;
         int rehearsal_iters;
 
         Params()
@@ -49,6 +50,7 @@ public:
         scale(32.0f),
         lr_weight(0.1f),
         lr_proto(0.1f),
+        rehearsal_mut(0.8f),
         rehearsal_iters(3)
         {}
     };
@@ -83,6 +85,7 @@ private:
 
     void randomize(
         const Int2 &column_pos,
+        const Int_Buffer* hidden_target_cis,
         unsigned long* state,
         const Params &params
     );

@@ -102,12 +102,16 @@ void Decoder::forward(
 
 void Decoder::randomize(
     const Int2 &column_pos,
+    const Int_Buffer* hidden_target_cis,
     unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    rand_cis[hidden_column_index] = rand(state) % hidden_size.z;
+    if (randf(state) < params.rehearsal_mut)
+        rand_cis[hidden_column_index] = rand(state) % hidden_size.z;
+    else
+        rand_cis[hidden_column_index] = (*hidden_target_cis)[hidden_column_index];
 }
 
 void Decoder::learn(
