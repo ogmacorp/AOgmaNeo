@@ -174,7 +174,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(vl.recon_sums[visible_cell_index]) / (max(1, count) * 255) - 1.0f) * params.scale));
+        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / (max(1, count) * 255) - 1.0f) * params.scale));
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -198,7 +198,7 @@ void Encoder::learn(
 
                         int wi = vc + wi_start;
 
-                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.recon_deltas[visible_cell_index])));
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.recon_deltas[visible_cell_index] * hidden_rates[hidden_cell_index_max])));
                     }
                 }
             }
