@@ -161,12 +161,14 @@ void Decoder::learn(
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
+                float rate = vl.rates[visible_cell_index];
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(hidden_deltas[hidden_cell_index] * vl.rates[visible_cell_index])));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(hidden_deltas[hidden_cell_index] * rate)));
                 }
             }
     }
@@ -272,20 +274,20 @@ void Decoder::step(
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, params);
+
+        PARALLEL_FOR
+        for (int i = 0; i < visible_pos_vlis.size(); i++) {
+            Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
+            int vli = visible_pos_vlis[i].z;
+
+            update_rates(pos, vli, params);
+        }
     }
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
     
-    PARALLEL_FOR
-    for (int i = 0; i < visible_pos_vlis.size(); i++) {
-        Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
-        int vli = visible_pos_vlis[i].z;
-
-        update_rates(pos, vli, params);
-    }
-
     // copy to prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
