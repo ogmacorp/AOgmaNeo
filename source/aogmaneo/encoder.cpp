@@ -198,7 +198,7 @@ void Encoder::learn(
 
                         int wi = vc + wi_start;
 
-                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.recon_deltas[visible_cell_index] * hidden_rates[hidden_cell_index_max])));
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.recon_deltas[visible_cell_index])));
                     }
                 }
             }
