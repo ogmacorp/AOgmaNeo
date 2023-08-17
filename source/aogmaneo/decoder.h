@@ -49,7 +49,7 @@ public:
         scale(32.0f),
         lr_weight(0.1f),
         lr_proto(0.1f),
-        rehearsal_iters(3)
+        rehearsal_iters(1)
         {}
     };
 
@@ -165,11 +165,6 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
-    }
-
-    // get the hidden states (predictions)
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
     }
 
     // get the hidden size
