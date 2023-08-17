@@ -260,6 +260,8 @@ void Encoder::init_random(
             vl.weights[i] = 255 - (rand() % init_weight_noise);
 
         vl.recon_acts.resize(num_visible_cells);
+
+        vl.recon_deltas.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -403,6 +405,8 @@ void Encoder::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         vl.recon_acts.resize(num_visible_cells);
+
+        vl.recon_deltas.resize(num_visible_cells);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
