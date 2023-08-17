@@ -75,12 +75,6 @@ private:
         const Params &params
     );
 
-    void update_rates(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
 public:
     // create with random initialization
     void init_random(
