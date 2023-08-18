@@ -100,8 +100,10 @@ void Encoder::update_gates(
 
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-    int sum = 0;
+    float sum = 0.0f;
     int count = 0;
+
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -135,12 +137,16 @@ void Encoder::update_gates(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    sum += vl.weights[wi];
+                    float w = (255 - vl.weights[wi]) * byte_inv;
+
+                    sum += w * w;
                 }
             }
     }
 
-    hidden_gates[hidden_column_index] = expf(-static_cast<float>(sum) / max(1, count) * params.gcurve);
+    sum /= count;
+
+    hidden_gates[hidden_column_index] = expf(-sum * params.scale * params.gcurve);
 }
 
 void Encoder::learn(

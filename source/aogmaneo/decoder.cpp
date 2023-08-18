@@ -170,11 +170,11 @@ void Decoder::update_gates(
                     sum += w * w;
                 }
 
-                count++;
+                count += hidden_size.z;
             }
         }
 
-    sum /= max(1, count) * hidden_size.z;
+    sum /= max(1, count);
 
     vl.gates[visible_column_index] = expf(-sum * params.scale * params.gcurve);
 }
