@@ -218,7 +218,7 @@ void Hierarchy::step(
             }
 
             // activate sparse coder
-            encoders[l].step(layer_input_cis, false, params.layers[l].encoder);
+            encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
 
             // add to next layer's history
             if (l < encoders.size() - 1) {
