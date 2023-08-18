@@ -80,6 +80,11 @@ private:
         const Params &params
     );
 
+    void update_gates(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
