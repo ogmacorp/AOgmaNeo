@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "decoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -143,7 +144,9 @@ void Decoder::update_gates(
     
     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-    int sum = 0;
+    const float half_byte_inv = 1.0f / 127.0f;
+
+    float sum = 0.0f;
     int count = 0;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -162,14 +165,18 @@ void Decoder::update_gates(
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     int wi = hc + wi_start;
 
-                    sum += vl.weights[wi];
+                    float w = (vl.weights[wi] - 127) * half_byte_inv;
+
+                    sum += w * w;
                 }
 
                 count++;
             }
         }
 
-    vl.gates[visible_column_index] = expf(-static_cast<float>(sum) / (max(1, count) * hidden_size.z) * params.gcurve);
+    sum /= max(1, count) * hidden_size.z;
+
+    vl.gates[visible_column_index] = expf(-sum * params.scale * params.gcurve);
 }
 
 void Decoder::learn(
@@ -227,12 +234,14 @@ void Decoder::learn(
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
+                float gate = vl.gates[visible_column_index];
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index] * vl.gates[visible_column_index], state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index] * gate, state)));
                 }
             }
     }
