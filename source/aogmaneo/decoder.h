@@ -30,26 +30,19 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
-
-        Float_Buffer protos;
+        Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
-        Int_Buffer recon_cis;
     };
 
     struct Params {
-        float lr_weight; // learning rate
-        float lr_proto; // learning rate
-        float rehearsal_mut;
-        int rehearsal_iters;
+        float scale; // scale of softmax
+        float lr; // learning rate
 
         Params()
         :
-        lr_weight(1.0f),
-        lr_proto(0.1f),
-        rehearsal_mut(0.8f),
-        rehearsal_iters(3)
+        scale(32.0f),
+        lr(0.05f)
         {}
     };
 
@@ -57,8 +50,8 @@ private:
     Int3 hidden_size; // size of the output/hidden/prediction
 
     Int_Buffer hidden_cis; // hidden state
-    Int_Buffer rand_cis;
 
+    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
 
     Float_Buffer hidden_deltas;
@@ -67,35 +60,18 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-
     // --- kernels ---
 
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Int_Buffer* hidden_target_cis,
-        bool learn_enabled,
-        unsigned long* state,
-        const Params &params
-    );
-
-    void randomize(
-        const Int2 &column_pos,
-        const Int_Buffer* hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
+        const Int_Buffer* hidden_target_cis,
         unsigned long* state,
-        const Params &params
-    );
-
-    void reconstruct(
-        const Int2 &column_pos,
-        int vli,
         const Params &params
     );
 
@@ -165,6 +141,11 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
+    }
+
+    // get the hidden states (predictions)
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
     }
 
     // get the hidden size
