@@ -255,12 +255,14 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
+                float gate = hidden_gates[hidden_column_index];
+
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
                     int wi = vc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(vl.recon_deltas[visible_cell_index] * hidden_gates[hidden_column_index], state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(vl.recon_deltas[visible_cell_index] * gate, state)));
                 }
             }
         }
