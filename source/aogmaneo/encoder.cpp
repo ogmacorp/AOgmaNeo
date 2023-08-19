@@ -137,7 +137,7 @@ void Encoder::update_gates(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    float w = (255 - vl.weights[wi]) * byte_inv;
+                    float w = (255.0f - vl.weights[wi]) * byte_inv;
 
                     sum += w * w;
                 }
