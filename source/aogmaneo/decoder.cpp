@@ -171,7 +171,7 @@ void Decoder::learn(
 
                     float w = vl.weights[wi] * byte_inv;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index] * (255 - vl.weights[wi]) * w, state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index] * (255.0f - vl.weights[wi]) * w, state)));
                 }
             }
     }
