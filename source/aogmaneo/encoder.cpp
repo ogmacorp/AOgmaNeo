@@ -48,7 +48,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        float influence = vl.importance / (sub_count * 255);
+        float influence = vl.importance / (sub_count * 255.0f);
 
         total_importance += vl.importance;
 
@@ -189,7 +189,7 @@ void Encoder::learn(
                 }
             }
 
-        total += static_cast<float>(sub_total) / (sub_count * 255) * vl.importance;
+        total += static_cast<float>(sub_total) / (sub_count * 255.0f) * vl.importance;
         total_importance += vl.importance;
     }
 
