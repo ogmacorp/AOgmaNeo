@@ -76,7 +76,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = static_cast<float>(hidden_sums[hidden_cell_index]) / (count * 255);
+        float activation = static_cast<float>(hidden_sums[hidden_cell_index]) / (count * 255.0f);
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -128,8 +128,10 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_deltas[hidden_cell_index] = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        hidden_deltas[hidden_cell_index] = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
     }
+
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -167,7 +169,9 @@ void Decoder::learn(
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index], state)));
+                    float w = vl.weights[wi] * byte_inv;
+
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index] * (255 - vl.weights[wi]) * w, state)));
                 }
             }
     }
@@ -187,12 +191,16 @@ void Decoder::init_random(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
+    int total_num_visible_columns = 0;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
 
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
+
+        total_num_visible_columns += num_visible_columns;
 
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
@@ -212,6 +220,23 @@ void Decoder::init_random(
     hidden_acts = Float_Buffer(num_hidden_cells, -1.0f); // flag
 
     hidden_deltas.resize(num_hidden_cells);
+
+    // generate helper buffers for parallelization
+    visible_pos_vlis.resize(total_num_visible_columns);
+
+    int index = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+        const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
+
+        int num_visible_columns = vld.size.x * vld.size.y;
+
+        for (int i = 0; i < num_visible_columns; i++) {
+            visible_pos_vlis[index] = Int3(i / vld.size.y, i % vld.size.y, vli);
+            index++;
+        }
+    }
 }
 
 void Decoder::step(
@@ -330,6 +355,8 @@ void Decoder::read(
     visible_layers.resize(num_visible_layers);
     visible_layer_descs.resize(num_visible_layers);
 
+    int total_num_visible_columns = 0;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -338,6 +365,8 @@ void Decoder::read(
 
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
+
+        total_num_visible_columns += num_visible_columns;
 
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
@@ -349,6 +378,23 @@ void Decoder::read(
         vl.input_cis_prev.resize(num_visible_columns);
 
         reader.read(reinterpret_cast<void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
+    }
+
+    // generate helper buffers for parallelization
+    visible_pos_vlis.resize(total_num_visible_columns);
+
+    int index = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+        const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
+
+        int num_visible_columns = vld.size.x * vld.size.y;
+
+        for (int i = 0; i < num_visible_columns; i++) {
+            visible_pos_vlis[index] = Int3(i / vld.size.y, i % vld.size.y, vli);
+            index++;
+        }
     }
 }
 
