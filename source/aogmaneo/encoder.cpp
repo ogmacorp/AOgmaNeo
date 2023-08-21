@@ -139,7 +139,7 @@ void Encoder::update_gates(
 
                     float w = (255.0f - vl.weights[wi]) * byte_inv;
 
-                    sum += w * w;
+                    sum += abs(w);
                 }
             }
     }
