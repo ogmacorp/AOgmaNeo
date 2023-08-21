@@ -76,7 +76,7 @@ void Encoder::forward(
     }
 
     int max_index = 0;
-    float max_activation = 0.0f;
+    float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -102,8 +102,6 @@ void Encoder::update_gates(
 
     float sum = 0.0f;
     int count = 0;
-
-    const float byte_inv = 1.0f / 255.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -137,7 +135,7 @@ void Encoder::update_gates(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    float w = (255.0f - vl.weights[wi]) * byte_inv;
+                    float w = 1.0f - vl.weights[wi];
 
                     sum += abs(w);
                 }
@@ -146,14 +144,13 @@ void Encoder::update_gates(
 
     sum /= count;
 
-    hidden_gates[hidden_column_index] = expf(-sum * params.scale * params.gcurve);
+    hidden_gates[hidden_column_index] = expf(-sum * params.gcurve);
 }
 
 void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
     int vli,
-    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -189,7 +186,7 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        vl.recon_sums[visible_cell_index] = 0;
+        vl.recon_acts[visible_cell_index] = 0.0f;
     }
 
     int count = 0;
@@ -214,7 +211,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    vl.recon_sums[visible_cell_index] += vl.weights[wi];
+                    vl.recon_acts[visible_cell_index] += vl.weights[wi];
                 }
 
                 count++;
@@ -222,19 +219,20 @@ void Encoder::learn(
         }
 
     int max_index = 0;
-    int max_activation = 0;
+    float max_activation = limit_min;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        int recon_sum = vl.recon_sums[visible_cell_index];
+        float recon_act = vl.recon_acts[visible_cell_index] / max(1, count);
 
-        if (recon_sum > max_activation) {
-            max_activation = recon_sum;
+        if (recon_act > max_activation) {
+            max_activation = recon_act;
             max_index = vc;
         }
 
-        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / (max(1, count) * 255) - 1.0f) * params.scale));
+        // reuse buffer for deltas
+        vl.recon_acts[visible_cell_index] = params.lr * ((vc == target_ci) - expf(recon_act - 1.0f));
     }
 
     if (max_index == target_ci)
@@ -262,7 +260,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(vl.recon_deltas[visible_cell_index] * gate, state)));
+                    vl.weights[wi] += vl.recon_acts[visible_cell_index] * gate;
                 }
             }
         }
@@ -300,11 +298,9 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noise);
+            vl.weights[i] = randf(0.99f, 1.0f);
 
-        vl.recon_sums.resize(num_visible_cells);
-
-        vl.recon_deltas.resize(num_visible_cells);
+        vl.recon_acts.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -347,16 +343,12 @@ void Encoder::step(
         for (int i = 0; i < num_hidden_columns; i++)
             update_gates(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
-        unsigned int base_state = rand();
-
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-            learn(pos, input_cis[vli], vli, &state, params);
+            learn(pos, input_cis[vli], vli, params);
         }
     }
 }
@@ -371,7 +363,7 @@ int Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float) + sizeof(float);
     }
 
     return size;
@@ -398,7 +390,7 @@ void Encoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.importance), sizeof(float));
     }
@@ -445,11 +437,9 @@ void Encoder::read(
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
 
-        vl.recon_sums.resize(num_visible_cells);
-
-        vl.recon_deltas.resize(num_visible_cells);
+        vl.recon_acts.resize(num_visible_cells);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }

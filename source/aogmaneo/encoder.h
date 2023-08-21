@@ -30,11 +30,9 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights;
 
-        Int_Buffer recon_sums;
-
-        Float_Buffer recon_deltas;
+        Float_Buffer recon_acts;
 
         float importance;
 
@@ -45,14 +43,12 @@ public:
     };
 
     struct Params {
-        float scale; // scale of exp
         float lr; // learning rate
         float gcurve; // gate curve
 
         Params()
         :
-        scale(16.0f),
-        lr(0.01f),
+        lr(0.1f),
         gcurve(0.5f)
         {}
     };
@@ -89,7 +85,6 @@ private:
         const Int2 &column_pos,
         const Int_Buffer* input_cis,
         int vli,
-        unsigned long* state,
         const Params &params
     );
 

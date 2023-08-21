@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
 
@@ -38,14 +38,12 @@ public:
     };
 
     struct Params {
-        float scale; // scale of softmax
         float lr; // learning rate
         float gcurve; // gate curve
 
         Params()
         :
-        scale(32.0f),
-        lr(0.05f),
+        lr(1.0f),
         gcurve(0.5f)
         {}
     };
@@ -55,7 +53,6 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
 
     Float_Buffer hidden_deltas;
@@ -83,7 +80,6 @@ private:
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
