@@ -143,9 +143,7 @@ void Decoder::update_gates(
     
     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-    const float half_byte_inv = 1.0f / 127.0f;
-
-    float sum = 0.0f;
+    int sum = 0;
     int count = 0;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -164,18 +162,14 @@ void Decoder::update_gates(
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     int wi = hc + wi_start;
 
-                    float w = (vl.weights[wi] - 127.0f) * half_byte_inv;
-
-                    sum += w * w;
+                    sum += vl.usages[wi];
                 }
 
                 count += hidden_size.z;
             }
         }
 
-    sum /= max(1, count);
-
-    vl.gates[visible_column_index] = expf(-sum * params.scale * params.gcurve);
+    vl.gates[visible_column_index] = expf(-static_cast<float>(sum) / max(1, count * 255) * params.scale);
 }
 
 void Decoder::learn(
@@ -199,7 +193,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_deltas[hidden_cell_index] = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        hidden_deltas[hidden_cell_index] = (hc == target_ci) - hidden_acts[hidden_cell_index];
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -240,7 +234,9 @@ void Decoder::learn(
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index] * gate, state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * hidden_deltas[hidden_cell_index] * gate * 255.0f, state)));
+
+                    vl.usages[wi] = min(255, vl.usages[wi] + rand_roundf(params.ur * abs(hidden_deltas[hidden_cell_index]) * 255.0f, state));
                 }
             }
     }
@@ -275,6 +271,7 @@ void Decoder::init_random(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.usages = Byte_Buffer(vl.weights.size(), 0);
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
@@ -368,7 +365,7 @@ int Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -405,6 +402,7 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
@@ -452,8 +450,10 @@ void Decoder::read(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.usages.resize(vl.weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.usages[0]), vl.usages.size() * sizeof(Byte));
 
         vl.input_cis_prev.resize(num_visible_columns);
 

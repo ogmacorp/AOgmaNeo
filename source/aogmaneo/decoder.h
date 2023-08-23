@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
+        Byte_Buffer usages;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
 
@@ -40,13 +41,13 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float gcurve; // gate curve
+        float ur; // usage rate
 
         Params()
         :
         scale(32.0f),
         lr(0.05f),
-        gcurve(0.5f)
+        ur(0.004f)
         {}
     };
 
