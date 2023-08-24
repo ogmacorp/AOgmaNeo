@@ -191,12 +191,8 @@ void Hierarchy::step(
         if (l < encoders.size() - 1)
             layer_input_cis[1] = &decoders[l + 1][0].get_hidden_cis();
 
-        for (int d = 0; d < decoders[l].size(); d++) {
-            if (learn_enabled)
-                decoders[l][d].learn((l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
-
-            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
-        }
+        for (int d = 0; d < decoders[l].size(); d++)
+            decoders[l][d].step(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), learn_enabled, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
         if (l == 0) {
             for (int d = 0; d < actors.size(); d++)
