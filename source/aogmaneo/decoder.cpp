@@ -175,7 +175,7 @@ void Decoder::update_gates(
 
     sum /= max(1, count);
 
-    vl.gates[visible_column_index] = expf(-sum * params.scale * params.gcurve);
+    vl.gates[visible_column_index] = expf(-sum * params.gcurve);
 }
 
 void Decoder::learn(
