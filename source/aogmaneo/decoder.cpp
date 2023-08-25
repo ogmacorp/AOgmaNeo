@@ -164,9 +164,7 @@ void Decoder::update_gates(
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     int wi = hc + wi_start;
 
-                    float w = (vl.weights[wi] - 127.0f) * half_byte_inv;
-
-                    sum += w * w;
+                    sum += abs((vl.weights[wi] - 127.0f) * half_byte_inv);
                 }
 
                 count += hidden_size.z;
