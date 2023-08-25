@@ -31,8 +31,8 @@ const float limit_min = -999999.0f;
 const float limit_max = 999999.0f;
 const float limit_small = 0.000001f;
 
-const int init_weight_noise = 5;
 const int rand_subseed_offset = 12345;
+const int init_weight_noise = 5;
 
 inline float modf(
     float x,
@@ -385,7 +385,9 @@ const unsigned long pcg_increment = 1442695040888963407u;
 
 const unsigned int rand_max = 0x00ffffff;
 
-inline unsigned int rotr32(unsigned int x, unsigned int r);
+inline unsigned int rotr32(unsigned int x, unsigned int r) {
+    return x >> r | x << (-r & 31);
+}
 
 unsigned long rand_get_state(
     unsigned long seed
@@ -395,15 +397,19 @@ unsigned int rand(
     unsigned long* state = &global_state
 );
 
-float randf(
+inline float randf(
     unsigned long* state = &global_state
-);
+) {
+    return static_cast<float>(rand(state) % rand_max) / static_cast<float>(rand_max);
+}
 
-float randf(
+inline float randf(
     float low,
     float high,
     unsigned long* state = &global_state
-);
+) {
+    return low + (high - low) * randf(state);
+}
 
 float rand_normalf(
     unsigned long* state = &global_state
