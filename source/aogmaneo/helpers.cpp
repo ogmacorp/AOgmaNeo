@@ -248,10 +248,6 @@ unsigned long aon::rand_get_state(
     return state;
 }
 
-unsigned int aon::rotr32(unsigned int x, unsigned int r) {
-    return x >> r | x << (-r & 31);
-}
-
 unsigned int aon::rand(
     unsigned long* state
 ) {
@@ -263,20 +259,6 @@ unsigned int aon::rand(
     x ^= x >> 18;
 
     return rotr32(static_cast<unsigned int>(x >> 27), count);
-}
-
-float aon::randf(
-    unsigned long* state
-) {
-    return static_cast<float>(rand(state) % rand_max) / static_cast<float>(rand_max);
-}
-
-float aon::randf(
-    float low,
-    float high,
-    unsigned long* state
-) {
-    return low + (high - low) * randf(state);
 }
 
 float aon::rand_normalf(

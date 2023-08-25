@@ -59,7 +59,7 @@ public:
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
-            int recurrent_radius = 2,
+            int recurrent_radius = 0,
             int down_radius = 2
         )
         :
@@ -197,10 +197,9 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
+        assert(io_types[i] == action);
 
-        return decoders[0][d_indices[i]].get_hidden_acts();
+        return actors[d_indices[i]].get_hidden_acts();
     }
 
     // number of io layers
