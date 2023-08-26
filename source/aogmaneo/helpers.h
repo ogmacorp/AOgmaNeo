@@ -29,7 +29,10 @@ const float log2_e = 1.44269f;
 const float log2_e_inv = 1.0f / log2_e;
 const float limit_min = -999999.0f;
 const float limit_max = 999999.0f;
-const float limit_small = 0.0001f;
+const float limit_small = 0.000001f;
+
+const int rand_subseed_offset = 12345;
+const int init_weight_noise = 5;
 
 inline float modf(
     float x,
@@ -374,27 +377,55 @@ inline float tanhf(
 
 // --- rng ---
 
-extern unsigned int global_state;
+// PCG32 https://en.wikipedia.org/wiki/Permuted_congruential_generator
+extern unsigned long global_state;
 
-const unsigned int rand_max = 0x00003fff;
+const unsigned long pcg_multiplier = 6364136223846793005u;
+const unsigned long pcg_increment = 1442695040888963407u;
+
+const unsigned int rand_max = 0x00ffffff;
+
+inline unsigned int rotr32(unsigned int x, unsigned int r) {
+    return x >> r | x << (-r & 31);
+}
+
+unsigned long rand_get_state(
+    unsigned long seed
+);
 
 unsigned int rand(
-    unsigned int* state = &global_state
+    unsigned long* state = &global_state
 );
 
-float randf(
-    unsigned int* state = &global_state
-);
+inline float randf(
+    unsigned long* state = &global_state
+) {
+    return static_cast<float>(rand(state) % rand_max) / static_cast<float>(rand_max);
+}
 
-float randf(
+inline float randf(
     float low,
     float high,
-    unsigned int* state = &global_state
-);
+    unsigned long* state = &global_state
+) {
+    return low + (high - low) * randf(state);
+}
 
 float rand_normalf(
-    unsigned int* state = &global_state
+    unsigned long* state = &global_state
 );
+
+inline int rand_roundf(
+    float x,
+    unsigned long* state = &global_state
+) {
+    int i = static_cast<int>(x);
+    float abs_rem = abs(x - i);
+
+    int s = (x > 0.0f) * 2 - 1;
+
+    return i + (randf(state) < abs_rem) * s;
+}
 
 // --- serialization ---
 

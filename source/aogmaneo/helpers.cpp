@@ -234,32 +234,35 @@ Int2 aon::min_overhang(
     return new_pos;
 }
 
-unsigned int aon::global_state = 123456;
+unsigned long aon::global_state = rand_get_state(12345);
+
+unsigned long aon::rand_get_state(
+    unsigned long seed
+) {
+    unsigned long state = seed + pcg_increment;
+
+    unsigned int count = static_cast<unsigned int>(state >> 59);
+
+    state = state * pcg_multiplier + pcg_increment;
+
+    return state;
+}
 
 unsigned int aon::rand(
-    unsigned int* state
+    unsigned long* state
 ) {
-    *state = ((*state) * 1103515245 + 12345) % (1u << 31);
+    unsigned long x = *state;
+    unsigned int count = static_cast<unsigned int>(x >> 59);
 
-    return (*state >> 16) & rand_max;
-}
+    *state = x * pcg_multiplier + pcg_increment;
 
-float aon::randf(
-    unsigned int* state
-) {
-    return static_cast<float>(rand(state)) / static_cast<float>(rand_max);
-}
+    x ^= x >> 18;
 
-float aon::randf(
-    float low,
-    float high,
-    unsigned int* state
-) {
-    return low + (high - low) * randf(state);
+    return rotr32(static_cast<unsigned int>(x >> 27), count);
 }
 
 float aon::rand_normalf(
-    unsigned int* state
+    unsigned long* state
 ) {
     float u1 = randf(state);
     float u2 = randf(state);
