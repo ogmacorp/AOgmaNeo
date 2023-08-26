@@ -148,22 +148,29 @@ void Encoder::learn(
 
                 int rand_ci = rand(state) % hidden_size.z;
 
+                bool found = false;
+
                 // choose non-vigilant cell to boost
                 for (int dhc = 0; dhc < hidden_size.z - 1; dhc++) {
                     int hidden_cell_index = rand_ci + hidden_cells_start;
 
-                    if (hidden_acts[hidden_cell_index] < params.vigilance)
+                    if (hidden_acts[hidden_cell_index] < params.vigilance) {
+                        found = true;
+
                         break;
+                    }
 
                     rand_ci = (rand_ci + 1) % hidden_size.z;
                 }
 
-                int wi = rand_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+                if (found) {
+                    int wi = rand_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                int byi = wi / 8;
-                int bi = wi % 8;
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                vl.weights[byi] |= (0x1 << bi);
+                    vl.weights[byi] |= (0x1 << bi);
+                }
             }
     }
 }
