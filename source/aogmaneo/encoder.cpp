@@ -114,20 +114,8 @@ void Encoder::learn(
 
     float hidden_max = hidden_acts[hidden_cell_index_max];
 
-    // ifa already vigilant somewhere, do nothing
-    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
-        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
-
-            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
-                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
-
-                float other_hidden_max = hidden_acts[hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z];
-
-                if (other_hidden_max >= params.vigilance)
-                    return;
-            }
-        }
+    if (hidden_max >= params.vigilance)
+        return;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];

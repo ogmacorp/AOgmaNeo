@@ -42,12 +42,10 @@ public:
 
     struct Params {
         float vigilance; // ART vigilance
-        int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        vigilance(0.95f),
-        l_radius(2)
+        vigilance(0.95f)
         {}
     };
 
