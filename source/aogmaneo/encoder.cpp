@@ -114,6 +114,7 @@ void Encoder::learn(
 
     float hidden_max = hidden_acts[hidden_cell_index_max];
 
+    // ifa already vigilant, do nothing
     if (hidden_max >= params.vigilance)
         return;
 
@@ -148,6 +149,7 @@ void Encoder::learn(
 
                 int rand_ci = rand(state) % hidden_size.z;
 
+                // choose non-vigilant cell to boost
                 for (int dhc = 0; dhc < hidden_size.z - 1; dhc++) {
                     int hidden_cell_index = rand_ci + hidden_cells_start;
 
