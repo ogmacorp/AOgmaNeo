@@ -51,7 +51,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float scale = vl.importance / sub_count;
+        float influence = vl.importance / sub_count;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -71,7 +71,7 @@ void Encoder::forward(
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    hidden_acts[hidden_cell_index] += ((vl.weights[byi] & (0x1 << bi)) != 0) * scale;
+                    hidden_acts[hidden_cell_index] += ((vl.weights[byi] & (0x1 << bi)) != 0) * influence;
                 }
             }
     }
@@ -95,7 +95,7 @@ void Encoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* input_cis,
     int vli,
-    unsigned int* state,
+    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -275,7 +275,7 @@ void Encoder::step(
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            unsigned int state = base_state + i * 12345;
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
             learn(pos, input_cis[vli], vli, &state, params);
         }
