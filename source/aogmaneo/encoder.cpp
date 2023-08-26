@@ -118,6 +118,23 @@ void Encoder::learn(
     if (hidden_max >= params.vigilance)
         return;
 
+    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+            if (dcx == 0 && dcy == 0)
+                continue;
+
+            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
+
+            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                float other_hidden_max = hidden_acts[hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z];
+
+                if (other_hidden_max >= params.vigilance)
+                    return;
+            }
+        }
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
