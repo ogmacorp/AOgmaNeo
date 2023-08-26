@@ -102,9 +102,6 @@ void Encoder::learn(
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            if (dcx == 0 && dcy == 0)
-                continue;
-
             Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
 
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
@@ -112,7 +109,7 @@ void Encoder::learn(
 
                 float other_hidden_max = hidden_acts[hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z];
 
-                if (other_hidden_max >= hidden_max)
+                if (other_hidden_max > hidden_max)
                     return;
             }
         }
