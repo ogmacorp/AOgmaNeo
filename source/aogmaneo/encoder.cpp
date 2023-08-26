@@ -117,6 +117,18 @@ void Encoder::learn(
     if (hidden_max >= params.vigilance)
         return;
 
+    int rand_ci = rand(state) % hidden_size.z;
+
+    // choose non-vigilant cell to boost
+    for (int dhc = 0; dhc < hidden_size.z - 1; dhc++) {
+        int hidden_cell_index = rand_ci + hidden_cells_start;
+
+        if (hidden_acts[hidden_cell_index] < params.vigilance)
+            break;
+
+        rand_ci = (rand_ci + 1) % hidden_size.z;
+    }
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -146,31 +158,12 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int rand_ci = rand(state) % hidden_size.z;
+                int wi = rand_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                bool found = false;
+                int byi = wi / 8;
+                int bi = wi % 8;
 
-                // choose non-vigilant cell to boost
-                for (int dhc = 0; dhc < hidden_size.z - 1; dhc++) {
-                    int hidden_cell_index = rand_ci + hidden_cells_start;
-
-                    if (hidden_acts[hidden_cell_index] < params.vigilance) {
-                        found = true;
-
-                        break;
-                    }
-
-                    rand_ci = (rand_ci + 1) % hidden_size.z;
-                }
-
-                if (found) {
-                    int wi = rand_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
-
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    vl.weights[byi] |= (0x1 << bi);
-                }
+                vl.weights[byi] |= (0x1 << bi);
             }
     }
 }
