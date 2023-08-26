@@ -61,8 +61,11 @@ void Decoder::forward(
                 Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
                 Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
 
-                int i_visible_column_index = address2(i_pos, Int2(vld.size.x, vld.size.y));
-                int j_visible_column_index = address2(j_pos, Int2(vld.size.x, vld.size.y));
+                Int2 i_pos_full(i_pos.x + iter_lower_bound.x, i_pos.y + iter_lower_bound.y);
+                Int2 j_pos_full(j_pos.x + iter_lower_bound.x, j_pos.y + iter_lower_bound.y);
+
+                int i_visible_column_index = address2(i_pos_full, Int2(vld.size.x, vld.size.y));
+                int j_visible_column_index = address2(j_pos_full, Int2(vld.size.x, vld.size.y));
 
                 int i_in_ci = vl_input_cis[i_visible_column_index];
                 int j_in_ci = vl_input_cis[j_visible_column_index];
@@ -151,8 +154,11 @@ void Decoder::learn(
                 Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
                 Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
 
-                int i_visible_column_index = address2(i_pos, Int2(vld.size.x, vld.size.y));
-                int j_visible_column_index = address2(j_pos, Int2(vld.size.x, vld.size.y));
+                Int2 i_pos_full(i_pos.x + iter_lower_bound.x, i_pos.y + iter_lower_bound.y);
+                Int2 j_pos_full(j_pos.x + iter_lower_bound.x, j_pos.y + iter_lower_bound.y);
+
+                int i_visible_column_index = address2(i_pos_full, Int2(vld.size.x, vld.size.y));
+                int j_visible_column_index = address2(j_pos_full, Int2(vld.size.x, vld.size.y));
 
                 int i_in_ci = vl.input_cis_prev[i_visible_column_index];
                 int j_in_ci = vl.input_cis_prev[j_visible_column_index];
