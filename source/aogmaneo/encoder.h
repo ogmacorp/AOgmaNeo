@@ -32,8 +32,6 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Int_Buffer recon_acts;
-
         float importance;
 
         Visible_Layer()
@@ -42,7 +40,14 @@ public:
         {}
     };
 
-    struct Params {};
+    struct Params {
+        float min_act;
+
+        Params()
+        :
+        min_act(0.9f)
+        {}
+    };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
@@ -62,14 +67,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
-        unsigned long* state,
+        bool learn_enabled,
         const Params &params
     );
 
