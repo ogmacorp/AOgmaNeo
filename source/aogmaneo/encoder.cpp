@@ -109,7 +109,7 @@ void Encoder::learn(
 
                 float other_hidden_max = hidden_acts[hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z];
 
-                if (other_hidden_max > hidden_max)
+                if (other_hidden_max < hidden_max)
                     return;
             }
         }
