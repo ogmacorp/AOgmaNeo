@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights;
         
         float importance;
 
@@ -41,15 +41,11 @@ public:
     };
 
     struct Params {
-        float choice; // Choice parameter
-        float vigilance; // ART vigilance
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.9f),
         lr(0.5f),
         l_radius(2)
         {}
@@ -60,13 +56,7 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
-
-    Float_Buffer hidden_matches;
-
-    Float_Buffer hidden_totals;
-
-    Float_Buffer hidden_maxs;
+    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
