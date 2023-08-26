@@ -303,6 +303,8 @@ void Encoder::read(
         vl.weights.resize((num_hidden_cells * area * vld.size.z + 7) / 8);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+
+        reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 }
 
