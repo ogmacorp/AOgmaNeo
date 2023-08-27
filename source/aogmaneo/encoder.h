@@ -47,7 +47,7 @@ public:
         Params()
         :
         lr(0.01f),
-        l_radius(2)
+        l_radius(4)
         {}
     };
 
