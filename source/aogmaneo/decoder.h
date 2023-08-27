@@ -42,7 +42,7 @@ public:
         Params()
         :
         lr(0.05f),
-        forget(0.001f)
+        forget(0.002f)
         {}
     };
 
