@@ -50,7 +50,7 @@ void Decoder::forward(
 
         int count = receptive_size_x * receptive_size_y;
 
-        int num_cell_combinations = vld.size.z * (vld.size.z - 1) / 2;
+        int num_cell_combinations = vld.size.z * vld.size.z;
 
         int num_column_combinations = area * (area - 1) / 2;
 
@@ -73,7 +73,7 @@ void Decoder::forward(
                 int i_in_ci = vl_input_cis[i_visible_column_index];
                 int j_in_ci = vl_input_cis[j_visible_column_index];
 
-                int cell_combination = i_in_ci + j_in_ci * (j_in_ci - 1) / 2;
+                int cell_combination = i_in_ci + j_in_ci * vld.size.z;
                 int column_combination = i + j * (j - 1) / 2;
 
                 int pair_address = cell_combination + num_cell_combinations * column_combination;
@@ -151,7 +151,7 @@ void Decoder::learn(
 
         int count = receptive_size_x * receptive_size_y;
 
-        int num_cell_combinations = vld.size.z * (vld.size.z - 1) / 2;
+        int num_cell_combinations = vld.size.z * vld.size.z;
 
         int num_column_combinations = area * (area - 1) / 2;
 
@@ -172,7 +172,7 @@ void Decoder::learn(
                 int i_in_ci = vl.input_cis_prev[i_visible_column_index];
                 int j_in_ci = vl.input_cis_prev[j_visible_column_index];
 
-                int cell_combination = i_in_ci + j_in_ci * (j_in_ci - 1) / 2;
+                int cell_combination = i_in_ci + j_in_ci * vld.size.z;
                 int column_combination = i + j * (j - 1) / 2;
 
                 int pair_address = cell_combination + num_cell_combinations * column_combination;
@@ -226,7 +226,7 @@ void Decoder::init_random(
         int area = diam * diam;
 
         // column pairs
-        int num_cell_combinations = vld.size.z * (vld.size.z - 1) / 2;
+        int num_cell_combinations = vld.size.z * vld.size.z;
 
         int num_column_combinations = area * (area - 1) / 2;
 
@@ -365,7 +365,7 @@ void Decoder::read(
         int area = diam * diam;
 
         // column pairs
-        int num_cell_combinations = vld.size.z * (vld.size.z - 1) / 2;
+        int num_cell_combinations = vld.size.z * vld.size.z;
 
         int num_column_combinations = area * (area - 1) / 2;
 
