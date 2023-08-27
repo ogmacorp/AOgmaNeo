@@ -36,11 +36,11 @@ public:
     };
 
     struct Params {
-        float forget;
+        float lr;
 
         Params()
         :
-        forget(0.01f)
+        lr(0.1f)
         {}
     };
 
