@@ -123,9 +123,6 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    if (hidden_ci == target_ci)
-        return;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
