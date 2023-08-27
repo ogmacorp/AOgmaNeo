@@ -65,7 +65,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_acts[hidden_cell_index] += logf(max(limit_small, vl.weights[wi])) * influence;
+                    hidden_acts[hidden_cell_index] += logf(limit_small + vl.weights[wi]) * influence;
                 }
             }
     }
