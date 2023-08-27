@@ -30,6 +30,7 @@ void Decoder::forward(
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
         int diam = vld.radius * 2 + 1;
+        int area = diam * diam;
 
         // projection
         Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
@@ -49,9 +50,11 @@ void Decoder::forward(
 
         int count = receptive_size_x * receptive_size_y;
 
-        int num_bits_per_cell = count * vld.size.z;
+        int num_cell_combinations = vld.size.z * (vld.size.z - 1) / 2;
 
-        int num_weights_per_cell = num_bits_per_cell * (num_bits_per_cell - 1) / 2;
+        int num_column_combinations = area * (area - 1) / 2;
+
+        int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
@@ -70,10 +73,10 @@ void Decoder::forward(
                 int i_in_ci = vl_input_cis[i_visible_column_index];
                 int j_in_ci = vl_input_cis[j_visible_column_index];
 
-                int i_full = i_in_ci + vld.size.z * i;
-                int j_full = j_in_ci + vld.size.z * j;
+                int cell_combination = i_in_ci + j_in_ci * (j_in_ci - 1) / 2;
+                int column_combination = i + j * (j - 1) / 2;
 
-                int pair_address = i_full + j_full * (j_full - 1) / 2;
+                int pair_address = cell_combination + num_cell_combinations * column_combination;
 
                 int wi_start = hidden_size.z * (pair_address + num_weights_per_cell * hidden_column_index);
 
@@ -128,6 +131,7 @@ void Decoder::learn(
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
         int diam = vld.radius * 2 + 1;
+        int area = diam * diam;
 
         // projection
         Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
@@ -147,9 +151,11 @@ void Decoder::learn(
 
         int count = receptive_size_x * receptive_size_y;
 
-        int num_bits_per_cell = count * vld.size.z;
+        int num_cell_combinations = vld.size.z * (vld.size.z - 1) / 2;
 
-        int num_weights_per_cell = num_bits_per_cell * (num_bits_per_cell - 1) / 2;
+        int num_column_combinations = area * (area - 1) / 2;
+
+        int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
         // loop through bit pairs
         for (int j = 1; j < count; j++)
@@ -166,10 +172,10 @@ void Decoder::learn(
                 int i_in_ci = vl.input_cis_prev[i_visible_column_index];
                 int j_in_ci = vl.input_cis_prev[j_visible_column_index];
 
-                int i_full = i_in_ci + vld.size.z * i;
-                int j_full = j_in_ci + vld.size.z * j;
+                int cell_combination = i_in_ci + j_in_ci * (j_in_ci - 1) / 2;
+                int column_combination = i + j * (j - 1) / 2;
 
-                int pair_address = i_full + j_full * (j_full - 1) / 2;
+                int pair_address = cell_combination + num_cell_combinations * column_combination;
 
                 int wi_start = hidden_size.z * (pair_address + num_weights_per_cell * hidden_column_index);
 
@@ -219,10 +225,12 @@ void Decoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        // bit pairs
-        int num_bits_per_cell = area * vld.size.z;
+        // column pairs
+        int num_cell_combinations = vld.size.z * (vld.size.z - 1) / 2;
 
-        int num_weights_per_cell = num_bits_per_cell * (num_bits_per_cell - 1) / 2;
+        int num_column_combinations = area * (area - 1) / 2;
+
+        int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
         vl.weights = Byte_Buffer((num_hidden_cells * num_weights_per_cell + 7) / 8, 0);
 
@@ -356,10 +364,12 @@ void Decoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        // bit pairs
-        int num_bits_per_cell = area * vld.size.z;
+        // column pairs
+        int num_cell_combinations = vld.size.z * (vld.size.z - 1) / 2;
 
-        int num_weights_per_cell = num_bits_per_cell * (num_bits_per_cell - 1) / 2;
+        int num_column_combinations = area * (area - 1) / 2;
+
+        int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
         vl.weights.resize((num_hidden_cells * num_weights_per_cell + 7) / 8);
 
