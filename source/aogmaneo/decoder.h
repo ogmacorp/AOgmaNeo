@@ -40,7 +40,7 @@ public:
 
         Params()
         :
-        forget(0.01f)
+        forget(0.1f)
         {}
     };
 
