@@ -45,10 +45,9 @@ void Decoder::forward(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int receptive_size_x = (iter_upper_bound.x - iter_lower_bound.x + 1);
-        int receptive_size_y = (iter_upper_bound.y - iter_lower_bound.y + 1);
+        Int2 receptive_size(iter_upper_bound.x - iter_lower_bound.x + 1, iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        int count = receptive_size_x * receptive_size_y;
+        int count = receptive_size.x * receptive_size.y;
 
         // need at least 2 columns
         if (count < 2)
@@ -65,8 +64,8 @@ void Decoder::forward(
         // loop through bit pairs
         for (int j = 1; j < count; j++)
             for (int i = 0; i < j; i++) {
-                Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
-                Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
+                Int2 i_pos(i / receptive_size.y, i % receptive_size.y);
+                Int2 j_pos(j / receptive_size.y, j % receptive_size.y);
 
                 Int2 i_pos_full(i_pos.x + iter_lower_bound.x, i_pos.y + iter_lower_bound.y);
                 Int2 j_pos_full(j_pos.x + iter_lower_bound.x, j_pos.y + iter_lower_bound.y);
@@ -146,10 +145,9 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int receptive_size_x = (iter_upper_bound.x - iter_lower_bound.x + 1);
-        int receptive_size_y = (iter_upper_bound.y - iter_lower_bound.y + 1);
+        Int2 receptive_size(iter_upper_bound.x - iter_lower_bound.x + 1, iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        int count = receptive_size_x * receptive_size_y;
+        int count = receptive_size.x * receptive_size.y;
 
         // need at least 2 columns
         if (count < 2)
@@ -164,8 +162,8 @@ void Decoder::learn(
         // loop through bit pairs
         for (int j = 1; j < count; j++)
             for (int i = 0; i < j; i++) {
-                Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
-                Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
+                Int2 i_pos(i / receptive_size.y, i % receptive_size.y);
+                Int2 j_pos(j / receptive_size.y, j % receptive_size.y);
 
                 Int2 i_pos_full(i_pos.x + iter_lower_bound.x, i_pos.y + iter_lower_bound.y);
                 Int2 j_pos_full(j_pos.x + iter_lower_bound.x, j_pos.y + iter_lower_bound.y);
