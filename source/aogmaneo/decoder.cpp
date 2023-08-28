@@ -78,7 +78,7 @@ void Decoder::forward(
                 int j_in_ci = vl_input_cis[j_visible_column_index];
 
                 int cell_combination = i_in_ci + j_in_ci * vld.size.z;
-                int column_combination = i + j * (j - 1) / 2;
+                int column_combination = i + j * (j - 1) / 2; // do not include diagonal
 
                 int pair_address = cell_combination + num_cell_combinations * column_combination;
 
@@ -178,7 +178,7 @@ void Decoder::learn(
                 int j_in_ci = vl.input_cis_prev[j_visible_column_index];
 
                 int cell_combination = i_in_ci + j_in_ci * vld.size.z;
-                int column_combination = i + j * (j - 1) / 2;
+                int column_combination = i + j * (j - 1) / 2; // do not include diagonal
 
                 int pair_address = cell_combination + num_cell_combinations * column_combination;
 
