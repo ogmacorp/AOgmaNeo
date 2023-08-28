@@ -184,7 +184,7 @@ void Decoder::learn(
 
                 int wi_start = hidden_size.z * (pair_address + num_weights_per_cell * hidden_column_index);
 
-                if (hidden_ci != target_ci && randf(state) < params.forget) {
+                if (hidden_ci != target_ci && randf(state) < params.lr) {
                     int wi = hidden_ci + wi_start;
 
                     int byi = wi / 8;
@@ -193,7 +193,7 @@ void Decoder::learn(
                     vl.weights[byi] &= ~(0x1 << bi);
                 }
 
-                if (randf(state) < params.remember) {
+                if (hidden_ci != target_ci || randf(state) < params.lr) {
                     int wi = target_ci + wi_start;
 
                     int byi = wi / 8;
