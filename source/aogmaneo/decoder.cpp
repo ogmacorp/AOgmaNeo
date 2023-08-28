@@ -193,7 +193,7 @@ void Decoder::learn(
                     vl.weights[byi] &= ~(0x1 << bi);
                 }
 
-                {
+                if (randf(state) < params.remember) {
                     int wi = target_ci + wi_start;
 
                     int byi = wi / 8;
