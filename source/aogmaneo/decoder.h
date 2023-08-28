@@ -37,10 +37,12 @@ public:
 
     struct Params {
         float lr;
+        int min_gap;
 
         Params()
         :
-        lr(0.1f)
+        lr(0.1f),
+        min_gap(16)
         {}
     };
 
