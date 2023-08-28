@@ -127,8 +127,21 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    if (hidden_ci == target_ci && hidden_sums[target_ci + hidden_cells_start] >= (hidden_sums[hidden_ci + hidden_cells_start] + params.min_gap))
-        return;
+    if (hidden_ci == target_ci) {
+        int second_max = 0;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            if (hc == hidden_ci)
+                continue;
+
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            second_max = max(second_max, hidden_sums[hidden_cell_index]);
+        }
+
+        if (hidden_sums[target_ci + hidden_cells_start] >= (second_max + params.min_gap))
+            return;
+    }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
