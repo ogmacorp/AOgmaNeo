@@ -35,16 +35,7 @@ public:
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
-    struct Params {
-        float lr;
-        int min_gap;
-
-        Params()
-        :
-        lr(0.5f),
-        min_gap(256)
-        {}
-    };
+    struct Params {};
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction

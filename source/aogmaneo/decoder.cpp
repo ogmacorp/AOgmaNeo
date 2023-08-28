@@ -125,23 +125,6 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
-    int hidden_ci = hidden_cis[hidden_column_index];
-
-    if (hidden_ci == target_ci) {
-        int second_max = 0;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            if (hc == hidden_ci)
-                continue;
-
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            second_max = max(second_max, hidden_sums[hidden_cell_index]);
-        }
-
-        if (hidden_sums[target_ci + hidden_cells_start] >= (second_max + params.min_gap))
-            return;
-    }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -181,9 +164,6 @@ void Decoder::learn(
         // loop through bit pairs
         for (int j = 1; j < count; j++)
             for (int i = 0; i < j; i++) {
-                if (randf(state) >= params.lr)
-                    continue;
-
                 Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
                 Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
 
