@@ -41,8 +41,8 @@ public:
 
         Params()
         :
-        remember(0.5f),
-        forget(0.01f)
+        remember(0.1f),
+        forget(0.001f)
         {}
     };
 
