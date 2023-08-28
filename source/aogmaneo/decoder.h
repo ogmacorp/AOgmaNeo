@@ -42,7 +42,7 @@ public:
         Params()
         :
         lr(0.1f),
-        min_gap(16)
+        min_gap(256)
         {}
     };
 
