@@ -50,21 +50,17 @@ void Decoder::forward(
 
         int count = receptive_size_x * receptive_size_y;
 
-        // need at least 2 columns
-        if (count < 2)
-            continue;
-
         int num_cell_combinations = vld.size.z * vld.size.z;
 
-        int num_column_combinations = area * (area - 1) / 2; // do not include diagonal
+        int num_column_combinations = area * (area + 1) / 2; // include diagonal, otherwise can't handle single-columns scenarios
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
         // loop through bit pairs
-        for (int j = 1; j < count; j++)
-            for (int i = 0; i < j; i++) {
+        for (int j = 0; j < count; j++)
+            for (int i = 0; i <= j; i++) {
                 Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
                 Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
 
@@ -78,7 +74,7 @@ void Decoder::forward(
                 int j_in_ci = vl_input_cis[j_visible_column_index];
 
                 int cell_combination = i_in_ci + j_in_ci * vld.size.z;
-                int column_combination = i + j * (j - 1) / 2; // do not include diagonal
+                int column_combination = i + j * (j + 1) / 2;
 
                 int pair_address = cell_combination + num_cell_combinations * column_combination;
 
@@ -125,6 +121,7 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -151,19 +148,15 @@ void Decoder::learn(
 
         int count = receptive_size_x * receptive_size_y;
 
-        // need at least 2 columns
-        if (count < 2)
-            continue;
-
         int num_cell_combinations = vld.size.z * vld.size.z;
 
-        int num_column_combinations = area * (area - 1) / 2; // do not include diagonal
+        int num_column_combinations = area * (area + 1) / 2; // include diagonal, otherwise can't handle single-columns scenarios
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
         // loop through bit pairs
-        for (int j = 1; j < count; j++)
-            for (int i = 0; i < j; i++) {
+        for (int j = 0; j < count; j++)
+            for (int i = 0; i <= j; i++) {
                 Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
                 Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
 
@@ -177,7 +170,7 @@ void Decoder::learn(
                 int j_in_ci = vl.input_cis_prev[j_visible_column_index];
 
                 int cell_combination = i_in_ci + j_in_ci * vld.size.z;
-                int column_combination = i + j * (j - 1) / 2; // do not include diagonal
+                int column_combination = i + j * (j + 1) / 2;
 
                 int pair_address = cell_combination + num_cell_combinations * column_combination;
 
@@ -221,7 +214,7 @@ void Decoder::init_random(
         // column pairs
         int num_cell_combinations = vld.size.z * vld.size.z;
 
-        int num_column_combinations = area * (area - 1) / 2; // do not include diagonal
+        int num_column_combinations = area * (area + 1) / 2; // include diagonal, otherwise can't handle single-columns scenarios
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
@@ -360,7 +353,7 @@ void Decoder::read(
         // column pairs
         int num_cell_combinations = vld.size.z * vld.size.z;
 
-        int num_column_combinations = area * (area - 1) / 2; // do not include diagonal
+        int num_column_combinations = area * (area + 1) / 2; // include diagonal, otherwise can't handle single-columns scenarios
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
