@@ -41,7 +41,7 @@ public:
 
         Params()
         :
-        lr(0.1f),
+        lr(0.5f),
         min_gap(256)
         {}
     };
