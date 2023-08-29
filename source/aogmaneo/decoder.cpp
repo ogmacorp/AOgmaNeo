@@ -25,6 +25,8 @@ void Decoder::forward(
         hidden_sums[hidden_cell_index] = 0;
     }
 
+    int total_num_combinations_used = 0;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -56,6 +58,8 @@ void Decoder::forward(
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
+
+        total_num_combinations_used += count * (count + 1) / 2;
 
         // loop through bit pairs
         for (int j = 0; j < count; j++)
@@ -106,6 +110,24 @@ void Decoder::forward(
         }
     }
 
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] = expf(static_cast<float>(hidden_sums[hidden_cell_index] - max_activation) / total_num_combinations_used * params.scale);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
+    }
+
     hidden_cis[hidden_column_index] = max_index;
 }
 
@@ -120,10 +142,8 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
-    int hidden_ci = hidden_cis[hidden_column_index];
 
-    if (hidden_ci == target_ci)
-        return;
+    float chance = params.lr * (1.0f - hidden_acts[target_ci + hidden_cells_start]);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -177,16 +197,7 @@ void Decoder::learn(
 
                 int wi_start = hidden_size.z * (pair_address + num_weights_per_cell * hidden_column_index);
 
-                if (randf(state) < params.forget) {
-                    int wi = hidden_ci + wi_start;
-
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    vl.weights[byi] &= ~(0x1 << bi);
-                }
-
-                if (randf(state) < params.remember) {
+                if (randf(state) < chance) {
                     int wi = target_ci + wi_start;
 
                     int byi = wi / 8;
@@ -239,6 +250,10 @@ void Decoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_sums = Int_Buffer(num_hidden_cells, 0);
+
+    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+
+    hidden_deltas.resize(num_hidden_cells);
 }
 
 void Decoder::step(
@@ -342,6 +357,10 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     hidden_sums = Int_Buffer(num_hidden_cells, 0);
+
+    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+
+    hidden_deltas.resize(num_hidden_cells);
 
     int num_visible_layers;
 

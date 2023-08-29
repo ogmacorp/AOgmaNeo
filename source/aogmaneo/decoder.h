@@ -36,13 +36,13 @@ public:
     };
 
     struct Params {
-        float remember;
-        float forget;
+        float scale;
+        float lr;
 
         Params()
         :
-        remember(0.1f),
-        forget(0.01f)
+        scale(4.0f),
+        lr(0.5f)
         {}
     };
 
@@ -52,6 +52,10 @@ private:
     Int_Buffer hidden_cis; // hidden state
 
     Int_Buffer hidden_sums;
+
+    Float_Buffer hidden_acts;
+
+    Int_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -138,6 +142,11 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
+    }
+
+    // get the hidden activations
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
     }
 
     // get the hidden size
