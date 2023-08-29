@@ -33,20 +33,14 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
-
-        Float_Buffer gates;
     };
 
     struct Params {
-        float scale; // scale of softmax
         float lr; // learning rate
-        float gcurve; // gate curve
 
         Params()
         :
-        scale(32.0f),
-        lr(0.05f),
-        gcurve(1.0f)
+        lr(0.05f)
         {}
     };
 
@@ -55,28 +49,17 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
         const Params &params
     );
 
@@ -153,11 +136,6 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
-    }
-
-    // get the hidden states (predictions)
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
     }
 
     // get the hidden size
