@@ -45,14 +45,13 @@ void Decoder::forward(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int receptive_size_x = (iter_upper_bound.x - iter_lower_bound.x + 1);
-        int receptive_size_y = (iter_upper_bound.y - iter_lower_bound.y + 1);
+        Int2 receptive_size(iter_upper_bound.x - iter_lower_bound.x + 1, iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        int count = receptive_size_x * receptive_size_y;
+        int count = receptive_size.x * receptive_size.y;
 
         int num_cell_combinations = vld.size.z * vld.size.z;
 
-        int num_column_combinations = area * (area + 1) / 2; // include diagonal, otherwise can't handle single-columns scenarios
+        int num_column_combinations = area * (area + 1) / 2; // do not include diagonal
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
@@ -61,8 +60,8 @@ void Decoder::forward(
         // loop through bit pairs
         for (int j = 0; j < count; j++)
             for (int i = 0; i <= j; i++) {
-                Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
-                Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
+                Int2 i_pos(i / receptive_size.y, i % receptive_size.y);
+                Int2 j_pos(j / receptive_size.y, j % receptive_size.y);
 
                 Int2 i_pos_full(i_pos.x + iter_lower_bound.x, i_pos.y + iter_lower_bound.y);
                 Int2 j_pos_full(j_pos.x + iter_lower_bound.x, j_pos.y + iter_lower_bound.y);
@@ -73,8 +72,8 @@ void Decoder::forward(
                 int i_in_ci = vl_input_cis[i_visible_column_index];
                 int j_in_ci = vl_input_cis[j_visible_column_index];
 
+                int column_combination = i + j * (j + 1) / 2; // do not include diagonal
                 int cell_combination = i_in_ci + j_in_ci * vld.size.z;
-                int column_combination = i + j * (j + 1) / 2;
 
                 int pair_address = cell_combination + num_cell_combinations * column_combination;
 
@@ -143,22 +142,21 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int receptive_size_x = (iter_upper_bound.x - iter_lower_bound.x + 1);
-        int receptive_size_y = (iter_upper_bound.y - iter_lower_bound.y + 1);
+        Int2 receptive_size(iter_upper_bound.x - iter_lower_bound.x + 1, iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        int count = receptive_size_x * receptive_size_y;
+        int count = receptive_size.x * receptive_size.y;
 
         int num_cell_combinations = vld.size.z * vld.size.z;
 
-        int num_column_combinations = area * (area + 1) / 2; // include diagonal, otherwise can't handle single-columns scenarios
+        int num_column_combinations = area * (area + 1) / 2; // do not include diagonal
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
         // loop through bit pairs
         for (int j = 0; j < count; j++)
             for (int i = 0; i <= j; i++) {
-                Int2 i_pos(i / receptive_size_y, i % receptive_size_y);
-                Int2 j_pos(j / receptive_size_y, j % receptive_size_y);
+                Int2 i_pos(i / receptive_size.y, i % receptive_size.y);
+                Int2 j_pos(j / receptive_size.y, j % receptive_size.y);
 
                 Int2 i_pos_full(i_pos.x + iter_lower_bound.x, i_pos.y + iter_lower_bound.y);
                 Int2 j_pos_full(j_pos.x + iter_lower_bound.x, j_pos.y + iter_lower_bound.y);
@@ -169,12 +167,21 @@ void Decoder::learn(
                 int i_in_ci = vl.input_cis_prev[i_visible_column_index];
                 int j_in_ci = vl.input_cis_prev[j_visible_column_index];
 
+                int column_combination = i + j * (j + 1) / 2; // do not include diagonal
                 int cell_combination = i_in_ci + j_in_ci * vld.size.z;
-                int column_combination = i + j * (j + 1) / 2;
 
                 int pair_address = cell_combination + num_cell_combinations * column_combination;
 
                 int wi_start = hidden_size.z * (pair_address + num_weights_per_cell * hidden_column_index);
+
+                if (hidden_ci != target_ci && randf(state) < params.forget) {
+                    int wi = hidden_ci + wi_start;
+
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    vl.weights[byi] &= ~(0x1 << bi);
+                }
 
                 int wi = target_ci + wi_start;
 
@@ -214,7 +221,7 @@ void Decoder::init_random(
         // column pairs
         int num_cell_combinations = vld.size.z * vld.size.z;
 
-        int num_column_combinations = area * (area + 1) / 2; // include diagonal, otherwise can't handle single-columns scenarios
+        int num_column_combinations = area * (area + 1) / 2; // do not include diagonal
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
@@ -226,7 +233,7 @@ void Decoder::init_random(
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_sums.resize(num_hidden_cells);
+    hidden_sums = Int_Buffer(num_hidden_cells, 0);
 }
 
 void Decoder::step(
@@ -329,7 +336,7 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    hidden_sums.resize(num_hidden_cells);
+    hidden_sums = Int_Buffer(num_hidden_cells, 0);
 
     int num_visible_layers;
 
@@ -353,7 +360,7 @@ void Decoder::read(
         // column pairs
         int num_cell_combinations = vld.size.z * vld.size.z;
 
-        int num_column_combinations = area * (area + 1) / 2; // include diagonal, otherwise can't handle single-columns scenarios
+        int num_column_combinations = area * (area + 1) / 2; // do not include diagonal
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
