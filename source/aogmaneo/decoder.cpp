@@ -140,6 +140,8 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+        const float vld_size_z_inv = 1.0f / vld.size.z;
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -151,7 +153,7 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = max_dendrite + num_dendrites * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * 255.0f * ((vc == in_ci_prev) - expf((vl.weights[wi] * byte_inv - 1.0f) * params.scale)), state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * 255.0f * ((vc == in_ci_prev) - vld_size_z_inv), state)));
                 }
             }
     }
@@ -188,7 +190,7 @@ void Decoder::init_random(
         vl.weights.resize(num_hidden_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noise);
+            vl.weights[i] = 127 + (rand() % init_weight_noise);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
