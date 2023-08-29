@@ -122,6 +122,9 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
+    if (hidden_ci == target_ci)
+        return;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -174,7 +177,7 @@ void Decoder::learn(
 
                 int wi_start = hidden_size.z * (pair_address + num_weights_per_cell * hidden_column_index);
 
-                if (hidden_ci != target_ci && randf(state) < params.forget) {
+                if (randf(state) < params.forget) {
                     int wi = hidden_ci + wi_start;
 
                     int byi = wi / 8;
@@ -183,12 +186,14 @@ void Decoder::learn(
                     vl.weights[byi] &= ~(0x1 << bi);
                 }
 
-                int wi = target_ci + wi_start;
+                if (randf(state) < params.remember) {
+                    int wi = target_ci + wi_start;
 
-                int byi = wi / 8;
-                int bi = wi % 8;
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                vl.weights[byi] |= (0x1 << bi);
+                    vl.weights[byi] |= (0x1 << bi);
+                }
             }
     }
 }
