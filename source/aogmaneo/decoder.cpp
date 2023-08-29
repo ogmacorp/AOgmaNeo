@@ -151,7 +151,7 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = max_dendrite + num_dendrites * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * 255.0f * ((vc == in_ci_prev) - expf(vl.weights[wi] * byte_inv - 1.0f) * params.scale), state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * 255.0f * ((vc == in_ci_prev) - expf((vl.weights[wi] * byte_inv - 1.0f) * params.scale)), state)));
                 }
             }
     }
