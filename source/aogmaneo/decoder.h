@@ -36,16 +36,19 @@ public:
     };
 
     struct Params {
+        float scale;
         float lr; // learning rate
 
         Params()
         :
+        scale(16.0f),
         lr(0.05f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
+    int num_dendrites;
 
     Int_Buffer hidden_cis; // hidden state
 
@@ -74,6 +77,7 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output/prediction size
+        int num_dendrites,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
