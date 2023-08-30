@@ -147,16 +147,24 @@ void Decoder::learn(
     int target_ci = (*hidden_target_cis)[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
+    bool all_zero = true;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         float prob = abs(params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]));
 
-        if (randf(state) < prob)
+        if (randf(state) < prob) {
             hidden_deltas[hidden_cell_index] = (hc == target_ci) * 2 - 1;
+
+            all_zero = false;
+        }
         else
             hidden_deltas[hidden_cell_index] = 0;
     }
+
+    if (all_zero)
+        return;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
