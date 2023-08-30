@@ -248,7 +248,10 @@ void Decoder::init_random(
 
         int num_weights_per_cell = num_column_combinations * num_cell_combinations;
 
-        vl.weights = Byte_Buffer(num_hidden_cells * num_weights_per_cell, 0);
+        vl.weights.resize(num_hidden_cells * num_weights_per_cell);
+
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
