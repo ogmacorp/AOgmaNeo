@@ -36,21 +36,26 @@ public:
     };
 
     struct Params {
-        float lr; // learning rate
+        float scale;
+        float lr;
 
         Params()
         :
-        lr(0.2f)
+        scale(8.0f),
+        lr(1.0f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
-    int num_dendrites;
 
     Int_Buffer hidden_cis; // hidden state
 
+    Int_Buffer hidden_sums;
+
     Float_Buffer hidden_acts;
+
+    Int_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -75,7 +80,6 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output/prediction size
-        int num_dendrites,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
@@ -138,6 +142,11 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
+    }
+
+    // get the hidden activations
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
     }
 
     // get the hidden size
