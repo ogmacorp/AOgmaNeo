@@ -145,8 +145,18 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
+    int hidden_ci = hidden_cis[hidden_column_index];
 
-    float chance = params.lr * (1.0f - hidden_acts[target_ci + hidden_cells_start]);
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        float prob = abs(params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]));
+
+        if (randf(state) < prob)
+            hidden_deltas[hidden_cell_index] = (hc == target_ci) * 2 - 1;
+        else
+            hidden_deltas[hidden_cell_index] = 0;
+    }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -203,13 +213,21 @@ void Decoder::learn(
 
                 int wi_start = hidden_size.z * (pair_address + num_weights_per_cell * hidden_column_index);
 
-                if (randf(state) < chance) {
-                    int wi = target_ci + wi_start;
+                for (int hc = 0; hc < hidden_size.z; hc++) {
+                    int hidden_cell_index = hc + hidden_cells_start;
+
+                    if (hidden_deltas[hidden_cell_index] == 0)
+                        continue;
+
+                    int wi = hc + wi_start;
 
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    vl.weights[byi] |= (0x1 << bi);
+                    if (hidden_deltas[hidden_cell_index] == 1)
+                        vl.weights[byi] |= (0x1 << bi);
+                    else
+                        vl.weights[byi] &= ~(0x1 << bi);
                 }
             }
     }
@@ -258,6 +276,8 @@ void Decoder::init_random(
     hidden_sums = Int_Buffer(num_hidden_cells, 0);
 
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+
+    hidden_deltas.resize(num_hidden_cells);
 }
 
 void Decoder::step(
@@ -363,6 +383,8 @@ void Decoder::read(
     hidden_sums = Int_Buffer(num_hidden_cells, 0);
 
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+
+    hidden_deltas.resize(num_hidden_cells);
 
     int num_visible_layers;
 
