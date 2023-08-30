@@ -152,7 +152,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float prob = abs(params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]));
+        float prob = abs((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         if (randf(state) < prob) {
             hidden_deltas[hidden_cell_index] = (hc == target_ci) * 2 - 1;
@@ -221,21 +221,23 @@ void Decoder::learn(
 
                 int wi_start = hidden_size.z * (pair_address + num_weights_per_cell * hidden_column_index);
 
-                for (int hc = 0; hc < hidden_size.z; hc++) {
-                    int hidden_cell_index = hc + hidden_cells_start;
+                if (randf(state) < params.lr) {
+                    for (int hc = 0; hc < hidden_size.z; hc++) {
+                        int hidden_cell_index = hc + hidden_cells_start;
 
-                    if (hidden_deltas[hidden_cell_index] == 0)
-                        continue;
+                        if (hidden_deltas[hidden_cell_index] == 0)
+                            continue;
 
-                    int wi = hc + wi_start;
+                        int wi = hc + wi_start;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
+                        int byi = wi / 8;
+                        int bi = wi % 8;
 
-                    if (hidden_deltas[hidden_cell_index] == 1)
-                        vl.weights[byi] |= (0x1 << bi);
-                    else
-                        vl.weights[byi] &= ~(0x1 << bi);
+                        if (hidden_deltas[hidden_cell_index] == 1)
+                            vl.weights[byi] |= (0x1 << bi);
+                        else
+                            vl.weights[byi] &= ~(0x1 << bi);
+                    }
                 }
             }
     }
