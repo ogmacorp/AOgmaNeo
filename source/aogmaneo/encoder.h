@@ -34,7 +34,7 @@ public:
 
         Int_Buffer recon_sums;
 
-        Float_Buffer recon_deltas;
+        Int_Buffer recon_deltas;
 
         float importance;
 
