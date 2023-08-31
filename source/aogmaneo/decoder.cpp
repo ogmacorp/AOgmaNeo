@@ -235,7 +235,6 @@ void Decoder::init_random(
         const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
 
         int num_visible_columns = vld.size.x * vld.size.y;
-        int num_visible_cells = num_visible_columns * vld.size.z;
 
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
@@ -377,7 +376,6 @@ void Decoder::read(
         reader.read(reinterpret_cast<void*>(&vld), sizeof(Visible_Layer_Desc));
 
         int num_visible_columns = vld.size.x * vld.size.y;
-        int num_visible_cells = num_visible_columns * vld.size.z;
 
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
