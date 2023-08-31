@@ -42,7 +42,7 @@ public:
         Params()
         :
         scale(32.0f),
-        lr(0.2f)
+        lr(0.1f)
         {}
     };
 
@@ -72,7 +72,6 @@ private:
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
