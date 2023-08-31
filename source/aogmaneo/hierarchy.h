@@ -36,8 +36,8 @@ public:
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
             int up_radius = 2,
-            int down_radius = 2,
-            int history_capacity = 64
+            int down_radius = 1,
+            int history_capacity = 128
         )
         :
         size(size),
@@ -59,8 +59,8 @@ public:
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
-            int recurrent_radius = 0,
-            int down_radius = 2
+            int recurrent_radius = 1,
+            int down_radius = 1
         )
         :
         hidden_size(hidden_size),
@@ -197,9 +197,10 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        assert(io_types[i] == action);
+        if (io_types[i] == action)
+            return actors[d_indices[i]].get_hidden_acts();
 
-        return actors[d_indices[i]].get_hidden_acts();
+        return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
     // number of io layers

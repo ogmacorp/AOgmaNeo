@@ -134,7 +134,6 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &column_pos,
     const Int_Buffer* hidden_target_cis,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -147,7 +146,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_deltas[hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]));
+        hidden_deltas[hidden_cell_index] = roundf(params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]));
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -272,15 +271,10 @@ void Decoder::step(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
     if (learn_enabled) {
-        unsigned int base_state = rand();
-
         // learn kernel
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++) {
-            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-            learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, &state, params);
-        }
+        for (int i = 0; i < num_hidden_columns; i++)
+            learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, params);
     }
 
     // forward kernel
