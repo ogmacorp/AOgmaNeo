@@ -33,20 +33,18 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
-
-        Float_Buffer gates;
     };
 
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float gcurve; // gate curve
+        float forget;
 
         Params()
         :
         scale(32.0f),
-        lr(0.05f),
-        gcurve(1.0f)
+        lr(0.1f),
+        forget(0.01f)
         {}
     };
 
@@ -71,12 +69,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
         const Params &params
     );
 
