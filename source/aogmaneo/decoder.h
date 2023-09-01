@@ -44,7 +44,7 @@ public:
         :
         scale(32.0f),
         lr(0.1f),
-        forget(0.01f)
+        forget(0.001f)
         {}
     };
 
