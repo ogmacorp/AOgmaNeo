@@ -47,13 +47,11 @@ public:
     struct Params {
         float scale; // scale of exp
         float lr; // learning rate
-        float forget;
 
         Params()
         :
         scale(16.0f),
-        lr(0.05f),
-        forget(0.01f)
+        lr(0.01f)
         {}
     };
 

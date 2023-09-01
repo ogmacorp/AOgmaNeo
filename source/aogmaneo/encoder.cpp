@@ -175,7 +175,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        vl.recon_deltas[visible_cell_index] = min(0.0f, params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / (max(1, count) * 255) - 1.0f) * params.scale))) + params.forget;
+        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / (max(1, count) * 255) - 1.0f) * params.scale));
     }
 
     if (max_index == target_ci)
