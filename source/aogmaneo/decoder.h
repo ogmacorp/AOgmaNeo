@@ -38,13 +38,11 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float forget;
 
         Params()
         :
         scale(32.0f),
-        lr(0.1f),
-        forget(0.001f)
+        lr(0.1f)
         {}
     };
 
