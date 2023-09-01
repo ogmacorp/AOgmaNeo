@@ -163,7 +163,7 @@ void Decoder::learn(
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf((hc == target_ci) * delta - params.forget, state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf((hc == target_ci) * delta - params.forget * 255.0f, state)));
                 }
             }
     }
