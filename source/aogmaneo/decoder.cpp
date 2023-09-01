@@ -163,7 +163,7 @@ void Decoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * 255.0f * (delta * (vc == in_ci_prev) - vld_size_z_inv), state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * 255.0f * delta * ((vc == in_ci_prev) - vld_size_z_inv), state)));
                 }
             }
     }
