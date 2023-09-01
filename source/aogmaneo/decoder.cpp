@@ -143,7 +143,7 @@ void Decoder::update_gates(
     
     int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-    const float half_byte_inv = 1.0f / 127.0f;
+    const float byte_inv = 1.0f / 255.0f;
 
     float sum = 0.0f;
     int count = 0;
@@ -164,7 +164,7 @@ void Decoder::update_gates(
                 for (int hc =  0; hc < hidden_size.z; hc++) {
                     int wi = hc + wi_start;
 
-                    float w = (vl.weights[wi] - 127.0f) * half_byte_inv;
+                    float w = vl.weights[wi] * byte_inv;
 
                     sum += w * w;
                 }
@@ -277,7 +277,7 @@ void Decoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
+            vl.weights[i] = rand() % init_weight_noise;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
 
