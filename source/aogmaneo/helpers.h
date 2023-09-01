@@ -41,6 +41,13 @@ inline float modf(
     return x - static_cast<int>(x / y) * y;
 }
 
+inline int ceil_divide(
+    int x,
+    int y
+) {
+    return (x + y - 1) / y;
+}
+
 float expf(
     float x
 );
