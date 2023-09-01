@@ -34,7 +34,7 @@ public:
 
         Int_Buffer recon_sums;
 
-        Int_Buffer recon_deltas;
+        Float_Buffer recon_deltas;
 
         float importance;
 
@@ -47,11 +47,13 @@ public:
     struct Params {
         float scale; // scale of exp
         float lr; // learning rate
+        float gcurve; // gate curve
 
         Params()
         :
         scale(16.0f),
-        lr(0.1f)
+        lr(0.01f),
+        gcurve(1.0f)
         {}
     };
 
@@ -61,6 +63,8 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_gates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -73,6 +77,11 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
         const Params &params
     );
 
