@@ -118,14 +118,20 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = (*hidden_target_cis)[hidden_column_index];
-
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     // check if has acts computed (ran at least once) by checking for flag value
-    if (hidden_acts[hidden_cell_index_target] == -1.0f)
+    if (hidden_acts[hidden_cells_start] == -1.0f)
         return;
 
-    float delta = 1.0f - hidden_acts[hidden_cell_index_target];
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        if (hc == target_ci)
+            hidden_deltas[hidden_cell_index] = params.ulr * 255.0f * (1.0f - hidden_acts[hidden_cell_index]);
+        else
+            hidden_deltas[hidden_cell_index] = -params.dlr * 255.0f * hidden_acts[hidden_cell_index];
+    }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -154,16 +160,16 @@ void Decoder::learn(
 
                 int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-                int visible_cell_index = in_ci_prev + visible_column_index * vld.size.z;
-
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
+                for (int hc = 0; hc < hidden_size.z; hc++) {
+                    int hidden_cell_index = hc + hidden_cells_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * 255.0f * (delta * (vc == in_ci_prev) - vld_size_z_inv), state)));
+                    int wi = hc + wi_start;
+
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index], state)));
                 }
             }
     }

@@ -37,12 +37,14 @@ public:
 
     struct Params {
         float scale; // scale of softmax
-        float lr; // learning rate
+        float ulr; // up learning rate
+        float dlr; // down learning rate
 
         Params()
         :
-        scale(32.0f),
-        lr(0.1f)
+        scale(64.0f),
+        ulr(0.2f),
+        dlr(0.02f)
         {}
     };
 
