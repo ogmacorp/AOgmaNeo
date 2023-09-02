@@ -154,8 +154,6 @@ void Decoder::learn(
 
                 int in_ci_prev = vl.input_cis_prev[visible_column_index];
 
-                int visible_cell_index = in_ci_prev + visible_column_index * vld.size.z;
-
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
