@@ -204,8 +204,6 @@ void Decoder::init_random(
 
     hidden_sums.resize(num_hidden_cells);
     hidden_acts = Float_Buffer(num_hidden_cells, -1.0f); // flag
-
-    hidden_deltas.resize(num_hidden_cells);
 }
 
 void Decoder::step(
@@ -314,8 +312,6 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
 
     hidden_sums.resize(num_hidden_cells);
-
-    hidden_deltas.resize(num_hidden_cells);
 
     int num_visible_layers;
 
