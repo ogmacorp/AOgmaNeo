@@ -38,11 +38,13 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
+        float depression; // synaptic depression multiplier
 
         Params()
         :
         scale(32.0f),
-        lr(0.1f)
+        lr(0.1f),
+        depression(0.5f)
         {}
     };
 
