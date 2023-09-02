@@ -36,7 +36,7 @@ public:
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
             int up_radius = 2,
-            int down_radius = 2,
+            int down_radius = 1,
             int history_capacity = 128
         )
         :
@@ -60,7 +60,7 @@ public:
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
             int recurrent_radius = 2,
-            int down_radius = 2
+            int down_radius = 1
         )
         :
         hidden_size(hidden_size),

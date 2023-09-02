@@ -36,15 +36,15 @@ public:
     };
 
     struct Params {
-        float scale; // scale of softmax
-        float ulr; // up learning rate
-        float dlr; // down learning rate
+        float scale;
+        float lr;
+        float forget;
 
         Params()
         :
-        scale(64.0f),
-        ulr(0.2f),
-        dlr(0.02f)
+        scale(32.0f),
+        lr(0.1f),
+        forget(0.001f)
         {}
     };
 
@@ -54,15 +54,12 @@ private:
     Int_Buffer hidden_cis; // hidden state
 
     Int_Buffer hidden_sums;
-    Float_Buffer hidden_acts;
 
-    Float_Buffer hidden_deltas;
+    Float_Buffer hidden_acts;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 
@@ -147,7 +144,7 @@ public:
         return hidden_cis;
     }
 
-    // get the hidden states (predictions)
+    // get the hidden activations
     const Float_Buffer &get_hidden_acts() const {
         return hidden_acts;
     }
