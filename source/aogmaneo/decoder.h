@@ -38,13 +38,11 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float ar; // average rate
 
         Params()
         :
         scale(32.0f),
-        lr(0.1f),
-        ar(0.01f)
+        lr(0.05f)
         {}
     };
 
@@ -55,8 +53,6 @@ private:
 
     Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_averages;
 
     Float_Buffer hidden_deltas;
 
