@@ -198,6 +198,8 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+        float vld_size_z_inv = 1.0f / vld.size.z;
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -206,9 +208,11 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    int wi = target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta, state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta * ((vc == in_ci_prev) - vld_size_z_inv), state)));
+                }
             }
     }
 }
