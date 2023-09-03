@@ -42,7 +42,7 @@ public:
         Params()
         :
         scale(32.0f),
-        lr(0.1f)
+        lr(0.05f)
         {}
     };
 
@@ -53,6 +53,8 @@ private:
 
     Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -65,7 +67,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
         const Params &params
     );
 
