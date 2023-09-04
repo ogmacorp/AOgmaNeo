@@ -32,23 +32,17 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Byte_Buffer usages;
-
-        Float_Buffer gates;
-
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float gcurve; // gain curve for anti-forget
 
         Params()
         :
         scale(32.0f),
-        lr(16.0f),
-        gcurve(4.0f)
+        lr(0.02f)
         {}
     };
 
@@ -57,13 +51,14 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
+    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 
@@ -73,16 +68,10 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        unsigned int* state,
+        unsigned long* state,
         const Params &params
     );
 
@@ -94,14 +83,10 @@ public:
     );
 
     // activate the predictor (predict values)
-    void activate(
+    void step(
         const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    // learning predictions (update weights)
-    void learn(
         const Int_Buffer* hidden_target_cis,
+        bool learn_enabled,
         const Params &params
     );
 

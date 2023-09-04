@@ -45,8 +45,8 @@ public:
         Params()
         :
         scale(2.0f),
-        falloff(0.9f),
-        lr(0.1f),
+        falloff(0.99f),
+        lr(0.05f),
         rr(0.1f)
         {}
     };
@@ -68,14 +68,14 @@ private:
         const Int2 &column_pos,
         const Array<const Byte_Buffer*> &inputs,
         bool learn_enabled,
-        unsigned int* state
+        unsigned long* state
     );
 
     void learn_reconstruction(
         const Int2 &column_pos,
         const Byte_Buffer* inputs,
         int vli,
-        unsigned int* state
+        unsigned long* state
     );
 
     void reconstruct(

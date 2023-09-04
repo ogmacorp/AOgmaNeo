@@ -31,10 +31,6 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer weights;
-
-        Byte_Buffer usages;
-
-        Float_Buffer gates;
     };
 
     // history sample for delayed updates
@@ -49,7 +45,6 @@ public:
         float lr; // value learning rate
         float cons; // convervativeness
         float discount; // discount fActor
-        float gcurve; // gate gain
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
@@ -58,7 +53,6 @@ public:
         lr(0.5f),
         cons(0.0f),
         discount(0.99f),
-        gcurve(4.0f),
         n_steps(8),
         history_iters(16)
         {}
@@ -90,21 +84,9 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        int t,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         int t,
-        const Params &params
-    );
-
-    void update_usages(
-        const Int2 &column_pos,
         const Params &params
     );
 
