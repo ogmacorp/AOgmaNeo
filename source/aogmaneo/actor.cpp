@@ -365,7 +365,7 @@ void Actor::init_random(
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
-    hidden_acts = Float_Buffer(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -555,7 +555,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
-    hidden_acts = Float_Buffer(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     int num_visible_layers;
 
