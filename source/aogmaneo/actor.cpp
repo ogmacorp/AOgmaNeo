@@ -273,9 +273,7 @@ void Actor::learn(
 
                     int wi = hc + wi_start;
 
-                    float delta = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
-
-                    vl.weights[wi] += delta;
+                    vl.weights[wi] += params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
                 }
             }
     }
@@ -315,7 +313,7 @@ void Actor::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_acts = Float_Buffer(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -484,7 +482,7 @@ void Actor::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    hidden_acts = Float_Buffer(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     int num_visible_layers;
 
