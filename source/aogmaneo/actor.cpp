@@ -278,7 +278,7 @@ void Actor::learn(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    float rate = params.alr * (mimic + (1.0f - mimic) * (td_error_value > 0.0f ? 1.0f : -(1.0f - params.bias)));
+    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -365,7 +365,7 @@ void Actor::init_random(
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
-    hidden_acts = Float_Buffer(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -555,7 +555,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
-    hidden_acts = Float_Buffer(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     int num_visible_layers;
 
