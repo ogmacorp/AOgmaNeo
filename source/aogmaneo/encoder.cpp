@@ -13,6 +13,7 @@ using namespace aon;
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
+    bool learn_enabled,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -76,18 +77,30 @@ void Encoder::forward(
     }
 
     int max_index = 0;
-    float max_activation = 0.0f;
+    float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        if (hidden_acts[hidden_cell_index] > max_activation) {
-            max_activation = hidden_acts[hidden_cell_index];
+        float activation = hidden_acts[hidden_cell_index] + hidden_biases[hidden_cell_index];
+
+        if (activation > max_activation) {
+            max_activation = activation;
             max_index = hc;
         }
     }
 
     hidden_cis[hidden_column_index] = max_index;
+
+    if (learn_enabled) {
+        float hidden_size_z_inv = 1.0f / hidden_size.z;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_biases[hidden_cell_index] += params.br * (hidden_size_z_inv - (hc == max_index));
+        }
+    }
 }
 
 void Encoder::learn(
@@ -162,24 +175,13 @@ void Encoder::learn(
             }
         }
 
-    int max_index = 0;
-    int max_activation = 0;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        if (recon_sum > max_activation) {
-            max_activation = recon_sum;
-            max_index = vc;
-        }
-
         vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / (max(1, count) * 255) - 1.0f) * params.scale));
     }
-
-    if (max_index == target_ci)
-        return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -250,6 +252,8 @@ void Encoder::init_random(
 
     hidden_acts.resize(num_hidden_cells);
 
+    hidden_biases = Float_Buffer(num_hidden_cells, 1.0f);
+
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
 
@@ -277,7 +281,7 @@ void Encoder::step(
     
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, learn_enabled, params);
 
     if (learn_enabled) {
         unsigned int base_state = rand();
@@ -299,7 +303,7 @@ void Encoder::clear_state() {
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_biases.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -320,6 +324,8 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    writer.write(reinterpret_cast<const void*>(&hidden_biases[0]), hidden_biases.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -350,6 +356,10 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     hidden_acts.resize(num_hidden_cells);
+
+    hidden_biases.resize(num_hidden_cells);
+
+    reader.read(reinterpret_cast<void*>(&hidden_biases[0]), hidden_biases.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 

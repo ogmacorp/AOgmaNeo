@@ -47,11 +47,13 @@ public:
     struct Params {
         float scale; // scale of exp
         float lr; // learning rate
+        float br; // bias rate
 
         Params()
         :
         scale(16.0f),
-        lr(0.01f)
+        lr(0.02f),
+        br(0.02f)
         {}
     };
 
@@ -61,6 +63,8 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_biases;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -73,6 +77,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
