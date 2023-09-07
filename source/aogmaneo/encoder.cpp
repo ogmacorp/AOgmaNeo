@@ -93,12 +93,13 @@ void Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        float hidden_size_z_inv = 1.0f / hidden_size.z;
-
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_biases[hidden_cell_index] += params.br * (hidden_size_z_inv - (hc == max_index));
+            if (hc == max_index)
+                hidden_biases[hidden_cell_index] = 0.0f;
+            else
+                hidden_biases[hidden_cell_index] += params.br;
         }
     }
 }
