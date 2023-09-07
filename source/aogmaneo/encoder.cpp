@@ -112,7 +112,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_biases[hidden_cell_index] = params.br * (hidden_size_z_inv - (hc == max_index));
+            hidden_biases[hidden_cell_index] += params.br * (hidden_size_z_inv - (hc == max_index));
         }
     }
 }
