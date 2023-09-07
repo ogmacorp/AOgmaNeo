@@ -47,13 +47,11 @@ public:
     struct Params {
         float scale; // scale of exp
         float lr; // learning rate
-        float br; // bias rate
 
         Params()
         :
         scale(16.0f),
-        lr(0.02f),
-        br(0.02f)
+        lr(0.02f)
         {}
     };
 
@@ -77,7 +75,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        bool learn_enabled,
         const Params &params
     );
 
