@@ -26,6 +26,8 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
+    float total_importance = 0.0f;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -52,7 +54,9 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float influence = vl.importance / sub_count;
+        float influence = vl.importance / (sub_count * 255);
+
+        total_importance += vl.importance;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
@@ -76,13 +80,23 @@ void Encoder::forward(
             }
     }
 
-    int max_index = 0;
-    float max_activation = limit_min;
+    float min_activation = 1.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_acts[hidden_cell_index] + hidden_biases[hidden_cell_index];
+        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
+
+        min_activation = min(min_activation, hidden_acts[hidden_cell_index]);
+    }
+
+    int max_index = 0;
+    float max_activation = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        float activation = (hidden_acts[hidden_cell_index] - min_activation) * expf(hidden_biases[hidden_cell_index]);
 
         if (activation > max_activation) {
             max_activation = activation;
@@ -93,13 +107,12 @@ void Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
+        float hidden_size_z_inv = 1.0f / hidden_size.z;
+
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            if (hc == max_index)
-                hidden_biases[hidden_cell_index] = 0.0f;
-            else
-                hidden_biases[hidden_cell_index] += params.br;
+            hidden_biases[hidden_cell_index] += params.br * (hidden_size_z_inv - (hc == max_index));
         }
     }
 }
