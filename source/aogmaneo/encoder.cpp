@@ -80,15 +80,23 @@ void Encoder::forward(
             }
     }
 
-    int max_index = 0;
-    float max_activation = 0.0f;
+    float min_activation = 1.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float activation = hidden_acts[hidden_cell_index] * expf(hidden_biases[hidden_cell_index]);
+        min_activation = min(min_activation, hidden_acts[hidden_cell_index]);
+    }
+
+    int max_index = 0;
+    float max_activation = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        float activation = (hidden_acts[hidden_cell_index] - min_activation) * expf(hidden_biases[hidden_cell_index]);
 
         if (activation > max_activation) {
             max_activation = activation;
@@ -104,7 +112,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_biases[hidden_cell_index] += params.br * (hidden_size_z_inv - (hc == max_index));
+            hidden_biases[hidden_cell_index] = params.br * (hidden_size_z_inv - (hc == max_index));
         }
     }
 }
@@ -194,7 +202,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - (1.0f - expf(-static_cast<float>(recon_sum) / max(1, count * 255) * params.scale)));
+        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / max(1, count * 255) - 1.0f) * params.scale));
     }
 
     if (max_index == target_ci)
@@ -258,7 +266,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % init_weight_noise;
+            vl.weights[i] = 255 - (rand() % init_weight_noise);
 
         vl.recon_sums.resize(num_visible_cells);
 
@@ -269,7 +277,7 @@ void Encoder::init_random(
 
     hidden_acts.resize(num_hidden_cells);
 
-    hidden_biases = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_biases = Float_Buffer(num_hidden_cells, 0.0f);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
