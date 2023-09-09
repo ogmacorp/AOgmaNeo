@@ -13,7 +13,6 @@ using namespace aon;
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    bool learn_enabled,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -25,8 +24,6 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] = 0.0f;
     }
-
-    float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -54,9 +51,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float influence = vl.importance / (sub_count * 255);
-
-        total_importance += vl.importance;
+        float influence = vl.importance / sub_count;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
@@ -80,23 +75,13 @@ void Encoder::forward(
             }
     }
 
-    float min_activation = 1.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
-
-        min_activation = min(min_activation, hidden_acts[hidden_cell_index]);
-    }
-
     int max_index = 0;
     float max_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = (hidden_acts[hidden_cell_index] - min_activation) * expf(hidden_biases[hidden_cell_index]);
+        float activation = hidden_acts[hidden_cell_index];
 
         if (activation > max_activation) {
             max_activation = activation;
@@ -105,16 +90,6 @@ void Encoder::forward(
     }
 
     hidden_cis[hidden_column_index] = max_index;
-
-    if (learn_enabled) {
-        float hidden_size_z_inv = 1.0f / hidden_size.z;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            hidden_biases[hidden_cell_index] += params.br * (hidden_size_z_inv - (hc == max_index));
-        }
-    }
 }
 
 void Encoder::learn(
@@ -277,8 +252,6 @@ void Encoder::init_random(
 
     hidden_acts.resize(num_hidden_cells);
 
-    hidden_biases = Float_Buffer(num_hidden_cells, 0.0f);
-
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
 
@@ -306,7 +279,7 @@ void Encoder::step(
     
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, learn_enabled, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
         unsigned int base_state = rand();
@@ -328,7 +301,7 @@ void Encoder::clear_state() {
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_biases.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -349,8 +322,6 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-
-    writer.write(reinterpret_cast<const void*>(&hidden_biases[0]), hidden_biases.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -381,10 +352,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     hidden_acts.resize(num_hidden_cells);
-
-    hidden_biases.resize(num_hidden_cells);
-
-    reader.read(reinterpret_cast<void*>(&hidden_biases[0]), hidden_biases.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
