@@ -79,7 +79,7 @@ void Encoder::forward(
     float max_match = 0.0f;
 
     int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
+    float max_complete_match = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -98,8 +98,8 @@ void Encoder::forward(
             }
         }
 
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
+        if (match > max_complete_match) {
+            max_complete_match = match;
             max_complete_index = hc;
         }
     }
@@ -108,7 +108,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_match;
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
 
 void Encoder::learn(
