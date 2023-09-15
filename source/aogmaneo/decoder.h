@@ -33,18 +33,20 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
+
+        Float_Buffer gates;
     };
 
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float stability;
+        float gcurve; // gate curve
 
         Params()
         :
         scale(32.0f),
-        lr(0.02f),
-        stability(8.0f)
+        lr(0.05f),
+        gcurve(1.0f)
         {}
     };
 
@@ -62,11 +64,19 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
+
     // --- kernels ---
 
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
