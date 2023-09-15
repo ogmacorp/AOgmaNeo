@@ -125,13 +125,7 @@ void Decoder::learn(
     if (hidden_acts[hidden_cell_index_target] == -1.0f)
         return;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_deltas[hidden_cell_index] = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
-    }
-
-    const float byte_inv = 1.0f / 255.0f;
+    float delta = params.lr * (1.0f - hidden_acts[hidden_cell_index_target]);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -162,17 +156,9 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
+                int wi = target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
-                for (int hc = 0; hc < hidden_size.z; hc++) {
-                    int hidden_cell_index = hc + hidden_cells_start;
-
-                    int wi = hc + wi_start;
-
-                    float w = vl.weights[wi] * byte_inv;
-
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index] * w * (1.0f - w), state)));
-                }
+                vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(delta * (255.0f - vl.weights[wi]))));
             }
     }
 }
@@ -204,7 +190,7 @@ void Decoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
+            vl.weights[i] = rand() % init_weight_noise;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -214,8 +200,6 @@ void Decoder::init_random(
 
     hidden_sums.resize(num_hidden_cells);
     hidden_acts = Float_Buffer(num_hidden_cells, -1.0f); // flag
-
-    hidden_deltas.resize(num_hidden_cells);
 }
 
 void Decoder::step(
@@ -324,8 +308,6 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
 
     hidden_sums.resize(num_hidden_cells);
-
-    hidden_deltas.resize(num_hidden_cells);
 
     int num_visible_layers;
 

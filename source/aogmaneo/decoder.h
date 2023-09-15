@@ -41,8 +41,8 @@ public:
 
         Params()
         :
-        scale(32.0f),
-        lr(0.05f)
+        scale(16.0f),
+        lr(0.02f)
         {}
     };
 
@@ -53,8 +53,6 @@ private:
 
     Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
