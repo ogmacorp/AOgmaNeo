@@ -117,19 +117,21 @@ void Decoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    // check if has acts computed (ran at least once) by checking for flag value
+    if (hidden_acts[hidden_cells_start] == -1.0f)
+        return;
+
     int target_ci = (*hidden_target_cis)[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
-
-    // check if has acts computed (ran at least once) by checking for flag value
-    if (hidden_acts[hidden_cell_index_target] == -1.0f)
-        return;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_deltas[hidden_cell_index] = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
     }
+
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -167,7 +169,11 @@ void Decoder::learn(
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index], state)));
+                    float w = (vl.weights[wi] * byte_inv - 0.5f) * 2.0f;
+
+                    float sub_rate = expf(-w * w * params.stability);
+
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(sub_rate * hidden_deltas[hidden_cell_index], state)));
                 }
             }
     }
