@@ -131,6 +131,8 @@ void Decoder::learn(
         hidden_deltas[hidden_cell_index] = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
     }
 
+    const float byte_inv = 1.0f / 255.0f;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -167,7 +169,9 @@ void Decoder::learn(
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index], state)));
+                    float w = vl.weights[wi] * byte_inv;
+
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index] * w * (1.0f - w), state)));
                 }
             }
     }

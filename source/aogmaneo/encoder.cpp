@@ -183,6 +183,8 @@ void Encoder::learn(
     if (max_index == target_ci)
         return;
 
+    const float byte_inv = 1.0f / 255.0f;
+
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 hidden_pos = Int2(ix, iy);
@@ -203,7 +205,9 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(vl.recon_deltas[visible_cell_index], state)));
+                    float w = vl.weights[wi] * byte_inv;
+
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(vl.recon_deltas[visible_cell_index] * w, state)));
                 }
             }
         }
