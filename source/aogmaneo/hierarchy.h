@@ -52,19 +52,22 @@ public:
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
 
-        int up_radius; // encoder radius
+        int up_radius; // encoder forward radius
+        int l_radius; // encoder lateral radius
         int recurrent_radius; // encoder onto self radius, -1 to disable
         int down_radius; // decoder radius, also shared with actor if there is one
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
+            int l_radius = 2,
             int recurrent_radius = 2,
             int down_radius = 2
         )
         :
         hidden_size(hidden_size),
         up_radius(up_radius),
+        l_radius(l_radius),
         recurrent_radius(recurrent_radius),
         down_radius(down_radius)
         {}
