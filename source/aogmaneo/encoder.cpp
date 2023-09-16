@@ -118,13 +118,17 @@ void Encoder::inhibit(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + l_radius), min(hidden_size.y - 1, column_pos.y + l_radius));
 
-    int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+    int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) - 1; // -1 for self connection removed
 
     float influence = 1.0f / (sub_count * 255);
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
+
+            // no self-connection
+            if (other_hidden_column_index == hidden_column_index)
+                continue;
 
             int in_ci = hidden_cis_temp[other_hidden_column_index];
 
@@ -173,6 +177,8 @@ void Encoder::learn(
 
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
+    float max_activation = max(0.0f, hidden_acts[hidden_cell_index_max] / (1 + params.explain_iters));
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -205,7 +211,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * ((vc == in_ci) * 255.0f - vl.weights[wi]), state)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * max_activation * ((vc == in_ci) * 255.0f - max_activation * vl.weights[wi]), state)));
                 }
             }
     }
@@ -230,7 +236,7 @@ void Encoder::learn(
             for (int ohc = 0; ohc < hidden_size.z; ohc++) {
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (ohc + hidden_size.z * hidden_column_index)));
 
-                laterals[wi] = min(255, max(0, laterals[wi] + rand_roundf(params.lr * ((ohc == in_ci) * 255.0f - laterals[wi]), state)));
+                laterals[wi] = min(255, max(0, laterals[wi] + rand_roundf(params.lr * max_activation * ((ohc == in_ci) * 255.0f - max_activation * laterals[wi]), state)));
             }
         }
 }
