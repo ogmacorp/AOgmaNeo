@@ -47,7 +47,7 @@ public:
         Params()
         :
         lr(0.01f),
-        explain_iters(8)
+        explain_iters(4)
         {}
     };
 
