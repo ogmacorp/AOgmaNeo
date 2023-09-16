@@ -41,43 +41,40 @@ public:
     };
 
     struct Params {
-        float choice; // Choice parameter
-        float vigilance; // ART vigilance
         float lr; // learning rate
-        int l_radius; // Second stage inhibition radius
 
         Params()
         :
-        choice(0.1f),
-        vigilance(0.9f),
-        lr(0.5f),
-        l_radius(2)
+        lr(0.01f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int l_radius;
 
     Int_Buffer hidden_cis;
+    Int_Buffer hidden_cis_temp;
 
-    Int_Buffer learn_cis;
-
-    Float_Buffer hidden_matches;
-
-    Float_Buffer hidden_totals;
-
-    Float_Buffer hidden_maxs;
+    Float_Buffer hidden_stimuli;
+    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
+    Byte_Buffer laterals;
+
     // --- kernels ---
     
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
         const Params &params
+    );
+
+    void inhibit(
+        const Int2 &column_pos
     );
 
     void learn(
@@ -90,6 +87,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int l_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 

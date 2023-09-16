@@ -22,7 +22,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_matches[hidden_cell_index] = 0.0f;
+        hidden_stimuli[hidden_cell_index] = 0.0f;
     }
 
     float total_importance = 0.0f;
@@ -69,46 +69,30 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_matches[hidden_cell_index] += vl.weights[wi] * influence;
+                    hidden_stimuli[hidden_cell_index] += vl.weights[wi] * influence;
                 }
             }
     }
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
-
-    int max_complete_index = 0;
-    float max_complete_match = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_matches[hidden_cell_index] /= max(limit_small, total_importance);
+        hidden_stimuli[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float match = hidden_matches[hidden_cell_index];
+        float stimulus = hidden_stimuli[hidden_cell_index];
 
-        float activation = match / (params.choice + hidden_totals[hidden_cell_index]);
+        hidden_acts[hidden_cell_index] = stimulus;
 
-        if (match >= params.vigilance) {
-            if (activation > max_activation) {
-                max_activation = activation;
-                max_match = match;
-                max_index = hc;
-            }
-        }
-
-        if (match > max_complete_match) {
-            max_complete_match = match;
-            max_complete_index = hc;
+        if (stimulus > max_activation) {
+            max_activation = stimulus;
+            max_index = hc;
         }
     }
 
-    learn_cis[hidden_column_index] = max_index;
-
-    hidden_maxs[hidden_column_index] = max_match;
-
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Encoder::learn(
@@ -234,7 +218,7 @@ void Encoder::init_random(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_matches.resize(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
 
@@ -318,7 +302,7 @@ void Encoder::read(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_matches.resize(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     hidden_totals.resize(num_hidden_cells);
 
