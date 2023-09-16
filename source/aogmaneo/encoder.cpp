@@ -103,6 +103,12 @@ void Encoder::inhibit(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] += hidden_stimuli[hidden_cell_index];
+    }
+
     int diam = l_radius * 2 + 1;
 
     // lower corner
