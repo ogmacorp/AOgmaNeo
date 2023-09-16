@@ -42,10 +42,12 @@ public:
 
     struct Params {
         float lr; // learning rate
+        int explain_iters;
 
         Params()
         :
-        lr(0.01f)
+        lr(0.01f),
+        explain_iters(8)
         {}
     };
 
@@ -74,12 +76,14 @@ private:
     );
 
     void inhibit(
-        const Int2 &column_pos
+        const Int2 &column_pos,
+        const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        unsigned long* state,
         const Params &params
     );
 
