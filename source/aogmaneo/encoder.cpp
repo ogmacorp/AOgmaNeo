@@ -108,15 +108,12 @@ void Encoder::update(
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            if (dcx == 0 && dcy == 0)
-                continue;
-
             Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
 
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_max_acts[other_hidden_column_index] >= max_activation)
+                if (hidden_max_acts[other_hidden_column_index] > max_activation)
                     return;
             }
         }
@@ -304,27 +301,10 @@ void Encoder::step(
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
-    int resets = 0;
-
     for (int it = 0; it < params.max_resets; it++) {
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             update(Int2(i / hidden_size.y, i % hidden_size.y), params);
-
-        // if all learns set, can early-out
-        bool all_learn = true;
-
-        for (int i = 0; i < learn_cis.size(); i++) {
-            if (learn_cis[i] == -1) {
-                all_learn = false;
-                break;
-            }
-        }
-
-        if (all_learn)
-            break;
-
-        resets++;
     }
 
     if (learn_enabled) {
