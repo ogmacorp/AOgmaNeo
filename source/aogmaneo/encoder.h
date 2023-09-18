@@ -42,16 +42,20 @@ public:
 
     struct Params {
         float choice; // Choice parameter
-        float vigilance; // ART vigilance
+        float vigilance_lower; // ART vigilance
+        float vigilance_upper; // ART vigilance
         float lr; // learning rate
         int l_radius; // Second stage inhibition radius
+        int max_resets;
 
         Params()
         :
         choice(0.0001f),
-        vigilance(0.9f),
+        vigilance_lower(0.3f),
+        vigilance_upper(0.4f),
         lr(0.5f),
-        l_radius(2)
+        l_radius(1),
+        max_resets(32)
         {}
     };
 
@@ -63,10 +67,11 @@ private:
     Int_Buffer learn_cis;
 
     Float_Buffer hidden_matches;
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_totals;
 
-    Float_Buffer hidden_maxs;
+    Float_Buffer hidden_max_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -77,6 +82,21 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        const Params &params
+    );
+
+    void update_local(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
+    void update_global(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
+    void fallback(
+        const Int2 &column_pos,
         const Params &params
     );
 
