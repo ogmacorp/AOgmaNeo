@@ -154,7 +154,7 @@ void Encoder::update_global(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_acts[hidden_cell_index_max] = 0.0f;
+            hidden_acts[hidden_cell_index] = 0.0f;
         }
     }
 }
