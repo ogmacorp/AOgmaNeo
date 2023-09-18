@@ -85,12 +85,7 @@ private:
         const Params &params
     );
 
-    void update_local(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
-    void update_global(
+    void update(
         const Int2 &column_pos,
         const Params &params
     );

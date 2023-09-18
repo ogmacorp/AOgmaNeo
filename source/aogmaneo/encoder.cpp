@@ -74,30 +74,17 @@ void Encoder::forward(
             }
     }
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_matches[hidden_cell_index] /= max(limit_small, total_importance);
-
-        hidden_acts[hidden_cell_index] = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
-    }
-}
-
-void Encoder::update_local(
-    const Int2 &column_pos,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
     int max_index = -1;
     float max_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_acts[hidden_cell_index];
+        hidden_matches[hidden_cell_index] /= max(limit_small, total_importance);
+
+        float activation = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+
+        hidden_acts[hidden_cell_index] = activation;
 
         if (activation > max_activation) {
             max_activation = activation;
@@ -109,7 +96,7 @@ void Encoder::update_local(
     hidden_max_acts[hidden_column_index] = max_activation;
 }
 
-void Encoder::update_global(
+void Encoder::update(
     const Int2 &column_pos,
     const Params &params
 ) {
@@ -144,9 +131,27 @@ void Encoder::update_global(
         if (max_match >= params.vigilance_upper)
             // ready to learn
             learn_cis[hidden_column_index] = hidden_cis[hidden_column_index];
-        else
+        else {
             // reset local
             hidden_acts[hidden_cell_index_max] = 0.0f;
+
+            // Find new max
+            int max_index = -1;
+            float max_activation = 0.0f;
+
+            for (int hc = 0; hc < hidden_size.z; hc++) {
+                int hidden_cell_index = hc + hidden_cells_start;
+
+                float activation = hidden_acts[hidden_cell_index];
+
+                if (activation > max_activation) {
+                    max_activation = activation;
+                    max_index = hc;
+                }
+            }
+
+            hidden_cis[hidden_column_index] = max_index;
+        }
     }
     else {
         // reset global
@@ -318,11 +323,7 @@ void Encoder::step(
     for (int it = 0; it < params.max_resets; it++) {
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
-            update_local(Int2(i / hidden_size.y, i % hidden_size.y), params);
-
-        PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            update_global(Int2(i / hidden_size.y, i % hidden_size.y), params);
+            update(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
         // if all learns set, can early-out
         bool all_learn = true;
