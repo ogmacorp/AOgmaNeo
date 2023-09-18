@@ -151,6 +151,7 @@ void Encoder::update(
             }
 
             hidden_cis[hidden_column_index] = max_index;
+            hidden_max_acts[hidden_column_index] = max_activation;
         }
     }
     else {
@@ -160,6 +161,8 @@ void Encoder::update(
 
             hidden_acts[hidden_cell_index] = 0.0f;
         }
+
+        hidden_max_acts[hidden_column_index] = 0.0f;
     }
 }
 
