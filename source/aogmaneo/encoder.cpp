@@ -155,32 +155,14 @@ void Encoder::update(
         }
     }
     else {
-        // reset global
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            hidden_acts[hidden_cell_index] = 0.0f;
-        }
-
-        hidden_max_acts[hidden_column_index] = 0.0f;
-    }
-}
-
-void Encoder::fallback(
-    const Int2 &column_pos,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    // if couldn't resonate, just set to max match
-    if (hidden_cis[hidden_column_index] == -1) {
+        // reset global and also set hidden_cis to max match
         int max_index = 0;
         float max_match = 0.0f;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_acts[hidden_cell_index] = 0.0f;
 
             float match = hidden_matches[hidden_cell_index];
 
@@ -191,6 +173,7 @@ void Encoder::fallback(
         }
 
         hidden_cis[hidden_column_index] = max_index;
+        hidden_max_acts[hidden_column_index] = 0.0f;
     }
 }
 
@@ -343,10 +326,6 @@ void Encoder::step(
 
         resets++;
     }
-
-    PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        fallback(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
     if (learn_enabled) {
         PARALLEL_FOR
