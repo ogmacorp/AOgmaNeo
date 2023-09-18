@@ -55,7 +55,7 @@ public:
         vigilance_upper(0.4f),
         lr(0.5f),
         l_radius(1),
-        max_resets(32)
+        max_resets(8)
         {}
     };
 

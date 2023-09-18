@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -340,8 +339,6 @@ void Encoder::step(
 
         resets++;
     }
-
-    std::cout << resets << std::endl;
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
