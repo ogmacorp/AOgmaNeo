@@ -51,8 +51,8 @@ public:
         Params()
         :
         choice(0.0001f),
-        vigilance_lower(0.3f),
-        vigilance_upper(0.4f),
+        vigilance_lower(0.1f),
+        vigilance_upper(0.2f),
         lr(0.5f),
         l_radius(1),
         max_resets(8)
