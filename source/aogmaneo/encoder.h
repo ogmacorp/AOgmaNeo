@@ -51,7 +51,7 @@ public:
         Params()
         :
         choice(0.0001f),
-        vigilance_lower(0.8f),
+        vigilance_lower(0.7f),
         vigilance_upper(0.9f),
         lr(0.5f),
         l_radius(2),
@@ -85,7 +85,12 @@ private:
         const Params &params
     );
 
-    void update(
+    void local_update(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
+    void global_update(
         const Int2 &column_pos,
         const Params &params
     );
