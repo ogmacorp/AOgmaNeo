@@ -159,9 +159,12 @@ void Encoder::global_update(
         if (max_match >= params.vigilance_upper)
             // ready to learn
             learn_cis[hidden_column_index] = hidden_cis[hidden_column_index];
-        else
+        else {
             // reset local
             hidden_acts[hidden_cell_index_max] = 0.0f;
+
+            hidden_resets[hidden_column_index] = true;
+        }
     }
     else {
         // reset global
@@ -170,6 +173,8 @@ void Encoder::global_update(
 
             hidden_acts[hidden_cell_index] = 0.0f;
         }
+
+        hidden_resets[hidden_column_index] = true;
     }
 }
 
@@ -279,6 +284,8 @@ void Encoder::init_random(
 
     learn_cis.resize(num_hidden_columns);
 
+    hidden_resets.resize(num_hidden_columns);
+
     hidden_matches.resize(num_hidden_cells);
     hidden_acts.resize(num_hidden_cells);
 
@@ -301,6 +308,8 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     for (int it = 0; it < params.max_resets; it++) {
+        hidden_resets.fill(false);
+
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             local_update(Int2(i / hidden_size.y, i % hidden_size.y), params);
@@ -308,6 +317,20 @@ void Encoder::step(
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             global_update(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
+        bool has_reset = false;
+
+        for (int i = 0; i < hidden_resets.size(); i++) {
+            if (hidden_resets[i]) {
+                has_reset = true;
+
+                break;
+            }
+        }
+
+        // early out
+        if (!has_reset)
+            break;
     }
 
     if (learn_enabled) {
@@ -375,6 +398,8 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     learn_cis.resize(num_hidden_columns);
+
+    hidden_resets.resize(num_hidden_columns);
 
     hidden_matches.resize(num_hidden_cells);
     hidden_acts.resize(num_hidden_cells);

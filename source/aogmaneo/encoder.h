@@ -50,8 +50,8 @@ public:
 
         Params()
         :
-        choice(0.0001f),
-        vigilance_lower(0.7f),
+        choice(0.01f),
+        vigilance_lower(0.8f),
         vigilance_upper(0.9f),
         lr(0.5f),
         l_radius(2),
@@ -65,6 +65,8 @@ private:
     Int_Buffer hidden_cis;
 
     Int_Buffer learn_cis;
+
+    Byte_Buffer hidden_resets;
 
     Float_Buffer hidden_matches;
     Float_Buffer hidden_acts;
