@@ -41,14 +41,16 @@ public:
     };
 
     struct Params {
-        float choice; // Choice parameter
+        float choice; // choice parameter
+        float power; // power parameter
         float vigilance; // ART vigilance
         float lr; // learning rate
-        int l_radius; // Second stage inhibition radius
+        int l_radius; // second stage inhibition radius
 
         Params()
         :
         choice(0.0001f),
+        power(2.0f),
         vigilance(0.9f),
         lr(0.5f),
         l_radius(2)
@@ -74,6 +76,10 @@ private:
     
     // --- kernels ---
     
+    void initialize(
+        const Int2 &column_pos
+    );
+
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
