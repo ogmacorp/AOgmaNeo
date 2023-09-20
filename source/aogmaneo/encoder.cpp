@@ -284,9 +284,13 @@ void Encoder::init_random(
 
     hidden_matches.resize(num_hidden_cells);
 
-    hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_totals.resize(num_hidden_cells);
 
     hidden_maxs.resize(num_hidden_columns);
+
+    PARALLEL_FOR
+    for (int i = 0; i < num_hidden_columns; i++)
+        initialize(Int2(i / hidden_size.y, i % hidden_size.y));
 }
 
 void Encoder::step(
