@@ -41,10 +41,10 @@ public:
     };
 
     struct Params {
-        float choice; // Choice parameter
+        float choice; // choice parameter
         float vigilance; // ART vigilance
         float lr; // learning rate
-        int l_radius; // Second stage inhibition radius
+        int l_radius; // second stage inhibition radius
 
         Params()
         :
@@ -62,8 +62,9 @@ private:
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_matches;
+    Float_Buffer hidden_sums;
 
+    Byte_Buffer hidden_commits;
     Float_Buffer hidden_totals;
 
     Float_Buffer hidden_maxs;
@@ -74,6 +75,10 @@ private:
     
     // --- kernels ---
     
+    void initialize(
+        const Int2 &column_pos
+    );
+
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
