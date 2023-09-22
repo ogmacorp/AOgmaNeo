@@ -140,6 +140,7 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+
         float match = hidden_sums[hidden_cell_index] / max(limit_small, total_input);
 
         if (match >= params.vigilance) {
