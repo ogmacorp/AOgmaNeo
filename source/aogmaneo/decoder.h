@@ -44,7 +44,7 @@ public:
         :
         scale(64.0f),
         threshold(0.9f),
-        lr(0.05f)
+        lr(0.1f)
         {}
     };
 
