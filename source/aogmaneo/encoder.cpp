@@ -77,7 +77,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_matches[hidden_cell_index] = 0.0f;
+        hidden_sums[hidden_cell_index] = 0.0f;
     }
 
     float total_input = 0.0f;
@@ -124,7 +124,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_matches[hidden_cell_index] += vl.weights[wi] * influence;
+                    hidden_sums[hidden_cell_index] += vl.weights[wi] * influence;
                 }
             }
     }
@@ -139,11 +139,9 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = powf(hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]), params.power);
+        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-        hidden_matches[hidden_cell_index] = powf(hidden_totals[hidden_cell_index] / total_input, params.power) * activation;
-
-        float match = hidden_matches[hidden_cell_index];
+        float match = hidden_sums[hidden_cell_index] / max(limit_small, total_input);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -285,7 +283,7 @@ void Encoder::init_random(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_matches.resize(num_hidden_cells);
+    hidden_sums.resize(num_hidden_cells);
 
     hidden_commits = Byte_Buffer(num_hidden_cells, false);
     hidden_totals.resize(num_hidden_cells);
@@ -375,7 +373,7 @@ void Encoder::read(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_matches.resize(num_hidden_cells);
+    hidden_sums.resize(num_hidden_cells);
 
     hidden_commits.resize(num_hidden_cells);
     hidden_totals.resize(num_hidden_cells);

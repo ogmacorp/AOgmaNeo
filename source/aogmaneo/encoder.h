@@ -42,7 +42,6 @@ public:
 
     struct Params {
         float choice; // choice parameter
-        float power; // power parameter
         float vigilance; // ART vigilance
         float lr; // learning rate
         int l_radius; // second stage inhibition radius
@@ -50,7 +49,6 @@ public:
         Params()
         :
         choice(0.1f),
-        power(1.0f),
         vigilance(0.9f),
         lr(0.5f),
         l_radius(2)
@@ -64,7 +62,7 @@ private:
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_matches;
+    Float_Buffer hidden_sums;
 
     Byte_Buffer hidden_commits;
     Float_Buffer hidden_totals;
