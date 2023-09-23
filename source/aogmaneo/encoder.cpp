@@ -133,7 +133,6 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -143,12 +142,13 @@ void Encoder::forward(
 
         float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_inputs);
 
-        float match = (1.0f - activation) * (1.0f - hidden_totals[hidden_cell_index] / max(limit_small, total_weights));
+        float weight_saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
+
+        float match = (1.0f - weight_saturation) + weight_saturation * (1.0f - activation);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
                 max_activation = activation;
-                max_match = match;
                 max_index = hc;
             }
         }
@@ -161,7 +161,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = max_match;
+    hidden_maxs[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = max_complete_index;
 }
