@@ -37,16 +37,18 @@ public:
     };
 
     struct Params {
-        float scale;
-        float falloff;
+        float threshold; // early stopping threshold distance
+        float scale; // scale of reconstruction
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float rr; // reconstruction rate
         
         Params()
         :
+        threshold(0.001f),
         scale(2.0f),
-        falloff(0.99f),
-        lr(0.05f),
+        falloff(0.9f),
+        lr(0.1f),
         rr(0.1f)
         {}
     };
@@ -56,7 +58,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_rates;
+    Float_Buffer hidden_resources;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
