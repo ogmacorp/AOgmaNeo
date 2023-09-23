@@ -81,7 +81,7 @@ void Encoder::forward(
         hidden_sums[hidden_cell_index] = 0.0f;
     }
 
-    float total_input = 0.0f;
+    float total_inputs = 0.0f;
     float total_weights = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -105,7 +105,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        total_input += vl.importance * sub_count;
+        total_inputs += vl.importance * sub_count;
         total_weights += vl.importance * sub_count * vld.size.z;
 
         float influence = vl.importance / 255;
@@ -137,12 +137,12 @@ void Encoder::forward(
     float max_match = 0.0f;
 
     int max_complete_index = 0;
-    float max_complete_match = 0.0f;
+    float max_complete_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_input);
+        float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_inputs);
 
         float match = (1.0f - activation) * (1.0f - hidden_totals[hidden_cell_index] / max(limit_small, total_weights));
 
@@ -154,8 +154,8 @@ void Encoder::forward(
             }
         }
 
-        if (match > max_complete_match) {
-            max_complete_match = match;
+        if (activation > max_complete_activation) {
+            max_complete_activation = activation;
             max_complete_index = hc;
         }
     }
@@ -164,7 +164,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_match;
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;
 }
 
 void Encoder::learn(
