@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -81,6 +82,7 @@ void Encoder::forward(
     }
 
     float total_input = 0.0f;
+    float total_weights = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -104,6 +106,7 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         total_input += vl.importance * sub_count;
+        total_weights += vl.importance * sub_count * vld.size.z;
 
         float influence = vl.importance / 255;
 
@@ -139,9 +142,9 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_input);
 
-        float match = hidden_sums[hidden_cell_index] / max(limit_small, total_input);
+        float match = (1.0f - activation) * (1.0f - hidden_totals[hidden_cell_index] / max(limit_small, total_weights));
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -235,8 +238,8 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    if (vc != in_ci)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
+                    if (vc == in_ci)
+                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(rate * (255.0f - vl.weights[wi])));
 
                     sub_total += vl.weights[wi];
                 }
@@ -276,7 +279,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noise);
+            vl.weights[i] = rand() % init_weight_noise;
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
