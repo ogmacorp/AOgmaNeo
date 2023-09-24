@@ -137,6 +137,7 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
+    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -144,15 +145,14 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_inputs);
+        float match = 1.0f - hidden_sums[hidden_cell_index] / max(limit_small, total_inputs);
 
-        float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
-
-        float match = 1.0f - saturation * activation;
+        float activation = match / (params.choice + hidden_totals[hidden_cell_index]);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
                 max_activation = activation;
+                max_match = match;
                 max_index = hc;
             }
         }
@@ -165,7 +165,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = max_activation;
+    hidden_maxs[hidden_column_index] = max_match;
 
     hidden_cis[hidden_column_index] = max_complete_index;
 }
@@ -200,6 +200,8 @@ void Encoder::learn(
                     return;
             }
         }
+
+    const float byte_inv = 1.0f / 255.0f;
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
@@ -240,13 +242,13 @@ void Encoder::learn(
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     if (vc == in_ci)
-                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                     sub_total += vl.weights[wi];
                 }
             }
 
-        total += static_cast<float>(sub_total) * vl.importance / 255;
+        total += static_cast<float>(sub_total) * vl.importance * byte_inv;
     }
 
     hidden_totals[hidden_cell_index_max] = total;
@@ -279,7 +281,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = rand() % init_weight_noise;
+            vl.weights[i] = 255 - (rand() % init_weight_noise);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
