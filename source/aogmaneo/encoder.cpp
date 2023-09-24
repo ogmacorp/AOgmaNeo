@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -22,6 +23,8 @@ void Encoder::initialize(
 
         hidden_totals[hidden_cell_index] = 0.0f;
     }
+
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -42,7 +45,7 @@ void Encoder::initialize(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        float influence = vl.importance / 255;
+        float influence = vl.importance * byte_inv;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -80,6 +83,8 @@ void Encoder::forward(
         hidden_sums[hidden_cell_index] = 0.0f;
     }
 
+    const float byte_inv = 1.0f / 255.0f;
+
     float total_inputs = 0.0f;
     float total_weights = 0.0f;
 
@@ -107,7 +112,7 @@ void Encoder::forward(
         total_inputs += vl.importance * sub_count;
         total_weights += vl.importance * sub_count * vld.size.z;
 
-        float influence = vl.importance / 255;
+        float influence = vl.importance * byte_inv;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
@@ -131,48 +136,37 @@ void Encoder::forward(
             }
     }
 
-    int max_index = 0;
+    int max_index = -1;
     float max_activation = 0.0f;
+
+    int max_complete_index = 0;
+    float max_complete_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_inputs);
+        float match = 1.0f - hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
 
-        // regular index
-        if (activation > max_activation) {
-            max_activation = activation;
-            max_index = hc;
-        }
-    }
+        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-    if (max_activation < params.min_activation) {
-        int min_index = 0;
-        float min_saturation = 1.0f;
-
-        // Find a new index
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
-
-            if (saturation < min_saturation) {
-                min_saturation = saturation;
-                min_index = hc;
+        if (match >= params.vigilance) {
+            if (activation > max_activation) {
+                max_activation = activation;
+                max_index = hc;
             }
         }
 
-        learn_cis[hidden_column_index] = min_index;
-
-        hidden_maxs[hidden_column_index] = hidden_sums[min_index + hidden_cells_start] / max(limit_small, total_inputs);
-    }
-    else {
-        learn_cis[hidden_column_index] = max_index;
-
-        hidden_maxs[hidden_column_index] = max_activation;
+        if (activation > max_complete_activation) {
+            max_complete_activation = activation;
+            max_complete_index = hc;
+        }
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    learn_cis[hidden_column_index] = max_index;
+
+    hidden_maxs[hidden_column_index] = max_activation;
+
+    hidden_cis[hidden_column_index] = max_complete_index;
 }
 
 void Encoder::learn(
@@ -205,6 +199,8 @@ void Encoder::learn(
                     return;
             }
         }
+
+    const float byte_inv = 1.0f / 255.0f;
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
@@ -251,7 +247,7 @@ void Encoder::learn(
                 }
             }
 
-        total += static_cast<float>(sub_total) * vl.importance / 255;
+        total += static_cast<float>(sub_total) * vl.importance * byte_inv;
     }
 
     hidden_totals[hidden_cell_index_max] = total;
