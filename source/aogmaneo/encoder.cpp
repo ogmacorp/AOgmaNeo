@@ -23,6 +23,8 @@ void Encoder::initialize(
         hidden_totals[hidden_cell_index] = 0.0f;
     }
 
+    const float byte_inv = 1.0f / 255.0f;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -42,7 +44,7 @@ void Encoder::initialize(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        float influence = vl.importance / 255;
+        float influence = vl.importance * byte_inv;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -80,6 +82,8 @@ void Encoder::forward(
         hidden_sums[hidden_cell_index] = 0.0f;
     }
 
+    const float byte_inv = 1.0f / 255.0f;
+
     float total_inputs = 0.0f;
     float total_weights = 0.0f;
 
@@ -107,7 +111,7 @@ void Encoder::forward(
         total_inputs += vl.importance * sub_count;
         total_weights += vl.importance * sub_count * vld.size.z;
 
-        float influence = vl.importance / 255;
+        float influence = vl.importance * byte_inv;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
@@ -144,7 +148,7 @@ void Encoder::forward(
 
         float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
 
-        float match = (1.0f - saturation) + saturation * (1.0f - activation);
+        float match = 1.0f - saturation * activation;
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
