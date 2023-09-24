@@ -135,39 +135,46 @@ void Encoder::forward(
             }
     }
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
-
-    int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float match = 1.0f - hidden_sums[hidden_cell_index] / max(limit_small, total_inputs);
+        float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_inputs);
 
-        float activation = match / (params.choice + hidden_totals[hidden_cell_index]);
-
-        if (match >= params.vigilance) {
-            if (activation > max_activation) {
-                max_activation = activation;
-                max_match = match;
-                max_index = hc;
-            }
-        }
-
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
-            max_complete_index = hc;
+        if (activation > max_activation) {
+            max_activation = activation;
+            max_index = hc;
         }
     }
 
-    learn_cis[hidden_column_index] = max_index;
+    if (max_activation < params.vigilance) {
+        int min_index = 0;
+        float min_saturation = 0.0f;
 
-    hidden_maxs[hidden_column_index] = max_match;
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+            float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
+
+            if (saturation < min_saturation) {
+                min_saturation = saturation;
+                min_index = hc;
+            }
+        }
+
+        learn_cis[hidden_column_index] = min_index;
+
+        hidden_maxs[hidden_column_index] = hidden_sums[min_index + hidden_cells_start] / max(limit_small, total_inputs);
+    }
+    else {
+        learn_cis[hidden_column_index] = max_index;
+
+        hidden_maxs[hidden_column_index] = max_activation;
+    }
+
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Encoder::learn(
@@ -242,7 +249,7 @@ void Encoder::learn(
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     if (vc == in_ci)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
 
                     sub_total += vl.weights[wi];
                 }
@@ -281,7 +288,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noise);
+            vl.weights[i] = rand() % init_weight_noise;
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
