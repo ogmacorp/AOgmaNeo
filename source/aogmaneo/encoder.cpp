@@ -131,41 +131,48 @@ void Encoder::forward(
             }
     }
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
-
-    int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_inputs);
 
-        float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
-
-        float match = (1.0f - saturation) + saturation * (1.0f - activation);
-
-        if (match >= params.vigilance) {
-            if (activation > max_activation) {
-                max_activation = activation;
-                max_match = match;
-                max_index = hc;
-            }
-        }
-
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
-            max_complete_index = hc;
+        // regular index
+        if (activation > max_activation) {
+            max_activation = activation;
+            max_index = hc;
         }
     }
 
-    learn_cis[hidden_column_index] = max_index;
+    if (max_activation < params.min_activation) {
+        int min_index = 0;
+        float min_saturation = 1.0f;
 
-    hidden_maxs[hidden_column_index] = max_match;
+        // Find a new index
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+            float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
+
+            if (saturation < min_saturation) {
+                min_saturation = saturation;
+                min_index = hc;
+            }
+        }
+
+        learn_cis[hidden_column_index] = min_index;
+
+        hidden_maxs[hidden_column_index] = hidden_sums[min_index + hidden_cells_start] / max(limit_small, total_inputs);
+    }
+    else {
+        learn_cis[hidden_column_index] = max_index;
+
+        hidden_maxs[hidden_column_index] = max_activation;
+    }
+
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Encoder::learn(
