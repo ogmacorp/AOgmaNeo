@@ -148,7 +148,7 @@ void Encoder::forward(
 
         float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
 
-        float match = (1.0f - activation) * (1.0f - saturation);
+        float match = 1.0f - saturation * activation;
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
