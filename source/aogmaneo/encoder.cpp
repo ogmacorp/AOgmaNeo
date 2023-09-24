@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -149,27 +150,34 @@ void Encoder::forward(
         }
     }
 
-    if (max_activation < params.vigilance) {
-        int min_index = 0;
-        float min_saturation = 0.0f;
+    if (max_activation < params.vigilance_high) {
+        if (max_activation < params.vigilance_low) {
+            int min_index = 0;
+            float min_saturation = 1.0f;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+            for (int hc = 0; hc < hidden_size.z; hc++) {
+                int hidden_cell_index = hc + hidden_cells_start;
 
-            float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
+                float saturation = hidden_totals[hidden_cell_index] / max(limit_small, total_weights);
 
-            if (saturation < min_saturation) {
-                min_saturation = saturation;
-                min_index = hc;
+                if (saturation < min_saturation) {
+                    min_saturation = saturation;
+                    min_index = hc;
+                }
             }
+
+            learn_cis[hidden_column_index] = min_index;
+
+            hidden_maxs[hidden_column_index] = hidden_sums[min_index + hidden_cells_start] / max(limit_small, total_inputs);
         }
+        else {
+            learn_cis[hidden_column_index] = max_index;
 
-        learn_cis[hidden_column_index] = min_index;
-
-        hidden_maxs[hidden_column_index] = hidden_sums[min_index + hidden_cells_start] / max(limit_small, total_inputs);
+            hidden_maxs[hidden_column_index] = max_activation;
+        }
     }
     else {
-        learn_cis[hidden_column_index] = max_index;
+        learn_cis[hidden_column_index] = -1;
 
         hidden_maxs[hidden_column_index] = max_activation;
     }

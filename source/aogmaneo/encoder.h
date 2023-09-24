@@ -42,14 +42,16 @@ public:
 
     struct Params {
         float choice; // ART choice parameter
-        float vigilance; // ART vigilance
+        float vigilance_low; // ART vigilance
+        float vigilance_high; // ART vigilance
         float lr; // learning rate
         int l_radius; // second stage inhibition radius
 
         Params()
         :
         choice(0.1f),
-        vigilance(0.5f),
+        vigilance_low(0.5f),
+        vigilance_high(0.9f),
         lr(0.5f),
         l_radius(2)
         {}
