@@ -148,7 +148,7 @@ void Encoder::update_gates(
 
     sum /= count;
 
-    hidden_gates[hidden_column_index] = expf(-sum * params.scale * params.gcurve);
+    hidden_gates[hidden_column_index] = expf(-sum * params.gcurve);
 }
 
 void Encoder::learn(
