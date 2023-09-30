@@ -45,10 +45,8 @@ void Hierarchy::init_random(
 
         if (io_descs[i].type == prediction)
             num_predictions++;
-        else if (io_descs[i].type == action) {
-            num_predictions++;
+        else if (io_descs[i].type == action)
             num_actions++;
-        }
     }
 
     // iterate through layers
@@ -91,9 +89,9 @@ void Hierarchy::init_random(
             int d_index = 0;
 
             for (int i = 0; i < io_sizes.size(); i++) {
-                if (io_descs[i].type == prediction || io_descs[i].type == action) {
+                if (io_descs[i].type == prediction) {
                     // decoder visible layer descriptors
-                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
+                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
 
                     d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     d_visible_layer_descs[0].radius = io_descs[i].down_radius;
@@ -114,7 +112,7 @@ void Hierarchy::init_random(
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == action) {
                     // decoder visible layer descriptors
-                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
+                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(1 + (l < encoders.size() - 1));
 
                     a_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     a_visible_layer_descs[0].radius = io_descs[i].down_radius;
@@ -150,7 +148,7 @@ void Hierarchy::init_random(
             decoders[l].resize(layer_descs[l].ticks_per_update);
 
             // decoder visible layer descriptors
-            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(l < encoders.size() - 1 ? 2 : 1);
+            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
 
             d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
             d_visible_layer_descs[0].radius = layer_descs[l].down_radius;
@@ -215,8 +213,11 @@ void Hierarchy::step(
             int index = 0;
 
             for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    layer_input_cis[index++] = &histories[l][i][t];
+                for (int t = 0; t < histories[l][i].size(); t++) {
+                    layer_input_cis[index] = &histories[l][i][t];
+
+                    index++;
+                }
             }
 
             if (learn_enabled) {
