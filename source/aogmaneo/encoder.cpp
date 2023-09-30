@@ -51,7 +51,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float influence = vl.importance / sub_count;
+        float influence = vl.importance / (sub_count * 255);
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
