@@ -43,11 +43,13 @@ public:
     };
 
     struct Params {
+        float scale;
         float lr; // learning rate
         float gcurve; // gain curve
 
         Params()
         :
+        scale(32.0f),
         lr(0.02f),
         gcurve(32.0f)
         {}
