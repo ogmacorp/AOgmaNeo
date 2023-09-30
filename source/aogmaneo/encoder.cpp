@@ -149,7 +149,7 @@ void Encoder::update_gates(
     float sum = 0.0f;
     int count = 0;
 
-    const float byte_inv = 1.0f / 255.0f;
+    const float half_byte_inv = 1.0f / 127.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -181,7 +181,7 @@ void Encoder::update_gates(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    float w = (255.0f - vl.weights[wi]) * byte_inv;
+                    float w = (vl.weights[wi] - 127.0f) * half_byte_inv;
 
                     sum += w * w;
                 }
@@ -221,7 +221,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noise);
+            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
