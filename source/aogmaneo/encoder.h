@@ -30,9 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
-
-        Int_Buffer usages;
+        Byte_Buffer weights;
 
         Int_Buffer input_cis_prev;
         
@@ -50,8 +48,8 @@ public:
 
         Params()
         :
-        lr(0.1f),
-        gcurve(0.02f)
+        lr(0.02f),
+        gcurve(32.0f)
         {}
     };
 
@@ -75,6 +73,7 @@ private:
         const Array<const Int_Buffer*> &input_cis,
         const Float_Buffer* errors,
         bool learn_enabled,
+        unsigned long* state,
         const Params &params
     );
 
