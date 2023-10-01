@@ -23,12 +23,8 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_sums[hidden_cell_index] = 0.0f;
+        hidden_acts[hidden_cell_index] = 0.0f;
     }
-
-    const float byte_inv = 1.0f / 255.0f;
-
-    float total_num_inputs = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -51,9 +47,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        total_num_inputs += vl.importance * sub_count;
-
-        float influence = vl.importance * byte_inv;
+        float influence = vl.importance / (sub_count * 255);
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
@@ -72,7 +66,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_sums[hidden_cell_index] += vl.weights[wi] * influence;
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * influence;
                 }
             }
     }
@@ -86,7 +80,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_sums[hidden_cell_index] / max(limit_small, total_num_inputs);
+        float activation = hidden_acts[hidden_cell_index];
 
         float usage = hidden_usages[hidden_cell_index];
 
@@ -217,7 +211,7 @@ void Encoder::init_random(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_sums.resize(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     hidden_usages = Float_Buffer(num_hidden_cells, 0.0f);
 
@@ -301,7 +295,7 @@ void Encoder::read(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_sums.resize(num_hidden_cells);
+    hidden_acts.resize(num_hidden_cells);
 
     hidden_usages.resize(num_hidden_cells);
 

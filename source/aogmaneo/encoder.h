@@ -62,7 +62,7 @@ private:
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_sums;
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_usages;
 
