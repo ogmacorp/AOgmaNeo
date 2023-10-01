@@ -151,7 +151,7 @@ void Encoder::update_gates(
     float sum = 0.0f;
     int count = 0;
 
-    const float half_byte_inv = 1.0f / 127.0f;
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -183,7 +183,7 @@ void Encoder::update_gates(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    float w = (255.0f - vl.weights[wi]) * half_byte_inv;
+                    float w = (255.0f - vl.weights[wi]) * byte_inv;
 
                     sum += w * w;
                 }
