@@ -25,7 +25,7 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
-        float base_delta = params.lr * 255.0f * (*errors)[hidden_column_index] * hidden_gates[hidden_column_index];
+        float base_delta = params.lr * 255.0f * tanhf((*errors)[hidden_column_index]) * hidden_gates[hidden_column_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -133,10 +133,12 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
+        float activation = hidden_acts[hidden_cell_index] / max(limit_small, total_importance);
 
-        if (hidden_acts[hidden_cell_index] > max_activation) {
-            max_activation = hidden_acts[hidden_cell_index];
+        hidden_acts[hidden_cell_index] = activation;
+
+        if (activation > max_activation) {
+            max_activation = activation;
             max_index = hc;
         }
     }
