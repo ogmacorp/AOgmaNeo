@@ -48,7 +48,7 @@ public:
 
         Params()
         :
-        max_usage(0.1f),
+        max_usage(0.05f),
         lr(0.5f),
         ur(0.01f),
         l_radius(2)
