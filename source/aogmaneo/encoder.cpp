@@ -25,7 +25,7 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
-        float base_delta = params.lr * 255.0f * (*errors)[hidden_column_index] * hidden_gates[hidden_column_index];
+        float base_delta = params.lr * 255.0f * max(0.0f, (*errors)[hidden_column_index]) * hidden_gates[hidden_column_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
