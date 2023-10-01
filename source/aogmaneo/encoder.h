@@ -41,16 +41,16 @@ public:
     };
 
     struct Params {
-        float choice; // ART choice parameter
-        float vigilance; // ART vigilance
+        float max_usage; // maximum usage for learning
         float lr; // learning rate
+        float ur; // usage rate
         int l_radius; // second stage inhibition radius
 
         Params()
         :
-        choice(0.00001f),
-        vigilance(0.95f),
-        lr(0.1f),
+        max_usage(0.1f),
+        lr(0.5f),
+        ur(0.01f),
         l_radius(2)
         {}
     };
@@ -64,7 +64,7 @@ private:
 
     Float_Buffer hidden_sums;
 
-    Float_Buffer hidden_totals;
+    Float_Buffer hidden_usages;
 
     Float_Buffer hidden_maxs;
 
@@ -74,10 +74,6 @@ private:
     
     // --- kernels ---
     
-    void initialize(
-        const Int2 &column_pos
-    );
-
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
