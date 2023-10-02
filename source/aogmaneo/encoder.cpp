@@ -235,7 +235,9 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    if (vc != in_ci)
+                    if (vc == in_ci)
+                        vl.weights[wi] = min(255, vl.weights[wi] + roundf(rate * (255.0f - vl.weights[wi])));
+                    else
                         vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
 
                     sub_total += vl.weights[wi];
