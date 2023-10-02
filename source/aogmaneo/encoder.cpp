@@ -80,7 +80,7 @@ void Encoder::forward(
         hidden_sums[hidden_cell_index] = 0.0f;
     }
 
-    float total_input = 0.0f;
+    float total_num_inputs = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -103,7 +103,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        total_input += vl.importance * sub_count;
+        total_num_inputs += vl.importance * sub_count;
 
         float influence = vl.importance / 255;
 
@@ -141,7 +141,7 @@ void Encoder::forward(
 
         float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-        float match = hidden_sums[hidden_cell_index] / max(limit_small, total_input);
+        float match = hidden_sums[hidden_cell_index] / max(limit_small, total_num_inputs);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
