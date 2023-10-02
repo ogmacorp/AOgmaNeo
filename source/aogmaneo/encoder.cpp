@@ -42,7 +42,7 @@ void Encoder::initialize(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        float influence = vl.importance / 255;
+        float influence = vl.importance / 255.0f;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -105,7 +105,7 @@ void Encoder::forward(
 
         total_num_inputs += vl.importance * sub_count;
 
-        float influence = vl.importance / 255;
+        float influence = vl.importance / 255.0f;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
@@ -242,7 +242,7 @@ void Encoder::learn(
                 }
             }
 
-        total += static_cast<float>(sub_total) * vl.importance / 255;
+        total += static_cast<float>(sub_total) * vl.importance / 255.0f;
     }
 
     hidden_totals[hidden_cell_index_max] = total;
