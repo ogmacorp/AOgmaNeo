@@ -96,8 +96,8 @@ void Encoder::forward(
             }
         }
 
-        if (match > max_complete_activation) {
-            max_complete_activation = match;
+        if (activation > max_complete_activation) {
+            max_complete_activation = activation;
             max_complete_index = hc;
         }
     }
