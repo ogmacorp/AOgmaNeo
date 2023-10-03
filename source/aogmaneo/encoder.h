@@ -49,7 +49,7 @@ public:
         Params()
         :
         choice(0.0001f),
-        vigilance(0.9f),
+        vigilance(0.95f),
         lr(0.1f),
         l_radius(2)
         {}
@@ -57,17 +57,20 @@ public:
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int support_size;
 
     Int_Buffer hidden_cis;
 
+    Float_Buffer support_acts;
+
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_sums;
-
     Byte_Buffer hidden_commits;
-    Float_Buffer hidden_totals;
 
     Float_Buffer hidden_maxs;
+
+    Float_Buffer weights0;
+    Float_Buffer weights1;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -75,10 +78,6 @@ private:
     
     // --- kernels ---
     
-    void initialize(
-        const Int2 &column_pos
-    );
-
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
@@ -95,6 +94,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int support_size,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
