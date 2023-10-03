@@ -62,7 +62,7 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Float_Buffer hidden_maxs;
+    Float_Buffer hidden_compares;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
