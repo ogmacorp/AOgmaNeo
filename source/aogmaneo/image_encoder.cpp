@@ -95,46 +95,55 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_complete_index;
 
     if (learn_enabled && max_index != -1) {
-        int hidden_cell_index_max = max_index + hidden_cells_start;
+        for (int dhc = -1; dhc <= 1; dhc++) {
+            int hc = max_index + dhc;
 
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+            if (hc < 0 || hc >= hidden_size.z)
+                continue;
 
-            int diam = vld.radius * 2 + 1;
+            int hidden_cell_index = hc + hidden_cells_start;
 
-            // projection
-            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+            float rate = params.lr * (dhc == 0 ? 1.0f : params.falloff);
 
-            Int2 visible_center = project(column_pos, h_to_v);
+            for (int vli = 0; vli < visible_layers.size(); vli++) {
+                Visible_Layer &vl = visible_layers[vli];
+                const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            // lower corner
-            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+                int diam = vld.radius * 2 + 1;
 
-            // bounds of receptive field, clamped to input size
-            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+                // projection
+                Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                    int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+                Int2 visible_center = project(column_pos, h_to_v);
 
-                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+                // lower corner
+                Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
 
-                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                // bounds of receptive field, clamped to input size
+                Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+                Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-                    int i_start = vld.size.z * (iy + ix * vld.size.y);
+                for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+                    for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                        int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    for (int vc = 0; vc < vld.size.z; vc++) {
-                        int wi = vc + wi_start;
+                        Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                        int input = (*inputs[vli])[vc + i_start];
+                        int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                        vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(params.lr * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
-                        vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(params.lr * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
+                        int i_start = vld.size.z * (iy + ix * vld.size.y);
+
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wi_start;
+
+                            int input = (*inputs[vli])[vc + i_start];
+
+                            vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(rate * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
+                            vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(rate * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
+                        }
                     }
-                }
+            }
         }
     }
 }

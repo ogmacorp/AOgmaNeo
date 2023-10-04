@@ -40,6 +40,7 @@ public:
     struct Params {
         float choice;
         float vigilance;
+        float falloff;
         float lr; // learning rate
         float scale;
         float rr; // reconstruction rate
@@ -48,6 +49,7 @@ public:
         :
         choice(0.01f),
         vigilance(0.99f),
+        falloff(0.75f),
         lr(0.5f),
         scale(2.0f),
         rr(0.1f)
