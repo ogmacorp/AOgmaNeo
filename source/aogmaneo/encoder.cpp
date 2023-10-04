@@ -10,6 +10,8 @@
 
 using namespace aon;
 
+const float init_weight_lower = 0.99f;
+
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
@@ -220,8 +222,8 @@ void Encoder::init_random(
         vl.weights1.resize(vl.weights0.size());
 
         for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = randf(0.99f, 1.0f);
-            vl.weights1[i] = randf(0.99f, 1.0f);
+            vl.weights0[i] = randf(init_weight_lower, 1.0f);
+            vl.weights1[i] = randf(init_weight_lower, 1.0f);
         }
     }
 
