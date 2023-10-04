@@ -30,7 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights0; // regular weights
+        Float_Buffer weights1; // complement weights
         
         float importance;
 
@@ -41,13 +42,17 @@ public:
     };
 
     struct Params {
+        float choice; // choice parameter
         float vigilance; // ART vigilance
+        float falloff; // falloff for mini-SOM part
         float lr; // learning rate
         int l_radius; // second stage inhibition radius
 
         Params()
         :
-        vigilance(0.7f),
+        choice(1.0f),
+        vigilance(0.9f),
+        falloff(0.9f),
         lr(0.5f),
         l_radius(2)
         {}
@@ -60,9 +65,10 @@ private:
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_acts;
+    Float_Buffer hidden_sums;
+    Float_Buffer hidden_totals;
 
-    Float_Buffer hidden_compares;
+    Float_Buffer hidden_maxs;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -70,6 +76,10 @@ private:
     
     // --- kernels ---
     
+    void initialize(
+        const Int2 &column_pos
+    );
+
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
