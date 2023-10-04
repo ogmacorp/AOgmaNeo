@@ -139,6 +139,8 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
+    int delta = ceilf(params.lr * 255.0f);
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -170,7 +172,7 @@ void Encoder::learn(
 
                 int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
+                vl.weights[wi] = min(255, vl.weights[wi] + delta);
             }
     }
 }
