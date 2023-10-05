@@ -47,9 +47,9 @@ public:
         
         Params()
         :
-        choice(0.1f),
-        vigilance(0.97f),
-        falloff(0.8f),
+        choice(0.01f),
+        vigilance(0.95f),
+        falloff(0.9f),
         lr(0.5f),
         scale(2.0f),
         rr(0.1f)
