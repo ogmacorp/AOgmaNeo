@@ -77,7 +77,7 @@ void Image_Encoder::forward(
 
         float match = (sum / 255.0f) / count;
 
-        float activation = match / (params.choice + (total / 255.0f) / (count * 2));
+        float activation = match / (params.choice + (total / 255.0f));
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
