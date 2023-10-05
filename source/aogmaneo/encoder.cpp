@@ -188,7 +188,7 @@ void Encoder::learn(
             }
     }
 
-    // neighbors
+    // neighbor influence
     for (int dhc = -1; dhc <= 1; dhc += 2) {
         int hc = learn_ci + dhc;
 
@@ -197,6 +197,7 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
+        // must be committed to influence max
         if (!hidden_commits[hidden_cell_index])
             continue;
 
