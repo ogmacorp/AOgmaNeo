@@ -51,8 +51,8 @@ public:
         Params()
         :
         choice(0.1f),
-        vigilance(0.95f),
-        falloff(0.9f),
+        vigilance(0.97f),
+        falloff(0.8f),
         lr(0.5f),
         l_radius(2)
         {}
