@@ -61,7 +61,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_rates;
+    Byte_Buffer hidden_commits;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

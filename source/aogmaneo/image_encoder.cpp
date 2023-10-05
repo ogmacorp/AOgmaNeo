@@ -95,7 +95,53 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_complete_index;
 
     if (learn_enabled && max_index != -1) {
-        for (int dhc = -1; dhc <= 1; dhc++) {
+        int hidden_cell_index_max = max_index + hidden_cells_start;
+
+        float rate_max = (hidden_commits[hidden_cell_index_max] ? params.lr : 1.0f);
+
+        // update center
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            int diam = vld.radius * 2 + 1;
+
+            // projection
+            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+
+            Int2 visible_center = project(column_pos, h_to_v);
+
+            // lower corner
+            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+
+            // bounds of receptive field, clamped to input size
+            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+
+            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                    int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+
+                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+
+                    int i_start = vld.size.z * (iy + ix * vld.size.y);
+
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = vc + wi_start;
+
+                        int input = (*inputs[vli])[vc + i_start];
+
+                        vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(rate_max * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
+                        vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(rate_max * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
+                    }
+                }
+        }
+
+        // update neighbors
+        for (int dhc = -1; dhc <= 1; dhc += 2) {
             int hc = max_index + dhc;
 
             if (hc < 0 || hc >= hidden_size.z)
@@ -103,7 +149,11 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = params.lr * (dhc == 0 ? 1.0f : params.falloff);
+            // must be committed to influence max
+            if (!hidden_commits[hidden_cell_index])
+                continue;
+
+            float rate = params.lr * params.falloff;
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -130,21 +180,25 @@ void Image_Encoder::forward(
 
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                        int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                        int wi_max_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                        int wi_neighbor_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                         int i_start = vld.size.z * (iy + ix * vld.size.y);
 
                         for (int vc = 0; vc < vld.size.z; vc++) {
-                            int wi = vc + wi_start;
+                            int wi_max = vc + wi_max_start;
+                            int wi_neighbor = vc + wi_neighbor_start;
 
                             int input = (*inputs[vli])[vc + i_start];
 
-                            vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(rate * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
-                            vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(rate * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
+                            vl.weights0[wi_max] = max(0, vl.weights0[wi_max] + ceilf(rate * (min(vl.weights0[wi_neighbor], vl.weights0[wi_max]) - vl.weights0[wi_max])));
+                            vl.weights1[wi_max] = max(0, vl.weights1[wi_max] + ceilf(rate * (min(vl.weights1[wi_neighbor], vl.weights1[wi_max]) - vl.weights1[wi_max])));
                         }
                     }
             }
         }
+
+        hidden_commits[hidden_cell_index_max] = true;
     }
 }
 
@@ -342,7 +396,7 @@ void Image_Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_commits = Byte_Buffer(num_hidden_cells, false);
 }
 
 void Image_Encoder::step(
@@ -388,7 +442,7 @@ void Image_Encoder::reconstruct(
 }
 
 int Image_Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_rates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -409,7 +463,7 @@ void Image_Encoder::write(
     
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     
-    writer.write(reinterpret_cast<const void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -441,9 +495,9 @@ void Image_Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    hidden_rates.resize(num_hidden_cells);
+    hidden_commits.resize(num_hidden_cells);
 
-    reader.read(reinterpret_cast<void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers;
 
