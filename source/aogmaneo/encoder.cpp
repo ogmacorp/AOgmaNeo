@@ -151,9 +151,7 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
-
-        float scale = (dhc == 0 ? 1.0f : params.falloff);
+        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * (dhc == 0 ? 1.0f : params.falloff);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -190,8 +188,8 @@ void Encoder::learn(
 
                     int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                    vl.weights0[wi] += rate * (min(in_value * scale, vl.weights0[wi]) - vl.weights0[wi]);
-                    vl.weights1[wi] += rate * (min((1.0f - in_value) * scale, vl.weights1[wi]) - vl.weights1[wi]);
+                    vl.weights0[wi] += rate * (min(in_value, vl.weights0[wi]) - vl.weights0[wi]);
+                    vl.weights1[wi] += rate * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);
                 }
         }
 
@@ -261,8 +259,11 @@ void Encoder::step(
 
     if (learn_enabled) {
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
+        for (int i = 0; i < num_hidden_columns; i++) {
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+        }
     }
 }
 
