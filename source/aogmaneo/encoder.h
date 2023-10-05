@@ -53,7 +53,7 @@ public:
         choice(0.1f),
         vigilance(0.95f),
         falloff(0.9f),
-        lr(0.5f),
+        lr(0.01f),
         l_radius(2)
         {}
     };
@@ -79,7 +79,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        unsigned long* state,
         const Params &params
     );
 

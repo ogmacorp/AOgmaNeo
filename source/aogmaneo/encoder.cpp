@@ -13,7 +13,6 @@ using namespace aon;
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -73,7 +72,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_sums[hidden_cell_index] += (min(in_value, vl.weights0[wi]) + min(1.0f - in_value, vl.weights1[wi])) * vl.importance;
+                    hidden_sums[hidden_cell_index] += (in_value * vl.weights0[wi] + (1.0f - in_value) * vl.weights1[wi]) * vl.importance;
                     hidden_totals[hidden_cell_index] += vl.weights0[wi] * vl.importance;
                     hidden_totals[hidden_cell_index] += vl.weights1[wi] * vl.importance;
                 }
@@ -110,7 +109,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = max_match + rand(state) * noise_small;
+    hidden_maxs[hidden_column_index] = max_match;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
@@ -245,22 +244,14 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    unsigned int base_state = rand();
-
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++) {
-            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
+        for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
-        }
     }
 }
 
