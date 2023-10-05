@@ -13,6 +13,7 @@ using namespace aon;
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -81,6 +82,7 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
+    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -95,6 +97,7 @@ void Encoder::forward(
         if (match >= params.vigilance) {
             if (activation > max_activation) {
                 max_activation = activation;
+                max_match = match;
                 max_index = hc;
             }
         }
@@ -107,9 +110,9 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = max_activation;
+    hidden_maxs[hidden_column_index] = max_match + rand(state) * noise_small;
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
 
 void Encoder::learn(
@@ -242,9 +245,14 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
+    unsigned int base_state = rand();
+
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
+    }
 
     if (learn_enabled) {
         PARALLEL_FOR

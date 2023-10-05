@@ -51,7 +51,7 @@ public:
         Params()
         :
         choice(0.1f),
-        vigilance(0.97f),
+        vigilance(0.9f),
         falloff(0.9f),
         lr(0.5f),
         l_radius(2)
@@ -75,14 +75,11 @@ private:
     Array<Visible_Layer_Desc> visible_layer_descs;
     
     // --- kernels ---
-    
-    void initialize(
-        const Int2 &column_pos
-    );
 
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        unsigned long* state,
         const Params &params
     );
 
