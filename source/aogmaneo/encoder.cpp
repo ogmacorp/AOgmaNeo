@@ -151,10 +151,7 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        bool committed = (hidden_totals[hidden_cell_index] < init_weight_lower);
-
-        if (dhc != 0 && !committed)
-            continue;
+        bool committed = hidden_commits[hidden_cell_index];
 
         float rate = (committed ? params.lr * (dhc == 0 ? 1.0f : params.falloff) : 1.0f);
 
@@ -197,6 +194,8 @@ void Encoder::learn(
                     vl.weights1[wi] += rate * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);
                 }
         }
+
+        hidden_commits[hidden_cell_index] = true;
     }
 }
 
@@ -239,6 +238,7 @@ void Encoder::init_random(
 
     hidden_sums.resize(num_hidden_cells);
     hidden_totals.resize(num_hidden_cells);
+    hidden_commits = Byte_Buffer(num_hidden_cells, false);
 
     hidden_maxs.resize(num_hidden_columns);
 }
@@ -271,7 +271,7 @@ void Encoder::clear_state() {
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -292,6 +292,8 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    writer.write(reinterpret_cast<const void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -326,6 +328,10 @@ void Encoder::read(
 
     hidden_sums.resize(num_hidden_cells);
     hidden_totals.resize(num_hidden_cells);
+
+    hidden_commits.resize(num_hidden_cells);
+
+    reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     hidden_maxs.resize(num_hidden_columns);
 
