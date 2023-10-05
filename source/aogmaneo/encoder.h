@@ -67,7 +67,6 @@ private:
 
     Float_Buffer hidden_sums;
     Float_Buffer hidden_totals;
-    Byte_Buffer hidden_commits;
 
     Float_Buffer hidden_maxs;
 
