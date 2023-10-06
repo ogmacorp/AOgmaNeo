@@ -147,23 +147,33 @@ void Encoder::learn(
             }
         }
 
-    for (int dhc = -1; dhc <= 1; dhc++) {
-        int hc = learn_ci + dhc;
-
-        if (hc < 0 || hc >= hidden_size.z)
-            continue;
-
+    for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         float rate;
+        bool commit;
 
-        if (dhc == 0) {
-            rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
+        if (hc == learn_ci) {
+            if (hidden_commits[hidden_cell_index]) {
+                rate = params.lr;
 
-            hidden_commits[hidden_cell_index] = true;
+                commit = false;
+            }
+            else {
+                rate = 1.0f;
+
+                commit = true;
+
+                hidden_commits[hidden_cell_index] = true;
+            }
         }
-        else
-            rate = params.lr * params.falloff;
+        else {
+            float dist = learn_ci - hc;
+
+            rate = params.lr * expf(-params.falloff * dist * dist);
+
+            commit = false;
+        }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -202,8 +212,14 @@ void Encoder::learn(
 
                     int wi = hc + wi_start;
 
-                    vl.weights0[wi] += rate * (min(in_value, vl.weights0[wi]) - vl.weights0[wi]);
-                    vl.weights1[wi] += rate * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);
+                    if (commit) {
+                        vl.weights0[wi] = in_value;
+                        vl.weights1[wi] = 1.0f - in_value;
+                    }
+                    else {
+                        vl.weights0[wi] += rate * (min(in_value, vl.weights0[wi]) - vl.weights0[wi]);
+                        vl.weights1[wi] += rate * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);
+                    }
                 }
         }
     }

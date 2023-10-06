@@ -49,8 +49,8 @@ public:
         :
         choice(0.01f),
         vigilance(0.97f),
-        falloff(0.5f),
-        lr(0.5f),
+        falloff(0.1f),
+        lr(0.1f),
         scale(2.0f),
         rr(0.1f)
         {}
