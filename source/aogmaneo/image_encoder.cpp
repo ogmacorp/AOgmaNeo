@@ -77,7 +77,7 @@ void Image_Encoder::forward(
 
         float match = (sum / 255.0f) / count;
 
-        float activation = match / (params.choice + (total / 255.0f));
+        float activation = match / (params.choice + (total / 255.0f) / count);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -103,7 +103,15 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = params.lr * (dhc == 0 ? 1.0f : params.falloff);
+            float rate;
+
+            if (dhc == 0) {
+                rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
+
+                hidden_commits[hidden_cell_index] = true;
+            }
+            else
+                rate = params.lr * params.falloff;
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -342,7 +350,7 @@ void Image_Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_commits = Byte_Buffer(num_hidden_cells, false);
 }
 
 void Image_Encoder::step(
@@ -388,7 +396,7 @@ void Image_Encoder::reconstruct(
 }
 
 int Image_Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_rates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -409,7 +417,7 @@ void Image_Encoder::write(
     
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     
-    writer.write(reinterpret_cast<const void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -441,9 +449,9 @@ void Image_Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    hidden_rates.resize(num_hidden_cells);
+    hidden_commits.resize(num_hidden_cells);
 
-    reader.read(reinterpret_cast<void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers;
 
