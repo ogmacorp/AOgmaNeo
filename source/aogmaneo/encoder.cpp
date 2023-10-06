@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -96,7 +95,6 @@ void Encoder::forward(
         hidden_matches[hidden_cell_index] /= max(limit_small, total_importance);
 
         float match = hidden_matches[hidden_cell_index];
-        std::cout << match << std::endl;
 
         float activation = match / (params.choice + hidden_totals[hidden_cell_index]);
 
