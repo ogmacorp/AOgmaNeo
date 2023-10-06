@@ -76,8 +76,7 @@ void Encoder::forward(
                     int wi = hc + wi_start;
 
                     hidden_matches[hidden_cell_index] += (min(in_value, vl.weights0[wi]) + min(1.0f - in_value, vl.weights1[wi])) * influence;
-                    hidden_totals[hidden_cell_index] += vl.weights0[wi] * influence;
-                    hidden_totals[hidden_cell_index] += vl.weights1[wi] * influence;
+                    hidden_totals[hidden_cell_index] += (vl.weights0[wi] + vl.weights1[wi]) * influence;
                 }
             }
     }
