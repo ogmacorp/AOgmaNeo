@@ -50,10 +50,10 @@ public:
 
         Params()
         :
-        choice(0.1f),
+        choice(0.01f),
         vigilance(0.95f),
         falloff(0.9f),
-        lr(0.01f),
+        lr(0.5f),
         l_radius(2)
         {}
     };
@@ -61,12 +61,15 @@ public:
 private:
     Int3 hidden_size; // size of hidden/output layer
 
+    unsigned int bias_state;
+
     Int_Buffer hidden_cis;
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_sums;
+    Float_Buffer hidden_matches;
     Float_Buffer hidden_totals;
+    Byte_Buffer hidden_commits;
 
     Float_Buffer hidden_maxs;
 
@@ -79,6 +82,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        unsigned long* state,
         const Params &params
     );
 
