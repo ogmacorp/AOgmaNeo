@@ -51,7 +51,7 @@ public:
         Params()
         :
         choice(0.1f),
-        vigilance(0.95f),
+        vigilance(0.98f),
         falloff(0.9f),
         lr(0.5f),
         l_radius(2)
@@ -60,6 +60,8 @@ public:
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+
+    unsigned int bias_state;
 
     Int_Buffer hidden_cis;
 
