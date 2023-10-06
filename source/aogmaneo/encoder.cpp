@@ -147,10 +147,6 @@ void Encoder::learn(
             }
         }
 
-    int hidden_cell_index_max = learn_ci + hidden_cells_start;
-
-    float rate_max = (hidden_commits[hidden_cell_index_max] ? params.lr : 1.0f);
-
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = learn_ci + dhc;
 
@@ -159,7 +155,15 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = rate_max * (dhc == 0 ? 1.0f : params.falloff);
+        float rate;
+
+        if (dhc == 0) {
+            rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
+
+            hidden_commits[hidden_cell_index] = true;
+        }
+        else
+            rate = params.lr * params.falloff;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -203,8 +207,6 @@ void Encoder::learn(
                 }
         }
     }
-
-    hidden_commits[hidden_cell_index_max] = true;
 }
 
 void Encoder::init_random(
