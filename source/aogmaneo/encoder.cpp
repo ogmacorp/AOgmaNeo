@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -23,11 +24,11 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_sums[hidden_cell_index] = 0.0f;
+        hidden_matches[hidden_cell_index] = 0.0f;
         hidden_totals[hidden_cell_index] = 0.0f;
     }
 
-    float total_num_inputs = 0.0f;
+    float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -50,7 +51,9 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        total_num_inputs += vl.importance * sub_count;
+        total_importance += vl.importance;
+
+        float influence = vl.importance / sub_count;
 
         const Int_Buffer &vl_input_cis = *input_cis[vli];
 
@@ -73,9 +76,9 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_sums[hidden_cell_index] += (min(in_value, vl.weights0[wi]) + min(1.0f - in_value, vl.weights1[wi])) * vl.importance;
-                    hidden_totals[hidden_cell_index] += vl.weights0[wi] * vl.importance;
-                    hidden_totals[hidden_cell_index] += vl.weights1[wi] * vl.importance;
+                    hidden_matches[hidden_cell_index] += (min(in_value, vl.weights0[wi]) + min(1.0f - in_value, vl.weights1[wi])) * influence;
+                    hidden_totals[hidden_cell_index] += vl.weights0[wi] * influence;
+                    hidden_totals[hidden_cell_index] += vl.weights1[wi] * influence;
                 }
             }
     }
@@ -90,9 +93,12 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        hidden_matches[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float match = hidden_sums[hidden_cell_index] / max(limit_small, total_num_inputs);
+        float match = hidden_matches[hidden_cell_index];
+        std::cout << match << std::endl;
+
+        float activation = match / (params.choice + hidden_totals[hidden_cell_index]);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -289,7 +295,7 @@ void Encoder::init_random(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_sums.resize(num_hidden_cells);
+    hidden_matches.resize(num_hidden_cells);
     hidden_totals.resize(num_hidden_cells);
     hidden_commits = Byte_Buffer(num_hidden_cells, false);
 
@@ -379,7 +385,7 @@ void Encoder::read(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_sums.resize(num_hidden_cells);
+    hidden_matches.resize(num_hidden_cells);
     hidden_totals.resize(num_hidden_cells);
 
     hidden_commits.resize(num_hidden_cells);
