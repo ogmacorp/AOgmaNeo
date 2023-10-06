@@ -93,7 +93,7 @@ void Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_matches[hidden_cell_index] /= max(limit_small, total_importance);
-        hidden_totals[hidden_cell_index] /= max(limit_small, total_importance);
+        hidden_totals[hidden_cell_index] /= max(limit_small, total_importance * 2.0f); // *2 for 2 weight sets
 
         float match = hidden_matches[hidden_cell_index];
 
