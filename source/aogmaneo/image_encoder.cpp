@@ -99,18 +99,12 @@ void Image_Encoder::forward(
             int hidden_cell_index = hc + hidden_cells_start;
 
             float rate;
-            bool commit;
 
             if (hc == max_index) {
-                if (hidden_commits[hidden_cell_index]) {
+                if (hidden_commits[hidden_cell_index])
                     rate = params.lr;
-
-                    commit = false;
-                }
                 else {
                     rate = 1.0f;
-
-                    commit = true;
 
                     hidden_commits[hidden_cell_index] = true;
                 }
@@ -119,8 +113,6 @@ void Image_Encoder::forward(
                 float dist = max_index - hc;
 
                 rate = params.lr * expf(-params.falloff * dist * dist);
-
-                commit = false;
             }
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -152,25 +144,13 @@ void Image_Encoder::forward(
 
                         int i_start = vld.size.z * (iy + ix * vld.size.y);
 
-                        if (commit) {
-                            for (int vc = 0; vc < vld.size.z; vc++) {
-                                int wi = vc + wi_start;
+                        for (int vc = 0; vc < vld.size.z; vc++) {
+                            int wi = vc + wi_start;
 
-                                int input = (*inputs[vli])[vc + i_start];
+                            int input = (*inputs[vli])[vc + i_start];
 
-                                vl.weights0[wi] = input;
-                                vl.weights1[wi] = 255 - input;
-                            }
-                        }
-                        else {
-                            for (int vc = 0; vc < vld.size.z; vc++) {
-                                int wi = vc + wi_start;
-
-                                int input = (*inputs[vli])[vc + i_start];
-
-                                vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(rate * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
-                                vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(rate * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
-                            }
+                            vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(rate * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
+                            vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(rate * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
                         }
                     }
             }
