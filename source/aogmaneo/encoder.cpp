@@ -116,7 +116,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_match + randf(state) * noise_small;
 
-    hidden_cis[hidden_column_index] = max_complete_index;//(max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
 
 void Encoder::learn(
