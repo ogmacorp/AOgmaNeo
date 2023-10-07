@@ -79,7 +79,7 @@ void Image_Encoder::forward(
 
         hidden_matches[hidden_cell_index] = match;
 
-        float activation = match / (params.choice + (total / 255.0f) / count);
+        float activation = match / (params.choice + (total / 255.0f) / (count * 2));
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
