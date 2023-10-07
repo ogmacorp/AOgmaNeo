@@ -61,8 +61,6 @@ public:
 private:
     Int3 hidden_size; // size of hidden/output layer
 
-    unsigned int bias_state;
-
     Int_Buffer hidden_cis;
 
     Int_Buffer learn_cis;
@@ -82,7 +80,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        unsigned long* state,
         const Params &params
     );
 
