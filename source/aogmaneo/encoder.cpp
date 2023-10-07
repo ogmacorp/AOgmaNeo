@@ -147,65 +147,25 @@ void Encoder::learn(
             }
         }
 
-    int hidden_cell_index_max = learn_ci + hidden_cells_start;
-
-    float rate_max = (hidden_commits[hidden_cell_index_max] ? params.lr : 1.0f);
-
-    // center
-    for (int vli = 0; vli < visible_layers.size(); vli++) {
-        Visible_Layer &vl = visible_layers[vli];
-        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-        int diam = vld.radius * 2 + 1;
-
-        // projection
-        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
-
-        Int2 visible_center = project(column_pos, h_to_v);
-
-        // lower corner
-        Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
-
-        // bounds of receptive field, clamped to input size
-        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-        Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-        const Int_Buffer &vl_input_cis = *input_cis[vli];
-
-        const float vld_size_z_inv = 1.0f / vld.size.z;
-
-        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
-
-                int in_ci = vl_input_cis[visible_column_index];
-
-                float in_value = (in_ci + 0.5f) * vld_size_z_inv;
-
-                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
-
-                int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
-
-                vl.weights0[wi] += rate_max * (min(in_value, vl.weights0[wi]) - vl.weights0[wi]);
-                vl.weights1[wi] += rate_max * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);
-            }
-    }
-
-    // neighbor influence
-    for (int dhc = -1; dhc <= 1; dhc += 2) {
-        int hc = learn_ci + dhc;
-
-        if (hc < 0 || hc >= hidden_size.z)
-            continue;
-
+    for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        // must be committed to influence max
-        if (!hidden_commits[hidden_cell_index])
-            continue;
+        float rate;
 
-        float rate = params.lr * params.falloff;
+        if (hc == learn_ci) {
+            if (hidden_commits[hidden_cell_index])
+                rate = params.lr;
+            else {
+                rate = 1.0f;
+
+                hidden_commits[hidden_cell_index] = true;
+            }
+        }
+        else {
+            float dist = learn_ci - hc;
+
+            rate = params.lr * expf(-params.falloff * dist * dist);
+        }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -242,16 +202,13 @@ void Encoder::learn(
 
                     int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                    int wi_max = learn_ci + wi_start;
-                    int wi_neighbor = hc + wi_start;
+                    int wi = hc + wi_start;
 
-                    vl.weights0[wi_max] += rate * (min(vl.weights0[wi_neighbor], vl.weights0[wi_max]) - vl.weights0[wi_max]);
-                    vl.weights1[wi_max] += rate * (min(vl.weights1[wi_neighbor], vl.weights1[wi_max]) - vl.weights1[wi_max]);
+                    vl.weights0[wi] += rate * (min(in_value, vl.weights0[wi]) - vl.weights0[wi]);
+                    vl.weights1[wi] += rate * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);
                 }
         }
     }
-
-    hidden_commits[hidden_cell_index_max] = true;
 }
 
 void Encoder::init_random(
