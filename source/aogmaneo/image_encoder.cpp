@@ -94,7 +94,7 @@ void Image_Encoder::forward(
         }
     }
 
-    hidden_cis[hidden_column_index] = max_complete_index;//(max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
     if (learn_enabled && max_index != -1) {
         for (int hc = 0; hc < hidden_size.z; hc++) {
