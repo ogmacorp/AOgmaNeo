@@ -77,6 +77,8 @@ void Image_Encoder::forward(
 
         float match = (sum / 255.0f) / count;
 
+        hidden_matches[hidden_cell_index] = match;
+
         float activation = match / (params.choice + (total / 255.0f) / count);
 
         if (match >= params.vigilance) {
@@ -110,6 +112,9 @@ void Image_Encoder::forward(
                 }
             }
             else {
+                if (hidden_matches[hidden_cell_index] < params.vigilance)
+                    continue;
+
                 float dist = max_index - hc;
 
                 rate = params.lr * expf(-params.falloff * dist * dist);
@@ -352,6 +357,8 @@ void Image_Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
+    hidden_matches.resize(num_hidden_cells);
+
     hidden_commits = Byte_Buffer(num_hidden_cells, false);
 }
 
@@ -450,6 +457,8 @@ void Image_Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    hidden_matches.resize(num_hidden_cells);
 
     hidden_commits.resize(num_hidden_cells);
 
