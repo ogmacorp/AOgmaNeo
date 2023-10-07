@@ -82,7 +82,6 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -100,7 +99,6 @@ void Encoder::forward(
         if (match >= params.vigilance) {
             if (activation > max_activation) {
                 max_activation = activation;
-                max_match = match;
                 max_index = hc;
             }
         }
