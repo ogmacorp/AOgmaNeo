@@ -162,6 +162,10 @@ void Encoder::learn(
             }
         }
         else {
+            // skip if not vigilant
+            if (hidden_matches[hidden_cell_index] < params.vigilance)
+                continue;
+
             float dist = learn_ci - hc;
 
             rate = params.lr * expf(-params.falloff * dist * dist);
