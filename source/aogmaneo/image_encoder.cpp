@@ -100,6 +100,9 @@ void Image_Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
+            if (hidden_matches[hidden_cell_index] < params.vigilance)
+                continue;
+
             float rate;
 
             if (hc == max_index) {
@@ -112,9 +115,6 @@ void Image_Encoder::forward(
                 }
             }
             else {
-                if (hidden_matches[hidden_cell_index] < params.vigilance)
-                    continue;
-
                 float dist = max_index - hc;
 
                 rate = params.lr * expf(-params.falloff * dist * dist);

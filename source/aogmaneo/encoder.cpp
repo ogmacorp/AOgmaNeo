@@ -150,6 +150,10 @@ void Encoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
+        // skip if not vigilant
+        if (hidden_matches[hidden_cell_index] < params.vigilance)
+            continue;
+
         float rate;
 
         if (hc == learn_ci) {
@@ -162,10 +166,6 @@ void Encoder::learn(
             }
         }
         else {
-            // skip if not vigilant
-            if (hidden_matches[hidden_cell_index] < params.vigilance)
-                continue;
-
             float dist = learn_ci - hc;
 
             rate = params.lr * expf(-params.falloff * dist * dist);
