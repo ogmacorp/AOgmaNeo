@@ -81,7 +81,7 @@ void Encoder::forward(
 
         float match = 1.0f - hidden_sums[hidden_cell_index];
 
-        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        float activation = hidden_sums[hidden_cell_index] / (params.choice + 1.0f - hidden_totals[hidden_cell_index]);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -136,7 +136,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
-    float rate = (hidden_totals[hidden_cell_index_max] == 1.0f ? 1.0f : params.lr);
+    float rate = (hidden_totals[hidden_cell_index_max] == 0.0f ? 1.0f : params.lr);
 
     float total = 0.0f;
     float total_importance = 0.0f;
@@ -230,7 +230,7 @@ void Encoder::init_random(
 
     hidden_sums.resize(num_hidden_cells);
 
-    hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_totals = Float_Buffer(num_hidden_cells, 0.0f);
 
     hidden_maxs.resize(num_hidden_columns);
 }
