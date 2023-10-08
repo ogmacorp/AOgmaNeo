@@ -85,9 +85,9 @@ void Encoder::forward(
 
         hidden_sums[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float match = hidden_sums[hidden_cell_index] + (1.0f - hidden_sums[hidden_cell_index]) * (1.0f - hidden_totals[hidden_cell_index]);
+        float match = 1.0f - hidden_totals[hidden_cell_index];
 
-        float activation = hidden_sums[hidden_cell_index];
+        float activation = hidden_sums[hidden_cell_index] / (params.choice + 1.0f - hidden_totals[hidden_cell_index]);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -106,7 +106,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_activation;
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;
 }
 
 void Encoder::learn(
@@ -163,7 +163,7 @@ void Encoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
         total_importance += vl.importance;
 
