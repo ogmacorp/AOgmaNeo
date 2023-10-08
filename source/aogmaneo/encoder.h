@@ -41,16 +41,16 @@ public:
     };
 
     struct Params {
-        float max_usage; // maximum usage for learning
+        float choice; // choice parameter
+        float vigilance; // ART vigilance
         float lr; // learning rate
-        float ur; // usage rate
         int l_radius; // second stage inhibition radius
 
         Params()
         :
-        max_usage(0.05f),
+        choice(0.1f),
+        vigilance(0.9f),
         lr(0.5f),
-        ur(0.1f),
         l_radius(2)
         {}
     };
@@ -62,9 +62,9 @@ private:
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_acts;
+    Float_Buffer hidden_sums;
 
-    Float_Buffer hidden_usages;
+    Float_Buffer hidden_totals;
 
     Float_Buffer hidden_maxs;
 
