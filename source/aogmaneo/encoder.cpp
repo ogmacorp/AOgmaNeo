@@ -85,9 +85,9 @@ void Encoder::forward(
 
         hidden_sums[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float match = 1.0f - hidden_sums[hidden_cell_index];
+        float match = hidden_sums[hidden_cell_index] + (1.0f - hidden_sums[hidden_cell_index]) * (1.0f - hidden_totals[hidden_cell_index]);
 
-        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        float activation = hidden_sums[hidden_cell_index];
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -127,15 +127,12 @@ void Encoder::learn(
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            if (dcx == 0 && dcy == 0)
-                continue;
-
             Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
 
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_maxs[other_hidden_column_index] >= hidden_max)
+                if (hidden_maxs[other_hidden_column_index] > hidden_max)
                     return;
             }
         }
