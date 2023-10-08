@@ -87,7 +87,7 @@ void Encoder::forward(
 
         float match = 1.0f - hidden_sums[hidden_cell_index];
 
-        float activation = match / (params.choice + 1.0f - hidden_totals[hidden_cell_index]);
+        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -186,7 +186,7 @@ void Encoder::learn(
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     if (vc == in_ci)
-                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(rate * vl.weights[wi]));
+                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(rate * (255.0f - vl.weights[wi])));
 
                     sub_total += vl.weights[wi];
                 }
