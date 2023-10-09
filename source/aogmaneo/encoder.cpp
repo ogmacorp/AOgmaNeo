@@ -113,7 +113,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_activation;
 
-    hidden_cis[hidden_column_index] = max_complete_index;//(max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;
 }
 
 void Encoder::learn(
@@ -152,7 +152,7 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = (hidden_commits[hidden_cell_index] ? params.lr * (dhc == 0 ? 1.0f : params.falloff) : 1.0f);
+        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * (dhc == 0 ? 1.0f : params.falloff);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
