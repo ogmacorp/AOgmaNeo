@@ -38,15 +38,15 @@ public:
     };
 
     struct Params {
-        float scale; // scale of softmax
+        float choice; // choice parameter
+        float vigilance; // ART vigilance
         float lr; // learning rate
-        float gcurve; // gate curve
 
         Params()
         :
-        scale(64.0f),
-        lr(0.02f),
-        gcurve(32.0f)
+        choice(1.0f),
+        vigilance(0.9f),
+        lr(0.1f)
         {}
     };
 
@@ -55,16 +55,13 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer hidden_sums;
-    Float_Buffer hidden_acts;
+    Float_Buffer hidden_sums;
 
-    Float_Buffer hidden_deltas;
+    Float_Buffer hidden_totals;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 
@@ -74,16 +71,9 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Int_Buffer* hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
@@ -157,7 +147,7 @@ public:
 
     // get the hidden states (predictions)
     const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
+        return hidden_sums;
     }
 
     // get the hidden size
