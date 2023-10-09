@@ -113,7 +113,7 @@ void Encoder::forward(
 
     hidden_maxs[hidden_column_index] = max_activation;
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;//(max_index == -1 ? max_complete_index : max_index);
 }
 
 void Encoder::learn(
@@ -144,29 +144,15 @@ void Encoder::learn(
             }
         }
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+    for (int dhc = -1; dhc <= 1; dhc++) {
+        int hc = learn_ci + dhc;
 
-        // skip if not vigilant
-        if (hidden_matches[hidden_cell_index] < params.vigilance)
+        if (hc < 0 || hc >= hidden_size.z)
             continue;
 
-        float rate;
+        int hidden_cell_index = hc + hidden_cells_start;
 
-        if (hc == learn_ci) {
-            if (hidden_commits[hidden_cell_index])
-                rate = params.lr;
-            else {
-                rate = 1.0f;
-
-                hidden_commits[hidden_cell_index] = true;
-            }
-        }
-        else {
-            float dist = learn_ci - hc;
-
-            rate = params.lr * expf(-params.falloff * dist * dist);
-        }
+        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * (dhc == 0 ? 1.0f : params.falloff);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -209,6 +195,8 @@ void Encoder::learn(
                     vl.weights1[wi] += rate * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);
                 }
         }
+
+        hidden_commits[hidden_cell_index] = true;
     }
 }
 
