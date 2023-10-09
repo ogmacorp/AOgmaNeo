@@ -102,7 +102,8 @@ void Decoder::learn(
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
-    float match = 1.0f - max(hidden_sums[hidden_cell_index_target], hidden_totals[hidden_cell_index_target]);
+    float match = (1.0f - hidden_totals[hidden_cell_index_target]) * hidden_sums[hidden_cell_index_target] + (1.0f - hidden_sums[hidden_cell_index_target]);
+    //float match = 1.0f - max(hidden_sums[hidden_cell_index_target], hidden_totals[hidden_cell_index_target]);
 
     if (match < params.vigilance && hidden_cis[hidden_column_index] == target_ci)
         return;
