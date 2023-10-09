@@ -152,7 +152,7 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * (dhc == 0 ? 1.0f : params.falloff);
+        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -187,9 +187,7 @@ void Encoder::learn(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
-
-                    int wi = hc + wi_start;
+                    int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
                     vl.weights0[wi] += rate * (min(in_value, vl.weights0[wi]) - vl.weights0[wi]);
                     vl.weights1[wi] += rate * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);

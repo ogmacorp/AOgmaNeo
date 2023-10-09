@@ -44,7 +44,6 @@ public:
     struct Params {
         float choice; // choice parameter
         float vigilance; // ART vigilance
-        float falloff; // falloff for mini-SOM part
         float lr; // learning rate
         int l_radius; // second stage inhibition radius
 
@@ -52,7 +51,6 @@ public:
         :
         choice(0.1f),
         vigilance(0.95f),
-        falloff(0.9f),
         lr(0.5f),
         l_radius(2)
         {}
