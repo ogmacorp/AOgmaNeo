@@ -97,28 +97,15 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
     if (learn_enabled && max_index != -1) {
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+        for (int dhc = -1; dhc <= 1; dhc++) {
+            int hc = max_index + dhc;
 
-            if (hidden_matches[hidden_cell_index] < params.vigilance)
+            if (hc < 0 || hc >= hidden_size.z)
                 continue;
 
-            float rate;
+            int hidden_cell_index = hc + hidden_cells_start;
 
-            if (hc == max_index) {
-                if (hidden_commits[hidden_cell_index])
-                    rate = params.lr;
-                else {
-                    rate = 1.0f;
-
-                    hidden_commits[hidden_cell_index] = true;
-                }
-            }
-            else {
-                float dist = max_index - hc;
-
-                rate = params.lr * expf(-params.falloff * dist * dist);
-            }
+            float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * (dhc == 0 ? 1.0f : params.falloff);
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
