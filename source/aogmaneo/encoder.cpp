@@ -114,7 +114,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = max_match + randf(state) * noise_small;
+    hidden_maxs[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
@@ -142,7 +142,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_maxs[other_hidden_column_index] > hidden_max)
+                if (hidden_maxs[other_hidden_column_index] > hidden_max && hidden_matches[hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z] >= params.vigilance)
                     return;
             }
         }
