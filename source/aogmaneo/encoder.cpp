@@ -142,14 +142,15 @@ void Encoder::learn(
             }
         }
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    for (int dhc = -1; dhc <= 1; dhc++) {
+        int hc = dhc + learn_ci;
+
+        if (hc < 0 || hc >= hidden_size.z)
+            continue;
+
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float diff = learn_ci - hc;
-
-        float activation = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
-
-        float rate = (hidden_commits[hidden_column_index] ? params.lr : 1.0f) * expf(-params.falloff * diff * diff * activation);
+        float rate = (hidden_commits[hidden_column_index] ? params.lr : 1.0f) * (dhc == 0 ? 1.0f : params.falloff);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
