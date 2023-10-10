@@ -197,7 +197,8 @@ void Encoder::learn(
                 }
         }
 
-        hidden_commits[hidden_cell_index] = true;
+        if (dhc == 0)
+            hidden_commits[hidden_cell_index] = true;
     }
 }
 
