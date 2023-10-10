@@ -50,7 +50,7 @@ public:
 
         Params()
         :
-        choice(1.0f),
+        choice(0.1f),
         vigilance(0.95f),
         falloff(0.9f),
         lr(0.5f),
