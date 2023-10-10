@@ -74,7 +74,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_matches[hidden_cell_index] += (in_value * vl.weights0[wi] + (1.0f - in_value) * vl.weights1[wi]) * influence;
+                    hidden_matches[hidden_cell_index] += (min(in_value, vl.weights0[wi]) + min(1.0f - in_value, vl.weights1[wi])) * influence;
                     hidden_totals[hidden_cell_index] += (vl.weights0[wi] + vl.weights1[wi]) * influence;
                 }
             }
@@ -151,7 +151,7 @@ void Encoder::learn(
 
         float diff = learn_ci - hc;
 
-        float rate = params.lr * expf(-params.falloff * diff * diff);
+        float rate = (hidden_commits[hidden_column_index] ? params.lr : 1.0f) * expf(-params.falloff * diff * diff / max(limit_small, hidden_matches[hidden_cell_index]));
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
