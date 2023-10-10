@@ -82,7 +82,6 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -93,14 +92,11 @@ void Encoder::forward(
         hidden_matches[hidden_cell_index] /= max(limit_small, total_importance);
         hidden_totals[hidden_cell_index] /= max(limit_small, total_importance * 2.0f); // *2 for 2 weight sets
 
-        float match = hidden_matches[hidden_cell_index];
+        float activation = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-        float activation = match / (params.choice + hidden_totals[hidden_cell_index]);
-
-        if (match >= params.vigilance) {
+        if (hidden_matches[hidden_cell_index] >= params.vigilance) {
             if (activation > max_activation) {
                 max_activation = activation;
-                max_match = match;
                 max_index = hc;
             }
         }
@@ -151,7 +147,9 @@ void Encoder::learn(
 
         float diff = learn_ci - hc;
 
-        float rate = (hidden_commits[hidden_column_index] ? params.lr : 1.0f) * expf(-params.falloff * diff * diff / max(limit_small, hidden_matches[hidden_cell_index]));
+        float activation = hidden_matches[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+
+        float rate = (hidden_commits[hidden_column_index] ? params.lr : 1.0f) * expf(-params.falloff * diff * diff * activation);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
