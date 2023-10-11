@@ -80,7 +80,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
-        unsigned long* state,
         const Params &params
     );
 

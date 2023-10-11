@@ -13,7 +13,6 @@ using namespace aon;
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<const Int_Buffer*> &input_cis,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -112,7 +111,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = max_activation;//max_match + randf(state) * rand_noise_small;
+    hidden_maxs[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
@@ -145,15 +144,18 @@ void Encoder::learn(
             }
         }
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    for (int dhc = -1; dhc <= 1; dhc++) {
+        int hc = learn_ci + dhc;
+
+        if (hc < 0 || hc >= hidden_size.z)
+            continue;
+
         int hidden_cell_index = hc + hidden_cells_start;
 
         if (hidden_matches[hidden_cell_index] < params.vigilance)
             continue;
 
-        float diff = learn_ci - hc;
-
-        float rate = params.lr * expf(-params.falloff * diff * diff);
+        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * (dhc == 0 ? 1.0f : params.falloff);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -236,6 +238,7 @@ void Encoder::init_random(
 
     hidden_matches.resize(num_hidden_cells);
     hidden_totals.resize(num_hidden_cells);
+    hidden_commits = Byte_Buffer(num_hidden_cells, false);
 
     hidden_maxs.resize(num_hidden_columns);
 }
@@ -247,14 +250,9 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    unsigned int base_state = rand();
-
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
         PARALLEL_FOR
@@ -268,7 +266,7 @@ void Encoder::clear_state() {
 }
 
 int Encoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -289,6 +287,8 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    writer.write(reinterpret_cast<const void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -323,6 +323,10 @@ void Encoder::read(
 
     hidden_matches.resize(num_hidden_cells);
     hidden_totals.resize(num_hidden_cells);
+
+    hidden_commits.resize(num_hidden_cells);
+
+    reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     hidden_maxs.resize(num_hidden_columns);
 
