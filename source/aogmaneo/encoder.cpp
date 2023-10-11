@@ -196,6 +196,8 @@ void Encoder::learn(
                     vl.weights1[wi] += rate * (min(1.0f - in_value, vl.weights1[wi]) - vl.weights1[wi]);
                 }
         }
+
+        hidden_commits[hidden_cell_index] = true;
     }
 }
 
