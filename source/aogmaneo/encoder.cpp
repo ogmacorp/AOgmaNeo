@@ -105,7 +105,7 @@ void Encoder::update_gates(
     float sum = 0.0f;
     int count = 0;
 
-    const float byte_inv = 1.0f / 255.0f;
+    const float half_byte_inv = 1.0f / 127.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -139,7 +139,7 @@ void Encoder::update_gates(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = vc + wi_start;
 
-                    float w = (255.0f - vl.weights[wi]) * byte_inv;
+                    float w = (vl.weights[wi] - 127.0f) * half_byte_inv;
 
                     sum += w * w;
                 }
@@ -236,7 +236,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / max(1, count * 255) - 1.0f) * params.scale));
+        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - sigmoidf((static_cast<float>(recon_sum) / max(1, count * 255) - 0.5f) * params.scale));
     }
 
     if (max_index == target_ci)
@@ -302,7 +302,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noise);
+            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
 
         vl.recon_sums.resize(num_visible_cells);
 
