@@ -105,6 +105,9 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
+            if (hidden_matches[hidden_cell_index] < params.vigilance)
+                continue;
+
             float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * (dhc == 0 ? 1.0f : params.falloff);
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -146,6 +149,8 @@ void Image_Encoder::forward(
                         }
                     }
             }
+
+            hidden_commits[hidden_cell_index] = true;
         }
     }
 }
