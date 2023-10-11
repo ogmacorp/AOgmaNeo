@@ -51,8 +51,8 @@ public:
         Params()
         :
         choice(0.1f),
-        vigilance(0.9f),
-        falloff(0.1f),
+        vigilance(0.95f),
+        falloff(0.5f),
         lr(0.5f),
         l_radius(2)
         {}
@@ -67,7 +67,6 @@ private:
 
     Float_Buffer hidden_matches;
     Float_Buffer hidden_totals;
-    Byte_Buffer hidden_commits;
 
     Float_Buffer hidden_maxs;
 
