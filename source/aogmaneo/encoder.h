@@ -50,9 +50,9 @@ public:
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.95f),
-        falloff(0.9f),
+        choice(0.1f),
+        vigilance(0.9f),
+        falloff(0.1f),
         lr(0.5f),
         l_radius(2)
         {}
@@ -80,6 +80,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<const Int_Buffer*> &input_cis,
+        unsigned long* state,
         const Params &params
     );
 
