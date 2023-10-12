@@ -43,11 +43,13 @@ public:
     };
 
     struct Params {
+        float scale;
         float lr; // learning rate
         float gcurve; // gain curve
 
         Params()
         :
+        scale(32.0f),
         lr(0.5f),
         gcurve(32.0f)
         {}
@@ -61,6 +63,8 @@ private:
     Float_Buffer hidden_acts;
 
     Float_Buffer hidden_gates;
+
+    Float_Buffer hidden_deltas;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

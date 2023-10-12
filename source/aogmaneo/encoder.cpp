@@ -27,7 +27,13 @@ void Encoder::forward(
 
         float error = (*errors)[hidden_column_index];
 
-        float delta = params.lr * 255.0f * error * hidden_gates[hidden_column_index];
+        float reward = -error * error;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_deltas[hidden_cell_index] = params.lr * 255.0f * reward * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]) * hidden_gates[hidden_column_index];
+        }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -56,9 +62,15 @@ void Encoder::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = hidden_ci_prev + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
+                    int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta, state)));
+                    for (int hc = 0; hc < hidden_size.z; hc++) {
+                        int hidden_cell_index = hc + hidden_cells_start;
+
+                        int wi = hc + wi_start;
+
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index], state)));
+                    }
                 }
         }
     }
@@ -137,6 +149,24 @@ void Encoder::forward(
         }
     }
 
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_acts[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) * params.scale);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
+    }
+
     hidden_cis[hidden_column_index] = max_index;
 }
 
@@ -153,7 +183,7 @@ void Encoder::update_gates(
     float sum = 0.0f;
     int count = 0;
 
-    const float byte_inv = 1.0f / 255.0f;
+    const float half_byte_inv = 1.0f / 127.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -185,7 +215,7 @@ void Encoder::update_gates(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    float w = (255.0f - vl.weights[wi]) * byte_inv;
+                    float w = (vl.weights[wi] - 127.0f) * half_byte_inv;
 
                     sum += w * w;
                 }
@@ -225,7 +255,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noise);
+            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -235,6 +265,8 @@ void Encoder::init_random(
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
     hidden_gates.resize(num_hidden_columns);
+
+    hidden_deltas.resize(num_hidden_cells);
 }
 
 void Encoder::step(
@@ -339,6 +371,8 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
 
     hidden_gates.resize(num_hidden_columns);
+
+    hidden_deltas.resize(num_hidden_cells);
 
     int num_visible_layers = visible_layers.size();
 
