@@ -63,7 +63,7 @@ public:
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
-            int temporal_horizon = 4
+            int temporal_horizon = 2
         )
         :
         hidden_size(hidden_size),
@@ -152,7 +152,7 @@ public:
 
     // simulation step/tick
     void step(
-        const Array<const Int_Buffer*> &input_cis, // inputs to remember
+        const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
         float reward = 0.0f, // reward
         float mimic = 0.0f // mimicry mode

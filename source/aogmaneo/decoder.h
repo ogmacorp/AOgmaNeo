@@ -70,7 +70,7 @@ private:
 
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
@@ -82,15 +82,15 @@ private:
 
     void learn(
         const Int2 &column_pos,
-        const Int_Buffer* hidden_target_cis,
+        Int_Buffer_View hidden_target_cis,
         unsigned long* state,
         const Params &params
     );
 
     void generate_errors(
         const Int2 &column_pos,
-        const Int_Buffer* hidden_target_cis,
-        Float_Buffer* errors,
+        Int_Buffer_View hidden_target_cis,
+        Float_Buffer_View errors,
         int vli,
         const Params &params
     );
@@ -104,15 +104,15 @@ public:
 
     // activate the predictor (predict values)
     void step(
-        const Array<const Int_Buffer*> &input_cis,
-        const Int_Buffer* hidden_target_cis,
+        const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View hidden_target_cis,
         bool learn_enabled,
         const Params &params
     );
 
     void generate_errors(
-        const Int_Buffer* hidden_target_cis,
-        Float_Buffer* errors,
+        Int_Buffer_View hidden_target_cis,
+        Float_Buffer_View errors,
         int vli,
         const Params &params
     );

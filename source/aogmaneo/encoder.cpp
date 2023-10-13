@@ -12,8 +12,8 @@ using namespace aon;
 
 void Encoder::forward(
     const Int2 &column_pos,
-    const Array<const Int_Buffer*> &input_cis,
-    const Float_Buffer* errors,
+    const Array<Int_Buffer_View> &input_cis,
+    const Float_Buffer_View errors,
     bool learn_enabled,
     unsigned long* state,
     const Params &params
@@ -25,7 +25,7 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
-        float error = (*errors)[hidden_column_index];
+        float error = errors[hidden_column_index];
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
@@ -109,7 +109,7 @@ void Encoder::forward(
 
         total_importance += vl.importance;
 
-        const Int_Buffer &vl_input_cis = *input_cis[vli];
+        Int_Buffer_View vl_input_cis = input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -268,8 +268,8 @@ void Encoder::init_random(
 }
 
 void Encoder::step(
-    const Array<const Int_Buffer*> &input_cis,
-    const Float_Buffer* errors,
+    const Array<Int_Buffer_View> &input_cis,
+    const Float_Buffer_View errors,
     bool learn_enabled,
     const Params &params
 ) {
@@ -292,7 +292,7 @@ void Encoder::step(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        vl.input_cis_prev = *input_cis[vli];
+        vl.input_cis_prev = input_cis[vli];
     }
 }
 

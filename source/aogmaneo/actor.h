@@ -83,7 +83,7 @@ private:
 
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
+        const Array<Int_Buffer_View> &input_cis,
         unsigned long* state,
         const Params &params
     );
@@ -107,8 +107,8 @@ public:
 
     // step (get actions and update)
     void step(
-        const Array<const Int_Buffer*> &input_cis,
-        const Int_Buffer* hidden_target_cis_prev,
+        const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View hidden_target_cis_prev,
         float reward,
         bool learn_enabled,
         float mimic,

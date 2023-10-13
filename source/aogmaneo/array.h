@@ -12,6 +12,9 @@
 
 namespace aon {
 template<typename T>
+class Array_View;
+
+template<typename T>
 class Array {
 private:
     T* p;
@@ -78,6 +81,24 @@ public:
         return *this;
     }
 
+    Array<T> &operator=(
+        const Array_View<T> &other
+    ) {
+        if (s != other.s) {
+            if (p != nullptr)
+                delete[] p;
+
+            s = other.s;
+
+            p = new T[static_cast<unsigned int>(s)];
+        }
+
+        for (int i = 0; i < s; i++)
+            p[i] = other.p[i];
+        
+        return *this;
+    }
+
     void resize(
         int size
     ) {
@@ -114,6 +135,77 @@ public:
 
         for (int i = old_s; i < s; i++)
             p[i] = value;
+    }
+
+    T &operator[](
+        int index
+    ) {
+        assert(index >= 0 && index < s);
+
+        return p[index];
+    }
+
+    const T &operator[](
+        int index
+    ) const {
+        assert(index >= 0 && index < s);
+        
+        return p[index];
+    }
+
+    int size() const {
+        return s;
+    }
+
+    void fill(
+        T value
+    ) {
+        for (int i = 0; i < s; i++)
+            p[i] = value;
+    }
+};
+
+template<typename T>
+class Array_View {
+private:
+    T* p;
+    int s;
+
+public:
+    Array_View()
+    :
+    p(nullptr),
+    s(0)
+    {}
+
+    Array_View(
+        const Array_View<T> &other
+    ) {
+        *this = other;
+    }
+
+    Array_View(
+        const Array<T> &other
+    ) {
+        *this = other;
+    }
+
+    Array_View<T> &operator=(
+        const Array_View<T> &other
+    ) {
+        p = other.p;
+        s = other.s;
+        
+        return *this;
+    }
+
+    Array_View<T> &operator=(
+        const Array<T> &other
+    ) {
+        p = other.p;
+        s = other.s;
+        
+        return *this;
     }
 
     T &operator[](

@@ -74,8 +74,8 @@ private:
 
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
-        const Float_Buffer* errors,
+        const Array<Int_Buffer_View> &input_cis,
+        Float_Buffer_View errors,
         bool learn_enabled,
         unsigned long* state,
         const Params &params
@@ -94,8 +94,8 @@ public:
     );
 
     void step(
-        const Array<const Int_Buffer*> &input_cis, // input states
-        const Float_Buffer* errors,
+        const Array<Int_Buffer_View> &input_cis, // input states
+        Float_Buffer_View errors,
         bool learn_enabled, // whether to learn
         const Params &params // parameters
     );

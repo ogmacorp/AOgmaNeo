@@ -175,7 +175,7 @@ void Hierarchy::init_random(
 }
 
 void Hierarchy::step(
-    const Array<const Int_Buffer*> &input_cis,
+    const Array< Int_Buffer_View> &input_cis,
     bool learn_enabled,
     float reward,
     float mimic
@@ -194,7 +194,7 @@ void Hierarchy::step(
     for (int i = 0; i < io_sizes.size(); i++) {
         histories[0][i].push_front();
 
-        histories[0][i][0] = *input_cis[i];
+        histories[0][i][0] = input_cis[i];
     }
 
     // set all updates to no update, will be set to true if an update occurred later
@@ -210,13 +210,13 @@ void Hierarchy::step(
             // updated
             updates[l] = true;
 
-            Array<const Int_Buffer*> layer_input_cis(encoders[l].get_num_visible_layers());
+            Array<Int_Buffer_View> layer_input_cis(encoders[l].get_num_visible_layers());
 
             int index = 0;
 
             for (int i = 0; i < histories[l].size(); i++) {
                 for (int t = 0; t < histories[l][i].size(); t++) {
-                    layer_input_cis[index] = &histories[l][i][t];
+                    layer_input_cis[index] = histories[l][i][t];
 
                     index++;
                 }
@@ -226,7 +226,7 @@ void Hierarchy::step(
                 errors[l].fill(0.0f);
 
                 for (int d = 0; d < decoders[l].size(); d++)
-                    decoders[l][d].generate_errors(&histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], &errors[l], 0, params.layers[l].decoder);
+                    decoders[l][d].generate_errors(histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], errors[l], 0, params.layers[l].decoder);
 
                 // Rescale
                 float decoders_inv = 1.0f / decoders[l].size();
@@ -236,7 +236,7 @@ void Hierarchy::step(
             }
 
             // activate sparse coder
-            encoders[l].step(layer_input_cis, &errors[l], learn_enabled, params.layers[l].encoder);
+            encoders[l].step(layer_input_cis, errors[l], learn_enabled, params.layers[l].encoder);
 
             // add to next layer's history
             if (l < encoders.size() - 1) {
@@ -254,15 +254,15 @@ void Hierarchy::step(
     // backward
     for (int l = decoders.size() - 1; l >= 0; l--) {
         if (updates[l]) {
-            Array<const Int_Buffer*> layer_input_cis(l < encoders.size() - 1 ? 2 : 1);
+            Array<Int_Buffer_View> layer_input_cis(l < encoders.size() - 1 ? 2 : 1);
 
-            layer_input_cis[0] = &encoders[l].get_hidden_cis();
+            layer_input_cis[0] = encoders[l].get_hidden_cis();
             
             if (l < encoders.size() - 1)
-                layer_input_cis[1] = &decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
+                layer_input_cis[1] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
 
             for (int d = 0; d < decoders[l].size(); d++)
-                decoders[l][d].step(layer_input_cis, &histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], learn_enabled, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                decoders[l][d].step(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], learn_enabled, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
             if (l == 0) {
                 for (int d = 0; d < actors.size(); d++)
