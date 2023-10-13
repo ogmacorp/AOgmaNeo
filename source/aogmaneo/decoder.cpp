@@ -48,7 +48,7 @@ void Decoder::forward(
 
         count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        const Int_Buffer_View vl_input_cis = input_cis[vli];
+        Int_Buffer_View vl_input_cis = input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
