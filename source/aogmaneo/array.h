@@ -163,6 +163,8 @@ public:
         for (int i = 0; i < s; i++)
             p[i] = value;
     }
+
+    friend Array_View<T>;
 };
 
 template<typename T>
@@ -234,5 +236,7 @@ public:
         for (int i = 0; i < s; i++)
             p[i] = value;
     }
+
+    friend Array<T>;
 };
 }
