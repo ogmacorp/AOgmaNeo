@@ -303,7 +303,7 @@ void Decoder::generate_errors(
 
                     int wi = hc + wi_start;
 
-                    sum += (vl.alignments[wi] - 127.0f) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+                    sum += (vl.weights[wi] - 127.0f) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
                 }
 
                 count++;
@@ -344,12 +344,9 @@ void Decoder::init_random(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
-        vl.alignments.resize(vl.weights.size());
 
-        for (int i = 0; i < vl.weights.size(); i++) {
+        for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
-            vl.alignments[i] = rand() % 256;
-        }
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
 
@@ -456,7 +453,7 @@ int Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -493,7 +490,6 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.alignments[0]), vl.alignments.size() * sizeof(Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
@@ -541,10 +537,8 @@ void Decoder::read(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
-        vl.alignments.resize(vl.weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.alignments[0]), vl.alignments.size() * sizeof(Byte));
 
         vl.input_cis_prev.resize(num_visible_columns);
 
