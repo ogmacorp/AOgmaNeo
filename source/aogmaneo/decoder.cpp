@@ -12,7 +12,7 @@ using namespace aon;
 
 void Decoder::forward(
     const Int2 &column_pos,
-    const Array<const Int_Buffer*> &input_cis,
+    const Array<Int_Buffer_View> &input_cis,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -48,7 +48,7 @@ void Decoder::forward(
 
         count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        const Int_Buffer &vl_input_cis = *input_cis[vli];
+        Int_Buffer_View vl_input_cis = input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -180,7 +180,7 @@ void Decoder::update_gates(
 
 void Decoder::learn(
     const Int2 &column_pos,
-    const Int_Buffer* hidden_target_cis,
+    const Int_Buffer_View hidden_target_cis,
     unsigned long* state,
     const Params &params
 ) {
@@ -192,7 +192,7 @@ void Decoder::learn(
     if (hidden_acts[hidden_cells_start] == -1.0f)
         return;
 
-    int target_ci = (*hidden_target_cis)[hidden_column_index];
+    int target_ci = hidden_target_cis[hidden_column_index];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -309,8 +309,8 @@ void Decoder::init_random(
 }
 
 void Decoder::step(
-    const Array<const Int_Buffer*> &input_cis,
-    const Int_Buffer* hidden_target_cis,
+    const Array<Int_Buffer_View> &input_cis,
+    Int_Buffer_View hidden_target_cis,
     bool learn_enabled,
     const Params &params
 ) {
@@ -344,7 +344,7 @@ void Decoder::step(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        vl.input_cis_prev = *input_cis[vli];
+        vl.input_cis_prev = input_cis[vli];
     }
 }
 

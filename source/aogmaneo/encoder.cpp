@@ -12,7 +12,7 @@ using namespace aon;
 
 void Encoder::forward(
     const Int2 &column_pos,
-    const Array<const Int_Buffer*> &input_cis,
+    const Array<Int_Buffer_View> &input_cis,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -53,7 +53,7 @@ void Encoder::forward(
 
         float influence = vl.importance / (sub_count * 255);
 
-        const Int_Buffer &vl_input_cis = *input_cis[vli];
+        Int_Buffer_View vl_input_cis = input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -153,7 +153,7 @@ void Encoder::update_gates(
 
 void Encoder::learn(
     const Int2 &column_pos,
-    const Int_Buffer* input_cis,
+    Int_Buffer_View input_cis,
     int vli,
     unsigned long* state,
     const Params &params
@@ -185,7 +185,7 @@ void Encoder::learn(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
-    int target_ci = (*input_cis)[visible_column_index];
+    int target_ci = input_cis[visible_column_index];
 
     // clear
     for (int vc = 0; vc < vld.size.z; vc++) {
@@ -334,7 +334,7 @@ void Encoder::init_random(
 }
 
 void Encoder::step(
-    const Array<const Int_Buffer*> &input_cis,
+    const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled,
     const Params &params
 ) {

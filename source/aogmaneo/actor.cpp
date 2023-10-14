@@ -12,7 +12,7 @@ using namespace aon;
 
 void Actor::forward(
     const Int2 &column_pos,
-    const Array<const Int_Buffer*> &input_cis,
+    const Array<Int_Buffer_View> &input_cis,
     unsigned long* state,
     const Params &params
 ) {
@@ -51,7 +51,7 @@ void Actor::forward(
 
         count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        const Int_Buffer &vl_input_cis = *input_cis[vli];
+        Int_Buffer_View vl_input_cis = input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -278,7 +278,7 @@ void Actor::learn(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    float rate = params.alr * (mimic + (1.0f - mimic) * (td_error_value > 0.0f));
+    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -387,8 +387,8 @@ void Actor::init_random(
 }
 
 void Actor::step(
-    const Array<const Int_Buffer*> &input_cis,
-    const Int_Buffer* hidden_target_cis_prev,
+    const Array<Int_Buffer_View> &input_cis,
+    Int_Buffer_View hidden_target_cis_prev,
     float reward,
     bool learn_enabled,
     float mimic,
@@ -417,10 +417,10 @@ void Actor::step(
         History_Sample &s = history_samples[0];
 
         for (int vli = 0; vli < visible_layers.size(); vli++)
-            s.input_cis[vli] = *input_cis[vli];
+            s.input_cis[vli] = input_cis[vli];
 
         // copy
-        s.hidden_target_cis_prev = *hidden_target_cis_prev;
+        s.hidden_target_cis_prev = hidden_target_cis_prev;
 
         s.reward = reward;
     }

@@ -204,9 +204,9 @@ typedef Vec4<int> Int4;
 typedef Vec2<float> Float2;
 typedef Vec3<float> Float3;
 typedef Vec4<float> Float4;
-
 typedef unsigned char Byte;
 typedef signed char S_Byte;
+
 typedef Array<Byte> Byte_Buffer;
 typedef Array<S_Byte> S_Byte_Buffer;
 typedef Array<unsigned short> U_Short_Buffer;
@@ -214,6 +214,14 @@ typedef Array<short> Short_Buffer;
 typedef Array<unsigned int> U_Int_Buffer;
 typedef Array<int> Int_Buffer;
 typedef Array<float> Float_Buffer;
+
+typedef Array_View<Byte> Byte_Buffer_View;
+typedef Array_View<S_Byte> S_Byte_Buffer_View;
+typedef Array_View<unsigned short> U_Short_Buffer_View;
+typedef Array_View<short> Short_Buffer_View;
+typedef Array_View<unsigned int> U_Int_Buffer_View;
+typedef Array_View<int> Int_Buffer_View;
+typedef Array_View<float> Float_Buffer_View;
 
 // --- circular buffer ---
 
