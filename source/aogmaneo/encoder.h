@@ -45,13 +45,11 @@ public:
     struct Params {
         float scale;
         float lr; // learning rate
-        float gcurve; // gain curve
 
         Params()
         :
         scale(64.0f),
-        lr(0.1f),
-        gcurve(32.0f)
+        lr(0.1f)
         {}
     };
 
@@ -61,8 +59,6 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_gates;
 
     Float_Buffer hidden_deltas;
 
@@ -78,11 +74,6 @@ private:
         Float_Buffer_View errors,
         bool learn_enabled,
         unsigned long* state,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
         const Params &params
     );
 
