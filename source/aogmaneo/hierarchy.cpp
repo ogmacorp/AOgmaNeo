@@ -138,7 +138,7 @@ void Hierarchy::init_random(
 }
 
 void Hierarchy::step(
-    const Array<const Int_Buffer*> &input_cis,
+    const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled,
     float reward,
     float mimic
@@ -154,24 +154,24 @@ void Hierarchy::step(
     for (int l = 0; l < encoders.size(); l++) {
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
-        Array<const Int_Buffer*> layer_input_cis(encoders[l].get_num_visible_layers());
+        Array<Int_Buffer_View> layer_input_cis(encoders[l].get_num_visible_layers());
 
         if (l == 0) {
             for (int i = 0; i < io_sizes.size(); i++)
                 layer_input_cis[i] = input_cis[i];
 
             if (layer_input_cis.size() > io_sizes.size()) {
-                layer_input_cis[io_sizes.size()] = &hidden_cis_prev[l];
+                layer_input_cis[io_sizes.size()] = hidden_cis_prev[l];
 
                 // set importance
                 encoders[l].get_visible_layer(io_sizes.size()).importance = params.layers[l].recurrent_importance;
             }
         }
         else {
-            layer_input_cis[0] = &encoders[l - 1].get_hidden_cis();
+            layer_input_cis[0] = encoders[l - 1].get_hidden_cis();
 
             if (layer_input_cis.size() > 1) {
-                layer_input_cis[1] = &hidden_cis_prev[l];
+                layer_input_cis[1] = hidden_cis_prev[l];
 
                 // set importance
                 encoders[l].get_visible_layer(1).importance = params.layers[l].recurrent_importance;
@@ -184,15 +184,15 @@ void Hierarchy::step(
 
     // backward
     for (int l = decoders.size() - 1; l >= 0; l--) {
-        Array<const Int_Buffer*> layer_input_cis(1 + (l < encoders.size() - 1));
+        Array<Int_Buffer_View> layer_input_cis(1 + (l < encoders.size() - 1));
 
-        layer_input_cis[0] = &encoders[l].get_hidden_cis();
+        layer_input_cis[0] = encoders[l].get_hidden_cis();
         
         if (l < encoders.size() - 1)
-            layer_input_cis[1] = &decoders[l + 1][0].get_hidden_cis();
+            layer_input_cis[1] = decoders[l + 1][0].get_hidden_cis();
 
         for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].step(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : &encoders[l - 1].get_hidden_cis()), learn_enabled, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+            decoders[l][d].step(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), learn_enabled, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
         if (l == 0) {
             for (int d = 0; d < actors.size(); d++)

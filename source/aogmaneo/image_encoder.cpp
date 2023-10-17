@@ -12,7 +12,7 @@ using namespace aon;
 
 void Image_Encoder::forward(
     const Int2 &column_pos,
-    const Array<const Byte_Buffer*> &inputs,
+    const Array<Byte_Buffer_View> &inputs,
     bool learn_enabled
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -53,6 +53,8 @@ void Image_Encoder::forward(
 
             count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
+            Byte_Buffer_View vl_inputs = inputs[vli];
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -66,7 +68,7 @@ void Image_Encoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        int input = (*inputs[vli])[vc + i_start];
+                        int input = vl_inputs[vc + i_start];
 
                         sum += min(input, static_cast<int>(vl.weights0[wi])) + min(255 - input, static_cast<int>(vl.weights1[wi]));
                         total += vl.weights0[wi];
@@ -76,6 +78,8 @@ void Image_Encoder::forward(
         }
 
         float match = (sum / 255.0f) / count;
+
+        hidden_matches[hidden_cell_index] = match;
 
         float activation = match / (params.choice + (total / 255.0f) / (count * 2));
 
@@ -92,10 +96,12 @@ void Image_Encoder::forward(
         }
     }
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
     if (learn_enabled && max_index != -1) {
-        int hidden_cell_index_max = max_index + hidden_cells_start;
+            int hidden_cell_index_max = max_index + hidden_cells_start;
+
+        float rate = (hidden_commits[hidden_cell_index_max] ? params.lr : 1.0f);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -116,6 +122,8 @@ void Image_Encoder::forward(
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+            Byte_Buffer_View vl_inputs = inputs[vli];
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -129,19 +137,21 @@ void Image_Encoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        int input = (*inputs[vli])[vc + i_start];
+                        int input = vl_inputs[vc + i_start];
 
-                        vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(params.lr * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
-                        vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(params.lr * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
+                        vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(rate * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
+                        vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(rate * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
                     }
                 }
         }
+
+        hidden_commits[hidden_cell_index_max] = true;
     }
 }
 
 void Image_Encoder::learn_reconstruction(
     const Int2 &column_pos,
-    const Byte_Buffer* inputs,
+    Byte_Buffer_View inputs,
     int vli,
     unsigned long* state
 ) {
@@ -202,7 +212,7 @@ void Image_Encoder::learn_reconstruction(
 
         sum /= max(1, count) * 255;
 
-        float target = (*inputs)[visible_cell_index] * byte_inv;
+        float target = inputs[visible_cell_index] * byte_inv;
 
         float delta = params.rr * (target - min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f))) * 255.0f;
 
@@ -229,7 +239,7 @@ void Image_Encoder::learn_reconstruction(
 
 void Image_Encoder::reconstruct(
     const Int2 &column_pos,
-    const Int_Buffer* recon_cis,
+    Int_Buffer_View recon_cis,
     int vli
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -275,7 +285,7 @@ void Image_Encoder::reconstruct(
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    int hidden_cell_index = (*recon_cis)[hidden_column_index] + hidden_column_index * hidden_size.z;
+                    int hidden_cell_index = recon_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -333,11 +343,13 @@ void Image_Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_rates = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_matches.resize(num_hidden_cells);
+
+    hidden_commits = Byte_Buffer(num_hidden_cells, false);
 }
 
 void Image_Encoder::step(
-    const Array<const Byte_Buffer*> &inputs,
+    const Array<Byte_Buffer_View> &inputs,
     bool learn_enabled
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -365,7 +377,7 @@ void Image_Encoder::step(
 }
 
 void Image_Encoder::reconstruct(
-    const Int_Buffer* recon_cis
+    Int_Buffer_View recon_cis
 ) {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -379,7 +391,7 @@ void Image_Encoder::reconstruct(
 }
 
 int Image_Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_rates.size() * sizeof(float) + sizeof(int);
+    int size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -400,7 +412,7 @@ void Image_Encoder::write(
     
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     
-    writer.write(reinterpret_cast<const void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -432,9 +444,11 @@ void Image_Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    hidden_rates.resize(num_hidden_cells);
+    hidden_matches.resize(num_hidden_cells);
 
-    reader.read(reinterpret_cast<void*>(&hidden_rates[0]), hidden_rates.size() * sizeof(float));
+    hidden_commits.resize(num_hidden_cells);
+
+    reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers;
 
