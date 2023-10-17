@@ -76,13 +76,13 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
@@ -94,7 +94,7 @@ public:
     );
 
     void step(
-        const Array<const Int_Buffer*> &input_cis, // input states
+        const Array<Int_Buffer_View> &input_cis, // input states
         bool learn_enabled, // whether to learn
         const Params &params // parameters
     );
