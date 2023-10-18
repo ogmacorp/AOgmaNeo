@@ -27,7 +27,7 @@ void Encoder::forward(
 
         float error = errors[hidden_column_index];
 
-        float delta = params.lr * 255.0f * (error - hidden_acts[hidden_ci_prev + hidden_cells_start]);
+        float delta = params.lr * 255.0f * error;// - hidden_acts[hidden_ci_prev + hidden_cells_start]);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
