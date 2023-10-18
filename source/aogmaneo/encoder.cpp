@@ -27,7 +27,7 @@ void Encoder::forward(
 
         float error = errors[hidden_column_index];
 
-        float delta = params.lr * 255.0f * error;// - hidden_acts[hidden_ci_prev + hidden_cells_start]);
+        float delta = params.lr * 255.0f * (error - hidden_acts[hidden_ci_prev + hidden_cells_start]);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -168,7 +168,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + (rand() % init_weight_noise) - init_weight_noise / 2;
+            vl.weights[i] = 255 - (rand() % init_weight_noise);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
