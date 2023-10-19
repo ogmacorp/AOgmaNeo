@@ -99,7 +99,7 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
     if (learn_enabled && max_index != -1) {
-            int hidden_cell_index_max = max_index + hidden_cells_start;
+        int hidden_cell_index_max = max_index + hidden_cells_start;
 
         float rate = (hidden_commits[hidden_cell_index_max] ? params.lr : 1.0f);
 
