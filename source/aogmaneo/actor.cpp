@@ -99,7 +99,7 @@ void Actor::forward(
 
     float td_error = reward + params.discount * max_value - value_prev;
 
-    float delta = params.lr * td_error;
+    float delta = params.lr * tanhf(td_error);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -131,27 +131,17 @@ void Actor::forward(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    if (vc == in_ci_prev) {
-                        for (int hc = 0; hc < hidden_size.z; hc++) {
-                            int hidden_cell_index = hc + hidden_cells_start;
+                    if (vc == in_ci_prev)
+                        vl.traces[target_ci + wi_start] = 1.0f;
 
-                            int wi = hc + wi_start;
+                    for (int hc = 0; hc < hidden_size.z; hc++) {
+                        int hidden_cell_index = hc + hidden_cells_start;
 
-                            vl.traces[wi] = (hc == target_ci);
+                        int wi = hc + wi_start;
 
-                            vl.weights[wi] += delta * vl.traces[wi];
-                        }
-                    }
-                    else {
-                        for (int hc = 0; hc < hidden_size.z; hc++) {
-                            int hidden_cell_index = hc + hidden_cells_start;
+                        vl.weights[wi] += delta * vl.traces[wi];
 
-                            int wi = hc + wi_start;
-
-                            vl.traces[wi] *= params.trace_decay;
-
-                            vl.weights[wi] += delta * vl.traces[wi];
-                        }
+                        vl.traces[wi] *= params.trace_decay;
                     }
                 }
             }
