@@ -85,6 +85,8 @@ void Actor::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
+        hidden_values[hidden_cell_index] /= count;
+
         float value = hidden_values[hidden_cell_index];
 
         if (value > max_value) {
