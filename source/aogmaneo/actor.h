@@ -65,8 +65,8 @@ private:
 
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
-        const Int_Buffer* hidden_target_cis,
+        const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View hidden_target_cis,
         float reward,
         bool learn_enabled,
         const Params &params
@@ -81,8 +81,8 @@ public:
 
     // Step (get actions and update)
     void step(
-        const Array<const Int_Buffer*> &input_cis,
-        const Int_Buffer* hidden_target_cis,
+        const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View hidden_target_cis,
         float reward,
         bool learn_enabled,
         const Params &params

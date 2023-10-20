@@ -30,22 +30,26 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0;
-        Byte_Buffer weights1;
+        Byte_Buffer protos;
+        Byte_Buffer weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float choice;
-        float vigilance;
+        float threshold; // early stopping threshold distance
+        float scale; // scale of reconstruction
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
+        float rr; // reconstruction rate
         
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.99f),
-        lr(0.1f)
+        threshold(0.001f),
+        scale(2.0f),
+        falloff(0.9f),
+        lr(0.1f),
+        rr(0.1f)
         {}
     };
 
@@ -53,6 +57,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer hidden_resources;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -62,13 +68,21 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<const Byte_Buffer*> &inputs,
-        bool learn_enabled
+        const Array<Byte_Buffer_View> &inputs,
+        bool learn_enabled,
+        unsigned long* state
+    );
+
+    void learn_reconstruction(
+        const Int2 &column_pos,
+        Byte_Buffer_View inputs,
+        int vli,
+        unsigned long* state
     );
 
     void reconstruct(
         const Int2 &column_pos,
-        const Int_Buffer* recon_cis,
+        Int_Buffer_View recon_cis,
         int vli
     );
 
@@ -82,12 +96,12 @@ public:
 
     // activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const Byte_Buffer*> &inputs, // input states
+        const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled // whether to learn
     );
 
     void reconstruct(
-        const Int_Buffer* recon_cis
+        Int_Buffer_View recon_cis
     );
 
     const Byte_Buffer &get_reconstruction(

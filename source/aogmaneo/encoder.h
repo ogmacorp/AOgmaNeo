@@ -30,11 +30,11 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
+        Byte_Buffer weights;
 
-        Byte_Buffer usages;
-        
-        Float_Buffer recon_acts;
+        Int_Buffer recon_sums;
+
+        Float_Buffer recon_deltas;
 
         float importance;
 
@@ -45,15 +45,15 @@ public:
     };
 
     struct Params {
-        int code_iters; // sparse coding iterations
+        float scale; // scale of exp
         float lr; // learning rate
-        float gcurve; // gain curve
+        float gcurve; // gate curve
 
         Params()
         :
-        code_iters(3),
-        lr(1.0f),
-        gcurve(8.0f)
+        scale(8.0f),
+        lr(0.01f),
+        gcurve(32.0f)
         {}
     };
 
@@ -70,18 +70,13 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
+    
     // --- kernels ---
 
     void forward(
         const Int2 &column_pos,
-        const Array<const Int_Buffer*> &input_cis,
-        const Params &params
-    );
-
-    void backward(
-        const Int2 &column_pos,
-        const Int_Buffer* input_cis,
-        int vli,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
@@ -92,8 +87,9 @@ private:
 
     void learn(
         const Int2 &column_pos,
-        const Int_Buffer* input_cis,
+        Int_Buffer_View input_cis,
         int vli,
+        unsigned long* state,
         const Params &params
     );
 
@@ -105,14 +101,12 @@ public:
     );
 
     void step(
-        const Array<const Int_Buffer*> &input_cis, // input states
+        const Array<Int_Buffer_View> &input_cis, // input states
         bool learn_enabled, // whether to learn
         const Params &params // parameters
     );
 
-    void clear_state() {
-        hidden_cis.fill(0);
-    }
+    void clear_state();
 
     // serialization
     int size() const; // returns size in bytes

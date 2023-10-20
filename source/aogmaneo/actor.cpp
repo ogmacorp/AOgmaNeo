@@ -12,8 +12,8 @@ using namespace aon;
 
 void Actor::forward(
     const Int2 &column_pos,
-    const Array<const Int_Buffer*> &input_cis,
-    const Int_Buffer* hidden_target_cis,
+    const Array<Int_Buffer_View> &input_cis,
+    Int_Buffer_View hidden_target_cis,
     float reward,
     bool learn_enabled,
     const Params &params
@@ -22,7 +22,7 @@ void Actor::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int target_ci = (*hidden_target_cis)[hidden_column_index];
+    int target_ci = hidden_target_cis[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
@@ -58,11 +58,13 @@ void Actor::forward(
 
             count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
+            Int_Buffer_View vl_input_cis = input_cis[vli];
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int in_ci = (*input_cis[vli])[visible_column_index];
+                    int in_ci = vl_input_cis[visible_column_index];
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -175,8 +177,8 @@ void Actor::init_random(
 }
 
 void Actor::step(
-    const Array<const Int_Buffer*> &input_cis,
-    const Int_Buffer* hidden_target_cis,
+    const Array<Int_Buffer_View> &input_cis,
+    Int_Buffer_View hidden_target_cis,
     float reward,
     bool learn_enabled,
     const Params &params
@@ -191,7 +193,7 @@ void Actor::step(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        vl.input_cis_prev = *input_cis[vli];
+        vl.input_cis_prev = input_cis[vli];
     }
 }
 
