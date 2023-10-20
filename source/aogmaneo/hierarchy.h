@@ -199,8 +199,7 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
+        assert(io_types[i] == prediction);
 
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
