@@ -18,6 +18,15 @@ void Hierarchy::init_random(
     encoders.resize(layer_descs.size());
     routed_layers.resize(layer_descs.size() - 1);
 
+    ticks.resize(layer_descs.size(), 0);
+
+    histories.resize(layer_descs.size());
+    
+    ticks_per_update.resize(layer_descs.size());
+
+    // default update state is no update
+    updates.resize(layer_descs.size(), false);
+
     // cache input sizes
     io_sizes.resize(io_descs.size());
     io_types.resize(io_descs.size());
