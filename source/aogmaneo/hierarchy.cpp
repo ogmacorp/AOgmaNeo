@@ -16,7 +16,7 @@ void Hierarchy::init_random(
 ) {
     // create layers
     encoders.resize(layer_descs.size());
-    routed_layers.resize(layer_descs.size());
+    routed_layers.resize(layer_descs.size() - 1);
 
     hidden_cis_prev.resize(layer_descs.size());
 
@@ -33,8 +33,10 @@ void Hierarchy::init_random(
 
         if (io_descs[i].type == prediction)
             num_predictions++;
-        else if (io_descs[i].type == action)
+        else if (io_descs[i].type == action) {
+            num_predictions++;
             num_actions++;
+        }
     }
 
     // iterate through layers
@@ -61,14 +63,14 @@ void Hierarchy::init_random(
             int o_index = 0;
 
             for (int i = 0; i < io_sizes.size(); i++) {
-                if (io_descs[i].type == prediction) {
+                if (io_descs[i].type == prediction || io_descs[i].type == action) {
                     // decoder visible layer descriptors
                     Array<Predictor::Visible_Layer_Desc> p_visible_layer_descs(1);
 
                     p_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     p_visible_layer_descs[0].radius = io_descs[i].down_radius;
 
-                    predictors[o_index].init_random(io_sizes[i], d_visible_layer_descs);
+                    predictors[o_index].init_random(io_sizes[i], p_visible_layer_descs);
 
                     i_indices[o_index] = i;
                     o_indices[i] = o_index;
@@ -102,20 +104,6 @@ void Hierarchy::init_random(
 
             e_visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
             e_visible_layer_descs[0].radius = layer_descs[l].up_radius;
-
-            decoders[l].resize(1);
-
-            // decoder visible layer descriptors
-            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
-
-            d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
-            d_visible_layer_descs[0].radius = layer_descs[l].down_radius;
-
-            if (l < encoders.size() - 1)
-                d_visible_layer_descs[1] = d_visible_layer_descs[0];
-
-            // create decoders
-            decoders[l][0].init_random(layer_descs[l - 1].hidden_size, d_visible_layer_descs);
         }
         
         if (layer_descs[l].recurrent_radius >= 0) {
@@ -125,6 +113,17 @@ void Hierarchy::init_random(
 
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
+
+        if (l < layer_descs.size() - 1) {
+            // routed layer visible layer descriptors
+            Array<Routed_Layer::Visible_Layer_Desc> r_visible_layer_descs(1);
+
+            r_visible_layer_descs[0].size = layer_descs[l + 1].hidden_size;
+            r_visible_layer_descs[0].radius = layer_descs[l].down_radius;
+
+            // create decoders
+            routed_layers[l].init_random(layer_descs[l].hidden_size, r_visible_layer_descs);
+        }
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
