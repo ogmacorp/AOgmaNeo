@@ -71,9 +71,7 @@ void Image_Encoder::forward(
 
                         float w = vl.protos[wi] * byte_inv;
 
-                        float delta = input - w;
-
-                        sum -= delta * delta;
+                        sum += min(w, input);
                     }
                 }
         }
