@@ -16,7 +16,7 @@ void Hierarchy::init_random(
 ) {
     // create layers
     encoders.resize(layer_descs.size());
-    decoders.resize(layer_descs.size());
+    routed_layers.resize(layer_descs.size());
 
     hidden_cis_prev.resize(layer_descs.size());
 
@@ -51,35 +51,32 @@ void Hierarchy::init_random(
                 e_visible_layer_descs[i].radius = io_descs[i].up_radius;
             }
 
-            decoders[l].resize(num_predictions);
+            predictors.resize(num_predictions);
             actors.resize(num_actions);
 
             i_indices.resize(io_sizes.size() * 2);
-            d_indices = Int_Buffer(io_sizes.size(), -1);
+            o_indices = Int_Buffer(io_sizes.size(), -1);
 
             // create decoders and actors
-            int d_index = 0;
+            int o_index = 0;
 
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == prediction) {
                     // decoder visible layer descriptors
-                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
+                    Array<Predictor::Visible_Layer_Desc> p_visible_layer_descs(1);
 
-                    d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
-                    d_visible_layer_descs[0].radius = io_descs[i].down_radius;
+                    p_visible_layer_descs[0].size = layer_descs[l].hidden_size;
+                    p_visible_layer_descs[0].radius = io_descs[i].down_radius;
 
-                    if (l < encoders.size() - 1)
-                        d_visible_layer_descs[1] = d_visible_layer_descs[0];
+                    predictors[o_index].init_random(io_sizes[i], d_visible_layer_descs);
 
-                    decoders[l][d_index].init_random(io_sizes[i], d_visible_layer_descs);
-
-                    i_indices[d_index] = i;
-                    d_indices[i] = d_index;
-                    d_index++;
+                    i_indices[o_index] = i;
+                    o_indices[i] = o_index;
+                    o_index++;
                 }
             }
 
-            d_index = 0;
+            o_index = 0;
 
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == action) {
@@ -92,11 +89,11 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         a_visible_layer_descs[1] = a_visible_layer_descs[0];
 
-                    actors[d_index].init_random(io_sizes[i], io_descs[i].history_capacity, a_visible_layer_descs);
+                    actors[o_index].init_random(io_sizes[i], io_descs[i].history_capacity, a_visible_layer_descs);
 
-                    i_indices[io_sizes.size() + d_index] = i;
-                    d_indices[i] = d_index;
-                    d_index++;
+                    i_indices[io_sizes.size() + o_index] = i;
+                    o_indices[i] = o_index;
+                    o_index++;
                 }
             }
         }
@@ -216,7 +213,7 @@ void Hierarchy::clear_state() {
 }
 
 int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + i_indices.size() * sizeof(int) + o_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += encoders[l].size();
@@ -275,7 +272,7 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&io_types[0]), num_io * sizeof(Byte));
 
     writer.write(reinterpret_cast<const void*>(&i_indices[0]), i_indices.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&d_indices[0]), d_indices.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&o_indices[0]), o_indices.size() * sizeof(int));
 
     for (int l = 0; l < num_layers; l++) {
         encoders[l].write(writer);
@@ -326,10 +323,10 @@ void Hierarchy::read(
     hidden_cis_prev.resize(num_layers);
 
     i_indices.resize(num_io * 2);
-    d_indices.resize(num_io);
+    o_indices.resize(num_io);
 
     reader.read(reinterpret_cast<void*>(&i_indices[0]), i_indices.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&d_indices[0]), d_indices.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&o_indices[0]), o_indices.size() * sizeof(int));
     
     for (int l = 0; l < num_layers; l++) {
         encoders[l].read(reader);

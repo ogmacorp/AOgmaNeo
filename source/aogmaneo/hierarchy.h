@@ -9,7 +9,8 @@
 #pragma once
 
 #include "encoder.h"
-#include "decoder.h"
+#include "routedlayer.h"
+#include "predictor.h"
 #include "actor.h"
 
 namespace aon {
@@ -71,7 +72,7 @@ public:
     };
 
     struct Layer_Params {
-        Decoder::Params decoder;
+        Routed_Layer::Params routed_layer;
         Encoder::Params encoder;
 
         float recurrent_importance;
@@ -83,7 +84,7 @@ public:
     };
 
     struct IO_Params {
-        Decoder::Params decoder;
+        Predictor::Params predictor;
         Actor::Params actor;
 
         // additional
@@ -103,14 +104,15 @@ public:
 private:
     // layers
     Array<Encoder> encoders;
-    Array<Array<Decoder>> decoders;
+    Array<Routed_Layer> routed_layers;
+    Array<Predictor> predictors;
     Array<Actor> actors;
 
     Array<Int_Buffer> hidden_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
-    Int_Buffer d_indices;
+    Int_Buffer o_indices;
 
     // input dimensions
     Array<Int3> io_sizes;
@@ -174,7 +176,7 @@ public:
     bool io_layer_exists(
         int i
     ) const {
-        return d_indices[i] != -1;
+        return o_indices[i] != -1;
     }
 
     bool is_layer_recurrent(
@@ -188,9 +190,9 @@ public:
         int i
     ) const {
         if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_cis();
+            return actors[o_indices[i]].get_hidden_cis();
 
-        return decoders[0][d_indices[i]].get_hidden_cis();
+        return predictors[o_indices[i]].get_hidden_cis();
     }
 
     // retrieve prediction activations
@@ -198,9 +200,9 @@ public:
         int i
     ) const {
         if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
+            return actors[o_indices[i]].get_hidden_acts();
 
-        return decoders[0][d_indices[i]].get_hidden_acts();
+        return predictors[o_indices[i]].get_hidden_acts();
     }
 
     // number of io layers
@@ -242,51 +244,49 @@ public:
         return encoders[l];
     }
 
-    int get_num_decoders(
+    // retrieve by index
+    Routed_Layer &get_routed_layer(
+        int l
+    ) {
+        return routed_layers[l];
+    }
+
+    const Routed_Layer &get_routed_layer(
         int l
     ) const {
-        return decoders[l].size();
+        return routed_layers[l];
     }
 
-    // retrieve by index
-    Decoder &get_decoder(
-        int l,
+    Predictor &get_predictor(
         int i
     ) {
-        if (l == 0)
-            return decoders[l][d_indices[i]];
-
-        return decoders[l][i];
+        return predictors[o_indices[i]];
     }
 
-    const Decoder &get_decoder(
-        int l,
+    const Predictor &get_predictor(
         int i
     ) const {
-        if (l == 0)
-            return decoders[l][d_indices[i]];
-
-        return decoders[l][i];
+        return predictors[o_indices[i]];
     }
 
     Actor &get_actor(
         int i
     ) {
-        return actors[d_indices[i]];
+        return actors[o_indices[i]];
     }
 
     const Actor &get_actor(
         int i
     ) const {
-        return actors[d_indices[i]];
+        return actors[o_indices[i]];
     }
 
     const Int_Buffer &get_i_indices() const {
         return i_indices;
     }
 
-    const Int_Buffer &get_d_indices() const {
-        return d_indices;
+    const Int_Buffer &get_o_indices() const {
+        return o_indices;
     }
 };
 }
