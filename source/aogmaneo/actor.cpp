@@ -380,6 +380,7 @@ void Actor::init_random(
 
     for (int i = 0; i < history_samples.size(); i++) {
         history_samples[i].input_cis.resize(visible_layers.size());
+        history_samples[i].input_acts.resize(visible_layers.size());
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
