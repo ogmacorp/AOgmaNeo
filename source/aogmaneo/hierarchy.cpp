@@ -144,7 +144,6 @@ void Hierarchy::step(
 
     // backward and learn predictors, also set importances
     int p_index = 0;
-    int a_index = 0;
 
     for (int i = 0; i < io_sizes.size(); i++) {
         if (learn_enabled) {
@@ -152,18 +151,14 @@ void Hierarchy::step(
             Array<Float_Buffer_View> layer_input_acts(1);
 
             layer_input_cis[0] = encoders[0].get_hidden_cis();
-            layer_input_acts[0] = routed_layers[0].get_hidden_acts();
+
+            if (routed_layers.size() > 0)
+                layer_input_acts[0] = routed_layers[0].get_hidden_acts();
 
             if (io_types[i] == prediction || io_types[i] == action) {
                 predictors[p_index].backward(layer_input_cis, layer_input_acts, input_cis[i], true, params.ios[i].predictor);
                 
                 p_index++;
-            }
-
-            if (io_types[i] == action) {
-                actors[a_index].step(layer_input_cis, input_cis[i], reward, true, mimic, params.ios[i].actor);
-                
-                a_index++;
             }
         }
 
@@ -233,6 +228,32 @@ void Hierarchy::step(
             r_input_acts[0] = routed_layers[l + 1].get_hidden_acts();
 
         routed_layers[l].forward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), params.layers[l].routed_layer);
+    }
+
+    // predictors and actors
+    p_index = 0;
+    int a_index = 0;
+
+    for (int i = 0; i < io_sizes.size(); i++) {
+        Array<Int_Buffer_View> layer_input_cis(1);
+        Array<Float_Buffer_View> layer_input_acts(1);
+
+        layer_input_cis[0] = encoders[0].get_hidden_cis();
+        
+        if (routed_layers.size() > 0)
+            layer_input_acts[0] = routed_layers[0].get_hidden_acts();
+
+        if (io_types[i] == prediction || io_types[i] == action) {
+            predictors[p_index].forward(layer_input_cis, layer_input_acts, params.ios[i].predictor);
+            
+            p_index++;
+        }
+
+        if (io_types[i] == action) {
+            actors[a_index].step(layer_input_cis, input_cis[i], reward, learn_enabled, mimic, params.ios[i].actor);
+            
+            a_index++;
+        }
     }
 }
 
