@@ -69,7 +69,7 @@ void Routed_Layer::forward(
 
     activation /= (count * 127);
 
-    hidden_acts[hidden_column_index] = activation * params.scale;
+    hidden_acts[hidden_column_index] = activation * params.scale + 1.0f;
 }
 
 void Routed_Layer::backward(
@@ -175,12 +175,12 @@ void Routed_Layer::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = (rand() % 127) - 63;
+            vl.weights[i] = (rand() % init_weight_noiseb) - init_weight_noiseb / 2;
 
         vl.errors.resize(num_visible_columns);
     }
 
-    hidden_acts = Float_Buffer(num_hidden_columns, 0.0f);
+    hidden_acts = Float_Buffer(num_hidden_columns, 1.0f);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -235,7 +235,7 @@ void Routed_Layer::backward(
 }
 
 void Routed_Layer::clear_state() {
-    hidden_acts.fill(0.0f);
+    hidden_acts.fill(1.0f);
 }
 
 int Routed_Layer::size() const {
