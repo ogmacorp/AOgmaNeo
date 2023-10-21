@@ -12,7 +12,7 @@
 
 namespace aon {
 // a prediction layer (predicts x_(t+1))
-class Decoder {
+class Predictor {
 public:
     // visible layer descriptor
     struct Visible_Layer_Desc {
@@ -30,23 +30,17 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights;
 
-        Int_Buffer input_cis_prev; // previous timestep (prev) input states
-
-        Float_Buffer gates;
+        Float_Buffer errors;
     };
 
     struct Params {
-        float scale; // scale of softmax
         float lr; // learning rate
-        float gcurve; // gate curve
 
         Params()
         :
-        scale(64.0f),
-        lr(0.05f),
-        gcurve(32.0f)
+        lr(0.02f)
         {}
     };
 
@@ -55,10 +49,9 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
 
-    Float_Buffer hidden_deltas;
+    Float_Buffer hidden_errors;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -71,19 +64,17 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        const Array<Float_Buffer_View> &input_acts,
         const Params &params
     );
 
-    void update_gates(
+    void backward(
         const Int2 &column_pos,
+        Int_Buffer_View input_cis,
+        Float_Buffer_View input_acts,
+        Int_Buffer_View target_cis,
         int vli,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        Int_Buffer_View hidden_target_cis,
-        unsigned long* state,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -95,9 +86,16 @@ public:
     );
 
     // activate the predictor (predict values)
-    void step(
+    void forward(
         const Array<Int_Buffer_View> &input_cis,
-        Int_Buffer_View hidden_target_cis,
+        const Array<Float_Buffer_View> &input_acts,
+        const Params &params
+    );
+
+    void backward(
+        const Array<Int_Buffer_View> &input_cis,
+        const Array<Float_Buffer_View> &input_acts,
+        Int_Buffer_View target_cis,
         bool learn_enabled,
         const Params &params
     );

@@ -110,8 +110,6 @@ void Routed_Layer::backward(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
-    int hidden_stride = vld.size.z * diam * diam;
-    
     int in_ci = input_cis[visible_column_index];
     float in_act = input_acts[visible_column_index];
 
