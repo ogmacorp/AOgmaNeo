@@ -260,15 +260,18 @@ void Hierarchy::step(
 void Hierarchy::clear_state() {
     for (int l = 0; l < encoders.size(); l++) {
         encoders[l].clear_state();
-        
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].clear_state();
+
+        if (l < encoders.size() - 1)
+            routed_layers[l].clear_state();
     }
 
+    // predictors
+    for (int p = 0; p < predictors.size(); p++)
+        predictors[p].clear_state();
+
     // actors
-    for (int d = 0; d < actors.size(); d++)
-        actors[d].clear_state();
+    for (int a = 0; a < actors.size(); a++)
+        actors[a].clear_state();
 }
 
 int Hierarchy::size() const {
@@ -277,13 +280,17 @@ int Hierarchy::size() const {
     for (int l = 0; l < encoders.size(); l++) {
         size += encoders[l].size();
 
-        for (int d = 0; d < decoders[l].size(); d++)
-            size += decoders[l][d].size();
+        if (l < encoders.size() - 1)
+            size += routed_layers[l].size();
     }
 
+    // predictors
+    for (int p = 0; p < predictors.size(); p++)
+        size += predictors[p].size();
+
     // actors
-    for (int d = 0; d < actors.size(); d++)
-        size += actors[d].size();
+    for (int a = 0; a < actors.size(); a++)
+        size += actors[a].size();
 
     // params
     size += encoders.size() * sizeof(Layer_Params);
@@ -298,14 +305,17 @@ int Hierarchy::state_size() const {
     for (int l = 0; l < encoders.size(); l++) {
         size += encoders[l].state_size();
         
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            size += decoders[l][d].state_size();
+        if (l < encoders.size() - 1)
+            size += routed_layers[l].state_size();
     }
 
+    // predictors
+    for (int p = 0; p < actors.size(); p++)
+        size += predictors[p].state_size();
+
     // actors
-    for (int d = 0; d < actors.size(); d++)
-        size += actors[d].state_size();
+    for (int a = 0; a < actors.size(); a++)
+        size += actors[a].state_size();
 
     return size;
 }
@@ -321,7 +331,7 @@ void Hierarchy::write(
 
     writer.write(reinterpret_cast<const void*>(&num_io), sizeof(int));
 
-    int num_predictions = decoders[0].size();
+    int num_predictions = predictors.size();
     int num_actions = actors.size();
 
     writer.write(reinterpret_cast<const void*>(&num_predictions), sizeof(int));
@@ -336,14 +346,17 @@ void Hierarchy::write(
     for (int l = 0; l < num_layers; l++) {
         encoders[l].write(writer);
 
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].write(writer);
+        if (l < encoders.size() - 1)
+            routed_layers[l].write(writer);
     }
+
+    // predictors
+    for (int p = 0; p < predictors.size(); p++)
+        predictors[p].write(writer);
     
     // actors
-    for (int d = 0; d < actors.size(); d++)
-        actors[d].write(writer);
+    for (int a = 0; a < actors.size(); a++)
+        actors[a].write(writer);
 
     // params
     for (int l = 0; l < encoders.size(); l++)
@@ -377,7 +390,7 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&io_types[0]), num_io * sizeof(Byte));
 
     encoders.resize(num_layers);
-    decoders.resize(num_layers);
+    routed_layers.resize(num_layers - 1);
 
     hidden_cis_prev.resize(num_layers);
 
@@ -390,20 +403,22 @@ void Hierarchy::read(
     for (int l = 0; l < num_layers; l++) {
         encoders[l].read(reader);
         
-        decoders[l].resize(l == 0 ? num_predictions : 1);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].read(reader);
+        if (l < encoders.size() - 1)
+            routed_layers[l].read(reader);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
+    predictors.resize(num_predictions);
     actors.resize(num_actions);
 
+    // predictors
+    for (int p = 0; p < predictors.size(); p++)
+        predictors[p].read(reader);
+
     // actors
-    for (int d = 0; d < actors.size(); d++)
-        actors[d].read(reader);
+    for (int a = 0; a < actors.size(); a++)
+        actors[a].read(reader);
 
     params.layers.resize(num_layers);
     params.ios.resize(num_io);
@@ -421,13 +436,15 @@ void Hierarchy::write_state(
     for (int l = 0; l < encoders.size(); l++) {
         encoders[l].write_state(writer);
 
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].write_state(writer);
+        if (l < encoders.size() - 1)
+            routed_layers[l].write_state(writer);
     }
+    
+    for (int p = 0; p < predictors.size(); p++)
+        predictors[p].write_state(writer);
 
-    for (int d = 0; d < actors.size(); d++)
-        actors[d].write_state(writer);
+    for (int a = 0; a < actors.size(); a++)
+        actors[a].write_state(writer);
 }
 
 void Hierarchy::read_state(
@@ -436,12 +453,13 @@ void Hierarchy::read_state(
     for (int l = 0; l < encoders.size(); l++) {
         encoders[l].read_state(reader);
         
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].read_state(reader);
+        if (l < encoders.size() - 1)
+            routed_layers[l].read_state(reader);
     }
 
-    // actors
-    for (int d = 0; d < actors.size(); d++)
-        actors[d].read_state(reader);
+    for (int p = 0; p < predictors.size(); p++)
+        predictors[p].read_state(reader);
+
+    for (int a = 0; a < actors.size(); a++)
+        actors[a].read_state(reader);
 }
