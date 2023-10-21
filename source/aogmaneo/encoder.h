@@ -31,7 +31,11 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
-        
+
+        Int_Buffer recon_sums;
+
+        Float_Buffer recon_deltas;
+
         float importance;
 
         Visible_Layer()
@@ -41,17 +45,15 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter
-        float vigilance; // ART vigilance
+        float scale; // scale of exp
         float lr; // learning rate
-        int l_radius; // second stage inhibition radius
+        float gcurve; // gate curve
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.99f),
-        lr(0.5f),
-        l_radius(2)
+        scale(8.0f),
+        lr(0.01f),
+        gcurve(32.0f)
         {}
     };
 
@@ -60,29 +62,34 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
+    Float_Buffer hidden_acts;
 
-    Float_Buffer hidden_sums;
-
-    Float_Buffer hidden_totals;
-
-    Float_Buffer hidden_maxs;
+    Float_Buffer hidden_gates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    // --- kernels ---
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
+    // --- kernels ---
+
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
+    void update_gates(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
     void learn(
         const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View input_cis,
+        int vli,
+        unsigned long* state,
         const Params &params
     );
 
