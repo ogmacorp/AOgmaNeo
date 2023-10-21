@@ -616,6 +616,7 @@ void Actor::read(
         History_Sample &s = history_samples[t];
 
         s.input_cis.resize(num_visible_layers);
+        s.input_acts.resize(num_visible_layers);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
