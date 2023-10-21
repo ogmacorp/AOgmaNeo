@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "predictor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -60,7 +59,6 @@ void Predictor::forward(
                 int in_ci = vl_input_cis[visible_column_index];
                 float in_act = (vl_input_acts.size() == 0 ? 1.0f : vl_input_acts[visible_column_index]);
 
-                std::cout << in_act << std::endl;
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
