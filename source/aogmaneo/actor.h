@@ -37,6 +37,7 @@ public:
     // history sample for delayed updates
     struct History_Sample {
         Array<Int_Buffer> input_cis;
+        Array<Float_Buffer> input_acts;
         Int_Buffer hidden_target_cis_prev;
 
         float reward;
@@ -84,6 +85,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        const Array<Float_Buffer_View> &input_acts,
         unsigned long* state,
         const Params &params
     );
@@ -108,6 +110,7 @@ public:
     // step (get actions and update)
     void step(
         const Array<Int_Buffer_View> &input_cis,
+        const Array<Float_Buffer_View> &input_acts,
         Int_Buffer_View hidden_target_cis_prev,
         float reward,
         bool learn_enabled,
