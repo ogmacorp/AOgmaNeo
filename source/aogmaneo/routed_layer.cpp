@@ -131,11 +131,13 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                sum += errors[hidden_column_index] * vl.weights[wi];
+                float error = errors[hidden_column_index];
+
+                sum += error * vl.weights[wi];
                 count++;
 
                 if (learn_enabled)
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + rand_roundf(params.lr * 127.0f * errors[hidden_column_index] * in_act, state)));
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + rand_roundf(params.lr * 127.0f * error * in_act, state)));
             }
         }
 
