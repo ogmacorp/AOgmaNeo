@@ -75,7 +75,7 @@ void Actor::forward(
                     hidden_acts[hidden_cell_index] += vl.action_weights[wi] * in_act;
                 }
 
-                value += vl.value_weights[value_wi];
+                value += vl.value_weights[value_wi] * in_act;
             }
     }
 
@@ -250,7 +250,7 @@ void Actor::learn(
                     hidden_acts[hidden_cell_index] += vl.action_weights[wi] * in_act;
                 }
 
-                vl.value_weights[value_wi] += delta_value;
+                vl.value_weights[value_wi] += delta_value * in_act;
             }
     }
 
