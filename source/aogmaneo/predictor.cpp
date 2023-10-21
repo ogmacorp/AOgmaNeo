@@ -222,7 +222,7 @@ void Predictor::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         vl.errors.resize(num_visible_columns);
     }

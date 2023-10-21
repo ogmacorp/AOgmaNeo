@@ -175,7 +175,7 @@ void Routed_Layer::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = (rand() % init_weight_noise) - init_weight_noise / 2;
+            vl.weights[i] = (rand() % 127) - 63;
 
         vl.errors.resize(num_visible_columns);
     }

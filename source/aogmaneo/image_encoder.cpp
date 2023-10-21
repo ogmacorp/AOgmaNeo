@@ -333,8 +333,8 @@ void Image_Encoder::init_random(
 
         // initialize to random values
         for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = 255 - (rand() % init_weight_noise);
-            vl.weights1[i] = 255 - (rand() % init_weight_noise);
+            vl.weights0[i] = 255 - (rand() % init_weight_noiseb);
+            vl.weights1[i] = 255 - (rand() % init_weight_noiseb);
             vl.weights_recon[i] = 127;
         }
 
