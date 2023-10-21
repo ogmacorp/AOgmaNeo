@@ -83,13 +83,10 @@ void Hierarchy::init_random(
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == action) {
                     // decoder visible layer descriptors
-                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(1 + (l < encoders.size() - 1));
+                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(1);
 
                     a_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     a_visible_layer_descs[0].radius = io_descs[i].down_radius;
-
-                    if (l < encoders.size() - 1)
-                        a_visible_layer_descs[1] = a_visible_layer_descs[0];
 
                     actors[o_index].init_random(io_sizes[i], io_descs[i].history_capacity, a_visible_layer_descs);
 
