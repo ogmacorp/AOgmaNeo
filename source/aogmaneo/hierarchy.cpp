@@ -184,7 +184,9 @@ void Hierarchy::step(
             Array<Float_Buffer_View> r_input_acts(1);
 
             r_input_cis[0] = encoders[l + 1].get_hidden_cis();
-            r_input_acts[0] = routed_layers[l + 1].get_hidden_acts();
+
+            if (l < routed_layers.size() - 1)
+                r_input_acts[0] = routed_layers[l + 1].get_hidden_acts();
 
             routed_layers[l].backward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), (l == 0 ? errors0 : routed_layers[l - 1].get_visible_layer(0).errors), true, params.layers[l].routed_layer);
         }
@@ -224,7 +226,7 @@ void Hierarchy::step(
 
         r_input_cis[0] = encoders[l + 1].get_hidden_cis();
 
-        if (l != encoders.size() - 1) // only set if there is a next layer. Will treat as all 1's if there is no next layer
+        if (l < routed_layers.size() - 1) // only set if there is a next layer. Will treat as all 1's if there is no next layer
             r_input_acts[0] = routed_layers[l + 1].get_hidden_acts();
 
         routed_layers[l].forward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), params.layers[l].routed_layer);
