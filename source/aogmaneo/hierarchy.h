@@ -9,7 +9,7 @@
 #pragma once
 
 #include "encoder.h"
-#include "routedlayer.h"
+#include "routed_layer.h"
 #include "predictor.h"
 #include "actor.h"
 
