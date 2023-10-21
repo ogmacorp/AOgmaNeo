@@ -23,8 +23,6 @@ void Routed_Layer::forward(
 
     int route_ci = route_cis[hidden_column_index];
 
-    int hidden_cell_index_route = route_ci + hidden_cells_start;
-
     float activation = 0.0f;
     int count = 0;
 
