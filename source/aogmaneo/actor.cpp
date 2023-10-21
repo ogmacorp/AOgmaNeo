@@ -100,7 +100,7 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * max_value - value_prev;
 
-        float delta = params.lr * td_error;
+        float delta = params.lr * tanhf(td_error);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
