@@ -54,33 +54,30 @@ public:
         Int3 hidden_size; // size of hidden layer
 
         int up_radius; // encoder radius
-        int recurrent_radius; // encoder onto self radius, -1 to disable
         int down_radius; // decoder radius, also shared with actor if there is one
+
+        int ticks_per_update;
+        int temporal_horizon;
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
-            int recurrent_radius = 2,
-            int down_radius = 2
+            int down_radius = 2,
+            int ticks_per_update = 2,
+            int temporal_horizon = 2
         )
         :
         hidden_size(hidden_size),
         up_radius(up_radius),
-        recurrent_radius(recurrent_radius),
-        down_radius(down_radius)
+        down_radius(down_radius),
+        ticks_per_update(ticks_per_update),
+        temporal_horizon(temporal_horizon)
         {}
     };
 
     struct Layer_Params {
         Routed_Layer::Params routed_layer;
         Encoder::Params encoder;
-
-        float recurrent_importance;
-
-        Layer_Params()
-        :
-        recurrent_importance(0.9f)
-        {}
     };
 
     struct IO_Params {
@@ -108,7 +105,14 @@ private:
     Array<Predictor> predictors;
     Array<Actor> actors;
 
-    Array<Int_Buffer> hidden_cis_prev;
+    // histories
+    Array<Array<Circle_Buffer<Int_Buffer>>> histories;
+
+    // per-layer values
+    Byte_Buffer updates;
+
+    Int_Buffer ticks;
+    Int_Buffer ticks_per_update;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -203,6 +207,27 @@ public:
             return actors[o_indices[i]].get_hidden_acts();
 
         return predictors[o_indices[i]].get_hidden_acts();
+    }
+
+    // whether this layer received on update this timestep
+    bool get_update(
+        int l
+    ) const {
+        return updates[l];
+    }
+
+    // get current layer ticks, relative to previous layer
+    int get_ticks(
+        int l
+    ) const {
+        return ticks[l];
+    }
+
+    // get layer ticks per update, relative to previous layer
+    int get_ticks_per_update(
+        int l
+    ) const {
+        return ticks_per_update[l];
     }
 
     // number of io layers

@@ -18,11 +18,13 @@ void Hierarchy::init_random(
     encoders.resize(layer_descs.size());
     routed_layers.resize(layer_descs.size() - 1);
 
-    hidden_cis_prev.resize(layer_descs.size());
-
     // cache input sizes
     io_sizes.resize(io_descs.size());
     io_types.resize(io_descs.size());
+
+    // determine ticks per update, first layer is always 1
+    for (int l = 0; l < layer_descs.size(); l++)
+        ticks_per_update[l] = (l == 0 ? 1 : layer_descs[l].ticks_per_update);
 
     int num_predictions = 0;
     int num_actions = 0;
@@ -46,11 +48,27 @@ void Hierarchy::init_random(
 
         // if first layer
         if (l == 0) {
-            e_visible_layer_descs.resize(io_sizes.size() + (layer_descs[l].recurrent_radius >= 0));
+            e_visible_layer_descs.resize(io_sizes.size() * layer_descs[l].temporal_horizon);
 
             for (int i = 0; i < io_sizes.size(); i++) {
-                e_visible_layer_descs[i].size = io_sizes[i];
-                e_visible_layer_descs[i].radius = io_descs[i].up_radius;
+                for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
+                    int index = t + layer_descs[l].temporal_horizon * i;
+
+                    e_visible_layer_descs[index].size = io_sizes[i];
+                    e_visible_layer_descs[index].radius = io_descs[i].up_radius;
+                }
+            }
+            
+            // initialize history buffers
+            histories[l].resize(io_sizes.size());
+
+            for (int i = 0; i < histories[l].size(); i++) {
+                int in_size = io_sizes[i].x * io_sizes[i].y;
+
+                histories[l][i].resize(layer_descs[l].temporal_horizon);
+                
+                for (int t = 0; t < histories[l][i].size(); t++)
+                    histories[l][i][t] = Int_Buffer(in_size, 0);
             }
 
             predictors.resize(num_predictions);
@@ -97,17 +115,23 @@ void Hierarchy::init_random(
             }
         }
         else {
-            e_visible_layer_descs.resize(1 + (layer_descs[l].recurrent_radius >= 0));
+            e_visible_layer_descs.resize(layer_descs[l].temporal_horizon);
 
-            e_visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
-            e_visible_layer_descs[0].radius = layer_descs[l].up_radius;
+            for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
+                e_visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
+                e_visible_layer_descs[t].radius = layer_descs[l].up_radius;
+            }
+
+            histories[l].resize(1);
+
+            int in_size = layer_descs[l - 1].hidden_size.x * layer_descs[l - 1].hidden_size.y;
+
+            histories[l][0].resize(layer_descs[l].temporal_horizon);
+
+            for (int t = 0; t < histories[l][0].size(); t++)
+                histories[l][0][t] = Int_Buffer(in_size, 0);
         }
         
-        if (layer_descs[l].recurrent_radius >= 0) {
-            e_visible_layer_descs[e_visible_layer_descs.size() - 1].size = layer_descs[l].hidden_size;
-            e_visible_layer_descs[e_visible_layer_descs.size() - 1].radius = layer_descs[l].recurrent_radius;
-        }
-
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
@@ -121,8 +145,6 @@ void Hierarchy::init_random(
             // create decoders
             routed_layers[l].init_random(layer_descs[l].hidden_size, r_visible_layer_descs);
         }
-
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     // initialize params
@@ -177,8 +199,6 @@ void Hierarchy::step(
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
-
         if (learn_enabled && l < encoders.size() - 1) {
             r_input_cis[0] = encoders[l + 1].get_hidden_cis();
 
@@ -190,32 +210,40 @@ void Hierarchy::step(
             routed_layers[l].backward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), (l == 0 ? errors0 : routed_layers[l - 1].get_visible_layer(0).errors), true, params.layers[l].routed_layer);
         }
 
-        Array<Int_Buffer_View> e_input_cis(encoders[l].get_num_visible_layers());
+        // if is time for layer to tick
+        if (l == 0 || ticks[l] >= ticks_per_update[l]) {
+            // reset tick
+            ticks[l] = 0;
 
-        if (l == 0) {
-            for (int i = 0; i < io_sizes.size(); i++)
-                e_input_cis[i] = input_cis[i];
+            // updated
+            updates[l] = true;
 
-            if (e_input_cis.size() > io_sizes.size()) {
-                e_input_cis[io_sizes.size()] = hidden_cis_prev[l];
+            Array<Int_Buffer_View> e_input_cis(encoders[l].get_num_visible_layers());
 
-                // set importance
-                encoders[l].get_visible_layer(io_sizes.size()).importance = params.layers[l].recurrent_importance;
+            int index = 0;
+
+            for (int i = 0; i < histories[l].size(); i++) {
+                for (int t = 0; t < histories[l][i].size(); t++) {
+                    e_input_cis[index] = histories[l][i][t];
+
+                    index++;
+                }
+            }
+
+            // activate sparse coder
+            encoders[l].step(e_input_cis, learn_enabled, params.layers[l].encoder);
+
+            // add to next layer's history
+            if (l < encoders.size() - 1) {
+                int l_next = l + 1;
+
+                histories[l_next][0].push_front();
+
+                histories[l_next][0][0] = encoders[l].get_hidden_cis();
+
+                ticks[l_next]++;
             }
         }
-        else {
-            e_input_cis[0] = encoders[l - 1].get_hidden_cis();
-
-            if (e_input_cis.size() > 1) {
-                e_input_cis[1] = hidden_cis_prev[l];
-
-                // set importance
-                encoders[l].get_visible_layer(1).importance = params.layers[l].recurrent_importance;
-            }
-        }
-
-        // activate sparse coder
-        encoders[l].step(e_input_cis, learn_enabled, params.layers[l].encoder);
     }
 
     // down
@@ -257,7 +285,15 @@ void Hierarchy::step(
 }
 
 void Hierarchy::clear_state() {
+    updates.fill(false);
+    ticks.fill(0);
+
     for (int l = 0; l < encoders.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            for (int t = 0; t < histories[l][i].size(); t++)
+                histories[l][i][t].fill(0);
+        }
+
         encoders[l].clear_state();
 
         if (l < encoders.size() - 1)
@@ -274,9 +310,17 @@ void Hierarchy::clear_state() {
 }
 
 int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + i_indices.size() * sizeof(int) + o_indices.size() * sizeof(int);
+    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + o_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
+        size += sizeof(int);
+
+        for (int i = 0; i < histories[l].size(); i++) {
+            size += 2 * sizeof(int);
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
+        }
         size += encoders[l].size();
 
         if (l < encoders.size() - 1)
@@ -299,9 +343,16 @@ int Hierarchy::size() const {
 }
 
 int Hierarchy::state_size() const {
-    int size = 0;
+    int size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            size += sizeof(int);
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                size += histories[l][i][t].size() * sizeof(int);
+        }
+
         size += encoders[l].state_size();
         
         if (l < encoders.size() - 1)
@@ -339,10 +390,35 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&io_sizes[0]), num_io * sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&io_types[0]), num_io * sizeof(Byte));
 
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&ticks_per_update[0]), ticks_per_update.size() * sizeof(int));
+
     writer.write(reinterpret_cast<const void*>(&i_indices[0]), i_indices.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&o_indices[0]), o_indices.size() * sizeof(int));
 
     for (int l = 0; l < num_layers; l++) {
+        int num_layer_inputs = histories[l].size();
+
+        writer.write(reinterpret_cast<const void*>(&num_layer_inputs), sizeof(int));
+
+        for (int i = 0; i < histories[l].size(); i++) {
+            int history_size = histories[l][i].size();
+
+            writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
+
+            int history_start = histories[l][i].start;
+
+            writer.write(reinterpret_cast<const void*>(&history_start), sizeof(int));
+
+            for (int t = 0; t < histories[l][i].size(); t++) {
+                int buffer_size = histories[l][i][t].size();
+
+                writer.write(reinterpret_cast<const void*>(&buffer_size), sizeof(int));
+
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+            }
+        }
         encoders[l].write(writer);
 
         if (l < encoders.size() - 1)
@@ -391,7 +467,15 @@ void Hierarchy::read(
     encoders.resize(num_layers);
     routed_layers.resize(num_layers - 1);
 
-    hidden_cis_prev.resize(num_layers);
+    histories.resize(num_layers);
+    
+    updates.resize(num_layers);
+    ticks.resize(num_layers);
+    ticks_per_update.resize(num_layers);
+
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&ticks_per_update[0]), ticks_per_update.size() * sizeof(int));
 
     i_indices.resize(num_io * 2);
     o_indices.resize(num_io);
@@ -400,12 +484,38 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&o_indices[0]), o_indices.size() * sizeof(int));
     
     for (int l = 0; l < num_layers; l++) {
+        int num_layer_inputs;
+        
+        reader.read(reinterpret_cast<void*>(&num_layer_inputs), sizeof(int));
+
+        histories[l].resize(num_layer_inputs);
+
+        for (int i = 0; i < histories[l].size(); i++) {
+            int history_size;
+
+            reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
+
+            int history_start;
+            
+            reader.read(reinterpret_cast<void*>(&history_start), sizeof(int));
+
+            histories[l][i].resize(history_size);
+            histories[l][i].start = history_start;
+
+            for (int t = 0; t < histories[l][i].size(); t++) {
+                int buffer_size;
+
+                reader.read(reinterpret_cast<void*>(&buffer_size), sizeof(int));
+
+                histories[l][i][t].resize(buffer_size);
+
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+            }
+        }
         encoders[l].read(reader);
         
         if (l < encoders.size() - 1)
             routed_layers[l].read(reader);
-
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     predictors.resize(num_predictions);
@@ -432,7 +542,19 @@ void Hierarchy::read(
 void Hierarchy::write_state(
     Stream_Writer &writer
 ) const {
+    writer.write(reinterpret_cast<const void*>(&updates[0]), updates.size() * sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&ticks[0]), ticks.size() * sizeof(int));
+
     for (int l = 0; l < encoders.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            int history_start = histories[l][i].start;
+
+            writer.write(reinterpret_cast<const void*>(&history_start), sizeof(int));
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                writer.write(reinterpret_cast<const void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+        }
+
         encoders[l].write_state(writer);
 
         if (l < encoders.size() - 1)
@@ -449,7 +571,21 @@ void Hierarchy::write_state(
 void Hierarchy::read_state(
     Stream_Reader &reader
 ) {
+    reader.read(reinterpret_cast<void*>(&updates[0]), updates.size() * sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
+
     for (int l = 0; l < encoders.size(); l++) {
+        for (int i = 0; i < histories[l].size(); i++) {
+            int history_start;
+            
+            reader.read(reinterpret_cast<void*>(&history_start), sizeof(int));
+
+            histories[l][i].start = history_start;
+
+            for (int t = 0; t < histories[l][i].size(); t++)
+                reader.read(reinterpret_cast<void*>(&histories[l][i][t][0]), histories[l][i][t].size() * sizeof(int));
+        }
+
         encoders[l].read_state(reader);
         
         if (l < encoders.size() - 1)
