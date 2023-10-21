@@ -47,7 +47,7 @@ public:
         :
         threshold(0.001f),
         scale(2.0f),
-        falloff(0.9f),
+        falloff(0.99f),
         lr(0.1f),
         rr(0.1f)
         {}
