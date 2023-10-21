@@ -57,7 +57,7 @@ void Routed_Layer::forward(
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 int in_ci = vl_input_cis[visible_column_index];
-                float in_act = vl_input_acts[visible_column_index];
+                float in_act = (vl_input_acts.size() == 0 ? 1.0f : vl_input_acts[visible_column_index]);
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -111,7 +111,7 @@ void Routed_Layer::backward(
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
     int in_ci = input_cis[visible_column_index];
-    float in_act = input_acts[visible_column_index];
+    float in_act = (input_acts.size() == 0 ? 1.0f : input_acts[visible_column_index]);
 
     float sum = 0.0f;
     int count = 0;

@@ -142,32 +142,76 @@ void Hierarchy::step(
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
-    // set importances from params
-    for (int i = 0; i < io_sizes.size(); i++)
+    // backward and learn predictors, also set importances
+    int p_index = 0;
+    int a_index = 0;
+
+    for (int i = 0; i < io_sizes.size(); i++) {
+        if (learn_enabled) {
+            Array<Int_Buffer_View> layer_input_cis(1);
+            Array<Float_Buffer_View> layer_input_acts(1);
+
+            layer_input_cis[0] = encoders[0].get_hidden_cis();
+            layer_input_acts[0] = routed_layers[0].get_hidden_acts();
+
+            if (io_types[i] == prediction || io_types[i] == action) {
+                predictors[p_index].backward(layer_input_cis, layer_input_acts, input_cis[i], true, params.ios[i].predictor);
+                
+                p_index++;
+            }
+
+            if (io_types[i] == action) {
+                actors[a_index].step(layer_input_cis, input_cis[i], reward, true, mimic, params.ios[i].actor);
+                
+                a_index++;
+            }
+        }
+
         encoders[0].get_visible_layer(i).importance = params.ios[i].importance;
+    }
+
+    // merge errors from predictors (into first one)
+    Float_Buffer_View errors0 = predictors[0].get_visible_layer(0).errors;
+
+    for (int p = 1; p < predictors.size(); p++) {
+        Float_Buffer_View errors = predictors[p].get_visible_layer(0).errors;
+
+        for (int i = 0; i < errors.size(); i++)
+            errors0[i] += errors[i];
+    }
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
-        Array<Int_Buffer_View> layer_input_cis(encoders[l].get_num_visible_layers());
+        if (learn_enabled && l < encoders.size() - 1) {
+            Array<Int_Buffer_View> r_input_cis(1);
+            Array<Float_Buffer_View> r_input_acts(1);
+
+            r_input_cis[0] = encoders[l + 1].get_hidden_cis();
+            r_input_acts[0] = routed_layers[l + 1].get_hidden_acts();
+
+            routed_layers[l].backward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), (l == 0 ? errors0 : routed_layers[l - 1].get_visible_layer(0).errors), true, params.layers[l].routed_layer);
+        }
+
+        Array<Int_Buffer_View> e_input_cis(encoders[l].get_num_visible_layers());
 
         if (l == 0) {
             for (int i = 0; i < io_sizes.size(); i++)
-                layer_input_cis[i] = input_cis[i];
+                e_input_cis[i] = input_cis[i];
 
-            if (layer_input_cis.size() > io_sizes.size()) {
-                layer_input_cis[io_sizes.size()] = hidden_cis_prev[l];
+            if (e_input_cis.size() > io_sizes.size()) {
+                e_input_cis[io_sizes.size()] = hidden_cis_prev[l];
 
                 // set importance
                 encoders[l].get_visible_layer(io_sizes.size()).importance = params.layers[l].recurrent_importance;
             }
         }
         else {
-            layer_input_cis[0] = encoders[l - 1].get_hidden_cis();
+            e_input_cis[0] = encoders[l - 1].get_hidden_cis();
 
-            if (layer_input_cis.size() > 1) {
-                layer_input_cis[1] = hidden_cis_prev[l];
+            if (e_input_cis.size() > 1) {
+                e_input_cis[1] = hidden_cis_prev[l];
 
                 // set importance
                 encoders[l].get_visible_layer(1).importance = params.layers[l].recurrent_importance;
@@ -175,25 +219,20 @@ void Hierarchy::step(
         }
 
         // activate sparse coder
-        encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
+        encoders[l].step(e_input_cis, learn_enabled, params.layers[l].encoder);
     }
 
-    // backward
-    for (int l = decoders.size() - 1; l >= 0; l--) {
-        Array<Int_Buffer_View> layer_input_cis(1 + (l < encoders.size() - 1));
+    // down
+    for (int l = encoders.size() - 2; l >= 0; l--) {
+        Array<Int_Buffer_View> r_input_cis(1);
+        Array<Float_Buffer_View> r_input_acts(1);
 
-        layer_input_cis[0] = encoders[l].get_hidden_cis();
-        
-        if (l < encoders.size() - 1)
-            layer_input_cis[1] = decoders[l + 1][0].get_hidden_cis();
+        r_input_cis[0] = encoders[l + 1].get_hidden_cis();
 
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].step(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), learn_enabled, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+        if (l != encoders.size() - 1) // only set if there is a next layer. Will treat as all 1's if there is no next layer
+            r_input_acts[0] = routed_layers[l + 1].get_hidden_acts();
 
-        if (l == 0) {
-            for (int d = 0; d < actors.size(); d++)
-                actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, mimic, params.ios[i_indices[d + io_sizes.size()]].actor);
-        }
+        routed_layers[l].forward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), params.layers[l].routed_layer);
     }
 }
 
