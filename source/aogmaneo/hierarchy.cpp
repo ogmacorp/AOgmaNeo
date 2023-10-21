@@ -252,7 +252,7 @@ void Hierarchy::step(
         }
 
         if (io_types[i] == action) {
-            actors[a_index].step(layer_input_cis, input_cis[i], reward, learn_enabled, mimic, params.ios[i].actor);
+            actors[a_index].step(layer_input_cis, layer_input_acts, input_cis[i], reward, learn_enabled, mimic, params.ios[i].actor);
             
             a_index++;
         }
