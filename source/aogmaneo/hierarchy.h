@@ -79,7 +79,7 @@ public:
 
         Layer_Params()
         :
-        recurrent_importance(0.99f)
+        recurrent_importance(0.9f)
         {}
     };
 
