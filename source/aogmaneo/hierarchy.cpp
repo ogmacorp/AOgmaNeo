@@ -206,6 +206,19 @@ void Hierarchy::step(
             errors0[i] += errors[i];
     }
 
+     // first tick is always 0
+    ticks[0] = 0;
+
+    // add input to first layer history   
+    for (int i = 0; i < io_sizes.size(); i++) {
+        histories[0][i].push_front();
+
+        histories[0][i][0] = input_cis[i];
+    }
+
+    // set all updates to no update, will be set to true if an update occurred later
+    updates.fill(false);
+
     // forward
     for (int l = 0; l < encoders.size(); l++) {
         if (learn_enabled && l < encoders.size() - 1) {
