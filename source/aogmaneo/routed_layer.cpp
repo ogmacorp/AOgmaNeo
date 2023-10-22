@@ -67,7 +67,7 @@ void Routed_Layer::forward(
 
     activation /= (count * 127);
 
-    hidden_acts[hidden_column_index] = min(2.0f, max(0.0f, activation * params.scale + 1.0f));
+    hidden_acts[hidden_column_index] = tanhf(activation * params.scale) + 1.0f;
 }
 
 void Routed_Layer::backward(
@@ -129,7 +129,8 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float grad = (hidden_acts[hidden_column_index] > 0.0f && hidden_acts[hidden_column_index] < 2.0f);
+                float grad = hidden_acts[hidden_column_index] - 1.0f;
+                grad = 1.0f - grad * grad;
 
                 float error = errors[hidden_column_index] * grad;
 
