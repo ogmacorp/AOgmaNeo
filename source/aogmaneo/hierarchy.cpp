@@ -165,7 +165,7 @@ void Hierarchy::step(
     Array<Int_Buffer_View> r_input_cis(1);
     Array<Float_Buffer_View> r_input_acts(1);
 
-    // merge errors from predictors (into first one)
+    // merge errors from predictors (into first one, which always exists)
     Float_Buffer_View errors0 = predictors[0].get_visible_layer(0).errors;
 
     for (int p = 1; p < predictors.size(); p++) {
@@ -174,6 +174,11 @@ void Hierarchy::step(
         for (int i = 0; i < errors.size(); i++)
             errors0[i] += errors[i];
     }
+
+    float predictors_inv = 1.0f / predictors.size();
+
+    for (int i = 0; i < errors0.size(); i++)
+        errors0[i] *= predictors_inv;
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
