@@ -67,7 +67,7 @@ void Routed_Layer::forward(
 
     activation /= (count * 127);
 
-    hidden_acts[hidden_column_index] = sigmoidf(activation * params.scale);
+    hidden_acts[hidden_column_index] = activation * params.scale + 1.0f;
 }
 
 void Routed_Layer::backward(
@@ -129,7 +129,7 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float error = errors[hidden_column_index] * hidden_acts[hidden_column_index] * (1.0f - hidden_acts[hidden_column_index]);
+                float error = errors[hidden_column_index];
 
                 sum += error * vl.weights[wi];
                 count++;

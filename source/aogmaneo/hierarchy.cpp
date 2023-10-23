@@ -206,6 +206,11 @@ void Hierarchy::step(
             errors0[i] += errors[i];
     }
 
+    float predictors_inv = 1.0f / predictors.size();
+
+    for (int i = 0; i < errors0.size(); i++)
+        errors0[i] *= predictors_inv;
+
      // first tick is always 0
     ticks[0] = 0;
 

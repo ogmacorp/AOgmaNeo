@@ -30,25 +30,26 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer protos;
-        Byte_Buffer weights; // for reconstruction
+        Byte_Buffer weights0; // regular
+        Byte_Buffer weights1; // complement
+        Byte_Buffer weights_recon; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float threshold; // early stopping threshold distance
-        float scale; // scale of reconstruction
-        float falloff; // amount less when not maximal (multiplier)
+        float choice;
+        float vigilance;
         float lr; // learning rate
+        float scale;
         float rr; // reconstruction rate
         
         Params()
         :
-        threshold(0.001f),
+        choice(0.1f),
+        vigilance(0.97f),
+        lr(0.5f),
         scale(2.0f),
-        falloff(0.99f),
-        lr(0.1f),
         rr(0.1f)
         {}
     };
@@ -58,7 +59,9 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_resources;
+    Float_Buffer hidden_matches;
+
+    Byte_Buffer hidden_commits;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -69,8 +72,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Byte_Buffer_View> &inputs,
-        bool learn_enabled,
-        unsigned long* state
+        bool learn_enabled
     );
 
     void learn_reconstruction(
