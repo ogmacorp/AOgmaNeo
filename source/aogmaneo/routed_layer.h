@@ -37,10 +37,12 @@ public:
 
     struct Params {
         float lr; // learning rate
+        float clip; // gradient clip
 
         Params()
         :
-        lr(0.1f)
+        lr(0.5f),
+        clip(1.0f)
         {}
     };
 
