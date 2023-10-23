@@ -129,7 +129,7 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float error = errors[hidden_column_index];
+                float error = min(params.clip, max(-params.clip, errors[hidden_column_index]));
 
                 sum += error * vl.weights[wi];
                 count++;
