@@ -96,7 +96,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        float influence = vl.importance / sub_count;
+        float influence = vl.importance / (sub_count * 255);
 
         total_importance += vl.importance;
 
@@ -117,7 +117,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_acts[hidden_cell_index] += (vl.weights[wi] > 127) * influence;
+                    hidden_acts[hidden_cell_index] += vl.weights[wi] * influence;
                 }
             }
     }
