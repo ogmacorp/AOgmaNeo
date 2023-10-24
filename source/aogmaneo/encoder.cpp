@@ -28,7 +28,7 @@ void Encoder::forward(
         float error = errors[hidden_column_index];
         float activation = sigmoidf((hidden_acts[hidden_ci_prev + hidden_cells_start] - 0.5f) * 2.0f * params.scale);
 
-        float delta = params.lr * 255.0f * (error + 0.5f - activation) * activation * (1.0f - activation);
+        float delta = params.lr * 255.0f * error * activation * (1.0f - activation);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
