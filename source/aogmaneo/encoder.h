@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
+        Byte_Buffer weights;
         
         float importance;
 
@@ -48,8 +48,8 @@ public:
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.9f),
+        choice(0.0001f),
+        vigilance(0.95f),
         lr(0.5f),
         l_radius(2)
         {}
