@@ -127,6 +127,10 @@ void Encoder::learn(
 
     float hidden_max = hidden_maxs[hidden_column_index];
 
+    int num_higher = 0;
+    int num_neighbors = params.l_radius * 2 + 1;
+    num_neighbors *= num_neighbors;
+
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
             Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
@@ -135,9 +139,12 @@ void Encoder::learn(
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
                 if (hidden_maxs[other_hidden_column_index] > hidden_max)
-                    return;
+                    num_higher++;
             }
         }
+
+    if (num_higher > num_neighbors * params.activity_ratio)
+        return;
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
