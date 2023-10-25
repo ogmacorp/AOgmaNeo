@@ -86,7 +86,7 @@ void Encoder::forward(
 
         hidden_sums[hidden_cell_index] /= max(limit_small, total_importance);
 
-        float match = min(1.0f - hidden_sums[hidden_cell_index], hidden_totals[hidden_cell_index]);
+        float match = (1.0f - hidden_sums[hidden_cell_index]) * (1.0f - hidden_totals[hidden_cell_index]);
 
         float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
@@ -233,7 +233,7 @@ void Encoder::init_random(
 
     hidden_sums.resize(num_hidden_cells);
 
-    hidden_totals = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_totals = Float_Buffer(num_hidden_cells, 0.0f);
 
     hidden_maxs.resize(num_hidden_columns);
 }
