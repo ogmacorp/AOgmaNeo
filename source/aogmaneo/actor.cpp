@@ -163,12 +163,16 @@ void Actor::forward(
                         if (vc == in_ci_prev)
                             vl.value_traces[value_wi] += 1.0f;
 
+                        vl.value_weights[value_wi] += value_delta * vl.value_traces[value_wi];
+
+                        vl.value_traces[value_wi] *= params.trace_decay;
+
                         for (int hc = 0; hc < hidden_size.z; hc++) {
                             int hidden_cell_index = hc + hidden_cells_start;
 
                             int action_wi = hc + action_wi_start;
 
-                            vl.action_traces[action_wi] += (hc == target_ci) - hidden_acts_prev[hidden_cell_index];
+                            vl.action_traces[action_wi] += ((hc == target_ci) - hidden_acts_prev[hidden_cell_index]) * (vc == in_ci_prev);
 
                             vl.action_weights[action_wi] += action_delta * vl.action_traces[action_wi];
 
@@ -243,6 +247,8 @@ void Actor::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, reward, mimic, learn_enabled, params);
 
     // copy to prevs
+    hidden_acts_prev = hidden_acts;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
