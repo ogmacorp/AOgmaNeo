@@ -15,6 +15,7 @@ void Actor::forward(
     const Array<Int_Buffer_View> &input_cis,
     Int_Buffer_View hidden_target_cis,
     float reward,
+    float mimic,
     bool learn_enabled,
     const Params &params
 ) {
@@ -126,7 +127,7 @@ void Actor::forward(
 
         float value_delta = params.vlr * td_error;
 
-        float action_delta = params.alr * tanhf(td_error);
+        float action_delta = params.alr * ((1.0f - mimic) * tanhf(td_error) + mimic);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -231,6 +232,7 @@ void Actor::step(
     const Array<Int_Buffer_View> &input_cis,
     Int_Buffer_View hidden_target_cis,
     float reward,
+    float mimic,
     bool learn_enabled,
     const Params &params
 ) {
@@ -238,7 +240,7 @@ void Actor::step(
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, reward, learn_enabled, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, reward, mimic, learn_enabled, params);
 
     // copy to prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
