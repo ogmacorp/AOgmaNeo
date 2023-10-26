@@ -149,7 +149,7 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
 
-        float value_delta = params.vlr * td_error;
+        float value_delta = params.vlr * tanhf(td_error);
 
         float action_delta = params.alr * ((1.0f - mimic) * tanhf(td_error) + mimic);
 

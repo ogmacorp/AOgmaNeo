@@ -52,8 +52,8 @@ public:
         vlr(0.01f),
         alr(0.1f),
         discount(0.99f),
-        trace_decay(0.98f),
-        temperature(1.0f)
+        trace_decay(0.95f),
+        temperature(0.1f)
         {}
     };
 
