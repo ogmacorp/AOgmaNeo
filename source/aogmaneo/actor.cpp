@@ -27,7 +27,7 @@ void Actor::forward(
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
-    float value_prev = hidden_values[hidden_cell_index_target];
+    float value_prev = hidden_values[hidden_column_index];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -86,6 +86,8 @@ void Actor::forward(
 
     value /= count;
 
+    hidden_values[hidden_column_index] = value;
+
     int max_index = 0;
     float max_activation = limit_min;
 
@@ -125,7 +127,7 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
 
-        float value_delta = params.vlr * td_error;
+        float value_delta = params.vlr * tanhf(td_error);
 
         float action_delta = params.alr * ((1.0f - mimic) * tanhf(td_error) + mimic);
 
