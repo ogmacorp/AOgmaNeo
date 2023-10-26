@@ -30,21 +30,26 @@ public:
 
     // Visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
-        Float_Buffer traces;
+        Float_Buffer action_weights;
+        Float_Buffer action_traces;
+
+        Float_Buffer value_weights;
+        Float_Buffer value_traces;
 
         Int_Buffer input_cis_prev;
     };
 
     struct Params {
-        float lr;
+        float vlr;
+        float alr;
         float discount;
         float trace_decay;
 
         // Defaults
         Params()
         :
-        lr(0.1f),
+        vlr(0.01f),
+        alr(0.1f),
         discount(0.99f),
         trace_decay(0.98f)
         {}
@@ -55,6 +60,8 @@ private:
 
     Int_Buffer hidden_cis; // Hidden states
 
+    Float_Buffer hidden_acts;
+    Float_Buffer hidden_acts_prev;
     Float_Buffer hidden_values;
 
     // Visible layers and descriptors
