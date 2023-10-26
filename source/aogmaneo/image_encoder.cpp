@@ -87,12 +87,7 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        float dist = sqrtf(-max_activation);
-
-        // control neighborhood
-        int radius = (dist >= params.threshold);
-
-        for (int dhc = -radius; dhc <= radius; dhc++) {
+        for (int dhc = -1; dhc <= 1; dhc++) {
             int hc = hidden_cis[hidden_column_index] + dhc;
 
             if (hc < 0 || hc >= hidden_size.z)
