@@ -26,8 +26,6 @@ void Actor::forward(
 
     int target_ci = hidden_target_cis[hidden_column_index];
 
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
     float value_prev = hidden_values[hidden_column_index];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
