@@ -44,6 +44,7 @@ public:
         float alr;
         float discount;
         float trace_decay;
+        float temperature;
 
         // Defaults
         Params()
@@ -51,7 +52,8 @@ public:
         vlr(0.01f),
         alr(0.1f),
         discount(0.99f),
-        trace_decay(0.98f)
+        trace_decay(0.98f),
+        temperature(1.0f)
         {}
     };
 
@@ -77,6 +79,7 @@ private:
         float reward,
         float mimic,
         bool learn_enabled,
+        unsigned long* state,
         const Params &params
     );
 

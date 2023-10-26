@@ -17,6 +17,7 @@ void Actor::forward(
     float reward,
     float mimic,
     bool learn_enabled,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -122,12 +123,33 @@ void Actor::forward(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    if (params.temperature > 0.0f) {
+        float cusp = randf(state);
+
+        int select_index = 0;
+        float sum_so_far = 0.0f;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            sum_so_far += hidden_acts[hidden_cell_index];
+
+            if (sum_so_far >= cusp) {
+                select_index = hc;
+
+                break;
+            }
+        }
+        
+        hidden_cis[hidden_column_index] = select_index;
+    }
+    else // deterministic
+        hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
 
-        float value_delta = params.vlr * tanhf(td_error);
+        float value_delta = params.vlr * td_error;
 
         float action_delta = params.alr * ((1.0f - mimic) * tanhf(td_error) + mimic);
 
@@ -244,9 +266,14 @@ void Actor::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
+    unsigned int base_state = rand();
+
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, reward, mimic, learn_enabled, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, reward, mimic, learn_enabled, &state, params);
+    }
 
     // copy to prevs
     hidden_acts_prev = hidden_acts;
