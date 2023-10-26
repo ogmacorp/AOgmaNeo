@@ -272,13 +272,16 @@ void Actor::learn(
 
     float total_inv = 1.0f / max(limit_small, total);
 
+    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] *= total_inv;
-    }
 
-    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+        // re-use as deltas
+        hidden_acts[hidden_cell_index] = rate * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+    }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -316,9 +319,7 @@ void Actor::learn(
 
                     int wi = hc + wi_start;
 
-                    float delta_action = rate * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
-
-                    vl.action_weights[wi] += delta_action;
+                    vl.action_weights[wi] += hidden_acts[hidden_cell_index];
                 }
             }
     }
