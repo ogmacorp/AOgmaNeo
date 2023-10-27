@@ -51,9 +51,9 @@ public:
         Params()
         :
         vlr(0.01f),
-        alr(0.1f),
+        alr(0.01f),
         discount(0.99f),
-        trace_decay(0.95f),
+        trace_decay(0.98f),
         trace_falloff(0.1f),
         temperature(0.1f)
         {}
