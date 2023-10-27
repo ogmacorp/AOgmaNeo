@@ -146,6 +146,11 @@ public:
         return hidden_cis;
     }
 
+    // Get hidden activations
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
+    }
+
     // Get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
