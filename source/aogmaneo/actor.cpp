@@ -183,7 +183,7 @@ void Actor::forward(
                         int action_wi_start = hidden_size.z * value_wi;
 
                         if (vc == in_ci_prev)
-                            vl.value_traces[value_wi] += 1.0f;
+                            vl.value_traces[value_wi] += expf(-params.trace_falloff * vl.value_traces[value_wi] * vl.value_traces[value_wi]);
 
                         vl.value_weights[value_wi] += value_delta * vl.value_traces[value_wi];
 
@@ -194,7 +194,8 @@ void Actor::forward(
 
                             int action_wi = hc + action_wi_start;
 
-                            vl.action_traces[action_wi] += ((hc == target_ci) - hidden_acts_prev[hidden_cell_index]) * (vc == in_ci_prev);
+                            if (vc == in_ci_prev)
+                                vl.action_traces[action_wi] += ((hc == target_ci) - hidden_acts_prev[hidden_cell_index]) * expf(-params.trace_falloff * vl.action_traces[action_wi] * vl.action_traces[action_wi]);
 
                             vl.action_weights[action_wi] += action_delta * vl.action_traces[action_wi];
 

@@ -44,6 +44,7 @@ public:
         float alr;
         float discount;
         float trace_decay;
+        float trace_falloff;
         float temperature;
 
         // Defaults
@@ -53,6 +54,7 @@ public:
         alr(0.1f),
         discount(0.99f),
         trace_decay(0.95f),
+        trace_falloff(0.1f),
         temperature(0.1f)
         {}
     };
