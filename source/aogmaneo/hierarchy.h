@@ -45,6 +45,7 @@ public:
         :
         size(size),
         type(type),
+        num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius),
         history_capacity(history_capacity)
