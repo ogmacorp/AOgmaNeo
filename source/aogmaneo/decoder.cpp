@@ -97,7 +97,7 @@ void Decoder::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_acts[dendrite_index] = tanhf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
+            dendrite_acts[dendrite_index] = sigmoidf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
 
             activation += dendrite_weights[dendrite_index] * dendrite_acts[dendrite_index];
         }
@@ -156,7 +156,7 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = params.wlr * 255.0f * error * dendrite_weights[dendrite_index] * (1.0f - dendrite_acts[dendrite_index] * dendrite_acts[dendrite_index]);
+            dendrite_deltas[dendrite_index] = params.wlr * 255.0f * error * dendrite_weights[dendrite_index] * (1.0f - dendrite_acts[dendrite_index]) * dendrite_acts[dendrite_index];
 
             dendrite_weights[dendrite_index] += delta * dendrite_acts[dendrite_index];
         }
