@@ -243,7 +243,7 @@ void Decoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
@@ -257,7 +257,7 @@ void Decoder::init_random(
     dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
-    dendrite_deltas.resize(num_hidden_cells);
+    dendrite_deltas.resize(num_dendrites);
 
     dendrite_weights.resize(num_dendrites);
 
@@ -298,6 +298,7 @@ void Decoder::step(
 
 void Decoder::clear_state() {
     hidden_cis.fill(0);
+    dendrite_acts.fill(0.0f);
     hidden_acts.fill(0.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -380,7 +381,7 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&dendrite_acts[0]), dendrite_acts.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
 
-    dendrite_deltas.resize(num_hidden_cells);
+    dendrite_deltas.resize(num_dendrites);
 
     int num_visible_layers;
 
@@ -405,7 +406,7 @@ void Decoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.weights.resize(num_dendrites * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
