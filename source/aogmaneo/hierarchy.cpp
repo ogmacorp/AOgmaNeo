@@ -71,7 +71,7 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         d_visible_layer_descs[1] = d_visible_layer_descs[0];
 
-                    decoders[l][d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, d_visible_layer_descs);
+                    decoders[l][d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_column, d_visible_layer_descs);
 
                     i_indices[d_index] = i;
                     d_indices[i] = d_index;
@@ -118,7 +118,7 @@ void Hierarchy::init_random(
                 d_visible_layer_descs[1] = d_visible_layer_descs[0];
 
             // create decoders
-            decoders[l][0].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
+            decoders[l][0].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_column, d_visible_layer_descs);
         }
         
         if (layer_descs[l].recurrent_radius >= 0) {

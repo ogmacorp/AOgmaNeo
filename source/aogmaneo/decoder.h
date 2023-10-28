@@ -42,7 +42,7 @@ public:
 
         Params()
         :
-        scale(32.0f),
+        scale(64.0f),
         dlr(1.0f),
         wlr(1.0f)
         {}
@@ -50,7 +50,7 @@ public:
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
-    int num_dendrites_per_cell;
+    int num_dendrites_per_column;
 
     Int_Buffer hidden_cis; // hidden state
 
@@ -85,7 +85,7 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output/prediction size
-        int num_dendrites_per_cell,
+        int num_dendrites_per_column,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
