@@ -72,6 +72,12 @@ void Decoder::forward(
             }
     }
 
+    for (int di = 0; di < num_dendrites_per_column; di++) {
+        int dendrite_index = di + dendrites_start;
+
+        dendrite_acts[dendrite_index] = max(0.0f, (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
+    }
+
     int max_index = 0;
     float max_activation = limit_min;
 
@@ -86,8 +92,6 @@ void Decoder::forward(
             int dendrite_index = di + dendrites_start;
 
             int wi = di + wi_start;
-
-            dendrite_acts[dendrite_index] = max(0.0f, (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
 
             activation += dendrite_weights[wi] * dendrite_acts[dendrite_index];
         }
