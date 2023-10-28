@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "decoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -99,7 +98,6 @@ void Decoder::forward(
             int dendrite_index = di + dendrites_start;
 
             dendrite_acts[dendrite_index] = sigmoidf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
-            std::cout << dendrite_acts[dendrite_index] << std::endl;
 
             activation += dendrite_weights[dendrite_index] * dendrite_acts[dendrite_index];
         }
