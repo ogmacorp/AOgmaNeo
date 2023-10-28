@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "decoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -116,7 +117,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
-        hidden_acts[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) * params.scale);
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
 
         total += hidden_acts[hidden_cell_index];
     }
@@ -205,7 +206,7 @@ void Decoder::learn(
 
                         int wi = di + wi_start;
 
-                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(dendrite_deltas[hidden_cell_index], state)));
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(dendrite_deltas[dendrite_index], state)));
                     }
                 }
             }
