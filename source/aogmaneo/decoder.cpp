@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "decoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -97,7 +98,8 @@ void Decoder::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_acts[dendrite_index] = max(0.0f, (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
+            dendrite_acts[dendrite_index] = sigmoidf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
+            std::cout << dendrite_acts[dendrite_index] << std::endl;
 
             activation += dendrite_weights[dendrite_index] * dendrite_acts[dendrite_index];
         }
@@ -156,7 +158,7 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = params.wlr * 255.0f * error * dendrite_weights[dendrite_index] * (dendrite_acts[dendrite_index] > 0.0f);
+            dendrite_deltas[dendrite_index] = params.wlr * 255.0f * error * dendrite_weights[dendrite_index] * (1.0f - dendrite_acts[dendrite_index]) * dendrite_acts[dendrite_index];
 
             dendrite_weights[dendrite_index] += delta * dendrite_acts[dendrite_index];
         }
@@ -254,7 +256,7 @@ void Decoder::init_random(
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
+    dendrite_acts = Float_Buffer(num_dendrites, 0.5f);
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
     dendrite_deltas.resize(num_dendrites);
@@ -298,7 +300,7 @@ void Decoder::step(
 
 void Decoder::clear_state() {
     hidden_cis.fill(0);
-    dendrite_acts.fill(0.0f);
+    dendrite_acts.fill(0.5f);
     hidden_acts.fill(0.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
