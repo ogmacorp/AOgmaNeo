@@ -157,7 +157,7 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = params.wlr * 255.0f * error * (1.0f - dendrite_acts[dendrite_index] * dendrite_acts[dendrite_index]);
+            dendrite_deltas[dendrite_index] = params.wlr * 255.0f * error * dendrite_weights[dendrite_index] * (1.0f - dendrite_acts[dendrite_index] * dendrite_acts[dendrite_index]);
 
             dendrite_weights[dendrite_index] += delta * dendrite_acts[dendrite_index];
         }
