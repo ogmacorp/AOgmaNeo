@@ -353,12 +353,12 @@ void Actor::init_random(
         vl.value_weights.resize(num_hidden_columns * area * vld.size.z);
 
         for (int i = 0; i < vl.value_weights.size(); i++)
-            vl.value_weights[i] = randf(-0.01f, 0.01f);
+            vl.value_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         vl.action_weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.action_weights.size(); i++)
-            vl.action_weights[i] = randf(-0.01f, 0.01f);
+            vl.action_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
