@@ -150,6 +150,11 @@ public:
         return hidden_cis;
     }
 
+    // get the dendrite states
+    const Float_Buffer &get_dendrite_acts() const {
+        return dendrite_acts;
+    }
+
     // get the hidden states (predictions)
     const Float_Buffer &get_hidden_acts() const {
         return hidden_acts;
