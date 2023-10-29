@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -297,12 +298,12 @@ void Actor::learn(
 
         int wi = di + value_wi_start;
 
-        dendrite_deltas[dendrite_index] += td_error_value * value_dendrite_weights[wi];
+        //dendrite_deltas[dendrite_index] += td_error_value * value_dendrite_weights[wi];
 
         value_dendrite_weights[wi] += value_delta * dendrite_acts[dendrite_index];
     }
 
-    float action_error_partial = mimic + (1.0f - mimic) * tanhf(td_error_value);
+    float action_error_partial = mimic + (1.0f - mimic) * (td_error_value > 0.0f);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
