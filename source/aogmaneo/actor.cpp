@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -77,7 +76,6 @@ void Actor::forward(
         int dendrite_index = di + dendrites_start;
 
         dendrite_acts[dendrite_index] = max(0.0f, (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
-        std::cout << dendrite_acts[dendrite_index] << std::endl;
     }
 
     int value_wi_start = num_dendrites_per_column * hidden_column_index;
