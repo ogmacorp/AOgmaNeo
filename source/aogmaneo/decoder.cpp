@@ -303,14 +303,14 @@ void Decoder::generate_errors(
 
                     int wi = hc + wi_start;
 
-                    sum += (vl.weights[wi] - 127.0f) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+                    sum += ((vl.weights[wi] > 127) * 2 - 1) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
                 }
 
                 count++;
             }
         }
 
-    sum /= max(1, count * 127);
+    sum /= max(1, count);
 
     errors[visible_column_index] += sum;
 }
