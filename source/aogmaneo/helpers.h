@@ -101,10 +101,7 @@ T min(
     T left,
     T right
 ) {
-    if (left < right)
-        return left;
-    
-    return right;
+    return (left < right) * (left - right) + right;
 }
 
 template <typename T>
@@ -112,10 +109,7 @@ T max(
     T left,
     T right
 ) {
-    if (left > right)
-        return left;
-    
-    return right;
+    return (left > right) * (left - right) + right;
 }
 
 template <typename T>
