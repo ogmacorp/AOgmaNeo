@@ -25,7 +25,7 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
-        float error = errors[hidden_column_index];
+        float error = tanhf(errors[hidden_column_index]);
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
@@ -176,7 +176,7 @@ void Encoder::update_gates(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     float sum = 0.0f;
     int count = 0;
@@ -210,10 +210,8 @@ void Encoder::update_gates(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
-
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = vc + wi_start;
+                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     float w = (255.0f - vl.weights[wi]) * byte_inv;
 
