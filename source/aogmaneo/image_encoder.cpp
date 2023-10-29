@@ -71,9 +71,9 @@ void Image_Encoder::forward(
 
                         float w = vl.protos[wi] * byte_inv;
 
-                        float delta = input - w;
+                        float diff = input - w;
 
-                        sum -= delta * delta;
+                        sum -= diff * diff;
                     }
                 }
         }
@@ -89,12 +89,9 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        float dist = sqrtf(-max_activation);
+        int scan_radius = (sqrtf(-max_activation) >= params.threshold);
 
-        // control neighborhood
-        int radius = (dist >= params.threshold);
-
-        for (int dhc = -radius; dhc <= radius; dhc++) {
+        for (int dhc = -scan_radius; dhc <= scan_radius; dhc++) {
             int hc = hidden_cis[hidden_column_index] + dhc;
 
             if (hc < 0 || hc >= hidden_size.z)
