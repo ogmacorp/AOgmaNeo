@@ -356,13 +356,13 @@ void Actor::learn(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int in_ci_prev = vl_input_cis[visible_column_index];
+                int in_ci = vl_input_cis[visible_column_index];
 
-                int visible_cell_index = in_ci_prev + visible_column_index * vld.size.z;
+                int visible_cell_index = in_ci + visible_column_index * vld.size.z;
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start = num_dendrites_per_column * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
+                int wi_start = num_dendrites_per_column * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 for (int di = 0; di < num_dendrites_per_column; di++) {
                     int dendrite_index = di + dendrites_start;
