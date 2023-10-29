@@ -77,6 +77,7 @@ void Actor::forward(
         int dendrite_index = di + dendrites_start;
 
         dendrite_acts[dendrite_index] = max(0.0f, (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
+        std::cout << dendrite_acts[dendrite_index] << std::endl;
     }
 
     int value_wi_start = num_dendrites_per_column * hidden_column_index;
@@ -303,7 +304,7 @@ void Actor::learn(
         value_dendrite_weights[wi] += value_delta * dendrite_acts[dendrite_index];
     }
 
-    float action_error_partial = mimic + (1.0f - mimic) * ((td_error_value > 0.0f) * 2.0f - 1.0f);
+    float action_error_partial = mimic + (1.0f - mimic) * tanhf(td_error_value);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
