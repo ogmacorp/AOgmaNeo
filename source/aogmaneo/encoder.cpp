@@ -239,18 +239,10 @@ void Encoder::learn_recon(
             }
         }
 
-    int max_index = 0;
-    int max_activation = 0;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
-
-        if (recon_sum > max_activation) {
-            max_activation = recon_sum;
-            max_index = vc;
-        }
 
         vl.recon_deltas[visible_cell_index] = params.rlr * 255.0f * ((vc == target_ci) - expf(min(0.0f, static_cast<float>(recon_sum) / max(1, count * 255) - 0.5f) * params.scale));
     }
