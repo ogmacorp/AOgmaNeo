@@ -27,6 +27,8 @@ public:
         Int3 size;
         IO_Type type;
 
+        int num_dendrites_per_column;
+
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
@@ -35,6 +37,7 @@ public:
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
+            int num_dendrites_per_column = 32,
             int up_radius = 2,
             int down_radius = 2,
             int history_capacity = 128
@@ -43,6 +46,7 @@ public:
         size(size),
         type(type),
         up_radius(up_radius),
+        num_dendrites_per_column(num_dendrites_per_column),
         down_radius(down_radius),
         history_capacity(history_capacity)
         {}
@@ -52,6 +56,8 @@ public:
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
 
+        int num_dendrites_per_column;
+
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
@@ -60,6 +66,7 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
+            int num_dendrites_per_column = 32,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
@@ -67,6 +74,7 @@ public:
         )
         :
         hidden_size(hidden_size),
+        num_dendrites_per_column(num_dendrites_per_column),
         up_radius(up_radius),
         down_radius(down_radius),
         ticks_per_update(ticks_per_update),
