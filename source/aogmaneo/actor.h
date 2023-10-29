@@ -30,8 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer value_weights; // value function weights
-        Float_Buffer action_weights; // action function weights
+        Byte_Buffer weights;
     };
 
     // history sample for delayed updates
@@ -43,19 +42,21 @@ public:
     };
 
     struct Params {
+        float scale; // byte scaling
         float vlr; // value learning rate
         float alr; // action learning rate
+        float wlr; // weight learning rate
         float discount; // discount fActor
-        float temperature; // exploration amount
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
+        scale(4.0f),
         vlr(0.01f),
         alr(0.01f),
+        wlr(0.01f),
         discount(0.99f),
-        temperature(1.0f),
         min_steps(16),
         history_iters(16)
         {}
@@ -63,15 +64,23 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
+    int num_dendrites_per_column;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
 
-    Float_Buffer hidden_acts; // temporary buffer
-
     Int_Buffer hidden_cis; // hidden states
 
+    Float_Buffer dendrite_acts;
+
+    Float_Buffer hidden_acts; // temporary buffer
+
+    Float_Buffer dendrite_deltas;
+
     Float_Buffer hidden_values; // hidden value function output buffer
+
+    Float_Buffer value_dendrite_weights;
+    Float_Buffer action_dendrite_weights;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
@@ -94,6 +103,7 @@ private:
         float r,
         float d,
         float mimic,
+        unsigned long* state,
         const Params &params
     );
 
@@ -101,6 +111,7 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
+        int num_dendrites_per_column,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
@@ -109,8 +120,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis_prev,
-        float reward,
         bool learn_enabled,
+        float reward,
         float mimic,
         const Params &params
     );
