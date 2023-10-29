@@ -57,7 +57,7 @@ public:
         :
         escale(64.0f),
         rscale(8.0f),
-        elr(0.01f),
+        elr(0.001f),
         rlr(0.01f),
         gcurve(32.0f)
         {}
@@ -71,8 +71,6 @@ private:
     Float_Buffer hidden_acts;
 
     Float_Buffer hidden_gates;
-
-    Float_Buffer hidden_deltas;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
