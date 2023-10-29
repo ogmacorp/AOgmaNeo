@@ -51,13 +51,15 @@ public:
         float rscale;
         float elr; // error learning rate
         float rlr; // recon learning rate
+        float gcurve;
 
         Params()
         :
         escale(64.0f),
         rscale(8.0f),
-        elr(0.0f),
-        rlr(0.01f)
+        elr(0.01f),
+        rlr(0.01f),
+        gcurve(32.0f)
         {}
     };
 
@@ -67,6 +69,8 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_gates;
 
     Float_Buffer hidden_deltas;
 
@@ -84,6 +88,11 @@ private:
         Float_Buffer_View errors,
         bool learn_enabled,
         unsigned long* state,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
         const Params &params
     );
 
