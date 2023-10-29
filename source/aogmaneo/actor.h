@@ -43,21 +43,21 @@ public:
 
     struct Params {
         float scale; // byte scaling
-        float vlr; // value learning rate
-        float alr; // action learning rate
+        float dlr; // dendritic learning rate
         float wlr; // weight learning rate
+        float cons; // convervativeness
         float discount; // discount fActor
-        int min_steps; // minimum steps before sample can be used
+        int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
         scale(4.0f),
-        vlr(0.1f),
-        alr(0.5f),
+        dlr(0.1f),
         wlr(0.01f),
+        cons(0.0f),
         discount(0.99f),
-        min_steps(16),
+        n_steps(16),
         history_iters(16)
         {}
     };
@@ -73,20 +73,17 @@ private:
 
     Float_Buffer dendrite_acts;
 
-    Float_Buffer hidden_acts; // temporary buffer
+    Float_Buffer hidden_acts;
 
     Float_Buffer dendrite_deltas;
-
-    Float_Buffer hidden_values; // hidden value function output buffer
-
-    Float_Buffer value_dendrite_weights;
-    Float_Buffer action_dendrite_weights;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
+
+    Float_Buffer dendrite_weights;
 
     // --- kernels ---
 
@@ -100,9 +97,6 @@ private:
     void learn(
         const Int2 &column_pos,
         int t,
-        float r,
-        float d,
-        float mimic,
         unsigned long* state,
         const Params &params
     );
@@ -120,9 +114,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis_prev,
-        bool learn_enabled,
         float reward,
-        float mimic,
+        bool learn_enabled,
         const Params &params
     );
 
