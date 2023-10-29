@@ -176,6 +176,9 @@ void Actor::learn(
         int dendrite_index = di + dendrites_start;
 
         dendrite_acts[dendrite_index] = 0.0f;
+
+        // use as error accum temporarily
+        dendrite_deltas[dendrite_index] = 0.0f;
     }
 
     int count = 0;
@@ -289,16 +292,9 @@ void Actor::learn(
     for (int di = 0; di < num_dendrites_per_column; di++) {
         int dendrite_index = di + dendrites_start;
 
-        // use as error accum temporarily
-        dendrite_deltas[dendrite_index] = 0.0f;
-    }
-
-    for (int di = 0; di < num_dendrites_per_column; di++) {
-        int dendrite_index = di + dendrites_start;
-
         int wi = di + value_wi_start;
 
-        //dendrite_deltas[dendrite_index] += td_error_value * value_dendrite_weights[wi];
+        dendrite_deltas[dendrite_index] += td_error_value * value_dendrite_weights[wi];
 
         value_dendrite_weights[wi] += value_delta * dendrite_acts[dendrite_index];
     }
