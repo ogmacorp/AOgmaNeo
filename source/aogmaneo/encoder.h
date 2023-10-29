@@ -34,6 +34,10 @@ public:
 
         Int_Buffer input_cis_prev;
         
+        Int_Buffer recon_sums;
+
+        Float_Buffer recon_deltas;
+
         float importance;
 
         Visible_Layer()
@@ -44,12 +48,14 @@ public:
 
     struct Params {
         float scale;
-        float lr; // learning rate
+        float elr; // error learning rate
+        float rlr; // recon learning rate
 
         Params()
         :
         scale(64.0f),
-        lr(0.1f)
+        elr(0.1f),
+        rlr(0.1f)
         {}
     };
 
@@ -66,6 +72,8 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
+
     // --- kernels ---
 
     void forward(
@@ -73,6 +81,14 @@ private:
         const Array<Int_Buffer_View> &input_cis,
         Float_Buffer_View errors,
         bool learn_enabled,
+        unsigned long* state,
+        const Params &params
+    );
+
+    void learn_recon(
+        const Int2 &column_pos,
+        Int_Buffer_View input_cis,
+        int vli,
         unsigned long* state,
         const Params &params
     );
