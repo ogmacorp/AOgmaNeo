@@ -159,7 +159,7 @@ void Decoder::learn(
 
             int wi = di + wi_start;
 
-            dendrite_deltas[dendrite_index] += hidden_error * dendrite_weights[wi] * (dendrite_acts[dendrite_index] > 0.0f);
+            dendrite_deltas[dendrite_index] += hidden_error * dendrite_weights[wi];
 
             dendrite_weights[wi] += hidden_delta * dendrite_acts[dendrite_index];
         }
@@ -169,7 +169,7 @@ void Decoder::learn(
     for (int di = 0; di < num_dendrites_per_column; di++) {
         int dendrite_index = di + dendrites_start;
 
-        dendrite_deltas[dendrite_index] = params.wlr * 255.0f * dendrite_deltas[dendrite_index];
+        dendrite_deltas[dendrite_index] = params.wlr * 255.0f * dendrite_deltas[dendrite_index] * (dendrite_acts[dendrite_index] > 0.0f);
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
