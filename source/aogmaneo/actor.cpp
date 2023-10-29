@@ -284,7 +284,6 @@ void Actor::learn(
     float td_error_value = new_value - value;
     
     float value_delta = params.vlr * td_error_value;
-    float action_delta = params.alr * (mimic + (1.0f - mimic) * ((td_error_value > 0.0f) * 2.0f - 1.0f));
 
     for (int di = 0; di < num_dendrites_per_column; di++) {
         int dendrite_index = di + dendrites_start;
@@ -303,12 +302,14 @@ void Actor::learn(
         value_dendrite_weights[wi] += value_delta * dendrite_acts[dendrite_index];
     }
 
+    float action_error_partial = mimic + (1.0f - mimic) * ((td_error_value > 0.0f) * 2.0f - 1.0f);
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float hidden_error = (hc == target_ci) - hidden_acts[hidden_cell_index];
+        float action_error = action_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
-        float hidden_delta = action_delta * hidden_error;
+        float action_delta = params.alr * action_error;
 
         int wi_start = num_dendrites_per_column * hidden_cell_index;
 
@@ -317,9 +318,9 @@ void Actor::learn(
 
             int wi = di + wi_start;
 
-            dendrite_deltas[dendrite_index] += hidden_error * action_dendrite_weights[wi];
+            dendrite_deltas[dendrite_index] += action_error * action_dendrite_weights[wi];
 
-            action_dendrite_weights[wi] += hidden_delta * dendrite_acts[dendrite_index];
+            action_dendrite_weights[wi] += action_delta * dendrite_acts[dendrite_index];
         }
     }
 

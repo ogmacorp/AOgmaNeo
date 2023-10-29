@@ -54,7 +54,7 @@ public:
         :
         scale(4.0f),
         vlr(0.01f),
-        alr(0.01f),
+        alr(0.1f),
         wlr(0.01f),
         discount(0.99f),
         min_steps(16),
