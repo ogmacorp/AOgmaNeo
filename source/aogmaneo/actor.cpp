@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -413,8 +414,8 @@ void Actor::init_random(
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
-    dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
-    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+    dendrite_acts.resize(num_dendrites);
+    hidden_acts.resize(num_hidden_cells);
 
     dendrite_deltas.resize(num_dendrites);
 
@@ -620,15 +621,16 @@ void Actor::read(
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
+    int num_dendrites = num_hidden_columns * num_dendrites_per_column;
     
     hidden_cis.resize(num_hidden_columns);
     hidden_values.resize(num_hidden_columns);
-    int num_dendrites = num_hidden_columns * num_dendrites_per_column;
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
-    hidden_acts.resize(num_hidden_cells);
+    dendrite_acts = Float_Buffer(num_dendrites);
+    hidden_acts = Float_Buffer(num_hidden_cells);
 
     int num_visible_layers;
 
