@@ -172,8 +172,7 @@ void Hierarchy::init_random(
 void Hierarchy::step(
     const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled,
-    float reward,
-    float mimic
+    float reward
 ) {
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
@@ -248,7 +247,7 @@ void Hierarchy::step(
 
             if (l == 0) {
                 for (int d = 0; d < actors.size(); d++)
-                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], learn_enabled, reward, mimic, params.ios[i_indices[d + io_sizes.size()]].actor);
+                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, params.ios[i_indices[d + io_sizes.size()]].actor);
             }
         }
     }
