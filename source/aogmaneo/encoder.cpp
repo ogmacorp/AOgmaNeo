@@ -30,7 +30,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_deltas[hidden_cell_index] = params.elr * 255.0f * error * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]) * hidden_gates[hidden_column_index];
+            hidden_deltas[hidden_cell_index] = params.elr * 255.0f * error * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]);
         }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
