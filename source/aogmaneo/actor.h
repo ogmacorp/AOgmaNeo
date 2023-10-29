@@ -52,9 +52,9 @@ public:
 
         Params()
         :
-        scale(8.0f),
+        scale(4.0f),
         vlr(0.1f),
-        alr(0.1f),
+        alr(0.5f),
         wlr(0.01f),
         discount(0.99f),
         min_steps(16),
