@@ -47,15 +47,17 @@ public:
     };
 
     struct Params {
-        float scale;
+        float escale;
+        float rscale;
         float elr; // error learning rate
         float rlr; // recon learning rate
 
         Params()
         :
-        scale(64.0f),
-        elr(0.1f),
-        rlr(0.1f)
+        escale(64.0f),
+        rscale(8.0f),
+        elr(0.01f),
+        rlr(0.01f)
         {}
     };
 
