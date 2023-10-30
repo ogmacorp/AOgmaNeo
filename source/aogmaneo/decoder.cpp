@@ -97,7 +97,7 @@ void Decoder::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_acts[dendrite_index] = tanhf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
+            dendrite_acts[dendrite_index] = max(0.0f, (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
 
             activation += dendrite_acts[dendrite_index];
         }
@@ -187,7 +187,7 @@ void Decoder::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = params.lr * 255.0f * error * (1.0f - dendrite_acts[dendrite_index] * dendrite_acts[dendrite_index]);
+                        float delta = params.lr * 255.0f * error * (dendrite_acts[dendrite_index] > 0.0f);
 
                         vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta, state)));
                     }
