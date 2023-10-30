@@ -52,6 +52,8 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
+    Float_Buffer hidden_acts;
+
     Float_Buffer dendrite_acts;
 
     Float_Buffer dendrite_deltas;
