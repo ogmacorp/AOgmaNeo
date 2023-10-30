@@ -97,7 +97,7 @@ void Decoder::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_acts[dendrite_index] = sigmoidf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
+            dendrite_acts[dendrite_index] = tanhf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
 
             activation += dendrite_acts[dendrite_index];
         }
@@ -172,8 +172,8 @@ void Decoder::learn(
                     int wi_target = di + wi_start_target;
                     int wi_max = di + wi_start_max;
 
-                    float delta_target = params.lr * 255.0f * (1.0f - dendrite_acts[dendrite_index_target]) * dendrite_acts[dendrite_index_target];
-                    float delta_max = -params.lr * 255.0f * (1.0f - dendrite_acts[dendrite_index_max]) * dendrite_acts[dendrite_index_max];
+                    float delta_target = params.lr * 255.0f * (1.0f - dendrite_acts[dendrite_index_target] * dendrite_acts[dendrite_index_target]);
+                    float delta_max = -params.lr * 255.0f * (1.0f - dendrite_acts[dendrite_index_max] * dendrite_acts[dendrite_index_max]);
 
                     vl.weights[wi_target] = min(255, max(0, vl.weights[wi_target] + rand_roundf(delta_target, state)));
                     vl.weights[wi_max] = min(255, max(0, vl.weights[wi_max] + rand_roundf(delta_max, state)));
@@ -212,7 +212,7 @@ void Decoder::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            vl.weights[i] = (rand() % 128) + 64;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
