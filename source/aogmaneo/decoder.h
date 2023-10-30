@@ -146,6 +146,11 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden activations
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
+    }
+
     // get the dendrite states
     const Float_Buffer &get_dendrite_acts() const {
         return dendrite_acts;

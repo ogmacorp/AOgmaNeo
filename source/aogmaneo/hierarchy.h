@@ -212,9 +212,10 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        assert(io_types[i] == action);
+        if (io_types[i] == action)
+            return actors[d_indices[i]].get_hidden_acts();
 
-        return actors[d_indices[i]].get_hidden_acts();
+        return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
     // whether this layer received on update this timestep
