@@ -42,7 +42,7 @@ public:
 
         Params()
         :
-        scale(4.0f),
+        scale(8.0f),
         dlr(0.1f),
         wlr(0.01f)
         {}
@@ -63,8 +63,6 @@ private:
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Float_Buffer dendrite_weights;
 
     // --- kernels ---
 
