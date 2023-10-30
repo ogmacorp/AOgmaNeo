@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "decoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -98,7 +97,7 @@ void Decoder::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_acts[dendrite_index] = tanhf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
+            dendrite_acts[dendrite_index] = sigmoidf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
 
             float dendrite_sign = (di < num_dendrites_per_cell / 2) * 2.0f - 1.0f;
 
@@ -173,7 +172,7 @@ void Decoder::learn(
 
                         float dendrite_sign = (di < num_dendrites_per_cell / 2) * 2.0f - 1.0f;
 
-                        float delta = params.lr * 255.0f * error * dendrite_sign * (1.0f - dendrite_acts[dendrite_index] * dendrite_acts[dendrite_index]);
+                        float delta = params.lr * 255.0f * error * dendrite_sign * (1.0f - dendrite_acts[dendrite_index]) * dendrite_acts[dendrite_index];
 
                         vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta, state)));
                     }
