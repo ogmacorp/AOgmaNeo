@@ -99,9 +99,7 @@ void Decoder::forward(
 
             dendrite_acts[dendrite_index] = sigmoidf((dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale);
 
-            float dendrite_sign = (di < num_dendrites_per_cell / 2) * 2.0f - 1.0f;
-
-            activation += dendrite_sign * dendrite_acts[dendrite_index];
+            activation += dendrite_acts[dendrite_index];
         }
 
         if (activation > max_activation) {
@@ -174,10 +172,8 @@ void Decoder::learn(
                     int wi_target = di + wi_start_target;
                     int wi_max = di + wi_start_max;
 
-                    float dendrite_sign = (di < num_dendrites_per_cell / 2) * 2.0f - 1.0f;
-
-                    float delta_target = params.lr * 255.0f * dendrite_sign * (1.0f - dendrite_acts[dendrite_index_target]) * dendrite_acts[dendrite_index_target];
-                    float delta_max = -params.lr * 255.0f * dendrite_sign * (1.0f - dendrite_acts[dendrite_index_max]) * dendrite_acts[dendrite_index_max];
+                    float delta_target = params.lr * 255.0f * (1.0f - dendrite_acts[dendrite_index_target]) * dendrite_acts[dendrite_index_target];
+                    float delta_max = -params.lr * 255.0f * (1.0f - dendrite_acts[dendrite_index_max]) * dendrite_acts[dendrite_index_max];
 
                     vl.weights[wi_target] = min(255, max(0, vl.weights[wi_target] + rand_roundf(delta_target, state)));
                     vl.weights[wi_max] = min(255, max(0, vl.weights[wi_max] + rand_roundf(delta_max, state)));
