@@ -41,7 +41,7 @@ public:
 
         Params()
         :
-        scale(16.0f),
+        scale(32.0f),
         lr(0.01f)
         {}
     };
