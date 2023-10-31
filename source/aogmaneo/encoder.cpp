@@ -25,7 +25,11 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
-        float delta = params.elr * 255.0f * errors[hidden_column_index];
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_deltas[hidden_cell_index] = params.elr * 255.0f * errors[hidden_column_index] * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]);;
+        }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -54,9 +58,15 @@ void Encoder::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = hidden_ci_prev + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
+                    int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta, state)));
+                    for (int hc = 0; hc < hidden_size.z; hc++) {
+                        int hidden_cell_index = hc + hidden_cells_start;
+
+                        int wi = hc + wi_start;
+
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index], state)));
+                    }
                 }
         }
     }
@@ -374,6 +384,8 @@ void Encoder::init_random(
 
     hidden_gates = Float_Buffer(num_hidden_columns, 0.0f);
 
+    hidden_deltas.resize(num_hidden_cells);
+
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
 
@@ -510,6 +522,8 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hidden_gates[0]), hidden_gates.size() * sizeof(float));
+
+    hidden_deltas.resize(num_hidden_cells);
 
     int num_visible_layers = visible_layers.size();
 

@@ -72,6 +72,8 @@ private:
 
     Float_Buffer hidden_gates;
 
+    Float_Buffer hidden_deltas;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
