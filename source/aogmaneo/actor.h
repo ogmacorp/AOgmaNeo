@@ -73,8 +73,6 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Float_Buffer dendrite_deltas;
-
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors

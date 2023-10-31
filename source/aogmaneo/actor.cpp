@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -102,11 +103,11 @@ void Actor::forward(
 
             float act = dendrite_acts[dendrite_index] / count;
 
+            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+
             float sign = (di < half_num_dendrites_per_cell) * 2.0f - 1.0f;
 
-            dendrite_acts[dendrite_index] = sign * ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
-
-            activation += dendrite_acts[dendrite_index];
+            activation += dendrite_acts[dendrite_index] * sign;
         }
 
         hidden_acts[hidden_cell_index] = activation;
@@ -116,6 +117,7 @@ void Actor::forward(
             max_index = hc;
         }
     }
+    std::cout << max_activation << std::endl;
 
     hidden_cis[hidden_column_index] = max_index;
 }
@@ -214,11 +216,11 @@ void Actor::learn(
 
             float act = dendrite_acts[dendrite_index] / count;
 
+            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+
             float sign = (di < half_num_dendrites_per_cell) * 2.0f - 1.0f;
 
-            dendrite_acts[dendrite_index] = sign * ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
-
-            activation += dendrite_acts[dendrite_index];
+            activation += dendrite_acts[dendrite_index] * sign;
         }
 
         max_activation_next = max(max_activation_next, activation);
@@ -301,11 +303,11 @@ void Actor::learn(
 
             float act = dendrite_acts[dendrite_index] / count;
 
+            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+
             float sign = (di < half_num_dendrites_per_cell) * 2.0f - 1.0f;
 
-            dendrite_acts[dendrite_index] = sign * ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
-
-            activation += dendrite_acts[dendrite_index];
+            activation += dendrite_acts[dendrite_index] * sign;
         }
 
         hidden_acts[hidden_cell_index] = activation;
@@ -436,8 +438,6 @@ void Actor::init_random(
 
     dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
-
-    dendrite_deltas.resize(num_dendrites);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -621,8 +621,6 @@ void Actor::read(
 
     dendrite_acts.resize(num_dendrites);
     hidden_acts.resize(num_hidden_cells);
-
-    dendrite_deltas.resize(num_dendrites);
 
     int num_visible_layers;
 

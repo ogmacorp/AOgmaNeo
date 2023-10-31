@@ -239,8 +239,6 @@ void Decoder::init_random(
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
     dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
-
-    dendrite_deltas.resize(num_dendrites);
 }
 
 void Decoder::step(
@@ -353,8 +351,6 @@ void Decoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&dendrite_acts[0]), dendrite_acts.size() * sizeof(float));
-
-    dendrite_deltas.resize(num_dendrites);
 
     int num_visible_layers;
 
