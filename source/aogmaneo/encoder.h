@@ -57,7 +57,7 @@ public:
         :
         escale(64.0f),
         rscale(8.0f),
-        elr(0.001f),
+        elr(0.01f),
         rlr(0.01f),
         gcurve(32.0f)
         {}
