@@ -413,7 +413,7 @@ void Actor::init_random(
     // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int num_dendrites = num_hidden_columns * num_dendrites_per_cell;
+    int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -613,7 +613,7 @@ void Actor::read(
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int num_dendrites = num_hidden_columns * num_dendrites_per_cell;
+    int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
 
     hidden_cis.resize(num_hidden_columns);
 
