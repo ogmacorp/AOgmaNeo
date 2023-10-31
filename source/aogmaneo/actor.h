@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights;
     };
 
     // history sample for delayed updates
@@ -42,20 +42,18 @@ public:
     };
 
     struct Params {
-        float scale; // byte scaling
-        float dlr; // dendritic learning rate
-        float wlr; // weight learning rate
+        float lr; // learning rate
         float cons; // convervativeness
+        float leak;
         float discount; // discount fActor
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        scale(4.0f),
-        dlr(0.1f),
-        wlr(0.01f),
+        lr(0.01f),
         cons(0.0f),
+        leak(0.1f),
         discount(0.99f),
         n_steps(16),
         history_iters(16)
@@ -64,7 +62,7 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int num_dendrites_per_column;
+    int num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
@@ -82,8 +80,6 @@ private:
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Float_Buffer dendrite_weights;
 
     // --- kernels ---
 
@@ -105,7 +101,7 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int num_dendrites_per_column,
+        int num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );

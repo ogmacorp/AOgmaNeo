@@ -37,34 +37,32 @@ public:
 
     struct Params {
         float scale; // scale of softmax
-        float dlr; // learning rate
-        float wlr; // learning rate
+        float lr; // learning rate
+        float leak;
 
         Params()
         :
-        scale(4.0f),
-        dlr(0.5f),
-        wlr(0.01f)
+        scale(32.0f),
+        lr(0.03f),
+        leak(0.1f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
-    int num_dendrites_per_column;
+    int num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden state
 
-    Float_Buffer dendrite_acts;
-
     Float_Buffer hidden_acts;
+
+    Float_Buffer dendrite_acts;
 
     Float_Buffer dendrite_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Float_Buffer dendrite_weights;
 
     // --- kernels ---
 
@@ -85,7 +83,7 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output/prediction size
-        int num_dendrites_per_column,
+        int num_dendrites_per_cell,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
@@ -150,14 +148,14 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden activations
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
+    }
+
     // get the dendrite states
     const Float_Buffer &get_dendrite_acts() const {
         return dendrite_acts;
-    }
-
-    // get the hidden states (predictions)
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
     }
 
     // get the hidden size
