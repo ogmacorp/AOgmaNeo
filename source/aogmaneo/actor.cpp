@@ -386,7 +386,9 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = params.lr * error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                        float sign = (di < half_num_dendrites_per_cell) * 2.0f - 1.0f;
+
+                        float delta = params.lr * error * sign * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
 
                         vl.weights[wi] += delta;
                     }
