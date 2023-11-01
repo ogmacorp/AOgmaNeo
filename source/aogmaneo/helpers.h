@@ -32,7 +32,7 @@ const float limit_max = 999999.0f;
 const float limit_small = 0.000001f;
 
 const int rand_subseed_offset = 12345;
-const int init_weight_noisei = 8;
+const int init_weight_noisei = 9;
 const float init_weight_noisef = 0.01f;
 
 inline float modf(
@@ -101,10 +101,7 @@ T min(
     T left,
     T right
 ) {
-    if (left < right)
-        return left;
-    
-    return right;
+    return (left < right) * (left - right) + right;
 }
 
 template <typename T>
@@ -112,10 +109,7 @@ T max(
     T left,
     T right
 ) {
-    if (left > right)
-        return left;
-    
-    return right;
+    return (left > right) * (left - right) + right;
 }
 
 template <typename T>
