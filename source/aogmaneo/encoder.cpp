@@ -239,9 +239,6 @@ void Encoder::learn(
         vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / max(1, count * 255) - 1.0f) * params.scale));
     }
 
-    if (max_index == target_ci)
-        return;
-
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 hidden_pos = Int2(ix, iy);
