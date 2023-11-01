@@ -39,12 +39,14 @@ public:
         float scale; // scale of softmax
         float lr; // learning rate
         float clip; // gradient clip
+        float leak;
 
         Params()
         :
-        scale(4.0f),
-        lr(0.02f),
-        clip(1.0f)
+        scale(8.0f),
+        lr(0.01f),
+        clip(1.0f),
+        leak(0.1f)
         {}
     };
 

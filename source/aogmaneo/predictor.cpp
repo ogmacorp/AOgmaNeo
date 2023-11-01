@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "predictor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -188,7 +189,7 @@ void Predictor::backward(
 
     sum /= max(1, count);
 
-    vl.errors[visible_column_index] = sum * (in_act > 0.0f);
+    vl.errors[visible_column_index] = sum;
 }
 
 void Predictor::init_random(
