@@ -47,18 +47,14 @@ public:
     };
 
     struct Params {
-        float escale;
-        float rscale;
-        float elr; // error learning rate
-        float rlr; // recon learning rate
+        float scale;
+        float lr; // error learning rate
         float gcurve;
 
         Params()
         :
-        escale(64.0f),
-        rscale(8.0f),
-        elr(0.01f),
-        rlr(0.01f),
+        scale(8.0f),
+        lr(0.01f),
         gcurve(32.0f)
         {}
     };
@@ -83,9 +79,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        Float_Buffer_View errors,
-        bool learn_enabled,
-        unsigned long* state,
         const Params &params
     );
 
@@ -94,9 +87,10 @@ private:
         const Params &params
     );
 
-    void learn_recon(
+    void learn(
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
+        Float_Buffer_View errors,
         int vli,
         unsigned long* state,
         const Params &params
