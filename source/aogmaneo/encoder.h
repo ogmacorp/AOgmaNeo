@@ -89,7 +89,6 @@ private:
 
     void learn(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
         Float_Buffer_View errors,
         int vli,
         unsigned long* state,

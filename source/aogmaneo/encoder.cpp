@@ -155,7 +155,6 @@ void Encoder::update_gates(
 
 void Encoder::learn(
     const Int2 &column_pos,
-    Int_Buffer_View input_cis,
     Float_Buffer_View errors,
     int vli,
     unsigned long* state,
@@ -188,7 +187,7 @@ void Encoder::learn(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
-    int target_ci = input_cis[visible_column_index];
+    int target_ci = vl.input_cis_prev[visible_column_index];
 
     // clear
     for (int vc = 0; vc < vld.size.z; vc++) {
@@ -355,7 +354,7 @@ void Encoder::step(
 
             unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-            learn(pos, input_cis[vli], errors, vli, &state, params);
+            learn(pos, errors, vli, &state, params);
         }
     }
 
