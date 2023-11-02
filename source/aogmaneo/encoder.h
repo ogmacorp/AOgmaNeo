@@ -54,8 +54,7 @@ public:
         Params()
         :
         scale(8.0f),
-        lr(0.1f),
-        gcurve(32.0f)
+        lr(0.1f)
         {}
     };
 
@@ -65,8 +64,6 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_gates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -79,11 +76,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
         const Params &params
     );
 
