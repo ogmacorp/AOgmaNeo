@@ -25,8 +25,6 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
-    float total_importance = 0.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -52,8 +50,6 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         float influence = vl.importance / (sub_count * 255);
-
-        total_importance += vl.importance;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
