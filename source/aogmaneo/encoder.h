@@ -66,6 +66,8 @@ private:
 
     Float_Buffer hidden_acts;
 
+    Float_Buffer hidden_gates;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -77,6 +79,11 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void update_gates(
+        const Int2 &column_pos,
         const Params &params
     );
 
