@@ -453,7 +453,7 @@ int Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;

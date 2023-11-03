@@ -192,7 +192,7 @@ void Encoder::learn(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                float modulation = max(0.0f, errors[hidden_column_index] + (max_index != target_ci));
+                float modulation = max(0.0f, errors[hidden_column_index] * params.error_mod) + (max_index != target_ci);
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
