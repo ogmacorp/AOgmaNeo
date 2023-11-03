@@ -49,12 +49,14 @@ public:
     struct Params {
         float scale;
         float lr; // error learning rate
+        float bias; // bias toward error-modulated updates even when there is no reconstruct error
         float gcurve;
 
         Params()
         :
         scale(8.0f),
-        lr(0.01f),
+        lr(0.1f),
+        bias(0.01f),
         gcurve(32.0f)
         {}
     };
