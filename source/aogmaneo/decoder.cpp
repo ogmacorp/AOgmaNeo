@@ -180,7 +180,7 @@ void Decoder::learn(
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    float error = (hc == target_ci) - hidden_acts[hidden_cell_index];
+                    float error = (hc == target_ci);// - (hc == hidden_cis[hidden_column_index]);//hidden_acts[hidden_cell_index];
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
