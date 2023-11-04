@@ -80,61 +80,44 @@ void Actor::forward(
 
     hidden_values[hidden_column_index] = value;
 
-    if (params.temperature > 0.0f) {
-        float max_activation = limit_min;
+    float max_activation = limit_min;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_acts[hidden_cell_index] /= count;
+        hidden_acts[hidden_cell_index] /= count;
 
-            max_activation = max(max_activation, hidden_acts[hidden_cell_index]);
-        }
-        
-        float total = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            hidden_acts[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) / params.temperature);
-            
-            total += hidden_acts[hidden_cell_index];
-        }
-
-        float cusp = randf(state) * total;
-
-        int select_index = 0;
-        float sum_so_far = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            sum_so_far += hidden_acts[hidden_cell_index];
-
-            if (sum_so_far >= cusp) {
-                select_index = hc;
-
-                break;
-            }
-        }
-        
-        hidden_cis[hidden_column_index] = select_index;
+        max_activation = max(max_activation, hidden_acts[hidden_cell_index]);
     }
-    else { // deterministic
-        int max_index = 0;
-        float max_activation = limit_min;
+    
+    float total = 0.0f;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-            if (hidden_acts[hidden_cell_index] > max_activation) {
-                max_activation = hidden_acts[hidden_cell_index];
-                max_index = hc;
-            }
-        }
-
-        hidden_cis[hidden_column_index] = max_index;
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+        
+        total += hidden_acts[hidden_cell_index];
     }
+
+    float cusp = randf(state) * total;
+
+    int select_index = 0;
+    float sum_so_far = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        sum_so_far += hidden_acts[hidden_cell_index];
+
+        if (sum_so_far >= cusp) {
+            select_index = hc;
+
+            break;
+        }
+    }
+    
+    hidden_cis[hidden_column_index] = select_index;
 }
 
 void Actor::learn(
@@ -272,7 +255,7 @@ void Actor::learn(
 
     float total_inv = 1.0f / max(limit_small, total);
 
-    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+    float rate = params.alr * (mimic + (1.0f - mimic) * ((td_error_value > 0.0f) * 2.0f - 1.0f));
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
