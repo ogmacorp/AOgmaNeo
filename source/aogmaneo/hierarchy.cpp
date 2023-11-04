@@ -122,7 +122,7 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         a_visible_layer_descs[1] = a_visible_layer_descs[0];
 
-                    actors[d_index].init_random(io_sizes[i], io_descs[i].history_capacity, a_visible_layer_descs);
+                    actors[d_index].init_random(io_sizes[i], a_visible_layer_descs);
 
                     i_indices[io_sizes.size() + d_index] = i;
                     d_indices[i] = d_index;
@@ -266,7 +266,7 @@ void Hierarchy::step(
 
             if (l == 0) {
                 for (int d = 0; d < actors.size(); d++)
-                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, mimic, params.ios[i_indices[d + io_sizes.size()]].actor);
+                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, mimic, learn_enabled, params.ios[i_indices[d + io_sizes.size()]].actor);
             }
         }
     }
