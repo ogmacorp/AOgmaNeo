@@ -100,7 +100,7 @@ void Actor::forward(
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+            dendrite_acts[dendrite_index] = sigmoidf(act);//((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
 
             activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
@@ -208,7 +208,7 @@ void Actor::learn(
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+            dendrite_acts[dendrite_index] = sigmoidf(act);//((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
 
             activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
@@ -291,7 +291,7 @@ void Actor::learn(
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+            dendrite_acts[dendrite_index] = sigmoidf(act);//((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
 
             activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
@@ -376,7 +376,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = params.dlr * error * hidden_weights[dendrite_index] * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                        float delta = params.dlr * error * hidden_weights[dendrite_index] * (1.0f - dendrite_acts[dendrite_index]) * dendrite_acts[dendrite_index];//((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
 
                         vl.weights[wi] += delta;
                     }
@@ -430,7 +430,7 @@ void Actor::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-init_weight_noisef, init_weight_noisef);
+            vl.weights[i] = randf(-1.0f, 1.0f);
     }
 
     // hidden cis
@@ -442,7 +442,7 @@ void Actor::init_random(
     hidden_weights.resize(num_dendrites);
 
     for (int i = 0; i < hidden_weights.size(); i++)
-        hidden_weights[i] = randf(-1.0f, 1.0f);
+        hidden_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
     // create (pre-allocated) history samples
     history_size = 0;
