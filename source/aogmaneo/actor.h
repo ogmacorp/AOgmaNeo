@@ -30,7 +30,9 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Byte_Buffer dendrite_weights;
+
+        Float_Buffer value_weights;
     };
 
     // history sample for delayed updates
@@ -44,18 +46,20 @@ public:
     struct Params {
         float scale; // byte scaling
         float vlr; // value learning rate
-        float alr; // action learning rate
-        float wlr; // weight learning rate
+        float dlr; // dendrite learning rate
+        float hlr; // hidden learning rate
+        float leak;
         float discount; // discount fActor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        scale(4.0f),
-        vlr(0.1f),
-        alr(0.5f),
-        wlr(0.01f),
+        scale(8.0f),
+        vlr(0.01f),
+        dlr(0.03f),
+        hlr(0.01f),
+        leak(0.1f),
         discount(0.99f),
         min_steps(16),
         history_iters(16)
@@ -64,7 +68,7 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int num_dendrites_per_column;
+    int num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
@@ -75,12 +79,9 @@ private:
 
     Float_Buffer hidden_acts; // temporary buffer
 
-    Float_Buffer dendrite_deltas;
-
     Float_Buffer hidden_values; // hidden value function output buffer
 
-    Float_Buffer value_dendrite_weights;
-    Float_Buffer action_dendrite_weights;
+    Float_Buffer hidden_weights;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
@@ -111,7 +112,7 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int num_dendrites_per_column,
+        int num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );

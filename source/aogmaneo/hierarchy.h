@@ -37,7 +37,7 @@ public:
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
-            int num_dendrites_per_cell = 3,
+            int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
             int history_capacity = 128
@@ -66,7 +66,7 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
-            int num_dendrites_per_cell = 3,
+            int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
@@ -162,7 +162,7 @@ public:
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
         float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        float mimic = 0.0f
     );
 
     void clear_state();
