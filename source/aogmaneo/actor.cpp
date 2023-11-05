@@ -430,7 +430,7 @@ void Actor::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-init_weight_noisef, init_weight_noisef);
     }
 
     // hidden cis
@@ -442,7 +442,7 @@ void Actor::init_random(
     hidden_weights.resize(num_dendrites);
 
     for (int i = 0; i < hidden_weights.size(); i++)
-        hidden_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
+        hidden_weights[i] = randf(-1.0f, 1.0f);
 
     // create (pre-allocated) history samples
     history_size = 0;
