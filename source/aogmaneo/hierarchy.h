@@ -30,17 +30,21 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
+        int history_capacity; // actor history max window size
+
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
             int up_radius = 2,
-            int down_radius = 2
+            int down_radius = 2,
+            int history_capacity = 256
         )
         :
         size(size),
         type(type),
         up_radius(up_radius),
-        down_radius(down_radius)
+        down_radius(down_radius),
+        history_capacity(history_capacity)
         {}
     };
 
@@ -150,8 +154,7 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        float reward = 0.0f // reward
     );
 
     void clear_state();
