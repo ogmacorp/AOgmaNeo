@@ -57,8 +57,8 @@ public:
         :
         scale(16.0f),
         vlr(0.01f),
-        dlr(0.03f),
-        hlr(0.01f),
+        dlr(0.0001f),
+        hlr(0.0001f),
         leak(0.1f),
         discount(0.99f),
         min_steps(16),
