@@ -49,15 +49,11 @@ public:
     struct Params {
         float scale;
         float lr; // error learning rate
-        float bias; // bias toward error-modulated updates even when there is no reconstruct error
-        float gcurve;
 
         Params()
         :
         scale(8.0f),
-        lr(0.1f),
-        bias(0.01f),
-        gcurve(32.0f)
+        lr(0.1f)
         {}
     };
 
@@ -67,8 +63,6 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_gates;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

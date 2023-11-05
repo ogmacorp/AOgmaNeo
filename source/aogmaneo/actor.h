@@ -30,8 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer value_weights; // value function weights
-        Float_Buffer action_weights; // action function weights
+        Float_Buffer weights;
     };
 
     // history sample for delayed updates
@@ -43,20 +42,20 @@ public:
     };
 
     struct Params {
-        float vlr; // value learning rate
-        float alr; // action learning rate
+        float lr; // value learning rate
+        float cons; // convervativeness
         float discount; // discount fActor
-        float temperature; // exploration amount
-        int min_steps; // minimum steps before sample can be used
+        float gap; // action gap
+        int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        vlr(0.01f),
-        alr(0.01f),
+        lr(0.01f),
+        cons(0.0f),
         discount(0.99f),
-        temperature(1.0f),
-        min_steps(16),
+        gap(0.9f),
+        n_steps(16),
         history_iters(16)
         {}
     };
@@ -71,8 +70,6 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_values; // hidden value function output buffer
-
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors
@@ -84,16 +81,12 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        unsigned long* state,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
         int t,
-        float r,
-        float d,
-        float mimic,
         const Params &params
     );
 
@@ -111,7 +104,6 @@ public:
         Int_Buffer_View hidden_target_cis_prev,
         float reward,
         bool learn_enabled,
-        float mimic,
         const Params &params
     );
 
