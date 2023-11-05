@@ -37,13 +37,15 @@ public:
 
     struct Params {
         float scale; // scale of softmax
-        float lr; // learning rate
+        float dlr; // dendrite learning rate
+        float hlr; // hidden learning rate
         float leak;
 
         Params()
         :
         scale(32.0f),
-        lr(0.03f),
+        dlr(0.03f),
+        hlr(0.01f),
         leak(0.1f)
         {}
     };

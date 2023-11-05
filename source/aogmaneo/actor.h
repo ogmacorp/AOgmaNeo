@@ -42,7 +42,8 @@ public:
     };
 
     struct Params {
-        float lr; // learning rate
+        float dlr; // dendrite learning rate
+        float hlr; // hidden learning rate
         float cons; // convervativeness
         float leak;
         float discount; // discount fActor
@@ -52,7 +53,8 @@ public:
 
         Params()
         :
-        lr(0.001f),
+        dlr(0.01f),
+        hlr(0.001f),
         cons(0.0f),
         leak(0.1f),
         discount(0.99f),
