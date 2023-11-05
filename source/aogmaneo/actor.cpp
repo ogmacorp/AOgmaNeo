@@ -312,8 +312,6 @@ void Actor::learn(
     float dAL = dQ - params.gap * (max_activation - value_prev);
     //float dPAL = max(dAL, dQ - params.gap * (max_activation_next - next_q_last_action));
     
-    float dAction = tanhf(dAL); // squash
-
     // softmax
     float total = 0.0f;
 
@@ -369,7 +367,7 @@ void Actor::learn(
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dAction;
+                    float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dAL;
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
@@ -391,7 +389,7 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dAction;
+        float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dAL;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
