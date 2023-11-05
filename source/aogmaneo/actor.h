@@ -52,7 +52,7 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.0001f),
         cons(0.0f),
         leak(0.1f),
         discount(0.99f),
