@@ -46,6 +46,7 @@ public:
         float cons; // convervativeness
         float leak;
         float discount; // discount fActor
+        float gap; // action gap
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
@@ -55,6 +56,7 @@ public:
         cons(0.0f),
         leak(0.1f),
         discount(0.99f),
+        gap(0.8f),
         n_steps(16),
         history_iters(16)
         {}
@@ -72,6 +74,8 @@ private:
     Float_Buffer dendrite_acts;
 
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_weights;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 

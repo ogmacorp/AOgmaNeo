@@ -105,9 +105,7 @@ void Actor::forward(
 
             dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
 
-            float sign = (di < half_num_dendrites_per_cell) * 2.0f - 1.0f;
-
-            activation += dendrite_acts[dendrite_index] * sign;
+            activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
 
         hidden_acts[hidden_cell_index] = activation;
@@ -218,9 +216,7 @@ void Actor::learn(
 
             dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
 
-            float sign = (di < half_num_dendrites_per_cell) * 2.0f - 1.0f;
-
-            activation += dendrite_acts[dendrite_index] * sign;
+            activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
 
         max_activation_next = max(max_activation_next, activation);
@@ -305,9 +301,7 @@ void Actor::learn(
 
             dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
 
-            float sign = (di < half_num_dendrites_per_cell) * 2.0f - 1.0f;
-
-            activation += dendrite_acts[dendrite_index] * sign;
+            activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
 
         hidden_acts[hidden_cell_index] = activation;
@@ -322,7 +316,9 @@ void Actor::learn(
 
     float value_prev = hidden_acts[target_ci + hidden_cells_start];
 
-    float td_error = value - value_prev;
+    float dQ = value - value_prev;
+    float dAL = dQ - params.gap * (max_activation - value_prev);
+    //float dPAL = max(dAL, dQ - params.gap * (max_activation_next - next_q_last_action));
 
     // softmax
     float total = 0.0f;
@@ -379,7 +375,7 @@ void Actor::learn(
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error;
+                    float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dAL;
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
@@ -388,9 +384,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float sign = (di < half_num_dendrites_per_cell) * 2.0f - 1.0f;
-
-                        float delta = params.lr * error * sign * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                        float delta = params.lr * error * hidden_weights[dendrite_index] * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
 
                         vl.weights[wi] += delta;
                     }
@@ -430,7 +424,7 @@ void Actor::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-init_weight_noisef, init_weight_noisef);
+            vl.weights[i] = randf(-1.0f, 1.0f);
     }
 
     // hidden cis
@@ -438,6 +432,11 @@ void Actor::init_random(
 
     dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+
+    hidden_weights.resize(num_dendrites);
+
+    for (int i = 0; i < hidden_weights.size(); i++)
+        hidden_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -526,8 +525,10 @@ int Actor::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float);
     }
+
+    size += hidden_weights.size() * sizeof(float);
 
     size += 3 * sizeof(int);
 
@@ -580,8 +581,10 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
+
+    writer.write(reinterpret_cast<const void*>(&hidden_weights[0]), hidden_weights.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
 
@@ -643,8 +646,12 @@ void Actor::read(
 
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
+
+    hidden_weights.resize(num_dendrites);
+
+    reader.read(reinterpret_cast<void*>(&hidden_weights[0]), hidden_weights.size() * sizeof(float));
 
     reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
 
