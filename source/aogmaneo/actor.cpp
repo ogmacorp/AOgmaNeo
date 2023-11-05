@@ -248,6 +248,49 @@ void Actor::learn(
 
     value /= count;
 
+    float max_activation = limit_min;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+
+        float activation = 0.0f;
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + dendrites_start;
+
+            float act = (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale;
+
+            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+
+            activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
+        }
+
+        hidden_acts[hidden_cell_index] = activation;
+
+        max_activation = max(max_activation, activation);
+    }
+
+    // softmax
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
+    }
+
     float td_error_value = new_value - value;
     
     float value_delta = params.vlr * td_error_value;
