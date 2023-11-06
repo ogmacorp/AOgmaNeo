@@ -47,7 +47,6 @@ public:
         float vlr; // value learning rate
         float alr; // action learning rate
         float discount; // discount fActor
-        float temperature; // exploration amount
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
@@ -56,7 +55,6 @@ public:
         vlr(0.01f),
         alr(0.01f),
         discount(0.99f),
-        temperature(1.0f),
         min_steps(16),
         history_iters(16)
         {}

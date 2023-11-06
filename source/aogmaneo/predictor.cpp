@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "predictor.h"
-#include <iostream>
 
 using namespace aon;
 

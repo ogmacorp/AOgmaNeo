@@ -64,8 +64,8 @@ void Actor::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int value_wi = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
-                int wi_start = hidden_size.z * value_wi;
+                int wi_value = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_start = hidden_size.z * wi_value;
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
@@ -75,7 +75,7 @@ void Actor::forward(
                     hidden_acts[hidden_cell_index] += vl.action_weights[wi] * in_act;
                 }
 
-                value += vl.value_weights[value_wi] * in_act;
+                value += vl.value_weights[wi_value] * in_act;
             }
     }
 
@@ -83,61 +83,44 @@ void Actor::forward(
 
     hidden_values[hidden_column_index] = value;
 
-    if (params.temperature > 0.0f) {
-        float max_activation = limit_min;
+    float max_activation = limit_min;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_acts[hidden_cell_index] /= count;
+        hidden_acts[hidden_cell_index] /= count;
 
-            max_activation = max(max_activation, hidden_acts[hidden_cell_index]);
-        }
-        
-        float total = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            hidden_acts[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) / params.temperature);
-            
-            total += hidden_acts[hidden_cell_index];
-        }
-
-        float cusp = randf(state) * total;
-
-        int select_index = 0;
-        float sum_so_far = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            sum_so_far += hidden_acts[hidden_cell_index];
-
-            if (sum_so_far >= cusp) {
-                select_index = hc;
-
-                break;
-            }
-        }
-        
-        hidden_cis[hidden_column_index] = select_index;
+        max_activation = max(max_activation, hidden_acts[hidden_cell_index]);
     }
-    else { // deterministic
-        int max_index = 0;
-        float max_activation = limit_min;
+    
+    float total = 0.0f;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-            if (hidden_acts[hidden_cell_index] > max_activation) {
-                max_activation = hidden_acts[hidden_cell_index];
-                max_index = hc;
-            }
-        }
-
-        hidden_cis[hidden_column_index] = max_index;
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+        
+        total += hidden_acts[hidden_cell_index];
     }
+
+    float cusp = randf(state) * total;
+
+    int select_index = 0;
+    float sum_so_far = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        sum_so_far += hidden_acts[hidden_cell_index];
+
+        if (sum_so_far >= cusp) {
+            select_index = hc;
+
+            break;
+        }
+    }
+
+    hidden_cis[hidden_column_index] = select_index;
 }
 
 void Actor::learn(
@@ -238,9 +221,9 @@ void Actor::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int value_wi = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_value = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
 
-                int wi_start = hidden_size.z * value_wi;
+                int wi_start = hidden_size.z * wi_value;
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
@@ -250,7 +233,7 @@ void Actor::learn(
                     hidden_acts[hidden_cell_index] += vl.action_weights[wi] * in_act;
                 }
 
-                vl.value_weights[value_wi] += delta_value * in_act;
+                vl.value_weights[wi_value] += delta_value * in_act;
             }
     }
 
@@ -278,13 +261,16 @@ void Actor::learn(
 
     float total_inv = 1.0f / max(limit_small, total);
 
+    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] *= total_inv;
-    }
 
-    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+        // re-use as deltas
+        hidden_acts[hidden_cell_index] = rate * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+    }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -323,9 +309,7 @@ void Actor::learn(
 
                     int wi = hc + wi_start;
 
-                    float delta_action = rate * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
-
-                    vl.action_weights[wi] += delta_action * in_act;
+                    vl.action_weights[wi] += hidden_acts[hidden_cell_index] * in_act;
                 }
             }
     }
