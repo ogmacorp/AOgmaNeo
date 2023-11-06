@@ -26,6 +26,8 @@ void Routed_Layer::forward(
     float activation = 0.0f;
     int count = 0;
 
+    const float weight_scale = params.scale / 127.0f;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -61,13 +63,15 @@ void Routed_Layer::forward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                activation += vl.weights[wi] * in_act;
+                float w = vl.weights[wi] * weight_scale + 1.0f;
+
+                activation += w * in_act;
             }
     }
 
-    activation /= count * 127;
+    activation /= count;
 
-    hidden_acts[hidden_column_index] = 1.0f + max(0.0f, activation * params.scale);
+    hidden_acts[hidden_column_index] = activation;
 }
 
 void Routed_Layer::backward(
@@ -114,6 +118,8 @@ void Routed_Layer::backward(
     float sum = 0.0f;
     int count = 0;
 
+    const float weight_scale = params.scale / 127.0f;
+
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 hidden_pos = Int2(ix, iy);
@@ -129,9 +135,11 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float error = min(params.clip, max(-params.clip, errors[hidden_column_index] * (hidden_acts[hidden_column_index] > 1.0f)));
+                float error = min(params.clip, max(-params.clip, errors[hidden_column_index]));
 
-                sum += error * vl.weights[wi];
+                float w = vl.weights[wi] * weight_scale + 1.0f;
+
+                sum += error * w;
                 count++;
 
                 if (learn_enabled)
@@ -139,9 +147,9 @@ void Routed_Layer::backward(
             }
         }
 
-    sum /= max(1, count * 127);
+    sum /= max(1, count);
 
-    vl.errors[visible_column_index] = sum * params.scale;
+    vl.errors[visible_column_index] = sum;
 }
 
 void Routed_Layer::init_random(
