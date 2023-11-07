@@ -71,7 +71,7 @@ void Routed_Layer::forward(
 
     activation /= count;
 
-    hidden_acts[hidden_column_index] = activation;
+    hidden_acts[hidden_column_index] = tanhf(activation);
 }
 
 void Routed_Layer::backward(
@@ -135,7 +135,7 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float error = min(params.clip, max(-params.clip, errors[hidden_column_index]));
+                float error = min(params.clip, max(-params.clip, errors[hidden_column_index] * (1.0f - hidden_acts[hidden_column_index] * hidden_acts[hidden_column_index])));
 
                 float w = vl.weights[wi] * weight_scale + 1.0f;
 
@@ -188,7 +188,7 @@ void Routed_Layer::init_random(
         vl.errors.resize(num_visible_columns);
     }
 
-    hidden_acts = Float_Buffer(num_hidden_columns, 0.0f);
+    hidden_acts = Float_Buffer(num_hidden_columns, 1.0f);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
