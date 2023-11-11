@@ -52,8 +52,8 @@ public:
 
         Params()
         :
-        vlr(0.02f),
-        alr(0.02f),
+        vlr(0.01f),
+        alr(0.01f),
         bias(0.7f),
         discount(0.99f),
         min_steps(16),
