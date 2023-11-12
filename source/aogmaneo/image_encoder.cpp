@@ -73,7 +73,7 @@ void Image_Encoder::forward(
 
                         float diff = input - w;
 
-                        sum -= abs(diff);
+                        sum -= diff * diff;
                     }
                 }
         }
