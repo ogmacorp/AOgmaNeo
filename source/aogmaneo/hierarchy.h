@@ -146,8 +146,7 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        float reward = 0.0f // reward
     );
 
     void clear_state();
