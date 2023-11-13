@@ -194,9 +194,6 @@ void Decoder::learn(
 
     int target_ci = hidden_target_cis[hidden_column_index];
 
-    if (hidden_cis[hidden_column_index] == target_ci)
-        return;
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
