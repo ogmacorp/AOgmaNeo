@@ -61,8 +61,8 @@ void Actor::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int value_wi = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
-                int wi_start = hidden_size.z * value_wi;
+                int wi_value = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_start = hidden_size.z * wi_value;
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
@@ -72,7 +72,7 @@ void Actor::forward(
                     hidden_acts[hidden_cell_index] += vl.action_weights[wi];
                 }
 
-                value += vl.value_weights[value_wi];
+                value += vl.value_weights[wi_value];
             }
     }
 
@@ -214,8 +214,8 @@ void Actor::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int value_wi = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
-                int wi_start = hidden_size.z * value_wi;
+                int wi_value = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_start = hidden_size.z * wi_value;
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
@@ -225,7 +225,7 @@ void Actor::learn(
                     hidden_acts[hidden_cell_index] += vl.action_weights[wi];
                 }
 
-                vl.value_weights[value_wi] += delta_value;
+                vl.value_weights[wi_value] += delta_value;
             }
     }
 
@@ -253,7 +253,7 @@ void Actor::learn(
 
     float total_inv = 1.0f / max(limit_small, total);
 
-    float rate = params.alr * (mimic + (1.0f - mimic) * (td_error_value > 0.0f));
+    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
