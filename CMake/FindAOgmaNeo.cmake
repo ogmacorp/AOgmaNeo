@@ -18,7 +18,7 @@ if(AOGMANEO_INCLUDE_DIR)
     set(AOGMANEO_FIND_QUIETLY TRUE)
 endif(AOGMANEO_INCLUDE_DIR)
 
-find_path(AOGMANEO_INCLUDE_DIR aogmaneo/Hierarchy.h)
+find_path(AOGMANEO_INCLUDE_DIR aogmaneo/hierarchy.h)
 
 set(AOGMANEO_NAMES aogmaneo AOgmaNeo AOGMANEO)
 
