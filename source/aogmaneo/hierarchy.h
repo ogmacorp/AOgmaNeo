@@ -63,8 +63,8 @@ public:
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
             int down_radius = 2,
-            int ticks_per_update = 1,
-            int temporal_horizon = 4
+            int ticks_per_update = 2,
+            int temporal_horizon = 2
         )
         :
         hidden_size(hidden_size),
@@ -101,7 +101,7 @@ public:
 private:
     // layers
     Array<Encoder> encoders;
-    Array<Routed_Layer> routed_layers;
+    Array<Array<Routed_Layer>> routed_layers;
     Array<Predictor> predictors;
     Array<Actor> actors;
 
@@ -270,15 +270,17 @@ public:
 
     // retrieve by index
     Routed_Layer &get_routed_layer(
-        int l
+        int l,
+        int i
     ) {
-        return routed_layers[l];
+        return routed_layers[l][i];
     }
 
     const Routed_Layer &get_routed_layer(
-        int l
+        int l,
+        int i
     ) const {
-        return routed_layers[l];
+        return routed_layers[l][i];
     }
 
     Predictor &get_predictor(

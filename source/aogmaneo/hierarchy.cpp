@@ -152,7 +152,10 @@ void Hierarchy::init_random(
             r_visible_layer_descs[0].radius = layer_descs[l].down_radius;
 
             // create decoders
-            routed_layers[l].init_random(layer_descs[l].hidden_size, r_visible_layer_descs);
+            routed_layers[l].resize(layer_descs[l].ticks_per_update);
+
+            for (int i = 0; i < routed_layers[l].size(); i++)
+                routed_layers[l][i].init_random(layer_descs[l].hidden_size, r_visible_layer_descs);
         }
     }
 
@@ -180,7 +183,7 @@ void Hierarchy::step(
             layer_input_cis[0] = encoders[0].get_hidden_cis();
 
             if (routed_layers.size() > 0)
-                layer_input_acts[0] = routed_layers[0].get_hidden_acts();
+                layer_input_acts[0] = routed_layers[0][ticks[1]].get_hidden_acts();
 
             if (io_types[i] == prediction || io_types[i] == action) {
                 predictors[p_index].backward(layer_input_cis, layer_input_acts, input_cis[i], true, params.ios[i].predictor);
@@ -210,6 +213,19 @@ void Hierarchy::step(
     for (int i = 0; i < errors0.size(); i++)
         errors0[i] *= predictors_inv;
 
+    for (int l = 0; l < encoders.size(); l++) {
+        if (learn_enabled && l < encoders.size() - 1) {
+            r_input_cis[0] = encoders[l + 1].get_hidden_cis();
+
+            if (l < routed_layers.size() - 1)
+                r_input_acts[0] = routed_layers[l + 1][ticks[l + 2]].get_hidden_acts();
+            else
+                r_input_acts[0] = Float_Buffer_View(); // empty
+
+            routed_layers[l][ticks[l + 1]].backward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), (l == 0 ? errors0 : routed_layers[l - 1][ticks[l]].get_visible_layer(0).errors), true, params.layers[l].routed_layer);
+        }
+    }
+
      // first tick is always 0
     ticks[0] = 0;
 
@@ -225,17 +241,6 @@ void Hierarchy::step(
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
-        if (learn_enabled && l < encoders.size() - 1) {
-            r_input_cis[0] = encoders[l + 1].get_hidden_cis();
-
-            if (l < routed_layers.size() - 1)
-                r_input_acts[0] = routed_layers[l + 1].get_hidden_acts();
-            else
-                r_input_acts[0] = Float_Buffer_View(); // empty
-
-            routed_layers[l].backward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), (l == 0 ? errors0 : routed_layers[l - 1].get_visible_layer(0).errors), true, params.layers[l].routed_layer);
-        }
-
         // if is time for layer to tick
         if (l == 0 || ticks[l] >= ticks_per_update[l]) {
             // reset tick
@@ -277,11 +282,11 @@ void Hierarchy::step(
         r_input_cis[0] = encoders[l + 1].get_hidden_cis();
 
         if (l < routed_layers.size() - 1) // only set if there is a next layer. Will treat as all 1's if there is no next layer
-            r_input_acts[0] = routed_layers[l + 1].get_hidden_acts();
+            r_input_acts[0] = routed_layers[l + 1][ticks[l + 2]].get_hidden_acts();
         else
             r_input_acts[0] = Float_Buffer_View(); // empty
 
-        routed_layers[l].forward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), params.layers[l].routed_layer);
+        routed_layers[l][ticks[l + 1]].forward(r_input_cis, r_input_acts, encoders[l].get_hidden_cis(), params.layers[l].routed_layer);
     }
 
     // predictors and actors
@@ -292,7 +297,7 @@ void Hierarchy::step(
         r_input_cis[0] = encoders[0].get_hidden_cis();
         
         if (routed_layers.size() > 0)
-            r_input_acts[0] = routed_layers[0].get_hidden_acts();
+            r_input_acts[0] = routed_layers[0][ticks[1]].get_hidden_acts();
         else
             r_input_acts[0] = Float_Buffer_View(); // empty
 
@@ -322,8 +327,10 @@ void Hierarchy::clear_state() {
 
         encoders[l].clear_state();
 
-        if (l < encoders.size() - 1)
-            routed_layers[l].clear_state();
+        if (l < encoders.size() - 1) {
+            for (int i = 0; i < routed_layers[l].size(); i++)
+                routed_layers[l][i].clear_state();
+        }
     }
 
     // predictors
@@ -350,7 +357,7 @@ int Hierarchy::size() const {
         size += encoders[l].size();
 
         if (l < encoders.size() - 1)
-            size += routed_layers[l].size();
+            size += routed_layers[l].size() * routed_layers[l][0].size();
     }
 
     // predictors
@@ -382,7 +389,7 @@ int Hierarchy::state_size() const {
         size += encoders[l].state_size();
         
         if (l < encoders.size() - 1)
-            size += routed_layers[l].state_size();
+            size += routed_layers[l].size() * routed_layers[l][0].state_size();
     }
 
     // predictors
@@ -447,8 +454,10 @@ void Hierarchy::write(
         }
         encoders[l].write(writer);
 
-        if (l < encoders.size() - 1)
-            routed_layers[l].write(writer);
+        if (l < encoders.size() - 1) {
+            for (int i = 0; i < routed_layers[l].size(); i++)
+                routed_layers[l][i].write(writer);
+        }
     }
 
     // predictors
@@ -540,8 +549,10 @@ void Hierarchy::read(
         }
         encoders[l].read(reader);
         
-        if (l < encoders.size() - 1)
-            routed_layers[l].read(reader);
+        if (l < encoders.size() - 1) {
+            for (int i = 0; i < routed_layers[l].size(); i++)
+                routed_layers[l][i].read(reader);
+        }
     }
 
     predictors.resize(num_predictions);
@@ -583,8 +594,10 @@ void Hierarchy::write_state(
 
         encoders[l].write_state(writer);
 
-        if (l < encoders.size() - 1)
-            routed_layers[l].write_state(writer);
+        if (l < encoders.size() - 1) {
+            for (int i = 0; i < routed_layers[l].size(); i++)
+                routed_layers[l][i].write_state(writer);
+        }
     }
     
     for (int p = 0; p < predictors.size(); p++)
@@ -614,8 +627,10 @@ void Hierarchy::read_state(
 
         encoders[l].read_state(reader);
         
-        if (l < encoders.size() - 1)
-            routed_layers[l].read_state(reader);
+        if (l < encoders.size() - 1) {
+            for (int i = 0; i < routed_layers[l].size(); i++)
+                routed_layers[l][i].read_state(reader);
+        }
     }
 
     for (int p = 0; p < predictors.size(); p++)
