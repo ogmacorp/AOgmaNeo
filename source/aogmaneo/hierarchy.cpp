@@ -152,7 +152,7 @@ void Hierarchy::init_random(
             r_visible_layer_descs[0].radius = layer_descs[l].down_radius;
 
             // create decoders
-            routed_layers[l].resize(layer_descs[l].ticks_per_update);
+            routed_layers[l].resize(layer_descs[l + 1].ticks_per_update);
 
             for (int i = 0; i < routed_layers[l].size(); i++)
                 routed_layers[l][i].init_random(layer_descs[l].hidden_size, r_visible_layer_descs);
@@ -551,6 +551,8 @@ void Hierarchy::read(
         encoders[l].read(reader);
         
         if (l < encoders.size() - 1) {
+            routed_layers[l].resize(ticks_per_update[l + 1]);
+
             for (int i = 0; i < routed_layers[l].size(); i++)
                 routed_layers[l][i].read(reader);
         }
