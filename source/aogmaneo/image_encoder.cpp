@@ -333,7 +333,7 @@ void Image_Encoder::init_random(
         // initialize to random values
         for (int i = 0; i < vl.protos.size(); i++) {
             vl.protos[i] = rand() % 256;
-            vl.weights[i] = 128;
+            vl.weights[i] = 127;
         }
 
         vl.reconstruction = Byte_Buffer(num_visible_cells, 0);
