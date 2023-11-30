@@ -593,8 +593,8 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
-    dendrite_acts = Float_Buffer(num_dendrites);
-    hidden_acts = Float_Buffer(num_hidden_cells);
+    dendrite_acts.resize(num_dendrites);
+    hidden_acts.resize(num_hidden_cells);
 
     int num_visible_layers;
 
