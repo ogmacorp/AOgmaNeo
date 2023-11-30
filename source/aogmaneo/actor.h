@@ -30,7 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Byte_Buffer action_weights;
+        Float_Buffer value_weights;
     };
 
     // history sample for delayed updates
@@ -45,20 +46,20 @@ public:
         float scale; // byte scaling
         float vlr; // value learning rate
         float alr; // action learning rate
-        float wlr; // weight learning rate
+        float leak; // ReLU leak
         float discount; // discount fActor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        scale(4.0f),
-        vlr(0.1f),
-        alr(0.5f),
-        wlr(0.01f),
+        scale(64.0f),
+        vlr(0.01f),
+        alr(0.02f),
+        leak(0.1f),
         discount(0.99f),
-        min_steps(16),
-        history_iters(16)
+        min_steps(8),
+        history_iters(8)
         {}
     };
 
