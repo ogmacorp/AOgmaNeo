@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -295,7 +296,7 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
-    float action_error_partial = mimic + (1.0f - mimic) * (td_error_value > 0.0f);
+    float action_error_partial = mimic + (1.0f - mimic) * tanhf(td_error_value);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -385,7 +386,7 @@ void Actor::init_random(
         vl.action_weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.action_weights.size(); i++)
-            vl.action_weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            vl.action_weights[i] = 128 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
 
         vl.value_weights.resize(num_hidden_columns * area * vld.size.z);
 
