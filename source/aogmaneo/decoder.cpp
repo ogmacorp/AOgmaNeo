@@ -267,6 +267,8 @@ void Decoder::learn(
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
+                    float gate = vl.gates[visible_column_index];
+
                     for (int di = 0; di < num_dendrites_per_cell; di++) {
                         int dendrite_index = di + dendrites_start;
 
@@ -274,7 +276,7 @@ void Decoder::learn(
 
                         float delta = params.lr * 255.0f * error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
 
-                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta, state)));
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta * gate, state)));
                     }
                 }
             }
