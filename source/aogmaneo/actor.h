@@ -54,10 +54,10 @@ public:
 
         Params()
         :
-        scale(4.0f),
-        vlr(0.01f),
+        scale(32.0f),
+        vlr(0.02f),
         alr(0.02f),
-        leak(0.1f),
+        leak(0.01f),
         discount(0.99f),
         min_steps(8),
         history_iters(8)
