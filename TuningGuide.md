@@ -86,9 +86,20 @@ Same as decoder.
 
 - alr: Actor learning rate, Around 0.01, can be > 1 (but this is very rare).
 
-- discount: Reinforcement learning discounting factor (lambda). Around 0.99.
+- discount: Reinforcement learning discounting factor (lambda). Around 0.99. Must be < 1.
 
 - min_steps: Minimum samples before the sample can be used in training. Must be < history_capacity, otherwise it won't learn. Usually around 8.
 
 - history_iters: Number of iterations over the history to assign credit with. Usually 8 or 16.
 
+## Assorted Tips
+
+- be aware of the receptive field coverage. The radii can be increased to increase coverage, at the cost of more compute. You can also add more layers to bridge spatial gaps in the receptive fields (higher level processing).
+
+- the defaults are likely fine for most tasks.
+
+- sometimes it is desirable to increase the actor alr parameter when in mimic mode, otherwise the smaller learning rate it has by default will make learning take forever (the default is made for RL).
+
+- generally it is more efficient to use more layers than to increase temporal_horizon per-layer to get more memory.
+
+- on tasks with highly reward variance w.r.t. timesteps, you may want to decrease the discount factor. On the other end, if the task is quite continuous and rewards are sparse, you may want to increase the discount factor.
