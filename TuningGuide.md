@@ -8,6 +8,8 @@ Structural parameters are set in the descriptors upon the creation of a hierarch
 
 **Note:** In C++ we use Pascal case for structures and snake case for everything else. In Python, we use camel case for structures and snake case for everything else (PEP8). C++ Example structure: Layer_Desc. Python: LayerDesc.
 
+Default parameter values for your particular build can be seen in the headers of the respective parts.
+
 ### IODesc
 
 Describes an input/output
