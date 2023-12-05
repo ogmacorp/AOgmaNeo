@@ -54,17 +54,17 @@ h.params.layers[4].decoder.scale = 64.0
 
 ### IOParams
 
-- decoder: Decoder parameters
+- decoder: (DecoderParams) Decoder parameters
 
-- actor: Actor parameters
+- actor: (ActorParams) Actor parameters
 
 - importance: Importance scaling of this IO layer's input. Affects encoding, defaults to 1. Can be used to tweak the relative influences of the inputs, which can accelerate learning if properly adjusted.
 
 ### LayerParams
 
-- decoder: Decoder parameters
+- decoder: (DecoderParams) Decoder parameters
 
-- encoder: Encoder parameters
+- encoder: (EncoderParams) Encoder parameters
 
 ### DecoderParams
 
