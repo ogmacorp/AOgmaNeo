@@ -6,6 +6,8 @@ Structural parameters are set in the descriptors upon the creation of a hierarch
 
 **Note:** Radius parameters are used to determine receptive field sizes. Receptive fields are squares, and the diameter is `2 * radius + 1`. The area is `diameter ^ 2` columns.
 
+**Note:** In C++ we use Pascal case for structures and snake case for everything else. In Python, we use camel case for structures and snake case for everything else (PEP8). C++ Example structure: Layer_Desc. Python: LayerDesc.
+
 ### IODesc
 
 Describes an input/output
