@@ -13,7 +13,7 @@ using namespace aon;
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
-    const Float_Buffer_View errors,
+    Float_Buffer_View errors,
     bool learn_enabled,
     unsigned long* state,
     const Params &params
@@ -210,7 +210,7 @@ void Encoder::init_random(
 
 void Encoder::step(
     const Array<Int_Buffer_View> &input_cis,
-    const Float_Buffer_View errors,
+    Float_Buffer_View errors,
     bool learn_enabled,
     const Params &params
 ) {
