@@ -38,7 +38,7 @@ public:
             IO_Type type = prediction,
             int up_radius = 2,
             int down_radius = 2,
-            int history_capacity = 128
+            int history_capacity = 256
         )
         :
         size(size),
