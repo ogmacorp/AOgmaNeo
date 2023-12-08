@@ -399,13 +399,30 @@ inline unsigned int rotr32(unsigned int x, unsigned int r) {
     return x >> r | x << (-r & 31);
 }
 
-unsigned long rand_get_state(
+inline unsigned long rand_get_state(
     unsigned long seed
-);
+) {
+    unsigned long state = seed + pcg_increment;
 
-unsigned int rand(
+    unsigned int count = static_cast<unsigned int>(state >> 59);
+
+    state = state * pcg_multiplier + pcg_increment;
+
+    return state;
+}
+
+inline unsigned int rand(
     unsigned long* state = &global_state
-);
+) {
+    unsigned long x = *state;
+    unsigned int count = static_cast<unsigned int>(x >> 59);
+
+    *state = x * pcg_multiplier + pcg_increment;
+
+    x ^= x >> 18;
+
+    return rotr32(static_cast<unsigned int>(x >> 27), count);
+}
 
 inline float randf(
     unsigned long* state = &global_state
