@@ -291,7 +291,7 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
-    float action_error_partial = mimic + (1.0f - mimic) * (td_error_value > 0.0f);
+    float action_error_partial = params.alr * 255.0f * (mimic + (1.0f - mimic) * tanhf(td_error_value));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -339,7 +339,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = params.alr * 255.0f * error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                        float delta = error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
 
                         vl.action_weights[wi] = min(255, max(0, vl.action_weights[wi] + rand_roundf(delta, state)));
                     }
