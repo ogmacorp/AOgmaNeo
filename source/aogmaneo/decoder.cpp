@@ -93,12 +93,12 @@ void Decoder::forward(
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
         int max_cell_di = 0;
-        float max_dendrite_act = limit_min;
+        float max_dendrite_act = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            float act = (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale;
+            float act = dendrite_acts[dendrite_index] / (count * 255) * params.scale;
 
             dendrite_acts[dendrite_index] = act;
 
@@ -232,7 +232,7 @@ void Decoder::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 128 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
