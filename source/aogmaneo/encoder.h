@@ -57,6 +57,7 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+    Int_Buffer hidden_cis_det; // deterministic version
 
     Float_Buffer hidden_acts;
 
@@ -142,6 +143,11 @@ public:
     // get the hidden states
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
+    }
+
+    // get the deterministic hidden states
+    const Int_Buffer &get_hidden_cis_det() const {
+        return hidden_cis_det;
     }
 
     // get the hidden size
