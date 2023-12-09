@@ -25,12 +25,12 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
-        float error = errors[hidden_column_index];
+        float reward = errors[hidden_column_index];
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_deltas[hidden_cell_index] = params.lr * 255.0f * error * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]);
+            hidden_deltas[hidden_cell_index] = params.lr * 255.0f * reward * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]);
         }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -131,8 +131,7 @@ void Encoder::forward(
             }
     }
 
-    int max_index = 0;
-    float max_activation = 0.0f;
+    float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -141,19 +140,16 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] = activation;
 
-        if (activation > max_activation) {
-            max_activation = activation;
-            max_index = hc;
-        }
+        max_activation = max(max_activation, activation);
     }
-
+    
     float total = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
-    
-        hidden_acts[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) * params.scale);
 
+        hidden_acts[hidden_cell_index] = expf((hidden_acts[hidden_cell_index] - max_activation) * params.scale);
+        
         total += hidden_acts[hidden_cell_index];
     }
 
@@ -165,7 +161,24 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    float cusp = randf(state);
+
+    int select_index = 0;
+    float sum_so_far = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        sum_so_far += hidden_acts[hidden_cell_index];
+
+        if (sum_so_far >= cusp) {
+            select_index = hc;
+
+            break;
+        }
+    }
+    
+    hidden_cis[hidden_column_index] = select_index;
 }
 
 void Encoder::init_random(
