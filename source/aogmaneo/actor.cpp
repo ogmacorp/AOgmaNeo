@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -93,7 +94,7 @@ void Actor::forward(
 
     hidden_values[hidden_column_index] = value;
 
-    float max_activation = limit_min;
+    float max_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -250,7 +251,7 @@ void Actor::learn(
 
     value /= count;
 
-    float max_activation = limit_min;
+    float max_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -303,7 +304,7 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
-    float action_error_partial = params.alr * 255.0f * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+    float action_error_partial = params.alr * 255.0f * (mimic + (1.0f - mimic) * (td_error_value > 0.0f));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
