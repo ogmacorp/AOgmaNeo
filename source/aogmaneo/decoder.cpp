@@ -180,7 +180,7 @@ void Decoder::update_gates(
 
 void Decoder::learn(
     const Int2 &column_pos,
-    const Int_Buffer_View hidden_target_cis,
+    Int_Buffer_View hidden_target_cis,
     unsigned long* state,
     const Params &params
 ) {
