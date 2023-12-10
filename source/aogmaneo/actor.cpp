@@ -162,7 +162,6 @@ void Actor::learn(
     float r,
     float d,
     float mimic,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -339,9 +338,9 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = params.alr * 255.0f * error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                        float delta = params.alr * error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
 
-                        vl.action_weights[wi] = min(255, max(0, vl.action_weights[wi] + rand_roundf(delta, state)));
+                        vl.action_weights[wi] += delta;
                     }
                 }
 
@@ -470,14 +469,9 @@ void Actor::step(
                 d *= params.discount;
             }
 
-            base_state = rand();
-
             PARALLEL_FOR
-            for (int i = 0; i < num_hidden_columns; i++) {
-                unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-                learn(Int2(i / hidden_size.y, i % hidden_size.y), t, r, d, mimic, &state, params);
-            }
+            for (int i = 0; i < num_hidden_columns; i++)
+                learn(Int2(i / hidden_size.y, i % hidden_size.y), t, r, d, mimic, params);
         }
     }
 }

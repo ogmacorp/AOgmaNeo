@@ -98,7 +98,6 @@ private:
         float r,
         float d,
         float mimic,
-        unsigned long* state,
         const Params &params
     );
 
