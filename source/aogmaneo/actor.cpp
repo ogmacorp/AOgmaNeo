@@ -95,6 +95,8 @@ void Actor::forward(
 
     float max_activation = limit_min;
 
+    const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -109,7 +111,7 @@ void Actor::forward(
 
             dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
 
-            activation += dendrite_acts[dendrite_index];
+            activation += dendrite_acts[dendrite_index] * ((di < half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         hidden_acts[hidden_cell_index] = activation;
