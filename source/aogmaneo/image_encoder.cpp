@@ -437,7 +437,8 @@ void Image_Encoder::init_random(
 
 void Image_Encoder::step(
     const Array<Byte_Buffer_View> &inputs,
-    bool learn_enabled
+    bool learn_enabled,
+    bool learn_recon
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
@@ -450,7 +451,7 @@ void Image_Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled, &state);
     }
 
-    if (learn_enabled) {
+    if (learn_enabled && learn_recon) {
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
