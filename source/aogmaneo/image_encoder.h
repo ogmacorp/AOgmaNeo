@@ -37,7 +37,6 @@ public:
     };
 
     struct Params {
-        float threshold; // early stopping threshold distance
         float scale; // scale of reconstruction
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
@@ -45,7 +44,6 @@ public:
         
         Params()
         :
-        threshold(0.001f),
         scale(2.0f),
         falloff(0.99f),
         lr(0.1f),
@@ -97,7 +95,8 @@ public:
     // activate the sparse coder (perform sparse coding)
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
-        bool learn_enabled // whether to learn
+        bool learn_enabled, // whether to learn
+        bool learn_recon // if learn_enabled, whether to also learn the reconstruction
     );
 
     void reconstruct(
