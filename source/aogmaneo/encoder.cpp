@@ -488,3 +488,40 @@ void Encoder::read_state(
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 }
+
+void Encoder::merge(
+    const Array<Encoder*> &encoders,
+    Merge_Mode mode
+) {
+    switch (mode) {
+    case merge_random:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                int e = rand() % encoders.size();                
+
+                vl.weights[i] = encoders[e]->visible_layers[vli].weights[i];
+            }
+        }
+
+        break;
+    case merge_average:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int e = 0; e < encoders.size(); e++)
+                    total += encoders[e]->visible_layers[vli].weights[i];
+
+                vl.weights[i] = roundf(total / encoders.size());
+            }
+        }
+
+        break;
+    }
+}

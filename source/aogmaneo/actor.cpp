@@ -648,3 +648,55 @@ void Actor::read_state(
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
     }
 }
+
+void Actor::merge(
+    const Array<Actor*> &actors,
+    Merge_Mode mode
+) {
+    switch (mode) {
+    case merge_random:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.action_weights.size(); i++) {
+                int d = rand() % actors.size();                
+
+                vl.action_weights[i] = actors[d]->visible_layers[vli].action_weights[i];
+            }
+
+            for (int i = 0; i < vl.value_weights.size(); i++) {
+                int d = rand() % actors.size();                
+
+                vl.value_weights[i] = actors[d]->visible_layers[vli].value_weights[i];
+            }
+        }
+
+        break;
+    case merge_average:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.action_weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int d = 0; d < actors.size(); d++)
+                    total += actors[d]->visible_layers[vli].action_weights[i];
+
+                vl.action_weights[i] = total / actors.size();
+            }
+
+            for (int i = 0; i < vl.value_weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int d = 0; d < actors.size(); d++)
+                    total += actors[d]->visible_layers[vli].value_weights[i];
+
+                vl.value_weights[i] = total / actors.size();
+            }
+        }
+
+        break;
+    }
+}

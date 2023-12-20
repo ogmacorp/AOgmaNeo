@@ -163,5 +163,11 @@ public:
     const Int3 &get_hidden_size() const {
         return hidden_size;
     }
+
+    // merge list of encoders and write to this one
+    void merge(
+        const Array<Encoder*> &encoders,
+        Merge_Mode mode
+    );
 };
 }

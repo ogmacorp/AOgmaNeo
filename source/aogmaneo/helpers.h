@@ -475,4 +475,11 @@ public:
         int len
     ) = 0;
 };
+
+// --- merging ---
+
+enum Merge_Mode {
+    merge_average = 0,
+    merge_random = 1
+};
 }

@@ -477,3 +477,40 @@ void Image_Encoder::read(
         vl.reconstruction = Byte_Buffer(num_visible_cells, 0);
     }
 }
+
+void Image_Encoder::merge(
+    const Array<Image_Encoder*> &image_encoders,
+    Merge_Mode mode
+) {
+    switch (mode) {
+    case merge_random:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                int e = rand() % image_encoders.size();                
+
+                vl.weights[i] = image_encoders[e]->visible_layers[vli].weights[i];
+            }
+        }
+
+        break;
+    case merge_average:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int e = 0; e < image_encoders.size(); e++)
+                    total += image_encoders[e]->visible_layers[vli].weights[i];
+
+                vl.weights[i] = roundf(total / image_encoders.size());
+            }
+        }
+
+        break;
+    }
+}
