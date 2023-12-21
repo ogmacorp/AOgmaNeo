@@ -478,6 +478,40 @@ void Image_Encoder::read(
     }
 }
 
+void Image_Encoder::write_state(
+    Stream_Writer &writer
+) const {
+    writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+}
+
+void Image_Encoder::read_state(
+    Stream_Reader &reader
+) {
+    reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+}
+
+void Image_Encoder::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+    }
+}
+
+void Image_Encoder::read_weights(
+    Stream_Reader &reader
+) {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+    }
+}
+
 void Image_Encoder::merge(
     const Array<Image_Encoder*> &image_encoders,
     Merge_Mode mode
