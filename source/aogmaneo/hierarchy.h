@@ -170,6 +170,7 @@ public:
     // serialization
     int size() const; // returns size in bytes
     int state_size() const; // returns size of state in bytes
+    int weights_size() const; // returns size of weights in bytes
 
     void write(
         Stream_Writer &writer
@@ -184,6 +185,14 @@ public:
     ) const;
 
     void read_state(
+        Stream_Reader &reader
+    );
+
+    void write_weights(
+        Stream_Writer &writer
+    ) const;
+
+    void read_weights(
         Stream_Reader &reader
     );
 
@@ -212,8 +221,7 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
+        assert(io_types[i] == prediction);
 
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
@@ -330,5 +338,11 @@ public:
     ) const {
         return histories[l];
     }
+
+    // merge list of hierarchies and write to this one
+    void merge(
+        const Array<Hierarchy*> &hierarchies,
+        Merge_Mode mode
+    );
 };
 }

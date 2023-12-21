@@ -331,6 +331,23 @@ int Hierarchy::state_size() const {
     return size;
 }
 
+int Hierarchy::weights_size() const {
+    int size = 0;
+
+    for (int l = 0; l < encoders.size(); l++) {
+        size += encoders[l].weights_size();
+
+        for (int d = 0; d < decoders[l].size(); d++)
+            size += decoders[l][d].weights_size();
+    }
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        size += actors[d].weights_size();
+
+    return size;
+}
+
 void Hierarchy::write(
     Stream_Writer &writer
 ) const {
@@ -552,4 +569,68 @@ void Hierarchy::read_state(
     // actors
     for (int d = 0; d < actors.size(); d++)
         actors[d].read_state(reader);
+}
+
+void Hierarchy::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int l = 0; l < encoders.size(); l++) {
+        encoders[l].write_weights(writer);
+
+        // decoders
+        for (int d = 0; d < decoders[l].size(); d++)
+            decoders[l][d].write_weights(writer);
+    }
+
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].write_weights(writer);
+}
+
+void Hierarchy::read_weights(
+    Stream_Reader &reader
+) {
+    for (int l = 0; l < encoders.size(); l++) {
+        encoders[l].read_weights(reader);
+        
+        // decoders
+        for (int d = 0; d < decoders[l].size(); d++)
+            decoders[l][d].read_weights(reader);
+    }
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].read_weights(reader);
+}
+
+void Hierarchy::merge(
+    const Array<Hierarchy*> &hierarchies,
+    Merge_Mode mode
+) {
+    Array<Encoder*> merge_encoders(hierarchies.size());
+    Array<Decoder*> merge_decoders(hierarchies.size());
+
+    for (int l = 0; l < encoders.size(); l++) {
+        for (int h = 0; h < hierarchies.size(); h++)
+            merge_encoders[h] = &hierarchies[h]->encoders[l];
+
+        encoders[l].merge(merge_encoders, mode);
+
+        // decoders
+        for (int d = 0; d < decoders[l].size(); d++) {
+            for (int h = 0; h < hierarchies.size(); h++)
+                merge_decoders[h] = &hierarchies[h]->decoders[l][d];
+
+            decoders[l][d].merge(merge_decoders, mode);
+        }
+    }
+    
+    // actors
+    Array<Actor*> merge_actors(hierarchies.size());
+
+    for (int d = 0; d < actors.size(); d++) {
+        for (int h = 0; h < hierarchies.size(); h++)
+            merge_actors[h] = &hierarchies[h]->actors[d];
+
+        actors[d].merge(merge_actors, mode);
+    }
 }
