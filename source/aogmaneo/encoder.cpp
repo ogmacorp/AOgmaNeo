@@ -386,6 +386,18 @@ int Encoder::state_size() const {
     return hidden_cis.size() * sizeof(int);
 }
 
+int Encoder::weights_size() const {
+    int size = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.weights.size() * sizeof(Byte);
+    }
+
+    return size;
+}
+
 void Encoder::write(
     Stream_Writer &writer
 ) const {

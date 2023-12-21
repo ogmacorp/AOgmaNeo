@@ -477,6 +477,18 @@ int Actor::state_size() const {
     return size;
 }
 
+int Actor::weights_size() const {
+    int size = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.value_weights.size() * sizeof(float) + vl.action_weights.size() * sizeof(float);
+    }
+
+    return size;
+}
+
 void Actor::write(
     Stream_Writer &writer
 ) const {

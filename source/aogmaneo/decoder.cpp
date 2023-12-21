@@ -382,6 +382,18 @@ int Decoder::state_size() const {
     return size;
 }
 
+int Decoder::weights_size() const {
+    int size = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.weights.size() * sizeof(Byte);
+    }
+
+    return size;
+}
+
 void Decoder::write(
     Stream_Writer &writer
 ) const {

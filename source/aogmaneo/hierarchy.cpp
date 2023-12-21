@@ -331,6 +331,23 @@ int Hierarchy::state_size() const {
     return size;
 }
 
+int Hierarchy::weights_size() const {
+    int size = 0;
+
+    for (int l = 0; l < encoders.size(); l++) {
+        size += encoders[l].weights_size();
+
+        for (int d = 0; d < decoders[l].size(); d++)
+            size += decoders[l][d].weights_size();
+    }
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        size += actors[d].weights_size();
+
+    return size;
+}
+
 void Hierarchy::write(
     Stream_Writer &writer
 ) const {
