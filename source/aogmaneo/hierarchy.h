@@ -179,6 +179,14 @@ public:
         Stream_Reader &reader
     );
 
+    void write_weights(
+        Stream_Writer &writer
+    ) const;
+
+    void read_weights(
+        Stream_Reader &reader
+    );
+
     // get the number of layers (encoders)
     int get_num_layers() const {
         return encoders.size();

@@ -554,6 +554,37 @@ void Hierarchy::read_state(
         actors[d].read_state(reader);
 }
 
+void Hierarchy::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int l = 0; l < encoders.size(); l++) {
+        encoders[l].write_weights(writer);
+
+        // decoders
+        for (int d = 0; d < decoders[l].size(); d++)
+            decoders[l][d].write_weights(writer);
+    }
+
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].write_weights(writer);
+}
+
+void Hierarchy::read_weights(
+    Stream_Reader &reader
+) {
+    for (int l = 0; l < encoders.size(); l++) {
+        encoders[l].read_weights(reader);
+        
+        // decoders
+        for (int d = 0; d < decoders[l].size(); d++)
+            decoders[l][d].read_weights(reader);
+    }
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].read_weights(reader);
+}
+
 void Hierarchy::merge(
     const Array<Hierarchy*> &hierarchies,
     Merge_Mode mode

@@ -124,6 +124,14 @@ public:
         Stream_Reader &reader
     );
 
+    void write_weights(
+        Stream_Writer &writer
+    ) const;
+
+    void read_weights(
+        Stream_Reader &reader
+    );
+
     // get number of visible layers
     int get_num_visible_layers() const {
         return visible_layers.size();

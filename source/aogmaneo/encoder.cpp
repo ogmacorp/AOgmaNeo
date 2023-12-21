@@ -489,6 +489,26 @@ void Encoder::read_state(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 }
 
+void Encoder::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+    }
+}
+
+void Encoder::read_weights(
+    Stream_Reader &reader
+) {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+    }
+}
+
 void Encoder::merge(
     const Array<Encoder*> &encoders,
     Merge_Mode mode

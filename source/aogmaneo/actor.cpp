@@ -649,6 +649,28 @@ void Actor::read_state(
     }
 }
 
+void Actor::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(Byte));
+    }
+}
+
+void Actor::read_weights(
+    Stream_Reader &reader
+) {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(Byte));
+    }
+}
+
 void Actor::merge(
     const Array<Actor*> &actors,
     Merge_Mode mode
