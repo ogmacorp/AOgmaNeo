@@ -57,8 +57,8 @@ public:
         alr(0.02f),
         leak(0.1f),
         discount(0.99f),
-        min_steps(16),
-        history_iters(16)
+        min_steps(8),
+        history_iters(8)
         {}
     };
 
