@@ -113,6 +113,8 @@ public:
 
     // serialization
     int size() const; // returns size in bytes
+    int state_size() const; // returns state size in bytes
+    int weights_size() const; // returns weights size in bytes
 
     void write(
         Stream_Writer &writer
