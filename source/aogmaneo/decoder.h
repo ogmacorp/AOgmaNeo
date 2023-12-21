@@ -40,12 +40,14 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
+        float leak; // ReLU leak
         float gcurve; // gate curve
 
         Params()
         :
         scale(64.0f),
         lr(0.1f),
+        leak(0.1f),
         gcurve(16.0f)
         {}
     };
@@ -57,6 +59,7 @@ private:
 
     Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
+    Float_Buffer hidden_logits;
 
     Float_Buffer hidden_deltas;
 
