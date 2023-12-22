@@ -393,7 +393,7 @@ void Image_Encoder::reconstruct(
 }
 
 long Image_Encoder::size() const {
-    long size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_resources.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(Params) + hidden_cis.size() * sizeof(int) + hidden_resources.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
