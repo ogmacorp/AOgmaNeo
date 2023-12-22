@@ -123,9 +123,9 @@ public:
     void clear_state();
 
     // serialization
-    int size() const; // returns size in bytes
-    int state_size() const; // returns size of state in bytes
-    int weights_size() const; // returns size of weights in bytes
+    long size() const; // returns size in bytes
+    long state_size() const; // returns size of state in bytes
+    long weights_size() const; // returns size of weights in bytes
 
     void write(
         Stream_Writer &writer

@@ -402,8 +402,8 @@ void Decoder::clear_state() {
     }
 }
 
-int Decoder::size() const {
-    int size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + dendrite_acts.size() * sizeof(float) + sizeof(int);
+long Decoder::size() const {
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + dendrite_acts.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -415,8 +415,8 @@ int Decoder::size() const {
     return size;
 }
 
-int Decoder::state_size() const {
-    int size = hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + dendrite_acts.size() * sizeof(float);
+long Decoder::state_size() const {
+    long size = hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + dendrite_acts.size() * sizeof(float);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -427,7 +427,7 @@ int Decoder::state_size() const {
     return size;
 }
 
-int Decoder::weights_size() const {
+long Decoder::weights_size() const {
     int size = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {

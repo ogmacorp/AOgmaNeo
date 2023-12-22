@@ -483,8 +483,8 @@ void Actor::clear_state() {
     history_size = 0;
 }
 
-int Actor::size() const {
-    int size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
+long Actor::size() const {
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -509,8 +509,8 @@ int Actor::size() const {
     return size;
 }
 
-int Actor::state_size() const {
-    int size = hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
+long Actor::state_size() const {
+    long size = hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
 
     int sample_size = 0;
 
@@ -526,8 +526,8 @@ int Actor::state_size() const {
     return size;
 }
 
-int Actor::weights_size() const {
-    int size = 0;
+long Actor::weights_size() const {
+    long size = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];

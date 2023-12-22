@@ -462,7 +462,7 @@ public:
 
     virtual void write(
         const void* data,
-        int len
+        long len
     ) = 0;
 };
 
@@ -472,7 +472,7 @@ public:
 
     virtual void read(
         void* data,
-        int len
+        long len
     ) = 0;
 };
 

@@ -276,8 +276,8 @@ void Hierarchy::clear_state() {
         actors[d].clear_state();
 }
 
-int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+long Hierarchy::size() const {
+    long size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += sizeof(int);
@@ -306,8 +306,8 @@ int Hierarchy::size() const {
     return size;
 }
 
-int Hierarchy::state_size() const {
-    int size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
+long Hierarchy::state_size() const {
+    long size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
@@ -331,8 +331,8 @@ int Hierarchy::state_size() const {
     return size;
 }
 
-int Hierarchy::weights_size() const {
-    int size = 0;
+long Hierarchy::weights_size() const {
+    long size = 0;
 
     for (int l = 0; l < encoders.size(); l++) {
         size += encoders[l].weights_size();
