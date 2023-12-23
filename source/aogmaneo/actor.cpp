@@ -408,10 +408,10 @@ void Actor::init_random(
 
             int num_visible_columns = vld.size.x * vld.size.y;
 
-            history_samples[i].input_cis[vli] = Int_Buffer(num_visible_columns);
+            history_samples[i].input_cis[vli].resize(num_visible_columns);
         }
 
-        history_samples[i].hidden_target_cis_prev = Int_Buffer(num_hidden_columns);
+        history_samples[i].hidden_target_cis_prev.resize(num_hidden_columns);
     }
 }
 
@@ -490,7 +490,7 @@ long Actor::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.action_weights.size() * sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.action_weights.size() * sizeof(float) + vl.value_weights.size() * sizeof(float);
     }
 
     size += 3 * sizeof(int);
@@ -532,7 +532,7 @@ long Actor::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.value_weights.size() * sizeof(float) + vl.action_weights.size() * sizeof(float);
+        size += vl.action_weights.size() * sizeof(float) + vl.value_weights.size() * sizeof(float);
     }
 
     return size;
@@ -722,8 +722,8 @@ void Actor::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
     }
 }
 
@@ -733,8 +733,8 @@ void Actor::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
     }
 }
 
