@@ -98,7 +98,7 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         d_visible_layer_descs[1] = d_visible_layer_descs[0];
 
-                    decoders[l][d_index].init_random(io_sizes[i], d_visible_layer_descs);
+                    decoders[l][d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, d_visible_layer_descs);
 
                     i_indices[d_index] = i;
                     d_indices[i] = d_index;
@@ -119,7 +119,7 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         a_visible_layer_descs[1] = a_visible_layer_descs[0];
 
-                    actors[d_index].init_random(io_sizes[i], io_descs[i].history_capacity, a_visible_layer_descs);
+                    actors[d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, io_descs[i].history_capacity, a_visible_layer_descs);
 
                     i_indices[io_sizes.size() + d_index] = i;
                     d_indices[i] = d_index;
@@ -157,7 +157,7 @@ void Hierarchy::init_random(
 
             // create decoders
             for (int t = 0; t < decoders[l].size(); t++)
-                decoders[l][t].init_random(layer_descs[l - 1].hidden_size, d_visible_layer_descs);
+                decoders[l][t].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
         }
         
         // create the sparse coding layer
@@ -248,7 +248,7 @@ void Hierarchy::step(
 
             if (l == 0) {
                 for (int d = 0; d < actors.size(); d++)
-                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], reward, learn_enabled, mimic, params.ios[i_indices[d + io_sizes.size()]].actor);
+                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], learn_enabled, reward, mimic, params.ios[i_indices[d + io_sizes.size()]].actor);
             }
         }
     }
@@ -276,8 +276,8 @@ void Hierarchy::clear_state() {
         actors[d].clear_state();
 }
 
-int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+long Hierarchy::size() const {
+    long size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += sizeof(int);
@@ -306,8 +306,8 @@ int Hierarchy::size() const {
     return size;
 }
 
-int Hierarchy::state_size() const {
-    int size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
+long Hierarchy::state_size() const {
+    long size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
@@ -331,8 +331,8 @@ int Hierarchy::state_size() const {
     return size;
 }
 
-int Hierarchy::weights_size() const {
-    int size = 0;
+long Hierarchy::weights_size() const {
+    long size = 0;
 
     for (int l = 0; l < encoders.size(); l++) {
         size += encoders[l].weights_size();

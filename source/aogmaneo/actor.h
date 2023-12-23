@@ -30,8 +30,9 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer value_weights; // value function weights
-        Float_Buffer action_weights; // action function weights
+        Float_Buffer action_weights;
+
+        Float_Buffer value_weights;
     };
 
     // history sample for delayed updates
@@ -45,14 +46,16 @@ public:
     struct Params {
         float vlr; // value learning rate
         float alr; // action learning rate
-        float discount; // discount fActor
+        float leak;
+        float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        vlr(0.02f),
-        alr(0.02f),
+        vlr(0.01f),
+        alr(0.01f),
+        leak(0.1f),
         discount(0.99f),
         min_steps(8),
         history_iters(8)
@@ -61,13 +64,16 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
+    int num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
 
-    Float_Buffer hidden_acts; // temporary buffer
-
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer dendrite_acts;
+
+    Float_Buffer hidden_acts; // temporary buffer
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
@@ -99,6 +105,7 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
+        int num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
@@ -107,8 +114,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis_prev,
-        float reward,
         bool learn_enabled,
+        float reward,
         float mimic,
         const Params &params
     );
@@ -116,9 +123,9 @@ public:
     void clear_state();
 
     // serialization
-    int size() const; // returns size in bytes
-    int state_size() const; // returns size of state in bytes
-    int weights_size() const; // returns size of weights in bytes
+    long size() const; // returns size in bytes
+    long state_size() const; // returns size of state in bytes
+    long weights_size() const; // returns size of weights in bytes
 
     void write(
         Stream_Writer &writer

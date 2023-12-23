@@ -40,8 +40,8 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float leak; // ReLU leak
-        float gcurve; // gate curve
+        float leak;
+        float gcurve;
 
         Params()
         :
@@ -54,14 +54,15 @@ public:
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
+    int num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_logits;
 
-    Float_Buffer hidden_deltas;
+    Float_Buffer dendrite_acts;
+
+    Float_Buffer dendrite_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -94,6 +95,7 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output/prediction size
+        int num_dendrites_per_cell,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
@@ -108,9 +110,9 @@ public:
     void clear_state();
 
     // serialization
-    int size() const; // returns size in Bytes
-    int state_size() const; // returns size of state in Bytes
-    int weights_size() const; // returns size of weights in Bytes
+    long size() const; // returns size in Bytes
+    long state_size() const; // returns size of state in Bytes
+    long weights_size() const; // returns size of weights in Bytes
 
     void write(
         Stream_Writer &writer
@@ -167,9 +169,14 @@ public:
         return hidden_cis;
     }
 
-    // get the hidden states (predictions)
+    // get the hidden activations
     const Float_Buffer &get_hidden_acts() const {
         return hidden_acts;
+    }
+
+    // get the dendrite states
+    const Float_Buffer &get_dendrite_acts() const {
+        return dendrite_acts;
     }
 
     // get the hidden size

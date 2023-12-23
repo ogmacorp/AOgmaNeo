@@ -370,8 +370,8 @@ void Encoder::clear_state() {
     hidden_cis.fill(0);
 }
 
-int Encoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+long Encoder::size() const {
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -382,12 +382,12 @@ int Encoder::size() const {
     return size;
 }
 
-int Encoder::state_size() const {
+long Encoder::state_size() const {
     return hidden_cis.size() * sizeof(int);
 }
 
-int Encoder::weights_size() const {
-    int size = 0;
+long Encoder::weights_size() const {
+    long size = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];

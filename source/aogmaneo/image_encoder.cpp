@@ -392,8 +392,8 @@ void Image_Encoder::reconstruct(
     }
 }
 
-int Image_Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_resources.size() * sizeof(float) + sizeof(int);
+long Image_Encoder::size() const {
+    long size = sizeof(Int3) + sizeof(Params) + hidden_cis.size() * sizeof(int) + hidden_resources.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -405,12 +405,12 @@ int Image_Encoder::size() const {
     return size;
 }
 
-int Image_Encoder::state_size() const {
+long Image_Encoder::state_size() const {
     return hidden_cis.size() * sizeof(int);
 }
 
-int Image_Encoder::weights_size() const {
-    int size = 0;
+long Image_Encoder::weights_size() const {
+    long size = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
