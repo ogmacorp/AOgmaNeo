@@ -343,8 +343,8 @@ void Image_Encoder::init_random(
 
         // initialize to random values
         for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = 255 - (rand() % init_weight_noise);
-            vl.weights1[i] = 255 - (rand() % init_weight_noise);
+            vl.weights0[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights1[i] = 255 - (rand() % init_weight_noisei);
             vl.weights_recon[i] = 127;
         }
 
@@ -400,8 +400,8 @@ void Image_Encoder::reconstruct(
     }
 }
 
-int Image_Encoder::size() const {
-    int size = sizeof(Int3) + sizeof(float) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
+long Image_Encoder::size() const {
+    long size = sizeof(Int3) + sizeof(Params) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -423,7 +423,7 @@ long Image_Encoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += 2 * vl.protos.size() * sizeof(Byte);
+        size += 3 * vl.weights0.size() * sizeof(Byte);
     }
 
     return size;
@@ -525,8 +525,9 @@ void Image_Encoder::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights_recon[0]), vl.weights_recon.size() * sizeof(Byte));
     }
 }
 
@@ -536,8 +537,9 @@ void Image_Encoder::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(reinterpret_cast<void*>(&vl.protos[0]), vl.protos.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights_recon[0]), vl.weights_recon.size() * sizeof(Byte));
     }
 }
 
@@ -551,10 +553,12 @@ void Image_Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights.size(); i++) {
+            for (int i = 0; i < vl.weights0.size(); i++) {
                 int e = rand() % image_encoders.size();                
 
-                vl.weights[i] = image_encoders[e]->visible_layers[vli].weights[i];
+                vl.weights0[i] = image_encoders[e]->visible_layers[vli].weights0[i];
+                vl.weights1[i] = image_encoders[e]->visible_layers[vli].weights1[i];
+                vl.weights_recon[i] = image_encoders[e]->visible_layers[vli].weights_recon[i];
             }
         }
 
@@ -564,13 +568,20 @@ void Image_Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights.size(); i++) {
-                float total = 0.0f;
+            for (int i = 0; i < vl.weights0.size(); i++) {
+                float total0 = 0.0f;
+                float total1 = 0.0f;
+                float total_recon = 0.0f;
 
-                for (int e = 0; e < image_encoders.size(); e++)
-                    total += image_encoders[e]->visible_layers[vli].weights[i];
+                for (int e = 0; e < image_encoders.size(); e++) {
+                    total0 += image_encoders[e]->visible_layers[vli].weights0[i];
+                    total1 += image_encoders[e]->visible_layers[vli].weights1[i];
+                    total_recon += image_encoders[e]->visible_layers[vli].weights_recon[i];
+                }
 
-                vl.weights[i] = roundf(total / image_encoders.size());
+                vl.weights0[i] = roundf(total0 / image_encoders.size());
+                vl.weights1[i] = roundf(total1 / image_encoders.size());
+                vl.weights_recon[i] = roundf(total_recon / image_encoders.size());
             }
         }
 
