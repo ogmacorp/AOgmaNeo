@@ -101,7 +101,8 @@ public:
     // activate the sparse coder (perform sparse coding)
     void step(
         const Array<const Byte_Buffer*> &inputs, // input states
-        bool learn_enabled // whether to learn
+        bool learn_enabled, // whether to learn
+        bool learn_recon = true
     );
 
     void reconstruct(
