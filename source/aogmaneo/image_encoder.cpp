@@ -53,7 +53,7 @@ void Image_Encoder::forward(
 
             count += (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1) * vld.size.z;
 
-            const Byte_Buffer &vl_inputs = *inputs[vli];
+            Byte_Buffer_View vl_inputs = inputs[vli];
 
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -131,7 +131,7 @@ void Image_Encoder::forward(
                 Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
                 Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-                const Byte_Buffer &vl_inputs = *inputs[vli];
+                Byte_Buffer_View vl_inputs = inputs[vli];
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -222,7 +222,7 @@ void Image_Encoder::learn_reconstruction(
 
         sum /= max(1, count) * 255;
 
-        float target = (*inputs)[visible_cell_index] * byte_inv;
+        float target = inputs[visible_cell_index] * byte_inv;
 
         float delta = params.rr * (target - min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f))) * 255.0f;
 
@@ -295,7 +295,7 @@ void Image_Encoder::reconstruct(
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    int hidden_cell_index = (*recon_cis)[hidden_column_index] + hidden_column_index * hidden_size.z;
+                    int hidden_cell_index = recon_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
