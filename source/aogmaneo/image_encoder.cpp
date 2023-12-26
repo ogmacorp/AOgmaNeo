@@ -12,7 +12,7 @@ using namespace aon;
 
 void Image_Encoder::forward(
     const Int2 &column_pos,
-    const Array<const Byte_Buffer*> &inputs,
+    const Array<Byte_Buffer_View> &inputs,
     bool learn_enabled
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -161,7 +161,7 @@ void Image_Encoder::forward(
 
 void Image_Encoder::learn_reconstruction(
     const Int2 &column_pos,
-    const Byte_Buffer* inputs,
+    Byte_Buffer_View inputs,
     int vli,
     unsigned long* state
 ) {
@@ -249,7 +249,7 @@ void Image_Encoder::learn_reconstruction(
 
 void Image_Encoder::reconstruct(
     const Int2 &column_pos,
-    const Int_Buffer* recon_cis,
+    Int_Buffer_View recon_cis,
     int vli
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -359,7 +359,7 @@ void Image_Encoder::init_random(
 }
 
 void Image_Encoder::step(
-    const Array<const Byte_Buffer*> &inputs,
+    const Array<Byte_Buffer_View> &inputs,
     bool learn_enabled,
     bool learn_recon
 ) {
@@ -388,7 +388,7 @@ void Image_Encoder::step(
 }
 
 void Image_Encoder::reconstruct(
-    const Int_Buffer* recon_cis
+    Int_Buffer_View recon_cis
 ) {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];

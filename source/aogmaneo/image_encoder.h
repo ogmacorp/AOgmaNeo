@@ -73,20 +73,20 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<const Byte_Buffer*> &inputs,
+        const Array<Byte_Buffer_View> &inputs,
         bool learn_enabled
     );
 
     void learn_reconstruction(
         const Int2 &column_pos,
-        const Byte_Buffer* inputs,
+        Byte_Buffer_View inputs,
         int vli,
         unsigned long* state
     );
 
     void reconstruct(
         const Int2 &column_pos,
-        const Int_Buffer* recon_cis,
+        Int_Buffer_View recon_cis,
         int vli
     );
 
@@ -100,13 +100,13 @@ public:
 
     // activate the sparse coder (perform sparse coding)
     void step(
-        const Array<const Byte_Buffer*> &inputs, // input states
+        const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled, // whether to learn
         bool learn_recon = true
     );
 
     void reconstruct(
-        const Int_Buffer* recon_cis
+        Int_Buffer_View recon_cis
     );
 
     const Byte_Buffer &get_reconstruction(
