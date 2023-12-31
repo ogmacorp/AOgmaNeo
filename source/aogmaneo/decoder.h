@@ -40,12 +40,14 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
+        float leak;
         float gcurve;
 
         Params()
         :
         scale(64.0f),
-        lr(0.2f),
+        lr(0.1f),
+        leak(0.01f),
         gcurve(16.0f)
         {}
     };
@@ -59,8 +61,6 @@ private:
     Float_Buffer hidden_acts;
 
     Float_Buffer dendrite_acts;
-
-    Int_Buffer hidden_cell_dis;
 
     Float_Buffer dendrite_deltas;
 

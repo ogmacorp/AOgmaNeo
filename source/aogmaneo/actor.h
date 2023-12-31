@@ -46,14 +46,16 @@ public:
     struct Params {
         float vlr; // value learning rate
         float alr; // action learning rate
+        float leak;
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        vlr(0.02f),
-        alr(0.02f),
+        vlr(0.01f),
+        alr(0.01f),
+        leak(0.01f),
         discount(0.99f),
         min_steps(16),
         history_iters(16)
@@ -69,11 +71,9 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Int_Buffer hidden_cell_dis;
+    Float_Buffer dendrite_acts;
 
     Float_Buffer hidden_acts; // temporary buffer
-
-    Float_Buffer dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
