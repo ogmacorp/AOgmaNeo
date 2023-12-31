@@ -708,7 +708,7 @@ void Hierarchy::merge(
     Merge_Mode mode
 ) {
     Array<Encoder*> merge_encoders(hierarchies.size());
-    Array<Decoder*> merge_decoders(hierarchies.size());
+    Array<Routed_Layer*> merge_routed_layers(hierarchies.size());
 
     for (int l = 0; l < encoders.size(); l++) {
         for (int h = 0; h < hierarchies.size(); h++)
@@ -716,12 +716,13 @@ void Hierarchy::merge(
 
         encoders[l].merge(merge_encoders, mode);
 
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++) {
-            for (int h = 0; h < hierarchies.size(); h++)
-                merge_decoders[h] = &hierarchies[h]->decoders[l][d];
+        if (l < encoders.size() - 1) {
+            for (int i = 0; i < routed_layers[l].size(); i++) {
+                for (int h = 0; h < hierarchies.size(); h++)
+                    merge_routed_layers[h] = &hierarchies[h]->routed_layers[l][i];
 
-            decoders[l][d].merge(merge_decoders, mode);
+                routed_layers[l][i].merge(merge_routed_layers, mode);
+            }
         }
     }
     

@@ -452,8 +452,8 @@ void Actor::clear_state() {
     history_size = 0;
 }
 
-int Actor::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
+long Actor::size() const {
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -478,8 +478,8 @@ int Actor::size() const {
     return size;
 }
 
-int Actor::state_size() const {
-    int size = hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
+long Actor::state_size() const {
+    long size = hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
 
     int sample_size = 0;
 
@@ -492,6 +492,17 @@ int Actor::state_size() const {
 
     size += history_samples.size() * sample_size;
 
+    return size;
+}
+
+long Actor::weights_size() const {
+    long size = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.value_weights.size() * sizeof(float) + vl.action_weights.size() * sizeof(float);
+    }
     return size;
 }
 
@@ -673,5 +684,79 @@ void Actor::read_state(
         reader.read(reinterpret_cast<void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
 
         reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
+    }
+}
+
+void Actor::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
+    }
+}
+
+void Actor::read_weights(
+    Stream_Reader &reader
+) {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
+    }
+}
+
+void Actor::merge(
+    const Array<Actor*> &actors,
+    Merge_Mode mode
+) {
+    switch (mode) {
+    case merge_random:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.value_weights.size(); i++) {
+                int e = rand() % actors.size();                
+
+                vl.value_weights[i] = actors[e]->visible_layers[vli].value_weights[i];
+            }
+
+            for (int i = 0; i < vl.action_weights.size(); i++) {
+                int e = rand() % actors.size();                
+
+                vl.action_weights[i] = actors[e]->visible_layers[vli].action_weights[i];
+            }
+        }
+
+        break;
+    case merge_average:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            for (int i = 0; i < vl.value_weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int e = 0; e < actors.size(); e++)
+                    total += actors[e]->visible_layers[vli].value_weights[i];
+
+                vl.value_weights[i] = total / actors.size();
+            }
+        
+            for (int i = 0; i < vl.action_weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int e = 0; e < actors.size(); e++)
+                    total += actors[e]->visible_layers[vli].action_weights[i];
+
+                vl.action_weights[i] = total / actors.size();
+            }
+        }
+
+        break;
     }
 }
