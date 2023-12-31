@@ -246,8 +246,8 @@ void Routed_Layer::clear_state() {
     hidden_acts.fill(1.0f);
 }
 
-int Routed_Layer::size() const {
-    int size = sizeof(Int3) + hidden_acts.size() * sizeof(float) + sizeof(int);
+long Routed_Layer::size() const {
+    long size = sizeof(Int3) + hidden_acts.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -259,8 +259,20 @@ int Routed_Layer::size() const {
     return size;
 }
 
-int Routed_Layer::state_size() const {
+long Routed_Layer::state_size() const {
     return hidden_acts.size() * sizeof(float);
+}
+
+long Routed_Layer::weights_size() const {
+    long size = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.weights.size() * sizeof(S_Byte);
+    }
+
+    return size;
 }
 
 void Routed_Layer::write(
@@ -356,3 +368,59 @@ void Routed_Layer::read_state(
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
 }
 
+void Routed_Layer::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+    }
+}
+
+void Routed_Layer::read_weights(
+    Stream_Reader &reader
+) {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+    }
+}
+
+void Routed_Layer::merge(
+    const Array<Routed_Layer*> &routed_layers,
+    Merge_Mode mode
+) {
+    switch (mode) {
+    case merge_random:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                int e = rand() % routed_layers.size();                
+
+                vl.weights[i] = routed_layers[e]->visible_layers[vli].weights[i];
+            }
+        }
+
+        break;
+    case merge_average:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int e = 0; e < routed_layers.size(); e++)
+                    total += routed_layers[e]->visible_layers[vli].weights[i];
+
+                vl.weights[i] = roundf(total / routed_layers.size());
+            }
+        }
+
+        break;
+    }
+}

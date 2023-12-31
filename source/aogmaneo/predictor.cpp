@@ -282,8 +282,8 @@ void Predictor::clear_state() {
     hidden_acts.fill(0.0f);
 }
 
-int Predictor::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + sizeof(int);
+long Predictor::size() const {
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -295,8 +295,20 @@ int Predictor::size() const {
     return size;
 }
 
-int Predictor::state_size() const {
+long Predictor::state_size() const {
     return hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float);
+}
+
+long Predictor::weights_size() const {
+    long size = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.weights.size() * sizeof(float);
+    }
+
+    return size;
 }
 
 void Predictor::write(
@@ -395,4 +407,61 @@ void Predictor::read_state(
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
+}
+
+void Predictor::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+    }
+}
+
+void Predictor::read_weights(
+    Stream_Reader &reader
+) {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+    }
+}
+
+void Predictor::merge(
+    const Array<Predictor*> &predictors,
+    Merge_Mode mode
+) {
+    switch (mode) {
+    case merge_random:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                int e = rand() % predictors.size();                
+
+                vl.weights[i] = predictors[e]->visible_layers[vli].weights[i];
+            }
+        }
+
+        break;
+    case merge_average:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int e = 0; e < predictors.size(); e++)
+                    total += predictors[e]->visible_layers[vli].weights[i];
+
+                vl.weights[i] = roundf(total / predictors.size());
+            }
+        }
+
+        break;
+    }
 }
