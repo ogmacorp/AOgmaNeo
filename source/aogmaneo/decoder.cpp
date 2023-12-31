@@ -204,9 +204,9 @@ void Decoder::update_gates(
 
                         int wi = di + wi_start;
 
-                        float w = (127.0f - vl.weights[wi]) * half_byte_inv;
+                        float w = (128.0f - vl.weights[wi]) * half_byte_inv;
 
-                        sum += abs(w);
+                        sum += w * w;
                     }
                 }
 
