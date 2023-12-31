@@ -71,9 +71,11 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer dendrite_acts;
+    Int_Buffer hidden_cell_dis;
 
     Float_Buffer hidden_acts; // temporary buffer
+
+    Float_Buffer dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
