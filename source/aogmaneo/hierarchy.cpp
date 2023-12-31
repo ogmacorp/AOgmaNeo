@@ -343,8 +343,8 @@ void Hierarchy::clear_state() {
         actors[a].clear_state();
 }
 
-int Hierarchy::size() const {
-    int size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + o_indices.size() * sizeof(int);
+long Hierarchy::size() const {
+    long size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + o_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += sizeof(int);
@@ -376,8 +376,8 @@ int Hierarchy::size() const {
     return size;
 }
 
-int Hierarchy::state_size() const {
-    int size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
+long Hierarchy::state_size() const {
+    long size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         for (int i = 0; i < histories[l].size(); i++) {
@@ -403,6 +403,28 @@ int Hierarchy::state_size() const {
 
     return size;
 }
+
+long Hierarchy::weights_size() const {
+    long size = 0;
+
+    for (int l = 0; l < encoders.size(); l++) {
+        size += encoders[l].weights_size();
+        
+        if (l < encoders.size() - 1)
+            size += routed_layers[l].size() * routed_layers[l][0].weights_size();
+    }
+
+    // predictors
+    for (int p = 0; p < actors.size(); p++)
+        size += predictors[p].weights_size();
+
+    // actors
+    for (int a = 0; a < actors.size(); a++)
+        size += actors[a].weights_size();
+
+    return size;
+}
+
 
 void Hierarchy::write(
     Stream_Writer &writer
@@ -641,4 +663,75 @@ void Hierarchy::read_state(
 
     for (int a = 0; a < actors.size(); a++)
         actors[a].read_state(reader);
+}
+
+void Hierarchy::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int l = 0; l < encoders.size(); l++) {
+        encoders[l].write_weights(writer);
+
+        if (l < encoders.size() - 1) {
+            for (int i = 0; i < routed_layers[l].size(); i++)
+                routed_layers[l][i].write_weights(writer);
+        }
+    }
+
+    for (int p = 0; p < predictors.size(); p++)
+        predictors[p].write_state(writer);
+
+    for (int a = 0; a < actors.size(); a++)
+        actors[a].write_state(writer);
+}
+
+void Hierarchy::read_weights(
+    Stream_Reader &reader
+) {
+    for (int l = 0; l < encoders.size(); l++) {
+        encoders[l].read_weights(reader);
+        
+        if (l < encoders.size() - 1) {
+            for (int i = 0; i < routed_layers[l].size(); i++)
+                routed_layers[l][i].read_weights(reader);
+        }
+    }
+
+    for (int p = 0; p < predictors.size(); p++)
+        predictors[p].read_weights(reader);
+
+    for (int a = 0; a < actors.size(); a++)
+        actors[a].read_weights(reader);
+}
+
+void Hierarchy::merge(
+    const Array<Hierarchy*> &hierarchies,
+    Merge_Mode mode
+) {
+    Array<Encoder*> merge_encoders(hierarchies.size());
+    Array<Decoder*> merge_decoders(hierarchies.size());
+
+    for (int l = 0; l < encoders.size(); l++) {
+        for (int h = 0; h < hierarchies.size(); h++)
+            merge_encoders[h] = &hierarchies[h]->encoders[l];
+
+        encoders[l].merge(merge_encoders, mode);
+
+        // decoders
+        for (int d = 0; d < decoders[l].size(); d++) {
+            for (int h = 0; h < hierarchies.size(); h++)
+                merge_decoders[h] = &hierarchies[h]->decoders[l][d];
+
+            decoders[l][d].merge(merge_decoders, mode);
+        }
+    }
+    
+    // actors
+    Array<Actor*> merge_actors(hierarchies.size());
+
+    for (int d = 0; d < actors.size(); d++) {
+        for (int h = 0; h < hierarchies.size(); h++)
+            merge_actors[h] = &hierarchies[h]->actors[d];
+
+        actors[d].merge(merge_actors, mode);
+    }
 }
