@@ -58,7 +58,6 @@ public:
         cons(0.1f),
         leak(0.1f),
         discount(0.99f),
-        gap(0.8f),
         n_steps(16),
         history_iters(16)
         {}

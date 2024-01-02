@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -107,14 +108,13 @@ void Actor::forward(
 
         activation /= num_dendrites_per_cell;
 
-        hidden_acts[hidden_cell_index] = activation;
-
         if (activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
     }
 
+    std::cout << max_activation << std::endl;
     hidden_cis[hidden_column_index] = max_index;
 }
 
@@ -315,7 +315,6 @@ void Actor::learn(
     float value_prev = hidden_acts[target_ci + hidden_cells_start];
 
     float dQ = value - value_prev;
-    float dAL = dQ - params.gap * (max_activation - value_prev);
     
     // softmax
     float total = 0.0f;
@@ -372,7 +371,7 @@ void Actor::learn(
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dAL;
+                    float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dQ;
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
@@ -394,7 +393,7 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dAL;
+        float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * dQ;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
