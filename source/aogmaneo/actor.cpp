@@ -105,6 +105,8 @@ void Actor::forward(
             activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
 
+        activation /= num_dendrites_per_cell;
+
         hidden_acts[hidden_cell_index] = activation;
 
         if (activation > max_activation) {
@@ -213,6 +215,8 @@ void Actor::learn(
             activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
 
+        activation /= num_dendrites_per_cell;
+
         max_activation_next = max(max_activation_next, activation);
     }
 
@@ -295,6 +299,8 @@ void Actor::learn(
 
             activation += dendrite_acts[dendrite_index] * hidden_weights[dendrite_index];
         }
+
+        activation /= num_dendrites_per_cell;
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -577,6 +583,8 @@ long Actor::weights_size() const {
         size += vl.weights.size() * sizeof(float);
     }
 
+    size += hidden_weights.size() * sizeof(float);
+
     return size;
 }
 
@@ -600,6 +608,8 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
+
+    writer.write(reinterpret_cast<const void*>(&hidden_weights[0]), hidden_weights.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
 
@@ -663,6 +673,8 @@ void Actor::read(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
+
+    reader.read(reinterpret_cast<void*>(&hidden_weights[0]), hidden_weights.size() * sizeof(float));
 
     reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
 
@@ -756,6 +768,8 @@ void Actor::write_weights(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
+
+    writer.write(reinterpret_cast<const void*>(&hidden_weights[0]), hidden_weights.size() * sizeof(float));
 }
 
 void Actor::read_weights(
@@ -766,6 +780,8 @@ void Actor::read_weights(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
     }
+
+    reader.read(reinterpret_cast<void*>(&hidden_weights[0]), hidden_weights.size() * sizeof(float));
 }
 
 void Actor::merge(
