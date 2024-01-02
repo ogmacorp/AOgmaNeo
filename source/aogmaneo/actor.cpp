@@ -94,7 +94,7 @@ void Actor::forward(
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
         int max_cell_di = 0;
-        float max_dendrite_act = 0.0f;
+        float max_dendrite_act = limit_min;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -208,7 +208,7 @@ void Actor::learn(
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
         int max_cell_di = 0;
-        float max_dendrite_act = 0.0f;
+        float max_dendrite_act = limit_min;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -295,7 +295,7 @@ void Actor::learn(
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
         int max_cell_di = 0;
-        float max_dendrite_act = 0.0f;
+        float max_dendrite_act = limit_min;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -428,7 +428,7 @@ void Actor::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-init_weight_noisef, init_weight_noisef);
     }
 
     // hidden cis
