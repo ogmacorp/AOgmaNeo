@@ -55,7 +55,7 @@ public:
         :
         dlr(0.001f),
         hlr(0.001f),
-        cons(0.1f),
+        cons(0.0f),
         leak(0.1f),
         discount(0.99f),
         n_steps(16),
