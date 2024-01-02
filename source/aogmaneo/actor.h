@@ -42,21 +42,16 @@ public:
     };
 
     struct Params {
-        float dlr; // dendrite learning rate
-        float hlr; // hidden learning rate
+        float lr; // dendrite learning rate
         float cons; // convervativeness
-        float leak;
         float discount; // discount fActor
-        float gap; // action gap
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        dlr(0.001f),
-        hlr(0.001f),
+        lr(0.001f),
         cons(0.0f),
-        leak(0.1f),
         discount(0.99f),
         n_steps(16),
         history_iters(16)
@@ -72,11 +67,11 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
+    Int_Buffer hidden_cell_dis;
+
     Float_Buffer dendrite_acts;
 
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_weights;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
