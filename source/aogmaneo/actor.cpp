@@ -434,6 +434,8 @@ void Actor::init_random(
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
+    hidden_cell_dis = Int_Buffer(num_hidden_cells, 0);
+
     dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
