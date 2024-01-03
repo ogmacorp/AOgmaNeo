@@ -42,7 +42,7 @@ public:
     };
 
     struct Params {
-        float lr; // dendrite learning rate
+        float lr; // hidden learning rate
         float cons; // convervativeness
         float discount; // discount fActor
         int n_steps; // q steps
@@ -53,7 +53,7 @@ public:
         lr(0.01f),
         cons(0.0f),
         discount(0.99f),
-        n_steps(5),
+        n_steps(16),
         history_iters(16)
         {}
     };
@@ -106,17 +106,16 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis_prev,
-        bool learn_enabled,
         float reward,
+        bool learn_enabled,
         const Params &params
     );
 
     void clear_state();
 
     // serialization
-    long size() const; // returns size in bytes
-    long state_size() const; // returns size of state in bytes
-    long weights_size() const; // returns size of weights in bytes
+    int size() const; // returns size in bytes
+    int state_size() const; // returns size of state in bytes
 
     void write(
         Stream_Writer &writer
@@ -131,14 +130,6 @@ public:
     ) const;
 
     void read_state(
-        Stream_Reader &reader
-    );
-
-    void write_weights(
-        Stream_Writer &writer
-    ) const;
-
-    void read_weights(
         Stream_Reader &reader
     );
 
@@ -183,11 +174,5 @@ public:
     int get_history_size() const {
         return history_size;
     }
-
-    // merge list of decoders and write to this one
-    void merge(
-        const Array<Actor*> &actors,
-        Merge_Mode mode
-    );
 };
 }
