@@ -92,21 +92,43 @@ void Decoder::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float activation = 0.0f;
+        float max_dendrite_act = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            float act = (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale;
+            float act = dendrite_acts[dendrite_index] / (count * 255) * params.scale;
 
-            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+            dendrite_acts[dendrite_index] = act;
+
+            max_dendrite_act = max(max_dendrite_act, act);
+        }
+
+        float activation = 0.0f;
+
+        float total = 0.0f;
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + dendrites_start;
+
+            dendrite_acts[dendrite_index] = expf(dendrite_acts[dendrite_index] - max_dendrite_act);
+
+            total += dendrite_acts[dendrite_index];
 
             activation += dendrite_acts[dendrite_index];
         }
 
-        activation /= num_dendrites_per_cell;
+        activation = max_dendrite_act + logf(activation);
 
         hidden_acts[hidden_cell_index] = activation;
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + dendrites_start;
+
+            dendrite_acts[dendrite_index] *= total_inv;
+        }
 
         if (activation > max_activation) {
             max_activation = activation;
@@ -276,7 +298,7 @@ void Decoder::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = params.lr * 255.0f * error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                        float delta = params.lr * 255.0f * error * dendrite_acts[dendrite_index];
 
                         vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta * gate, state)));
                     }
