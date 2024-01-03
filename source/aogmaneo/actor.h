@@ -106,8 +106,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis_prev,
-        float reward,
         bool learn_enabled,
+        float reward,
         const Params &params
     );
 
