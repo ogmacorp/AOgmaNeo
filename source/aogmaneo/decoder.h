@@ -44,7 +44,7 @@ public:
 
         Params()
         :
-        scale(64.0f),
+        scale(128.0f),
         lr(0.1f),
         gcurve(16.0f)
         {}
@@ -55,8 +55,6 @@ private:
     int num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden state
-
-    Int_Buffer hidden_cell_dis;
 
     Float_Buffer hidden_acts;
 
