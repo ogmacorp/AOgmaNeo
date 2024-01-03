@@ -110,9 +110,9 @@ void Actor::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_acts[dendrite_index] = expf(dendrite_acts[dendrite_index] - max_dendrite_act);
+            float dendrite_act = expf(dendrite_acts[dendrite_index] - max_dendrite_act);
 
-            activation += dendrite_acts[dendrite_index];
+            activation += dendrite_act;
         }
 
         activation = max_dendrite_act + logf(activation);
@@ -407,7 +407,7 @@ void Actor::learn(
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    float error = params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error;
+                    float error = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
@@ -416,7 +416,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = params.lr * error * dendrite_acts[dendrite_index];
+                        float delta = error * dendrite_acts[dendrite_index];
 
                         vl.weights[wi] += delta;
                     }
@@ -456,7 +456,7 @@ void Actor::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = randf(-1.0f, 1.0f);
+            vl.weights[i] = randf(-init_weight_noisef, init_weight_noisef);
     }
 
     // hidden cis
