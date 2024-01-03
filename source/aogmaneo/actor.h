@@ -50,7 +50,7 @@ public:
 
         Params()
         :
-        lr(0.001f),
+        lr(0.01f),
         cons(0.0f),
         discount(0.99f),
         n_steps(8),
