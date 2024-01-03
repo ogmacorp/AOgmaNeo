@@ -117,9 +117,7 @@ void Actor::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            float dendrite_act = expf(dendrite_acts[dendrite_index] - max_dendrite_act);
-
-            activation += dendrite_act;
+            activation += expf(dendrite_acts[dendrite_index] - max_dendrite_act);
         }
 
         activation = max_dendrite_act + logf(activation);
@@ -290,13 +288,13 @@ void Actor::learn(
 
         hidden_acts[hidden_cell_index] = activation;
 
+        max_activation = max(max_activation, activation);
+
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             dendrite_acts[dendrite_index] *= total_inv;
         }
-
-        max_activation = max(max_activation, activation);
     }
 
     // softmax
