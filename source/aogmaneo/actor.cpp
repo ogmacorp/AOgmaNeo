@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -121,7 +120,6 @@ void Actor::forward(
             max_index = hc;
         }
     }
-    std::cout << max_activation << std::endl;
 
     hidden_cis[hidden_column_index] = max_index;
 }
