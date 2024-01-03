@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -416,9 +417,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = error * dendrite_acts[dendrite_index];
-
-                        vl.weights[wi] += delta;
+                        vl.weights[wi] += error * dendrite_acts[dendrite_index];
                     }
                 }
             }
