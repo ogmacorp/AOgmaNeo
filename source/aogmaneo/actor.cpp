@@ -124,6 +124,8 @@ void Actor::forward(
 
         activation = max_dendrite_act + logf(activation);
 
+        hidden_acts[hidden_cell_index] = activation;
+
         max_activation = max(max_activation, activation);
     }
 
@@ -274,23 +276,19 @@ void Actor::learn(
 
         float activation = 0.0f;
 
-        float total = 0.0f;
-
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             dendrite_acts[dendrite_index] = expf(dendrite_acts[dendrite_index] - max_dendrite_act);
 
-            total += dendrite_acts[dendrite_index];
-
             activation += dendrite_acts[dendrite_index];
         }
+
+        float total_inv = 1.0f / max(limit_small, activation);
 
         activation = max_dendrite_act + logf(activation);
 
         hidden_acts[hidden_cell_index] = activation;
-
-        float total_inv = 1.0f / max(limit_small, total);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
