@@ -332,13 +332,13 @@ void Actor::learn(
 
         hidden_acts[hidden_cell_index] = activation;
 
+        max_activation = max(max_activation, activation);
+
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             dendrite_acts[dendrite_index] *= total_inv;
         }
-
-        max_activation = max(max_activation, activation);
     }
 
     float value = max_activation_next;
