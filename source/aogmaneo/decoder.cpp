@@ -99,7 +99,7 @@ void Decoder::forward(
 
             float act = (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale;
 
-            dendrite_acts[dendrite_index] = max(act * params.leak, act);
+            dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
 
             activation += dendrite_acts[dendrite_index];
         }
