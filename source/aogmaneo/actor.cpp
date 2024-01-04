@@ -380,7 +380,7 @@ void Actor::init_random(
         vl.action_weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.action_weights.size(); i++)
-            vl.action_weights[i] = randf(0.0f, init_weight_noisef);
+            vl.action_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         vl.value_weights.resize(num_hidden_columns * area * vld.size.z);
 
