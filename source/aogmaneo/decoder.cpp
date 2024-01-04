@@ -104,8 +104,6 @@ void Decoder::forward(
             activation += dendrite_acts[dendrite_index];
         }
 
-        activation /= num_dendrites_per_cell;
-
         hidden_acts[hidden_cell_index] = activation;
 
         if (activation > max_activation) {
