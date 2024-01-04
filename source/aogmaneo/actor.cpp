@@ -107,7 +107,7 @@ void Actor::forward(
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+            dendrite_acts[dendrite_index] = max(act * params.leak, act);
 
             activation += dendrite_acts[dendrite_index];
         }
@@ -259,7 +259,7 @@ void Actor::learn(
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = ((act > 0.0f) * act + (act < 0.0f) * act * params.leak);
+            dendrite_acts[dendrite_index] = max(act * params.leak, act);
 
             activation += dendrite_acts[dendrite_index];
         }
@@ -294,7 +294,7 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
-    float action_error_partial = mimic + (1.0f - mimic) * tanhf(td_error_value);
+    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -342,7 +342,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = params.alr * error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                        float delta = error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
 
                         vl.action_weights[wi] += delta;
                     }
