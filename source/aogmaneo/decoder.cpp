@@ -27,7 +27,7 @@ void Decoder::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_acts[dendrite_index] = dendrite_biases[dendrite_index];
+            dendrite_acts[dendrite_index] = 0.0f;
         }
     }
 
@@ -281,22 +281,6 @@ void Decoder::learn(
                 }
             }
     }
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
-
-        float error = (hc == target_ci) - hidden_acts[hidden_cell_index];
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            float delta = params.lr * 255.0f * error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
-
-            dendrite_biases[dendrite_index] = min(255, max(0, dendrite_biases[dendrite_index] + rand_roundf(delta, state)));
-        }
-    }
 }
 
 void Decoder::init_random(
@@ -333,7 +317,7 @@ void Decoder::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + (rand() % init_weight_noisei);
+            vl.weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
 
@@ -348,11 +332,6 @@ void Decoder::init_random(
     dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
 
     dendrite_deltas.resize(num_dendrites);
-
-    dendrite_biases.resize(num_dendrites);
-
-    for (int i = 0; i < num_dendrites; i++)
-        dendrite_biases[i] = 127 + (rand() % init_weight_noisei);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -484,8 +463,6 @@ void Decoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
-
-    writer.write(reinterpret_cast<const void*>(&dendrite_biases[0]), dendrite_biases.size() * sizeof(Byte));
 }
 
 void Decoder::read(
@@ -542,10 +519,6 @@ void Decoder::read(
         vl.gates.resize(num_visible_columns);
     }
 
-    dendrite_biases.resize(num_dendrites);
-
-    reader.read(reinterpret_cast<void*>(&dendrite_biases[0]), dendrite_biases.size() * sizeof(Byte));
-
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
 
@@ -600,8 +573,6 @@ void Decoder::write_weights(
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
     }
-
-    writer.write(reinterpret_cast<const void*>(&dendrite_biases[0]), dendrite_biases.size() * sizeof(Byte));
 }
 
 void Decoder::read_weights(
@@ -612,8 +583,6 @@ void Decoder::read_weights(
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
     }
-
-    reader.read(reinterpret_cast<void*>(&dendrite_biases[0]), dendrite_biases.size() * sizeof(Byte));
 }
 
 void Decoder::merge(
