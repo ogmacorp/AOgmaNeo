@@ -56,6 +56,7 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Int_Buffer hidden_cell_dis;
+    Int_Buffer hidden_cell_dis_prev;
 
     Float_Buffer dendrite_acts;
 
