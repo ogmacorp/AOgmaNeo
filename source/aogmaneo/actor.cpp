@@ -101,17 +101,11 @@ void Actor::forward(
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = act;
-
             if (act > max_dendrite_act) {
                 max_dendrite_act = act;
                 max_cell_di = di;
             }
         }
-
-        hidden_cell_dis[hidden_cell_index] = max_cell_di;
-
-        hidden_acts[hidden_cell_index] = max_dendrite_act;
 
         if (max_dendrite_act > max_activation) {
             max_activation = max_dendrite_act;
@@ -381,7 +375,7 @@ void Actor::learn(
 
                     int wi = di + wi_start;
 
-                    vl.weights[wi] += params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error) * dendrite_acts[dendrite_index];
+                    vl.weights[wi] += params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
                 }
             }
     }
