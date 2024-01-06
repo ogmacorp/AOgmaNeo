@@ -32,23 +32,19 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int history_capacity; // actor history max window size
-
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
-            int num_dendrites_per_cell = 2,
+            int num_dendrites_per_cell = 4,
             int up_radius = 2,
-            int down_radius = 2,
-            int history_capacity = 256
+            int down_radius = 2
         )
         :
         size(size),
         type(type),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
-        down_radius(down_radius),
-        history_capacity(history_capacity)
+        down_radius(down_radius)
         {}
     };
 
@@ -66,7 +62,7 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
-            int num_dendrites_per_cell = 2,
+            int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,

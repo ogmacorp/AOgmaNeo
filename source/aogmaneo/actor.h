@@ -32,6 +32,8 @@ public:
     struct Visible_Layer {
         Float_Buffer weights;
         Float_Buffer traces;
+
+        Int_Buffer input_cis_prev;
     };
 
     struct Params {
@@ -68,6 +70,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View hidden_target_cis_prev,
         float reward,
         bool learn_enabled,
         unsigned long* state,
