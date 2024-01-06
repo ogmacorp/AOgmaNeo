@@ -54,7 +54,7 @@ public:
         :
         lr(0.01f),
         cons(0.0f),
-        rate(0.01f),
+        rate(0.001f),
         discount(0.99f),
         n_steps(8),
         history_iters(16)
