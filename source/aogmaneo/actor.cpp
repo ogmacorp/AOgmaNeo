@@ -13,6 +13,8 @@ using namespace aon;
 void Actor::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
+    float reward,
+    bool learn_enabled,
     unsigned long* state,
     const Params &params
 ) {
@@ -79,7 +81,7 @@ void Actor::forward(
 
                         int wi = di + wi_start;
 
-                        dendrite_acts[dendrite_index] += vl.weights_delayed[wi];
+                        dendrite_acts[dendrite_index] += vl.weights[wi];
                     }
                 }
             }
@@ -387,7 +389,6 @@ void Actor::learn(
 void Actor::init_random(
     const Int3 &hidden_size,
     int num_dendrites_per_cell,
-    int history_capacity,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
@@ -417,7 +418,7 @@ void Actor::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
-        vl.weights_delayed = vl.weights;
+        vl.traces = Float_Buffer(vl.weights.size(), 0.0f);
     }
 
     // hidden cis
@@ -427,24 +428,6 @@ void Actor::init_random(
 
     dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
-
-    // create (pre-allocated) history samples
-    history_size = 0;
-    history_samples.resize(history_capacity);
-
-    for (int i = 0; i < history_samples.size(); i++) {
-        history_samples[i].input_cis.resize(visible_layers.size());
-
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
-
-            int num_visible_columns = vld.size.x * vld.size.y;
-
-            history_samples[i].input_cis[vli] = Int_Buffer(num_visible_columns);
-        }
-
-        history_samples[i].hidden_target_cis_prev = Int_Buffer(num_hidden_columns);
-    }
 }
 
 void Actor::step(
@@ -463,58 +446,18 @@ void Actor::step(
     for (int i = 0; i < num_hidden_columns; i++) {
         unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
-    }
-
-    history_samples.push_front();
-
-    // if not at cap, increment
-    if (history_size < history_samples.size())
-        history_size++;
-    
-    // add new sample
-    {
-        History_Sample &s = history_samples[0];
-
-        for (int vli = 0; vli < visible_layers.size(); vli++)
-            s.input_cis[vli] = input_cis[vli];
-
-        // copy
-        s.hidden_target_cis_prev = hidden_target_cis_prev;
-
-        s.reward = reward;
-    }
-
-    // learn (if have sufficient samples)
-    if (learn_enabled && history_size > params.n_steps) {
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-
-            // update delayed weights
-            PARALLEL_FOR
-            for (int i = 0; i < vl.weights.size(); i++)
-                vl.weights_delayed[i] += params.rate * (vl.weights[i] - vl.weights_delayed[i]);
-        }
-
-        for (int it = 0; it < params.history_iters; it++) {
-            int t = rand() % (history_size - params.n_steps) + params.n_steps;
-
-            base_state = rand();
-
-            PARALLEL_FOR
-            for (int i = 0; i < num_hidden_columns; i++) {
-                unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-                learn(Int2(i / hidden_size.y, i % hidden_size.y), t, &state, params);
-            }
-        }
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, reward, learn_enabled, &state, params);
     }
 }
 
 void Actor::clear_state() {
     hidden_cis.fill(0);
 
-    history_size = 0;
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        vl.traces.fill(0.0f);
+    }
 }
 
 long Actor::size() const {
@@ -527,37 +470,11 @@ long Actor::size() const {
         size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(float);
     }
 
-    size += 3 * sizeof(int);
-
-    int sample_size = 0;
-
-    const History_Sample &s = history_samples[0];
-
-    for (int vli = 0; vli < visible_layers.size(); vli++)
-        sample_size += s.input_cis[vli].size() * sizeof(int);
-
-    sample_size += s.hidden_target_cis_prev.size() * sizeof(int) + sizeof(float);
-
-    size += history_samples.size() * sample_size;
-
     return size;
 }
 
 long Actor::state_size() const {
-    long size = hidden_cis.size() * sizeof(int) + 2 * sizeof(int);
-
-    int sample_size = 0;
-
-    const History_Sample &s = history_samples[0];
-
-    for (int vli = 0; vli < visible_layers.size(); vli++)
-        sample_size += s.input_cis[vli].size() * sizeof(int);
-
-    sample_size += s.hidden_target_cis_prev.size() * sizeof(int) + sizeof(float);
-
-    size += history_samples.size() * sample_size;
-
-    return size;
+    return hidden_cis.size() * sizeof(int) + 2 * sizeof(int);
 }
 
 long Actor::weights_size() const {
@@ -591,28 +508,7 @@ void Actor::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.weights_delayed[0]), vl.weights_delayed.size() * sizeof(float));
-    }
-
-    writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
-
-    int num_history_samples = history_samples.size();
-
-    writer.write(reinterpret_cast<const void*>(&num_history_samples), sizeof(int));
-
-    int history_start = history_samples.start;
-
-    writer.write(reinterpret_cast<const void*>(&history_start), sizeof(int));
-
-    for (int t = 0; t < history_samples.size(); t++) {
-        const History_Sample &s = history_samples[t];
-
-        for (int vli = 0; vli < visible_layers.size(); vli++)
-            writer.write(reinterpret_cast<const void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
     }
 }
 
@@ -655,45 +551,10 @@ void Actor::read(
         int area = diam * diam;
 
         vl.weights.resize(num_dendrites * area * vld.size.z);
-        vl.weights_delayed.resize(vl.weights.size());
+        vl.traces.resize(vl.weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.weights_delayed[0]), vl.weights_delayed.size() * sizeof(float));
-    }
-
-    reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
-
-    int num_history_samples;
-
-    reader.read(reinterpret_cast<void*>(&num_history_samples), sizeof(int));
-
-    int history_start;
-
-    reader.read(reinterpret_cast<void*>(&history_start), sizeof(int));
-
-    history_samples.resize(num_history_samples);
-    history_samples.start = history_start;
-
-    for (int t = 0; t < history_samples.size(); t++) {
-        History_Sample &s = history_samples[t];
-
-        s.input_cis.resize(num_visible_layers);
-
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-            int num_visible_columns = vld.size.x * vld.size.y;
-
-            s.input_cis[vli].resize(num_visible_columns);
-
-            reader.read(reinterpret_cast<void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
-        }
-
-        s.hidden_target_cis_prev.resize(num_hidden_columns);
-
-        reader.read(reinterpret_cast<void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
-
-        reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
     }
 }
 
@@ -702,21 +563,10 @@ void Actor::write_state(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
 
-    int history_start = history_samples.start;
-
-    writer.write(reinterpret_cast<const void*>(&history_start), sizeof(int));
-
-    for (int t = 0; t < history_samples.size(); t++) {
-        const History_Sample &s = history_samples[t];
-
-        for (int vli = 0; vli < visible_layers.size(); vli++)
-            writer.write(reinterpret_cast<const void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
     }
 }
 
@@ -725,23 +575,10 @@ void Actor::read_state(
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
 
-    int history_start;
-
-    reader.read(reinterpret_cast<void*>(&history_start), sizeof(int));
-
-    history_samples.start = history_start;
-
-    for (int t = 0; t < history_samples.size(); t++) {
-        History_Sample &s = history_samples[t];
-
-        for (int vli = 0; vli < visible_layers.size(); vli++)
-            reader.read(reinterpret_cast<void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
-
-        reader.read(reinterpret_cast<void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
-
-        reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.traces[0]), vl.traces.size() * sizeof(float));
     }
 }
 
@@ -752,7 +589,6 @@ void Actor::write_weights(
         const Visible_Layer &vl = visible_layers[vli];
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.weights_delayed[0]), vl.weights_delayed.size() * sizeof(float));
     }
 }
 
@@ -763,7 +599,6 @@ void Actor::read_weights(
         Visible_Layer &vl = visible_layers[vli];
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.weights_delayed[0]), vl.weights_delayed.size() * sizeof(float));
     }
 }
 
@@ -781,7 +616,6 @@ void Actor::merge(
                 int d = rand() % actors.size();                
 
                 vl.weights[i] = actors[d]->visible_layers[vli].weights[i];
-                vl.weights_delayed[i] = actors[d]->visible_layers[vli].weights_delayed[i];
             }
         }
 
@@ -793,15 +627,11 @@ void Actor::merge(
         
             for (int i = 0; i < vl.weights.size(); i++) {
                 float total = 0.0f;
-                float total_delayed = 0.0f;
 
-                for (int d = 0; d < actors.size(); d++) {
+                for (int d = 0; d < actors.size(); d++)
                     total += actors[d]->visible_layers[vli].weights[i];
-                    total_delayed += actors[d]->visible_layers[vli].weights_delayed[i];
-                }
 
                 vl.weights[i] = total / actors.size();
-                vl.weights_delayed[i] = total_delayed / actors.size();
             }
         }
 

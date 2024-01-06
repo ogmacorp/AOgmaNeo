@@ -31,42 +31,25 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer weights;
-        Float_Buffer weights_delayed;
-    };
-
-    // history sample for delayed updates
-    struct History_Sample {
-        Array<Int_Buffer> input_cis;
-        Int_Buffer hidden_target_cis_prev;
-
-        float reward;
+        Float_Buffer traces;
     };
 
     struct Params {
         float lr; // hidden learning rate
-        float cons; // convervativeness
-        float rate;
         float discount; // discount fActor
-        int n_steps; // q steps
-        int history_iters; // number of iterations over samples
+        float trace_decay;
 
         Params()
         :
         lr(0.01f),
-        cons(0.0f),
-        rate(0.001f),
         discount(0.99f),
-        n_steps(8),
-        history_iters(16)
+        trace_decay(0.01f)
         {}
     };
 
 private:
     Int3 hidden_size; // hidden/output/action size
     int num_dendrites_per_cell;
-
-    // current history size - fixed after initialization. determines length of wait before updating
-    int history_size;
 
     Int_Buffer hidden_cis; // hidden states
 
@@ -75,8 +58,6 @@ private:
     Float_Buffer dendrite_acts;
 
     Float_Buffer hidden_acts;
-
-    Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
@@ -87,13 +68,8 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        unsigned long* state,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        int t,
+        float reward,
+        bool learn_enabled,
         unsigned long* state,
         const Params &params
     );
@@ -103,7 +79,6 @@ public:
     void init_random(
         const Int3 &hidden_size,
         int num_dendrites_per_cell,
-        int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
@@ -179,14 +154,6 @@ public:
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
-    }
-
-    int get_history_capacity() const {
-        return history_samples.size();
-    }
-
-    int get_history_size() const {
-        return history_size;
     }
 
     // merge list of decoders and write to this one
