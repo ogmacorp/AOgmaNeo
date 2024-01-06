@@ -166,15 +166,17 @@ void Actor::forward(
 
                             int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
-                            int di = hidden_cell_dis[hidden_cell_index];
+                            int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                            int dendrite_index = di + num_dendrites_per_cell * hidden_cell_index;
+                            for (int di = 0; di < num_dendrites_per_cell; di++) {
+                                int dendrite_index = di + dendrites_start;
 
-                            int wi = di + wi_start;
+                                int wi = di + wi_start;
 
-                            vl.traces[wi] = (1.0f - params.trace_decay) * vl.traces[wi] + (vc == in_ci_prev && hc == target_ci);
+                                vl.traces[wi] = max((1.0f - params.trace_decay) * vl.traces[wi], static_cast<float>(vc == in_ci_prev && hc == target_ci && di == hidden_cell_dis[dendrite_index]));
 
-                            vl.weights[wi] += delta * vl.traces[wi];
+                                vl.weights[wi] += delta * vl.traces[wi];
+                            }
                         }
                     }
                 }

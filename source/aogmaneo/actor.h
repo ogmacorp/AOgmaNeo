@@ -43,9 +43,9 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.001f),
         discount(0.99f),
-        trace_decay(0.01f)
+        trace_decay(0.02f)
         {}
     };
 
