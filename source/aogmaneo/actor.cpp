@@ -255,6 +255,8 @@ void Actor::step(
     }
 
     // copy to prevs
+    hidden_cell_dis_prev = hidden_cell_dis;
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
