@@ -269,17 +269,15 @@ void Decoder::learn(
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
-                    int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
-
-                    float delta = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
-
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
                     int di = hidden_cell_dis[hidden_cell_index];
 
-                    int dendrite_index = di + dendrites_start;
+                    int dendrite_index = di + num_dendrites_per_cell * hidden_cell_index;
 
                     int wi = di + wi_start;
+
+                    float delta = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
                     vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(delta * gate, state)));
                 }
