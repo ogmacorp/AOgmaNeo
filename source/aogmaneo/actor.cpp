@@ -79,8 +79,6 @@ void Actor::forward(
 
                         int wi = di + wi_start;
 
-                        vl.weights_delayed[wi] += params.rate * (vl.weights[wi] - vl.weights_delayed[wi]);
-
                         dendrite_acts[dendrite_index] += vl.weights_delayed[wi];
                     }
                 }
@@ -489,6 +487,15 @@ void Actor::step(
 
     // learn (if have sufficient samples)
     if (learn_enabled && history_size > params.n_steps) {
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+
+            // update delayed weights
+            PARALLEL_FOR
+            for (int i = 0; i < vl.weights.size(); i++)
+                vl.weights_delayed[i] += params.rate * (vl.weights[i] - vl.weights_delayed[i]);
+        }
+
         for (int it = 0; it < params.history_iters; it++) {
             int t = rand() % (history_size - params.n_steps) + params.n_steps;
 
