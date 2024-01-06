@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -115,6 +116,8 @@ void Actor::forward(
                 max_cell_di = di;
             }
         }
+
+        hidden_cell_dis[hidden_cell_index] = max_cell_di;
 
         hidden_acts[hidden_cell_index] = max_dendrite_act;
 
