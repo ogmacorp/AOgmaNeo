@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer weights;
+        Float_Buffer weights_delayed;
     };
 
     // history sample for delayed updates
@@ -44,6 +45,7 @@ public:
     struct Params {
         float lr; // hidden learning rate
         float cons; // convervativeness
+        float rate;
         float discount; // discount fActor
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
@@ -52,9 +54,10 @@ public:
         :
         lr(0.01f),
         cons(0.0f),
+        rate(0.01f),
         discount(0.99f),
-        n_steps(6),
-        history_iters(8)
+        n_steps(8),
+        history_iters(16)
         {}
     };
 
