@@ -100,7 +100,6 @@ void Actor::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        int max_cell_di = 0;
         float max_dendrite_act = limit_min;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
@@ -108,15 +107,8 @@ void Actor::forward(
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = act;
-
-            if (act > max_dendrite_act) {
-                max_dendrite_act = act;
-                max_cell_di = di;
-            }
+            max_dendrite_act = max(max_dendrite_act, act);
         }
-
-        hidden_cell_dis[hidden_cell_index] = max_cell_di;
 
         hidden_acts[hidden_cell_index] = max_dendrite_act;
 
