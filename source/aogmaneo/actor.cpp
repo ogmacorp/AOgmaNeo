@@ -331,6 +331,9 @@ void Actor::learn(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] *= total_inv;
+
+        // re-use as deltas
+        hidden_acts[hidden_cell_index] = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -375,7 +378,7 @@ void Actor::learn(
 
                     int wi = di + wi_start;
 
-                    vl.weights[wi] += params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
+                    vl.weights[wi] += hidden_acts[hidden_cell_index];
                 }
             }
     }
