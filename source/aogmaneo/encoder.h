@@ -102,8 +102,9 @@ public:
     void clear_state();
 
     // serialization
-    int size() const; // returns size in bytes
-    int state_size() const; // returns size of state in bytes
+    long size() const; // returns size in Bytes
+    long state_size() const; // returns size of state in Bytes
+    long weights_size() const; // returns size of weights in Bytes
 
     void write(
         Stream_Writer &writer
@@ -118,6 +119,14 @@ public:
     ) const;
 
     void read_state(
+        Stream_Reader &reader
+    );
+
+    void write_weights(
+        Stream_Writer &writer
+    ) const;
+
+    void read_weights(
         Stream_Reader &reader
     );
 
@@ -156,5 +165,11 @@ public:
     const Int3 &get_hidden_size() const {
         return hidden_size;
     }
+
+    // merge list of encoders and write to this one
+    void merge(
+        const Array<Encoder*> &encoders,
+        Merge_Mode mode
+    );
 };
 }
