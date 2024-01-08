@@ -418,6 +418,8 @@ void Hierarchy::read(
     encoders.resize(num_layers);
     routed_layers.resize(num_layers - 1);
 
+    hidden_cis_prev.resize(num_layers);
+
     i_indices.resize(num_io * 2);
     o_indices.resize(num_io);
 
@@ -429,6 +431,8 @@ void Hierarchy::read(
         
         if (l < encoders.size() - 1)
             routed_layers[l].read(reader);
+
+        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     predictors.resize(num_predictions);
