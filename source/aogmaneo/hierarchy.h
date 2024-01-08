@@ -54,24 +54,20 @@ public:
         Int3 hidden_size; // size of hidden layer
 
         int up_radius; // encoder radius
+        int recurrent_radius; // recurrent encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
-
-        int ticks_per_update;
-        int temporal_horizon;
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int up_radius = 2,
-            int down_radius = 2,
-            int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int recurrent_radius = 0,
+            int down_radius = 2
         )
         :
         hidden_size(hidden_size),
         up_radius(up_radius),
-        down_radius(down_radius),
-        ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon)
+        recurrent_radius(recurrent_radius),
+        down_radius(down_radius)
         {}
     };
 
@@ -101,18 +97,11 @@ public:
 private:
     // layers
     Array<Encoder> encoders;
-    Array<Array<Routed_Layer>> routed_layers;
+    Array<Routed_Layer> routed_layers;
     Array<Predictor> predictors;
     Array<Actor> actors;
 
-    // histories
-    Array<Array<Circle_Buffer<Int_Buffer>>> histories;
-
-    // per-layer values
-    Byte_Buffer updates;
-
-    Int_Buffer ticks;
-    Int_Buffer ticks_per_update;
+    Array<Int_Buffer> hidden_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -218,27 +207,6 @@ public:
         return predictors[o_indices[i]].get_hidden_acts();
     }
 
-    // whether this layer received on update this timestep
-    bool get_update(
-        int l
-    ) const {
-        return updates[l];
-    }
-
-    // get current layer ticks, relative to previous layer
-    int get_ticks(
-        int l
-    ) const {
-        return ticks[l];
-    }
-
-    // get layer ticks per update, relative to previous layer
-    int get_ticks_per_update(
-        int l
-    ) const {
-        return ticks_per_update[l];
-    }
-
     // number of io layers
     int get_num_io() const {
         return io_sizes.size();
@@ -280,17 +248,15 @@ public:
 
     // retrieve by index
     Routed_Layer &get_routed_layer(
-        int l,
-        int i
+        int l
     ) {
-        return routed_layers[l][i];
+        return routed_layers[l];
     }
 
     const Routed_Layer &get_routed_layer(
-        int l,
-        int i
+        int l
     ) const {
-        return routed_layers[l][i];
+        return routed_layers[l];
     }
 
     Predictor &get_predictor(
