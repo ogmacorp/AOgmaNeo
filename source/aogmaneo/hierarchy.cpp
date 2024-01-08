@@ -349,10 +349,6 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&d_indices[0]), d_indices.size() * sizeof(int));
     
     for (int l = 0; l < num_layers; l++) {
-        int num_layer_inputs;
-        
-        reader.read(reinterpret_cast<void*>(&num_layer_inputs), sizeof(int));
-
         encoders[l].read(reader);
         
         decoders[l].resize(l == 0 ? num_predictions : 1);
