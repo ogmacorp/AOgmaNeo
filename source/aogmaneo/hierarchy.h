@@ -40,7 +40,7 @@ public:
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
-            int history_capacity = 128
+            int history_capacity = 256
         )
         :
         size(size),
