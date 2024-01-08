@@ -74,6 +74,13 @@ public:
     struct Layer_Params {
         Routed_Layer::Params routed_layer;
         Encoder::Params encoder;
+
+        float recurrent_importance;
+
+        Layer_Params()
+        :
+        recurrent_importance(1.0f)
+        {}
     };
 
     struct IO_Params {
