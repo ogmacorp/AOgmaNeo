@@ -100,23 +100,19 @@ void Actor::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float activation = 0.0f;
+        float max_dendrite_act = limit_min;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = max(act * params.leak, act);
-
-            activation += dendrite_acts[dendrite_index];
+            max_dendrite_act = max(max_dendrite_act, act);
         }
 
-        activation /= num_dendrites_per_cell;
+        hidden_acts[hidden_cell_index] = max_dendrite_act;
 
-        hidden_acts[hidden_cell_index] = activation;
-
-        max_activation = max(max_activation, activation);
+        max_activation = max(max_activation, max_dendrite_act);
     }
 
     // softmax
@@ -252,23 +248,27 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float activation = 0.0f;
+        int max_cell_di = 0;
+        float max_dendrite_act = limit_min;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = dendrite_acts[dendrite_index] / count;
 
-            dendrite_acts[dendrite_index] = max(act * params.leak, act);
+            dendrite_acts[dendrite_index] = act;
 
-            activation += dendrite_acts[dendrite_index];
+            if (act > max_dendrite_act) {
+                max_dendrite_act = act;
+                max_cell_di = di;
+            }
         }
 
-        activation /= num_dendrites_per_cell;
+        hidden_cell_dis[hidden_cell_index] = max_cell_di;
 
-        hidden_acts[hidden_cell_index] = activation;
+        hidden_acts[hidden_cell_index] = max_dendrite_act;
 
-        max_activation = max(max_activation, activation);
+        max_activation = max(max_activation, max_dendrite_act);
     }
 
     // softmax
@@ -333,19 +333,17 @@ void Actor::learn(
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    float error = action_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+                    float delta = action_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
-                    for (int di = 0; di < num_dendrites_per_cell; di++) {
-                        int dendrite_index = di + dendrites_start;
+                    int di = hidden_cell_dis[hidden_cell_index];
 
-                        int wi = di + wi_start;
+                    int dendrite_index = di + dendrites_start;
 
-                        float delta = error * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                    int wi = di + wi_start;
 
-                        vl.action_weights[wi] += delta;
-                    }
+                    vl.action_weights[wi] += delta;
                 }
 
                 vl.value_weights[wi_value] += value_delta;
@@ -393,6 +391,8 @@ void Actor::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
+
+    hidden_cell_dis = Int_Buffer(num_hidden_cells, 0);
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
@@ -482,13 +482,14 @@ void Actor::step(
 
 void Actor::clear_state() {
     hidden_cis.fill(0);
+    hidden_cell_dis.fill(0);
     hidden_values.fill(0.0f);
 
     history_size = 0;
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_cell_dis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -514,7 +515,7 @@ long Actor::size() const {
 }
 
 long Actor::state_size() const {
-    long size = hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
+    long size = hidden_cis.size() * sizeof(int) + hidden_cell_dis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
 
     int sample_size = 0;
 
@@ -549,6 +550,7 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&num_dendrites_per_cell), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_cell_dis[0]), hidden_cell_dis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
@@ -598,9 +600,11 @@ void Actor::read(
     int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
     
     hidden_cis.resize(num_hidden_columns);
+    hidden_cell_dis.resize(num_hidden_cells);
     hidden_values.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hidden_cell_dis[0]), hidden_cell_dis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     dendrite_acts.resize(num_dendrites);
@@ -674,6 +678,7 @@ void Actor::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&hidden_cell_dis[0]), hidden_cell_dis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
@@ -698,6 +703,7 @@ void Actor::read_state(
     Stream_Reader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&hidden_cell_dis[0]), hidden_cell_dis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
