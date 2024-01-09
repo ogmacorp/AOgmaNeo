@@ -53,7 +53,7 @@ void Encoder::forward(
 
         total_importance += vl.importance;
 
-        float vld_size_z_inv = 1.0f / vld.size.z;
+        const float vld_size_z_inv = 1.0f / vld.size.z;
 
         float influence = vl.importance / sub_count;
 
