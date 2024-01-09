@@ -63,7 +63,7 @@ void Routed_Layer::forward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float w = vl.weights[wi] * weight_scale + 1.0f;
+                float w = vl.weights[wi] * weight_scale;
 
                 activation += w * in_act;
             }
@@ -71,7 +71,7 @@ void Routed_Layer::forward(
 
     activation /= count;
 
-    hidden_acts[hidden_column_index] = activation;
+    hidden_acts[hidden_column_index] = max(params.leak * activation, activation);
 }
 
 void Routed_Layer::backward(
@@ -135,9 +135,9 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float error = min(params.clip, max(-params.clip, errors[hidden_column_index]));
+                float error = min(params.clip, max(-params.clip, errors[hidden_column_index] * ((hidden_acts[hidden_column_index] > 0.0f) * (1.0f - params.leak) + params.leak)));
 
-                float w = vl.weights[wi] * weight_scale + 1.0f;
+                float w = vl.weights[wi] * weight_scale;
 
                 sum += error * w;
                 count++;
@@ -183,7 +183,7 @@ void Routed_Layer::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            vl.weights[i] = (rand() % 64) - 32;
 
         vl.errors.resize(num_visible_columns);
     }

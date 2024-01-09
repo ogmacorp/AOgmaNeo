@@ -38,12 +38,14 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
+        float leak;
         float clip; // gradient clip
 
         Params()
         :
-        scale(16.0f),
+        scale(8.0f),
         lr(0.02f),
+        leak(0.01f),
         clip(1.0f)
         {}
     };

@@ -180,7 +180,7 @@ void Hierarchy::step(
     for (int i = 0; i < errors0.size(); i++)
         errors0[i] *= predictors_inv;
 
-    // forward
+    // up
     for (int l = 0; l < encoders.size(); l++) {
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
