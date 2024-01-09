@@ -50,7 +50,7 @@ public:
         :
         threshold(0.001f),
         falloff(0.99f),
-        lr(0.01f),
+        lr(0.1f),
         l_radius(2)
         {}
     };
