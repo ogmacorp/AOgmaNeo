@@ -30,7 +30,7 @@ void Decoder::forward(
 
     int num_column_combinations = count * (count - 1) / 2;
 
-    unsigned long state = rand_get_state(weight_state + hidden_column_index * rand_subseed_offset);
+    unsigned long weight_state = rand_get_state(base_weight_state + hidden_column_index * rand_subseed_offset);
 
     for (int j = 1; j < count; j++)
         for (int i = 0; i < j; i++) {
@@ -70,7 +70,7 @@ void Decoder::forward(
 
             unsigned long weight_index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
 
-            int hash_index = (weight_index + rand(&state)) % num_locations;
+            int hash_index = (weight_index + rand(&weight_state)) % num_locations;
 
             int wi_start = hidden_size.z * (hash_index + num_locations * hidden_column_index);
 
@@ -123,6 +123,7 @@ void Decoder::forward(
 void Decoder::learn(
     const Int2 &column_pos,
     Int_Buffer_View hidden_target_cis,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -135,12 +136,12 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_deltas[hidden_cell_index] = roundf(params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]));
+        hidden_deltas[hidden_cell_index] = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
     }
 
     int count = column_addresses.size();
 
-    unsigned long state = rand_get_state(weight_state + hidden_column_index * rand_subseed_offset);
+    unsigned long weight_state = rand_get_state(base_weight_state + hidden_column_index * rand_subseed_offset);
 
     for (int j = 1; j < count; j++)
         for (int i = 0; i < j; i++) {
@@ -180,7 +181,7 @@ void Decoder::learn(
 
             unsigned long weight_index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
 
-            int hash_index = (weight_index + rand(&state)) % num_locations;
+            int hash_index = (weight_index + rand(&weight_state)) % num_locations;
 
             int wi_start = hidden_size.z * (hash_index + num_locations * hidden_column_index);
 
@@ -189,7 +190,7 @@ void Decoder::learn(
 
                 int wi = hc + wi_start;
 
-                weights[wi] = min(255, max(0, weights[wi] + hidden_deltas[hidden_cell_index]));
+                weights[wi] = min(255, max(0, weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index], state)));
             }
         }
 }
@@ -203,7 +204,7 @@ void Decoder::init_random(
 
     this->hidden_size = hidden_size;
     this->num_locations = num_locations;
-    this->weight_state = rand();
+    this->base_weight_state = rand();
 
     visible_layers.resize(visible_layer_descs.size());
 
@@ -275,9 +276,14 @@ void Decoder::step(
 
     if (learn_enabled) {
         // learn kernel
+        unsigned int base_state = rand();
+
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, params);
+        for (int i = 0; i < num_hidden_columns; i++) {
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+            learn(Int2(i / hidden_size.y, i % hidden_size.y), hidden_target_cis, &state, params);
+        }
     }
 
     // forward kernel
@@ -336,7 +342,7 @@ void Decoder::write(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
     writer.write(reinterpret_cast<const void*>(&num_locations), sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&weight_state), sizeof(unsigned int));
+    writer.write(reinterpret_cast<const void*>(&base_weight_state), sizeof(unsigned int));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
@@ -364,7 +370,7 @@ void Decoder::read(
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_size), sizeof(Int3));
     reader.read(reinterpret_cast<void*>(&num_locations), sizeof(int));
-    reader.read(reinterpret_cast<void*>(&weight_state), sizeof(unsigned int));
+    reader.read(reinterpret_cast<void*>(&base_weight_state), sizeof(unsigned int));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;

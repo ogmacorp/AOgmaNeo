@@ -39,8 +39,8 @@ public:
 
         Params()
         :
-        scale(64.0f),
-        lr(0.1f)
+        scale(32.0f),
+        lr(0.02f)
         {}
     };
 
@@ -50,7 +50,7 @@ private:
 
     int max_vld_size_z;
 
-    unsigned int weight_state;
+    unsigned int base_weight_state;
 
     Array<Int3> column_addresses;
 
@@ -60,7 +60,7 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Int_Buffer hidden_deltas;
+    Float_Buffer hidden_deltas;
 
     Byte_Buffer weights; // one weight set for all visible layers
 
@@ -79,6 +79,7 @@ private:
     void learn(
         const Int2 &column_pos,
         Int_Buffer_View hidden_target_cis,
+        unsigned long* state,
         const Params &params
     );
 
