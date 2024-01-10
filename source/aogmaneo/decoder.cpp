@@ -255,7 +255,8 @@ void Decoder::init_random(
 
     hidden_deltas.resize(num_hidden_cells);
 
-    int num_locations = num_hidden_cells * count * max_vld_size_z;
+    int num_column_combinations = count * (count - 1) / 2;
+    int num_locations = num_hidden_cells * num_column_combinations * max_vld_size_z;
 
     weights.resize(num_hidden_cells * num_locations);
 
@@ -410,7 +411,8 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&column_addresses[0]), column_addresses.size() * sizeof(Int3));
 
-    int num_locations = num_hidden_cells * count * max_vld_size_z;
+    int num_column_combinations = count * (count - 1) / 2;
+    int num_locations = num_hidden_cells * num_column_combinations * max_vld_size_z;
 
     weights.resize(num_hidden_cells * num_locations);
 
