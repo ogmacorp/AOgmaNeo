@@ -173,9 +173,9 @@ void Decoder::learn(
             int i_in_ci = i_vl.input_cis_prev[address2(i_pos, Int2(i_vld.size.x, i_vld.size.y))];
             int j_in_ci = j_vl.input_cis_prev[address2(j_pos, Int2(j_vld.size.x, j_vld.size.y))];
 
-            unsigned long column_combination = i + j * (j - 1) / 2; // do not include diagonal
+            int column_combination = i + j * (j - 1) / 2; // do not include diagonal
 
-            unsigned long weight_index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
+            int weight_index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
 
             int index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
 
