@@ -257,7 +257,7 @@ void Decoder::init_random(
 
     int num_column_combinations = count * (count - 1) / 2;
 
-    weights.resize(num_hidden_cells * num_column_combinations * max_vld_size_z);
+    weights.resize(num_hidden_cells * num_column_combinations * max_vld_size_z * max_vld_size_z);
 
     for (int i = 0; i < weights.size(); i++)
         weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
@@ -412,7 +412,7 @@ void Decoder::read(
 
     int num_column_combinations = count * (count - 1) / 2;
 
-    weights.resize(num_hidden_cells * num_column_combinations * max_vld_size_z);
+    weights.resize(num_hidden_cells * num_column_combinations * max_vld_size_z * max_vld_size_z);
 
     reader.read(reinterpret_cast<void*>(&weights[0]), weights.size() * sizeof(Byte));
 }
