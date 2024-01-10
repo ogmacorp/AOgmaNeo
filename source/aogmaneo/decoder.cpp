@@ -175,8 +175,6 @@ void Decoder::learn(
 
             int column_combination = i + j * (j - 1) / 2; // do not include diagonal
 
-            int weight_index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
-
             int index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
 
             int wi_start = hidden_size.z * (hidden_column_index + num_hidden_columns * index);
@@ -353,8 +351,6 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
 
-    writer.write(reinterpret_cast<const void*>(&column_addresses[0]), column_addresses.size() * sizeof(Int3));
-
     writer.write(reinterpret_cast<const void*>(&weights[0]), weights.size() * sizeof(Byte));
 }
 
@@ -406,7 +402,20 @@ void Decoder::read(
 
     column_addresses.resize(count);
 
-    reader.read(reinterpret_cast<void*>(&column_addresses[0]), column_addresses.size() * sizeof(Int3));
+    // assign combinations
+    int running_count = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+        for (int dx = -vld.radius; dx <= vld.radius; dx++) {
+            for (int dy = -vld.radius; dy <= vld.radius; dy++) {
+                column_addresses[running_count] = Int3(dx, dy, vli);
+
+                running_count++;
+            }
+        }
+    }
 
     int num_column_combinations = count * (count - 1) / 2;
 
