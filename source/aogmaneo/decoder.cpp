@@ -19,6 +19,8 @@ void Decoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    int num_hidden_columns = hidden_size.x * hidden_size.y;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -64,13 +66,11 @@ void Decoder::forward(
             int i_in_ci = input_cis[i_address.z][address2(i_pos, Int2(i_vld.size.x, i_vld.size.y))];
             int j_in_ci = input_cis[j_address.z][address2(j_pos, Int2(j_vld.size.x, j_vld.size.y))];
 
-            unsigned long column_combination = i + j * (j - 1) / 2; // do not include diagonal
+            int column_combination = i + j * (j - 1) / 2; // do not include diagonal
 
-            unsigned long weight_index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
+            int index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
 
-            int hash_index = weight_index % num_locations;
-
-            int wi_start = hidden_size.z * (hash_index + num_locations * hidden_column_index);
+            int wi_start = hidden_size.z * (hidden_column_index + num_hidden_columns * index);
 
             for (int hc = 0; hc < hidden_size.z; hc++) {
                 int hidden_cell_index = hc + hidden_cells_start;
@@ -128,6 +128,8 @@ void Decoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    int num_hidden_columns = hidden_size.x * hidden_size.y;
+
     int target_ci = hidden_target_cis[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
@@ -177,9 +179,9 @@ void Decoder::learn(
 
             unsigned long weight_index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
 
-            int hash_index = weight_index % num_locations;
+            int index = i_in_ci + max_vld_size_z * (j_in_ci + max_vld_size_z * column_combination);
 
-            int wi_start = hidden_size.z * (hash_index + num_locations * hidden_column_index);
+            int wi_start = hidden_size.z * (hidden_column_index + num_hidden_columns * index);
 
             for (int hc = 0; hc < hidden_size.z; hc++) {
                 int hidden_cell_index = hc + hidden_cells_start;
@@ -244,7 +246,6 @@ void Decoder::init_random(
         }
     }
     
-
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
@@ -303,7 +304,7 @@ void Decoder::clear_state() {
 }
 
 long Decoder::size() const {
-    long size = sizeof(Int3) + sizeof(int) + sizeof(unsigned int) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];

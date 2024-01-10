@@ -46,7 +46,6 @@ public:
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
-    unsigned long num_locations;
 
     int max_vld_size_z;
 
