@@ -30,8 +30,6 @@ void Decoder::forward(
     int total_num_combinations_used = 0;
     int count = column_addresses.size();
 
-    //int num_column_combinations = count * (count - 1) / 2;
-
     for (int j = 1; j < count; j++)
         for (int i = 0; i < j; i++) {
             Int3 i_address = column_addresses[i];
