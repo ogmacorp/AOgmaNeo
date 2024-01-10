@@ -39,18 +39,16 @@ public:
 
         Params()
         :
-        scale(32.0f),
+        scale(64.0f),
         lr(0.1f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
-    int num_locations;
+    unsigned long num_locations;
 
     int max_vld_size_z;
-
-    unsigned int base_weight_state;
 
     Array<Int3> column_addresses;
 
@@ -87,7 +85,6 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output/prediction size
-        int num_locations,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
