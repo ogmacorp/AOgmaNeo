@@ -136,7 +136,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_deltas[hidden_cell_index] = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        hidden_deltas[hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]), state);
     }
 
     int count = column_addresses.size();
@@ -190,7 +190,7 @@ void Decoder::learn(
 
                 int wi = hc + wi_start;
 
-                weights[wi] = min(255, max(0, weights[wi] + rand_roundf(hidden_deltas[hidden_cell_index], state)));
+                weights[wi] = min(255, max(0, weights[wi] + hidden_deltas[hidden_cell_index]));
             }
         }
 }

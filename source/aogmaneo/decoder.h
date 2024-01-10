@@ -40,7 +40,7 @@ public:
         Params()
         :
         scale(32.0f),
-        lr(0.02f)
+        lr(0.1f)
         {}
     };
 
@@ -60,7 +60,7 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Float_Buffer hidden_deltas;
+    Int_Buffer hidden_deltas;
 
     Byte_Buffer weights; // one weight set for all visible layers
 
