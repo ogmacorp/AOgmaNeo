@@ -43,7 +43,7 @@ public:
         Params()
         :
         scale(8.0f),
-        lr(0.05f),
+        lr(0.02f),
         clip(1.0f)
         {}
     };
