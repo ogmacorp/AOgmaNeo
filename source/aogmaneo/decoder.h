@@ -30,45 +30,41 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
-
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
-
-        Float_Buffer gates;
     };
 
     struct Params {
-        float scale; // scale of softmax
-        float lr; // learning rate
-        float leak; // relu leak
-        float gcurve;
+        float scale;
+        float lr;
 
         Params()
         :
-        scale(64.0f),
-        lr(0.1f),
-        leak(0.1f),
-        gcurve(16.0f)
+        scale(32.0f),
+        lr(0.02f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of the output/hidden/prediction
-    int num_dendrites_per_cell;
+    int num_locations;
+
+    int max_vld_size_z;
+
+    Array<Int3> column_addresses;
 
     Int_Buffer hidden_cis; // hidden state
 
+    Int_Buffer hidden_sums;
+
     Float_Buffer hidden_acts;
 
-    Float_Buffer dendrite_acts;
+    Int_Buffer hidden_deltas;
 
-    Float_Buffer dendrite_deltas;
+    Byte_Buffer weights; // one weight set for all visible layers
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 
@@ -78,16 +74,9 @@ private:
         const Params &params
     );
 
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         Int_Buffer_View hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
@@ -95,7 +84,7 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output/prediction size
-        int num_dendrites_per_cell,
+        int num_locations,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
@@ -172,11 +161,6 @@ public:
     // get the hidden activations
     const Float_Buffer &get_hidden_acts() const {
         return hidden_acts;
-    }
-
-    // get the dendrite states
-    const Float_Buffer &get_dendrite_acts() const {
-        return dendrite_acts;
     }
 
     // get the hidden size
