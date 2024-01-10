@@ -39,8 +39,8 @@ public:
 
         Params()
         :
-        scale(32.0f),
-        lr(0.02f)
+        scale(64.0f),
+        lr(0.1f)
         {}
     };
 
@@ -49,6 +49,8 @@ private:
     int num_locations;
 
     int max_vld_size_z;
+
+    unsigned int weight_state;
 
     Array<Int3> column_addresses;
 
