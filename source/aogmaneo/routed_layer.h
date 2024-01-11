@@ -44,7 +44,7 @@ public:
         :
         scale(8.0f),
         lr(0.01f),
-        clip(2.0f)
+        clip(4.0f)
         {}
     };
 
