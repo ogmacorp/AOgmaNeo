@@ -30,21 +30,17 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
+        Byte_Buffer weights;
 
         Float_Buffer errors;
     };
 
     struct Params {
-        float scale; // scale of softmax
         float lr; // learning rate
-        float clip; // gradient clip
 
         Params()
         :
-        scale(8.0f),
-        lr(0.01f),
-        clip(8.0f)
+        lr(0.01f)
         {}
     };
 
