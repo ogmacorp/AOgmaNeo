@@ -227,7 +227,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights[i] = rand() % 256;
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);

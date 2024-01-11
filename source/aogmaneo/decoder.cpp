@@ -129,7 +129,6 @@ void Decoder::learn(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
     int target_ci = hidden_target_cis[hidden_column_index];
-    int hidden_ci = hidden_cis[hidden_column_index];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
