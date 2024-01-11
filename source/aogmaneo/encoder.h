@@ -20,14 +20,11 @@ public:
 
         int radius; // radius onto input
 
-        Byte is_recurrent;
-
         // defaults
         Visible_Layer_Desc()
         :
         size(4, 4, 16),
-        radius(2),
-        is_recurrent(false)
+        radius(2)
         {}
     };
 
@@ -53,7 +50,7 @@ public:
         :
         choice(0.0001f),
         vigilance(0.5f),
-        lr(0.5f),
+        lr(0.1f),
         l_radius(2)
         {}
     };
