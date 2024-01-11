@@ -26,7 +26,7 @@ void Routed_Layer::forward(
     float activation = 0.0f;
     int count = 0;
 
-    const float byte_inv = 1.0f / 255.0f;
+    const float weight_scale = params.scale / 127.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -63,7 +63,7 @@ void Routed_Layer::forward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float w = vl.weights[wi] * byte_inv;
+                float w = vl.weights[wi] * weight_scale + 1.0f;
 
                 activation += w * in_act;
             }
@@ -118,7 +118,7 @@ void Routed_Layer::backward(
     float sum = 0.0f;
     int count = 0;
 
-    const float byte_inv = 1.0f / 255.0f;
+    const float weight_scale = params.scale / 127.0f;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -135,15 +135,15 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float error = errors[hidden_column_index];
+                float error = min(params.clip, max(-params.clip, errors[hidden_column_index]));
 
-                float w = vl.weights[wi] * byte_inv;
+                float w = vl.weights[wi] * weight_scale + 1.0f;
 
                 sum += error * w;
                 count++;
 
                 if (learn_enabled)
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + rand_roundf(params.lr * 255.0f * error * in_act, state)));
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + rand_roundf(params.lr * 127.0f * error * in_act, state)));
             }
         }
 
@@ -183,7 +183,7 @@ void Routed_Layer::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights[i] = -(rand() % init_weight_noisei);
 
         vl.errors.resize(num_visible_columns);
     }
@@ -253,7 +253,7 @@ long Routed_Layer::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(S_Byte);
     }
 
     return size;
@@ -269,7 +269,7 @@ long Routed_Layer::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.weights.size() * sizeof(Byte);
+        size += vl.weights.size() * sizeof(S_Byte);
     }
 
     return size;
@@ -292,7 +292,7 @@ void Routed_Layer::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
     }
 }
 
@@ -333,7 +333,7 @@ void Routed_Layer::read(
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
 
         vl.errors.resize(num_visible_columns);
     }
@@ -374,7 +374,7 @@ void Routed_Layer::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
     }
 }
 
@@ -384,7 +384,7 @@ void Routed_Layer::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
     }
 }
 
