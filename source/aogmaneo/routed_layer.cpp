@@ -71,7 +71,7 @@ void Routed_Layer::forward(
 
     activation /= count;
 
-    hidden_acts[hidden_column_index] = min(1.0f, max(0.0f, activation));
+    hidden_acts[hidden_column_index] = activation;
 }
 
 void Routed_Layer::backward(
@@ -135,7 +135,7 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float error = min(params.clip, max(-params.clip, errors[hidden_column_index] * (hidden_acts[hidden_column_index] > 0.0f && hidden_acts[hidden_column_index] < 1.0f)));
+                float error = min(params.clip, max(-params.clip, errors[hidden_column_index]));
 
                 float w = vl.weights[wi] * weight_scale + 1.0f;
 
