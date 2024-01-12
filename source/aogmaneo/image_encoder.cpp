@@ -20,9 +20,6 @@ void Image_Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int max_index = 0;
-    float max_activation = limit_min;
-
     const float byte_inv = 1.0f / 255.0f;
 
     float center = 0.0f;
@@ -68,6 +65,9 @@ void Image_Encoder::forward(
     }
 
     center /= count;
+
+    int max_index = 0;
+    float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -127,7 +127,7 @@ void Image_Encoder::forward(
 
     if (learn_enabled) {
         for (int dhc = -1; dhc <= 1; dhc++) {
-            int hc = hidden_cis[hidden_column_index] + dhc;
+            int hc = max_index + dhc;
 
             if (hc < 0 || hc >= hidden_size.z)
                 continue;
