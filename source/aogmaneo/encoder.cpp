@@ -180,7 +180,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        vl.recon_deltas[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / max(1, count * 255) - 1.0f) * params.scale)), state);
+        vl.recon_deltas[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) / max(1, count * 255) - 0.5f) * params.scale)), state);
     }
 
     if (max_index == target_ci)
@@ -244,7 +244,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights[i] = 127 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
 
