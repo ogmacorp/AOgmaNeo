@@ -103,7 +103,7 @@ void Decoder::forward(
 
             dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
 
-            activation += dendrite_acts[dendrite_index] * ((di < half_num_dendrites_per_cell) * 2.0f - 1.0f);
+            activation += dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         activation /= num_dendrites_per_cell;
@@ -163,7 +163,7 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = rand_roundf(error * ((di < half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak), state);
+            dendrite_deltas[dendrite_index] = rand_roundf(error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak), state);
         }
     }
 
