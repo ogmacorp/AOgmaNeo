@@ -41,15 +41,13 @@ public:
     };
 
     struct Params {
-        float threshold; // early stopping threshold distance
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         int l_radius;
 
         Params()
         :
-        threshold(0.001f),
-        falloff(0.99f),
+        falloff(0.1f),
         lr(0.05f),
         l_radius(2)
         {}
