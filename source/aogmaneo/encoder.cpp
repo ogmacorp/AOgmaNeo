@@ -76,7 +76,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.weights[wi];
 
-                    hidden_acts[hidden_cell_index] -= sqrtf(abs(diff)) * influence;
+                    hidden_acts[hidden_cell_index] -= abs(diff) * influence;
                 }
             }
     }
