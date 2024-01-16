@@ -37,6 +37,7 @@ public:
     };
 
     struct Params {
+        float threshold; // early stopping threshold distance
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float scale; // scale of reconstruction
@@ -44,7 +45,8 @@ public:
         
         Params()
         :
-        falloff(0.1f),
+        threshold(0.001f),
+        falloff(0.99f),
         lr(0.1f),
         scale(2.0f),
         rr(0.1f)
