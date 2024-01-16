@@ -298,7 +298,7 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
-    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * (td_error_value > 0.0f ? 1.0f : 1.0f - params.bias) * tanhf(td_error_value));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
