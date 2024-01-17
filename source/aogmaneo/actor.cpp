@@ -318,15 +318,14 @@ void Actor::learn(
 
     float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, prob_prev);
 
-    float ppo_left = ratio * td_error_value;
-    float ppo_right = min(1.0f + params.clip_coef, max(1.0f - params.clip_coef, ratio)) * td_error_value;
+    float clip;
 
-    bool passed_clip = (ratio < 1.0f + params.clip_coef && ratio > 1.0f - params.clip_coef);
+    if (td_error_value > 0.0f)
+        clip = (ratio < 1.0f + params.clip_coef);
+    else
+        clip = (ratio > 1.0f - params.clip_coef);
 
-    if (ppo_right < ppo_left && !passed_clip)
-        return;
-
-    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * clip * tanhf(td_error_value));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
