@@ -57,7 +57,7 @@ public:
         vlr(0.01f),
         alr(0.01f),
         bias(0.5f),
-        leak(0.1f),
+        leak(0.01f),
         discount(0.99f),
         min_steps(16),
         history_iters(16)
