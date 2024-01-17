@@ -418,6 +418,8 @@ void Actor::init_random(
         for (int i = 0; i < vl.action_weights.size(); i++)
             vl.action_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
+        vl.action_weights_delayed = vl.action_weights;
+
         vl.value_weights.resize(num_hidden_columns * area * vld.size.z);
 
         for (int i = 0; i < vl.value_weights.size(); i++)
