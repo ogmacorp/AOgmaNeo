@@ -58,7 +58,7 @@ public:
         :
         vlr(0.01f),
         alr(0.01f),
-        rate(0.5f),
+        rate(0.001f),
         leak(0.01f),
         clip_coef(0.2f),
         discount(0.99f),
