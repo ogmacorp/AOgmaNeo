@@ -313,19 +313,21 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
-    // probability ratio
-    float prob_prev = hidden_acts_delayed[target_ci + hidden_cells_start];
+    float advantage = tanhf(td_error_value);
 
-    float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, prob_prev);
+    float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
 
-    float clip;
+    float clipped_ratio = min(1.0f + params.clip_coef, max(1.0f - params.clip_coef, ratio));
 
-    if (td_error_value > 0.0f)
-        clip = (ratio < 1.0f + params.clip_coef);
+    float ppo_left = advantage * ratio;
+    float ppo_right = advantage * clipped_ratio;
+
+    float action_error_partial;
+
+    if (ppo_left < ppo_right)
+        action_error_partial = params.alr * (mimic + (1.0f - mimic) * advantage);
     else
-        clip = (ratio > 1.0f - params.clip_coef);
-
-    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * clip * tanhf(td_error_value));
+        action_error_partial = params.alr * (mimic + (1.0f - mimic) * advantage * (ratio < 1.0f + params.clip_coef && ratio > 1.0f - params.clip_coef));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
