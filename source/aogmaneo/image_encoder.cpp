@@ -13,8 +13,7 @@ using namespace aon;
 void Image_Encoder::forward(
     const Int2 &column_pos,
     const Array<Byte_Buffer_View> &inputs,
-    bool learn_enabled,
-    unsigned long* state
+    bool learn_enabled
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
@@ -113,9 +112,7 @@ void Image_Encoder::forward(
 
                         int wi = hc + wi_start;
 
-                        float w = vl.weights[wi] * byte_inv;
-
-                        hidden_acts[hidden_cell_index] += input_centered * (w * 2.0f - 1.0f);
+                        hidden_acts[hidden_cell_index] += input_centered * vl.weights[wi];
                     }
                 }
             }
@@ -400,14 +397,9 @@ void Image_Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    unsigned int base_state = rand();
-
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled, &state);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled);
 
     if (learn_enabled && learn_recon) {
         for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -415,7 +407,7 @@ void Image_Encoder::step(
 
             int num_visible_columns = vld.size.x * vld.size.y;
 
-            base_state = rand();
+            unsigned int base_state = rand();
 
             PARALLEL_FOR
             for (int i = 0; i < num_visible_columns; i++) {
