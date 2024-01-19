@@ -66,6 +66,12 @@ void Image_Encoder::forward(
 
     center /= count;
 
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] = 0.0f;
+    }
+
     int max_index = 0;
     float max_activation = limit_min;
 
@@ -101,18 +107,22 @@ void Image_Encoder::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi_start_partial = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
                     int i_start = vld.size.z * (iy + ix * vld.size.y);
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
-                        int wi = vc + wi_start;
+                        int wi_start = hidden_size.z * (vc + wi_start_partial);
 
-                        float input = vl_inputs[vc + i_start] * byte_inv;
+                        float input_centered = vl_inputs[vc + i_start] * byte_inv - center;
 
-                        float w = vl.weights[wi] * byte_inv;
+                        for (int hc = 0; hc < hidden_size.z; hc++) {
+                            int wi = hc + wi_start;
 
-                        sum += (input - center) * (w * 2.0f - 1.0f);
+                            float w = vl.weights[wi] * byte_inv;
+
+                            sum += input_centered * (w * 2.0f - 1.0f);
+                        }
                     }
                 }
         }
@@ -126,12 +136,15 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        for (int hc = 0; hc < hidden_size.z; hc++) {
+        for (int dhc = -1; dhc <= 1; dhc++) {
+            int hc = max_index + dhc;
+
+            if (hc < 0 || hc >= hidden_size.z)
+                continue;
+
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float diff = hidden_cis[hidden_column_index] - hc;
-
-            float rate = hidden_resources[hidden_cell_index] * expf(-params.falloff * diff * diff / max(limit_small, hidden_resources[hidden_cell_index]));
+            float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -160,18 +173,18 @@ void Image_Encoder::forward(
 
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                        int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                        int wi_start_partial = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
                         int i_start = vld.size.z * (iy + ix * vld.size.y);
 
                         for (int vc = 0; vc < vld.size.z; vc++) {
-                            int wi = vc + wi_start;
+                            int wi = hc + hidden_size.z * (vc + wi_start_partial);
 
                             float input = vl_inputs[vc + i_start] * byte_inv;
 
                             float w = vl.weights[wi] * byte_inv;
 
-                            vl.weights[wi] = min(255, max(0, rand_roundf(vl.weights[wi] + rate * 255.0f * (input - center - (w * 2.0f - 1.0f)), state)));
+                            vl.weights[wi] = min(255, max(0, roundf(vl.weights[wi] + rate * 255.0f * (input - center - (w * 2.0f - 1.0f)))));
                         }
                     }
             }

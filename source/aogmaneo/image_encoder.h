@@ -44,7 +44,7 @@ public:
         
         Params()
         :
-        falloff(0.1f),
+        falloff(0.99f),
         lr(0.1f),
         scale(2.0f),
         rr(0.1f)
@@ -55,6 +55,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_resources;
 
