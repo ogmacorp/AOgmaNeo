@@ -386,6 +386,8 @@ void Image_Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
+    hidden_acts.resize(num_hidden_cells);
+
     hidden_resources = Float_Buffer(num_hidden_cells, 1.0f);
 }
 
@@ -505,6 +507,8 @@ void Image_Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    hidden_acts.resize(num_hidden_cells);
 
     hidden_resources.resize(num_hidden_cells);
 
