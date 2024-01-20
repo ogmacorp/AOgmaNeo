@@ -322,7 +322,7 @@ void Actor::learn(
     float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
 
     // https://huggingface.co/blog/deep-rl-ppo
-    bool clip = (ratio < 1.0f - params.clip_coef && td_error_value < 0.0f) || (ratio > 1.0f + params.clip_coef && td_error_value > 0.0f);
+    bool clip = (ratio < (1.0f - params.clip_coef) && td_error_value < 0.0f) || (ratio > (1.0f + params.clip_coef) && td_error_value > 0.0f);
     
     float action_error_partial = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (!clip));
 
