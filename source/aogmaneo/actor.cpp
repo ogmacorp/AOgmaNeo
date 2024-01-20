@@ -288,7 +288,7 @@ void Actor::learn(
         hidden_acts_delayed[hidden_cell_index] = activation_delayed;
 
         max_activation = max(max_activation, activation);
-        max_activation_delayed = max(max_activation, activation_delayed);
+        max_activation_delayed = max(max_activation_delayed, activation_delayed);
     }
 
     // softmax
