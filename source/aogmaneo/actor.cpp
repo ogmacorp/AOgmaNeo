@@ -319,6 +319,7 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
+    // probability ratio
     float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
 
     // https://huggingface.co/blog/deep-rl-ppo
