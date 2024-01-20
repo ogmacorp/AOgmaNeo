@@ -96,6 +96,7 @@ void Actor::forward(
     float max_activation = limit_min;
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
+    const float dendrite_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -114,7 +115,7 @@ void Actor::forward(
             activation += dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        activation /= num_dendrites_per_cell;
+        activation *= dendrite_scale;
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -253,6 +254,7 @@ void Actor::learn(
     float max_activation_delayed = limit_min;
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
+    const float dendrite_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -275,8 +277,8 @@ void Actor::learn(
             activation_delayed += dendrite_acts_delayed[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        activation /= num_dendrites_per_cell;
-        activation_delayed /= num_dendrites_per_cell;
+        activation *= dendrite_scale;
+        activation_delayed *= dendrite_scale;
 
         hidden_acts[hidden_cell_index] = activation;
         hidden_acts_delayed[hidden_cell_index] = activation_delayed;
