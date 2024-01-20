@@ -167,7 +167,7 @@ void Encoder::learn(
             }
         }
 
-    const float recon_scale = 1.0f / max(1, count * 255);
+    const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
 
     int max_index = 0;
     int max_activation = 0;
@@ -183,7 +183,7 @@ void Encoder::learn(
         }
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((static_cast<float>(recon_sum) * recon_scale - 1.0f) * params.scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
     }
 
     if (max_index == target_ci)
