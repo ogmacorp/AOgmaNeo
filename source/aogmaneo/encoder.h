@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
+        Byte_Buffer weights;
 
         Int_Buffer recon_sums;
 
