@@ -323,7 +323,7 @@ void Actor::learn(
 
     // https://huggingface.co/blog/deep-rl-ppo
     bool clip = (ratio < 1.0f - params.clip_coef && td_error_value < 0.0f) || (ratio > 1.0f + params.clip_coef && td_error_value > 0.0f);
-
+    
     float action_error_partial = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (!clip));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
