@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        S_Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
@@ -42,9 +42,9 @@ public:
 
         Params()
         :
-        scale(64.0f),
-        lr(0.05f),
-        leak(0.1f)
+        scale(32.0f),
+        lr(0.03f),
+        leak(0.01f)
         {}
     };
 

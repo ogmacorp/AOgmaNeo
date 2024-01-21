@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -88,6 +88,8 @@ void Decoder::forward(
     float max_activation = limit_min;
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
+    const float dendrite_scale = sqrtf(1.0f / count) / 127.0f * params.scale;
+    const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -99,14 +101,14 @@ void Decoder::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            float act = (dendrite_acts[dendrite_index] / (count * 255) - 0.5f) * 2.0f * params.scale;
+            float act = dendrite_acts[dendrite_index] * dendrite_scale;
 
             dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
 
             activation += dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        activation /= num_dendrites_per_cell;
+        activation *= activation_scale;
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -158,7 +160,7 @@ void Decoder::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float error = params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        float error = params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -208,7 +210,7 @@ void Decoder::learn(
 
                         int wi = di + wi_start;
 
-                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + dendrite_deltas[dendrite_index]));
+                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + dendrite_deltas[dendrite_index]));
                     }
                 }
             }
@@ -249,7 +251,7 @@ void Decoder::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            vl.weights[i] = (rand() % init_weight_noisei) - init_weight_noisei / 2;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -330,7 +332,7 @@ long Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(S_Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -354,7 +356,7 @@ long Decoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.weights.size() * sizeof(Byte);
+        size += vl.weights.size() * sizeof(S_Byte);
     }
 
     return size;
@@ -380,7 +382,7 @@ void Decoder::write(
 
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
@@ -431,7 +433,7 @@ void Decoder::read(
 
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
 
         vl.input_cis_prev.resize(num_visible_columns);
 
@@ -490,7 +492,7 @@ void Decoder::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
     }
 }
 
@@ -500,7 +502,7 @@ void Decoder::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(S_Byte));
     }
 }
 
