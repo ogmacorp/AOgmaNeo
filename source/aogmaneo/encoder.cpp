@@ -76,7 +76,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.weights[wi];
 
-                    hidden_acts[hidden_cell_index] -= sqrtf(abs(diff)) * influence;
+                    hidden_acts[hidden_cell_index] -= diff * diff * influence;
                 }
             }
     }
@@ -109,6 +109,9 @@ void Encoder::learn(
 
     float max_activation = hidden_acts[hidden_cell_index_max];
 
+    if (sqrtf(-max_activation) < params.threshold)
+        return;
+
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
             Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
@@ -121,12 +124,12 @@ void Encoder::learn(
             }
         }
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    for (int dhc = -1; dhc <= 1; dhc++) {
+        int hc = hidden_cis[hidden_column_index] + dhc;
+
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float diff = hidden_cis[hidden_column_index] - hc;
-
-        float rate = hidden_resources[hidden_cell_index] * expf(-params.falloff * diff * diff / max(limit_small, hidden_resources[hidden_cell_index]));
+        float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
