@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -38,13 +38,11 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float leak; // relu leak
 
         Params()
         :
-        scale(32.0f),
-        lr(0.03f),
-        leak(0.01f)
+        scale(16.0f),
+        lr(0.05f)
         {}
     };
 
@@ -53,6 +51,8 @@ private:
     int num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden state
+
+    Int_Buffer hidden_cell_dis;
 
     Float_Buffer hidden_acts;
 
