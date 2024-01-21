@@ -56,8 +56,8 @@ public:
 
         Params()
         :
-        vlr(0.003f),
-        alr(0.003f),
+        vlr(0.002f),
+        alr(0.002f),
         rate(0.01f),
         leak(0.01f),
         clip_coef(0.1f),
