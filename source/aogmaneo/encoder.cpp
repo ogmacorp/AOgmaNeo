@@ -76,7 +76,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.weights[wi];
 
-                    hidden_acts[hidden_cell_index] -= sqrtf(abs(diff)) * influence;
+                    hidden_acts[hidden_cell_index] -= diff * diff * influence;
                 }
             }
     }
@@ -86,6 +86,8 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -121,7 +123,9 @@ void Encoder::learn(
             }
         }
 
-    for (int dhc = -1; dhc <= 1; dhc++) {
+    int scan_radius = (sqrtf(-max_activation) > params.threshold);
+
+    for (int dhc = -scan_radius; dhc <= scan_radius; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
 
         int hidden_cell_index = hc + hidden_cells_start;
