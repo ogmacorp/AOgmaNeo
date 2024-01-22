@@ -76,7 +76,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.weights[wi];
 
-                    hidden_acts[hidden_cell_index] -= diff * diff * influence;
+                    hidden_acts[hidden_cell_index] -= sqrtf(abs(diff)) * influence;
                 }
             }
     }
@@ -108,9 +108,6 @@ void Encoder::learn(
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
     float max_activation = hidden_acts[hidden_cell_index_max];
-
-    if (sqrtf(-max_activation) < params.threshold)
-        return;
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
