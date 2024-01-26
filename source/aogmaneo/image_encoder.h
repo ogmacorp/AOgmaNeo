@@ -51,7 +51,7 @@ public:
         lr(0.1f),
         scale(2.0f),
         rr(0.1f),
-        l_radius(2)
+        l_radius(1)
         {}
     };
 

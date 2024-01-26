@@ -108,10 +108,28 @@ void Image_Encoder::learn_weights(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    int hidden_ci = hidden_cis[hidden_column_index];
+
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
+
+    float max_activation = hidden_acts[hidden_cell_index_max];
+
+    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
+
+            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                if (hidden_acts[hidden_cis[other_hidden_column_index] + hidden_size.z * other_hidden_column_index] > max_activation)
+                    return;
+            }
+        }
+
     int scan_radius = (sqrtf(-max_activation) > params.threshold);
 
     for (int dhc = -scan_radius; dhc <= scan_radius; dhc++) {
-        int hc = max_index + dhc;
+        int hc = hidden_ci + dhc;
 
         if (hc < 0 || hc >= hidden_size.z)
             continue;
@@ -369,21 +387,27 @@ void Image_Encoder::step(
     
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, learn_enabled);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs);
 
-    if (learn_enabled && learn_recon) {
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+    if (learn_enabled) {
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            learn_weights(Int2(i / hidden_size.y, i % hidden_size.y), inputs);
 
-            int num_visible_columns = vld.size.x * vld.size.y;
+        if (learn_recon) {
+            for (int vli = 0; vli < visible_layers.size(); vli++) {
+                const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            unsigned int base_state = rand();
+                int num_visible_columns = vld.size.x * vld.size.y;
 
-            PARALLEL_FOR
-            for (int i = 0; i < num_visible_columns; i++) {
-                unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+                unsigned int base_state = rand();
 
-                learn_reconstruction(Int2(i / vld.size.y, i % vld.size.y), inputs[vli], vli, &state);
+                PARALLEL_FOR
+                for (int i = 0; i < num_visible_columns; i++) {
+                    unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+                    learn_reconstruction(Int2(i / vld.size.y, i % vld.size.y), inputs[vli], vli, &state);
+                }
             }
         }
     }
