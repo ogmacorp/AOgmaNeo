@@ -73,9 +73,7 @@ void Image_Encoder::forward(
 
                         float w = vl.weights[wi] * byte_inv;
 
-                        float diff = input - w;
-
-                        hidden_acts[hidden_cell_index] -= diff * diff;
+                        hidden_acts[hidden_cell_index] += input * w;
                     }
                 }
             }
@@ -176,7 +174,7 @@ void Image_Encoder::learn_weights(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = hc + hidden_size.z * (vc + wi_start_partial);
 
-                        vl.weights[wi] = min(255, max(0, roundf(vl.weights[wi] + rate * (static_cast<float>(vl_inputs[vc + i_start]) - static_cast<float>(vl.weights[wi])))));
+                        vl.weights[wi] = min(255, max(0, roundf(vl.weights[wi] + rate * max_activation * (static_cast<float>(vl_inputs[vc + i_start]) - max_activation * static_cast<float>(vl.weights[wi])))));
                     }
                 }
         }
