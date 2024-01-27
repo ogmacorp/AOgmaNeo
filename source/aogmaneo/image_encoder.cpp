@@ -132,7 +132,9 @@ void Image_Encoder::learn_weights(
             }
         }
 
-    for (int dhc = -1; dhc <= 1; dhc++) {
+    int scan_radius = (sqrtf(-max_activation) > params.threshold);
+
+    for (int dhc = -scan_radius; dhc <= scan_radius; dhc++) {
         int hc = hidden_ci + dhc;
 
         if (hc < 0 || hc >= hidden_size.z)
