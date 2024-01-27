@@ -50,7 +50,7 @@ public:
         falloff(0.99f),
         lr(0.1f),
         scale(2.0f),
-        rr(0.01f),
+        rr(0.02f),
         l_radius(0)
         {}
     };
