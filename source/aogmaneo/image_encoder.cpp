@@ -250,7 +250,7 @@ void Image_Encoder::learn_reconstruction(
 
         float target = inputs[visible_cell_index] * byte_inv;
 
-        float delta = params.rr * (target - min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f))) * 255.0f;
+        int delta = rand_roundf(params.rr * (target - min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f))) * 255.0f, state);
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -267,7 +267,7 @@ void Image_Encoder::learn_reconstruction(
 
                     int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-                    vl.recon_weights[wi] = min(255, max(0, rand_roundf(vl.recon_weights[wi] + delta, state)));
+                    vl.recon_weights[wi] = min(255, max(0, vl.recon_weights[wi] + delta));
                 }
             }
     }
