@@ -369,7 +369,7 @@ void Image_Encoder::init_random(
         // initialize to random values
         for (int i = 0; i < vl.weights.size(); i++) {
             vl.weights[i] = rand() % 256;
-            vl.recon_weights[i] = 128;
+            vl.recon_weights[i] = 127;
         }
 
         vl.reconstruction = Byte_Buffer(num_visible_cells, 0);
