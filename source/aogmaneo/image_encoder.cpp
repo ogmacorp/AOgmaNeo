@@ -87,7 +87,7 @@ void Image_Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= count;
+        hidden_acts[hidden_cell_index] *= sqrtf(1.0f / count);
 
         float activation = hidden_acts[hidden_cell_index];
 
