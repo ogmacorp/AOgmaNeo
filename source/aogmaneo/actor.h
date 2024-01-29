@@ -60,7 +60,7 @@ public:
         alr(0.002f),
         rate(0.01f),
         leak(0.01f),
-        clip_coef(0.1f),
+        clip_coef(0.2f),
         discount(0.99f),
         min_steps(16),
         history_iters(16)
