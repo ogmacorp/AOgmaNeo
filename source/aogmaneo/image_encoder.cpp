@@ -178,7 +178,7 @@ void Image_Encoder::learn_weights(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = hc + hidden_size.z * (vc + wi_start_partial);
 
-                        vl.weights[wi] = min(255, max(0, roundf(vl.weights[wi] + rate * (static_cast<float>(vl_inputs[vc + i_start]) - static_cast<float>(vl.weights[wi])))));
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(rate * (static_cast<float>(vl_inputs[vc + i_start]) - static_cast<float>(vl.weights[wi])))));
                     }
                 }
         }
