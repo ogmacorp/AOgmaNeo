@@ -52,7 +52,7 @@ public:
 
         Params()
         :
-        lr(0.001f),
+        lr(0.005f),
         cons(0.0f),
         rate(0.01f),
         discount(0.99f),
@@ -73,8 +73,10 @@ private:
     Int_Buffer hidden_cell_dis;
 
     Float_Buffer dendrite_acts;
+    Float_Buffer dendrite_acts_delayed;
 
     Float_Buffer hidden_acts;
+    Float_Buffer hidden_acts_delayed;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
