@@ -482,7 +482,7 @@ void Actor::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_cell_dis = Int_Buffer(num_hidden_cells, 0);
+    hidden_cell_dis.resize(num_hidden_cells);
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
@@ -582,14 +582,13 @@ void Actor::step(
 
 void Actor::clear_state() {
     hidden_cis.fill(0);
-    hidden_cell_dis.fill(0);
     hidden_values.fill(0.0f);
 
     history_size = 0;
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_cell_dis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -615,7 +614,7 @@ long Actor::size() const {
 }
 
 long Actor::state_size() const {
-    long size = hidden_cis.size() * sizeof(int) + hidden_cell_dis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
+    long size = hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
 
     int sample_size = 0;
 
@@ -650,7 +649,6 @@ void Actor::write(
     writer.write(reinterpret_cast<const void*>(&num_dendrites_per_cell), sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hidden_cell_dis[0]), hidden_cell_dis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
@@ -701,13 +699,12 @@ void Actor::read(
     int value_num_dendrites = num_hidden_columns * num_dendrites_per_cell;
     
     hidden_cis.resize(num_hidden_columns);
-    hidden_cell_dis.resize(num_hidden_cells);
     hidden_values.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hidden_cell_dis[0]), hidden_cell_dis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
+    hidden_cell_dis.resize(num_hidden_cells);
     action_dendrite_acts.resize(action_num_dendrites);
     value_dendrite_acts.resize(value_num_dendrites);
     hidden_acts.resize(num_hidden_cells);
@@ -780,7 +777,6 @@ void Actor::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hidden_cell_dis[0]), hidden_cell_dis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
@@ -805,7 +801,6 @@ void Actor::read_state(
     Stream_Reader &reader
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hidden_cell_dis[0]), hidden_cell_dis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
