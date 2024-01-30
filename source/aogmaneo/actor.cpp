@@ -316,7 +316,7 @@ void Actor::learn(
 
     float value_prev = hidden_acts[target_ci + hidden_cells_start];
 
-    float td_error = value - value_prev;
+    float td_error = tanhf(value - value_prev);
     
     // softmax
     float total = 0.0f;
