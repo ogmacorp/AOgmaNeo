@@ -87,7 +87,7 @@ void Image_Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= count;
+        hidden_acts[hidden_cell_index] *= sqrtf(1.0f / count);
 
         float activation = hidden_acts[hidden_cell_index];
 
@@ -178,7 +178,7 @@ void Image_Encoder::learn_weights(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = hc + hidden_size.z * (vc + wi_start_partial);
 
-                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(rate * (static_cast<float>(vl_inputs[vc + i_start]) - static_cast<float>(vl.weights[wi])))));
+                        vl.weights[wi] = min(255, max(0, roundf(vl.weights[wi] + rate * (static_cast<float>(vl_inputs[vc + i_start]) - static_cast<float>(vl.weights[wi])))));
                     }
                 }
         }
@@ -370,7 +370,7 @@ void Image_Encoder::init_random(
 
         // initialize to random values
         for (int i = 0; i < vl.weights.size(); i++) {
-            vl.weights[i] = rand() % 256;
+            vl.weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
             vl.recon_weights[i] = 127;
         }
 
