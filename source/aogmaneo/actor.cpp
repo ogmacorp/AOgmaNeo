@@ -375,7 +375,13 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
-    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (td_error_value > 0.0f ? 1.0f : 1.0f - params.bias));
+    // probability ratio
+    float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
+
+    // https://huggingface.co/blog/deep-rl-ppo
+    bool clip = (ratio < (1.0f - params.clip_coef) && td_error_value < 0.0f) || (ratio > (1.0f + params.clip_coef) && td_error_value > 0.0f);
+    
+    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (!clip));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -731,6 +737,8 @@ void Actor::read(
         vl.action_weights.resize(action_num_dendrites * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
+
+        vl.action_weights_delayed = vl.action_weights;
 
         vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
 
