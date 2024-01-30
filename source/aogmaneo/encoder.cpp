@@ -167,7 +167,7 @@ void Encoder::learn(
             }
         }
 
-    const float recon_scale = 1.0f / max(1, count) / 255.0f * params.scale;
+    const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
 
     int max_index = 0;
     int max_activation = 0;
