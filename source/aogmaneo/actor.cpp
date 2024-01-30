@@ -493,9 +493,11 @@ void Actor::init_random(
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
     action_dendrite_acts.resize(action_num_dendrites);
+    action_dendrite_acts_delayed.resize(action_num_dendrites);
     value_dendrite_acts.resize(value_num_dendrites);
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_acts_delayed.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -712,8 +714,11 @@ void Actor::read(
 
     hidden_cell_dis.resize(num_hidden_cells);
     action_dendrite_acts.resize(action_num_dendrites);
+    action_dendrite_acts_delayed.resize(action_num_dendrites);
     value_dendrite_acts.resize(value_num_dendrites);
+
     hidden_acts.resize(num_hidden_cells);
+    hidden_acts_delayed.resize(num_hidden_cells);
 
     int num_visible_layers;
 
