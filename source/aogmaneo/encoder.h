@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -34,8 +34,6 @@ public:
 
         Int_Buffer recon_sums;
 
-        Int_Buffer recon_deltas;
-
         float importance;
 
         Visible_Layer()
@@ -50,8 +48,8 @@ public:
 
         Params()
         :
-        scale(8.0f),
-        lr(0.02f)
+        scale(2.0f),
+        lr(0.01f)
         {}
     };
 

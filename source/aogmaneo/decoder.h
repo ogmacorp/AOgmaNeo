@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,25 +30,21 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        S_Byte_Buffer weights;
 
         Int_Buffer input_cis_prev; // previous timestep (prev) input states
-
-        Float_Buffer gates;
     };
 
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
         float leak; // relu leak
-        float gcurve;
 
         Params()
         :
-        scale(64.0f),
-        lr(0.1f),
-        leak(0.1f),
-        gcurve(16.0f)
+        scale(16.0f),
+        lr(0.02f),
+        leak(0.01f)
         {}
     };
 
@@ -62,7 +58,7 @@ private:
 
     Float_Buffer dendrite_acts;
 
-    Float_Buffer dendrite_deltas;
+    Int_Buffer dendrite_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -75,12 +71,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void update_gates(
-        const Int2 &column_pos,
-        int vli,
         const Params &params
     );
 

@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -37,11 +37,12 @@ public:
     };
 
     struct Params {
-        float threshold; // early stopping threshold distance
+        float threshold; // distance from input where cells stop having neighborhood influence
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
+        int l_radius; // lateral inhibition radius
         
         Params()
         :
@@ -49,7 +50,8 @@ public:
         falloff(0.99f),
         lr(0.1f),
         scale(2.0f),
-        rr(0.1f)
+        rr(0.01f),
+        l_radius(0)
         {}
     };
 
@@ -57,6 +59,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_resources;
 
@@ -68,9 +72,12 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs,
-        bool learn_enabled,
-        unsigned long* state
+        const Array<Byte_Buffer_View> &inputs
+    );
+
+    void learn_weights(
+        const Int2 &column_pos,
+        const Array<Byte_Buffer_View> &inputs
     );
 
     void learn_reconstruction(
