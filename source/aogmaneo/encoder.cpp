@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -108,7 +107,6 @@ void Encoder::forward(
 
             activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
         }
-        std::cout << match << " " << activation << std::endl;
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
