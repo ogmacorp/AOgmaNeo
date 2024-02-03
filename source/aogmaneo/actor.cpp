@@ -606,7 +606,6 @@ void Actor::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.action_weights_delayed[0]), vl.action_weights_delayed.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
     }
 
@@ -674,10 +673,10 @@ void Actor::read(
         int area = diam * diam;
 
         vl.action_weights.resize(num_dendrites * area * vld.size.z);
-        vl.action_weights_delayed.resize(vl.action_weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.action_weights_delayed[0]), vl.action_weights_delayed.size() * sizeof(float));
+
+        vl.action_weights_delayed = vl.action_weights;
 
         vl.value_weights.resize(num_hidden_columns * area * vld.size.z);
 
@@ -778,7 +777,6 @@ void Actor::write_weights(
 
         writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.action_weights_delayed[0]), vl.action_weights_delayed.size() * sizeof(float));
     }
 }
 
@@ -790,7 +788,6 @@ void Actor::read_weights(
 
         reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.action_weights_delayed[0]), vl.action_weights_delayed.size() * sizeof(float));
     }
 }
 

@@ -47,8 +47,8 @@ public:
     struct Params {
         float vlr; // value learning rate
         float alr; // action learning rate
-        float rate; // rate of delayed weights
         float leak; // relu leak
+        float rate; // rate of delayed weights
         float clip_coef; // PPO clip coefficient
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
@@ -58,8 +58,8 @@ public:
         :
         vlr(0.002f),
         alr(0.002f),
-        rate(0.01f),
         leak(0.01f),
+        rate(0.01f),
         clip_coef(0.1f),
         discount(0.99f),
         min_steps(16),
