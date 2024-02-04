@@ -27,7 +27,6 @@ void Encoder::forward(
         // if has no total information, compute it once
         if (hidden_totals[hidden_cell_index] == -1.0f) {
             float total = 0.0f;
-            float total_importance = 0.0f;
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -48,8 +47,6 @@ void Encoder::forward(
                 Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
                 Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-                total_importance += vl.importance;
-
                 int sub_total = 0;
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -68,14 +65,11 @@ void Encoder::forward(
                 total += vl.importance * sub_total / 255.0f;
             }
 
-            total /= max(limit_small, total_importance);
-
             hidden_totals[hidden_cell_index] = total;
         }
     }
 
     float count = 0.0f;
-    float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -102,8 +96,6 @@ void Encoder::forward(
 
         float influence = vl.importance / 255.0f;
 
-        total_importance += vl.importance;
-
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -126,8 +118,6 @@ void Encoder::forward(
             }
     }
 
-    count /= max(limit_small, total_importance);
-
     int max_index = -1;
     float max_activation = 0.0f;
 
@@ -136,8 +126,6 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_sums[hidden_cell_index] /= max(limit_small, total_importance);
 
         // invert
         hidden_sums[hidden_cell_index] = hidden_totals[hidden_cell_index] - hidden_sums[hidden_cell_index];
@@ -195,7 +183,6 @@ void Encoder::learn(
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
     float total = 0.0f;
-    float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -215,8 +202,6 @@ void Encoder::learn(
         // bounds of receptive field, clamped to input size
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-        total_importance += vl.importance;
 
         int sub_total = 0;
 
@@ -242,8 +227,6 @@ void Encoder::learn(
 
         total += vl.importance * sub_total / 255.0f;
     }
-
-    total /= max(limit_small, total_importance);
 
     hidden_totals[hidden_cell_index_max] = total;
 }
