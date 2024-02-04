@@ -48,7 +48,7 @@ public:
 
         Params()
         :
-        choice(0.01f),
+        choice(0.1f),
         vigilance(0.9f),
         lr(0.5f),
         l_radius(2)
@@ -77,7 +77,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        unsigned long* state,
         const Params &params
     );
 
