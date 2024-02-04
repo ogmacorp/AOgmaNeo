@@ -25,7 +25,7 @@ void Encoder::forward(
         hidden_sums[hidden_cell_index] = 0.0f;
 
         // if has no total information, compute it once
-        if (hidden_totals[hidden_cell_index] == 0.0f) {
+        if (hidden_totals[hidden_cell_index] == -1.0f) {
             float total = 0.0f;
             float total_importance = 0.0f;
 
@@ -289,7 +289,7 @@ void Encoder::init_random(
 
     hidden_sums.resize(num_hidden_cells);
 
-    hidden_totals = Float_Buffer(num_hidden_cells, 0.0f);
+    hidden_totals = Float_Buffer(num_hidden_cells, -1.0f); // flag
 
     hidden_maxs.resize(num_hidden_columns);
 }
