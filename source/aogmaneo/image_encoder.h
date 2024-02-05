@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,28 +30,27 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
-        Byte_Buffer recon_weights; // for reconstruction
+        Byte_Buffer weights0; // regular
+        Byte_Buffer weights1; // complement
+        Byte_Buffer weights_recon; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float threshold; // distance from input where cells stop having neighborhood influence
-        float falloff; // amount less when not maximal (multiplier)
+        float choice;
+        float vigilance;
         float lr; // learning rate
-        float scale; // scale of reconstruction
+        float scale;
         float rr; // reconstruction rate
-        int l_radius; // lateral inhibition radius
         
         Params()
         :
-        threshold(0.001f),
-        falloff(0.99f),
-        lr(0.1f),
+        choice(0.1f),
+        vigilance(0.95f),
+        lr(0.5f),
         scale(2.0f),
-        rr(0.01f),
-        l_radius(0)
+        rr(0.01f)
         {}
     };
 
@@ -59,10 +58,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
-
-    Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_resources;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -72,12 +67,8 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
-    );
-
-    void learn_weights(
-        const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
+        const Array<Byte_Buffer_View> &inputs,
+        bool learn_enabled
     );
 
     void learn_reconstruction(
@@ -104,8 +95,7 @@ public:
     // activate the sparse coder (perform sparse coding)
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
-        bool learn_enabled, // whether to learn
-        bool learn_recon = true // whether to learn a reconstruction as well (conditional on learn_enabled)
+        bool learn_enabled // whether to learn
     );
 
     void reconstruct(
@@ -121,7 +111,7 @@ public:
     // serialization
     long size() const; // returns size in bytes
     long state_size() const; // returns state size in bytes
-    long weights_size() const; // returns recon_weights size in bytes
+    long weights_size() const; // returns weights size in bytes
 
     void write(
         Stream_Writer &writer
