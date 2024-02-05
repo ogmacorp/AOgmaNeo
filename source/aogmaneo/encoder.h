@@ -60,6 +60,8 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Int_Buffer learn_cis;
+
     Float_Buffer hidden_sums;
 
     Float_Buffer hidden_totals;

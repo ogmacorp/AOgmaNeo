@@ -147,6 +147,8 @@ void Encoder::forward(
         }
     }
 
+    learn_cis[hidden_column_index] = max_index;
+
     hidden_maxs[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
@@ -161,7 +163,10 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int hidden_ci = hidden_cis[hidden_column_index];
+    int learn_ci = learn_cis[hidden_column_index];
+
+    if (learn_ci == -1)
+        return;
 
     float hidden_max = hidden_maxs[hidden_column_index];
 
@@ -180,7 +185,7 @@ void Encoder::learn(
             }
         }
 
-    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
+    int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
     float total = 0.0f;
 
@@ -216,7 +221,7 @@ void Encoder::learn(
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
+                    int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     if (vc == in_ci)
                         vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
@@ -262,6 +267,8 @@ void Encoder::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
+
+    learn_cis.resize(num_hidden_columns);
 
     hidden_sums.resize(num_hidden_cells);
 
@@ -357,6 +364,8 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_totals[0]), hidden_totals.size() * sizeof(float));
+
+    learn_cis.resize(num_hidden_columns);
 
     hidden_sums.resize(num_hidden_cells);
 
