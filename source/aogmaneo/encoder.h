@@ -43,12 +43,12 @@ public:
     };
 
     struct Params {
-        float scale; // scale of exp
+        float exponent; // recon curve
         float lr; // learning rate
 
         Params()
         :
-        scale(2.0f),
+        exponent(8.0f),
         lr(0.01f)
         {}
     };
