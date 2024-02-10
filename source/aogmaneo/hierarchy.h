@@ -85,13 +85,6 @@ public:
     struct Layer_Params {
         Decoder::Params decoder;
         Encoder::Params encoder;
-
-        float recurrent_importance;
-
-        Layer_Params()
-        :
-        recurrent_importance(1.0f)
-        {}
     };
 
     struct IO_Params {
