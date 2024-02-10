@@ -640,6 +640,9 @@ void Encoder::read(
         }
     }
 
+    int diam = recurrent_radius * 2 + 1;
+    int area = diam * diam;
+
     recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
 
     reader.read(reinterpret_cast<void*>(&recurrent_weights[0]), recurrent_weights.size() * sizeof(Byte));

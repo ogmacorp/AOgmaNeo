@@ -124,11 +124,10 @@ void Hierarchy::init_random(
         if (layer_descs[l].recurrent_radius >= 0) {
             e_visible_layer_descs[e_visible_layer_descs.size() - 1].size = layer_descs[l].hidden_size;
             e_visible_layer_descs[e_visible_layer_descs.size() - 1].radius = layer_descs[l].recurrent_radius;
-            e_visible_layer_descs[e_visible_layer_descs.size() - 1].is_recurrent = true;
         }
 
         // create the sparse coding layer
-        encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
+        encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].spatial_activity, layer_descs[l].recurrent_radius, e_visible_layer_descs);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
