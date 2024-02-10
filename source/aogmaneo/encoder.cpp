@@ -486,7 +486,7 @@ void Encoder::step(
     for (int i = 0; i < num_hidden_columns; i++)
         forward_recurrent(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
-    if (learn_enabled && false) {
+    if (learn_enabled) {
         unsigned int base_state = rand();
 
         PARALLEL_FOR
