@@ -125,7 +125,7 @@ void Encoder::forward_recurrent(
 
     int hidden_stride = hidden_size.z * diam * diam;
 
-    float influence = 1.0f * sqrtf(1.0f / count) / 255.0f;
+    float influence = sqrtf(1.0f / count) / 255.0f;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -138,7 +138,7 @@ void Encoder::forward_recurrent(
             int wi_offset = in_ci + hidden_size.z * (offset.y + diam * offset.x);
 
             for (int k = 0; k < spatial_activity; k++) {
-                int spatial_ci = k + spatial_activity * hidden_column_index;
+                int spatial_ci = spatial_cis[k + spatial_activity * hidden_column_index];
 
                 int hidden_cell_index = spatial_ci + hidden_cells_start;
 
@@ -152,7 +152,7 @@ void Encoder::forward_recurrent(
     float max_activation = 0.0f;
 
     for (int k = 0; k < spatial_activity; k++) {
-        int spatial_ci = k + spatial_activity * hidden_column_index;
+        int spatial_ci = spatial_cis[k + spatial_activity * hidden_column_index];
 
         int hidden_cell_index = spatial_ci + hidden_cells_start;
 
