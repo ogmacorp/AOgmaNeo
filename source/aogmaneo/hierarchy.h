@@ -70,7 +70,7 @@ public:
             int up_radius = 2,
             int recurrent_radius = 2,
             int down_radius = 2,
-            int spatial_activity = 4
+            int spatial_activity = 6
         )
         :
         hidden_size(hidden_size),
