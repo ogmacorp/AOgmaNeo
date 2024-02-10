@@ -299,9 +299,9 @@ void Encoder::learn_recurrent(
 ) {
     int diam = recurrent_radius * 2 + 1;
 
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+    int other_hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
+    int other_hidden_cells_start = other_hidden_column_index * hidden_size.z;
 
     // lower corner
     Int2 field_lower_bound(column_pos.x - recurrent_radius, column_pos.y - recurrent_radius);
@@ -310,11 +310,11 @@ void Encoder::learn_recurrent(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
-    int target_ci = hidden_cis_prev[hidden_column_index];
+    int target_ci = hidden_cis_prev[other_hidden_column_index];
 
     // clear
     for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+        int hidden_cell_index = hc + other_hidden_cells_start;
 
         recurrent_recon_sums[hidden_cell_index] = 0;
     }
@@ -325,16 +325,16 @@ void Encoder::learn_recurrent(
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 other_hidden_pos = Int2(ix, iy);
 
-            int other_hidden_column_index = address2(other_hidden_pos, Int2(hidden_size.x, hidden_size.y));
+            int hidden_column_index = address2(other_hidden_pos, Int2(hidden_size.x, hidden_size.y));
 
-            int other_hidden_cell_index_max = hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z;
+            int other_hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
             Int2 offset(column_pos.x - other_hidden_pos.x + recurrent_radius, column_pos.y - other_hidden_pos.y + recurrent_radius);
 
             int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * other_hidden_cell_index_max));
 
             for (int hc = 0; hc < hidden_size.z; hc++) {
-                int hidden_cell_index = hc + hidden_cells_start;
+                int hidden_cell_index = hc + other_hidden_cells_start;
 
                 int wi = hc + wi_start;
 
@@ -350,7 +350,7 @@ void Encoder::learn_recurrent(
     int max_activation = 0;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+        int hidden_cell_index = hc + other_hidden_cells_start;
 
         int recon_sum = recurrent_recon_sums[hidden_cell_index];
 
@@ -372,16 +372,16 @@ void Encoder::learn_recurrent(
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 other_hidden_pos = Int2(ix, iy);
 
-            int other_hidden_column_index = address2(other_hidden_pos, Int2(hidden_size.x, hidden_size.y));
+            int hidden_column_index = address2(other_hidden_pos, Int2(hidden_size.x, hidden_size.y));
 
-            int other_hidden_cell_index_max = hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z;
+            int other_hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
             Int2 offset(column_pos.x - other_hidden_pos.x + recurrent_radius, column_pos.y - other_hidden_pos.y + recurrent_radius);
 
             int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * other_hidden_cell_index_max));
 
             for (int hc = 0; hc < hidden_size.z; hc++) {
-                int hidden_cell_index = hc + hidden_cells_start;
+                int hidden_cell_index = hc + other_hidden_cells_start;
 
                 int wi = hc + wi_start;
 
