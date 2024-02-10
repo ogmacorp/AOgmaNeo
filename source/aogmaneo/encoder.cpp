@@ -497,10 +497,8 @@ void Encoder::step(
 
         base_state = rand();
 
-        int num_hidden_cells = num_hidden_columns * hidden_size.z;
-
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_cells; i++) {
+        for (int i = 0; i < num_hidden_columns; i++) {
             unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
             learn_recurrent(Int2(i / hidden_size.y, i % hidden_size.y), &state, params);
