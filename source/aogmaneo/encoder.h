@@ -72,6 +72,8 @@ private:
     
     Byte_Buffer recurrent_weights;
 
+    Int_Buffer recurrent_recon_sums;
+
     // --- kernels ---
 
     void forward_spatial(
