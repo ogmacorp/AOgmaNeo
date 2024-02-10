@@ -227,9 +227,9 @@ void Encoder::learn_spatial(
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
                 for (int k = 0; k < spatial_activity; k++) {
-                    int hidden_cell_index_max = spatial_cis[k + spatial_activity * hidden_column_index] + hidden_column_index * hidden_size.z;
+                    int hidden_cell_index = spatial_cis[k + spatial_activity * hidden_column_index] + hidden_column_index * hidden_size.z;
 
-                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int visible_cell_index = vc + visible_cells_start;
@@ -280,9 +280,9 @@ void Encoder::learn_spatial(
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
                 for (int k = 0; k < spatial_activity; k++) {
-                    int hidden_cell_index_max = spatial_cis[k + spatial_activity * hidden_column_index] + hidden_column_index * hidden_size.z;
+                    int hidden_cell_index = spatial_cis[k + spatial_activity * hidden_column_index] + hidden_column_index * hidden_size.z;
 
-                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int visible_cell_index = vc + visible_cells_start;
@@ -486,7 +486,7 @@ void Encoder::step(
     for (int i = 0; i < num_hidden_columns; i++)
         forward_recurrent(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
-    if (learn_enabled) {
+    if (learn_enabled && false) {
         unsigned int base_state = rand();
 
         PARALLEL_FOR
