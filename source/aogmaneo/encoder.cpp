@@ -224,21 +224,23 @@ void Encoder::learn_spatial(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
-
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                for (int k = 0; k < spatial_activity; k++) {
+                    int hidden_cell_index_max = spatial_cis[k + spatial_activity * hidden_column_index] + hidden_column_index * hidden_size.z;
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                    int wi = vc + wi_start;
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int visible_cell_index = vc + visible_cells_start;
 
-                    vl.recon_sums[visible_cell_index] += vl.weights[wi];
+                        int wi = vc + wi_start;
+
+                        vl.recon_sums[visible_cell_index] += vl.weights[wi];
+                    }
+
+                    count++;
                 }
-
-                count++;
             }
         }
 
@@ -275,18 +277,20 @@ void Encoder::learn_spatial(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
-
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                for (int k = 0; k < spatial_activity; k++) {
+                    int hidden_cell_index_max = spatial_cis[k + spatial_activity * hidden_column_index] + hidden_column_index * hidden_size.z;
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                    int wi = vc + wi_start;
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int visible_cell_index = vc + visible_cells_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
+                        int wi = vc + wi_start;
+
+                        vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
+                    }
                 }
             }
         }
@@ -313,10 +317,10 @@ void Encoder::learn_recurrent(
     int target_ci = hidden_cis_prev[other_hidden_column_index];
 
     // clear
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + other_hidden_cells_start;
+    for (int ohc = 0; ohc < hidden_size.z; ohc++) {
+        int other_hidden_cell_index = ohc + other_hidden_cells_start;
 
-        recurrent_recon_sums[hidden_cell_index] = 0;
+        recurrent_recon_sums[other_hidden_cell_index] = 0;
     }
 
     int count = 0;
@@ -333,12 +337,12 @@ void Encoder::learn_recurrent(
 
             int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * other_hidden_cell_index_max));
 
-            for (int hc = 0; hc < hidden_size.z; hc++) {
-                int hidden_cell_index = hc + other_hidden_cells_start;
+            for (int ohc = 0; ohc < hidden_size.z; ohc++) {
+                int other_hidden_cell_index = ohc + other_hidden_cells_start;
 
-                int wi = hc + wi_start;
+                int wi = ohc + wi_start;
 
-                recurrent_recon_sums[hidden_cell_index] += recurrent_weights[wi];
+                recurrent_recon_sums[other_hidden_cell_index] += recurrent_weights[wi];
             }
 
             count++;
@@ -349,20 +353,20 @@ void Encoder::learn_recurrent(
     int max_index = 0;
     int max_activation = 0;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + other_hidden_cells_start;
+    for (int ohc = 0; ohc < hidden_size.z; ohc++) {
+        int other_hidden_cell_index = ohc + other_hidden_cells_start;
 
-        int recon_sum = recurrent_recon_sums[hidden_cell_index];
+        int recon_sum = recurrent_recon_sums[other_hidden_cell_index];
 
         if (recon_sum > max_activation) {
             max_activation = recon_sum;
-            max_index = hc;
+            max_index = ohc;
         }
 
         float recon = recon_sum * recon_scale;
 
         // re-use sums as deltas
-        recurrent_recon_sums[hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((hc == target_ci) - powf(recon, params.exponent)), state);
+        recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ohc == target_ci) - powf(recon, params.exponent)), state);
     }
 
     if (max_index == target_ci)
@@ -380,12 +384,12 @@ void Encoder::learn_recurrent(
 
             int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * other_hidden_cell_index_max));
 
-            for (int hc = 0; hc < hidden_size.z; hc++) {
-                int hidden_cell_index = hc + other_hidden_cells_start;
+            for (int ohc = 0; ohc < hidden_size.z; ohc++) {
+                int other_hidden_cell_index = ohc + other_hidden_cells_start;
 
-                int wi = hc + wi_start;
+                int wi = ohc + wi_start;
 
-                recurrent_weights[wi] = min(255, max(0, recurrent_weights[wi] + recurrent_recon_sums[hidden_cell_index]));
+                recurrent_weights[wi] = min(255, max(0, recurrent_weights[wi] + recurrent_recon_sums[other_hidden_cell_index]));
             }
         }
 }
