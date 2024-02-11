@@ -239,7 +239,7 @@ void Decoder::generate_errors(
             }
         }
 
-    sum /= max(1, count * 127);
+    sum *= sqrtf(1.0f / count) / 127.0f;
 
     errors[visible_column_index] += sum;
 }
