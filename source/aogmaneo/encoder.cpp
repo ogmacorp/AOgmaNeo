@@ -129,7 +129,7 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_acts[hidden_cell_index] * params.scale;
+        float activation = hidden_acts[hidden_cell_index] / max(limit_small, total_importance) * params.scale;
 
         hidden_acts[hidden_cell_index] = activation;
 
