@@ -20,14 +20,11 @@ public:
 
         int radius; // radius onto input
 
-        Byte is_recurrent;
-
         // defaults
         Visible_Layer_Desc()
         :
         size(4, 4, 16),
-        radius(2),
-        is_recurrent(false)
+        radius(2)
         {}
     };
 
@@ -35,8 +32,8 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Int_Buffer recon_sums;
-
+        Float_Buffer visible_traces;
+        
         float importance;
 
         Visible_Layer()
@@ -46,13 +43,13 @@ public:
     };
 
     struct Params {
-        float scale; // scale of exp
         float lr; // learning rate
+        float trace_decay;
 
         Params()
         :
-        scale(2.0f),
-        lr(0.01f)
+        lr(0.1f),
+        trace_decay(0.99f)
         {}
     };
 
@@ -63,24 +60,20 @@ private:
 
     Float_Buffer hidden_acts;
 
+    Float_Buffer hidden_traces;
+
+    Int_Buffer hidden_deltas;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
     // --- kernels ---
-
+    
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
+        bool learn_enabled,
         unsigned long* state,
         const Params &params
     );
@@ -101,9 +94,9 @@ public:
     void clear_state();
 
     // serialization
-    long size() const; // returns size in bytes
-    long state_size() const; // returns size of state in bytes
-    long weights_size() const; // returns size of weights in bytes
+    long size() const; // returns size in Bytes
+    long state_size() const; // returns size of state in Bytes
+    long weights_size() const; // returns size of weights in Bytes
 
     void write(
         Stream_Writer &writer
