@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,26 +30,24 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer protos;
-        Byte_Buffer weights; // for reconstruction
+        Byte_Buffer weights;
+        Byte_Buffer recon_weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float threshold; // early stopping threshold distance
-        float scale; // scale of reconstruction
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
+        float scale; // scale of reconstruction
         float rr; // reconstruction rate
         
         Params()
         :
-        threshold(0.001f),
-        scale(2.0f),
         falloff(0.99f),
         lr(0.1f),
-        rr(0.1f)
+        scale(2.0f),
+        rr(0.01f)
         {}
     };
 
@@ -57,6 +55,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_resources;
 
@@ -69,8 +69,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Byte_Buffer_View> &inputs,
-        bool learn_enabled,
-        unsigned long* state
+        bool learn_enabled
     );
 
     void learn_reconstruction(
@@ -97,7 +96,8 @@ public:
     // activate the sparse coder (perform sparse coding)
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
-        bool learn_enabled // whether to learn
+        bool learn_enabled, // whether to learn
+        bool learn_recon = true // whether to learn a reconstruction as well (conditional on learn_enabled)
     );
 
     void reconstruct(
@@ -111,13 +111,31 @@ public:
     }
 
     // serialization
-    int size() const; // returns size in bytes
+    long size() const; // returns size in bytes
+    long state_size() const; // returns state size in bytes
+    long weights_size() const; // returns recon_weights size in bytes
 
     void write(
         Stream_Writer &writer
     ) const;
 
     void read(
+        Stream_Reader &reader
+    );
+
+    void write_state(
+        Stream_Writer &writer
+    ) const;
+
+    void read_state(
+        Stream_Reader &reader
+    );
+
+    void write_weights(
+        Stream_Writer &writer
+    ) const;
+
+    void read_weights(
         Stream_Reader &reader
     );
 
@@ -149,5 +167,11 @@ public:
     const Int3 &get_hidden_size() const {
         return hidden_size;
     }
+
+    // merge list of image encoders and write to this one
+    void merge(
+        const Array<Image_Encoder*> &image_encoders,
+        Merge_Mode mode
+    );
 };
 }
