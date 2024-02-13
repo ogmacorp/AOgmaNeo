@@ -60,7 +60,7 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Float_Buffer hidden_deltas;
+    Int_Buffer hidden_deltas;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
