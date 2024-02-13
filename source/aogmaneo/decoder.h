@@ -174,11 +174,6 @@ public:
         return hidden_acts;
     }
 
-    // get the dendrite states
-    const Float_Buffer &get_dendrite_acts() const {
-        return dendrite_acts;
-    }
-
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
