@@ -364,8 +364,8 @@ void Decoder::clear_state() {
     }
 }
 
-int Decoder::size() const {
-    int size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + sizeof(int);
+long Decoder::size() const {
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -377,13 +377,25 @@ int Decoder::size() const {
     return size;
 }
 
-int Decoder::state_size() const {
-    int size = hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float);
+long Decoder::state_size() const {
+    long size = hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
         size += vl.input_cis_prev.size() * sizeof(int);
+    }
+
+    return size;
+}
+
+long Decoder::weights_size() const {
+    int size = 0;
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.weights.size() * sizeof(Byte);
     }
 
     return size;
@@ -426,10 +438,6 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_acts[0]), hidden_acts.size() * sizeof(float));
-
-    hidden_sums.resize(num_hidden_cells);
-
-    hidden_deltas.resize(num_hidden_cells);
 
     int num_visible_layers;
 
@@ -504,5 +512,62 @@ void Decoder::read_state(
         Visible_Layer &vl = visible_layers[vli];
 
         reader.read(reinterpret_cast<void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
+    }
+}
+
+void Decoder::write_weights(
+    Stream_Writer &writer
+) const {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+    }
+}
+
+void Decoder::read_weights(
+    Stream_Reader &reader
+) {
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+    }
+}
+
+void Decoder::merge(
+    const Array<Decoder*> &decoders,
+    Merge_Mode mode
+) {
+    switch (mode) {
+    case merge_random:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                int d = rand() % decoders.size();                
+
+                vl.weights[i] = decoders[d]->visible_layers[vli].weights[i];
+            }
+        }
+
+        break;
+    case merge_average:
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        
+            for (int i = 0; i < vl.weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int d = 0; d < decoders.size(); d++)
+                    total += decoders[d]->visible_layers[vli].weights[i];
+
+                vl.weights[i] = roundf(total / decoders.size());
+            }
+        }
+
+        break;
     }
 }
