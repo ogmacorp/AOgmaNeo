@@ -51,7 +51,7 @@ public:
         :
         scale(8.0f),
         lr(0.01f),
-        early_stop_cells(1)
+        early_stop_cells(3)
         {}
     };
 
