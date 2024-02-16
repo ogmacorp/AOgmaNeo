@@ -51,7 +51,7 @@ public:
         Params()
         :
         exponent(8.0f),
-        lr(0.1f),
+        lr(0.01f),
         spatial_recon_tolerance(2),
         recurrent_recon_tolerance(2)
         {}
