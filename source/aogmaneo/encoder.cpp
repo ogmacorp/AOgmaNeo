@@ -191,7 +191,7 @@ void Encoder::learn(
         float recon = recon_sum * recon_scale;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - powf(recon, params.exponent)), state);
+        vl.recon_sums[visible_cell_index] = roundf(params.lr * 255.0f * ((vc == target_ci) - powf(recon, params.exponent)));
     }
 
     if (num_higher < params.early_stop_cells)
