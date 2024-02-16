@@ -208,6 +208,8 @@ void Hierarchy::clear_state() {
         // decoders
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].clear_state();
+
+        hidden_cis_prev.fill(0);
     }
 
     // actors
