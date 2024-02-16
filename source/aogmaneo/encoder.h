@@ -50,7 +50,7 @@ public:
         Params()
         :
         exponent(8.0f),
-        lr(0.1f),
+        lr(0.01f),
         early_stop_cells(2)
         {}
     };
