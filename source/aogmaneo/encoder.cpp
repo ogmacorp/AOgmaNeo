@@ -248,10 +248,13 @@ void Encoder::learn_spatial(
             }
         }
 
-    const float recon_scale = 1.0f / max(1, count) / 255.0f;
+    const float recon_scale = 1.0f / max(1, count * 255);
 
     int max_index = 0;
     int max_activation = 0;
+
+    int target_recon_sum = vl.recon_sums[target_ci + visible_cells_start];
+    int num_higher = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
@@ -263,13 +266,16 @@ void Encoder::learn_spatial(
             max_index = vc;
         }
 
+        if (recon_sum > target_recon_sum)
+            num_higher++;
+
         float recon = recon_sum * recon_scale;
 
         // re-use sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - powf(recon, params.exponent)), state);
     }
 
-    if (max_index == target_ci)
+    if (num_higher < params.spatial_recon_tolerance)
         return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -354,10 +360,13 @@ void Encoder::learn_recurrent(
             count++;
         }
 
-    const float recon_scale = 1.0f / max(1, count) / 255.0f;
+    const float recon_scale = 1.0f / max(1, count * 255);
 
     int max_index = 0;
     int max_activation = 0;
+
+    int target_recon_sum = recurrent_recon_sums[target_ci + other_hidden_cells_start];
+    int num_higher = 0;
 
     for (int ohc = 0; ohc < hidden_size.z; ohc++) {
         int other_hidden_cell_index = ohc + other_hidden_cells_start;
@@ -369,13 +378,16 @@ void Encoder::learn_recurrent(
             max_index = ohc;
         }
 
+        if (recon_sum > target_recon_sum)
+            num_higher++;
+
         float recon = recon_sum * recon_scale;
 
         // re-use sums as deltas
         recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ohc == target_ci) - powf(recon, params.exponent)), state);
     }
 
-    if (max_index == target_ci)
+    if (num_higher < params.recurrent_recon_tolerance)
         return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)

@@ -45,11 +45,15 @@ public:
     struct Params {
         float exponent; // recon curve
         float lr; // learning rate
+        int spatial_recon_tolerance;
+        int recurrent_recon_tolerance;
 
         Params()
         :
         exponent(8.0f),
-        lr(0.01f)
+        lr(0.01f),
+        spatial_recon_tolerance(2),
+        recurrent_recon_tolerance(2)
         {}
     };
 
