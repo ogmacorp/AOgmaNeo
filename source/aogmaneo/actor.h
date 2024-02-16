@@ -56,11 +56,11 @@ public:
 
         Params()
         :
-        vlr(0.005f),
-        alr(0.005f),
+        vlr(0.002f),
+        alr(0.002f),
         leak(0.01f),
         rate(0.01f),
-        clip_coef(0.2f),
+        clip_coef(0.15f),
         discount(0.99f),
         min_steps(16),
         history_iters(16)
