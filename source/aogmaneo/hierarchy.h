@@ -68,9 +68,9 @@ public:
             const Int3 &hidden_size = Int3(4, 4, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
-            int recurrent_radius = 2,
+            int recurrent_radius = 0,
             int down_radius = 2,
-            int spatial_activity = 2
+            int spatial_activity = 4
         )
         :
         hidden_size(hidden_size),
