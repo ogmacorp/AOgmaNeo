@@ -353,9 +353,6 @@ void Encoder::learn_recurrent(
 
     const float recon_scale = 1.0f / max(1, count * 255);
 
-    int max_index = 0;
-    int max_activation = 0;
-
     int target_recon_sum = recurrent_recon_sums[target_ci + other_hidden_cells_start];
     int num_higher = 0;
 
@@ -363,11 +360,6 @@ void Encoder::learn_recurrent(
         int other_hidden_cell_index = tc + other_temporal_cells_start;
 
         int recon_sum = recurrent_recon_sums[other_hidden_cell_index];
-
-        if (recon_sum > max_activation) {
-            max_activation = recon_sum;
-            max_index = tc;
-        }
 
         if (recon_sum > target_recon_sum)
             num_higher++;
