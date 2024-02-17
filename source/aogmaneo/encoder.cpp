@@ -140,9 +140,7 @@ void Encoder::forward_recurrent(
             int wi_offset = in_ci + hidden_size.z * (offset.y + diam * offset.x);
 
             for (int k = 0; k < spatial_activity; k++) {
-                int spatial_ci = spatial_cis[k + ks_start];
-
-                int hidden_cell_index = spatial_ci + hidden_cells_start;
+                int hidden_cell_index = spatial_cis[k + ks_start] + hidden_cells_start;
 
                 int wi = wi_offset + hidden_cell_index * hidden_stride;
 
