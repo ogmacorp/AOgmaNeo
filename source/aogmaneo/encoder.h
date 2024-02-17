@@ -53,7 +53,7 @@ public:
         exponent(8.0f),
         lr(0.01f),
         spatial_recon_tolerance(2),
-        recurrent_recon_tolerance(1)
+        recurrent_recon_tolerance(2)
         {}
     };
 
@@ -63,7 +63,6 @@ private:
     int recurrent_radius;
 
     Int_Buffer spatial_cis;
-    Int_Buffer spatial_cis_prev;
     Int_Buffer hidden_cis;
     Int_Buffer hidden_cis_prev;
 
