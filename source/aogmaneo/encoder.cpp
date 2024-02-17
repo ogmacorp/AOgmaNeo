@@ -597,13 +597,15 @@ void Encoder::read(
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
     int num_spatial_cells = num_hidden_columns * spatial_activity;
 
-    spatial_cis.resize(num_spatial_cells);
+    spatial_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&spatial_cis[0]), spatial_cis.size() * sizeof(int));
 
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    spatial_cis_prev.resize(num_hidden_columns);
 
     hidden_cis_prev.resize(num_hidden_columns);
 
@@ -634,7 +636,7 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.weights.resize(num_spatial_cells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
