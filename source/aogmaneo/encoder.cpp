@@ -159,7 +159,7 @@ void Encoder::forward_recurrent(
         }
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    hidden_cis[hidden_column_index] = max_index + spatial_ci * temporal_activity;
 }
 
 void Encoder::learn_spatial(
