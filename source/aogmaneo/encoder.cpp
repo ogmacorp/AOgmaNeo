@@ -311,12 +311,12 @@ void Encoder::learn_recurrent(
     unsigned long* state,
     const Params &params
 ) {
-    int diam = recurrent_radius * 2 + 1;
-
     int other_hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int other_hidden_cells_start = other_hidden_column_index * hidden_size.z;
     int other_ks_start = spatial_activity * other_hidden_column_index;
+
+    int diam = recurrent_radius * 2 + 1;
 
     // lower corner
     Int2 field_lower_bound(column_pos.x - recurrent_radius, column_pos.y - recurrent_radius);
