@@ -163,6 +163,26 @@ void Encoder::learn(
                     vl.weights[wi] += rate * (in_value - vl.weights[wi]);
                 }
         }
+    }
+}
+
+void Encoder::shrink(
+    const Int2 &column_pos,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    for (int dhc = -1; dhc <= 1; dhc++) {
+        int hc = hidden_cis[hidden_column_index] + dhc;
+
+        if (hc < 0 || hc >= hidden_size.z)
+            continue;
+
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
 
         hidden_resources[hidden_cell_index] -= params.lr * rate;
     }
@@ -221,6 +241,10 @@ void Encoder::step(
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            shrink(Int2(i / hidden_size.y, i % hidden_size.y), params);
     }
 }
 

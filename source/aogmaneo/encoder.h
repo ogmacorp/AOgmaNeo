@@ -80,6 +80,11 @@ private:
         const Params &params
     );
 
+    void shrink(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
 public:
     // create a sparse coding layer with random initialization
     void init_random(
