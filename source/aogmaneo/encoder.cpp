@@ -120,6 +120,9 @@ void Encoder::learn(
     for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
 
+        if (hc < 0 || hc >= hidden_size.z)
+            continue;
+
         int hidden_cell_index = hc + hidden_cells_start;
 
         float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
