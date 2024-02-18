@@ -76,7 +76,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.weights[wi];
 
-                    hidden_acts[hidden_cell_index] -= diff * diff * influence;
+                    hidden_acts[hidden_cell_index] -= sqrtf(abs(diff)) * influence;
                 }
             }
     }
@@ -123,7 +123,7 @@ void Encoder::learn(
             }
         }
 
-    int scan_radius = (sqrtf(-max_activation) > params.threshold);
+    int scan_radius = (-max_activation > params.threshold);
 
     for (int dhc = -scan_radius; dhc <= scan_radius; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
