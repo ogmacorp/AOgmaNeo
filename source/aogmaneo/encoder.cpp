@@ -25,8 +25,6 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
-    float total_importance = 0.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -50,8 +48,6 @@ void Encoder::forward(
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
-        total_importance += vl.importance;
 
         const float vld_size_z_inv = 1.0f / vld.size.z;
 
@@ -87,8 +83,6 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= max(limit_small, total_importance);
-
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
@@ -123,9 +117,7 @@ void Encoder::learn(
             }
         }
 
-    int scan_radius = (-max_activation > params.threshold);
-
-    for (int dhc = -scan_radius; dhc <= scan_radius; dhc++) {
+    for (int dhc = -1; dhc <= 1; dhc++) {
         int hc = hidden_cis[hidden_column_index] + dhc;
 
         int hidden_cell_index = hc + hidden_cells_start;
