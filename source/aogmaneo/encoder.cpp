@@ -117,12 +117,15 @@ void Encoder::learn(
             }
         }
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
+    for (int dhc = -1; dhc <= 1; dhc++) {
+        int hc = hidden_cis[hidden_column_index] + dhc;
+
+        if (hc < 0 || hc >= hidden_size.z)
+            continue;
+
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float diff = hidden_cis[hidden_column_index] - hc;
-
-        float rate = hidden_resources[hidden_cell_index] * expf(-params.falloff * diff * diff / max(limit_small, hidden_resources[hidden_cell_index]));
+        float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
