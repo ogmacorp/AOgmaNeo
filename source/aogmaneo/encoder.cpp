@@ -201,7 +201,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
+    hidden_resources = Float_Buffer(num_hidden_cells, 1.0f);
 
     hidden_acts.resize(num_hidden_cells);
 }
