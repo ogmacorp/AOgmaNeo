@@ -37,21 +37,17 @@ public:
     };
 
     struct Params {
-        float threshold; // distance from input where cells stop having neighborhood influence
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
-        int l_radius; // lateral inhibition radius
         
         Params()
         :
-        threshold(0.001f),
         falloff(0.99f),
-        lr(0.1f),
+        lr(0.2f),
         scale(2.0f),
-        rr(0.02f),
-        l_radius(0)
+        rr(0.01f)
         {}
     };
 
@@ -72,12 +68,8 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
-    );
-
-    void learn_weights(
-        const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
+        const Array<Byte_Buffer_View> &inputs,
+        bool learn_enabled
     );
 
     void learn_reconstruction(
