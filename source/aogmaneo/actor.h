@@ -53,10 +53,10 @@ public:
 
         Params()
         :
-        lr(0.001f),
+        lr(0.01f),
         cons(0.0f),
         rate(0.01f),
-        clip_coef(1.0f),
+        clip_coef(0.1f),
         discount(0.99f),
         n_steps(8),
         history_iters(16)
