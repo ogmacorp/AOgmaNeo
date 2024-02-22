@@ -43,13 +43,15 @@ public:
     };
 
     struct Params {
-        float exponent; // recon curve
+        float scale; // recon curve
         float lr; // learning rate
+        int early_stop_cells;
 
         Params()
         :
-        exponent(8.0f),
-        lr(0.01f)
+        scale(8.0f),
+        lr(0.01f),
+        early_stop_cells(2)
         {}
     };
 

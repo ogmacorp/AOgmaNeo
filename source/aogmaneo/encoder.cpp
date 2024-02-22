@@ -51,7 +51,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float influence = vl.importance * sqrtf(1.0f / sub_count) / 255.0f;
+        const float influence = vl.importance * sqrtf(1.0f / sub_count) / 255.0f;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -167,28 +167,26 @@ void Encoder::learn(
             }
         }
 
-    const float recon_scale = 1.0f / max(1, count) / 255.0f;
+    const float recon_scale = 1.0f / max(1, count * 255);
 
-    int max_index = 0;
-    int max_activation = 0;
+    int num_higher = 0;
+    int target_sum = vl.recon_sums[target_ci + visible_cells_start];
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        if (recon_sum > max_activation) {
-            max_activation = recon_sum;
-            max_index = vc;
-        }
+        if (recon_sum > target_sum)
+            num_higher++;
 
         float recon = recon_sum * recon_scale;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - powf(recon, params.exponent)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon - 1.0f) * params.scale)), state);
     }
 
-    if (max_index == target_ci)
+    if (num_higher < params.early_stop_cells)
         return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
