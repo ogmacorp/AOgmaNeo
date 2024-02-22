@@ -51,7 +51,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        float influence = vl.importance * sqrtf(1.0f / sub_count) / 255.0f;
+        const float influence = vl.importance * sqrtf(1.0f / sub_count) / 255.0f;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -167,7 +167,7 @@ void Encoder::learn(
             }
         }
 
-    float recon_scale = 1.0f / max(1, count * 255);
+    const float recon_scale = 1.0f / max(1, count * 255);
 
     int num_higher = 0;
     int target_sum = vl.recon_sums[target_ci + visible_cells_start];
@@ -183,7 +183,7 @@ void Encoder::learn(
         float recon = recon_sum * recon_scale;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - powf(recon, params.exponent)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon - 1.0f) * params.scale)), state);
     }
 
     if (num_higher < params.early_stop_cells)

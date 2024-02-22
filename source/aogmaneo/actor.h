@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,7 +32,6 @@ public:
     struct Visible_Layer {
         Float_Buffer action_weights;
         Float_Buffer action_weights_delayed;
-
         Float_Buffer value_weights;
     };
 
@@ -47,9 +46,8 @@ public:
     struct Params {
         float vlr; // value learning rate
         float alr; // action learning rate
-        float leak; // relu leak
         float rate; // rate of delayed weights
-        float clip_coef; // PPO clip coefficient
+        float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
@@ -58,7 +56,6 @@ public:
         :
         vlr(0.002f),
         alr(0.002f),
-        leak(0.01f),
         rate(0.01f),
         clip_coef(0.15f),
         discount(0.99f),
@@ -76,11 +73,14 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
+    Int_Buffer hidden_cell_dis;
+
     Float_Buffer hidden_acts;
     Float_Buffer hidden_acts_delayed;
 
-    Float_Buffer dendrite_acts;
-    Float_Buffer dendrite_acts_delayed;
+    Float_Buffer action_dendrite_acts;
+    Float_Buffer action_dendrite_acts_delayed;
+    Float_Buffer value_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
