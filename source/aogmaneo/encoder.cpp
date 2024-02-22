@@ -425,7 +425,7 @@ void Encoder::init_random(
         vl.recon_sums.resize(num_visible_cells);
     }
 
-    spatial_cis = Int_Buffer(num_hidden_columns, 0);
+    spatial_cis.resize(num_hidden_columns);
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
     hidden_cis_prev = Int_Buffer(num_hidden_columns, 0);
 
@@ -575,6 +575,8 @@ void Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+
+    spatial_cis.resize(num_hidden_columns);
 
     hidden_cis_prev.resize(num_hidden_columns);
 
