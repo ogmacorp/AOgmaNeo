@@ -358,11 +358,14 @@ void Actor::learn(
     // https://huggingface.co/blog/deep-rl-ppo
     bool clip = (ratio < (1.0f - params.clip_coef) && td_error < 0.0f) || (ratio > (1.0f + params.clip_coef) && td_error > 0.0f);
 
+    if (clip)
+        return;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         // re-use as deltas
-        hidden_acts[hidden_cell_index] = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error * (!clip));
+        hidden_acts[hidden_cell_index] = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
