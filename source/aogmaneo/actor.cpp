@@ -311,14 +311,16 @@ void Actor::learn(
     float max_activation = limit_min;
     float max_activation_delayed = limit_min;
 
+    const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
+    const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        int max_cell_di = 0;
-        float max_dendrite_act = limit_min;
-        float max_dendrite_act_delayed = limit_min;
+        float activation = 0.0f;
+        float activation_delayed = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -326,24 +328,21 @@ void Actor::learn(
             float act = action_dendrite_acts[dendrite_index] * dendrite_scale;
             float act_delayed = action_dendrite_acts_delayed[dendrite_index] * dendrite_scale;
 
-            action_dendrite_acts[dendrite_index] = act;
-            action_dendrite_acts_delayed[dendrite_index] = act_delayed;
+            action_dendrite_acts[dendrite_index] = max(act * params.leak, act);
+            action_dendrite_acts_delayed[dendrite_index] = max(act_delayed * params.leak, act_delayed);
 
-            if (act > max_dendrite_act) {
-                max_dendrite_act = act;
-                max_cell_di = di;
-            }
-            
-            max_dendrite_act_delayed = max(max_dendrite_act_delayed, act_delayed);
+            activation += action_dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+            activation_delayed += action_dendrite_acts_delayed[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        hidden_cell_dis[hidden_cell_index] = max_cell_di;
+        activation *= activation_scale;
+        activation_delayed *= activation_scale;
 
-        hidden_acts[hidden_cell_index] = max_dendrite_act;
-        hidden_acts_delayed[hidden_cell_index] = max_dendrite_act_delayed;
+        hidden_acts[hidden_cell_index] = activation;
+        hidden_acts_delayed[hidden_cell_index] = activation_delayed;
 
-        max_activation = max(max_activation, max_dendrite_act);
-        max_activation_delayed = max(max_activation_delayed, max_dendrite_act_delayed);
+        max_activation = max(max_activation, activation);
+        max_activation_delayed = max(max_activation_delayed, activation_delayed);
     }
 
     // softmax
