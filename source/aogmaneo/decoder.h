@@ -31,8 +31,6 @@ public:
     // visible layer
     struct Visible_Layer {
         S_Byte_Buffer weights;
-
-        Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
@@ -76,6 +74,7 @@ private:
 
     void learn(
         const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
         unsigned long* state,
         const Params &params
@@ -90,10 +89,14 @@ public:
     );
 
     // activate the predictor (predict values)
-    void step(
+    void activate(
+        const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void learn(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
-        bool learn_enabled,
         const Params &params
     );
 
