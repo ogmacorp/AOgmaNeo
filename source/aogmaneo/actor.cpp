@@ -418,17 +418,19 @@ void Actor::learn(
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    float delta = action_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+                    float error = action_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
-                    int di = hidden_cell_dis[hidden_cell_index];
+                    for (int di = 0; di < num_dendrites_per_cell; di++) {
+                        int dendrite_index = di + dendrites_start;
 
-                    int dendrite_index = di + dendrites_start;
+                        int wi = di + wi_start;
 
-                    int wi = di + wi_start;
+                        float delta = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((action_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
 
-                    vl.action_weights[wi] += delta;
+                        vl.action_weights[wi] += delta;
+                    }
                 }
 
                 int wi_value_start = num_dendrites_per_cell * wi_value_partial;
