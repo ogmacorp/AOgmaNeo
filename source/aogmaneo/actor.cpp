@@ -355,7 +355,7 @@ void Actor::learn(
         max_activation = max(max_activation, max_dendrite_act);
     }
 
-    float value = max_activation_next;
+    float value = soft_max_activation_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         value = history_samples[t - n].reward + params.discount * value;
