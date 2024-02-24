@@ -52,7 +52,7 @@ public:
 
         Params()
         :
-        lr(0.002f),
+        lr(0.005f),
         cons(0.0f),
         rate(0.01f),
         clip_coef(0.1f),
