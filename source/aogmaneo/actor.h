@@ -31,7 +31,6 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer weights;
-        Float_Buffer weights_delayed;
     };
 
     // history sample for delayed updates
@@ -53,7 +52,7 @@ public:
 
         Params()
         :
-        lr(0.001f),
+        lr(0.002f),
         cons(0.0f),
         rate(0.01f),
         clip_coef(0.1f),
@@ -75,10 +74,8 @@ private:
     Int_Buffer hidden_cell_dis;
 
     Float_Buffer dendrite_acts;
-    Float_Buffer dendrite_acts_delayed;
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_delayed;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
