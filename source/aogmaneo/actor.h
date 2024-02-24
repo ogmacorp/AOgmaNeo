@@ -44,18 +44,14 @@ public:
     struct Params {
         float lr; // hidden learning rate
         float cons; // convervativeness
-        float rate;
-        float clip_coef;
         float discount; // discount fActor
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        lr(0.005f),
+        lr(0.01f),
         cons(0.0f),
-        rate(0.01f),
-        clip_coef(0.1f),
         discount(0.99f),
         n_steps(8),
         history_iters(16)

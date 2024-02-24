@@ -257,9 +257,7 @@ void Actor::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float max_dendrite_act = hidden_acts[hidden_cell_index];
-
-        soft_max_activation_next += expf(max_dendrite_act - max_activation_next);
+        soft_max_activation_next += expf(hidden_acts[hidden_cell_index] - max_activation_next);
     }
 
     soft_max_activation_next = max_activation_next + logf(soft_max_activation_next);
