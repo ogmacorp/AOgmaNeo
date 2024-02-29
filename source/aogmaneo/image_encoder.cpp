@@ -70,7 +70,7 @@ void Image_Encoder::forward(
 
                         float diff = input - vl.weights[wi] * byte_inv;
 
-                        hidden_acts[hidden_cell_index] -= sqrtf(abs(diff));
+                        hidden_acts[hidden_cell_index] -= diff * diff;
                     }
                 }
             }
