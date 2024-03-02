@@ -31,7 +31,6 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer action_weights;
-        Float_Buffer action_weights_delayed;
         Float_Buffer value_weights;
     };
 
@@ -47,8 +46,7 @@ public:
         float vlr; // value learning rate
         float alr; // action learning rate
         float leak; // ReLU leak
-        float rate; // rate of delayed weights
-        float clip_coef; // PPO clipping coefficient
+        float bias; // bias towards positive updates
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
@@ -58,8 +56,7 @@ public:
         vlr(0.002f),
         alr(0.002f),
         leak(0.01f),
-        rate(0.01f),
-        clip_coef(0.15f),
+        bias(0.5f),
         discount(0.99f),
         min_steps(16),
         history_iters(16)
@@ -78,10 +75,8 @@ private:
     Int_Buffer hidden_cell_dis;
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_delayed;
 
     Float_Buffer action_dendrite_acts;
-    Float_Buffer action_dendrite_acts_delayed;
     Float_Buffer value_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
