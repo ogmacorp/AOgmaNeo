@@ -50,7 +50,7 @@ public:
 
         Params()
         :
-        lr(0.001f),
+        lr(0.01f),
         cons(0.0f),
         discount(0.99f),
         n_steps(8),
@@ -91,7 +91,6 @@ private:
     void learn(
         const Int2 &column_pos,
         int t,
-        unsigned long* state,
         const Params &params
     );
 
