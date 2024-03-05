@@ -379,7 +379,7 @@ void Actor::learn(
     // https://huggingface.co/blog/deep-rl-ppo
     bool clip = (ratio < (1.0f - params.clip_coef) && td_error_value < 0.0f) || (ratio > (1.0f + params.clip_coef) && td_error_value > 0.0f);
     
-    float action_error_partial = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (!clip));
+    float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (!clip));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -418,7 +418,7 @@ void Actor::learn(
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    float error = action_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+                    float error = policy_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
@@ -460,7 +460,7 @@ void Actor::init_random(
     // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int action_num_dendrites = num_hidden_cells * num_dendrites_per_cell;
+    int policy_num_dendrites = num_hidden_cells * num_dendrites_per_cell;
     int value_num_dendrites = num_hidden_columns * num_dendrites_per_cell;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -473,7 +473,7 @@ void Actor::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.policy_weights.resize(action_num_dendrites * area * vld.size.z);
+        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.policy_weights.size(); i++)
             vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
@@ -494,8 +494,8 @@ void Actor::init_random(
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
-    policy_dendrite_acts.resize(action_num_dendrites);
-    policy_dendrite_acts_delayed.resize(action_num_dendrites);
+    policy_dendrite_acts.resize(policy_num_dendrites);
+    policy_dendrite_acts_delayed.resize(policy_num_dendrites);
     value_dendrite_acts.resize(value_num_dendrites);
 
     hidden_acts.resize(num_hidden_cells);
@@ -585,7 +585,7 @@ void Actor::step(
 
             PARALLEL_FOR
             for (int i = 0; i < vl.policy_weights.size(); i++)
-                vl.policy_weights_delayed[i] += params.action_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
+                vl.policy_weights_delayed[i] += params.policy_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
 
             PARALLEL_FOR
             for (int i = 0; i < vl.value_weights.size(); i++)
@@ -709,7 +709,7 @@ void Actor::read(
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int action_num_dendrites = num_hidden_cells * num_dendrites_per_cell;
+    int policy_num_dendrites = num_hidden_cells * num_dendrites_per_cell;
     int value_num_dendrites = num_hidden_columns * num_dendrites_per_cell;
     
     hidden_cis.resize(num_hidden_columns);
@@ -719,8 +719,8 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     hidden_cell_dis.resize(num_hidden_cells);
-    policy_dendrite_acts.resize(action_num_dendrites);
-    policy_dendrite_acts_delayed.resize(action_num_dendrites);
+    policy_dendrite_acts.resize(policy_num_dendrites);
+    policy_dendrite_acts_delayed.resize(policy_num_dendrites);
     value_dendrite_acts.resize(value_num_dendrites);
 
     hidden_acts.resize(num_hidden_cells);
@@ -745,7 +745,7 @@ void Actor::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.policy_weights.resize(action_num_dendrites * area * vld.size.z);
+        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
 

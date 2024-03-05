@@ -46,9 +46,9 @@ public:
 
     struct Params {
         float vlr; // value learning rate
-        float alr; // action learning rate
+        float plr; // policy learning rate
         float leak; // ReLU leak
-        float action_rate; // rate of delayed action weights
+        float policy_rate; // rate of delayed policy weights
         float value_rate; // rate of delayed value weights
         float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
@@ -58,9 +58,9 @@ public:
         Params()
         :
         vlr(0.002f),
-        alr(0.002f),
+        plr(0.002f),
         leak(0.01f),
-        action_rate(0.01f),
+        policy_rate(0.01f),
         value_rate(0.01f),
         clip_coef(0.1f),
         discount(0.99f),
