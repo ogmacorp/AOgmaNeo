@@ -53,7 +53,7 @@ public:
         lr(0.002f),
         cons(0.0f),
         discount(0.99f),
-        n_steps(8),
+        n_steps(5),
         history_iters(16)
         {}
     };
