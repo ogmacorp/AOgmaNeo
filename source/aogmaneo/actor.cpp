@@ -79,7 +79,7 @@ void Actor::forward(
 
                         int wi = di + wi_start;
 
-                        dendrite_acts[dendrite_index] += vl.weights[wi];
+                        dendrite_acts[dendrite_index] += vl.weights_delayed[wi];
                     }
                 }
             }
@@ -318,7 +318,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        dendrite_acts[dendrite_index] += vl.weights_delayed[wi];
+                        dendrite_acts[dendrite_index] += vl.weights[wi];
                     }
                 }
             }
