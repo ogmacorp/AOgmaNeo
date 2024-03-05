@@ -427,8 +427,6 @@ void Actor::learn(
 
                     int di = hidden_cell_dis[hidden_cell_index];
 
-                    int dendrite_index = di + num_dendrites_per_cell * hidden_cell_index;
-
                     int wi = di + wi_start;
 
                     vl.weights[wi] += hidden_acts[hidden_cell_index];
@@ -561,7 +559,7 @@ long Actor::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float);
     }
 
     size += 3 * sizeof(int);
@@ -603,7 +601,7 @@ long Actor::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += 2 * vl.weights.size() * sizeof(float);
+        size += vl.weights.size() * sizeof(float);
     }
 
     return size;
