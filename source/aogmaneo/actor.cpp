@@ -253,15 +253,15 @@ void Actor::learn(
         max_activation_next = max(max_activation_next, max_dendrite_act);
     }
 
-    //float soft_max_activation_next = 0.0f;
+    float soft_max_activation_next = 0.0f;
 
-    //for (int hc = 0; hc < hidden_size.z; hc++) {
-    //    int hidden_cell_index = hc + hidden_cells_start;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-    //    soft_max_activation_next += expf(hidden_acts[hidden_cell_index] - max_activation_next);
-    //}
+        soft_max_activation_next += expf(hidden_acts[hidden_cell_index] - max_activation_next);
+    }
 
-    //soft_max_activation_next = max_activation_next + logf(soft_max_activation_next);
+    soft_max_activation_next = max_activation_next + logf(soft_max_activation_next);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -354,7 +354,7 @@ void Actor::learn(
         max_activation = max(max_activation, max_dendrite_act);
     }
 
-    float value = max_activation_next; // soft_max_activation_next
+    float value = soft_max_activation_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         value = history_samples[t - n].reward + params.discount * value;
