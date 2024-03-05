@@ -61,8 +61,8 @@ public:
         rate(0.01f),
         clip_coef(0.15f),
         discount(0.99f),
-        min_steps(16),
-        history_iters(16)
+        min_steps(8),
+        history_iters(8)
         {}
     };
 
