@@ -33,6 +33,7 @@ public:
         Float_Buffer action_weights;
         Float_Buffer action_weights_delayed;
         Float_Buffer value_weights;
+        Float_Buffer value_weights_delayed;
     };
 
     // history sample for delayed updates
@@ -47,7 +48,8 @@ public:
         float vlr; // value learning rate
         float alr; // action learning rate
         float leak; // ReLU leak
-        float rate; // rate of delayed weights
+        float action_rate; // rate of delayed action weights
+        float value_rate; // rate of delayed value weights
         float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
@@ -58,7 +60,8 @@ public:
         vlr(0.002f),
         alr(0.002f),
         leak(0.01f),
-        rate(0.01f),
+        action_rate(0.01f),
+        value_rate(0.01f),
         clip_coef(0.1f),
         discount(0.99f),
         min_steps(8),
