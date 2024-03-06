@@ -435,8 +435,6 @@ void Actor::learn(
 
                 int wi_value_start = num_dendrites_per_cell * wi_value_partial;
 
-                int dendrite_index = value_max_cell_di + value_dendrites_start;
-
                 int wi = value_max_cell_di + wi_value_start;
 
                 vl.value_weights[wi] += value_delta;
