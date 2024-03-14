@@ -380,7 +380,7 @@ void Image_Encoder::init_random(
 
         // initialize to random values
         for (int i = 0; i < vl.weights.size(); i++) {
-            vl.weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            vl.weights[i] = rand() % 256;
             vl.recon_weights[i] = 128;
         }
 
