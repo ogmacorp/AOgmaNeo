@@ -199,9 +199,7 @@ void Decoder::learn(
 
                     int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
-                    int di = hidden_cell_dis[hidden_cell_index];
-
-                    int wi = di + wi_start;
+                    int wi = hidden_cell_dis[hidden_cell_index] + wi_start;
 
                     vl.weights[wi] = min(127, max(-127, vl.weights[wi] + dendrite_deltas[hidden_cell_index]));
                 }
