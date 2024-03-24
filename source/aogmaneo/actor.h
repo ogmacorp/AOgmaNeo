@@ -57,8 +57,8 @@ public:
 
         Params()
         :
-        vlr(0.004f),
-        plr(0.004f),
+        vlr(0.001f),
+        plr(0.001f),
         leak(0.01f),
         policy_rate(0.01f),
         value_rate(0.01f),
