@@ -52,7 +52,7 @@ public:
 
         Params()
         :
-        lr(0.002f),
+        lr(0.01f),
         cons(0.0f),
         discount(0.99f),
         delay_rate(0.01f),
@@ -69,8 +69,6 @@ private:
     int history_size;
 
     Int_Buffer hidden_cis; // hidden states
-
-    Int_Buffer hidden_cell_dis;
 
     Float_Buffer dendrite_acts;
 
