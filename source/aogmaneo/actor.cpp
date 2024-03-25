@@ -130,13 +130,14 @@ void Actor::forward(
             total += value_dendrite_acts[dendrite_index];
         }
 
-        float total_inv = 1.0f / max(limit_small, total);
+        // not needed for inference
+        //float total_inv = 1.0f / max(limit_small, total);
 
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + value_dendrites_start;
+        //for (int di = 0; di < num_dendrites_per_cell; di++) {
+        //    int dendrite_index = di + value_dendrites_start;
 
-            value_dendrite_acts[dendrite_index] *= total_inv;
-        }
+        //    value_dendrite_acts[dendrite_index] *= total_inv;
+        //}
 
         hidden_values[hidden_column_index] = max_act + logf(total); // log sum exp
     }
@@ -170,13 +171,14 @@ void Actor::forward(
             total += policy_dendrite_acts[dendrite_index];
         }
 
-        float total_inv = 1.0f / max(limit_small, total);
+        // not needed for inference
+        //float total_inv = 1.0f / max(limit_small, total);
 
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
+        //for (int di = 0; di < num_dendrites_per_cell; di++) {
+        //    int dendrite_index = di + dendrites_start;
 
-            policy_dendrite_acts[dendrite_index] *= total_inv;
-        }
+        //    policy_dendrite_acts[dendrite_index] *= total_inv;
+        //}
 
         float activation = max_act + logf(total); // log sum exp
 
@@ -382,13 +384,15 @@ void Actor::learn(
         }
 
         float total_inv = 1.0f / max(limit_small, total);
-        float total_inv_delayed = 1.0f / max(limit_small, total_delayed);
+
+        // delayed not needed, since it's inference only here
+        //float total_inv_delayed = 1.0f / max(limit_small, total_delayed);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             policy_dendrite_acts[dendrite_index] *= total_inv;
-            policy_dendrite_acts_delayed[dendrite_index] *= total_inv_delayed;
+            //policy_dendrite_acts_delayed[dendrite_index] *= total_inv_delayed;
         }
 
         float activation = max_act + logf(total); // log sum exp
