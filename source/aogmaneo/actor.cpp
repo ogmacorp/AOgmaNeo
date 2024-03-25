@@ -330,20 +330,41 @@ void Actor::learn(
 
     const float dendrite_scale = sqrtf(1.0f / count);
 
-    int value_max_cell_di = 0;
-    float value = limit_min;
+    float value;
 
-    for (int di = 0; di < num_dendrites_per_cell; di++) {
-        int dendrite_index = di + value_dendrites_start;
+    // value
+    {
+        float max_act = limit_min;
 
-        float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
 
-        value_dendrite_acts[dendrite_index] = act;
+            float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
 
-        if (act > value) {
-            value = act;
-            value_max_cell_di = di;
+            value_dendrite_acts[dendrite_index] = act;
+
+            max_act = max(max_act, act);
         }
+
+        float total = 0.0f;
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            value_dendrite_acts[dendrite_index] = expf(value_dendrite_acts[dendrite_index] - max_act);
+
+            total += value_dendrite_acts[dendrite_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            value_dendrite_acts[dendrite_index] *= total_inv;
+        }
+
+        value = max_act + logf(total); // log sum exp
     }
 
     float max_activation = limit_min;
@@ -495,9 +516,13 @@ void Actor::learn(
 
                 int wi_value_start = num_dendrites_per_cell * wi_value_partial;
 
-                int wi = value_max_cell_di + wi_value_start;
+                for (int di = 0; di < num_dendrites_per_cell; di++) {
+                    int dendrite_index = di + value_dendrites_start;
 
-                vl.value_weights[wi] += value_delta;
+                    int wi = di + wi_value_start;
+
+                    vl.value_weights[wi] += value_delta * value_dendrite_acts[dendrite_index];
+                }
             }
     }
 }
