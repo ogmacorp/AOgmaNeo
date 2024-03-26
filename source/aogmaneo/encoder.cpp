@@ -175,16 +175,12 @@ void Encoder::learn(
 
     const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
 
-    int num_higher = 0;
     int target_sum = vl.recon_sums[target_ci + visible_cells_start];
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
-
-        if (recon_sum > target_sum)
-            num_higher++;
 
         // re-use sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
