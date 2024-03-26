@@ -44,14 +44,14 @@ public:
 
     struct Params {
         float scale; // recon curve
+        float vigilance; // vigilance threshold
         float lr; // learning rate
-        int early_stop_cells;
 
         Params()
         :
         scale(4.0f),
-        lr(0.01f),
-        early_stop_cells(1)
+        vigilance(0.9f),
+        lr(0.02f)
         {}
     };
 
@@ -61,6 +61,8 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
+
+    Byte_Buffer hidden_learnables;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
