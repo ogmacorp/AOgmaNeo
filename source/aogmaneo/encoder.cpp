@@ -78,22 +78,16 @@ void Encoder::forward(
     int max_index = 0;
     float max_activation = 0.0f;
 
-    float total = 0.0f;
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         float activation = hidden_acts[hidden_cell_index];
-
-        total += activation;
 
         if (activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
     }
-
-    hidden_learnables[hidden_column_index] = (max_activation / max(limit_small, total)) < params.vigilance;
 
     hidden_cis[hidden_column_index] = max_index;
 }
@@ -192,9 +186,6 @@ void Encoder::learn(
 
             int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
 
-            if (!hidden_learnables[hidden_column_index])
-                continue;
-
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
@@ -255,8 +246,6 @@ void Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_acts.resize(num_hidden_cells);
-
-    hidden_learnables.resize(num_hidden_columns);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -370,8 +359,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     hidden_acts.resize(num_hidden_cells);
-
-    hidden_learnables.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
