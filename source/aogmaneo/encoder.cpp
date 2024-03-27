@@ -178,7 +178,7 @@ void Encoder::learn(
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        if (recon_sum > target_sum)
+        if (recon_sum >= target_sum)
             num_higher++;
 
         // re-use sums as deltas
