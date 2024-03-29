@@ -52,7 +52,7 @@ public:
 
         Params()
         :
-        lr(0.004f),
+        lr(0.005f),
         cons(0.0f),
         discount(0.99f),
         delay_rate(0.01f),
