@@ -435,6 +435,9 @@ void Actor::step(
         }
 
         hidden_acts_prev = hidden_acts;
+        policy_dendrite_acts_prev = policy_dendrite_acts;
+        value_dendrite_acts_prev = value_dendrite_acts;
+
         vl.input_cis_prev = input_cis[vli];
     }
 }
