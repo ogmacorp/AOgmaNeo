@@ -414,26 +414,26 @@ void Actor::step(
     for (int i = 0; i < num_hidden_columns; i++) {
         unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, reward, mimic, learn_enabled, &state, params);
     }
 
-    if (learn_enabled) {
-        // update delayed weights and traces
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
+    // update delayed weights and traces
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
 
-            PARALLEL_FOR
-            for (int i = 0; i < vl.policy_weights.size(); i++) {
-                vl.policy_traces[i] *= params.trace_decay;
-                vl.policy_weights_delayed[i] += params.policy_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
-            }
-
-            PARALLEL_FOR
-            for (int i = 0; i < vl.value_weights.size(); i++) {
-                vl.value_traces[i] *= params.trace_decay;
-                vl.value_weights_delayed[i] += params.value_rate * (vl.value_weights[i] - vl.value_weights_delayed[i]);
-            }
+        PARALLEL_FOR
+        for (int i = 0; i < vl.policy_weights.size(); i++) {
+            vl.policy_traces[i] *= params.trace_decay;
+            vl.policy_weights_delayed[i] += params.policy_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
         }
+
+        PARALLEL_FOR
+        for (int i = 0; i < vl.value_weights.size(); i++) {
+            vl.value_traces[i] *= params.trace_decay;
+            vl.value_weights_delayed[i] += params.value_rate * (vl.value_weights[i] - vl.value_weights_delayed[i]);
+        }
+
+        vl.input_cis_prev = input_cis[vli];
     }
 }
 
