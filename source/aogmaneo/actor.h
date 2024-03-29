@@ -40,14 +40,6 @@ public:
         Int_Buffer input_cis_prev;
     };
 
-    // history sample for delayed updates
-    struct History_Sample {
-        Array<Int_Buffer> input_cis;
-        Int_Buffer hidden_target_cis_prev;
-
-        float reward;
-    };
-
     struct Params {
         float vlr; // value learning rate
         float plr; // policy learning rate
@@ -107,7 +99,6 @@ public:
     void init_random(
         const Int3 &hidden_size,
         int num_dendrites_per_cell,
-        int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
