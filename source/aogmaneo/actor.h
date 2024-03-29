@@ -32,8 +32,12 @@ public:
     struct Visible_Layer {
         Float_Buffer policy_weights;
         Float_Buffer policy_weights_delayed;
+        Float_Buffer policy_traces;
         Float_Buffer value_weights;
         Float_Buffer value_weights_delayed;
+        Float_Buffer value_traces;
+
+        Int_Buffer input_cis_prev;
     };
 
     // history sample for delayed updates
@@ -51,8 +55,7 @@ public:
         float value_rate; // rate of delayed value weights
         float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
-        int min_steps; // minimum steps before sample can be used
-        int history_iters; // number of iterations over samples
+        float trace_decay; // eligibility trace decay
 
         Params()
         :
@@ -62,8 +65,7 @@ public:
         value_rate(0.01f),
         clip_coef(0.1f),
         discount(0.99f),
-        min_steps(8),
-        history_iters(8)
+        trace_decay(0.98f)
         {}
     };
 
@@ -71,23 +73,19 @@ private:
     Int3 hidden_size; // hidden/output/action size
     int num_dendrites_per_cell;
 
-    // current history size - fixed after initialization. determines length of wait before updating
-    int history_size;
-
     Int_Buffer hidden_cis; // hidden states
 
     Int_Buffer hidden_cell_dis;
 
     Float_Buffer hidden_acts;
     Float_Buffer hidden_acts_delayed;
+    Float_Buffer hidden_acts_prev;
 
     Float_Buffer policy_dendrite_acts;
     Float_Buffer policy_dendrite_acts_delayed;
     Float_Buffer value_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
-
-    Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
@@ -98,16 +96,11 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        unsigned long* state,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        int t,
-        float r,
-        float d,
+        Int_Buffer_View hidden_target_cis_prev,
+        float reward,
         float mimic,
+        bool learn_enabled,
+        unsigned long* state,
         const Params &params
     );
 
