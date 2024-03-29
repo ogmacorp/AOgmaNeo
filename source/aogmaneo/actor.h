@@ -75,8 +75,6 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Int_Buffer hidden_cell_dis;
-
     Float_Buffer hidden_acts;
     Float_Buffer hidden_acts_delayed;
     Float_Buffer hidden_acts_prev;

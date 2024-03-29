@@ -386,8 +386,6 @@ void Actor::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_cell_dis.resize(num_hidden_cells);
-
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
     policy_dendrite_acts.resize(policy_num_dendrites);
@@ -452,44 +450,26 @@ void Actor::clear_state() {
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + hidden_acts_prev.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.policy_weights.size() * sizeof(float) + vl.value_weights.size() * sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + 2 * vl.policy_weights.size() * sizeof(float) + 2 * vl.value_weights.size() * sizeof(float) + vl.input_cis_prev.size() * sizeof(int);
     }
-
-    size += 3 * sizeof(int);
-
-    int sample_size = 0;
-
-    const History_Sample &s = history_samples[0];
-
-    for (int vli = 0; vli < visible_layers.size(); vli++)
-        sample_size += s.input_cis[vli].size() * sizeof(int);
-
-    sample_size += s.hidden_target_cis_prev.size() * sizeof(int) + sizeof(float);
-
-    size += history_samples.size() * sample_size;
 
     return size;
 }
 
 long Actor::state_size() const {
-    long size = hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * sizeof(int);
+    long size = hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + hidden_acts_prev.size() * sizeof(float);
 
-    int sample_size = 0;
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
 
-    const History_Sample &s = history_samples[0];
-
-    for (int vli = 0; vli < visible_layers.size(); vli++)
-        sample_size += s.input_cis[vli].size() * sizeof(int);
-
-    sample_size += s.hidden_target_cis_prev.size() * sizeof(int) + sizeof(float);
-
-    size += history_samples.size() * sample_size;
+        size += vl.policy_traces.size() * sizeof(float) + vl.value_traces.size() * sizeof(float) + vl.input_cis_prev.size() * sizeof(int);
+    }
 
     return size;
 }
@@ -514,6 +494,7 @@ void Actor::write(
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hidden_acts_prev[0]), hidden_acts_prev.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -527,27 +508,8 @@ void Actor::write(
 
         writer.write(reinterpret_cast<const void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
-    }
 
-    writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
-
-    int num_history_samples = history_samples.size();
-
-    writer.write(reinterpret_cast<const void*>(&num_history_samples), sizeof(int));
-
-    int history_start = history_samples.start;
-
-    writer.write(reinterpret_cast<const void*>(&history_start), sizeof(int));
-
-    for (int t = 0; t < history_samples.size(); t++) {
-        const History_Sample &s = history_samples[t];
-
-        for (int vli = 0; vli < visible_layers.size(); vli++)
-            writer.write(reinterpret_cast<const void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
 }
 
@@ -564,11 +526,12 @@ void Actor::read(
     
     hidden_cis.resize(num_hidden_columns);
     hidden_values.resize(num_hidden_columns);
+    hidden_acts_prev.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hidden_acts_prev[0]), hidden_acts_prev.size() * sizeof(float));
 
-    hidden_cell_dis.resize(num_hidden_cells);
     policy_dendrite_acts.resize(policy_num_dendrites);
     policy_dendrite_acts_delayed.resize(policy_num_dendrites);
     value_dendrite_acts.resize(value_num_dendrites);
@@ -606,41 +569,10 @@ void Actor::read(
         reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
 
         vl.value_weights_delayed = vl.value_weights;
-    }
 
-    reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
+        vl.input_cis_prev.resize(num_visible_columns);
 
-    int num_history_samples;
-
-    reader.read(reinterpret_cast<void*>(&num_history_samples), sizeof(int));
-
-    int history_start;
-
-    reader.read(reinterpret_cast<void*>(&history_start), sizeof(int));
-
-    history_samples.resize(num_history_samples);
-    history_samples.start = history_start;
-
-    for (int t = 0; t < history_samples.size(); t++) {
-        History_Sample &s = history_samples[t];
-
-        s.input_cis.resize(num_visible_layers);
-
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-            int num_visible_columns = vld.size.x * vld.size.y;
-
-            s.input_cis[vli].resize(num_visible_columns);
-
-            reader.read(reinterpret_cast<void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
-        }
-
-        s.hidden_target_cis_prev.resize(num_hidden_columns);
-
-        reader.read(reinterpret_cast<void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
-
-        reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
 }
 
@@ -649,22 +581,15 @@ void Actor::write_state(
 ) const {
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     writer.write(reinterpret_cast<const void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
+    writer.write(reinterpret_cast<const void*>(&hidden_acts_prev[0]), hidden_acts_prev.size() * sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
 
-    int history_start = history_samples.start;
+        writer.write(reinterpret_cast<const void*>(&vl.policy_traces[0]), vl.policy_traces.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.value_traces[0]), vl.value_traces.size() * sizeof(float));
 
-    writer.write(reinterpret_cast<const void*>(&history_start), sizeof(int));
-
-    for (int t = 0; t < history_samples.size(); t++) {
-        const History_Sample &s = history_samples[t];
-
-        for (int vli = 0; vli < visible_layers.size(); vli++)
-            writer.write(reinterpret_cast<const void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
-
-        writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
 }
 
@@ -673,24 +598,15 @@ void Actor::read_state(
 ) {
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
+    reader.read(reinterpret_cast<void*>(&hidden_acts_prev[0]), hidden_acts_prev.size() * sizeof(float));
 
-    reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
 
-    int history_start;
+        reader.read(reinterpret_cast<void*>(&vl.policy_traces[0]), vl.policy_traces.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.value_traces[0]), vl.value_traces.size() * sizeof(float));
 
-    reader.read(reinterpret_cast<void*>(&history_start), sizeof(int));
-
-    history_samples.start = history_start;
-
-    for (int t = 0; t < history_samples.size(); t++) {
-        History_Sample &s = history_samples[t];
-
-        for (int vli = 0; vli < visible_layers.size(); vli++)
-            reader.read(reinterpret_cast<void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
-
-        reader.read(reinterpret_cast<void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
-
-        reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
 }
 
