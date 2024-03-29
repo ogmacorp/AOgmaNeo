@@ -56,8 +56,8 @@ public:
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.01f),
+        vlr(0.005f),
+        plr(0.005f),
         policy_rate(0.01f),
         value_rate(0.01f),
         clip_coef(0.1f),
