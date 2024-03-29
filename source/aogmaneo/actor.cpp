@@ -339,7 +339,6 @@ void Actor::forward(
 void Actor::init_random(
     const Int3 &hidden_size,
     int num_dendrites_per_cell,
-    int history_capacity,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
