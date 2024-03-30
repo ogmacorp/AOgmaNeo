@@ -513,7 +513,9 @@ void Actor::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.policy_traces[0]), vl.policy_traces.size() * sizeof(float));
         writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.value_traces[0]), vl.value_traces.size() * sizeof(float));
 
         writer.write(reinterpret_cast<const void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
     }
@@ -568,12 +570,16 @@ void Actor::read(
         int area = diam * diam;
 
         vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
+        vl.policy_traces.resize(vl.policy_weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.policy_traces[0]), vl.policy_traces.size() * sizeof(float));
 
         vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
+        vl.value_traces.resize(vl.value_weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.value_traces[0]), vl.value_traces.size() * sizeof(float));
 
         vl.value_weights_delayed = vl.value_weights;
 
