@@ -47,6 +47,7 @@ public:
         float value_rate; // rate of delayed value weights
         float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
+        float trace_curve; // curvature of trace to prevent getting too large
         float trace_decay; // eligibility trace decay
 
         Params()
@@ -57,6 +58,7 @@ public:
         value_rate(0.01f),
         clip_coef(0.1f),
         discount(0.99f),
+        trace_curve(1.0f),
         trace_decay(0.95f)
         {}
     };
