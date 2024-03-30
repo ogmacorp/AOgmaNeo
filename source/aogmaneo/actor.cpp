@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -402,10 +403,13 @@ void Actor::init_random(
 
     policy_dendrite_acts.resize(policy_num_dendrites);
     policy_dendrite_acts_delayed.resize(policy_num_dendrites);
-    policy_dendrite_acts_prev.resize(policy_num_dendrites);
+
+    policy_dendrite_acts_prev = Float_Buffer(policy_num_dendrites, 0.0f);
+
     value_dendrite_acts.resize(value_num_dendrites);
     value_dendrite_acts_delayed.resize(value_num_dendrites);
-    value_dendrite_acts_prev.resize(value_num_dendrites);
+
+    value_dendrite_acts_prev = Float_Buffer(value_num_dendrites, 0.0f);
 
     hidden_acts.resize(num_hidden_cells);
     hidden_acts_delayed.resize(num_hidden_cells);
@@ -449,6 +453,8 @@ void Actor::step(
         }
 
         vl.input_cis_prev = input_cis[vli];
+
+        std::cout << vl.policy_traces[5] << std::endl;
     }
 
     hidden_acts_prev = hidden_acts;
