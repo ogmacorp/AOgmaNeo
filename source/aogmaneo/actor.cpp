@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -436,12 +437,12 @@ void Actor::step(
             vl.value_weights_delayed[i] += params.value_rate * (vl.value_weights[i] - vl.value_weights_delayed[i]);
         }
 
-        hidden_acts_prev = hidden_acts;
-        policy_dendrite_acts_prev = policy_dendrite_acts;
-        value_dendrite_acts_prev = value_dendrite_acts;
-
         vl.input_cis_prev = input_cis[vli];
     }
+
+    hidden_acts_prev = hidden_acts;
+    policy_dendrite_acts_prev = policy_dendrite_acts;
+    value_dendrite_acts_prev = value_dendrite_acts;
 }
 
 void Actor::clear_state() {
