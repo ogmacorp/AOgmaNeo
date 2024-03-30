@@ -267,7 +267,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error_value = reward + params.discount * value - value_prev;
+        float td_error_value = tanhf(reward + params.discount * value - value_prev);
         
         float value_delta = params.vlr * td_error_value;
 
@@ -279,7 +279,7 @@ void Actor::forward(
         // https://huggingface.co/blog/deep-rl-ppo
         bool clip = (ratio < (1.0f - params.clip_coef) && td_error_value < 0.0f) || (ratio > (1.0f + params.clip_coef) && td_error_value > 0.0f);
         
-        float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (!clip));
+        float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * td_error_value * (!clip));
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
