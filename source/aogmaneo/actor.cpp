@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -453,8 +452,6 @@ void Actor::step(
         }
 
         vl.input_cis_prev = input_cis[vli];
-
-        std::cout << vl.policy_traces[5] << std::endl;
     }
 
     hidden_acts_prev = hidden_acts;
