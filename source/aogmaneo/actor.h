@@ -31,7 +31,6 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer policy_weights;
-        Float_Buffer policy_weights_delayed;
         Float_Buffer policy_traces;
         Float_Buffer value_weights;
         Float_Buffer value_weights_delayed;
@@ -43,9 +42,7 @@ public:
     struct Params {
         float vlr; // value learning rate
         float plr; // policy learning rate
-        float policy_rate; // rate of delayed policy weights
         float value_rate; // rate of delayed value weights
-        float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
         float trace_curve; // curvature of trace to prevent getting too large
         float trace_decay; // eligibility trace decay
@@ -54,9 +51,7 @@ public:
         :
         vlr(0.005f),
         plr(0.005f),
-        policy_rate(0.01f),
         value_rate(0.01f),
-        clip_coef(0.1f),
         discount(0.99f),
         trace_curve(16.0f),
         trace_decay(0.95f)
@@ -70,11 +65,9 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_delayed;
     Float_Buffer hidden_acts_prev;
 
     Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_delayed;
     Float_Buffer policy_dendrite_acts_prev;
     Float_Buffer value_dendrite_acts;
     Float_Buffer value_dendrite_acts_delayed;
