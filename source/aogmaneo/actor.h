@@ -58,7 +58,7 @@ public:
         value_rate(0.01f),
         clip_coef(0.1f),
         discount(0.99f),
-        trace_curve(8.0f),
+        trace_curve(16.0f),
         trace_decay(0.97f)
         {}
     };
