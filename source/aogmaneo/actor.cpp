@@ -301,7 +301,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev) {
                                     float trace = vl.policy_traces[wi];
 
-                                    vl.policy_traces[wi] += error * policy_dendrite_acts_prev[dendrite_index] * expf(-trace * trace * params.trace_curve);
+                                    vl.policy_traces[wi] += error * policy_dendrite_acts_prev[dendrite_index] * expf(-abs(trace) * params.trace_curve);
                                 }
 
                                 vl.policy_weights[wi] += policy_error_partial * vl.policy_traces[wi];
@@ -318,7 +318,7 @@ void Actor::forward(
                             if (vc == in_ci_prev) {
                                 float trace = vl.value_traces[wi];
 
-                                vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index] * expf(-trace * trace * params.trace_curve);
+                                vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index] * expf(-abs(trace) * params.trace_curve);
                             }
 
                             vl.value_weights[wi] += value_delta * vl.value_traces[wi];
