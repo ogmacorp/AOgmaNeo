@@ -78,6 +78,12 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
+    Float_Buffer policy_dendrite_weights;
+    Float_Buffer policy_dendrite_traces;
+    Float_Buffer value_dendrite_weights;
+    Float_Buffer value_dendrite_delayed;
+    Float_Buffer value_dendrite_traces;
+
     // --- kernels ---
 
     void forward(
