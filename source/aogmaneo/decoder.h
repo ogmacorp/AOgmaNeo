@@ -37,13 +37,15 @@ public:
 
     struct Params {
         float scale; // scale of softmax
-        float lr; // learning rate
+        float wlr; // weight learning rate
+        float dlr; // dendrite learning rate
         float leak; // relu leak
 
         Params()
         :
         scale(8.0f),
-        lr(0.02f),
+        wlr(0.02f),
+        dlr(0.01f),
         leak(0.01f)
         {}
     };
@@ -64,7 +66,7 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
+    Float_Buffer dendrite_weights;
 
     // --- kernels ---
 
