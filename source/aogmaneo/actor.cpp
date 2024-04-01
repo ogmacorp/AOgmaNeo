@@ -39,6 +39,7 @@ void Actor::forward(
     }
 
     float value = 0.0f;
+    float value_delayed = 0.0f;
     int count = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -92,6 +93,7 @@ void Actor::forward(
                 }
 
                 value += vl.value_weights[wi_value];
+                value_delayed += vl.value_weights_delayed[wi_value];
             }
     }
 
@@ -100,6 +102,7 @@ void Actor::forward(
     const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
     value *= dendrite_scale;
+    value_delayed *= dendrite_scale;
 
     hidden_values[hidden_column_index] = value;
 
@@ -168,7 +171,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error_value = reward + params.discount * value - value_prev;
+        float td_error_value = reward + params.discount * value_delayed - value_prev;
         
         float value_delta = params.vlr * td_error_value;
 
