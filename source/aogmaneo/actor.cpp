@@ -394,7 +394,7 @@ void Actor::init_random(
     for (int i = 0; i < value_num_dendrites; i++)
         value_dendrite_weights[i] = randf(-1.0f, 1.0f);
 
-    value_dendrite_weights_delayed.resize(value_num_dendrites);
+    value_dendrite_weights_delayed = value_dendrite_weights;
 
     value_dendrite_traces = Float_Buffer(value_num_dendrites, 0.0f);
 }
