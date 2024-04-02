@@ -112,13 +112,11 @@ void Actor::forward(
             }
     }
 
-    const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
     const float dendrite_scale = sqrtf(1.0f / count);
-    const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
+
+    float value;
 
     // value
-    float value;
-    
     {
         float max_act = limit_min;
         float max_act_delayed = limit_min;
@@ -171,19 +169,37 @@ void Actor::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float activation = 0.0f;
+        float max_act = limit_min;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = policy_dendrite_acts[dendrite_index] * dendrite_scale;
 
-            policy_dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
+            policy_dendrite_acts[dendrite_index] = act;
 
-            activation += policy_dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+            max_act = max(max_act, act);
         }
 
-        activation *= activation_scale;
+        float total = 0.0f;
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + dendrites_start;
+
+            policy_dendrite_acts[dendrite_index] = expf(policy_dendrite_acts[dendrite_index] - max_act);
+
+            total += policy_dendrite_acts[dendrite_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + dendrites_start;
+
+            policy_dendrite_acts[dendrite_index] *= total_inv;
+        }
+
+        float activation = max_act + logf(total); // log sum exp
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -264,7 +280,6 @@ void Actor::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    // regular weights update
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi_value_partial = offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index));
                         int wi_start_partial = hidden_size.z * wi_value_partial;
@@ -286,7 +301,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev) {
                                     float trace = vl.policy_traces[wi];
 
-                                    vl.policy_traces[wi] += error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak) * expf(-abs(trace) * params.trace_curve);
+                                    vl.policy_traces[wi] += error * policy_dendrite_acts_prev[dendrite_index] * expf(-abs(trace) * params.trace_curve);
                                 }
 
                                 vl.policy_weights[wi] += policy_error_partial * vl.policy_traces[wi];
