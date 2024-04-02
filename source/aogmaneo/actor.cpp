@@ -120,26 +120,23 @@ void Actor::forward(
     float value_delayed = 0.0f;
 
     // value
-    {
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + value_dendrites_start;
+    for (int di = 0; di < num_dendrites_per_cell; di++) {
+        int dendrite_index = di + value_dendrites_start;
 
-            float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
-            float act_delayed = value_dendrite_acts_delayed[dendrite_index] * dendrite_scale;
+        float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
+        float act_delayed = value_dendrite_acts_delayed[dendrite_index] * dendrite_scale;
 
-            value_dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
-            value_dendrite_acts_delayed[dendrite_index] = max(act_delayed * params.leak, act_delayed); // relu
+        value_dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
+        value_dendrite_acts_delayed[dendrite_index] = max(act_delayed * params.leak, act_delayed); // relu
 
-            value += value_dendrite_acts[dendrite_index] * value_dendrite_weights[dendrite_index];
-            value_delayed += value_dendrite_acts_delayed[dendrite_index] * value_dendrite_weights_delayed[dendrite_index];
-        }
-
-        value *= activation_scale;
-        value_delayed *= activation_scale;
-        std::cout << value << std::endl;
-
-        hidden_values[hidden_column_index] = value;
+        value += value_dendrite_acts[dendrite_index] * value_dendrite_weights[dendrite_index];
+        value_delayed += value_dendrite_acts_delayed[dendrite_index] * value_dendrite_weights_delayed[dendrite_index];
     }
+
+    value *= activation_scale;
+    value_delayed *= activation_scale;
+
+    hidden_values[hidden_column_index] = value;
 
     float max_activation = limit_min;
 
@@ -206,7 +203,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error_value = reward + params.discount * value - value_prev;
+        float td_error_value = reward + params.discount * value_delayed - value_prev;
         
         float value_delta = params.vlr * td_error_value;
 
