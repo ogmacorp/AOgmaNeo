@@ -66,8 +66,6 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Float_Buffer dendrite_weights;
-
     // --- kernels ---
 
     void forward(

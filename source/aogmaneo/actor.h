@@ -40,10 +40,8 @@ public:
     };
 
     struct Params {
-        float vwlr; // value weight learning rate
-        float vdlr; // value dendrite learning rate
-        float pwlr; // policy weight learning rate
-        float pdlr; // policy dendrite learning rate
+        float vlr; // value learning rate
+        float plr; // policy learning rate
         float leak; // dendrite ReLU leak
         float value_rate; // rate of delayed value weights
         float discount; // discount factor
@@ -52,10 +50,8 @@ public:
 
         Params()
         :
-        vwlr(0.01f),
-        vdlr(0.01f),
-        pwlr(0.01f),
-        pdlr(0.01f),
+        vlr(0.01f),
+        plr(0.01f),
         leak(0.01f),
         value_rate(0.01f),
         discount(0.99f),
@@ -84,12 +80,6 @@ private:
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Float_Buffer policy_dendrite_weights;
-    Float_Buffer policy_dendrite_traces;
-    Float_Buffer value_dendrite_weights;
-    Float_Buffer value_dendrite_weights_delayed;
-    Float_Buffer value_dendrite_traces;
 
     // --- kernels ---
 
