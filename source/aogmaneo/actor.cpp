@@ -439,6 +439,17 @@ void Actor::step(
     hidden_acts_prev = hidden_acts;
     policy_dendrite_acts_prev = policy_dendrite_acts;
     value_dendrite_acts_prev = value_dendrite_acts;
+
+    PARALLEL_FOR
+    for (int i = 0; i < policy_dendrite_weights.size(); i++)
+        policy_dendrite_traces[i] *= params.trace_decay;
+
+    PARALLEL_FOR
+    for (int i = 0; i < value_dendrite_weights.size(); i++) {
+        value_dendrite_traces[i] *= params.trace_decay;
+        value_dendrite_weights_delayed[i] += params.value_rate * (value_dendrite_weights[i] - value_dendrite_weights_delayed[i]);
+    }
+
 }
 
 void Actor::clear_state() {
