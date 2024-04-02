@@ -113,53 +113,30 @@ void Actor::forward(
     }
 
     const float dendrite_scale = sqrtf(1.0f / count);
+    const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
-    float value;
+    float value = 0.0f;
+    float value_delayed = 0.0f;
 
     // value
     {
-        float max_act = limit_min;
-        float max_act_delayed = limit_min;
-
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + value_dendrites_start;
 
             float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
             float act_delayed = value_dendrite_acts_delayed[dendrite_index] * dendrite_scale;
 
-            value_dendrite_acts[dendrite_index] = act;
-            value_dendrite_acts_delayed[dendrite_index] = act_delayed;
+            value_dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
+            value_dendrite_acts_delayed[dendrite_index] = max(act_delayed * params.leak, act_delayed); // relu
 
-            max_act = max(max_act, act);
-            max_act_delayed = max(max_act_delayed, act);
+            value += value_dendrite_acts[dendrite_index] * value_dendrite_weights[dendrite_index];
+            value_delayed += value_dendrite_acts_delayed[dendrite_index] * value_dendrite_weights_delayed[dendrite_index];
         }
 
-        float total = 0.0f;
-        float total_delayed = 0.0f;
+        value *= activation_scale;
+        value_delayed *= activation_scale;
 
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + value_dendrites_start;
-
-            value_dendrite_acts[dendrite_index] = expf(value_dendrite_acts[dendrite_index] - max_act);
-            value_dendrite_acts_delayed[dendrite_index] = expf(value_dendrite_acts_delayed[dendrite_index] - max_act_delayed);
-
-            total += value_dendrite_acts[dendrite_index];
-            total_delayed += value_dendrite_acts_delayed[dendrite_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-        //float total_inv_delayed = 1.0f / max(limit_small, total_delayed);
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + value_dendrites_start;
-
-            value_dendrite_acts[dendrite_index] *= total_inv;
-            //value_dendrite_acts_delayed[dendrite_index] *= total_inv_delayed;
-        }
-
-        value = max_act_delayed + logf(total_delayed); // log sum exp
-
-        hidden_values[hidden_column_index] = max_act + logf(total);
+        hidden_values[hidden_column_index] = value;
     }
 
     float max_activation = limit_min;
@@ -169,37 +146,19 @@ void Actor::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float max_act = limit_min;
+        float activation = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = policy_dendrite_acts[dendrite_index] * dendrite_scale;
 
-            policy_dendrite_acts[dendrite_index] = act;
+            policy_dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
 
-            max_act = max(max_act, act);
+            activation += policy_dendrite_acts[dendrite_index] * policy_dendrite_weights[dendrite_index];
         }
 
-        float total = 0.0f;
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            policy_dendrite_acts[dendrite_index] = expf(policy_dendrite_acts[dendrite_index] - max_act);
-
-            total += policy_dendrite_acts[dendrite_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            policy_dendrite_acts[dendrite_index] *= total_inv;
-        }
-
-        float activation = max_act + logf(total); // log sum exp
+        activation *= activation_scale;
 
         hidden_acts[hidden_cell_index] = activation;
 

@@ -42,6 +42,7 @@ public:
     struct Params {
         float vlr; // value learning rate
         float plr; // policy learning rate
+        float leak; // dendrite ReLU leak
         float value_rate; // rate of delayed value weights
         float discount; // discount factor
         float trace_curve; // curvature of trace to prevent getting too large
@@ -51,6 +52,7 @@ public:
         :
         vlr(0.01f),
         plr(0.01f),
+        leak(0.01f),
         value_rate(0.01f),
         discount(0.99f),
         trace_curve(16.0f),
