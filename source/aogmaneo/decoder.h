@@ -36,7 +36,7 @@ public:
     };
 
     struct Params {
-        float scale; // scale of softmax
+        float scale; // scale of activations
         float wlr; // weight learning rate
         float dlr; // dendrite learning rate
         float leak; // relu leak
