@@ -260,7 +260,7 @@ void Actor::forward(
                                     vl.policy_traces[wi] += error * policy_dendrite_weights[dendrite_index] * ((policy_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak) * expf(-abs(trace) * params.trace_curve);
                                 }
 
-                                vl.policy_weights[wi] = min(1.0f, max(-1.0f, vl.policy_weights[wi] + params.pwlr * policy_error_partial * vl.policy_traces[wi]));
+                                vl.policy_weights[wi] += params.pwlr * policy_error_partial * vl.policy_traces[wi];
                             }
                         }
 
@@ -277,7 +277,7 @@ void Actor::forward(
                                 vl.value_traces[wi] += value_dendrite_weights[dendrite_index] * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak) * expf(-abs(trace) * params.trace_curve);
                             }
 
-                            vl.value_weights[wi] = min(1.0f, max(-1.0f, vl.value_weights[wi] + params.vwlr * td_error_value * vl.value_traces[wi]));
+                            vl.value_weights[wi] += params.vwlr * td_error_value * vl.value_traces[wi];
                         }
                     }
 
