@@ -40,8 +40,10 @@ public:
     };
 
     struct Params {
-        float vlr; // value learning rate
-        float plr; // policy learning rate
+        float vwlr; // value weight learning rate
+        float vdlr; // value dendrite learning rate
+        float pwlr; // policy weight learning rate
+        float pdlr; // policy dendrite learning rate
         float leak; // dendrite ReLU leak
         float value_rate; // rate of delayed value weights
         float discount; // discount factor
@@ -50,8 +52,10 @@ public:
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.01f),
+        vwlr(0.01f),
+        vdlr(0.01f),
+        pwlr(0.01f),
+        pdlr(0.01f),
         leak(0.01f),
         value_rate(0.01f),
         discount(0.99f),
