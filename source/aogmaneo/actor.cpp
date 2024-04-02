@@ -116,27 +116,53 @@ void Actor::forward(
     const float dendrite_scale = sqrtf(1.0f / count);
     const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
-    float value = 0.0f;
-    float value_delayed = 0.0f;
-
     // value
-    for (int di = 0; di < num_dendrites_per_cell; di++) {
-        int dendrite_index = di + value_dendrites_start;
+    float value;
+    
+    {
+        float max_act = limit_min;
+        float max_act_delayed = limit_min;
 
-        float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
-        float act_delayed = value_dendrite_acts_delayed[dendrite_index] * dendrite_scale;
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
 
-        value_dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
-        value_dendrite_acts_delayed[dendrite_index] = max(act_delayed * params.leak, act_delayed); // relu
+            float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
+            float act_delayed = value_dendrite_acts_delayed[dendrite_index] * dendrite_scale;
 
-        value += value_dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
-        value_delayed += value_dendrite_acts_delayed[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+            value_dendrite_acts[dendrite_index] = act;
+            value_dendrite_acts_delayed[dendrite_index] = act_delayed;
+
+            max_act = max(max_act, act);
+            max_act_delayed = max(max_act_delayed, act);
+        }
+
+        float total = 0.0f;
+        float total_delayed = 0.0f;
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            value_dendrite_acts[dendrite_index] = expf(value_dendrite_acts[dendrite_index] - max_act);
+            value_dendrite_acts_delayed[dendrite_index] = expf(value_dendrite_acts_delayed[dendrite_index] - max_act_delayed);
+
+            total += value_dendrite_acts[dendrite_index];
+            total_delayed += value_dendrite_acts_delayed[dendrite_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+        //float total_inv_delayed = 1.0f / max(limit_small, total_delayed);
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            value_dendrite_acts[dendrite_index] *= total_inv;
+            //value_dendrite_acts_delayed[dendrite_index] *= total_inv_delayed;
+        }
+
+        value = max_act_delayed + logf(total_delayed); // log sum exp
+
+        hidden_values[hidden_column_index] = max_act + logf(total);
     }
-
-    value *= activation_scale;
-    value_delayed *= activation_scale;
-
-    hidden_values[hidden_column_index] = value;
 
     float max_activation = limit_min;
 
@@ -203,7 +229,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error_value = reward + params.discount * value_delayed - value_prev;
+        float td_error_value = reward + params.discount * value - value_prev;
         
         float value_delta = params.vlr * td_error_value;
 
@@ -277,7 +303,7 @@ void Actor::forward(
                             if (vc == in_ci_prev) {
                                 float trace = vl.value_traces[wi];
 
-                                vl.value_traces[wi] += ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak) * expf(-abs(trace) * params.trace_curve);
+                                vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index] * expf(-abs(trace) * params.trace_curve);
                             }
 
                             vl.value_weights[wi] += value_delta * vl.value_traces[wi];
