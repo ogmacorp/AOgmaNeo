@@ -239,6 +239,7 @@ void Actor::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
+                    // regular weights update
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi_value_partial = offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index));
                         int wi_start_partial = hidden_size.z * wi_value_partial;
@@ -282,6 +283,35 @@ void Actor::forward(
 
                             vl.value_weights[wi] += value_delta * vl.value_traces[wi];
                         }
+                    }
+
+                    // dendrite weights update
+                    for (int hc = 0; hc < hidden_size.z; hc++) {
+                        int hidden_cell_index = hc + hidden_cells_start;
+
+                        int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+
+                        float error = (hc == target_ci) - hidden_acts_prev[hidden_cell_index];
+
+                        for (int di = 0; di < num_dendrites_per_cell; di++) {
+                            int dendrite_index = di + dendrites_start;
+
+                            float trace = policy_dendrite_traces[dendrite_index];
+
+                            policy_dendrite_traces[dendrite_index] += error * policy_dendrite_acts_prev[dendrite_index] * expf(-abs(trace) * params.trace_curve);
+
+                            policy_dendrite_weights[dendrite_index] += policy_error_partial * policy_dendrite_traces[dendrite_index];
+                        }
+                    }
+
+                    for (int di = 0; di < num_dendrites_per_cell; di++) {
+                        int dendrite_index = di + value_dendrites_start;
+
+                        float trace = value_dendrite_traces[dendrite_index];
+
+                        value_dendrite_traces[dendrite_index] += value_dendrite_acts_prev[dendrite_index] * expf(-abs(trace) * params.trace_curve);
+
+                        value_dendrite_weights[dendrite_index] += value_delta * value_dendrite_traces[dendrite_index];
                     }
                 }
         }
