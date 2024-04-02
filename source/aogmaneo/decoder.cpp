@@ -152,6 +152,8 @@ void Decoder::learn(
 
     int target_ci = hidden_target_cis[hidden_column_index];
 
+    const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
+
     // find deltas
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
