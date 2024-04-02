@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -135,6 +136,7 @@ void Actor::forward(
 
         value *= activation_scale;
         value_delayed *= activation_scale;
+        std::cout << value << std::endl;
 
         hidden_values[hidden_column_index] = value;
     }
@@ -449,7 +451,6 @@ void Actor::step(
         value_dendrite_traces[i] *= params.trace_decay;
         value_dendrite_weights_delayed[i] += params.value_rate * (value_dendrite_weights[i] - value_dendrite_weights_delayed[i]);
     }
-
 }
 
 void Actor::clear_state() {
