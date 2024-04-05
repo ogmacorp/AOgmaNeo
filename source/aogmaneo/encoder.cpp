@@ -237,7 +237,7 @@ void Encoder::learn_spatial(
             }
         }
 
-    const float recon_scale = sqrtf(1.0f / max(1, count)) / 127.0f * params.scale;
+    const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
 
     int num_higher = 0;
 
@@ -252,7 +252,7 @@ void Encoder::learn_spatial(
             num_higher++;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 127.0f * ((vc == target_ci) - expf(min(0, recon_sum - count * 127) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
     }
 
     if (num_higher < params.spatial_recon_tolerance)
@@ -338,7 +338,7 @@ void Encoder::learn_recurrent(
             count++;
         }
 
-    const float recon_scale = sqrtf(1.0f / max(1, count)) / 127.0f * params.scale;
+    const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
 
     int num_higher = 0;
 
@@ -353,7 +353,7 @@ void Encoder::learn_recurrent(
             num_higher++;
 
         // re-use sums as deltas
-        recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 127.0f * ((ohc == target_ci) - expf(min(0, recon_sum - count * 127) * recon_scale)), state);
+        recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ohc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
     }
 
     if (num_higher < params.recurrent_recon_tolerance)
@@ -418,7 +418,7 @@ void Encoder::init_random(
         vl.weights.resize(num_spatial_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - (rand() % init_weight_noisei);
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
     }
@@ -454,7 +454,7 @@ void Encoder::init_random(
     recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
 
     for (int i = 0; i < recurrent_weights.size(); i++)
-        recurrent_weights[i] = 127 - (rand() % init_weight_noisei);
+        recurrent_weights[i] = 255 - (rand() % init_weight_noisei);
 }
 
 void Encoder::step(
