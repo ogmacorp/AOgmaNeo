@@ -36,14 +36,14 @@ public:
     };
 
     struct Params {
-        float scale; // scale of softmax
-        float lr; // learning rate
+        float scale; // scale of activations
+        float lr; // weight learning rate
         float leak; // relu leak
 
         Params()
         :
-        scale(16.0f),
-        lr(0.05f),
+        scale(8.0f),
+        lr(0.02f),
         leak(0.01f)
         {}
     };
@@ -63,8 +63,6 @@ private:
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
     // --- kernels ---
 
