@@ -50,13 +50,13 @@ public:
 
         Params()
         :
-        vlr(0.1f),
-        plr(0.1f),
+        vlr(0.01f),
+        plr(0.01f),
         leak(0.01f),
         value_rate(0.01f),
         discount(0.99f),
-        trace_curve(8.0f),
-        trace_decay(0.98f)
+        trace_curve(16.0f),
+        trace_decay(0.97f)
         {}
     };
 
