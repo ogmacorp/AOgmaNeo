@@ -429,6 +429,14 @@ void Encoder::init_random(
 
     hidden_acts.resize(num_hidden_cells);
 
+    int diam = recurrent_radius * 2 + 1;
+    int area = diam * diam;
+
+    recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
+
+    for (int i = 0; i < recurrent_weights.size(); i++)
+        recurrent_weights[i] = 255 - (rand() % init_weight_noisei);
+
     recurrent_recon_sums.resize(num_hidden_cells);
 
     // generate helper buffers for parallelization
@@ -447,14 +455,6 @@ void Encoder::init_random(
             index++;
         }
     }
-
-    int diam = recurrent_radius * 2 + 1;
-    int area = diam * diam;
-
-    recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
-
-    for (int i = 0; i < recurrent_weights.size(); i++)
-        recurrent_weights[i] = 255 - (rand() % init_weight_noisei);
 }
 
 void Encoder::step(
@@ -580,8 +580,6 @@ void Encoder::read(
 
     hidden_acts.resize(num_hidden_cells);
 
-    recurrent_recon_sums.resize(num_hidden_cells);
-
     int num_visible_layers = visible_layers.size();
 
     reader.read(reinterpret_cast<void*>(&num_visible_layers), sizeof(int));
@@ -614,6 +612,15 @@ void Encoder::read(
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
 
+    int diam = recurrent_radius * 2 + 1;
+    int area = diam * diam;
+
+    recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
+
+    reader.read(reinterpret_cast<void*>(&recurrent_weights[0]), recurrent_weights.size() * sizeof(Byte));
+
+    recurrent_recon_sums.resize(num_hidden_cells);
+
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
 
@@ -630,13 +637,6 @@ void Encoder::read(
             index++;
         }
     }
-
-    int diam = recurrent_radius * 2 + 1;
-    int area = diam * diam;
-
-    recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
-
-    reader.read(reinterpret_cast<void*>(&recurrent_weights[0]), recurrent_weights.size() * sizeof(Byte));
 }
 
 void Encoder::write_state(
