@@ -45,20 +45,26 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
+        int spatial_recon_tolerance;
+        int recurrent_recon_tolerance;
 
         Params()
         :
         scale(4.0f),
-        lr(0.02f),
-        early_stop_cells(3)
+        lr(0.05f),
+        spatial_recon_tolerance(3),
+        recurrent_recon_tolerance(3)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int spatial_activity;
+    int recurrent_radius;
 
+    Int_Buffer spatial_cis;
     Int_Buffer hidden_cis;
+    Int_Buffer hidden_cis_prev;
 
     Float_Buffer hidden_acts;
 
@@ -68,18 +74,33 @@ private:
     
     Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
+    Byte_Buffer recurrent_weights;
+
+    Int_Buffer recurrent_recon_sums;
+
     // --- kernels ---
 
-    void forward(
+    void forward_spatial(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
-    void learn(
+    void forward_recurrent(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
+    void learn_spatial(
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
+        unsigned long* state,
+        const Params &params
+    );
+
+    void learn_recurrent(
+        const Int2 &column_pos,
         unsigned long* state,
         const Params &params
     );
@@ -88,6 +109,8 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int spatial_activity,
+        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
