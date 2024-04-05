@@ -425,7 +425,7 @@ void Encoder::init_random(
 
     spatial_cis.resize(num_hidden_columns);
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-    hidden_cis_prev = Int_Buffer(num_hidden_columns, 0);
+    hidden_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
 
