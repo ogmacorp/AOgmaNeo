@@ -338,7 +338,7 @@ void Encoder::learn_recurrent(
             count++;
         }
 
-    const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
+    const float recon_scale = sqrtf(1.0f / count) / 255.0f * params.scale;
 
     int num_higher = 0;
 
