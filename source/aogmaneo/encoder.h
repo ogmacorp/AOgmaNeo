@@ -63,7 +63,6 @@ private:
     int recurrent_radius;
 
     Int_Buffer spatial_cis;
-    Int_Buffer spatial_cis_prev;
     Int_Buffer hidden_cis;
     Int_Buffer hidden_cis_prev;
 
