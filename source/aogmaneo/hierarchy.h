@@ -69,7 +69,7 @@ public:
             int num_dendrites_per_cell = 4,
             int spatial_activity = 4,
             int up_radius = 2,
-            int recurrent_radius = 0,
+            int recurrent_radius = 2,
             int down_radius = 2
         )
         :
