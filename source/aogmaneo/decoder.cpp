@@ -154,6 +154,8 @@ void Decoder::learn(
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
 
+    float modulation = 1.0f - hidden_acts[target_ci + hidden_cells_start];
+
     // find deltas
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -161,8 +163,6 @@ void Decoder::learn(
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
         float delta = (hc == target_ci) - hidden_acts[hidden_cell_index];
-
-        float modulation = (delta > 0.0f ? 1.0f : 1.0f - hidden_acts[hidden_cell_index]);
 
         float partial_update = params.lr * 127.0f * modulation * delta;
 
