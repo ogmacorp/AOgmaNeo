@@ -71,7 +71,8 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int num_dendrites_per_cell;
+    int policy_num_dendrites_per_cell;
+    int value_num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
@@ -115,7 +116,8 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int num_dendrites_per_cell,
+        int policy_num_dendrites_per_cell,
+        int value_num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
