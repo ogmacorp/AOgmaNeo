@@ -295,6 +295,7 @@ void Decoder::step(
 
 void Decoder::clear_state() {
     hidden_cis.fill(0);
+    hidden_acts.fill(0.0f);
     dendrite_acts.fill(0.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
