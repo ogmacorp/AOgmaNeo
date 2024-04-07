@@ -181,8 +181,14 @@ void Encoder::learn(
         if (recon_sum >= target_sum)
             num_higher++;
 
+        float recon = expf((recon_sum - count * 255) * recon_scale);
+
+        float delta = (vc == target_ci) - recon;
+
+        float modulation = (delta > 0.0f ? recon : 1.0f - recon);
+
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * modulation * delta, state);
     }
 
     if (num_higher < params.early_stop_cells)
