@@ -185,7 +185,7 @@ void Encoder::learn(
 
         float delta = (vc == target_ci) - recon;
 
-        float modulation = (delta > 0.0f ? recon : 1.0f - recon);
+        float modulation = (delta > 0.0f ? recon : 1.0f);
 
         // re-use sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * modulation * delta, state);
