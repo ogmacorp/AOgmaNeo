@@ -62,7 +62,7 @@ public:
         leak(0.01f),
         policy_rate(0.01f),
         value_rate(0.01f),
-        clip_coef(0.1f),
+        clip_coef(0.2f),
         discount(0.99f),
         min_steps(8),
         history_iters(8)
