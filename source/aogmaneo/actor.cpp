@@ -468,9 +468,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        float delta = error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
-
-                        vl.policy_weights[wi] += delta;
+                        vl.policy_weights[wi] += error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
                     }
                 }
 
