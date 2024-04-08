@@ -151,37 +151,19 @@ void Actor::forward(
 
         int dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
-        float max_act = limit_min;
+        float activation = 0.0f;
 
         for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = policy_dendrite_acts[dendrite_index] * dendrite_scale;
 
-            policy_dendrite_acts[dendrite_index] = act;
+            policy_dendrite_acts[dendrite_index] = max(act * params.leak, act);
 
-            max_act = max(max_act, act);
+            activation += policy_dendrite_acts[dendrite_index] * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        float total = 0.0f;
-
-        for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            policy_dendrite_acts[dendrite_index] = expf(policy_dendrite_acts[dendrite_index] - max_act);
-
-            total += policy_dendrite_acts[dendrite_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-
-        for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            policy_dendrite_acts[dendrite_index] *= total_inv;
-        }
-
-        float activation = max_act + logf(total); // log sum exp
+        activation *= policy_activation_scale;
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -378,8 +360,8 @@ void Actor::learn(
 
         int dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
-        float max_act = limit_min;
-        float max_act_delayed = limit_min;
+        float activation = 0.0f;
+        float activation_delayed = 0.0f;
 
         for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -387,40 +369,15 @@ void Actor::learn(
             float act = policy_dendrite_acts[dendrite_index] * dendrite_scale;
             float act_delayed = policy_dendrite_acts_delayed[dendrite_index] * dendrite_scale;
 
-            policy_dendrite_acts[dendrite_index] = act;
-            policy_dendrite_acts_delayed[dendrite_index] = act_delayed;
+            policy_dendrite_acts[dendrite_index] = max(act * params.leak, act);
+            policy_dendrite_acts_delayed[dendrite_index] = max(act_delayed * params.leak, act_delayed);
 
-            max_act = max(max_act, act);
-            max_act_delayed = max(max_act_delayed, act_delayed);
+            activation += policy_dendrite_acts[dendrite_index] * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
+            activation_delayed += policy_dendrite_acts_delayed[dendrite_index] * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        float total = 0.0f;
-        float total_delayed = 0.0f;
-
-        for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            policy_dendrite_acts[dendrite_index] = expf(policy_dendrite_acts[dendrite_index] - max_act);
-            policy_dendrite_acts_delayed[dendrite_index] = expf(policy_dendrite_acts_delayed[dendrite_index] - max_act_delayed);
-
-            total += policy_dendrite_acts[dendrite_index];
-            total_delayed += policy_dendrite_acts_delayed[dendrite_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-
-        // delayed not needed, since it's inference only here
-        //float total_inv_delayed = 1.0f / max(limit_small, total_delayed);
-
-        for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            policy_dendrite_acts[dendrite_index] *= total_inv;
-            //policy_dendrite_acts_delayed[dendrite_index] *= total_inv_delayed;
-        }
-
-        float activation = max_act + logf(total); // log sum exp
-        float activation_delayed = max_act_delayed + logf(total_delayed); // log sum exp
+        activation *= policy_activation_scale;
+        activation_delayed *= policy_activation_scale;
 
         hidden_acts[hidden_cell_index] = activation;
         hidden_acts_delayed[hidden_cell_index] = activation_delayed;
@@ -511,7 +468,9 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        vl.policy_weights[wi] += error * policy_dendrite_acts[dendrite_index];
+                        float delta = error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+
+                        vl.policy_weights[wi] += delta;
                     }
                 }
 
