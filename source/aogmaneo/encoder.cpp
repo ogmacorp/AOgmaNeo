@@ -172,6 +172,7 @@ void Encoder::learn(
     int target_sum = vl.recon_sums[target_ci + visible_cells_start];
 
     int num_higher = 0;
+    float total_log_recon = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
@@ -181,18 +182,27 @@ void Encoder::learn(
         if (recon_sum >= target_sum)
             num_higher++;
 
-        float recon = expf((recon_sum - count * 255) * recon_scale);
-
-        float delta = (vc == target_ci) - recon;
-
-        float modulation = (delta > 0.0f ? recon : 1.0f);
-
-        // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * modulation * delta, state);
+        if (vc != target_ci)
+            total_log_recon += (recon_sum - count * 255) * recon_scale;
     }
 
     if (num_higher < params.early_stop_cells)
         return;
+
+    float modulation = expf(total_log_recon / (vld.size.z - 1));
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+
+        int recon_sum = vl.recon_sums[visible_cell_index];
+
+        float recon = expf((recon_sum - count * 255) * recon_scale);
+
+        float delta = (vc == target_ci) - recon;
+
+        // re-use sums as deltas
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * modulation * delta, state);
+    }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
