@@ -25,7 +25,6 @@ void Image_Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] = 0.0f;
-        hidden_totals[hidden_cell_index] = 0.0f;
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -71,8 +70,9 @@ void Image_Encoder::forward(
 
                         float w = vl.weights[wi] * byte_inv;
 
-                        hidden_acts[hidden_cell_index] += input * w;
-                        hidden_totals[hidden_cell_index] += w * w;
+                        float diff = input - w;
+
+                        hidden_acts[hidden_cell_index] -= diff * diff;
                     }
                 }
             }
@@ -84,7 +84,7 @@ void Image_Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_acts[hidden_cell_index] / max(limit_small, sqrtf(hidden_totals[hidden_cell_index]));
+        float activation = hidden_acts[hidden_cell_index];
 
         if (activation > max_activation) {
             max_activation = activation;
@@ -346,7 +346,6 @@ void Image_Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_acts.resize(num_hidden_cells);
-    hidden_totals.resize(num_hidden_cells);
 
     hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
 }
@@ -464,7 +463,6 @@ void Image_Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     hidden_acts.resize(num_hidden_cells);
-    hidden_totals.resize(num_hidden_cells);
 
     hidden_resources.resize(num_hidden_cells);
 
