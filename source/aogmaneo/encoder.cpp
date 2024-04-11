@@ -181,7 +181,7 @@ void Encoder::learn(
         if (vc != target_ci && recon_sum >= target_sum)
             num_higher++;
 
-        float recon = expf((recon_sum - count * 255) * recon_scale);
+        float recon = sigmoidf((recon_sum - count * 127) * recon_scale);
 
         // re-use sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
