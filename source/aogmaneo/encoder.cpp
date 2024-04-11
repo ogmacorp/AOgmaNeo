@@ -251,7 +251,7 @@ void Encoder::learn_spatial(
         if (recon_sum >= target_recon_sum)
             num_higher++;
 
-        float recon = expf((recon_sum - count * 255) * recon_scale);
+        float recon = sigmoidf((recon_sum - count * 127) * recon_scale);
 
         float delta = (vc == target_ci) - recon;
 
@@ -358,7 +358,7 @@ void Encoder::learn_recurrent(
         if (recon_sum >= target_recon_sum)
             num_higher++;
 
-        float recon = expf((recon_sum - count * 255) * recon_scale);
+        float recon = sigmoidf((recon_sum - count * 127) * recon_scale);
 
         float delta = (ohc == target_ci) - recon;
 
