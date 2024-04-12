@@ -248,10 +248,10 @@ void Encoder::learn_spatial(
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        if (recon_sum >= target_recon_sum)
+        if (vc != target_ci && recon_sum >= target_recon_sum)
             num_higher++;
 
-        float recon = sigmoidf((recon_sum - count * 127) * recon_scale);
+        float recon = expf((recon_sum - count * 127) * recon_scale);
 
         float delta = (vc == target_ci) - recon;
 
@@ -355,10 +355,10 @@ void Encoder::learn_recurrent(
 
         int recon_sum = recurrent_recon_sums[other_hidden_cell_index];
 
-        if (recon_sum >= target_recon_sum)
+        if (ohc != target_ci && recon_sum >= target_recon_sum)
             num_higher++;
 
-        float recon = sigmoidf((recon_sum - count * 127) * recon_scale);
+        float recon = expf((recon_sum - count * 127) * recon_scale);
 
         float delta = (ohc == target_ci) - recon;
 
