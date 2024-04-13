@@ -227,7 +227,7 @@ void Hierarchy::step(
             // copy to prev
             hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
-            if (l < encoders[l].size())
+            if (l < encoders[l].size() - 1)
                 feedback_cis_prev[l] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
 
             // activate sparse coder
@@ -481,7 +481,7 @@ void Hierarchy::read(
     encoders.resize(num_layers);
     decoders.resize(num_layers);
     hidden_cis_prev.resize(num_layers);
-    feedback_cis_prev.resize(num_layers);
+    feedback_cis_prev.resize(num_layers - 1);
 
     histories.resize(num_layers);
     
@@ -538,7 +538,9 @@ void Hierarchy::read(
             decoders[l][d].read(reader);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
-        feedback_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        if (l < encoders.size() - 1)
+            feedback_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     actors.resize(num_actions);
