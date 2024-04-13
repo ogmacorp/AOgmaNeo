@@ -110,7 +110,8 @@ public:
         Byte representation_anticipation;
 
         Params()
-        : representation_anticipation(true)
+        :
+        representation_anticipation(true)
         {}
     };
 
