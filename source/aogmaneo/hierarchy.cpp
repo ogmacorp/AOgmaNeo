@@ -261,14 +261,16 @@ void Hierarchy::step(
                     for (int d = 0; d < decoders[l].size(); d++)
                         decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-                    // learn on actual
-                    layer_input_cis[1] = encoders[l].get_hidden_cis();
+                    if (params.representation_anticipation) {
+                        // learn on actual
+                        layer_input_cis[1] = encoders[l].get_hidden_cis();
 
-                    for (int d = 0; d < decoders[l].size(); d++) {
-                        // need to re-activate for this
-                        decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                        for (int d = 0; d < decoders[l].size(); d++) {
+                            // need to re-activate for this
+                            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-                        decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                            decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                        }
                     }
                 }
                 else {

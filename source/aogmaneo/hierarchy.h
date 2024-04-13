@@ -106,6 +106,12 @@ public:
     struct Params {
         Array<Layer_Params> layers;
         Array<IO_Params> ios;
+
+        Byte representation_anticipation;
+
+        Params()
+        : representation_anticipation(true)
+        {}
     };
 
 private:
