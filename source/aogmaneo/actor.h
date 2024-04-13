@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,9 +30,10 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer action_weights;
-        Float_Buffer action_weights_delayed;
+        Float_Buffer policy_weights;
+        Float_Buffer policy_weights_delayed;
         Float_Buffer value_weights;
+        Float_Buffer value_weights_delayed;
     };
 
     // history sample for delayed updates
@@ -45,9 +46,10 @@ public:
 
     struct Params {
         float vlr; // value learning rate
-        float alr; // action learning rate
+        float plr; // policy learning rate
         float leak; // ReLU leak
-        float rate; // rate of delayed weights
+        float policy_rate; // rate of delayed policy weights
+        float value_rate; // rate of delayed value weights
         float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
@@ -55,33 +57,33 @@ public:
 
         Params()
         :
-        vlr(0.002f),
-        alr(0.002f),
+        vlr(0.005f),
+        plr(0.005f),
         leak(0.01f),
-        rate(0.01f),
-        clip_coef(0.15f),
+        policy_rate(0.01f),
+        value_rate(0.01f),
+        clip_coef(0.1f),
         discount(0.99f),
-        min_steps(16),
-        history_iters(16)
+        min_steps(8),
+        history_iters(8)
         {}
     };
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int num_dendrites_per_cell;
+    int policy_num_dendrites_per_cell;
+    int value_num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
 
     Int_Buffer hidden_cis; // hidden states
 
-    Int_Buffer hidden_cell_dis;
-
     Float_Buffer hidden_acts;
     Float_Buffer hidden_acts_delayed;
 
-    Float_Buffer action_dendrite_acts;
-    Float_Buffer action_dendrite_acts_delayed;
+    Float_Buffer policy_dendrite_acts;
+    Float_Buffer policy_dendrite_acts_delayed;
     Float_Buffer value_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
@@ -114,7 +116,8 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int num_dendrites_per_cell,
+        int policy_num_dendrites_per_cell,
+        int value_num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );

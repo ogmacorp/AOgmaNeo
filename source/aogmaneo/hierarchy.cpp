@@ -120,7 +120,7 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         a_visible_layer_descs[1] = a_visible_layer_descs[0];
 
-                    actors[d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, io_descs[i].history_capacity, a_visible_layer_descs);
+                    actors[d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, io_descs[i].value_num_dendrites_per_cell, io_descs[i].history_capacity, a_visible_layer_descs);
 
                     i_indices[io_sizes.size() + d_index] = i;
                     d_indices[i] = d_index;
@@ -163,8 +163,6 @@ void Hierarchy::init_random(
         
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
-
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     // initialize params
@@ -458,7 +456,6 @@ void Hierarchy::read(
 
     encoders.resize(num_layers);
     decoders.resize(num_layers);
-    hidden_cis_prev.resize(num_layers);
 
     histories.resize(num_layers);
     
@@ -513,8 +510,6 @@ void Hierarchy::read(
         // decoders
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].read(reader);
-
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     actors.resize(num_actions);
