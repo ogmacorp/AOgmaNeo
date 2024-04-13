@@ -227,7 +227,7 @@ void Hierarchy::step(
             // copy to prev
             hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
-            if (l < encoders[l].size() - 1)
+            if (l < encoders.size() - 1)
                 feedback_cis_prev[l] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
 
             // activate sparse coder
@@ -268,9 +268,6 @@ void Hierarchy::step(
                         decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
                 }
                 else {
-                    // learn on actual
-                    layer_input_cis[1] = encoders[l].get_hidden_cis();
-
                     for (int d = 0; d < decoders[l].size(); d++)
                         decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
                 }
