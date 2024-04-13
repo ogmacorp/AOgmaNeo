@@ -262,10 +262,10 @@ void Hierarchy::step(
                         decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
                     // learn on feedback
-                    //layer_input_cis[1] = feedback_cis_prev[l];
+                    layer_input_cis[1] = feedback_cis_prev[l];
 
-                    //for (int d = 0; d < decoders[l].size(); d++)
-                    //    decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                    for (int d = 0; d < decoders[l].size(); d++)
+                        decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
                 }
                 else {
                     for (int d = 0; d < decoders[l].size(); d++)
