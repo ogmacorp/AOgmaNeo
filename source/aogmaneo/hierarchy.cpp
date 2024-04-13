@@ -343,6 +343,7 @@ long Hierarchy::size() const {
     // params
     size += encoders.size() * sizeof(Layer_Params);
     size += io_sizes.size() * sizeof(IO_Params);
+    size += sizeof(Byte);
 
     return size;
 }
@@ -456,6 +457,8 @@ void Hierarchy::write(
 
     for (int i = 0; i < io_sizes.size(); i++)
         writer.write(reinterpret_cast<const void*>(&params.ios[i]), sizeof(IO_Params));
+
+    writer.write(reinterpret_cast<const void*>(&params.representation_anticipation), sizeof(Byte));
 }
 
 void Hierarchy::read(
@@ -560,6 +563,8 @@ void Hierarchy::read(
 
     for (int i = 0; i < num_io; i++)
         reader.read(reinterpret_cast<void*>(&params.ios[i]), sizeof(IO_Params));
+
+    reader.read(reinterpret_cast<void*>(&params.representation_anticipation), sizeof(Byte));
 }
 
 void Hierarchy::write_state(
