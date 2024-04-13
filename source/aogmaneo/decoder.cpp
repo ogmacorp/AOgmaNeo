@@ -218,7 +218,6 @@ void Decoder::learn(
             }
     }
 
-    int max_index = 0;
     float max_activation = limit_min;
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
@@ -246,10 +245,7 @@ void Decoder::learn(
 
         hidden_acts[hidden_cell_index] = activation;
 
-        if (activation > max_activation) {
-            max_activation = activation;
-            max_index = hc;
-        }
+        max_activation = max(max_activation, activation);
     }
 
     // softmax
