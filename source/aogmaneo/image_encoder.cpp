@@ -55,11 +55,7 @@ void Image_Encoder::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start_partial = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
-
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi_start = hidden_size.z * (vc + wi_start_partial);
-
                     float input = vl_inputs[vc + visible_cells_start] * byte_inv;
 
                     center += input;
