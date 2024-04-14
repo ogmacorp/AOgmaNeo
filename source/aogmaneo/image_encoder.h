@@ -41,13 +41,15 @@ public:
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
+        int radius;
         
         Params()
         :
-        falloff(0.99f),
+        falloff(0.9f),
         lr(0.1f),
         scale(2.0f),
-        rr(0.01f)
+        rr(0.01f),
+        radius(2)
         {}
     };
 
