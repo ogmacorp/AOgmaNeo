@@ -107,11 +107,11 @@ public:
         Array<Layer_Params> layers;
         Array<IO_Params> ios;
 
-        Byte representation_anticipation;
+        Byte anticipation;
 
         Params()
         :
-        representation_anticipation(true)
+        anticipation(true)
         {}
     };
 

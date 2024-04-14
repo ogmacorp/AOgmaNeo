@@ -261,7 +261,7 @@ void Hierarchy::step(
                     for (int d = 0; d < decoders[l].size(); d++)
                         decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-                    if (params.representation_anticipation) {
+                    if (params.anticipation) {
                         // learn on actual
                         layer_input_cis[1] = encoders[l].get_hidden_cis();
 
@@ -458,7 +458,7 @@ void Hierarchy::write(
     for (int i = 0; i < io_sizes.size(); i++)
         writer.write(reinterpret_cast<const void*>(&params.ios[i]), sizeof(IO_Params));
 
-    writer.write(reinterpret_cast<const void*>(&params.representation_anticipation), sizeof(Byte));
+    writer.write(reinterpret_cast<const void*>(&params.anticipation), sizeof(Byte));
 }
 
 void Hierarchy::read(
@@ -564,7 +564,7 @@ void Hierarchy::read(
     for (int i = 0; i < num_io; i++)
         reader.read(reinterpret_cast<void*>(&params.ios[i]), sizeof(IO_Params));
 
-    reader.read(reinterpret_cast<void*>(&params.representation_anticipation), sizeof(Byte));
+    reader.read(reinterpret_cast<void*>(&params.anticipation), sizeof(Byte));
 }
 
 void Hierarchy::write_state(
