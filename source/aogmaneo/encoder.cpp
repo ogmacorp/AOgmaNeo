@@ -181,7 +181,7 @@ void Encoder::learn(
         if (vc != target_ci && recon_sum >= target_sum)
             num_higher++;
 
-        float recon = expf((recon_sum - count * 127) * recon_scale);
+        float recon = expf((recon_sum - count * 255) * recon_scale);
 
         // re-use sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
@@ -248,7 +248,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - (rand() % init_weight_noisei);
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
     }
