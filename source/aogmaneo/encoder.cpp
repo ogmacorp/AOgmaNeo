@@ -251,7 +251,7 @@ void Encoder::learn_spatial(
         if (vc != target_ci && recon_sum >= target_recon_sum)
             num_higher++;
 
-        float recon = expf((recon_sum - count * 127) * recon_scale);
+        float recon = expf(min(0, recon_sum - count * 127) * recon_scale);
 
         // re-use sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
@@ -354,7 +354,7 @@ void Encoder::learn_recurrent(
         if (ohc != target_ci && recon_sum >= target_recon_sum)
             num_higher++;
 
-        float recon = expf((recon_sum - count * 127) * recon_scale);
+        float recon = expf(min(0, recon_sum - count * 127) * recon_scale);
 
         // re-use sums as deltas
         recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ohc == target_ci) - recon), state);
