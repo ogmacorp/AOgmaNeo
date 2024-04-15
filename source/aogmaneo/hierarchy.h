@@ -27,7 +27,8 @@ public:
         Int3 size;
         IO_Type type;
 
-        int num_dendrites_per_cell;
+        int num_dendrites_per_cell; // also for policy
+        int value_num_dendrites_per_cell; // just value
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -38,6 +39,7 @@ public:
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
+            int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
             int down_radius = 2,
             int history_capacity = 256
@@ -46,6 +48,7 @@ public:
         size(size),
         type(type),
         num_dendrites_per_cell(num_dendrites_per_cell),
+        value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius),
         history_capacity(history_capacity)
@@ -103,6 +106,13 @@ public:
     struct Params {
         Array<Layer_Params> layers;
         Array<IO_Params> ios;
+
+        Byte anticipation;
+
+        Params()
+        :
+        anticipation(true)
+        {}
     };
 
 private:
@@ -110,6 +120,8 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
+    Array<Int_Buffer> hidden_cis_prev;
+    Array<Int_Buffer> feedback_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -161,7 +173,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f // reward
+        float reward = 0.0f, // reward
+        float mimic = 0.0f // mimicry mode
     );
 
     void clear_state();

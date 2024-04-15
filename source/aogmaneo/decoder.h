@@ -31,18 +31,18 @@ public:
     // visible layer
     struct Visible_Layer {
         S_Byte_Buffer weights;
-
-        Int_Buffer input_cis_prev; // previous timestep (prev) input states
     };
 
     struct Params {
-        float scale; // scale of softmax
-        float lr; // learning rate
+        float scale; // scale of activations
+        float lr; // weight learning rate
+        float leak; // relu leak
 
         Params()
         :
-        scale(32.0f),
-        lr(0.05f)
+        scale(16.0f),
+        lr(0.02f),
+        leak(0.01f)
         {}
     };
 
@@ -62,8 +62,6 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-
     // --- kernels ---
 
     void forward(
@@ -74,6 +72,7 @@ private:
 
     void learn(
         const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
         unsigned long* state,
         const Params &params
@@ -88,10 +87,14 @@ public:
     );
 
     // activate the predictor (predict values)
-    void step(
+    void activate(
+        const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void learn(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
-        bool learn_enabled,
         const Params &params
     );
 
@@ -160,11 +163,6 @@ public:
     // get the hidden activations
     const Float_Buffer &get_hidden_acts() const {
         return hidden_acts;
-    }
-
-    // get the dendrite states
-    const Float_Buffer &get_dendrite_acts() const {
-        return dendrite_acts;
     }
 
     // get the hidden size

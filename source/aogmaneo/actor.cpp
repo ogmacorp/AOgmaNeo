@@ -85,7 +85,9 @@ void Actor::forward(
             }
     }
 
+    const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
     const float dendrite_scale = sqrtf(1.0f / count);
+    const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
     float max_activation = limit_min;
 
@@ -94,37 +96,19 @@ void Actor::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float max_act = limit_min;
+        float activation = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = dendrite_acts[dendrite_index] * dendrite_scale;
 
-            dendrite_acts[dendrite_index] = act;
+            dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
 
-            max_act = max(max_act, act);
+            activation += dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        float total = 0.0f;
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            dendrite_acts[dendrite_index] = expf(dendrite_acts[dendrite_index] - max_act);
-
-            total += dendrite_acts[dendrite_index];
-        }
-
-        //float total_inv = 1.0f / max(limit_small, total);
-
-        //for (int di = 0; di < num_dendrites_per_cell; di++) {
-        //    int dendrite_index = di + dendrites_start;
-
-        //    dendrite_acts[dendrite_index] *= total_inv;
-        //}
-
-        float activation = max_act + logf(total); // log sum exp
+        activation *= activation_scale;
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -247,7 +231,9 @@ void Actor::learn(
             }
     }
 
+    const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
     const float dendrite_scale = sqrtf(1.0f / count);
+    const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
     float max_activation_next = limit_min;
 
@@ -256,37 +242,19 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float max_act = limit_min;
+        float activation = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = dendrite_acts[dendrite_index] * dendrite_scale;
 
-            dendrite_acts[dendrite_index] = act;
+            dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
 
-            max_act = max(max_act, act);
+            activation += dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        float total = 0.0f;
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            dendrite_acts[dendrite_index] = expf(dendrite_acts[dendrite_index] - max_act);
-
-            total += dendrite_acts[dendrite_index];
-        }
-
-        //float total_inv = 1.0f / max(limit_small, total);
-
-        //for (int di = 0; di < num_dendrites_per_cell; di++) {
-        //    int dendrite_index = di + dendrites_start;
-
-        //    dendrite_acts[dendrite_index] *= total_inv;
-        //}
-
-        float activation = max_act + logf(total); // log sum exp
+        activation *= activation_scale;
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -371,37 +339,19 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float max_act = limit_min;
+        float activation = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = dendrite_acts[dendrite_index] * dendrite_scale;
 
-            dendrite_acts[dendrite_index] = act;
+            dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
 
-            max_act = max(max_act, act);
+            activation += dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
-        float total = 0.0f;
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            dendrite_acts[dendrite_index] = expf(dendrite_acts[dendrite_index] - max_act);
-
-            total += dendrite_acts[dendrite_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            dendrite_acts[dendrite_index] *= total_inv;
-        }
-
-        float activation = max_act + logf(total); // log sum exp
+        activation *= activation_scale;
 
         hidden_acts[hidden_cell_index] = activation;
 
@@ -435,8 +385,16 @@ void Actor::learn(
 
         hidden_acts[hidden_cell_index] *= total_inv;
 
-        // re-use as deltas
-        hidden_acts[hidden_cell_index] = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
+        int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+
+        float error = params.lr * (params.cons * ((hc == target_ci) - hidden_acts[hidden_cell_index]) + (hc == target_ci) * td_error);
+
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + dendrites_start;
+
+            // re-use as deltas
+            dendrite_acts[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+        }
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -482,7 +440,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        vl.weights[wi] += hidden_acts[hidden_cell_index] * dendrite_acts[dendrite_index];
+                        vl.weights[wi] += dendrite_acts[dendrite_index];
                     }
                 }
             }
