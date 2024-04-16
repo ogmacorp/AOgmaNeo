@@ -110,7 +110,6 @@ void Actor::forward(
     const float policy_activation_scale = sqrtf(1.0f / policy_num_dendrites_per_cell);
     const float value_activation_scale = sqrtf(1.0f / value_num_dendrites_per_cell);
 
-    // value
     float value = 0.0f;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
