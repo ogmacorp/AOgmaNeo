@@ -41,7 +41,7 @@ public:
         Params()
         :
         scale(8.0f),
-        lr(0.04f),
+        lr(0.08f),
         leak(0.01f)
         {}
     };
@@ -74,6 +74,7 @@ private:
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
+        float modulation,
         unsigned long* state,
         const Params &params
     );
@@ -95,6 +96,7 @@ public:
     void learn(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
+        float modulation,
         const Params &params
     );
 

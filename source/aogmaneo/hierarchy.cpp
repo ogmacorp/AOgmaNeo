@@ -259,9 +259,9 @@ void Hierarchy::step(
                     layer_input_cis[1] = feedback_cis_prev[l];
 
                     for (int d = 0; d < decoders[l].size(); d++)
-                        decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                        decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], 1.0f - params.anticipation, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-                    if (params.anticipation) {
+                    if (params.anticipation != 0.0f) {
                         // learn on actual
                         layer_input_cis[1] = encoders[l].get_hidden_cis();
 
@@ -269,13 +269,13 @@ void Hierarchy::step(
                             // need to re-activate for this
                             decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-                            decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                            decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], params.anticipation, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
                         }
                     }
                 }
                 else {
                     for (int d = 0; d < decoders[l].size(); d++)
-                        decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                        decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], 1.0f, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
                 }
             }
 
