@@ -107,11 +107,11 @@ public:
         Array<Layer_Params> layers;
         Array<IO_Params> ios;
 
-        float anticipation; // how much to train on anticipated state, in [0, 1]
+        Byte anticipation;
 
         Params()
         :
-        anticipation(0.8f)
+        anticipation(true)
         {}
     };
 

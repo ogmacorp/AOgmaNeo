@@ -144,7 +144,6 @@ void Decoder::learn(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     const Int_Buffer_View hidden_target_cis,
-    float modulation,
     unsigned long* state,
     const Params &params
 ) {
@@ -162,7 +161,7 @@ void Decoder::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float error = params.lr * modulation * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        float error = params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -277,7 +276,6 @@ void Decoder::activate(
 void Decoder::learn(
     const Array<Int_Buffer_View> &input_cis,
     Int_Buffer_View hidden_target_cis,
-    float modulation,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -288,7 +286,7 @@ void Decoder::learn(
     for (int i = 0; i < num_hidden_columns; i++) {
         unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, modulation, &state, params);
+        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, &state, params);
     }
 }
 
