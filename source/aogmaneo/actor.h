@@ -45,17 +45,19 @@ public:
         float leak; // dendrite ReLU leak
         float value_rate; // rate of delayed value weights
         float discount; // discount factor
-        float clip; // gradient clipping for policy
+        float policy_clip; // gradient clipping for policy
+        float value_clip; // gradient clipping for value
         float trace_decay; // eligibility trace decay
 
         Params()
         :
         vlr(0.002f),
-        plr(0.004f),
+        plr(0.002f),
         leak(0.01f),
         value_rate(0.01f),
         discount(0.99f),
-        clip(0.25f),
+        policy_clip(0.25f),
+        value_clip(1.0f),
         trace_decay(0.97f)
         {}
     };
