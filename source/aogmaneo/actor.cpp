@@ -35,6 +35,7 @@ void Actor::forward(
             int dendrite_index = di + policy_dendrites_start;
 
             policy_dendrite_acts[dendrite_index] = 0.0f;
+            policy_dendrite_acts_delayed[dendrite_index] = 0.0f;
         }
     }
 
@@ -95,6 +96,7 @@ void Actor::forward(
                         int wi = di + wi_start;
 
                         policy_dendrite_acts[dendrite_index] += vl.policy_weights[wi];
+                        policy_dendrite_acts_delayed[dendrite_index] += vl.policy_weights_delayed[wi];
                     }
                 }
 
@@ -134,6 +136,7 @@ void Actor::forward(
     hidden_values[hidden_column_index] = value;
 
     float max_activation = limit_min;
+    float max_activation_delayed = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -141,41 +144,53 @@ void Actor::forward(
         int dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
         float activation = 0.0f;
+        float activation_delayed = 0.0f;
 
         for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
             float act = policy_dendrite_acts[dendrite_index] * dendrite_scale;
+            float act_delayed = policy_dendrite_acts_delayed[dendrite_index] * dendrite_scale;
 
             policy_dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
+            policy_dendrite_acts_delayed[dendrite_index] = max(act_delayed * params.leak, act_delayed); // relu
 
             activation += policy_dendrite_acts[dendrite_index] * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
+            activation_delayed += policy_dendrite_acts_delayed[dendrite_index] * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         activation *= policy_activation_scale;
+        activation_delayed *= policy_activation_scale;
 
         hidden_acts[hidden_cell_index] = activation;
+        hidden_acts_delayed[hidden_cell_index] = activation_delayed;
 
         max_activation = max(max_activation, activation);
+        max_activation_delayed = max(max_activation_delayed, activation_delayed);
     }
 
     // softmax
     float total = 0.0f;
+    float total_delayed = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
         hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+        hidden_acts_delayed[hidden_cell_index] = expf(hidden_acts_delayed[hidden_cell_index] - max_activation_delayed);
 
         total += hidden_acts[hidden_cell_index];
+        total_delayed += hidden_acts_delayed[hidden_cell_index];
     }
 
     float total_inv = 1.0f / max(limit_small, total);
+    float total_inv_delayed = 1.0f / max(limit_small, total_delayed);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] *= total_inv;
+        hidden_acts_delayed[hidden_cell_index] *= total_inv_delayed;
     }
 
     float cusp = randf(state);
@@ -204,7 +219,13 @@ void Actor::forward(
 
         int target_ci = hidden_target_cis_prev[hidden_column_index];
 
-        float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * td_error_value);
+        // probability ratio
+        float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
+
+        // https://huggingface.co/blog/deep-rl-ppo
+        bool clip = (ratio < (1.0f - params.policy_clip) && td_error_value < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error_value > 0.0f);
+
+        float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * td_error_value * (!clip));
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -258,7 +279,7 @@ void Actor::forward(
                                     vl.policy_traces[wi] += error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
                                 }
 
-                                vl.policy_weights[wi] += min(params.policy_clip, max(-params.policy_clip, policy_error_partial * vl.policy_traces[wi]));
+                                vl.policy_weights[wi] += policy_error_partial * vl.policy_traces[wi];
                                 vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }

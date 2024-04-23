@@ -44,8 +44,8 @@ public:
         float plr; // policy learning rate
         float leak; // dendrite ReLU leak
         float policy_rate; // rate of policy delayed weight update
-        float discount; // discount factor
         float policy_clip; // PPO clipping for policy
+        float discount; // discount factor
         float trace_decay; // eligibility trace decay
 
         Params()
@@ -53,9 +53,9 @@ public:
         vlr(0.002f),
         plr(0.002f),
         leak(0.01f),
-        policy_rate(0.1f),
+        policy_rate(0.01f),
+        policy_clip(0.1f),
         discount(0.99f),
-        policy_clip(0.25f),
         trace_decay(0.97f)
         {}
     };
@@ -68,9 +68,11 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
+    Float_Buffer hidden_acts_delayed;
     Float_Buffer hidden_acts_prev;
 
     Float_Buffer policy_dendrite_acts;
+    Float_Buffer policy_dendrite_acts_delayed;
     Float_Buffer policy_dendrite_acts_prev;
     Float_Buffer value_dendrite_acts;
     Float_Buffer value_dendrite_acts_prev;
