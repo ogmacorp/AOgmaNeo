@@ -276,7 +276,7 @@ void Actor::forward(
                                 vl.value_traces[wi] += ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
                             }
 
-                            vl.value_weights[wi] += min(params.value_clip, max(-params.value_clip, value_delta * vl.value_traces[wi]));
+                            vl.value_weights[wi] += value_delta * vl.value_traces[wi];
                             vl.value_traces[wi] *= params.trace_decay;
                         }
                     }
@@ -321,6 +321,8 @@ void Actor::init_random(
             vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         vl.policy_traces = Float_Buffer(vl.policy_weights.size(), 0.0f);
+
+        vl.policy_weights_delayed = vl.policy_weights;
 
         vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
 
@@ -373,6 +375,12 @@ void Actor::step(
         Visible_Layer &vl = visible_layers[vli];
 
         vl.input_cis_prev = input_cis[vli];
+
+        if (learn_enabled) {
+            PARALLEL_FOR
+            for (int i = 0; i < vl.policy_weights.size(); i++)
+                vl.policy_weights_delayed[i] += params.policy_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
+        }
     }
 
     hidden_acts_prev = hidden_acts;
@@ -521,6 +529,8 @@ void Actor::read(
         reader.read(reinterpret_cast<void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
         reader.read(reinterpret_cast<void*>(&vl.policy_traces[0]), vl.policy_traces.size() * sizeof(float));
 
+        vl.policy_weights_delayed = vl.policy_weights;
+
         vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
         vl.value_traces.resize(vl.value_weights.size());
 
@@ -609,6 +619,8 @@ void Actor::merge(
                 vl.policy_weights[i] = actors[d]->visible_layers[vli].policy_weights[i];
             }
 
+            vl.policy_weights_delayed = vl.policy_weights;
+
             for (int i = 0; i < vl.value_weights.size(); i++) {
                 int d = rand() % actors.size();                
 
@@ -630,6 +642,8 @@ void Actor::merge(
 
                 vl.policy_weights[i] = total / actors.size();
             }
+
+            vl.policy_weights_delayed = vl.policy_weights;
 
             for (int i = 0; i < vl.value_weights.size(); i++) {
                 float total = 0.0f;

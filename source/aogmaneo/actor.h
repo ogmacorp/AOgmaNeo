@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer policy_weights;
+        Float_Buffer policy_weights_delayed;
         Float_Buffer policy_traces;
         Float_Buffer value_weights;
         Float_Buffer value_traces;
@@ -42,9 +43,9 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float leak; // dendrite ReLU leak
+        float policy_rate; // rate of policy delayed weight update
         float discount; // discount factor
-        float policy_clip; // gradient clipping for policy
-        float value_clip; // gradient clipping for value
+        float policy_clip; // PPO clipping for policy
         float trace_decay; // eligibility trace decay
 
         Params()
@@ -52,9 +53,9 @@ public:
         vlr(0.002f),
         plr(0.002f),
         leak(0.01f),
+        policy_rate(0.1f),
         discount(0.99f),
         policy_clip(0.25f),
-        value_clip(1.0f),
         trace_decay(0.97f)
         {}
     };
