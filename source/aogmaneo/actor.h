@@ -54,7 +54,7 @@ public:
         leak(0.01f),
         discount(0.99f),
         policy_clip(0.25f),
-        value_clip(0.5f),
+        value_clip(1.0f),
         trace_decay(0.97f)
         {}
     };
