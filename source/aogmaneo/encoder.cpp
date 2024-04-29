@@ -22,7 +22,7 @@ void Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    if (learn_enabled) {
+    if (learn_enabled && hidden_acts[hidden_cells_start] != -1.0f) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
         float error = errors[hidden_column_index];
@@ -203,7 +203,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
+    hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
 
     hidden_deltas.resize(num_hidden_cells);
 }
@@ -235,7 +235,6 @@ void Encoder::step(
 
 void Encoder::clear_state() {
     hidden_cis.fill(0);
-    hidden_acts.fill(0.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++)
         visible_layers[vli].input_cis_prev.fill(0);
@@ -314,7 +313,7 @@ void Encoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    hidden_acts.resize(num_hidden_cells);
+    hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
 
     hidden_deltas.resize(num_hidden_cells);
 

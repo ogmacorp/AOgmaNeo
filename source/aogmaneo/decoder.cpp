@@ -120,6 +120,9 @@ void Decoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    if (hidden_acts[hidden_cells_start] == -1.0f)
+        return;
+
     int target_ci = hidden_target_cis[hidden_column_index];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -282,7 +285,7 @@ void Decoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_sums.resize(num_hidden_cells);
-    hidden_acts.resize(num_hidden_cells);
+    hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
 
     hidden_deltas.resize(num_hidden_cells);
 
@@ -354,7 +357,7 @@ void Decoder::clear_state() {
 }
 
 long Decoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -415,7 +418,7 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
-    hidden_acts.resize(num_hidden_cells);
+    hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
 
     int num_visible_layers;
 
