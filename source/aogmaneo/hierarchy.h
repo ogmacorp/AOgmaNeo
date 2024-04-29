@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -27,30 +27,35 @@ public:
         Int3 size;
         IO_Type type;
 
+        int num_dendrites_per_cell; // also for policy
+        int value_num_dendrites_per_cell; // just value
+
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
-
-        int history_capacity; // actor history max window size
 
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
+            int num_dendrites_per_cell = 4,
+            int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
-            int down_radius = 2,
-            int history_capacity = 256
+            int down_radius = 2
         )
         :
         size(size),
         type(type),
+        num_dendrites_per_cell(num_dendrites_per_cell),
+        value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
-        down_radius(down_radius),
-        history_capacity(history_capacity)
+        down_radius(down_radius)
         {}
     };
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
+
+        int num_dendrites_per_cell;
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -60,6 +65,7 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
+            int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
@@ -67,6 +73,7 @@ public:
         )
         :
         hidden_size(hidden_size),
+        num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius),
         ticks_per_update(ticks_per_update),
@@ -95,6 +102,13 @@ public:
     struct Params {
         Array<Layer_Params> layers;
         Array<IO_Params> ios;
+
+        Byte anticipation;
+
+        Params()
+        :
+        anticipation(true)
+        {}
     };
 
 private:
@@ -102,7 +116,8 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
-    Array<Float_Buffer> errors;
+    Array<Int_Buffer> hidden_cis_prev;
+    Array<Int_Buffer> feedback_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -155,7 +170,7 @@ public:
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
         float reward = 0.0f, // reward
-        float mimic = 0.0f
+        float mimic = 0.0f // mimicry mode
     );
 
     void clear_state();
@@ -214,7 +229,8 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        assert(io_types[i] == prediction);
+        if (io_types[i] == action)
+            return actors[d_indices[i]].get_hidden_acts();
 
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
