@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,50 +30,44 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer value_weights; // value function weights
-        Float_Buffer action_weights; // action function weights
-    };
+        Float_Buffer policy_weights;
+        Float_Buffer policy_traces;
+        Float_Buffer value_weights;
+        Float_Buffer value_traces;
 
-    // history sample for delayed updates
-    struct History_Sample {
-        Array<Int_Buffer> input_cis;
-        Int_Buffer hidden_target_cis_prev;
-
-        float reward;
+        Int_Buffer input_cis_prev;
     };
 
     struct Params {
         float vlr; // value learning rate
-        float alr; // action learning rate
-        float bias; // bias toward positive updates
-        float discount; // discount fActor
-        int min_steps; // minimum steps before sample can be used
-        int history_iters; // number of iterations over samples
+        float plr; // policy learning rate
+        float leak; // dendrite ReLU leak
+        float discount; // discount factor
+        float policy_clip; // gradient clipping for policy
+        float value_clip; // gradient clipping for value
+        float trace_decay; // eligibility trace decay
 
         Params()
         :
-        vlr(0.01f),
-        alr(0.01f),
-        bias(0.5f),
+        vlr(0.002f),
+        plr(0.002f),
+        leak(0.01f),
         discount(0.99f),
-        min_steps(8),
-        history_iters(8)
+        policy_clip(0.25f),
+        value_clip(1.0f),
+        trace_decay(0.97f)
         {}
     };
 
 private:
     Int3 hidden_size; // hidden/output/action size
 
-    // current history size - fixed after initialization. determines length of wait before updating
-    int history_size;
-
-    Float_Buffer hidden_acts; // temporary buffer
-
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_values; // hidden value function output buffer
+    Float_Buffer hidden_acts;
+    Float_Buffer hidden_acts_prev;
 
-    Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
+    Float_Buffer hidden_values; // hidden value function output buffer
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
@@ -84,16 +78,11 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        unsigned long* state,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        int t,
-        float r,
-        float d,
+        Int_Buffer_View hidden_target_cis_prev,
+        float reward,
         float mimic,
+        bool learn_enabled,
+        unsigned long* state,
         const Params &params
     );
 
@@ -101,7 +90,6 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
@@ -109,8 +97,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis_prev,
-        float reward,
         bool learn_enabled,
+        float reward,
         float mimic,
         const Params &params
     );
@@ -178,14 +166,6 @@ public:
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
-    }
-
-    int get_history_capacity() const {
-        return history_samples.size();
-    }
-
-    int get_history_size() const {
-        return history_size;
     }
 
     // merge list of decoders and write to this one

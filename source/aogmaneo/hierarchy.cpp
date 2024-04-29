@@ -100,7 +100,7 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         d_visible_layer_descs[1] = d_visible_layer_descs[0];
 
-                    decoders[l][d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, d_visible_layer_descs);
+                    decoders[l][d_index].init_random(io_sizes[i], d_visible_layer_descs);
 
                     i_indices[d_index] = i;
                     d_indices[i] = d_index;
@@ -121,7 +121,7 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         a_visible_layer_descs[1] = a_visible_layer_descs[0];
 
-                    actors[d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, io_descs[i].value_num_dendrites_per_cell, a_visible_layer_descs);
+                    actors[d_index].init_random(io_sizes[i], a_visible_layer_descs);
 
                     i_indices[io_sizes.size() + d_index] = i;
                     d_indices[i] = d_index;
@@ -159,7 +159,7 @@ void Hierarchy::init_random(
 
             // create decoders
             for (int t = 0; t < decoders[l].size(); t++)
-                decoders[l][t].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
+                decoders[l][t].init_random(layer_descs[l - 1].hidden_size, d_visible_layer_descs);
         }
         
         // create the sparse coding layer
@@ -212,6 +212,12 @@ void Hierarchy::step(
             // updated
             updates[l] = true;
 
+            // copy to prev
+            hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+
+            if (l < encoders.size() - 1)
+                feedback_cis_prev[l] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
+
             Array<Int_Buffer_View> layer_input_cis(encoders[l].get_num_visible_layers());
 
             int index = 0;
@@ -223,12 +229,6 @@ void Hierarchy::step(
                     index++;
                 }
             }
-
-            // copy to prev
-            hidden_cis_prev[l] = encoders[l].get_hidden_cis();
-
-            if (l < encoders.size() - 1)
-                feedback_cis_prev[l] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
 
             // activate sparse coder
             encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
