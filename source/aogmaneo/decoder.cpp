@@ -285,9 +285,8 @@ void Decoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_sums.resize(num_hidden_cells);
-    hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
-
     hidden_deltas.resize(num_hidden_cells);
+    hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -418,6 +417,8 @@ void Decoder::read(
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
+    hidden_sums.resize(num_hidden_cells);
+    hidden_deltas.resize(num_hidden_cells);
     hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
 
     int num_visible_layers;

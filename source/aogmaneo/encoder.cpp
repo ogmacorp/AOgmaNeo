@@ -342,7 +342,7 @@ void Encoder::read(
 
         vl.input_cis_prev.resize(num_visible_columns);
 
-        reader.read(reinterpret_cast<void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.input_cis_prev[0]), vl.input_cis_prev.size() * sizeof(int));
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
