@@ -19,6 +19,7 @@ void Hierarchy::init_random(
     decoders.resize(layer_descs.size());
     hidden_cis_prev.resize(layer_descs.size());
     feedback_cis_prev.resize(layer_descs.size() - 1);
+    errors.resize(layer_descs.size());
 
     ticks.resize(layer_descs.size(), 0);
 
@@ -169,6 +170,8 @@ void Hierarchy::init_random(
 
         if (l < encoders.size() - 1)
             feedback_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        errors[l].resize(hidden_cis_prev[l].size());
     }
 
     // initialize params
@@ -228,6 +231,19 @@ void Hierarchy::step(
 
                     index++;
                 }
+            }
+
+            if (learn_enabled) {
+                errors[l].fill(0.0f);
+
+                for (int d = 0; d < decoders[l].size(); d++)
+                    decoders[l][d].generate_errors(histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], errors[l], 0, params.layers[l].decoder);
+
+                // Rescale
+                float decoders_inv = 1.0f / decoders[l].size();
+
+                for (int i = 0; i < errors[l].size(); i++)
+                    errors[l][i] *= decoders_inv;
             }
 
             // activate sparse coder
@@ -488,6 +504,7 @@ void Hierarchy::read(
     decoders.resize(num_layers);
     hidden_cis_prev.resize(num_layers);
     feedback_cis_prev.resize(num_layers - 1);
+    errors.resize(num_layers);
 
     histories.resize(num_layers);
     
@@ -547,6 +564,8 @@ void Hierarchy::read(
 
         if (l < encoders.size() - 1)
             feedback_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        errors[l].resize(hidden_cis_prev[l].size());
     }
 
     actors.resize(num_actions);

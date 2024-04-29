@@ -107,6 +107,7 @@ private:
     Array<Actor> actors;
     Array<Int_Buffer> hidden_cis_prev;
     Array<Int_Buffer> feedback_cis_prev;
+    Array<Float_Buffer> errors;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
