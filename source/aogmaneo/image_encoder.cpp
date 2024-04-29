@@ -51,12 +51,12 @@ void Image_Encoder::forward(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                int visible_cells_start = visible_column_index * vld.size.z;
+
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int i_start = vld.size.z * (iy + ix * vld.size.y);
-
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    float input = vl_inputs[vc + i_start] * byte_inv;
+                    float input = vl_inputs[vc + visible_cells_start] * byte_inv;
 
                     center += input;
                 }
@@ -69,6 +69,7 @@ void Image_Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] = 0.0f;
+        hidden_totals[hidden_cell_index] = 0.0f;
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -96,23 +97,26 @@ void Image_Encoder::forward(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                int visible_cells_start = visible_column_index * vld.size.z;
+
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 int wi_start_partial = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                int i_start = vld.size.z * (iy + ix * vld.size.y);
-
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi_start = hidden_size.z * (vc + wi_start_partial);
 
-                    float input_centered = vl_inputs[vc + i_start] * byte_inv - center;
+                    float input_centered = vl_inputs[vc + visible_cells_start] * byte_inv - center;
 
                     for (int hc = 0; hc < hidden_size.z; hc++) {
                         int hidden_cell_index = hc + hidden_cells_start;
 
                         int wi = hc + wi_start;
 
-                        hidden_acts[hidden_cell_index] += input_centered * vl.weights[wi];
+                        float w = vl.weights[wi] * byte_inv * 2.0f - 1.0f;
+
+                        hidden_acts[hidden_cell_index] += input_centered * w;
+                        hidden_totals[hidden_cell_index] += w * w;
                     }
                 }
             }
@@ -124,7 +128,7 @@ void Image_Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_acts[hidden_cell_index];
+        float activation = hidden_acts[hidden_cell_index] / max(limit_small, sqrtf(hidden_totals[hidden_cell_index]));
 
         if (activation > max_activation) {
             max_activation = activation;
@@ -135,7 +139,7 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        for (int dhc = -1; dhc <= 1; dhc++) {
+        for (int dhc = -params.radius; dhc <= params.radius; dhc++) {
             int hc = max_index + dhc;
 
             if (hc < 0 || hc >= hidden_size.z)
@@ -143,7 +147,7 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
+            float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : powf(params.falloff, abs(dhc)));
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -170,20 +174,20 @@ void Image_Encoder::forward(
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                         int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                        int visible_cells_start = visible_column_index * vld.size.z;
+
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                         int wi_start_partial = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                        int i_start = vld.size.z * (iy + ix * vld.size.y);
-
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = hc + hidden_size.z * (vc + wi_start_partial);
 
-                            float input = vl_inputs[vc + i_start] * byte_inv;
+                            float input_centered = vl_inputs[vc + visible_cells_start] * byte_inv - center;
 
-                            float w = vl.weights[wi] * byte_inv;
+                            float w = vl.weights[wi] * byte_inv * 2.0f - 1.0f;
 
-                            vl.weights[wi] = min(255, max(0, roundf(vl.weights[wi] + rate * 255.0f * (input - center - (w * 2.0f - 1.0f)))));
+                            vl.weights[wi] = min(255, max(0, roundf(vl.weights[wi] + rate * 255.0f * (input_centered - w))));
                         }
                     }
             }
@@ -386,8 +390,9 @@ void Image_Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_totals.resize(num_hidden_cells);
 
-    hidden_resources = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
 }
 
 void Image_Encoder::step(
@@ -503,6 +508,7 @@ void Image_Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_totals.resize(num_hidden_cells);
 
     hidden_resources.resize(num_hidden_cells);
 
@@ -584,6 +590,7 @@ void Image_Encoder::merge(
             for (int i = 0; i < vl.recon_weights.size(); i++) {
                 int e = rand() % image_encoders.size();                
 
+                vl.weights[i] = image_encoders[e]->visible_layers[vli].weights[i];
                 vl.recon_weights[i] = image_encoders[e]->visible_layers[vli].recon_weights[i];
             }
         }
@@ -596,11 +603,15 @@ void Image_Encoder::merge(
         
             for (int i = 0; i < vl.recon_weights.size(); i++) {
                 float total = 0.0f;
+                float recon_total = 0.0f;
 
-                for (int e = 0; e < image_encoders.size(); e++)
-                    total += image_encoders[e]->visible_layers[vli].recon_weights[i];
+                for (int e = 0; e < image_encoders.size(); e++) {
+                    total += image_encoders[e]->visible_layers[vli].weights[i];
+                    recon_total += image_encoders[e]->visible_layers[vli].recon_weights[i];
+                }
 
-                vl.recon_weights[i] = roundf(total / image_encoders.size());
+                vl.weights[i] = roundf(total / image_encoders.size());
+                vl.recon_weights[i] = roundf(recon_total / image_encoders.size());
             }
         }
 

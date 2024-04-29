@@ -1,6 +1,6 @@
 <!---
   AOgmaNeo
-  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 
   This copy of AOgmaNeo is licensed to you under the terms described
   in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -12,7 +12,7 @@
 
 ## Introduction 
 
-Welcome to the [Ogma](https://ogmacorp.com) AOgmaNeo library, C++ library that contains an implementation of Sparse Predictive Hierarchies aimed at desktop, embedded, and microcontroller devices.
+Welcome to the [Ogma](https://ogmacorp.com) AOgmaNeo library, C++ library that contains an implementation of Sparse Predictive Hierarchies (SPH) aimed at desktop, embedded, and microcontroller devices.
 
 For easier use on desktop, we also have [Python bindings](https://github.com/ogmacorp/PyAOgmaNeo).
 
@@ -20,7 +20,7 @@ This version of OgmaNeo (AOgmaNeo) is similar to [OgmaNeo2](https://github.com/o
 However, it has since become the default and preferred version of OgmaNeo for all tasks, as it works great on desktop as well.
 
 For an introduction to how the algorithm works, see [the user guide](./AOgmaNeo_User_Guide.pdf).
-For a more in-depth look, check out [the whitepaper](https://github.com/ogmacorp/OgmaNeo2/blob/master/OgmaNeo2_Whitepaper_DRAFT.pdf) (from the OgmaNeo2 repository).
+For a more in-depth look, check out [the whitepaper](https://ogma.ai/sph-technology-description/).
 
 ## Installation
 
@@ -62,4 +62,4 @@ Refer to the [CONTRIBUTING.md](./CONTRIBUTING.md) file for information on making
 
 Contact Ogma via licenses@ogmacorp.com to discuss commercial use and licensing options.
 
-AOgmaNeo Copyright (c) 2020-2023 [Ogma Intelligent Systems Corp](https://ogmacorp.com). All rights reserved.
+AOgmaNeo Copyright (c) 2020-2024 [Ogma Intelligent Systems Corp](https://ogmacorp.com). All rights reserved.
