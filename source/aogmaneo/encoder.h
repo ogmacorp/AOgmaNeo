@@ -30,7 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Byte_Buffer weights0;
+        Byte_Buffer weights1;
         
         float importance;
 
@@ -49,7 +50,7 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.5f),
+        vigilance(0.9f),
         lr(0.5f),
         l_radius(2)
         {}
@@ -62,9 +63,11 @@ private:
 
     Int_Buffer learn_cis;
 
-    Float_Buffer hidden_sums;
+    Float_Buffer hidden_sums0;
+    Float_Buffer hidden_sums1;
 
     Float_Buffer hidden_totals;
+    Float_Buffer hidden_totals1;
 
     Float_Buffer hidden_maxs;
 
