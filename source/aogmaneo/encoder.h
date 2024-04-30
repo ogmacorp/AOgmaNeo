@@ -49,7 +49,7 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
+        vigilance(0.95f),
         lr(0.5f),
         l_radius(2)
         {}
@@ -67,6 +67,8 @@ private:
     Float_Buffer hidden_totals;
 
     Float_Buffer hidden_maxs;
+
+    Byte_Buffer hidden_commits;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
