@@ -163,8 +163,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_global_matches[hidden_column_index] = max_complete_match;
-    hidden_global_activations[hidden_column_index] = max_complete_activation;
+    hidden_global_activations[hidden_column_index] = (max_complete_match < params.vigilance_lower ? 0.0f : max_complete_activation);
 
     hidden_cis[hidden_column_index] = max_complete_index;
 }
@@ -195,7 +194,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_global_matches[other_hidden_column_index] >= params.vigilance_lower && hidden_global_activations[other_hidden_column_index] >= hidden_max)
+                if (hidden_global_activations[other_hidden_column_index] >= hidden_max)
                     return;
             }
         }
@@ -298,7 +297,6 @@ void Encoder::init_random(
 
     hidden_totals = Float_Buffer(num_hidden_cells, 0.0f);
 
-    hidden_global_matches.resize(num_hidden_columns);
     hidden_global_activations.resize(num_hidden_columns);
 
     hidden_commits = Byte_Buffer(num_hidden_cells, false);
@@ -399,7 +397,6 @@ void Encoder::read(
 
     hidden_sums.resize(num_hidden_cells);
 
-    hidden_global_matches.resize(num_hidden_columns);
     hidden_global_activations.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
