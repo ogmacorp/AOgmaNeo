@@ -134,8 +134,8 @@ void Encoder::forward(
     int max_index = -1;
     float max_activation = 0.0f;
 
-    int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
+    int max_global_index = 0;
+    float max_global_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -149,24 +149,22 @@ void Encoder::forward(
 
         float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-        if (match >= params.vigilance) {
-            if (activation > max_activation) {
-                max_activation = activation;
-                max_index = hc;
-            }
+        if (match >= params.vigilance && activation > max_activation) {
+            max_activation = activation;
+            max_index = hc;
         }
 
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
-            max_complete_index = hc;
+        if (activation > max_global_activation) {
+            max_global_activation = activation;
+            max_global_index = hc;
         }
     }
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_global_activations[hidden_column_index] = (max_index == -1 ? 0.0f : max_global_activation);
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+    hidden_cis[hidden_column_index] = max_global_index;
 }
 
 void Encoder::learn(
@@ -183,7 +181,7 @@ void Encoder::learn(
     if (learn_ci == -1)
         return;
 
-    float hidden_max = hidden_maxs[hidden_column_index];
+    float hidden_max = hidden_global_activations[hidden_column_index];
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
@@ -195,7 +193,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_maxs[other_hidden_column_index] >= hidden_max)
+                if (hidden_global_activations[other_hidden_column_index] >= hidden_max)
                     return;
             }
         }
@@ -298,7 +296,7 @@ void Encoder::init_random(
 
     hidden_totals = Float_Buffer(num_hidden_cells, 0.0f);
 
-    hidden_maxs.resize(num_hidden_columns);
+    hidden_global_activations.resize(num_hidden_columns);
 
     hidden_commits = Byte_Buffer(num_hidden_cells, false);
 }
@@ -398,7 +396,7 @@ void Encoder::read(
 
     hidden_sums.resize(num_hidden_cells);
 
-    hidden_maxs.resize(num_hidden_columns);
+    hidden_global_activations.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
