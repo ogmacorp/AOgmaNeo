@@ -197,23 +197,17 @@ void Encoder::learn(
         }
 
     int learn_ci = -1;
+    float max_activation_local = 0.0f;
 
-    if (max_match_global >= params.vigilance_lower) {
-        int max_index = -1;
-        float max_activation_local = 0.0f;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            if (hidden_matches_local[hidden_cell_index] >= params.vigilance_upper) {
-                if (hidden_activations_local[hidden_cell_index] > max_activation_local) {
-                    max_activation_local = hidden_activations_local[hidden_cell_index];
-                    max_index = hc;
-                }
+        if (hidden_matches_local[hidden_cell_index] >= params.vigilance_upper) {
+            if (hidden_activations_local[hidden_cell_index] > max_activation_local) {
+                max_activation_local = hidden_activations_local[hidden_cell_index];
+                learn_ci = hc;
             }
         }
-
-        learn_ci = max_index;
     }
 
     if (learn_ci == -1)
