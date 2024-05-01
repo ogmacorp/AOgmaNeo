@@ -203,11 +203,9 @@ void Encoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        if (hidden_matches_local[hidden_cell_index] >= params.vigilance_upper) {
-            if (hidden_activations_local[hidden_cell_index] > max_activation_local) {
-                max_activation_local = hidden_activations_local[hidden_cell_index];
-                learn_ci = hc;
-            }
+        if (hidden_matches_local[hidden_cell_index] >= params.vigilance_upper && hidden_activations_local[hidden_cell_index] > max_activation_local) {
+            max_activation_local = hidden_activations_local[hidden_cell_index];
+            learn_ci = hc;
         }
     }
 
