@@ -162,11 +162,12 @@ void Encoder::forward(
     hidden_matches_global[hidden_column_index] = max_match_global;
     hidden_activations_global[hidden_column_index] = max_activation_global;
 
-    hidden_cis[hidden_column_index] = max_index; // fallback in case nothing else is found
+    hidden_cis[hidden_column_index] = max_index;
 }
 
-void Encoder::stage2(
+void Encoder::learn(
     const Int2 &column_pos,
+    const Array<Int_Buffer_View> &input_cis,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -195,8 +196,10 @@ void Encoder::stage2(
             }
         }
 
+    int learn_ci = -1;
+
     if (max_match_global >= params.vigilance_lower) {
-        int max_index_local = -1;
+        int max_index = -1;
         float max_activation_local = 0.0f;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -205,25 +208,13 @@ void Encoder::stage2(
             if (hidden_matches_local[hidden_cell_index] >= params.vigilance_upper) {
                 if (hidden_activations_local[hidden_cell_index] > max_activation_local) {
                     max_activation_local = hidden_activations_local[hidden_cell_index];
-                    max_index_local = hc;
+                    max_index = hc;
                 }
             }
         }
 
-        learn_cis[hidden_column_index] = max_index_local;
+        learn_ci = max_index;
     }
-}
-
-void Encoder::learn(
-    const Int2 &column_pos,
-    const Array<Int_Buffer_View> &input_cis,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    int learn_ci = learn_cis[hidden_column_index];
 
     if (learn_ci == -1)
         return;
@@ -347,10 +338,6 @@ void Encoder::step(
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
-
-    PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        stage2(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
     if (learn_enabled) {
         PARALLEL_FOR

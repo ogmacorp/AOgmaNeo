@@ -61,9 +61,7 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-    Int_Buffer fallback_cis;
     Int_Buffer learn_cis;
-    Byte_Buffer hidden_founds;
 
     Float_Buffer hidden_sums;
 
@@ -86,11 +84,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void stage2(
-        const Int2 &column_pos,
         const Params &params
     );
 
