@@ -150,7 +150,7 @@ void Encoder::forward(
 
         float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-        if (match >= params.vigilance_upper && activation > max_activation) {
+        if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -165,7 +165,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_global_activations[hidden_column_index] = (max_global_match < params.vigilance_lower ? 0.0f : max_global_activation);
+    hidden_global_activations[hidden_column_index] = (max_global_match < params.vigilance ? 0.0f : max_global_activation);
 
     hidden_cis[hidden_column_index] = max_global_index;
 }
