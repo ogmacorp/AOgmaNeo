@@ -196,6 +196,7 @@ void Encoder::learn(
             }
         }
 
+    // if made it here, this is a max matching cell
     int learn_ci = -1;
     float max_activation_local = 0.0f;
 
