@@ -46,7 +46,6 @@ public:
         float vigilance_upper; // ART vigilance, upper bound (local)
         float lr; // learning rate
         int l_radius; // second stage inhibition radius
-        int num_iters;
 
         Params()
         :
@@ -54,8 +53,7 @@ public:
         vigilance_lower(0.9f),
         vigilance_upper(0.95f),
         lr(0.5f),
-        l_radius(2),
-        num_iters(8)
+        l_radius(2)
         {}
     };
 
@@ -63,8 +61,9 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
+    Int_Buffer fallback_cis;
     Int_Buffer learn_cis;
+    Byte_Buffer hidden_founds;
 
     Float_Buffer hidden_sums;
 
@@ -90,12 +89,7 @@ private:
         const Params &params
     );
 
-    void find_activations_global(
-        const Int2 &column_pos,
-        const Params &params
-    );
-
-    void cycle(
+    void stage2(
         const Int2 &column_pos,
         const Params &params
     );

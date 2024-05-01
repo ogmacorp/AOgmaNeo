@@ -133,6 +133,9 @@ void Encoder::forward(
 
     float max_match_global = 0.0f;
 
+    int max_index = 0;
+    float max_activation_global = 0.0f;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -149,36 +152,20 @@ void Encoder::forward(
         hidden_activations_local[hidden_cell_index] = activation;
 
         max_match_global = max(max_match_global, match);
-    }
 
-    hidden_matches_global[hidden_column_index] = max_match_global;
-}
-
-void Encoder::find_activations_global(
-    const Int2 &column_pos,
-    const Params &params
-) {
-    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    int max_index = 0;
-    float max_activation_global = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        if (hidden_activations_local[hidden_cell_index] > max_activation_global) {
-            max_activation_global = hidden_activations_local[hidden_cell_index];
+        if (activation > max_activation_global) {
+            max_activation_global = activation;
             max_index = hc;
         }
     }
 
+    hidden_matches_global[hidden_column_index] = max_match_global;
     hidden_activations_global[hidden_column_index] = max_activation_global;
-    hidden_cis[hidden_column_index] = max_index;
+
+    hidden_cis[hidden_column_index] = max_index; // fallback in case nothing else is found
 }
 
-void Encoder::cycle(
+void Encoder::stage2(
     const Int2 &column_pos,
     const Params &params
 ) {
@@ -186,6 +173,11 @@ void Encoder::cycle(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    float max_match_global = hidden_matches_global[hidden_column_index];
+
+    if (max_match_global < params.vigilance_lower)
+        return;
+    
     float max_activation_global = hidden_activations_global[hidden_column_index];
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
@@ -198,27 +190,28 @@ void Encoder::cycle(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_activations_global[other_hidden_column_index] >= max_activation_global)
+                if (hidden_activations_global[other_hidden_column_index] >= max_activation_global && hidden_matches_global[other_hidden_column_index] >= params.vigilance_lower)
                     return;
             }
         }
 
-    // if got here, this is the max global activation
-    float max_match_global = hidden_matches_global[hidden_column_index];
-
     if (max_match_global >= params.vigilance_lower) {
-        int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+        int max_index_local = -1;
+        float max_activation_local = 0.0f;
 
-        if (hidden_matches_local[hidden_cell_index_max] >= params.vigilance_upper)
-            // accept
-            learn_cis[hidden_column_index] = hidden_cis[hidden_column_index];
-        else
-            // reset
-            hidden_activations_local[hidden_cell_index_max] = 0.0f;
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            if (hidden_matches_local[hidden_cell_index] >= params.vigilance_upper) {
+                if (hidden_activations_local[hidden_cell_index] > max_activation_local) {
+                    max_activation_local = hidden_activations_local[hidden_cell_index];
+                    max_index_local = hc;
+                }
+            }
+        }
+
+        learn_cis[hidden_column_index] = max_index_local;
     }
-    else
-        // reset
-        hidden_activations_global[hidden_column_index] = 0.0f;
 }
 
 void Encoder::learn(
@@ -355,15 +348,9 @@ void Encoder::step(
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
-    for (int it = 0; it < params.num_iters; it++) {
-        PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            find_activations_global(Int2(i / hidden_size.y, i % hidden_size.y), params);
-
-        PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            cycle(Int2(i / hidden_size.y, i % hidden_size.y), params);
-    }
+    PARALLEL_FOR
+    for (int i = 0; i < num_hidden_columns; i++)
+        stage2(Int2(i / hidden_size.y, i % hidden_size.y), params);
 
     if (learn_enabled) {
         PARALLEL_FOR
