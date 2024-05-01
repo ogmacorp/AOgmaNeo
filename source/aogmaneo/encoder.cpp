@@ -136,7 +136,6 @@ void Encoder::forward(
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
-    float max_complete_match = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -161,13 +160,11 @@ void Encoder::forward(
             max_complete_activation = activation;
             max_complete_index = hc;
         }
-
-        max_complete_match = max(max_complete_match, match);
     }
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_maxs[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_match);
+    hidden_maxs[hidden_column_index] = max_complete_activation;
 
     hidden_cis[hidden_column_index] = max_complete_index;
 }
@@ -198,7 +195,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_maxs[other_hidden_column_index] >= hidden_max)
+                if (hidden_maxs[other_hidden_column_index] >= hidden_max && learn_cis[other_hidden_column_index] != -1)
                     return;
             }
         }
