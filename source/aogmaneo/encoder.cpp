@@ -304,8 +304,6 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    learn_cis.resize(num_hidden_columns);
-
     hidden_sums.resize(num_hidden_cells);
 
     hidden_totals = Float_Buffer(num_hidden_cells, 0.0f);
@@ -326,8 +324,6 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    learn_cis.fill(-1);
-
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
@@ -411,8 +407,6 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&hidden_totals[0]), hidden_totals.size() * sizeof(float));
     reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
-
-    learn_cis.resize(num_hidden_columns);
 
     hidden_sums.resize(num_hidden_cells);
 
