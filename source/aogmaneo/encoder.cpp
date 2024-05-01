@@ -131,12 +131,7 @@ void Encoder::forward(
     count /= max(limit_small, total_importance);
     count1 /= max(limit_small, total_importance);
 
-    int max_index = -1;
-    float max_activation = 0.0f;
-
-    int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
-    float max_complete_match = 0.0f;
+    float max_match_global = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -150,26 +145,80 @@ void Encoder::forward(
 
         float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-        if (match >= params.vigilance) {
-            if (activation > max_activation) {
-                max_activation = activation;
-                max_index = hc;
+        hidden_matches_local[hidden_cell_index] = match;
+        hidden_activations_local[hidden_cell_index] = activation;
+
+        max_match_global = max(max_match_global, match);
+    }
+
+    hidden_matches_global[hidden_column_index] = max_match_global;
+}
+
+void Encoder::find_activations_global(
+    const Int2 &column_pos,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    int max_index = 0;
+    float max_activation_global = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        if (hidden_activations_local[hidden_cell_index] > max_activation_global) {
+            max_activation_global = hidden_activations_local[hidden_cell_index];
+            max_index = hc;
+        }
+    }
+
+    hidden_activations_global[hidden_column_index] = max_activation_global;
+    hidden_cis[hidden_column_index] = max_index;
+}
+
+void Encoder::cycle(
+    const Int2 &column_pos,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    float max_activation_global = hidden_activations_global[hidden_column_index];
+
+    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+            if (dcx == 0 && dcy == 0)
+                continue;
+
+            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
+
+            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                if (hidden_activations_global[other_hidden_column_index] >= max_activation_global)
+                    return;
             }
         }
 
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
-            max_complete_index = hc;
-        }
+    // if got here, this is the max global activation
+    float max_match_global = hidden_matches_global[hidden_column_index];
 
-        max_complete_match = max(max_complete_match, match);
+    if (max_match_global >= params.vigilance_lower) {
+        int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
+
+        if (hidden_matches_local[hidden_cell_index_max] >= params.vigilance_upper)
+            // accept
+            learn_cis[hidden_column_index] = hidden_cis[hidden_column_index];
+        else
+            // reset
+            hidden_activations_local[hidden_cell_index_max] = 0.0f;
     }
-
-    learn_cis[hidden_column_index] = max_index;
-
-    hidden_maxs[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_match);
-
-    hidden_cis[hidden_column_index] = max_complete_index;
+    else
+        // reset
+        hidden_activations_global[hidden_column_index] = 0.0f;
 }
 
 void Encoder::learn(
@@ -185,23 +234,6 @@ void Encoder::learn(
 
     if (learn_ci == -1)
         return;
-
-    float hidden_max = hidden_maxs[hidden_column_index];
-
-    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
-        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            if (dcx == 0 && dcy == 0)
-                continue;
-
-            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
-
-            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
-                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
-
-                if (hidden_maxs[other_hidden_column_index] >= hidden_max)
-                    return;
-            }
-        }
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
@@ -301,7 +333,11 @@ void Encoder::init_random(
 
     hidden_totals = Float_Buffer(num_hidden_cells, 0.0f);
 
-    hidden_maxs.resize(num_hidden_columns);
+    hidden_matches_local.resize(num_hidden_cells);
+    hidden_activations_local.resize(num_hidden_cells);
+
+    hidden_matches_global.resize(num_hidden_columns);
+    hidden_activations_global.resize(num_hidden_columns);
 
     hidden_commits = Byte_Buffer(num_hidden_cells, false);
 }
@@ -313,9 +349,21 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
+    learn_cis.fill(-1);
+
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+
+    for (int it = 0; it < params.num_iters; it++) {
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            find_activations_global(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            cycle(Int2(i / hidden_size.y, i % hidden_size.y), params);
+    }
 
     if (learn_enabled) {
         PARALLEL_FOR
@@ -401,7 +449,11 @@ void Encoder::read(
 
     hidden_sums.resize(num_hidden_cells);
 
-    hidden_maxs.resize(num_hidden_columns);
+    hidden_matches_local.resize(num_hidden_cells);
+    hidden_activations_local.resize(num_hidden_cells);
+
+    hidden_matches_global.resize(num_hidden_columns);
+    hidden_activations_global.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
