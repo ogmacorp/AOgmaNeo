@@ -61,7 +61,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-    Int_Buffer learn_cis;
 
     Float_Buffer hidden_sums;
 
