@@ -60,13 +60,15 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
-
     Float_Buffer hidden_sums;
 
     Float_Buffer hidden_totals;
 
-    Float_Buffer hidden_global_activations;
+    Float_Buffer hidden_matches_local;
+    Float_Buffer hidden_activations_local;
+
+    Float_Buffer hidden_matches_global;
+    Float_Buffer hidden_activations_global;
 
     Byte_Buffer hidden_commits;
 
