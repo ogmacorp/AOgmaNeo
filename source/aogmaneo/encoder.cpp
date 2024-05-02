@@ -176,7 +176,7 @@ void Encoder::learn(
 
     float max_match_global = hidden_matches_global[hidden_column_index];
 
-    if (max_match_global < params.vigilance_lower)
+    if (max_match_global < params.vigilance)
         return;
     
     float max_activation_global = hidden_activations_global[hidden_column_index];
@@ -191,7 +191,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_activations_global[other_hidden_column_index] >= max_activation_global && hidden_matches_global[other_hidden_column_index] >= params.vigilance_lower)
+                if (hidden_matches_global[other_hidden_column_index] >= params.vigilance && hidden_activations_global[other_hidden_column_index] >= max_activation_global)
                     return;
             }
         }
@@ -203,7 +203,7 @@ void Encoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        if (hidden_matches_local[hidden_cell_index] >= params.vigilance_upper && hidden_activations_local[hidden_cell_index] > max_activation_local) {
+        if (hidden_matches_local[hidden_cell_index] >= params.vigilance && hidden_activations_local[hidden_cell_index] > max_activation_local) {
             max_activation_local = hidden_activations_local[hidden_cell_index];
             learn_ci = hc;
         }
