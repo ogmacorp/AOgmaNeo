@@ -75,7 +75,7 @@ void Encoder::forward(
     }
 
     float count = 0.0f;
-    float count1 = 0.0f;
+    float count_except = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -100,7 +100,7 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         count += vl.importance * sub_count;
-        count1 += vl.importance * sub_count * (vld.size.z - 1);
+        count_except += vl.importance * sub_count * (vld.size.z - 1);
 
         float influence = vl.importance / 255.0f;
 
@@ -129,7 +129,7 @@ void Encoder::forward(
     }
 
     count /= max(limit_small, total_importance);
-    count1 /= max(limit_small, total_importance);
+    count_except /= max(limit_small, total_importance);
 
     float max_match_global = 0.0f;
 
@@ -144,7 +144,7 @@ void Encoder::forward(
         // invert
         hidden_sums[hidden_cell_index] = hidden_totals[hidden_cell_index] - (count - hidden_sums[hidden_cell_index]);
 
-        float match = hidden_sums[hidden_cell_index] / count1;
+        float match = hidden_sums[hidden_cell_index] / count_except;
 
         float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
