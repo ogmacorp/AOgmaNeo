@@ -41,7 +41,7 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter, lower makes it select matchier columns over ones with less overall weights (total)
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // ART vigilance
         float lr; // learning rate
         int l_radius; // second stage inhibition radius
@@ -60,15 +60,13 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Int_Buffer learn_cis;
+
     Float_Buffer hidden_sums;
 
     Float_Buffer hidden_totals;
 
-    Float_Buffer hidden_matches_local;
-    Float_Buffer hidden_activations_local;
-
-    Float_Buffer hidden_matches_global;
-    Float_Buffer hidden_activations_global;
+    Float_Buffer hidden_global_activations;
 
     Byte_Buffer hidden_commits;
 
