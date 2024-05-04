@@ -75,7 +75,6 @@ void Encoder::forward(
     }
 
     float count = 0.0f;
-    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -100,7 +99,6 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         count += vl.importance * sub_count;
-        count_all += vl.importance * sub_count * vld.size.z;
 
         float influence = vl.importance / 255.0f;
 
@@ -129,7 +127,6 @@ void Encoder::forward(
     }
 
     count /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
     float max_activation = 0.0f;
