@@ -115,9 +115,9 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_global_activations[hidden_column_index] = max_activation;
+    hidden_global_activations[hidden_column_index] = (max_index == -1 ? 0.0f : max_global_activation);
 
-    hidden_cis[hidden_column_index] = max_global_index;
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_global_index : max_index);
 }
 
 void Encoder::learn(
