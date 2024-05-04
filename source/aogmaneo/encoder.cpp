@@ -156,7 +156,7 @@ void Encoder::learn(
             }
         }
 
-    float ratio = static_cast<float>(num_higher) / static_cast<float>(count);
+    float ratio = static_cast<float>(num_higher) / static_cast<float>(count + 1);
 
     if (ratio > params.activity_ratio)
         return;
