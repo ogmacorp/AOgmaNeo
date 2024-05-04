@@ -136,6 +136,9 @@ void Encoder::learn(
 
     float hidden_max = hidden_global_activations[hidden_column_index];
 
+    int num_higher = 0;
+    int count = 0;
+
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
             if (dcx == 0 && dcy == 0)
@@ -147,9 +150,16 @@ void Encoder::learn(
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
                 if (hidden_global_activations[other_hidden_column_index] >= hidden_max)
-                    return;
+                    num_higher++;
+
+                count++;
             }
         }
+
+    float ratio = static_cast<float>(num_higher) / static_cast<float>(count);
+
+    if (ratio > params.activity_ratio)
+        return;
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
