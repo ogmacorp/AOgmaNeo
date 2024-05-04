@@ -115,7 +115,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_global_activations[hidden_column_index] = (max_index == -1 ? 0.0f : max_global_activation);
+    hidden_global_activations[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = max_global_index;
 }
@@ -156,7 +156,7 @@ void Encoder::learn(
             }
         }
 
-    float ratio = static_cast<float>(num_higher) / static_cast<float>(count + 1);
+    float ratio = static_cast<float>(num_higher) / static_cast<float>(max(1, count));
 
     if (ratio > params.activity_ratio)
         return;
