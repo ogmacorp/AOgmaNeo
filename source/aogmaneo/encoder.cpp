@@ -96,12 +96,11 @@ void Encoder::forward(
 
         hidden_sums[hidden_cell_index] /= max(limit_small, total_importance);
 
-        // invert
-        hidden_sums[hidden_cell_index] = (count_all - hidden_totals[hidden_cell_index]) - (count - hidden_sums[hidden_cell_index]);
+        float complemented = (count_all - hidden_totals[hidden_cell_index]) - (count - hidden_sums[hidden_cell_index]);
 
-        float match = hidden_sums[hidden_cell_index] / count_except;
+        float match = complemented / count_except;
 
-        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        float activation = complemented / (params.choice + count_all - hidden_totals[hidden_cell_index]);
 
         if (match >= params.vigilance_upper && activation > max_activation) {
             max_activation = activation;
