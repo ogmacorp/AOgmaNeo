@@ -49,9 +49,9 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
+        vigilance(0.97f),
         lr(0.5f),
-        l_radius(2)
+        l_radius(1)
         {}
     };
 
