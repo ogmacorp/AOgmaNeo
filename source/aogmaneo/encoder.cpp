@@ -76,6 +76,7 @@ void Encoder::forward(
 
     float count = 0.0f;
     float count_except = 0.0f;
+    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -101,6 +102,7 @@ void Encoder::forward(
 
         count += vl.importance * sub_count;
         count_except += vl.importance * sub_count * (vld.size.z - 1);
+        count_all += vl.importance * sub_count * vld.size.z;
 
         float influence = vl.importance / 255.0f;
 
@@ -130,6 +132,7 @@ void Encoder::forward(
 
     count /= max(limit_small, total_importance);
     count_except /= max(limit_small, total_importance);
+    count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
     float max_activation = 0.0f;
@@ -147,7 +150,7 @@ void Encoder::forward(
 
         float match = hidden_sums[hidden_cell_index] / count_except;
 
-        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
+        float activation = hidden_sums[hidden_cell_index] / (params.choice + count_all - hidden_totals[hidden_cell_index]);
 
         if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
