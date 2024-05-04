@@ -138,6 +138,7 @@ void Encoder::forward(
     float max_activation = 0.0f;
 
     int max_global_index = 0;
+    float max_global_match = 0.0f;
     float max_global_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -150,9 +151,9 @@ void Encoder::forward(
 
         float match = hidden_sums[hidden_cell_index] / count_except;
 
-        float activation = hidden_sums[hidden_cell_index] / (params.choice + count_all - hidden_totals[hidden_cell_index]);
+        float activation = hidden_sums[hidden_cell_index] / (params.choice + hidden_totals[hidden_cell_index]);
 
-        if (match >= params.vigilance && activation > max_activation) {
+        if (match >= params.vigilance_upper && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -161,11 +162,13 @@ void Encoder::forward(
             max_global_activation = activation;
             max_global_index = hc;
         }
+
+        max_global_match = max(max_global_match, match);
     }
 
     learn_cis[hidden_column_index] = max_index;
 
-    hidden_global_activations[hidden_column_index] = (max_index == -1 ? 0.0f : max_global_activation);
+    hidden_global_activations[hidden_column_index] = (max_global_match >= params.vigilance_lower ? max_global_activation : 0.0f);
 
     hidden_cis[hidden_column_index] = max_global_index;
 }
