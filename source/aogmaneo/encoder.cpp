@@ -100,7 +100,7 @@ void Encoder::forward(
 
         float match = complemented / count_except;
 
-        float activation = complemented / (params.choice + count_all - hidden_totals[hidden_cell_index]); // use match in the beginning instead of hidden_sums so that the final result is relative to / count_except. Prevents unfair 2nd stage competition
+        float activation = complemented / (params.choice + count_all - hidden_totals[hidden_cell_index]);
 
         if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
