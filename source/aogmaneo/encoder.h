@@ -44,7 +44,7 @@ public:
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // ART vigilance
         float lr; // learning rate
-        float activity_ratio; // 2nd stage inhibition activity ratio
+        float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
 
         Params()
@@ -52,7 +52,7 @@ public:
         choice(0.01f),
         vigilance(0.95f),
         lr(0.5f),
-        activity_ratio(0.1f),
+        active_ratio(0.1f),
         l_radius(2)
         {}
     };

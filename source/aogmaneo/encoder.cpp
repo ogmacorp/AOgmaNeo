@@ -158,7 +158,7 @@ void Encoder::learn(
 
     float ratio = static_cast<float>(num_higher) / static_cast<float>(max(1, count));
 
-    if (ratio > params.activity_ratio)
+    if (ratio > params.active_ratio)
         return;
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
