@@ -163,8 +163,6 @@ void Encoder::learn(
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
 
-    float rate = (hidden_commits[hidden_cell_index_max] ? params.lr : 1.0f);
-
     float total = 0.0f;
     float total_importance = 0.0f;
 
@@ -205,7 +203,7 @@ void Encoder::learn(
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     if (vc == in_ci)
-                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(rate * (255.0f - vl.weights[wi])));
+                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
 
                     sub_total += vl.weights[wi];
                 }
