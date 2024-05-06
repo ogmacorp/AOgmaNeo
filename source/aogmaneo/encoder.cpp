@@ -315,7 +315,7 @@ void Encoder::init_random(
                         }
                     }
 
-                total += vl.importance / sub_total * sub_total / 255.0f;
+                total += vl.importance / sub_count * sub_total / 255.0f;
             }
 
             total /= max(limit_small, total_importance);
