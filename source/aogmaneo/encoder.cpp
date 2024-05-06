@@ -51,13 +51,13 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        count += vl.importance * sub_count;
-        count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_all += vl.importance * sub_count * vld.size.z;
+        count += vl.importance;
+        count_except += vl.importance * (vld.size.z - 1);
+        count_all += vl.importance * vld.size.z;
 
-        float influence = vl.importance / 255.0f;
+        float influence = vl.importance / sub_count / 255.0f;
 
-        total_importance += vl.importance;
+        total_importance += vl.importance / sub_count;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
