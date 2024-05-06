@@ -185,7 +185,9 @@ void Encoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        total_importance += vl.importance;
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+
+        total_importance += vl.importance / sub_count;
 
         int sub_total = 0;
 
@@ -209,7 +211,7 @@ void Encoder::learn(
                 }
             }
 
-        total += vl.importance * sub_total / 255.0f;
+        total += vl.importance / sub_count * sub_total / 255.0f;
     }
 
     total /= max(limit_small, total_importance);
