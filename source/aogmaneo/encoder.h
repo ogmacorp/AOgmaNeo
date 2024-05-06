@@ -68,7 +68,7 @@ private:
 
     Float_Buffer hidden_totals;
 
-    Float_Buffer hidden_global_activations;
+    Float_Buffer hidden_comparisons;
 
     Byte_Buffer hidden_commits;
 
