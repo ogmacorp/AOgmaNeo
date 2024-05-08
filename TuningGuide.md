@@ -18,6 +18,10 @@ Describes an input/output
 
 - type: Enum type of the IO layer. Can be none (input only), prediction, and actor (RL).
 
+- num_dendrites_per_cell: Number of dendrites attached to each ouput cell. Applies to decoders and actor policies.
+
+- value_num_dendrites_per_cell: Number of dendrites attached to each ouput cell specifically for actor value functions.
+
 - up_radius: Receptive field radius from this IO layer to the first layer (encoder radius). Usually 2
 
 - down_radius: Receptive field radius from the first layer to this IO layer (decoder/actor radius). Usually 2
@@ -29,6 +33,8 @@ Describes an input/output
 Describes a higher (not IO) layer
 
 - hidden_size: Size (Int3) of the encoder's hidden state for that layer (width, height, column_size). Usually width/height are in the range [4, 16] and column_size is in the range [16, 64] depending on the requirements.
+
+- num_dendrites_per_cell: Number of dendrites attached to each ouput cell in the decoder.
 
 - up_radius: Receptive field radius from this previous (lower) layer to this layer (encoder radius). Usually 2
 
@@ -46,7 +52,7 @@ Example access (Python):
 
 ```python
 h.params.ios[2].decoder.lr = 0.1
-h.params.ios[1].actor.alr = 0.01
+h.params.ios[1].actor.plr = 0.01
 
 h.params.layers[3].encoder.lr = 0.05
 h.params.layers[4].decoder.scale = 64.0
@@ -70,40 +76,48 @@ h.params.layers[4].decoder.scale = 64.0
 
 - scale: Range scaling for byte-weights. Unlikely you need to change this, best left as-is.
 
-- lr: Learning rate, usually in [0.0, 1.0] range. Can be > 1 in some instances!
+- lr: Learning rate, in [0.0, 1.0] range.
 
-- gcurve: Gate curve, used to prevent forgetting. Also unlikely that you will need to change this.
+- leak: Leaky ReLU amount, for dendrites
 
 ### EncoderParams
 
 Same as decoder.
 
-- scale: Range scaling for byte-weights. Unlikely you need to change this, best left as-is.
+- choice: ART choice parameter (alpha). Usually a small value. Must be > 0.0.
 
-- lr: Learning rate, usually in [0.0, 1.0] range. Can be > 1 in some instances!
+- vigilance: ART vigilance parameter in the [0.0, 1.0] range. The closer to 1, the pickier it gets about updating clusters.
 
-- gcurve: Gate curve, used to prevent forgetting. Also unlikely that you will need to change this.
+- lr: Learning rate, in [0.0, 1.0] range.
+
+- active_ratio: Activity ratio in the second stage of inhibition [0.0, 1.0] range.
+
+- l_radius: Lateral inhibition radius. Must be large enough to fit the active_ratio ((l_radius + 1)^-2 <= active_ratio)
 
 ### ActorParams:
 
 - vlr: Value function learning rate. Around 0.01, cannot be > 1!
 
-- alr: Actor learning rate, Around 0.01, can be > 1 (but this is very rare).
+- plr: Actor learning rate, Around 0.01, can be > 1 (but this is very rare).
 
-- discount: Reinforcement learning discounting factor (lambda). Around 0.99. Must be < 1.
+- leak: Leaky ReLU amount, for dendrites
 
-- min_steps: Minimum samples before the sample can be used in training. Must be < history_capacity, otherwise it won't learn. Usually around 8.
+- discount: Reinforcement learning discounting factor (lambda). Around 0.99. Must be in [0.0, 1.0).
 
-- history_iters: Number of iterations over the history to assign credit with. Usually 8 or 16.
+- policy_clip: Gradient clipping on the policy. Must be > 0.0.
+
+- value_clip: Gradient clipping on the value function. Must be > 0.0.
+
+- trace_decay: Decay multiplier for eligibility traces in [0.0, 1.0)
 
 ## Assorted Tips
 
-- be aware of the receptive field coverage. The radii can be increased to increase coverage, at the cost of more compute. You can also add more layers to bridge spatial gaps in the receptive fields (higher level processing).
+- Be aware of the receptive field coverage. The radii can be increased to increase coverage, at the cost of more compute. You can also add more layers to bridge spatial gaps in the receptive fields (higher level processing).
 
-- the defaults are likely fine for most tasks.
+- The defaults are likely fine for most tasks.
 
-- sometimes it is desirable to increase the actor alr parameter when in mimic mode, otherwise the smaller learning rate it has by default will make learning take forever (the default is made for RL).
+- Sometimes it is desirable to increase the actor alr parameter when in mimic mode, otherwise the smaller learning rate it has by default will make learning take forever (the default is made for RL).
 
-- generally it is more efficient to use more layers than to increase temporal_horizon per-layer to get more memory.
+- Generally it is more efficient to use more layers than to increase temporal_horizon per-layer to get more memory.
 
-- on tasks with highly reward variance w.r.t. timesteps, you may want to decrease the discount factor. On the other end, if the task is quite continuous and rewards are sparse, you may want to increase the discount factor.
+- On tasks with highly reward variance w.r.t. timesteps, you may want to decrease the discount factor. On the other end, if the task is quite continuous and rewards are sparse, you may want to increase the discount factor.
