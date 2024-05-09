@@ -45,6 +45,7 @@ public:
         float discount; // discount factor
         float policy_clip; // gradient clipping for policy
         float value_clip; // gradient clipping for value
+        float trace_curve; // how much traces replace vs accumulate ( > 0.0)
         float trace_decay; // eligibility trace decay
 
         Params()
@@ -53,8 +54,9 @@ public:
         plr(0.002f),
         leak(0.01f),
         discount(0.99f),
-        policy_clip(0.25f),
+        policy_clip(1.0f),
         value_clip(1.0f),
+        trace_curve(1.0f),
         trace_decay(0.97f)
         {}
     };

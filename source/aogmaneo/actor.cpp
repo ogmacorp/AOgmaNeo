@@ -255,7 +255,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev) {
                                     float trace = vl.policy_traces[wi];
 
-                                    vl.policy_traces[wi] += error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                                    vl.policy_traces[wi] += error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak) * expf(-params.trace_curve * abs(vl.policy_traces[wi]));
                                 }
 
                                 vl.policy_weights[wi] += min(params.policy_clip, max(-params.policy_clip, policy_error_partial * vl.policy_traces[wi]));
@@ -273,7 +273,7 @@ void Actor::forward(
                             if (vc == in_ci_prev) {
                                 float trace = vl.value_traces[wi];
 
-                                vl.value_traces[wi] += ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+                                vl.value_traces[wi] += ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak) * expf(-params.trace_curve * abs(vl.value_traces[wi]));
                             }
 
                             vl.value_weights[wi] += min(params.value_clip, max(-params.value_clip, value_delta * vl.value_traces[wi]));
