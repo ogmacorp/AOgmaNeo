@@ -57,49 +57,29 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Float_Buffer spatial_acts;
+    Byte_Buffer spatial_bits;
     Int_Buffer hidden_cis;
-    Int_Buffer hidden_cis_prev;
-
-    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
-    Byte_Buffer recurrent_weights;
-
-    Int_Buffer recurrent_recon_sums;
-
     // --- kernels ---
 
-    void forward_spatial(
+    void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
-    void inhibit_spatial(
+    void inhibit(
         const Int2 &column_pos,
         const Params &params
     );
 
-    void forward_recurrent(
+    void learn(
         const Int2 &column_pos,
-        const Params &params
-    );
-
-    void learn_spatial(
-        const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
-        unsigned long* state,
-        const Params &params
-    );
-
-    void learn_recurrent(
-        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         unsigned long* state,
         const Params &params
     );
