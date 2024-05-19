@@ -101,6 +101,8 @@ void Encoder::inhibit(
     // cycle if not active
     if (!spatial_bits[hidden_column_index])
         hidden_cis[hidden_column_index] = (hidden_cis[hidden_column_index] + 1) % hidden_size.z;
+    else
+        hidden_cis[hidden_column_index] = 0; // reset
 }
 
 void Encoder::learn(
@@ -118,9 +120,6 @@ void Encoder::learn(
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        if (vl.importance == 0.0f)
-            continue;
-
         int diam = vld.radius * 2 + 1;
 
         // projection
@@ -136,11 +135,7 @@ void Encoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
         int hidden_stride = vld.size.z * diam * diam;
-
-        const float influence = vl.importance * sqrtf(1.0f / sub_count) / 255.0f;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -177,8 +172,6 @@ void Encoder::init_random(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
-    int total_num_visible_columns = 0;
-
     // create layers
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -186,8 +179,6 @@ void Encoder::init_random(
 
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
-
-        total_num_visible_columns += num_visible_columns;
 
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
