@@ -98,10 +98,7 @@ void Encoder::inhibit(
 
     spatial_bits[hidden_column_index] = (ratio <= params.active_ratio);
 
-    if (spatial_bits[hidden_column_index])
-        hidden_cis[hidden_column_index] = min(hidden_size.z - 1, hidden_cis[hidden_column_index] + ceilf(1.0f / params.active_ratio));
-    else
-        hidden_cis[hidden_column_index] = max(0, hidden_cis[hidden_column_index] - 1);
+    hidden_cis[hidden_column_index] = min(hidden_size.z - 1, max(0, hidden_cis[hidden_column_index] + ceilf((spatial_bits[hidden_column_index] - params.active_ratio) / params.active_ratio)));
 }
 
 void Encoder::learn(
