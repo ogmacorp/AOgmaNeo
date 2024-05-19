@@ -32,8 +32,6 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Int_Buffer recon_sums;
-
         float importance;
 
         Visible_Layer()
@@ -43,26 +41,22 @@ public:
     };
 
     struct Params {
-        float scale; // recon curve
         float lr; // learning rate
-        int spatial_recon_tolerance;
-        int recurrent_recon_tolerance;
+        float active_ratio; // spatial activity ratio (lateral)
+        int l_radius; // lateral inhibition radius
 
         Params()
         :
-        scale(16.0f),
         lr(0.02f),
-        spatial_recon_tolerance(1),
-        recurrent_recon_tolerance(1)
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
-    int spatial_activity;
-    int recurrent_radius;
 
-    Int_Buffer spatial_cis;
+    Float_Buffer spatial_acts;
     Int_Buffer hidden_cis;
     Int_Buffer hidden_cis_prev;
 
@@ -83,6 +77,11 @@ private:
     void forward_spatial(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void inhibit_spatial(
+        const Int2 &column_pos,
         const Params &params
     );
 
@@ -109,8 +108,6 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
-        int spatial_activity,
-        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 

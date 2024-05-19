@@ -17,13 +17,7 @@ void Encoder::forward_spatial(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int spatial_cells_start = hidden_column_index * spatial_activity;
-
-    for (int sc = 0; sc < spatial_activity; sc++) {
-        int spatial_cell_index = sc + spatial_cells_start;
-
-        hidden_acts[spatial_cell_index] = 0.0f;
-    }
+    float act = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -65,31 +59,21 @@ void Encoder::forward_spatial(
 
                 int wi_offset = in_ci + vld.size.z * (offset.y + diam * offset.x);
 
-                for (int sc = 0; sc < spatial_activity; sc++) {
-                    int spatial_cell_index = sc + spatial_cells_start;
+                int wi = in_ci + vld.size.z * (offset.y + diam * offset.x) + hidden_column_index * hidden_stride;
 
-                    int wi = wi_offset + spatial_cell_index * hidden_stride;
-
-                    hidden_acts[spatial_cell_index] += vl.weights[wi] * influence;
-                }
+                act += vl.weights[wi] * influence;
             }
     }
 
-    int max_index = 0;
-    float max_activation = 0.0f;
+    spatial_acts[hidden_column_index] = act;
+}
 
-    for (int sc = 0; sc < spatial_activity; sc++) {
-        int spatial_cell_index = sc + spatial_cells_start;
+void Encoder::inhibit_spatial(
+    const Int2 &column_pos,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-        float activation = hidden_acts[spatial_cell_index];
-
-        if (activation > max_activation) {
-            max_activation = activation;
-            max_index = sc;
-        }
-    }
-
-    spatial_cis[hidden_column_index] = max_index;
 }
 
 void Encoder::forward_recurrent(
