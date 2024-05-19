@@ -251,7 +251,7 @@ void Encoder::learn_spatial(
         if (vc != target_ci && recon_sum >= target_recon_sum)
             num_higher++;
 
-        float recon = expf(min(0, recon_sum - count * 127) * recon_scale);
+        float recon = expf((recon_sum - count * 255) * recon_scale);
 
         // re-use sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
@@ -354,7 +354,7 @@ void Encoder::learn_recurrent(
         if (ohc != target_ci && recon_sum >= target_recon_sum)
             num_higher++;
 
-        float recon = expf(min(0, recon_sum - count * 127) * recon_scale);
+        float recon = expf((recon_sum - count * 255) * recon_scale);
 
         // re-use sums as deltas
         recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ohc == target_ci) - recon), state);
@@ -422,7 +422,7 @@ void Encoder::init_random(
         vl.weights.resize(num_spatial_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - (rand() % init_weight_noisei);
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
     }
@@ -439,7 +439,7 @@ void Encoder::init_random(
     recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
 
     for (int i = 0; i < recurrent_weights.size(); i++)
-        recurrent_weights[i] = 127 - (rand() % init_weight_noisei);
+        recurrent_weights[i] = 255 - (rand() % init_weight_noisei);
 
     recurrent_recon_sums.resize(num_hidden_cells);
 
