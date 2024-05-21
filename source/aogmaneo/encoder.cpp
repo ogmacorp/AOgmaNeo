@@ -194,6 +194,8 @@ void Encoder::learn(
     if (num_higher == 0)
         return;
 
+    modulation = powf(modulation, params.stability);
+
     // re-use recon sums as integer deltas
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
