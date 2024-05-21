@@ -33,6 +33,7 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer recon_sums;
+        Float_Buffer recon_deltas;
 
         float importance;
 
@@ -49,7 +50,7 @@ public:
 
         Params()
         :
-        scale(8.0f),
+        scale(4.0f),
         lr(0.02f),
         early_stop_cells(1)
         {}
