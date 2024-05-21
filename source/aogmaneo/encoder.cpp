@@ -186,7 +186,7 @@ void Encoder::learn(
         vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
     }
 
-    if (num_higher < params.early_stop_cells)
+    if (num_higher == 0)
         return;
 
     const float byte_inv = 1.0f / 255.0f;
