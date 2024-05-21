@@ -155,6 +155,8 @@ void Decoder::learn(
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
 
+    float modulation = powf(1.0f - hidden_acts[target_ci + hidden_cells_start], params.stability);
+
     // find deltas
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -166,7 +168,7 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = rand_roundf(error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak), state);
+            dendrite_deltas[dendrite_index] = rand_roundf(error * modulation * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak), state);
         }
     }
 
