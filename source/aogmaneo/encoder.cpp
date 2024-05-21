@@ -211,7 +211,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    float modulation = (vl.recon_deltas[visible_cell_index] > 0.0f ? vl.weights[wi] * byte_inv : 1.0f - vl.weights[wi] * byte_inv);
+                    float modulation = (vl.recon_deltas[visible_cell_index] > 0.0f ? vl.weights[wi] * byte_inv : 1.0f);
 
                     vl.weights[wi] = min(255, max(0, vl.weights[wi] + ceilf(vl.recon_deltas[visible_cell_index] * modulation)));
                 }
