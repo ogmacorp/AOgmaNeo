@@ -186,6 +186,7 @@ void Encoder::learn(
         vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
     }
 
+    // early stop
     if (num_higher == 0)
         return;
 
