@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -268,8 +267,6 @@ void Encoder::reconstruct(
         vl.recon_sums[visible_cell_index] = 0;
     }
 
-    int count = 0;
-
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 hidden_pos = Int2(ix, iy);
@@ -279,21 +276,17 @@ void Encoder::reconstruct(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                int hidden_ci = hidden_cis[hidden_column_index];
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
-
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
-                    int wi = vc + wi_start;
+                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     vl.recon_sums[visible_cell_index] += vl.weights[wi];
                 }
-
-                count++;
             }
         }
 
@@ -308,8 +301,6 @@ void Encoder::reconstruct(
             max_index = vc;
         }
     }
-
-    std::cout << (max_sum / 255.0f / static_cast<float>(count)) << std::endl;
 
     vl.recon_cis[visible_column_index] = max_index;
 }
