@@ -218,17 +218,7 @@ public:
         if (io_types[i] == action)
             return actors[d_indices[i]].get_hidden_cis();
 
-        return decoders[0][d_indices[i]].get_hidden_cis();
-    }
-
-    // retrieve prediction activations
-    const Float_Buffer &get_prediction_acts(
-        int i
-    ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
-
-        return decoders[0][d_indices[i]].get_hidden_acts();
+        return encoders[0].get_visible_layer(i).recon_cis;
     }
 
     // whether this layer received on update this timestep

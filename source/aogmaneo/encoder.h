@@ -37,6 +37,8 @@ public:
 
         Float_Buffer totals;
 
+        Int_Buffer recon_sums;
+
         bool use_input;
         
         float importance;
@@ -96,8 +98,7 @@ private:
 
     void reconstruct(
         const Int2 &column_pos,
-        int vli,
-        const Params &params
+        int vli
     );
 
 public:
@@ -124,6 +125,10 @@ public:
     void step(
         bool learn_enabled, // whether to learn
         const Params &params // parameters
+    );
+
+    void reconstruct(
+        int vli
     );
 
     void clear_state();
