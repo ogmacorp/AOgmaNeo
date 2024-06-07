@@ -31,11 +31,19 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
+
+        Int_Buffer input_cis;
+        Int_Buffer recon_cis;
+
+        Float_Buffer totals;
+
+        bool use_input;
         
         float importance;
 
         Visible_Layer()
         :
+        use_input(false),
         importance(1.0f)
         {}
     };
@@ -66,8 +74,6 @@ private:
 
     Float_Buffer hidden_sums;
 
-    Float_Buffer hidden_totals;
-
     Float_Buffer hidden_comparisons;
 
     Byte_Buffer hidden_commits;
@@ -80,13 +86,17 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void reconstruct(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
@@ -97,8 +107,21 @@ public:
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
+    void set_ignore(
+        int vli
+    ) {
+        visible_layers[vli].use_input = false;
+    }
+
+    void set_input_cis(
+        int vli,
+        Int_Buffer_View input_cis
+    ) {
+        visible_layers[vli].use_input = true;
+        visible_layers[vli].input_cis = input_cis;
+    }
+
     void step(
-        const Array<Int_Buffer_View> &input_cis, // input states
         bool learn_enabled, // whether to learn
         const Params &params // parameters
     );
