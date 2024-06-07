@@ -120,6 +120,8 @@ public:
         int vli,
         Int_Buffer_View input_cis
     ) {
+        assert(input_cis.size() == visible_layers[vli].input_cis.size());
+
         visible_layers[vli].use_input = true;
         visible_layers[vli].up_to_date = false;
         visible_layers[vli].input_cis = input_cis;
