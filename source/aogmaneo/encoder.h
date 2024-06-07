@@ -32,20 +32,24 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
+        Float_Buffer hidden_sums;
+
         Int_Buffer input_cis;
         Int_Buffer recon_cis;
 
-        Float_Buffer totals;
+        Float_Buffer hidden_totals;
 
         Int_Buffer recon_sums;
 
         bool use_input;
+        bool up_to_date;
         
         float importance;
 
         Visible_Layer()
         :
         use_input(false),
+        up_to_date(false),
         importance(1.0f)
         {}
     };
@@ -73,8 +77,6 @@ private:
     Int_Buffer hidden_cis;
 
     Int_Buffer learn_cis;
-
-    Float_Buffer hidden_sums;
 
     Float_Buffer hidden_comparisons;
 
@@ -119,6 +121,7 @@ public:
         Int_Buffer_View input_cis
     ) {
         visible_layers[vli].use_input = true;
+        visible_layers[vli].up_to_date = false;
         visible_layers[vli].input_cis = input_cis;
     }
 

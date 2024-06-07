@@ -281,33 +281,6 @@ public:
         return encoders[l];
     }
 
-    int get_num_decoders(
-        int l
-    ) const {
-        return decoders[l].size();
-    }
-
-    // retrieve by index
-    Decoder &get_decoder(
-        int l,
-        int i
-    ) {
-        if (l == 0)
-            return decoders[l][d_indices[i]];
-
-        return decoders[l][i];
-    }
-
-    const Decoder &get_decoder(
-        int l,
-        int i
-    ) const {
-        if (l == 0)
-            return decoders[l][d_indices[i]];
-
-        return decoders[l][i];
-    }
-
     Actor &get_actor(
         int i
     ) {
