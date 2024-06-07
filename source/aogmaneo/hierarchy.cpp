@@ -276,6 +276,29 @@ void Hierarchy::step(
                 encoders[l].step(false, params.layers[l].encoder);
             }
 
+            // reconstruct
+            if (l == 0) {
+                int predictions_start = io_sizes.size() * histories[l][0].size();
+                int prediction_index = 0;
+
+                for (int i = 0; i < io_sizes.size(); i++) {
+                    if (io_types[i] == prediction || io_types[i] == action) {
+                        int index = predictions_start + prediction_index;
+
+                        encoders[l].reconstruct(index);
+
+                        prediction_index++;
+                    }
+                }
+            }
+            else {
+                for (int t = 0; t < ticks_per_update[l]; t++) {
+                    int index = histories[l][0].size() + t;
+
+                    encoders[l].reconstruct(index);
+                }
+            }
+
             if (l == 0 && actors.size() > 0) {
                 int next_predictions_start = histories[l + 1][0].size(); // temporal horizon
 
