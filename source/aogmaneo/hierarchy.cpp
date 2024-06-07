@@ -16,8 +16,6 @@ void Hierarchy::init_random(
 ) {
     // create layers
     encoders.resize(layer_descs.size());
-    hidden_cis_prev.resize(layer_descs.size());
-    feedback_cis_prev.resize(layer_descs.size() - 1);
 
     ticks.resize(layer_descs.size(), 0);
 
