@@ -16,7 +16,7 @@
 #include <algorithm>
 #endif
 
-#define PARALLEL_FOR// _Pragma("omp parallel for")
+#define PARALLEL_FOR _Pragma("omp parallel for")
 
 namespace aon {
 const int exp_iters = 6;

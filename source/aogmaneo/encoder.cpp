@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -80,14 +81,14 @@ void Encoder::forward(
                         vl.hidden_sums[hidden_cell_index] += vl.weights[wi] * influence;
                     }
                 }
-
-            vl.up_to_date = true;
         }
     }
 
-    count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
+    assert(total_importance > 0.0f);
+
+    count /= total_importance;
+    count_except /= total_importance;
+    count_all /= total_importance;
 
     int max_index = -1;
     float max_activation = 0.0f;
@@ -107,12 +108,14 @@ void Encoder::forward(
             if (!vl.use_input)
                 continue;
 
+            assert(vl.up_to_date);
+
             hidden_sum += vl.hidden_sums[hidden_cell_index];
             hidden_total += vl.hidden_totals[hidden_cell_index];
         }
 
-        hidden_sum /= max(limit_small, total_importance);
-        hidden_total /= max(limit_small, total_importance);
+        hidden_sum /= total_importance;
+        hidden_total /= total_importance;
 
         float complemented = (count_all - hidden_total) - (count - hidden_sum);
 
@@ -233,9 +236,6 @@ void Encoder::reconstruct(
 ) {
     Visible_Layer &vl = visible_layers[vli];
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-    if (vl.importance == 0.0f)
-        return;
 
     int diam = vld.radius * 2 + 1;
 
@@ -367,8 +367,6 @@ void Encoder::init_random(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float total = 0.0f;
-
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
                 const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -420,6 +418,12 @@ void Encoder::step(
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        vl.up_to_date = true;
+    }
 
     if (learn_enabled) {
         PARALLEL_FOR
