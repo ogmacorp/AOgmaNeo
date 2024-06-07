@@ -99,13 +99,6 @@ public:
     struct Params {
         Array<Layer_Params> layers;
         Array<IO_Params> ios;
-
-        Byte anticipation;
-
-        Params()
-        :
-        anticipation(true)
-        {}
     };
 
 private:
