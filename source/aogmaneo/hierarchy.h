@@ -235,6 +235,12 @@ public:
         return ticks_per_update[l];
     }
 
+    int get_temporal_horizon(
+        int l
+    ) const {
+        return histories[l][0].size();
+    }
+
     // number of io layers
     int get_num_io() const {
         return io_sizes.size();
