@@ -187,6 +187,8 @@ void Encoder::learn(
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
+        assert(vl.use_input && vl.up_to_date);
+
         int diam = vld.radius * 2 + 1;
 
         // projection
@@ -226,8 +228,6 @@ void Encoder::learn(
 
         vl.hidden_totals[hidden_cell_index_max] = vl.importance / sub_count * sub_total / 255.0f;
     }
-
-    hidden_commits[hidden_cell_index_max] = true;
 }
 
 void Encoder::reconstruct(
@@ -268,6 +268,8 @@ void Encoder::reconstruct(
         vl.recon_sums[visible_cell_index] = 0;
     }
 
+    int count = 0;
+
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 hidden_pos = Int2(ix, iy);
@@ -290,6 +292,8 @@ void Encoder::reconstruct(
 
                     vl.recon_sums[visible_cell_index] += vl.weights[wi];
                 }
+
+                count++;
             }
         }
 
@@ -304,6 +308,8 @@ void Encoder::reconstruct(
             max_index = vc;
         }
     }
+
+    std::cout << (max_sum / 255.0f / static_cast<float>(count)) << std::endl;
 
     vl.recon_cis[visible_column_index] = max_index;
 }
@@ -353,8 +359,6 @@ void Encoder::init_random(
     learn_cis.resize(num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
-
-    hidden_commits = Byte_Buffer(num_hidden_cells, false);
 
     // init hidden_totals
     for (int i = 0; i < num_hidden_columns; i++) {
@@ -455,7 +459,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -496,7 +500,6 @@ void Encoder::write(
     writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -527,10 +530,8 @@ void Encoder::read(
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
     hidden_cis.resize(num_hidden_columns);
-    hidden_commits.resize(num_hidden_cells);
 
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&hidden_commits[0]), hidden_commits.size() * sizeof(Byte));
 
     learn_cis.resize(num_hidden_columns);
 
