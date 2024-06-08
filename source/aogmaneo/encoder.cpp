@@ -173,8 +173,6 @@ void Encoder::learn(
 
     int num_higher = 0;
 
-    float modulation = 1.0f;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -185,23 +183,15 @@ void Encoder::learn(
 
         float recon = expf(min(0, recon_sum - count * 127) * recon_scale);
 
-        modulation = min(modulation, recon);
+        float delta = params.lr * 255.0f * ((vc == target_ci) - recon);
 
-        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
+        // re-use recon sums as deltas
+        vl.recon_sums[visible_cell_index] = rand_roundf(delta, state);
     }
 
     // early stop
     if (num_higher == 0)
         return;
-
-    modulation = powf(modulation, params.stability);
-
-    // re-use recon sums as integer deltas
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        vl.recon_sums[visible_cell_index] = rand_roundf(vl.recon_deltas[visible_cell_index] * modulation, state);
-    }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -264,7 +254,6 @@ void Encoder::init_random(
             vl.weights[i] = 127 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
-        vl.recon_deltas.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -412,7 +401,6 @@ void Encoder::read(
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
-        vl.recon_deltas.resize(num_visible_cells);
 
         reader.read(reinterpret_cast<void*>(&vl.importance), sizeof(float));
     }
