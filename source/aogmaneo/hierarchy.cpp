@@ -56,6 +56,9 @@ void Hierarchy::init_random(
 
         // if first layer
         if (l == 0) {
+            i_indices.resize(io_sizes.size() * 2);
+            d_indices = Int_Buffer(io_sizes.size(), -1);
+
             // initialize history buffers
             histories[l].resize(io_sizes.size());
 
@@ -89,6 +92,8 @@ void Hierarchy::init_random(
                     e_visible_layer_descs[index].size = io_sizes[i];
                     e_visible_layer_descs[index].radius = io_descs[i].up_radius;
 
+                    i_indices[prediction_index] = i;
+                    d_indices[i] = prediction_index;
                     prediction_index++;
                 }
             }
@@ -102,11 +107,8 @@ void Hierarchy::init_random(
 
             actors.resize(num_actions);
 
-            i_indices.resize(io_sizes.size());
-            a_indices = Int_Buffer(io_sizes.size(), -1);
-
             // create actors
-            int a_index = 0;
+            int action_index = 0;
 
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == action) {
@@ -119,11 +121,11 @@ void Hierarchy::init_random(
                     if (l < encoders.size() - 1)
                         a_visible_layer_descs[1] = a_visible_layer_descs[0];
 
-                    actors[a_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, io_descs[i].value_num_dendrites_per_cell, a_visible_layer_descs);
+                    actors[action_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, io_descs[i].value_num_dendrites_per_cell, a_visible_layer_descs);
 
-                    i_indices[a_index] = i;
-                    a_indices[i] = a_index;
-                    a_index++;
+                    i_indices[io_sizes.size() + action_index] = i;
+                    d_indices[i] = action_index;
+                    action_index++;
                 }
             }
         }
@@ -309,7 +311,7 @@ void Hierarchy::step(
                     layer_input_cis[1] = encoders[l + 1].get_visible_layer(next_predictions_start + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis;
 
                 for (int d = 0; d < actors.size(); d++)
-                    actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], learn_enabled, reward, mimic, params.ios[i_indices[d + io_sizes.size()]].actor);
+                    actors[d].step(layer_input_cis, input_cis[i_indices[io_sizes.size() + d]], learn_enabled, reward, mimic, params.ios[i_indices[io_sizes.size() + d]].actor);
             }
         }
     }
@@ -334,7 +336,7 @@ void Hierarchy::clear_state() {
 }
 
 long Hierarchy::size() const {
-    long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + a_indices.size() * sizeof(int);
+    long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += sizeof(int);
@@ -414,7 +416,7 @@ void Hierarchy::write(
     writer.write(reinterpret_cast<const void*>(&ticks_per_update[0]), ticks_per_update.size() * sizeof(int));
 
     writer.write(reinterpret_cast<const void*>(&i_indices[0]), i_indices.size() * sizeof(int));
-    writer.write(reinterpret_cast<const void*>(&a_indices[0]), a_indices.size() * sizeof(int));
+    writer.write(reinterpret_cast<const void*>(&d_indices[0]), d_indices.size() * sizeof(int));
 
     for (int l = 0; l < num_layers; l++) {
         int num_layer_inputs = histories[l].size();
@@ -495,11 +497,11 @@ void Hierarchy::read(
     reader.read(reinterpret_cast<void*>(&ticks[0]), ticks.size() * sizeof(int));
     reader.read(reinterpret_cast<void*>(&ticks_per_update[0]), ticks_per_update.size() * sizeof(int));
 
-    i_indices.resize(num_io);
-    a_indices.resize(num_io);
+    i_indices.resize(2 * num_io);
+    d_indices.resize(num_io);
 
     reader.read(reinterpret_cast<void*>(&i_indices[0]), i_indices.size() * sizeof(int));
-    reader.read(reinterpret_cast<void*>(&a_indices[0]), a_indices.size() * sizeof(int));
+    reader.read(reinterpret_cast<void*>(&d_indices[0]), d_indices.size() * sizeof(int));
     
     for (int l = 0; l < num_layers; l++) {
         int num_layer_inputs;

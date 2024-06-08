@@ -112,7 +112,7 @@ private:
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
-    Int_Buffer a_indices;
+    Int_Buffer d_indices;
 
     // histories
     Array<Array<Circle_Buffer<Int_Buffer>>> histories;
@@ -203,7 +203,7 @@ public:
     bool a_layer_exists(
         int i
     ) const {
-        return a_indices[i] != -1;
+        return d_indices[i] != -1;
     }
 
     // retrieve predictions
@@ -211,11 +211,11 @@ public:
         int i
     ) const {
         if (io_types[i] == action)
-            return actors[a_indices[i]].get_hidden_cis();
+            return actors[d_indices[i]].get_hidden_cis();
 
         int predictions_start = io_sizes.size() * histories[0][0].size();
 
-        return encoders[0].get_visible_layer(predictions_start + i).recon_cis;
+        return encoders[0].get_visible_layer(predictions_start + d_indices[i]).recon_cis;
     }
 
     // whether this layer received on update this timestep
@@ -287,21 +287,21 @@ public:
     Actor &get_actor(
         int i
     ) {
-        return actors[a_indices[i]];
+        return actors[d_indices[i]];
     }
 
     const Actor &get_actor(
         int i
     ) const {
-        return actors[a_indices[i]];
+        return actors[d_indices[i]];
     }
 
     const Int_Buffer &get_i_indices() const {
         return i_indices;
     }
 
-    const Int_Buffer &get_a_indices() const {
-        return a_indices;
+    const Int_Buffer &get_d_indices() const {
+        return d_indices;
     }
 
     const Array<Circle_Buffer<Int_Buffer>> &get_histories(
