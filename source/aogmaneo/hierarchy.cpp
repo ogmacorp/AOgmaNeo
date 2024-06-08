@@ -99,7 +99,6 @@ void Hierarchy::init_random(
                 e_visible_layer_descs[feedback_index].size = layer_descs[l].hidden_size;
                 e_visible_layer_descs[feedback_index].radius = layer_descs[l].down_radius;
             }
-            
 
             actors.resize(num_actions);
 
@@ -205,7 +204,7 @@ void Hierarchy::step(
             // updated
             updates[l] = true;
 
-            if (learn_enabled) {
+            if (learn_enabled && encoders[l].get_visible_layer(0).use_input) { // check if used at least once
                 if (l == 0) {
                     int predictions_start = io_sizes.size() * histories[l][0].size();
                     int prediction_index = 0;
