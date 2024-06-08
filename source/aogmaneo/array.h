@@ -140,6 +140,7 @@ public:
     T &operator[](
         int index
     ) {
+        assert(p != nullptr);
         assert(index >= 0 && index < s);
 
         return p[index];
@@ -148,6 +149,7 @@ public:
     const T &operator[](
         int index
     ) const {
+        assert(p != nullptr);
         assert(index >= 0 && index < s);
         
         return p[index];
@@ -160,6 +162,8 @@ public:
     void fill(
         T value
     ) {
+        assert(p != nullptr);
+
         for (int i = 0; i < s; i++)
             p[i] = value;
     }
@@ -213,6 +217,7 @@ public:
     T &operator[](
         int index
     ) {
+        assert(p != nullptr);
         assert(index >= 0 && index < s);
 
         return p[index];
@@ -221,6 +226,7 @@ public:
     const T &operator[](
         int index
     ) const {
+        assert(p != nullptr);
         assert(index >= 0 && index < s);
         
         return p[index];
@@ -233,6 +239,8 @@ public:
     void fill(
         T value
     ) {
+        assert(p != nullptr);
+
         for (int i = 0; i < s; i++)
             p[i] = value;
     }
