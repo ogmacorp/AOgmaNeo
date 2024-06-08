@@ -107,8 +107,6 @@ void Encoder::forward(
             if (!vl.use_input)
                 continue;
 
-            assert(vl.up_to_date);
-
             hidden_sum += vl.hidden_sums[hidden_cell_index];
             hidden_total += vl.hidden_totals[hidden_cell_index];
         }
