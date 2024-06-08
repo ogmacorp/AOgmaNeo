@@ -122,7 +122,9 @@ void Encoder::forward(
 
         float activation = complemented / (params.choice + count_all - hidden_total);
 
-        if (match >= params.vigilance && activation > max_activation) {
+        hidden_matches[hidden_cell_index] = match;
+
+        if (match >= hidden_vigilances[hidden_cell_index] && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -227,6 +229,24 @@ void Encoder::learn(
 
         vl.hidden_totals[hidden_cell_index_max] = vl.importance / sub_count * sub_total / 255.0f;
     }
+
+    // lowest passing match
+    float lowest_passing_match = 1.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        if (hidden_matches[hidden_cell_index] >= hidden_vigilances[hidden_cell_index])
+            lowest_passing_match = min(lowest_passing_match, hidden_matches[hidden_cell_index]);
+    }
+
+    // update vigilances in column
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        if (hidden_matches[hidden_cell_index] >= hidden_vigilances[hidden_cell_index])
+            hidden_vigilances[hidden_cell_index] = lowest_passing_match;
+    }
 }
 
 void Encoder::reconstruct(
@@ -307,6 +327,7 @@ void Encoder::reconstruct(
 
 void Encoder::init_random(
     const Int3 &hidden_size,
+    float base_vigilance,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
@@ -348,6 +369,10 @@ void Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     learn_cis.resize(num_hidden_columns);
+
+    hidden_matches.resize(num_hidden_cells);
+
+    hidden_vigilances = Float_Buffer(num_hidden_cells, base_vigilance);
 
     hidden_comparisons.resize(num_hidden_columns);
 
@@ -450,7 +475,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_vigilances.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -492,6 +517,8 @@ void Encoder::write(
 
     writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
+    writer.write(reinterpret_cast<const void*>(&hidden_vigilances[0]), hidden_vigilances.size() * sizeof(float));
+
     int num_visible_layers = visible_layers.size();
 
     writer.write(reinterpret_cast<const void*>(&num_visible_layers), sizeof(int));
@@ -525,6 +552,12 @@ void Encoder::read(
     reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
 
     learn_cis.resize(num_hidden_columns);
+
+    hidden_matches.resize(num_hidden_cells);
+
+    hidden_vigilances.resize(num_hidden_cells);
+
+    reader.read(reinterpret_cast<void*>(&hidden_vigilances[0]), hidden_vigilances.size() * sizeof(float));
 
     hidden_comparisons.resize(num_hidden_columns);
 

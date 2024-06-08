@@ -62,13 +62,16 @@ public:
         int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
+        float base_vigilance;
+
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int temporal_horizon = 2,
+            float base_vigilance = 0.8f
         )
         :
         hidden_size(hidden_size),
@@ -76,7 +79,8 @@ public:
         up_radius(up_radius),
         down_radius(down_radius),
         ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon)
+        temporal_horizon(temporal_horizon),
+        base_vigilance(base_vigilance)
         {}
     };
 

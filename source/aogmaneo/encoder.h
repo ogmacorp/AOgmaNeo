@@ -56,7 +56,6 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
@@ -64,7 +63,6 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
@@ -77,6 +75,10 @@ private:
     Int_Buffer hidden_cis;
 
     Int_Buffer learn_cis;
+
+    Float_Buffer hidden_matches;
+
+    Float_Buffer hidden_vigilances;
 
     Float_Buffer hidden_comparisons;
 
@@ -105,6 +107,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        float base_vigilance,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
