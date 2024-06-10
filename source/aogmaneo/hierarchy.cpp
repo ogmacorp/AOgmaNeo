@@ -44,7 +44,7 @@ void Hierarchy::init_random(
 
         // if first layer
         if (l == 0) {
-            e_visible_layer_descs.resize(io_sizes.size());
+            e_visible_layer_descs.resize(io_sizes.size() + (layer_descs[l].recurrent_radius > -1));
 
             for (int i = 0; i < io_sizes.size(); i++) {
                 e_visible_layer_descs[i].size = io_sizes[i];
@@ -101,7 +101,7 @@ void Hierarchy::init_random(
             }
         }
         else {
-            e_visible_layer_descs.resize(1);
+            e_visible_layer_descs.resize(1 + (layer_descs[l].recurrent_radius > -1));
 
             e_visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
             e_visible_layer_descs[0].radius = layer_descs[l].up_radius;
@@ -120,9 +120,16 @@ void Hierarchy::init_random(
             // create decoders
             decoders[l][0].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
         }
+
+        if (layer_descs[l].recurrent_radius > -1) {
+            int last_index = e_visible_layer_descs.size() - 1;
+
+            e_visible_layer_descs[last_index].size = layer_descs[l].hidden_size;
+            e_visible_layer_descs[last_index].radius = layer_descs[l].recurrent_radius;
+        }
         
         // create the sparse coding layer
-        encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].spatial_activity, layer_descs[l].recurrent_radius, e_visible_layer_descs);
+        encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
@@ -150,6 +157,12 @@ void Hierarchy::step(
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
+        // copy to prev
+        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        if (l < encoders.size() - 1)
+            feedback_cis_prev[l] = decoders[l + 1][0].get_hidden_cis();
+
         Array<Int_Buffer_View> layer_input_cis(encoders[l].get_num_visible_layers());
 
         if (l == 0) {
@@ -159,11 +172,13 @@ void Hierarchy::step(
         else
             layer_input_cis[0] = encoders[l - 1].get_hidden_cis();
 
-        // copy to prev
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+        if (is_layer_recurrent(l)) {
+            int last_index = encoders[l].get_num_visible_layers() - 1;
 
-        if (l < encoders.size() - 1)
-            feedback_cis_prev[l] = decoders[l + 1][0].get_hidden_cis();
+            layer_input_cis[last_index] = hidden_cis_prev[l];
+
+            encoders[l].get_visible_layer(last_index).importance = params.layers[l].recurrent_importance;
+        }
 
         // activate sparse coder
         encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
@@ -327,6 +342,8 @@ void Hierarchy::write(
 
     for (int i = 0; i < io_sizes.size(); i++)
         writer.write(reinterpret_cast<const void*>(&params.ios[i]), sizeof(IO_Params));
+
+    writer.write(reinterpret_cast<const void*>(&params.anticipation), sizeof(Byte));
 }
 
 void Hierarchy::read(
@@ -392,6 +409,8 @@ void Hierarchy::read(
 
     for (int i = 0; i < num_io; i++)
         reader.read(reinterpret_cast<void*>(&params.ios[i]), sizeof(IO_Params));
+
+    reader.read(reinterpret_cast<void*>(&params.anticipation), sizeof(Byte));
 }
 
 void Hierarchy::write_state(
