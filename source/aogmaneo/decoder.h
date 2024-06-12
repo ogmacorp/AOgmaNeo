@@ -44,7 +44,7 @@ public:
         scale(4.0f),
         lr(0.02f),
         leak(0.01f),
-        stability(2.0f)
+        stability(1.0f)
         {}
     };
 
