@@ -46,7 +46,6 @@ public:
         float policy_clip; // gradient clipping for policy
         float value_clip; // gradient clipping for value
         float trace_decay; // eligibility trace decay
-        float stability; // how stable the weights are (inverse of plasticity)
 
         Params()
         :
@@ -54,10 +53,9 @@ public:
         plr(0.002f),
         leak(0.01f),
         discount(0.99f),
-        policy_clip(0.2f),
-        value_clip(1.0f),
-        trace_decay(0.97f),
-        stability(2.0f)
+        policy_clip(0.1f),
+        value_clip(0.5f),
+        trace_decay(0.97f)
         {}
     };
 

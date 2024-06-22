@@ -214,8 +214,6 @@ void Actor::forward(
             max_activation_prev = max(max_activation_prev, hidden_acts_prev[hidden_cell_index]);
         }
 
-        float modulation = powf(1.0f - max_activation_prev, params.stability);
-
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -253,7 +251,7 @@ void Actor::forward(
 
                             int dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
-                            float error = modulation * ((hc == target_ci) - hidden_acts_prev[hidden_cell_index]);
+                            float error = (hc == target_ci) - hidden_acts_prev[hidden_cell_index];
 
                             int wi_start = policy_num_dendrites_per_cell * (hc + wi_start_partial);
 
