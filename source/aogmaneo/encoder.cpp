@@ -173,6 +173,8 @@ void Encoder::learn(
 
     int num_higher = 0;
 
+    float modulation = 1.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -181,7 +183,9 @@ void Encoder::learn(
         if (vc != target_ci && recon_sum >= target_sum)
             num_higher++;
 
-        float recon = expf(min(0, recon_sum - count * 127) * recon_scale);
+        float recon = expf((recon_sum - count * 255) * recon_scale);
+
+        modulation = min(modulation, recon);
 
         vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
     }
@@ -190,7 +194,14 @@ void Encoder::learn(
     if (num_higher == 0)
         return;
 
-    const float byte_inv = 1.0f / 255.0f;
+    modulation = powf(modulation, params.stability);
+
+    // re-use recon sums as integer deltas
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+
+        vl.recon_sums[visible_cell_index] = rand_roundf(modulation * vl.recon_deltas[visible_cell_index], state);
+    }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -212,9 +223,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    float modulation = (vl.recon_deltas[visible_cell_index] > 0.0f ? vl.weights[wi] * byte_inv : 1.0f);
-
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + ceilf(vl.recon_deltas[visible_cell_index] * modulation)));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
                 }
             }
         }
@@ -252,7 +261,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - (rand() % init_weight_noisei);
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_deltas.resize(num_visible_cells);

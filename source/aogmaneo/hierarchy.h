@@ -33,7 +33,7 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int history_capacity; // actor history max window size
+        int history_capacity; // maximum length of credit assignment buffer for actor
 
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
