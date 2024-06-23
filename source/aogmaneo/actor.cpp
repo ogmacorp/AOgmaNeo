@@ -206,14 +206,6 @@ void Actor::forward(
 
         float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * td_error_value);
 
-        float max_activation_prev = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            max_activation_prev = max(max_activation_prev, hidden_acts_prev[hidden_cell_index]);
-        }
-
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
