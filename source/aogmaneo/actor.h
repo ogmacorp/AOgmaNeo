@@ -49,12 +49,12 @@ public:
 
         Params()
         :
-        vlr(0.001f),
-        plr(0.001f),
+        vlr(0.002f),
+        plr(0.002f),
         leak(0.01f),
         discount(0.99f),
         policy_clip(0.1f),
-        value_clip(0.2f),
+        value_clip(0.5f),
         trace_decay(0.97f)
         {}
     };
