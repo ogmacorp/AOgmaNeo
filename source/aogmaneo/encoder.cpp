@@ -172,6 +172,8 @@ void Encoder::learn(
     int max_index = 0;
     int max_recon_sum = 0;
 
+    float modulation = 1.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -181,28 +183,19 @@ void Encoder::learn(
             max_recon_sum = recon_sum;
             max_index = vc;
         }
+
+        float recon = expf((recon_sum - count * 255) * recon_scale);
+
+        modulation = min(modulation, recon);
+
+        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
     }
 
     // early stop
     if (max_index == target_ci)
         return;
 
-    float modulation = 0.0f;
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        int recon_sum = vl.recon_sums[visible_cell_index];
-
-        float recon = expf((recon_sum - count * 255) * recon_scale);
-
-        if (vc != max_index)
-            modulation += recon;
-
-        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
-    }
-
-    modulation = powf(modulation / (vld.size.z - 1), params.stability);
+    modulation = powf(modulation, params.stability);
 
     // re-use recon sums as integer deltas
     for (int vc = 0; vc < vld.size.z; vc++) {
