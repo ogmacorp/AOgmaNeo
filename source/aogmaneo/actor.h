@@ -53,8 +53,8 @@ public:
         plr(0.002f),
         leak(0.01f),
         discount(0.99f),
-        policy_clip(0.1f),
-        value_clip(0.5f),
+        policy_clip(0.2f),
+        value_clip(1.0f),
         trace_decay(0.97f)
         {}
     };
