@@ -218,9 +218,9 @@ void Hierarchy::step(
 
     // backward
     for (int l = decoders.size() - 1; l >= 0; l--) {
-        if (updates[l]) {
-            Array<Int_Buffer_View> layer_input_cis(1 + (l < encoders.size() - 1));
+        Array<Int_Buffer_View> layer_input_cis(2);
 
+        if (updates[l]) {
             if (learn_enabled) {
                 layer_input_cis[0] = hidden_cis_prev[l];
                 
@@ -240,15 +240,17 @@ void Hierarchy::step(
                     decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
                 }
             }
-
-            layer_input_cis[0] = encoders[l].get_hidden_cis();
-            
-            if (l < encoders.size() - 1)
-                layer_input_cis[1] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
-
-            for (int d = 0; d < decoders[l].size(); d++)
-                decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
         }
+
+        layer_input_cis[0] = encoders[l].get_hidden_cis();
+        
+        if (l < encoders.size() - 1)
+            layer_input_cis[1] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
+        else
+            layer_input_cis[1] = top_feedback_cis;
+
+        for (int d = 0; d < decoders[l].size(); d++)
+            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
     }
 }
 
