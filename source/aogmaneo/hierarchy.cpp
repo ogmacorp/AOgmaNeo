@@ -424,7 +424,7 @@ void Hierarchy::read(
     reader.read(&ticks[0], ticks.size() * sizeof(int));
     reader.read(&ticks_per_update[0], ticks_per_update.size() * sizeof(int));
 
-    i_indices.resize(num_io * 2);
+    i_indices.resize(num_io);
     d_indices.resize(num_io);
 
     reader.read(&i_indices[0], i_indices.size() * sizeof(int));
