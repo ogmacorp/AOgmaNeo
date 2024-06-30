@@ -41,7 +41,7 @@ public:
 
         Params()
         :
-        scale(4.0f),
+        scale(8.0f),
         lr(0.04f),
         leak(0.01f),
         stability(2.0f)
@@ -69,6 +69,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        unsigned long* state,
         const Params &params
     );
 

@@ -217,19 +217,16 @@ void Hierarchy::step(
     for (int l = decoders.size() - 1; l >= 0; l--) {
         Array<Int_Buffer_View> layer_input_cis(2);
 
-        if (updates[l]) {
-            if (learn_enabled) {
-                layer_input_cis[0] = hidden_cis_prev[l];
-                
-                // learn on actual
-                layer_input_cis[1] = encoders[l].get_hidden_cis();
+        if (updates[l] && learn_enabled) {
+            layer_input_cis[0] = hidden_cis_prev[l];
+            
+            layer_input_cis[1] = encoders[l].get_hidden_cis();
 
-                for (int d = 0; d < decoders[l].size(); d++) {
-                    // need to re-activate for this
-                    decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+            for (int d = 0; d < decoders[l].size(); d++) {
+                // need to re-activate for this
+                decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-                    decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
-                }
+                decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
             }
         }
 
