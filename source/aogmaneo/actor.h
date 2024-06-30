@@ -52,7 +52,7 @@ public:
         plr(0.01f),
         leak(0.01f),
         discount(0.99f),
-        trace_scale(1.0f),
+        trace_scale(0.5f),
         trace_decay(0.97f)
         {}
     };
