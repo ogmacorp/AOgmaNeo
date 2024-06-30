@@ -50,7 +50,7 @@ public:
 
         Params()
         :
-        scale(4.0f),
+        scale(2.0f),
         lr(0.01f),
         stability(2.0f)
         {}
