@@ -18,7 +18,6 @@ void Hierarchy::init_random(
     encoders.resize(layer_descs.size());
     decoders.resize(layer_descs.size());
     hidden_cis_prev.resize(layer_descs.size());
-    feedback_cis_prev.resize(layer_descs.size());
 
     ticks.resize(layer_descs.size(), 0);
 
@@ -141,7 +140,6 @@ void Hierarchy::init_random(
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
-        feedback_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     // initialize params
@@ -198,7 +196,6 @@ void Hierarchy::step(
 
             // copy to prev
             hidden_cis_prev[l] = encoders[l].get_hidden_cis();
-            feedback_cis_prev[l] = (l < encoders.size() - 1 ? decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis() : top_feedback_cis);
 
             // activate sparse coder
             encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
@@ -224,12 +221,6 @@ void Hierarchy::step(
             if (learn_enabled) {
                 layer_input_cis[0] = hidden_cis_prev[l];
                 
-                // learn on feedback
-                layer_input_cis[1] = feedback_cis_prev[l];
-
-                for (int d = 0; d < decoders[l].size(); d++)
-                    decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
-
                 // learn on actual
                 layer_input_cis[1] = encoders[l].get_hidden_cis();
 
@@ -422,7 +413,6 @@ void Hierarchy::read(
     encoders.resize(num_layers);
     decoders.resize(num_layers);
     hidden_cis_prev.resize(num_layers);
-    feedback_cis_prev.resize(num_layers);
 
     histories.resize(num_layers);
     
@@ -479,7 +469,6 @@ void Hierarchy::read(
             decoders[l][d].read(reader);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
-        feedback_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     params.layers.resize(num_layers);
