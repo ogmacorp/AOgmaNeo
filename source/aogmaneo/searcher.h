@@ -17,11 +17,13 @@ public:
     struct Params {
         float lr; // weight learning rate
         float leak; // relu leak
+        float exploration; // exploration amount
 
         Params()
         :
         lr(0.01f),
-        leak(0.01f)
+        leak(0.01f),
+        exploration(0.1f)
         {}
     };
 
@@ -48,6 +50,7 @@ private:
         Int_Buffer_View actual_config_cis,
         float reward,
         bool learn_enabled,
+        unsigned long* state,
         const Params &params
     );
 
