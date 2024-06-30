@@ -50,11 +50,12 @@ private:
         Int_Buffer_View actual_config_cis,
         float reward,
         bool learn_enabled,
-        unsigned long* state,
-        const Params &params
+        unsigned long* state
     );
 
 public:
+    Params params;
+
     // create with random initialization
     void init_random(
         const Int3 &config_size, // configuration size
@@ -66,8 +67,7 @@ public:
     void step(
         Int_Buffer_View actual_config_cis,
         float reward,
-        bool learn_enabled,
-        const Params &params
+        bool learn_enabled
     );
 
     void clear_state();

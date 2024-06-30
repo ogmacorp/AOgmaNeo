@@ -15,8 +15,7 @@ void Searcher::forward(
     Int_Buffer_View actual_config_cis,
     float reward,
     bool learn_enabled,
-    unsigned long* state,
-    const Params &params
+    unsigned long* state
 ) {
     int config_column_index = address2(column_pos, Int2(config_size.x, config_size.y));
 
@@ -185,8 +184,7 @@ void Searcher::init_random(
 void Searcher::step(
     Int_Buffer_View actual_config_cis,
     float reward,
-    bool learn_enabled,
-    const Params &params
+    bool learn_enabled
 ) {
     int num_config_columns = config_size.x * config_size.y;
 
@@ -196,7 +194,7 @@ void Searcher::step(
     for (int i = 0; i < num_config_columns; i++) {
         unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-        forward(Int2(i / config_size.y, i % config_size.y), actual_config_cis, reward, learn_enabled, &state, params);
+        forward(Int2(i / config_size.y, i % config_size.y), actual_config_cis, reward, learn_enabled, &state);
     }
 }
 
