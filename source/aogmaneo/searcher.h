@@ -32,9 +32,9 @@ private:
     int num_dendrites_per_cell;
     int radius;
 
-    Int_Buffer pred_config_cis; // hidden state
+    Int_Buffer config_cis; // hidden state
 
-    Float_Buffer pred_config_acts;
+    Float_Buffer config_acts;
 
     Float_Buffer dendrite_acts;
 
@@ -47,7 +47,6 @@ private:
 
     void forward(
         const Int2 &column_pos,
-        Int_Buffer_View actual_config_cis,
         float reward,
         bool learn_enabled,
         unsigned long* state
@@ -65,7 +64,6 @@ public:
 
     // step the search
     void step(
-        Int_Buffer_View actual_config_cis,
         float reward,
         bool learn_enabled
     );
@@ -102,8 +100,8 @@ public:
     );
 
     // get the hidden states (predictions)
-    const Int_Buffer &get_pred_config_cis() const {
-        return pred_config_cis;
+    const Int_Buffer &get_config_cis() const {
+        return config_cis;
     }
 
     // get the hidden size
