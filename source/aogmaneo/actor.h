@@ -58,7 +58,7 @@ public:
         vlr(0.002f),
         plr(0.002f),
         leak(0.01f),
-        value_rate(0.1f),
+        value_rate(0.01f),
         bias(0.5f),
         discount(0.99f),
         min_steps(8),
