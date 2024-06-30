@@ -32,9 +32,11 @@ private:
     int num_dendrites_per_cell;
     int radius;
 
-    Int_Buffer config_cis; // hidden state
+    Int_Buffer config_cis;
+    Int_Buffer config_cis_prev;
 
     Float_Buffer config_acts;
+    Float_Buffer config_acts_prev;
 
     Float_Buffer dendrite_acts;
 

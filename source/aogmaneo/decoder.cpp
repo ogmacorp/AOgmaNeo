@@ -13,7 +13,6 @@ using namespace aon;
 void Decoder::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -138,24 +137,7 @@ void Decoder::forward(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    float cusp = randf(state);
-
-    int select_index = 0;
-    float sum_so_far = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        sum_so_far += hidden_acts[hidden_cell_index];
-
-        if (sum_so_far >= cusp) {
-            select_index = hc;
-
-            break;
-        }
-    }
-
-    hidden_cis[hidden_column_index] = select_index;
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Decoder::learn(
@@ -170,6 +152,9 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = hidden_target_cis[hidden_column_index];
+
+    if (hidden_cis[hidden_column_index] == target_ci)
+        return;
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
 
@@ -288,14 +273,9 @@ void Decoder::activate(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    unsigned int base_state = rand();
-
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 }
 
 void Decoder::learn(

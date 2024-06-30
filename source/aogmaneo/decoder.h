@@ -69,7 +69,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        unsigned long* state,
         const Params &params
     );
 

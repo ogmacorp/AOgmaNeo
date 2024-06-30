@@ -36,11 +36,11 @@ void Searcher::forward(
     const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
     if (learn_enabled) {
-        int config_cell_index = config_cis[config_column_index] + config_cells_start;
+        int config_cell_index = config_cis_prev[config_column_index] + config_cells_start;
 
         int dendrites_start = num_dendrites_per_cell * config_cell_index;
 
-        float error = params.lr * (reward - config_acts[config_cis[config_column_index] + config_cells_start]);
+        float error = params.lr * (reward - config_acts_prev[config_cis_prev[config_column_index] + config_cells_start]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -52,7 +52,7 @@ void Searcher::forward(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(config_size.x, config_size.y));
 
-                int in_ci = config_cis[visible_column_index];
+                int in_ci = config_cis_prev[visible_column_index];
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -92,7 +92,7 @@ void Searcher::forward(
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             int visible_column_index = address2(Int2(ix, iy), Int2(config_size.x, config_size.y));
 
-            int in_ci = config_cis[visible_column_index];
+            int in_ci = config_cis_prev[visible_column_index];
 
             Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -174,8 +174,10 @@ void Searcher::init_random(
         weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
     config_cis = Int_Buffer(num_config_columns, 0);
+    config_cis_prev = Int_Buffer(num_config_columns, 0);
 
     config_acts = Float_Buffer(num_config_cells, 0.0f);
+    config_acts_prev = Float_Buffer(num_config_cells, 0.0f);
 
     dendrite_acts.resize(num_dendrites);
 
@@ -187,6 +189,9 @@ void Searcher::step(
     bool learn_enabled
 ) {
     int num_config_columns = config_size.x * config_size.y;
+
+    config_cis_prev = config_cis;
+    config_acts_prev = config_acts;
 
     unsigned int base_state = rand();
 
@@ -246,6 +251,9 @@ void Searcher::read(
 
     reader.read(&config_cis[0], config_cis.size() * sizeof(int));
     reader.read(&config_acts[0], config_acts.size() * sizeof(float));
+
+    config_cis_prev.resize(num_config_columns);
+    config_acts_prev.resize(num_config_cells);
 
     dendrite_acts.resize(num_dendrites);
 
