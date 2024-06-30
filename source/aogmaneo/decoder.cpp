@@ -155,7 +155,7 @@ void Decoder::learn(
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
 
-    float modulation = powf(1.0f - hidden_acts[target_ci + hidden_cells_start], params.stability);
+    float modulation = powf(1.0f - hidden_acts[hidden_cis[hidden_column_index] + hidden_cells_start], params.stability);
 
     // find deltas
     for (int hc = 0; hc < hidden_size.z; hc++) {
