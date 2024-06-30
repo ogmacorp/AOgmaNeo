@@ -10,14 +10,12 @@
 
 #include "encoder.h"
 #include "decoder.h"
-#include "actor.h"
 
 namespace aon {
 // type of hierarchy input layer
 enum IO_Type {
     none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 1
 };
 
 // a sph
@@ -28,7 +26,6 @@ public:
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
-        int value_num_dendrites_per_cell; // just value
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -37,7 +34,6 @@ public:
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
-            int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
             int down_radius = 2
         )
@@ -45,7 +41,6 @@ public:
         size(size),
         type(type),
         num_dendrites_per_cell(num_dendrites_per_cell),
-        value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius)
         {}
@@ -88,7 +83,6 @@ public:
 
     struct IO_Params {
         Decoder::Params decoder;
-        Actor::Params actor;
 
         // additional
         float importance;
@@ -102,20 +96,12 @@ public:
     struct Params {
         Array<Layer_Params> layers;
         Array<IO_Params> ios;
-
-        Byte anticipation;
-
-        Params()
-        :
-        anticipation(true)
-        {}
     };
 
 private:
     // layers
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
-    Array<Actor> actors;
     Array<Int_Buffer> hidden_cis_prev;
     Array<Int_Buffer> feedback_cis_prev;
 
@@ -168,9 +154,8 @@ public:
     // simulation step/tick
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
-        bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        Int_Buffer_View top_feedback_cis, // top feed back ("program")
+        bool learn_enabled = true // whether learning is enabled
     );
 
     void clear_state();
@@ -219,9 +204,6 @@ public:
     const Int_Buffer &get_prediction_cis(
         int i
     ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_cis();
-
         return decoders[0][d_indices[i]].get_hidden_cis();
     }
 
@@ -229,9 +211,6 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
-
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
@@ -320,18 +299,6 @@ public:
             return decoders[l][d_indices[i]];
 
         return decoders[l][i];
-    }
-
-    Actor &get_actor(
-        int i
-    ) {
-        return actors[d_indices[i]];
-    }
-
-    const Actor &get_actor(
-        int i
-    ) const {
-        return actors[d_indices[i]];
     }
 
     const Int_Buffer &get_i_indices() const {
