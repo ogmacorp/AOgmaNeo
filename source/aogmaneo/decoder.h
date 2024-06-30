@@ -41,10 +41,10 @@ public:
 
         Params()
         :
-        scale(16.0f),
-        lr(0.2f),
+        scale(8.0f),
+        lr(0.1f),
         leak(0.01f),
-        stability(1.0f)
+        stability(2.0f)
         {}
     };
 
