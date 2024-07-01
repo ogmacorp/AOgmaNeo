@@ -31,16 +31,19 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
+        Byte_Buffer alignments;
     };
 
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
+        float stability; // inverse of plasticity
 
         Params()
         :
-        scale(16.0f),
-        lr(0.02f)
+        scale(4.0f),
+        lr(0.02f),
+        stability(2.0f)
         {}
     };
 

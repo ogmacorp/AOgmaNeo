@@ -125,10 +125,12 @@ void Decoder::learn(
 
     int target_ci = hidden_target_cis[hidden_column_index];
 
+    float modulation = powf(1.0f - hidden_acts[hidden_cis[hidden_column_index] + hidden_cells_start], params.stability);
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_deltas[hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]), state);
+        hidden_deltas[hidden_cell_index] = rand_roundf(params.lr * 255.0f * modulation * ((hc == target_ci) - hidden_acts[hidden_cell_index]), state);
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -235,7 +237,7 @@ void Decoder::generate_errors(
 
                     int wi = hc + wi_start;
 
-                    sum += (vl.weights[wi] - 127.0f) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+                    sum += (vl.alignments[wi] - 127.0f) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
                 }
 
                 count++;
@@ -276,9 +278,12 @@ void Decoder::init_random(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.alignments.resize(vl.weights.size());
 
-        for (int i = 0; i < vl.weights.size(); i++)
+        for (int i = 0; i < vl.weights.size(); i++) {
             vl.weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            vl.alignments[i] = rand() % 256;
+        }
     }
 
     // hidden cis
@@ -362,7 +367,7 @@ long Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte);
+        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights.size() * sizeof(Byte);
     }
 
     return size;
@@ -378,7 +383,7 @@ long Decoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.weights.size() * sizeof(Byte);
+        size += 2 * vl.weights.size() * sizeof(Byte);
     }
 
     return size;
@@ -402,6 +407,7 @@ void Decoder::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.alignments[0]), vl.alignments.size() * sizeof(Byte));
     }
 }
 
@@ -445,8 +451,10 @@ void Decoder::read(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.alignments.resize(vl.weights.size());
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.alignments[0]), vl.alignments.size() * sizeof(Byte));
     }
 
     // generate helper buffers for parallelization
@@ -486,6 +494,7 @@ void Decoder::write_weights(
         const Visible_Layer &vl = visible_layers[vli];
 
         writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        writer.write(reinterpret_cast<const void*>(&vl.alignments[0]), vl.alignments.size() * sizeof(Byte));
     }
 }
 
@@ -496,6 +505,7 @@ void Decoder::read_weights(
         Visible_Layer &vl = visible_layers[vli];
 
         reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(Byte));
+        reader.read(reinterpret_cast<void*>(&vl.alignments[0]), vl.alignments.size() * sizeof(Byte));
     }
 }
 
@@ -513,6 +523,7 @@ void Decoder::merge(
                 int d = rand() % decoders.size();                
 
                 vl.weights[i] = decoders[d]->visible_layers[vli].weights[i];
+                vl.alignments[i] = decoders[d]->visible_layers[vli].alignments[i];
             }
         }
 
@@ -523,12 +534,16 @@ void Decoder::merge(
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
             for (int i = 0; i < vl.weights.size(); i++) {
-                float total = 0.0f;
+                float total_weight = 0.0f;
+                float total_alignment = 0.0f;
 
-                for (int d = 0; d < decoders.size(); d++)
-                    total += decoders[d]->visible_layers[vli].weights[i];
+                for (int d = 0; d < decoders.size(); d++) {
+                    total_weight += decoders[d]->visible_layers[vli].weights[i];
+                    total_alignment += decoders[d]->visible_layers[vli].alignments[i];
+                }
 
-                vl.weights[i] = roundf(total / decoders.size());
+                vl.weights[i] = roundf(total_weight / decoders.size());
+                vl.alignments[i] = roundf(total_alignment / decoders.size());
             }
         }
 
