@@ -43,8 +43,7 @@ public:
         float plr; // policy learning rate
         float leak; // dendrite ReLU leak
         float discount; // discount factor
-        float value_clip; // gradient clipping for value
-        float policy_clip; // gradient clipping for policy
+        float trace_scale; // trace squashing scale
         float trace_decay; // eligibility trace decay
 
         Params()
@@ -53,8 +52,7 @@ public:
         plr(0.001f),
         leak(0.01f),
         discount(0.99f),
-        value_clip(1.0f),
-        policy_clip(0.5f),
+        trace_scale(1.0f),
         trace_decay(0.97f)
         {}
     };
