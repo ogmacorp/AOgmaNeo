@@ -183,10 +183,6 @@ void Encoder::learn(
         }
     }
 
-    // early stop
-    if (max_index == target_ci)
-        return;
-
     float modulation = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
@@ -194,7 +190,7 @@ void Encoder::learn(
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        float recon = expf((recon_sum - count * 255) * recon_scale);
+        float recon = sigmoidf((recon_sum - count * 127) * recon_scale);
 
         if (vc != max_index)
             modulation += recon;
@@ -269,7 +265,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights[i] = 127 + (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_deltas.resize(num_visible_cells);
