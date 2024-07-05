@@ -269,7 +269,7 @@ void Hierarchy::step(
             if (l < encoders.size() - 1) {
                 int next_predictions_start = histories[l + 1][0].size(); // temporal horizon
 
-                // learn on feedback
+                // feedback
                 int feedback_index = encoders[l].get_num_visible_layers() - 1;
 
                 encoders[l].set_input_cis(feedback_index, encoders[l + 1].get_visible_layer(next_predictions_start + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis);
