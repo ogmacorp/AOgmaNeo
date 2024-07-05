@@ -51,7 +51,7 @@ void Encoder::forward(
         count_except += vl.importance * (vld.size.z - 1);
         count_all += vl.importance * vld.size.z;
 
-        float influence = vl.importance / sub_count / 255.0f;
+        float influence = vl.importance / (sub_count * 255.0f);
 
         total_importance += vl.importance / sub_count;
 
@@ -225,7 +225,7 @@ void Encoder::learn(
                 }
             }
 
-        vl.hidden_totals[hidden_cell_index_max] = vl.importance / sub_count * sub_total / 255.0f;
+        vl.hidden_totals[hidden_cell_index_max] = vl.importance / (sub_count * 255.0f) * sub_total;
     }
 }
 
@@ -398,7 +398,7 @@ void Encoder::init_random(
                         }
                     }
 
-                vl.hidden_totals[hidden_cell_index] = vl.importance / sub_count * sub_total / 255.0f;
+                vl.hidden_totals[hidden_cell_index] = vl.importance / (sub_count * 255.0f) * sub_total;
             }
         }
     }
