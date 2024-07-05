@@ -54,8 +54,6 @@ public:
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
 
-        int num_dendrites_per_cell;
-
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
@@ -64,7 +62,6 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
-            int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
@@ -72,7 +69,6 @@ public:
         )
         :
         hidden_size(hidden_size),
-        num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius),
         ticks_per_update(ticks_per_update),
@@ -108,7 +104,7 @@ private:
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
-    Int_Buffer a_indices;
+    Int_Buffer d_indices;
 
     // histories
     Array<Array<Circle_Buffer<Int_Buffer>>> histories;
@@ -199,7 +195,7 @@ public:
     bool a_layer_exists(
         int i
     ) const {
-        return a_indices[i] != -1;
+        return d_indices[i] != -1;
     }
 
     // retrieve predictions
@@ -207,11 +203,11 @@ public:
         int i
     ) const {
         if (io_types[i] == action)
-            return actors[a_indices[i]].get_hidden_cis();
+            return actors[d_indices[i]].get_hidden_cis();
 
         int predictions_start = io_sizes.size() * histories[0][0].size();
 
-        return encoders[0].get_visible_layer(predictions_start + i).recon_cis;
+        return encoders[0].get_visible_layer(predictions_start + d_indices[i]).recon_cis;
     }
 
     // whether this layer received on update this timestep
@@ -283,21 +279,21 @@ public:
     Actor &get_actor(
         int i
     ) {
-        return actors[a_indices[i]];
+        return actors[d_indices[i]];
     }
 
     const Actor &get_actor(
         int i
     ) const {
-        return actors[a_indices[i]];
+        return actors[d_indices[i]];
     }
 
     const Int_Buffer &get_i_indices() const {
         return i_indices;
     }
 
-    const Int_Buffer &get_a_indices() const {
-        return a_indices;
+    const Int_Buffer &get_d_indices() const {
+        return d_indices;
     }
 
     const Array<Circle_Buffer<Int_Buffer>> &get_histories(
