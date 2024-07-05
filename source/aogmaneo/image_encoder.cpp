@@ -208,7 +208,7 @@ void Image_Encoder::learn_reconstruction(
 
         float target = inputs[visible_cell_index] * byte_inv;
 
-        int delta = rand_roundf(params.rr * (target - min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f))) * 255.0f, state);
+        int delta = rand_roundf(params.rr * 255.0f * (target - min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f))), state);
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -290,9 +290,9 @@ void Image_Encoder::reconstruct(
                 }
             }
 
-        sum /= max(1, count) * 255;
+        sum /= max(1, count * 255);
 
-        vl.reconstruction[visible_cell_index] = roundf(min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f)) * 255.0f);
+        vl.reconstruction[visible_cell_index] = roundf(255.0f * min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f)));
     }
 }
 
@@ -413,45 +413,45 @@ long Image_Encoder::weights_size() const {
 void Image_Encoder::write(
     Stream_Writer &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
+    writer.write(&hidden_size, sizeof(Int3));
 
-    writer.write(reinterpret_cast<const void*>(&params), sizeof(Params));
+    writer.write(&params, sizeof(Params));
     
-    writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
     int num_visible_layers = visible_layers.size();
 
-    writer.write(reinterpret_cast<const void*>(&num_visible_layers), sizeof(int));
+    writer.write(&num_visible_layers, sizeof(int));
     
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
+        writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.weights_recon[0]), vl.weights_recon.size() * sizeof(Byte));
+        writer.write(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
+        writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        writer.write(&vl.weights_recon[0], vl.weights_recon.size() * sizeof(Byte));
     }
 }
 
 void Image_Encoder::read(
     Stream_Reader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hidden_size), sizeof(Int3));
+    reader.read(&hidden_size, sizeof(Int3));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
-    reader.read(reinterpret_cast<void*>(&params), sizeof(Params));
+    reader.read(&params, sizeof(Params));
 
     hidden_cis.resize(num_hidden_columns);
 
-    reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
     int num_visible_layers;
 
-    reader.read(reinterpret_cast<void*>(&num_visible_layers), sizeof(int));
+    reader.read(&num_visible_layers, sizeof(int));
 
     visible_layers.resize(num_visible_layers);
     visible_layer_descs.resize(num_visible_layers);
@@ -460,7 +460,7 @@ void Image_Encoder::read(
         Visible_Layer &vl = visible_layers[vli];
         Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        reader.read(reinterpret_cast<void*>(&vld), sizeof(Visible_Layer_Desc));
+        reader.read(&vld, sizeof(Visible_Layer_Desc));
 
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
@@ -472,9 +472,9 @@ void Image_Encoder::read(
         vl.weights1.resize(vl.weights0.size());
         vl.weights_recon.resize(vl.weights0.size());
 
-        reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.weights_recon[0]), vl.weights_recon.size() * sizeof(Byte));
+        reader.read(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
+        reader.read(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        reader.read(&vl.weights_recon[0], vl.weights_recon.size() * sizeof(Byte));
 
         vl.reconstruction = Byte_Buffer(num_visible_cells, 0);
     }
@@ -483,13 +483,13 @@ void Image_Encoder::read(
 void Image_Encoder::write_state(
     Stream_Writer &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 }
 
 void Image_Encoder::read_state(
     Stream_Reader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 }
 
 void Image_Encoder::write_weights(
@@ -498,9 +498,9 @@ void Image_Encoder::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
-        writer.write(reinterpret_cast<const void*>(&vl.weights_recon[0]), vl.weights_recon.size() * sizeof(Byte));
+        writer.write(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
+        writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        writer.write(&vl.weights_recon[0], vl.weights_recon.size() * sizeof(Byte));
     }
 }
 
@@ -510,9 +510,9 @@ void Image_Encoder::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(reinterpret_cast<void*>(&vl.weights0[0]), vl.weights0.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.weights1[0]), vl.weights1.size() * sizeof(Byte));
-        reader.read(reinterpret_cast<void*>(&vl.weights_recon[0]), vl.weights_recon.size() * sizeof(Byte));
+        reader.read(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
+        reader.read(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        reader.read(&vl.weights_recon[0], vl.weights_recon.size() * sizeof(Byte));
     }
 }
 
@@ -526,7 +526,7 @@ void Image_Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights_recon.size(); i++) {
+            for (int i = 0; i < vl.weights0.size(); i++) {
                 int e = rand() % image_encoders.size();                
 
                 vl.weights0[i] = image_encoders[e]->visible_layers[vli].weights0[i];
@@ -541,7 +541,7 @@ void Image_Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights_recon.size(); i++) {
+            for (int i = 0; i < vl.weights0.size(); i++) {
                 float total0 = 0.0f;
                 float total1 = 0.0f;
                 float total_recon = 0.0f;
