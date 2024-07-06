@@ -107,8 +107,10 @@ void Encoder::forward(
 
             assert(vl.up_to_date);
 
-            hidden_sum += vl.hidden_sums[hidden_cell_index] * ;
-            hidden_total += vl.hidden_totals[hidden_cell_index];
+            float influence = vl.importance / 255.0f;
+
+            hidden_sum += vl.hidden_sums[hidden_cell_index] * influence;
+            hidden_total += vl.hidden_totals[hidden_cell_index] * influence;
         }
 
         hidden_sum /= total_importance;
@@ -201,8 +203,6 @@ void Encoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
         int sub_total = 0;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -223,7 +223,7 @@ void Encoder::learn(
                 }
             }
 
-        vl.hidden_totals[hidden_cell_index_max] = vl.importance / (sub_count * 255.0f) * sub_total;
+        vl.hidden_totals[hidden_cell_index_max] = sub_total;
     }
 }
 
@@ -378,8 +378,6 @@ void Encoder::init_random(
                 // bounds of receptive field, clamped to input size
                 Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
                 Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-                int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
                 int sub_total = 0;
 
