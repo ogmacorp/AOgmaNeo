@@ -47,19 +47,17 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        count += vl.importance;
-        count_except += vl.importance * (vld.size.z - 1);
-        count_all += vl.importance * vld.size.z;
+        count += vl.importance * sub_count;
+        count_except += vl.importance * sub_count * (vld.size.z - 1);
+        count_all += vl.importance * sub_count * vld.size.z;
 
-        float influence = vl.importance / (sub_count * 255.0f);
-
-        total_importance += vl.importance / sub_count;
+        total_importance += vl.importance;
 
         if (!vl.up_to_date) {
             for (int hc = 0; hc < hidden_size.z; hc++) {
                 int hidden_cell_index = hc + hidden_cells_start;
 
-                vl.hidden_sums[hidden_cell_index] = 0.0f;
+                vl.hidden_sums[hidden_cell_index] = 0;
             }
 
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -77,7 +75,7 @@ void Encoder::forward(
 
                         int wi = hc + wi_start;
 
-                        vl.hidden_sums[hidden_cell_index] += vl.weights[wi] * influence;
+                        vl.hidden_sums[hidden_cell_index] += vl.weights[wi];
                     }
                 }
         }
@@ -109,7 +107,7 @@ void Encoder::forward(
 
             assert(vl.up_to_date);
 
-            hidden_sum += vl.hidden_sums[hidden_cell_index];
+            hidden_sum += vl.hidden_sums[hidden_cell_index] * ;
             hidden_total += vl.hidden_totals[hidden_cell_index];
         }
 
@@ -137,7 +135,7 @@ void Encoder::forward(
 
     hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;
 }
 
 void Encoder::learn(
@@ -398,7 +396,7 @@ void Encoder::init_random(
                         }
                     }
 
-                vl.hidden_totals[hidden_cell_index] = vl.importance / (sub_count * 255.0f) * sub_total;
+                vl.hidden_totals[hidden_cell_index] = sub_total;
             }
         }
     }
