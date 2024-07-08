@@ -63,11 +63,11 @@ public:
 
         Params()
         :
-        choice(0.1f),
-        vigilance(0.98f),
-        lr(1.0f),
-        active_ratio(0.1f),
-        l_radius(2)
+        choice(0.01f),
+        vigilance(0.97f),
+        lr(0.5f),
+        active_ratio(0.04f),
+        l_radius(4)
         {}
     };
 
