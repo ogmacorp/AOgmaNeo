@@ -64,12 +64,12 @@ public:
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.97f),
+        choice(0.5f),
+        vigilance(0.95f),
         lr(0.5f),
-        active_ratio(0.03f),
-        l_radius(4),
-        min_matches(3)
+        active_ratio(0.05f),
+        l_radius(3),
+        min_matches(4)
         {}
     };
 
