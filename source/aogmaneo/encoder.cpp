@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -139,6 +140,8 @@ void Encoder::forward(
 
     hidden_comparisons[hidden_column_index] = max_activation;
 
+    if (max_index == -1)
+        std::cout << "TEST";
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
 
