@@ -216,8 +216,10 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    if (vc == in_ci)
+                    if (vc == in_ci) // reinforce input
                         vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
+                    else if (vc == vl.recon_cis[visible_column_index]) // punish incorrect predictions
+                        vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                     sub_total += vl.weights[wi];
                 }
@@ -417,6 +419,17 @@ void Encoder::step(
     }
 
     if (learn_enabled) {
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            int num_visible_columns = vld.size.x * vld.size.y;
+
+            PARALLEL_FOR
+            for (int i = 0; i < num_visible_columns; i++)
+                reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli);
+        }
+
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), params);
