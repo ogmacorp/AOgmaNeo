@@ -58,17 +58,13 @@ public:
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // ART vigilance
         float lr; // learning rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // second stage inhibition radius
         int min_matches;
 
         Params()
         :
-        choice(0.1f),
+        choice(0.01f),
         vigilance(0.95f),
-        lr(0.1f),
-        active_ratio(0.05f),
-        l_radius(3),
+        lr(0.5f),
         min_matches(3)
         {}
     };
@@ -79,8 +75,6 @@ private:
     Int_Buffer hidden_cis;
 
     Int_Buffer learn_cis;
-
-    Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

@@ -133,8 +133,6 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = (num_matches > params.min_matches ? max_index : -1);
 
-    hidden_comparisons[hidden_column_index] = (num_matches > params.min_matches ? max_activation : 0.0f);
-
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
 
@@ -149,33 +147,6 @@ void Encoder::learn(
     int learn_ci = learn_cis[hidden_column_index];
 
     if (learn_ci == -1)
-        return;
-
-    float hidden_max = hidden_comparisons[hidden_column_index];
-
-    int num_higher = 0;
-    int count = 0;
-
-    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
-        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            if (dcx == 0 && dcy == 0)
-                continue;
-
-            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
-
-            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
-                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
-
-                if (hidden_comparisons[other_hidden_column_index] >= hidden_max)
-                    num_higher++;
-
-                count++;
-            }
-        }
-
-    float ratio = static_cast<float>(num_higher) / static_cast<float>(max(1, count));
-
-    if (ratio > params.active_ratio)
         return;
 
     int hidden_cell_index_max = learn_ci + hidden_cells_start;
@@ -217,7 +188,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    if (vc != in_ci)
+                    if (vl.recon_cis[visible_column_index] != in_ci && vc == vl.recon_cis[visible_column_index])
                         vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                     sub_total += vl.weights[wi];
@@ -348,8 +319,6 @@ void Encoder::init_random(
 
     learn_cis.resize(num_hidden_columns);
 
-    hidden_comparisons.resize(num_hidden_columns);
-
     // init hidden_totals
     for (int i = 0; i < num_hidden_columns; i++) {
         Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
@@ -418,6 +387,17 @@ void Encoder::step(
     }
 
     if (learn_enabled) {
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            int num_visible_columns = vld.size.x * vld.size.y;
+
+            PARALLEL_FOR
+            for (int i = 0; i < num_visible_columns; i++)
+                reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli);
+        }
+
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), params);
@@ -522,8 +502,6 @@ void Encoder::read(
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
     learn_cis.resize(num_hidden_columns);
-
-    hidden_comparisons.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
