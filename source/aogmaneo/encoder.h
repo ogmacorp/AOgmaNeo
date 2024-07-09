@@ -46,16 +46,14 @@ public:
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
-        int min_matches; // minimum matches for learning
 
         Params()
         :
-        choice(0.1f),
+        choice(0.01f),
         vigilance(0.8f),
         lr(0.5f),
-        active_ratio(0.05f),
-        l_radius(3),
-        min_matches(3)
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
