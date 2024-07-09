@@ -19,8 +19,6 @@ void Encoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
-    float count_except = 0.0f;
-    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -48,8 +46,6 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         count += vl.importance * sub_count;
-        count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
 
@@ -84,8 +80,6 @@ void Encoder::forward(
     assert(total_importance > 0.0f);
 
     count /= total_importance;
-    count_except /= total_importance;
-    count_all /= total_importance;
 
     int max_index = -1;
     float max_activation = 0.0f;
@@ -118,11 +112,9 @@ void Encoder::forward(
         hidden_sum /= total_importance;
         hidden_total /= total_importance;
 
-        float complemented = (count_all - hidden_total) - (count - hidden_sum);
+        float match = hidden_sum / count;
 
-        float match = complemented / count_except;
-
-        float activation = complemented / (params.choice + count_all - hidden_total);
+        float activation = hidden_sum / (params.choice + hidden_total);
 
         if (match >= params.vigilance) {
             if (activation > max_activation) {
@@ -225,9 +217,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = learn_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    if (vc == in_ci)
-                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
-                    else if (in_ci != vl.recon_cis[visible_column_index] && vc == vl.recon_cis[visible_column_index])
+                    if (vc != in_ci)
                         vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
 
                     sub_total += vl.weights[wi];
@@ -342,7 +332,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = (rand() % init_weight_noisei);
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.hidden_sums.resize(num_hidden_cells);
 
@@ -428,17 +418,6 @@ void Encoder::step(
     }
 
     if (learn_enabled) {
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-            int num_visible_columns = vld.size.x * vld.size.y;
-
-            PARALLEL_FOR
-            for (int i = 0; i < num_visible_columns; i++)
-                reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli);
-        }
-
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), params);
