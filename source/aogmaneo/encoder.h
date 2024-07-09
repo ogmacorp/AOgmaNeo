@@ -64,9 +64,9 @@ public:
 
         Params()
         :
-        choice(0.01f),
+        choice(0.1f),
         vigilance(0.95f),
-        lr(0.5f),
+        lr(0.1f),
         active_ratio(0.05f),
         l_radius(3),
         min_matches(3)
