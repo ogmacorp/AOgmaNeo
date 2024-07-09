@@ -121,7 +121,7 @@ void Encoder::forward(
 
     learn_cis[hidden_column_index] = (num_matches > params.min_matches ? max_index : -1);
 
-    hidden_comparisons[hidden_column_index] = (num_matches > params.min_matches ? max_activation : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = max_complete_activation;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
