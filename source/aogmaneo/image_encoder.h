@@ -48,12 +48,12 @@ public:
         
         Params()
         :
-        choice(0.0001f),
+        choice(0.01f),
         vigilance(0.97f),
         lr(0.5f),
         scale(2.0f),
         rr(0.05f),
-        active_ratio(0.5f),
+        active_ratio(0.2f),
         l_radius(1)
         {}
     };
