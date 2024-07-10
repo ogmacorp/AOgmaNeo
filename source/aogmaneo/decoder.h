@@ -42,7 +42,7 @@ public:
         Params()
         :
         scale(4.0f),
-        lr(0.05f),
+        lr(0.04f),
         leak(0.01f),
         stability(4.0f)
         {}
