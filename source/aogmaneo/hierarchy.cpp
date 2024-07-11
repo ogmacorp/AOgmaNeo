@@ -219,7 +219,7 @@ void Hierarchy::step(
             layer_input_cis[1] = encoders[l].get_hidden_cis();
 
             for (int d = 0; d < decoders[l].size(); d++) {
-                if (io_types[i_indices[d]] == action) // actions stay random, they are not learned in UBL
+                if (l == 0 && io_types[i_indices[d]] == action) // actions stay random, they are not learned in UBL
                     continue;
 
                 // need to re-activate for this
