@@ -214,7 +214,7 @@ void Hierarchy::step(
     }
 
     // backward
-    for (int l = decoders.size() - 1; l >= 0; l--) {
+    for (int l = encoders.size() - 1; l >= 0; l--) {
         Array<Int_Buffer_View> layer_input_cis(2);
 
         if (updates[l] && learn_enabled) {
