@@ -53,12 +53,12 @@ public:
 
         Params()
         :
-        lr(0.001f),
-        cons(0.1f),
+        lr(0.002f),
+        cons(0.0f),
         leak(0.01f),
         discount(0.99f),
-        delay_rate(0.01f),
-        n_steps(5),
+        delay_rate(0.5f),
+        n_steps(8),
         history_iters(8)
         {}
     };
