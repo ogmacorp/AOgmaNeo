@@ -296,6 +296,8 @@ void Encoder::step(
     bool learn_enabled,
     const Params &params
 ) {
+    assert(input_cis.size() == visible_layers.size());
+
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
     PARALLEL_FOR

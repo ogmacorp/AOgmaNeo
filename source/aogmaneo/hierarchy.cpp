@@ -87,7 +87,7 @@ void Hierarchy::init_random(
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == prediction) {
                     // decoder visible layer descriptors
-                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
+                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(2);
 
                     d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     d_visible_layer_descs[0].radius = io_descs[i].down_radius;
@@ -123,7 +123,7 @@ void Hierarchy::init_random(
             decoders[l].resize(layer_descs[l].ticks_per_update);
 
             // decoder visible layer descriptors
-            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
+            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(2);
 
             d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
             d_visible_layer_descs[0].radius = layer_descs[l].down_radius;
