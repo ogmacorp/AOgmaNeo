@@ -630,51 +630,51 @@ long Actor::weights_size() const {
 void Actor::write(
     Stream_Writer &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hidden_size), sizeof(Int3));
-    writer.write(reinterpret_cast<const void*>(&num_dendrites_per_cell), sizeof(int));
+    writer.write(&hidden_size, sizeof(Int3));
+    writer.write(&num_dendrites_per_cell, sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
     int num_visible_layers = visible_layers.size();
 
-    writer.write(reinterpret_cast<const void*>(&num_visible_layers), sizeof(int));
+    writer.write(&num_visible_layers, sizeof(int));
     
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
+        writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(&vl.weights[0], vl.weights.size() * sizeof(float));
     }
 
-    writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
+    writer.write(&history_size, sizeof(int));
 
     int num_history_samples = history_samples.size();
 
-    writer.write(reinterpret_cast<const void*>(&num_history_samples), sizeof(int));
+    writer.write(&num_history_samples, sizeof(int));
 
     int history_start = history_samples.start;
 
-    writer.write(reinterpret_cast<const void*>(&history_start), sizeof(int));
+    writer.write(&history_start, sizeof(int));
 
     for (int t = 0; t < history_samples.size(); t++) {
         const History_Sample &s = history_samples[t];
 
         for (int vli = 0; vli < visible_layers.size(); vli++)
-            writer.write(reinterpret_cast<const void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
+            writer.write(&s.input_cis[vli][0], s.input_cis[vli].size() * sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
+        writer.write(&s.hidden_target_cis_prev[0], s.hidden_target_cis_prev.size() * sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
+        writer.write(&s.reward, sizeof(float));
     }
 }
 
 void Actor::read(
     Stream_Reader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hidden_size), sizeof(Int3));
-    reader.read(reinterpret_cast<void*>(&num_dendrites_per_cell), sizeof(int));
+    reader.read(&hidden_size, sizeof(Int3));
+    reader.read(&num_dendrites_per_cell, sizeof(int));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
@@ -682,14 +682,14 @@ void Actor::read(
     
     hidden_cis.resize(num_hidden_columns);
 
-    reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
     dendrite_acts.resize(num_dendrites);
     hidden_acts.resize(num_hidden_cells);
 
     int num_visible_layers;
 
-    reader.read(reinterpret_cast<void*>(&num_visible_layers), sizeof(int));
+    reader.read(&num_visible_layers, sizeof(int));
 
     visible_layers.resize(num_visible_layers);
     visible_layer_descs.resize(num_visible_layers);
@@ -698,7 +698,7 @@ void Actor::read(
         Visible_Layer &vl = visible_layers[vli];
         Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        reader.read(reinterpret_cast<void*>(&vld), sizeof(Visible_Layer_Desc));
+        reader.read(&vld, sizeof(Visible_Layer_Desc));
 
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
@@ -708,20 +708,20 @@ void Actor::read(
 
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(&vl.weights[0], vl.weights.size() * sizeof(float));
 
         vl.weights_delayed = vl.weights;
     }
 
-    reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
+    reader.read(&history_size, sizeof(int));
 
     int num_history_samples;
 
-    reader.read(reinterpret_cast<void*>(&num_history_samples), sizeof(int));
+    reader.read(&num_history_samples, sizeof(int));
 
     int history_start;
 
-    reader.read(reinterpret_cast<void*>(&history_start), sizeof(int));
+    reader.read(&history_start, sizeof(int));
 
     history_samples.resize(num_history_samples);
     history_samples.start = history_start;
@@ -738,50 +738,50 @@ void Actor::read(
 
             s.input_cis[vli].resize(num_visible_columns);
 
-            reader.read(reinterpret_cast<void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
+            reader.read(&s.input_cis[vli][0], s.input_cis[vli].size() * sizeof(int));
         }
 
         s.hidden_target_cis_prev.resize(num_hidden_columns);
 
-        reader.read(reinterpret_cast<void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
+        reader.read(&s.hidden_target_cis_prev[0], s.hidden_target_cis_prev.size() * sizeof(int));
 
-        reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
+        reader.read(&s.reward, sizeof(float));
     }
 }
 
 void Actor::write_state(
     Stream_Writer &writer
 ) const {
-    writer.write(reinterpret_cast<const void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-    writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
+    writer.write(&history_size, sizeof(int));
 
     int history_start = history_samples.start;
 
-    writer.write(reinterpret_cast<const void*>(&history_start), sizeof(int));
+    writer.write(&history_start, sizeof(int));
 
     for (int t = 0; t < history_samples.size(); t++) {
         const History_Sample &s = history_samples[t];
 
         for (int vli = 0; vli < visible_layers.size(); vli++)
-            writer.write(reinterpret_cast<const void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
+            writer.write(&s.input_cis[vli][0], s.input_cis[vli].size() * sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
+        writer.write(&s.hidden_target_cis_prev[0], s.hidden_target_cis_prev.size() * sizeof(int));
 
-        writer.write(reinterpret_cast<const void*>(&s.reward), sizeof(float));
+        writer.write(&s.reward, sizeof(float));
     }
 }
 
 void Actor::read_state(
     Stream_Reader &reader
 ) {
-    reader.read(reinterpret_cast<void*>(&hidden_cis[0]), hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-    reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
+    reader.read(&history_size, sizeof(int));
 
     int history_start;
 
-    reader.read(reinterpret_cast<void*>(&history_start), sizeof(int));
+    reader.read(&history_start, sizeof(int));
 
     history_samples.start = history_start;
 
@@ -789,11 +789,11 @@ void Actor::read_state(
         History_Sample &s = history_samples[t];
 
         for (int vli = 0; vli < visible_layers.size(); vli++)
-            reader.read(reinterpret_cast<void*>(&s.input_cis[vli][0]), s.input_cis[vli].size() * sizeof(int));
+            reader.read(&s.input_cis[vli][0], s.input_cis[vli].size() * sizeof(int));
 
-        reader.read(reinterpret_cast<void*>(&s.hidden_target_cis_prev[0]), s.hidden_target_cis_prev.size() * sizeof(int));
+        reader.read(&s.hidden_target_cis_prev[0], s.hidden_target_cis_prev.size() * sizeof(int));
 
-        reader.read(reinterpret_cast<void*>(&s.reward), sizeof(float));
+        reader.read(&s.reward, sizeof(float));
     }
 }
 
@@ -803,7 +803,7 @@ void Actor::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(reinterpret_cast<const void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        writer.write(&vl.weights[0], vl.weights.size() * sizeof(float));
     }
 }
 
@@ -813,7 +813,7 @@ void Actor::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(reinterpret_cast<void*>(&vl.weights[0]), vl.weights.size() * sizeof(float));
+        reader.read(&vl.weights[0], vl.weights.size() * sizeof(float));
     }
 }
 
