@@ -153,9 +153,6 @@ void Decoder::learn(
 
     int target_ci = hidden_target_cis[hidden_column_index];
 
-    if (hidden_cis[hidden_column_index] == target_ci)
-        return;
-
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
 
     float modulation = powf(1.0f - hidden_acts[target_ci + hidden_cells_start], params.stability);
