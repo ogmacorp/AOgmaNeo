@@ -95,7 +95,7 @@ void Searcher::step(
         dendrite_deltas[di] = ((di >= half_num_dendrites) * 2.0f - 1.0f) * ((dendrite_acts[di] > 0.0f) * (1.0f - params.leak) + params.leak);
 
     for (int i = 0; i < num_config_columns; i++) {
-        if (rand() < params.exploration) 
+        if (randf() < params.exploration) 
             config_cis[i] = rand() % config_size.z;
         else {
             int config_ci = 0;
