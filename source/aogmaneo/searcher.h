@@ -21,38 +21,25 @@ public:
 
         Params()
         :
-        lr(0.0001f),
+        lr(0.01f),
         leak(0.01f),
-        exploration(0.05f)
+        exploration(0.01f)
         {}
     };
 
 private:
     Int3 config_size; // size of the configuration
-    int num_dendrites_per_cell;
-    int radius;
+    int num_dendrites;
 
     Int_Buffer config_cis;
-    Int_Buffer config_cis_prev;
-
-    Float_Buffer config_acts;
-    Float_Buffer config_acts_prev;
 
     Float_Buffer dendrite_acts;
 
     Float_Buffer dendrite_deltas;
 
-    // visible layers and descs
     Float_Buffer weights;
 
-    // --- kernels ---
-
-    void forward(
-        const Int2 &column_pos,
-        float reward,
-        bool learn_enabled,
-        unsigned long* state
-    );
+    float activation;
 
 public:
     Params params;
@@ -60,8 +47,7 @@ public:
     // create with random initialization
     void init_random(
         const Int3 &config_size, // configuration size
-        int num_dendrites_per_cell,
-        int radius
+        int num_dendrites
     );
 
     // step the search
@@ -109,6 +95,10 @@ public:
     // get the hidden size
     const Int3 &get_config_size() const {
         return config_size;
+    }
+    
+    float get_activation() const {
+        return activation;
     }
 
     // merge list of decoders and write to this one

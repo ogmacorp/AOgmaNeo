@@ -10,178 +10,29 @@
 
 using namespace aon;
 
-void Searcher::forward(
-    const Int2 &column_pos,
-    float reward,
-    bool learn_enabled,
-    unsigned long* state
-) {
-    int config_column_index = address2(column_pos, Int2(config_size.x, config_size.y));
-
-    int config_cells_start = config_column_index * config_size.z;
-
-    int diam = radius * 2 + 1;
-
-    // lower corner
-    Int2 field_lower_bound(column_pos.x - radius, column_pos.y - radius);
-
-    // bounds of receptive field, clamped to input size
-    Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-    Int2 iter_upper_bound(min(config_size.x - 1, column_pos.x + radius), min(config_size.y - 1, column_pos.y + radius));
-
-    int count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
-    const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
-    const float dendrite_scale = sqrtf(1.0f / count);
-    const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
-
-    if (learn_enabled) {
-        int config_cell_index = config_cis_prev[config_column_index] + config_cells_start;
-
-        int dendrites_start = num_dendrites_per_cell * config_cell_index;
-
-        float error = params.lr * (reward - config_acts_prev[config_cis_prev[config_column_index] + config_cells_start]);
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            dendrite_deltas[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
-        }
-
-        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                int visible_column_index = address2(Int2(ix, iy), Int2(config_size.x, config_size.y));
-
-                int in_ci = config_cis_prev[visible_column_index];
-
-                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
-
-                int wi_start_partial = config_size.z * (offset.y + diam * (offset.x + diam * (in_ci + config_size.z * config_column_index)));
-
-                for (int hc = 0; hc < config_size.z; hc++) {
-                    int config_cell_index = hc + config_cells_start;
-
-                    int dendrites_start = num_dendrites_per_cell * config_cell_index;
-
-                    int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
-
-                    for (int di = 0; di < num_dendrites_per_cell; di++) {
-                        int dendrite_index = di + dendrites_start;
-
-                        int wi = di + wi_start;
-
-                        weights[wi] += dendrite_deltas[dendrite_index];
-                    }
-                }
-            }
-    }
-
-    for (int hc = 0; hc < config_size.z; hc++) {
-        int config_cell_index = hc + config_cells_start;
-
-        int dendrites_start = num_dendrites_per_cell * config_cell_index;
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            dendrite_acts[dendrite_index] = 0.0f;
-        }
-    }
-
-    for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-        for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-            int visible_column_index = address2(Int2(ix, iy), Int2(config_size.x, config_size.y));
-
-            int in_ci = config_cis_prev[visible_column_index];
-
-            Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
-
-            int wi_start_partial = config_size.z * (offset.y + diam * (offset.x + diam * (in_ci + config_size.z * config_column_index)));
-
-            for (int hc = 0; hc < config_size.z; hc++) {
-                int config_cell_index = hc + config_cells_start;
-
-                int dendrites_start = num_dendrites_per_cell * config_cell_index;
-
-                int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
-
-                for (int di = 0; di < num_dendrites_per_cell; di++) {
-                    int dendrite_index = di + dendrites_start;
-
-                    int wi = di + wi_start;
-
-                    dendrite_acts[dendrite_index] += weights[wi];
-                }
-            }
-        }
-
-    int max_index = 0;
-    float max_activation = limit_min;
-
-    for (int hc = 0; hc < config_size.z; hc++) {
-        int config_cell_index = hc + config_cells_start;
-
-        int dendrites_start = num_dendrites_per_cell * config_cell_index;
-
-        float activation = 0.0f;
-
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
-
-            float act = dendrite_acts[dendrite_index] * dendrite_scale;
-
-            dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
-
-            activation += dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
-        }
-
-        activation *= activation_scale;
-
-        config_acts[config_cell_index] = activation;
-
-        if (activation > max_activation) {
-            max_activation = activation;
-            max_index = hc;
-        }
-    }
-
-    if (randf(state) < params.exploration)
-        config_cis[config_column_index] = rand(state) % config_size.z;
-    else
-        config_cis[config_column_index] = max_index;
-}
-
 void Searcher::init_random(
     const Int3 &config_size,
-    int num_dendrites_per_cell,
-    int radius
+    int num_dendrites
 ) {
     this->config_size = config_size;
-    this->num_dendrites_per_cell = num_dendrites_per_cell;
-    this->radius = radius;
+    this->num_dendrites = num_dendrites;
 
     // pre-compute dimensions
     int num_config_columns = config_size.x * config_size.y;
     int num_config_cells = num_config_columns * config_size.z;
-    int num_dendrites = num_config_cells * num_dendrites_per_cell;
 
-    int diam = radius * 2 + 1;
-    int area = diam * diam;
-
-    weights.resize(num_dendrites * area * config_size.z);
+    weights.resize(num_dendrites * num_config_cells);
 
     for (int i = 0; i < weights.size(); i++)
         weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
     config_cis = Int_Buffer(num_config_columns, 0);
-    config_cis_prev = Int_Buffer(num_config_columns, 0);
-
-    config_acts = Float_Buffer(num_config_cells, 0.0f);
-    config_acts_prev = Float_Buffer(num_config_cells, 0.0f);
 
     dendrite_acts.resize(num_dendrites);
 
     dendrite_deltas.resize(num_dendrites);
+
+    activation = 0.0f;
 }
 
 void Searcher::step(
@@ -190,26 +41,92 @@ void Searcher::step(
 ) {
     int num_config_columns = config_size.x * config_size.y;
 
-    config_cis_prev = config_cis;
-    config_acts_prev = config_acts;
+    const int half_num_dendrites = num_dendrites / 2;
 
-    unsigned int base_state = rand();
+    if (learn_enabled) { // learn from last activation
+        float error = reward - activation;
 
-    PARALLEL_FOR
+        for (int di = 0; di < num_dendrites; di++)
+            dendrite_deltas[di] = params.lr * error * ((di >= half_num_dendrites) * 2.0f - 1.0f) * ((dendrite_acts[di] > 0.0f) * (1.0f - params.leak) + params.leak);
+
+        for (int i = 0; i < num_config_columns; i++) {
+            int config_ci = config_cis[i];
+
+            for (int di = 0; di < num_dendrites; di++) {
+                int wi = di + num_dendrites * (config_ci + config_size.z * i);
+
+                weights[wi] += dendrite_deltas[di];
+            }
+        }
+    }
+
+    // activate dendrites
+    for (int di = 0; di < num_dendrites; di++)
+        dendrite_acts[di] = 0.0f;
+
     for (int i = 0; i < num_config_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+        int config_ci = config_cis[i];
 
-        forward(Int2(i / config_size.y, i % config_size.y), reward, learn_enabled, &state);
+        for (int di = 0; di < num_dendrites; di++) {
+            float w = weights[di + num_dendrites * (config_ci + config_size.z * i)];
+
+            dendrite_acts[di] += w;
+        }
+    }
+
+    // reward prediction
+    activation = 0.0f;
+
+    const float dendrite_scale = sqrtf(1.0f / num_config_columns);
+    const float activation_scale = sqrtf(1.0f / num_dendrites);
+
+    for (int di = 0; di < num_dendrites; di++) {
+        float act = dendrite_acts[di] * dendrite_scale;
+
+        dendrite_acts[di] = max(act * params.leak, act); // relu
+
+        activation += dendrite_acts[di] * ((di >= half_num_dendrites) * 2.0f - 1.0f);
+    }
+
+    activation *= activation_scale;
+
+    // determine new representation with gradient of 1
+    for (int di = 0; di < num_dendrites; di++)
+        dendrite_deltas[di] = ((di >= half_num_dendrites) * 2.0f - 1.0f) * ((dendrite_acts[di] > 0.0f) * (1.0f - params.leak) + params.leak);
+
+    for (int i = 0; i < num_config_columns; i++) {
+        if (rand() < params.exploration) 
+            config_cis[i] = rand() % config_size.z;
+        else {
+            int config_ci = 0;
+            float max_grad = limit_min;
+
+            for (int cc = 0; cc < config_size.z; cc++) {
+                float grad = 0.0f;
+
+                for (int di = 0; di < num_dendrites; di++) {
+                    int wi = di + num_dendrites * (cc + config_size.z * i);
+
+                    grad += weights[wi] * dendrite_deltas[di];
+                }
+
+                if (grad > max_grad) {
+                    max_grad = grad;
+                    config_ci = cc;
+                }
+            }
+
+            config_cis[i] = config_ci;
+        }
     }
 }
 
 void Searcher::clear_state() {
     config_cis.fill(0);
-    config_acts.fill(0.0f);
 }
 
 long Searcher::size() const {
-    long size = sizeof(Int3) + sizeof(int) + config_cis.size() * sizeof(int) + config_acts.size() * sizeof(float) + dendrite_acts.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + config_cis.size() * sizeof(int) + dendrite_acts.size() * sizeof(float) + sizeof(int);
 
     size += weights.size() * sizeof(float);
 
@@ -217,7 +134,7 @@ long Searcher::size() const {
 }
 
 long Searcher::state_size() const {
-    return config_cis.size() * sizeof(int) + config_acts.size() * sizeof(float);
+    return config_cis.size() * sizeof(int);
 }
 
 long Searcher::weights_size() const {
@@ -228,10 +145,9 @@ void Searcher::write(
     Stream_Writer &writer
 ) const {
     writer.write(&config_size, sizeof(Int3));
-    writer.write(&num_dendrites_per_cell, sizeof(int));
+    writer.write(&num_dendrites, sizeof(int));
 
     writer.write(&config_cis[0], config_cis.size() * sizeof(int));
-    writer.write(&config_acts[0], config_acts.size() * sizeof(float));
     
     writer.write(&weights[0], weights.size() * sizeof(float));
 }
@@ -240,29 +156,20 @@ void Searcher::read(
     Stream_Reader &reader
 ) {
     reader.read(&config_size, sizeof(Int3));
-    reader.read(&num_dendrites_per_cell, sizeof(int));
+    reader.read(&num_dendrites, sizeof(int));
 
     int num_config_columns = config_size.x * config_size.y;
     int num_config_cells = num_config_columns * config_size.z;
-    int num_dendrites = num_config_cells * num_dendrites_per_cell;
 
     config_cis.resize(num_config_columns);
-    config_acts.resize(num_config_cells);
 
     reader.read(&config_cis[0], config_cis.size() * sizeof(int));
-    reader.read(&config_acts[0], config_acts.size() * sizeof(float));
-
-    config_cis_prev.resize(num_config_columns);
-    config_acts_prev.resize(num_config_cells);
 
     dendrite_acts.resize(num_dendrites);
 
     dendrite_deltas.resize(num_dendrites);
 
-    int diam = radius * 2 + 1;
-    int area = diam * diam;
-
-    weights.resize(num_dendrites * area * config_size.z);
+    weights.resize(num_dendrites * num_config_cells);
 
     reader.read(&weights[0], weights.size() * sizeof(float));
 }
@@ -271,14 +178,12 @@ void Searcher::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(&config_cis[0], config_cis.size() * sizeof(int));
-    writer.write(&config_acts[0], config_acts.size() * sizeof(float));
 }
 
 void Searcher::read_state(
     Stream_Reader &reader
 ) {
     reader.read(&config_cis[0], config_cis.size() * sizeof(int));
-    reader.read(&config_acts[0], config_acts.size() * sizeof(float));
 }
 
 void Searcher::write_weights(
