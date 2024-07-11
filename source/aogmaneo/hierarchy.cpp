@@ -42,7 +42,7 @@ void Hierarchy::init_random(
         io_sizes[i] = io_descs[i].size;
         io_types[i] = static_cast<Byte>(io_descs[i].type);
 
-        if (io_descs[i].type == prediction || io_descs[i].type == action)
+        if (io_descs[i].type == prediction)
             num_predictions++;
     }
 
@@ -85,7 +85,7 @@ void Hierarchy::init_random(
             int d_index = 0;
 
             for (int i = 0; i < io_sizes.size(); i++) {
-                if (io_descs[i].type == prediction || io_descs[i].type == action) {
+                if (io_descs[i].type == prediction) {
                     // decoder visible layer descriptors
                     Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(2);
 
@@ -219,9 +219,6 @@ void Hierarchy::step(
             layer_input_cis[1] = encoders[l].get_hidden_cis();
 
             for (int d = 0; d < decoders[l].size(); d++) {
-                if (l == 0 && io_types[i_indices[d]] == action) // actions stay random, they are not learned in UBL
-                    continue;
-
                 // need to re-activate for this
                 decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
