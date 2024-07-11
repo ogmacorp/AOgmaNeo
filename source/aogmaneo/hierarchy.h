@@ -213,6 +213,10 @@ public:
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
+    const Int_Buffer &get_top_hidden_cis() const {
+        return encoders[encoders.size() - 1].get_hidden_cis();
+    }
+
     // whether this layer received on update this timestep
     bool get_update(
         int l
