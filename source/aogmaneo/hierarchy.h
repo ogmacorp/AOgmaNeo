@@ -233,7 +233,7 @@ public:
         int i
     ) const {
         if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
+            return actors[d_indices[i]].get_hidden_advs();
 
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
