@@ -614,6 +614,10 @@ void Actor::step(
             Visible_Layer &vl = visible_layers[vli];
 
             PARALLEL_FOR
+            for (int i = 0; i < vl.value_weights.size(); i++)
+                vl.value_weights_delayed[i] += params.delay_rate * (vl.value_weights[i] - vl.value_weights_delayed[i]);
+
+            PARALLEL_FOR
             for (int i = 0; i < vl.adv_weights.size(); i++)
                 vl.adv_weights_delayed[i] += params.delay_rate * (vl.adv_weights[i] - vl.adv_weights_delayed[i]);
         }
