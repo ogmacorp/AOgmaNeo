@@ -111,7 +111,7 @@ void Actor::forward(
 
         adv *= adv_scale;
 
-        hidden_advs[hidden_cell_index] = adv;
+        //hidden_advs[hidden_cell_index] = adv;
 
         if (adv > max_adv) {
             max_adv = adv;
@@ -263,6 +263,12 @@ void Actor::learn(
     }
 
     float q_next = value_next + max_adv_next;
+
+    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+        int value_dendrite_index = di + value_dendrites_start;
+
+        value_dendrite_acts[value_dendrite_index] = 0.0f;
+    }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
