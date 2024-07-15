@@ -390,7 +390,7 @@ void Actor::learn(
 
     float q_prev = value_prev + adv_prev;
 
-    float td_error = target_q - value_prev;
+    float td_error = target_q - q_prev;
 
     float value_delta = params.lr * td_error;
 
