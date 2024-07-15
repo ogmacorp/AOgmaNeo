@@ -67,16 +67,18 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int num_dendrites_per_cell;
+    int value_num_dendrites_per_cell;
+    int adv_num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer dendrite_acts;
+    Float_Buffer value_dendrite_acts;
+    Float_Buffer adv_dendrite_acts;
 
-    Float_Buffer hidden_acts;
+    Float_Buffer hidden_advs;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
@@ -103,7 +105,8 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int num_dendrites_per_cell,
+        int value_num_dendrites_per_cell,
+        int adv_num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
@@ -172,9 +175,9 @@ public:
         return hidden_cis;
     }
 
-    // get hidden activations (probabilities) for actions
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
+    // get hidden advs
+    const Float_Buffer &get_hidden_advs() const {
+        return hidden_advs;
     }
 
     // get the hidden size
