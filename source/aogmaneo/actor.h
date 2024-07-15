@@ -30,8 +30,10 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
-        Float_Buffer weights_delayed;
+        Float_Buffer value_weights;
+        Float_Buffer value_weights_delayed;
+        Float_Buffer adv_weights;
+        Float_Buffer adv_weights_delayed;
     };
 
     // history sample for delayed updates
@@ -54,12 +56,12 @@ public:
         Params()
         :
         lr(0.001f),
-        cons(0.01f),
+        cons(0.0f),
         leak(0.01f),
         discount(0.99f),
-        delay_rate(0.5f),
-        n_steps(3),
-        history_iters(16)
+        delay_rate(0.1f),
+        n_steps(5),
+        history_iters(8)
         {}
     };
 
