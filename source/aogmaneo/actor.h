@@ -55,11 +55,11 @@ public:
 
         Params()
         :
-        lr(0.01f),
-        cons(0.0f),
+        lr(0.001f),
+        cons(0.01f),
         leak(0.01f),
         discount(0.99f),
-        delay_rate(0.5f),
+        delay_rate(0.2f),
         n_steps(5),
         history_iters(8)
         {}
