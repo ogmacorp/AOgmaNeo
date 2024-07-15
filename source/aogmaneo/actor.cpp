@@ -72,7 +72,7 @@ void Actor::forward(
 
                     int adv_dendrites_start = adv_num_dendrites_per_cell * hidden_cell_index;
 
-                    int adv_wi_start = adv_num_dendrites_per_cell * (hc + wi_start_partial);
+                    int adv_wi_start = adv_num_dendrites_per_cell * (hc + hidden_size.z * wi_start_partial);
 
                     for (int di = 0; di < adv_num_dendrites_per_cell; di++) {
                         int adv_dendrite_index = di + adv_dendrites_start;
@@ -203,7 +203,7 @@ void Actor::learn(
 
                     int adv_dendrites_start = adv_num_dendrites_per_cell * hidden_cell_index;
 
-                    int wi_adv_start = adv_num_dendrites_per_cell * (hc + wi_start_partial);
+                    int wi_adv_start = adv_num_dendrites_per_cell * (hc + hidden_size.z * wi_start_partial);
 
                     for (int di = 0; di < adv_num_dendrites_per_cell; di++) {
                         int adv_dendrite_index = di + adv_dendrites_start;
@@ -328,7 +328,7 @@ void Actor::learn(
 
                     int adv_dendrites_start = adv_num_dendrites_per_cell * hidden_cell_index;
 
-                    int wi_adv_start = adv_num_dendrites_per_cell * (hc + wi_start_partial);
+                    int wi_adv_start = adv_num_dendrites_per_cell * (hc + hidden_size.z * wi_start_partial);
 
                     for (int di = 0; di < adv_num_dendrites_per_cell; di++) {
                         int adv_dendrite_index = di + adv_dendrites_start;
@@ -476,7 +476,7 @@ void Actor::learn(
 
                     int adv_dendrites_start = adv_num_dendrites_per_cell * hidden_cell_index;
 
-                    int wi_adv_start = adv_num_dendrites_per_cell * (hc + wi_start_partial);
+                    int wi_adv_start = adv_num_dendrites_per_cell * (hc + hidden_size.z * wi_start_partial);
 
                     for (int di = 0; di < adv_num_dendrites_per_cell; di++) {
                         int adv_dendrite_index = di + adv_dendrites_start;
