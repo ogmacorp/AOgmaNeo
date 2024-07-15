@@ -57,8 +57,8 @@ public:
         cons(0.01f),
         leak(0.01f),
         discount(0.99f),
-        delay_rate(0.1f),
-        n_steps(5),
+        delay_rate(0.5f),
+        n_steps(3),
         history_iters(16)
         {}
     };
