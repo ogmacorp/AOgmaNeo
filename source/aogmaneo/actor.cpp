@@ -262,8 +262,6 @@ void Actor::learn(
         max_adv_next = max(max_adv_next, adv);
     }
 
-    float q_next = value_next + max_adv_next;
-
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int value_dendrite_index = di + value_dendrites_start;
 
@@ -356,6 +354,7 @@ void Actor::learn(
     value_prev *= value_scale;
 
     float max_adv_prev = limit_min;
+    float average_adv_prev = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -379,16 +378,19 @@ void Actor::learn(
         hidden_advs[hidden_cell_index] = adv;
 
         max_adv_prev = max(max_adv_prev, adv);
+        average_adv_prev += adv;
     }
 
-    float target_q = q_next;
+    average_adv_prev /= hidden_size.z;
+
+    float target_q = value_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         target_q = history_samples[t - n].reward + params.discount * target_q;
 
     float adv_prev = hidden_advs[target_ci + hidden_cells_start];
 
-    float q_prev = value_prev + adv_prev;
+    float q_prev = value_prev + adv_prev - average_adv_prev;
 
     float td_error = target_q - q_prev;
 
@@ -406,9 +408,9 @@ void Actor::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
-        hidden_advs[hidden_cell_index] = expf(hidden_advs[hidden_cell_index] - max_adv_prev);
+        hidden_probs[hidden_cell_index] = expf(hidden_advs[hidden_cell_index] - max_adv_prev);
 
-        total += hidden_advs[hidden_cell_index];
+        total += hidden_probs[hidden_cell_index];
     }
 
     float total_inv = 1.0f / max(limit_small, total);
@@ -416,11 +418,11 @@ void Actor::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_advs[hidden_cell_index] *= total_inv;
+        hidden_probs[hidden_cell_index] *= total_inv;
 
         int adv_dendrites_start = adv_num_dendrites_per_cell * hidden_cell_index;
 
-        float error = params.lr * (params.cons * (hidden_advs[hidden_cell_index] - 1.0f) + (hc == target_ci) * td_error - max_adv_prev);
+        float error = params.lr * (params.cons * (hidden_probs[hidden_cell_index] - 1.0f) + td_error * ((hc == target_ci) - 1.0f / hidden_size.z));
 
         for (int di = 0; di < adv_num_dendrites_per_cell; di++) {
             int adv_dendrite_index = di + adv_dendrites_start;
@@ -542,6 +544,7 @@ void Actor::init_random(
     value_dendrite_acts.resize(value_num_dendrites);
     adv_dendrite_acts.resize(adv_num_dendrites);
     hidden_advs.resize(num_hidden_cells);
+    hidden_probs.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -749,6 +752,7 @@ void Actor::read(
     value_dendrite_acts.resize(value_num_dendrites);
     adv_dendrite_acts.resize(adv_num_dendrites);
     hidden_advs.resize(num_hidden_cells);
+    hidden_probs.resize(num_hidden_cells);
 
     int num_visible_layers;
 

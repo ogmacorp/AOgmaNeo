@@ -56,7 +56,7 @@ public:
         Params()
         :
         lr(0.001f),
-        cons(0.01f),
+        cons(0.0f),
         leak(0.01f),
         discount(0.99f),
         delay_rate(0.2f),
@@ -79,6 +79,7 @@ private:
     Float_Buffer adv_dendrite_acts;
 
     Float_Buffer hidden_advs;
+    Float_Buffer hidden_probs;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
