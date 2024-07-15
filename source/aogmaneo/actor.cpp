@@ -397,7 +397,7 @@ void Actor::learn(
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int value_dendrite_index = di + value_dendrites_start;
 
-        value_dendrite_acts[value_dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        value_dendrite_acts[value_dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[value_dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
     }
 
     // softmax, no longer actual advantage but softmax version of it stored in hidden_advs
