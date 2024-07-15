@@ -44,7 +44,6 @@ public:
 
     struct Params {
         float lr; // hidden learning rate
-        float cons; // convervativeness
         float leak; // ReLU leak
         float discount; // discount fActor
         float delay_rate; // delay weights
@@ -53,8 +52,7 @@ public:
 
         Params()
         :
-        lr(0.004f),
-        cons(0.0f),
+        lr(0.005f),
         leak(0.01f),
         discount(0.99f),
         delay_rate(0.5f),
