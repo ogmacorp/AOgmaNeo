@@ -237,6 +237,7 @@ void Actor::learn(
     value_next *= value_scale;
 
     float max_adv_next = limit_min;
+    float average_adv_next = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -260,7 +261,12 @@ void Actor::learn(
         //hidden_advs[hidden_cell_index] = adv;
 
         max_adv_next = max(max_adv_next, adv);
+        average_adv_next += adv;
     }
+
+    average_adv_next /= hidden_size.z;
+
+    float q_next = value_next + max_adv_next - average_adv_next;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int value_dendrite_index = di + value_dendrites_start;
@@ -383,7 +389,7 @@ void Actor::learn(
 
     average_adv_prev /= hidden_size.z;
 
-    float target_q = value_next;
+    float target_q = q_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         target_q = history_samples[t - n].reward + params.discount * target_q;
@@ -402,7 +408,6 @@ void Actor::learn(
         value_dendrite_acts[value_dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[value_dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
     }
 
-    // softmax, no longer actual advantage but softmax version of it stored in hidden_advs
     float total = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
