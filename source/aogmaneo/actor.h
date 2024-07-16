@@ -33,6 +33,7 @@ public:
         Float_Buffer policy_weights;
         Float_Buffer policy_traces;
         Float_Buffer value_weights;
+        Float_Buffer value_weights_delayed;
         Float_Buffer value_traces;
 
         Int_Buffer input_cis_prev;
@@ -43,6 +44,9 @@ public:
         float plr; // policy learning rate
         float leak; // dendrite ReLU leak
         float discount; // discount factor
+        float value_clip; // value gradient clip
+        float policy_clip; // policy gradient clip
+        float value_rate; // delay rate on delayed value function
         float trace_decay; // eligibility trace decay
 
         Params()
@@ -51,6 +55,9 @@ public:
         plr(0.01f),
         leak(0.01f),
         discount(0.99f),
+        value_clip(0.5f),
+        policy_clip(0.1f),
+        value_rate(0.1f),
         trace_decay(0.97f)
         {}
     };
@@ -69,6 +76,7 @@ private:
     Float_Buffer policy_dendrite_acts_prev;
     Float_Buffer value_dendrite_acts;
     Float_Buffer value_dendrite_acts_prev;
+    Float_Buffer value_dendrite_acts_delayed;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
