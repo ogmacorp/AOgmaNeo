@@ -212,7 +212,7 @@ void Actor::forward(
 
         int target_ci = hidden_target_cis_prev[hidden_column_index];
 
-        float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+        float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * td_error_value);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
