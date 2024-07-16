@@ -380,9 +380,11 @@ void Actor::step(
 
         vl.input_cis_prev = input_cis[vli];
 
-        PARALLEL_FOR
-        for (int i = 0; i < vl.value_weights.size(); i++)
-            vl.value_weights_delayed[i] += params.value_rate * (vl.value_weights[i] - vl.value_weights_delayed[i]);
+        if (learn_enabled) {
+            PARALLEL_FOR
+            for (int i = 0; i < vl.value_weights.size(); i++)
+                vl.value_weights_delayed[i] += params.value_rate * (vl.value_weights[i] - vl.value_weights_delayed[i]);
+        }
     }
 
     hidden_acts_prev = hidden_acts;

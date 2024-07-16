@@ -51,8 +51,8 @@ public:
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.01f),
+        vlr(0.001f),
+        plr(0.001f),
         leak(0.01f),
         discount(0.99f),
         value_clip(0.5f),
