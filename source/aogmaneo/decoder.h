@@ -37,13 +37,11 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        float stability; // inverse of plasticity
 
         Params()
         :
         scale(4.0f),
-        lr(0.05f),
-        stability(2.0f)
+        lr(0.05f)
         {}
     };
 

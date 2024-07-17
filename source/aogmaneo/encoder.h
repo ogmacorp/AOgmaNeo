@@ -45,13 +45,11 @@ public:
     struct Params {
         float scale;
         float lr; // learning rate
-        float stability;
 
         Params()
         :
         scale(4.0f),
-        lr(0.5f),
-        stability(2.0f)
+        lr(0.05f)
         {}
     };
 
