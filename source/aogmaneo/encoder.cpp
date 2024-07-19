@@ -172,21 +172,15 @@ void Encoder::learn(
     int target_sum = vl.recon_sums[target_ci + visible_cells_start];
     int num_higher = 0;
 
-    float modulation = 0.0f;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
+        if (vc != target_ci && recon_sum >= target_sum)
+            num_higher++;
+
         float recon = expf((recon_sum - count * 255) * recon_scale);
-
-        if (vc != target_ci) {
-            if (recon_sum >= target_sum)
-                num_higher++;
-
-            modulation += recon;
-        }
 
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
     }
