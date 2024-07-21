@@ -102,6 +102,9 @@ void Encoder::learn(
     Visible_Layer &vl = visible_layers[vli];
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
+    if (vl.importance == 0.0f)
+        return;
+
     int diam = vld.radius * 2 + 1;
 
     int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
