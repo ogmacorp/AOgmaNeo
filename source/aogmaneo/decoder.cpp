@@ -111,8 +111,6 @@ void Decoder::forward(
         int max_complete_index = 0;
         float max_complete_activation = 0.0f;
 
-        int num_matches = 0;
-
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
@@ -137,13 +135,9 @@ void Decoder::forward(
 
             float activation = complemented / (params.choice + count_all - total);
 
-            if (match >= params.vigilance) {
-                if (activation > max_activation) {
-                    max_activation = activation;
-                    max_index = di;
-                }
-
-                num_matches++;
+            if (match >= params.vigilance && activation > max_activation) {
+                max_activation = activation;
+                max_index = di;
             }
 
             if (activation > max_complete_activation) {
@@ -152,12 +146,10 @@ void Decoder::forward(
             }
         }
 
-        learn_dis[hidden_cell_index] = (num_matches > 1 ? max_index : -1);
+        learn_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
 
-        float compare_activation = (max_index == -1 ? 0.0f : max_complete_activation);
-
-        if (compare_activation > max_compare_activation) {
-            max_compare_activation = compare_activation;
+        if (max_complete_activation > max_compare_activation) {
+            max_compare_activation = max_complete_activation;
             max_compare_index = hc;
         }
     }
