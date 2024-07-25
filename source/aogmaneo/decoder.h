@@ -30,19 +30,19 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
+        Byte_Buffer weights;
     };
 
     struct Params {
-        float scale; // scale of activations
-        float lr; // weight learning rate
-        float leak; // relu leak
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float vigilance; // ART vigilance
+        float lr; // learning rate
 
         Params()
         :
-        scale(4.0f),
-        lr(0.04f),
-        leak(0.01f)
+        choice(0.01f),
+        vigilance(0.8f),
+        lr(0.1f)
         {}
     };
 
