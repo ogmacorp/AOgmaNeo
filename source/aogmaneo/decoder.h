@@ -31,6 +31,16 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
+
+        Int_Buffer dendrite_sums;
+        Int_Buffer dendrite_totals;
+
+        float importance;
+
+        Visible_Layer()
+        :
+        importance(1.0f)
+        {}
     };
 
     struct Params {
@@ -52,11 +62,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Float_Buffer hidden_acts;
-
-    Float_Buffer dendrite_acts;
-
-    Int_Buffer dendrite_deltas;
+    Int_Buffer learn_dis;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -158,11 +164,6 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
-    }
-
-    // get the hidden activations
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
     }
 
     // get the hidden size
