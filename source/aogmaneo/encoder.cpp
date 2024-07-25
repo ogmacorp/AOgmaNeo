@@ -169,16 +169,18 @@ void Encoder::learn(
 
     const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
 
-    int target_sum = vl.recon_sums[target_ci + visible_cells_start];
-    int num_higher = 0;
+    int max_index = 0;
+    int max_recon_sum = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        if (vc != target_ci && recon_sum >= target_sum)
-            num_higher++;
+        if (recon_sum > max_recon_sum) {
+            max_recon_sum = recon_sum;
+            max_index = vc;
+        }
 
         float recon = expf((recon_sum - count * 255) * recon_scale);
 
@@ -186,7 +188,7 @@ void Encoder::learn(
     }
 
     // early stop
-    if (num_higher == 0)
+    if (max_index == target_ci)
         return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
