@@ -146,7 +146,7 @@ void Decoder::forward(
             }
         }
 
-        learn_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
+        learn_dis[hidden_cell_index] = max_index;
 
         if (max_complete_activation > max_compare_activation) {
             max_compare_activation = max_complete_activation;
