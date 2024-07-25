@@ -36,7 +36,7 @@ public:
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
-            int num_dendrites_per_cell = 4,
+            int num_dendrites_per_cell = 8,
             int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
             int down_radius = 2
@@ -65,7 +65,7 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
-            int num_dendrites_per_cell = 4,
+            int num_dendrites_per_cell = 8,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
