@@ -89,6 +89,8 @@ void Encoder::forward(
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
 
+    int num_matches = 0;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -114,9 +116,13 @@ void Encoder::forward(
 
         float activation = complemented / (params.choice + count_all - total);
 
-        if (match >= params.vigilance && activation > max_activation) {
-            max_activation = activation;
-            max_index = hc;
+        if (match >= params.vigilance) {
+            if (activation > max_activation) {
+                max_activation = activation;
+                max_index = hc;
+            }
+
+            num_matches++;
         }
 
         if (activation > max_complete_activation) {
@@ -125,7 +131,7 @@ void Encoder::forward(
         }
     }
 
-    learn_cis[hidden_column_index] = max_index;
+    learn_cis[hidden_column_index] = (num_matches > 1 ? max_index : -1);
 
     hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
