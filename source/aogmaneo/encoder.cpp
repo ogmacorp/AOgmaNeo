@@ -99,8 +99,10 @@ void Encoder::forward(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            sum += vl.hidden_sums[hidden_cell_index] * vl.importance;
-            total += vl.hidden_totals[hidden_cell_index] * vl.importance;
+            float influence = vl.importance / 255.0f;
+
+            sum += vl.hidden_sums[hidden_cell_index] * influence;
+            total += vl.hidden_totals[hidden_cell_index] * influence;
         }
 
         sum /= max(limit_small, total_importance);
