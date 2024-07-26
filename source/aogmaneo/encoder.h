@@ -35,7 +35,6 @@ public:
         Int_Buffer hidden_sums;
 
         Int_Buffer recon_sums;
-        Int_Buffer recon_acts;
         Int_Buffer recon_cis;
 
         float importance;
@@ -46,14 +45,7 @@ public:
         {}
     };
 
-    struct Params {
-        float vigilance;
-
-        Params()
-        :
-        vigilance(0.9f)
-        {}
-    };
+    struct Params {};
 
 private:
     Int3 hidden_size; // size of hidden/output layer

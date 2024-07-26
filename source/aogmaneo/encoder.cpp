@@ -185,8 +185,7 @@ void Encoder::reconstruct(
             max_index = vc;
         }
     }
-
-    vl.recon_acts[visible_column_index] = static_cast<float>(max_recon_sum) / static_cast<float>(max(1, count));
+    
     vl.recon_cis[visible_column_index] = max_index;
 }
 
@@ -289,7 +288,6 @@ void Encoder::init_random(
         vl.hidden_sums.resize(num_hidden_cells);
 
         vl.recon_sums.resize(num_visible_cells);
-        vl.recon_acts.resize(num_visible_columns);
         vl.recon_cis.resize(num_visible_columns);
     }
 
@@ -441,7 +439,6 @@ void Encoder::read(
         vl.hidden_sums.resize(num_hidden_cells);
 
         vl.recon_sums.resize(num_visible_cells);
-        vl.recon_acts.resize(num_visible_columns);
         vl.recon_cis.resize(num_visible_columns);
 
         reader.read(&vl.importance, sizeof(float));
