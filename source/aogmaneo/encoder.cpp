@@ -200,7 +200,7 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    int hidden_cell_index_rand = rand(state) % hidden_size.z + hidden_cells_start;
+    int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -236,13 +236,20 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                if (in_ci != vl.recon_cis[visible_column_index] && vl.recon_acts[visible_column_index] < params.vigilance) {
-                    int wi = in_ci + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_rand));
+                if (in_ci != vl.recon_cis[visible_column_index] && randf(state) < 0.5f) {
+                    int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max)); 
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        if (vc == in_ci)
+                            continue;
 
-                    vl.weights[byi] |= (1 << bi);
+                        int wi = vc + wi_start;
+
+                        int byi = wi / 8;
+                        int bi = wi % 8;
+
+                        vl.weights[byi] &= ~(1 << bi);
+                    }
                 }
             }
     }
@@ -277,7 +284,7 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights = Byte_Buffer((num_hidden_cells * area * vld.size.z + 7) / 8, 0);
+        vl.weights = Byte_Buffer((num_hidden_cells * area * vld.size.z + 7) / 8, 255);
 
         vl.hidden_sums.resize(num_hidden_cells);
 

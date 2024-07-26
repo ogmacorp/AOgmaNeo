@@ -35,7 +35,7 @@ public:
         Int_Buffer hidden_sums;
 
         Int_Buffer recon_sums;
-        Float_Buffer recon_acts;
+        Int_Buffer recon_acts;
         Int_Buffer recon_cis;
 
         float importance;
@@ -51,7 +51,7 @@ public:
 
         Params()
         :
-        vigilance(0.7f)
+        vigilance(0.9f)
         {}
     };
 
