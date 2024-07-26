@@ -176,10 +176,8 @@ void Encoder::reconstruct(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        int recon_sum = vl.recon_sums[visible_cell_index];
-
-        if (recon_sum > max_recon_sum) {
-            max_recon_sum = recon_sum;
+        if (vl.recon_sums[visible_cell_index] > max_recon_sum) {
+            max_recon_sum = vl.recon_sums[visible_cell_index];
             max_index = vc;
         }
     }
@@ -324,7 +322,7 @@ void Encoder::init_random(
 
         vl.weights = Byte_Buffer((num_hidden_cells * area * vld.size.z + 7) / 8, 0);
 
-        vl.hidden_sums.resize(num_hidden_columns);
+        vl.hidden_sums.resize(num_hidden_cells);
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_cis.resize(num_visible_columns);

@@ -138,6 +138,9 @@ void Decoder::learn(
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
+    if (hidden_dis[hidden_cell_index_target] == -1)
+        return;
+
     int di_learn;
 
     // if matching
@@ -217,7 +220,7 @@ void Decoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_dis = Int_Buffer(num_hidden_cells, 0);
+    hidden_dis = Int_Buffer(num_hidden_cells, -1);
 
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
@@ -254,7 +257,7 @@ void Decoder::learn(
 
 void Decoder::clear_state() {
     hidden_cis.fill(0);
-    hidden_dis.fill(0);
+    hidden_dis.fill(-1);
     hidden_acts.fill(0.0f);
 }
 
