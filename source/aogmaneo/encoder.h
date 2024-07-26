@@ -45,12 +45,21 @@ public:
         {}
     };
 
-    struct Params {};
+    struct Params {
+        float vigilance;
+
+        Params()
+        :
+        vigilance(0.9f)
+        {}
+    };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
