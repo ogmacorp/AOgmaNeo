@@ -35,10 +35,12 @@ public:
 
     struct Params {
         float vigilance;
+        float forget;
 
         Params()
         :
-        vigilance(0.8f)
+        vigilance(0.95f),
+        forget(0.1f)
         {}
     };
 

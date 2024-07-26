@@ -132,22 +132,17 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = hidden_target_cis[hidden_column_index];
-
-    if (hidden_cis[hidden_column_index] == target_ci)
-        return;
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
+    // check if has run at leat once (using flag stored in dis)
     if (hidden_dis[hidden_cell_index_target] == -1)
         return;
 
-    int di_learn;
-
-    // if matching
-    if (hidden_acts[hidden_cell_index_target] >= params.vigilance)
-        di_learn = hidden_dis[hidden_cell_index_target]; // choose max dendrite
-    else // otherwise choose random dendrite
-        di_learn = rand(state) % num_dendrites_per_cell;
+    int di_learn = (hidden_acts[hidden_cell_index_target] >= params.vigilance ? hidden_dis[hidden_cell_index_target] : rand(state) % num_dendrites_per_cell);
+    int di_unlearn = hidden_dis[hidden_cell_index_max];
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -178,12 +173,27 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = di_learn + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
+                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                int byi = wi / 8;
-                int bi = wi % 8;
+                // unlearn
+                if (hidden_ci != target_ci && randf(state) < params.forget) {
+                    int wi = di_unlearn + num_dendrites_per_cell * (hidden_ci + wi_start);
 
-                vl.weights[byi] |= (1 << bi);
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    vl.weights[byi] &= ~(1 << bi);
+                }
+
+                // learn
+                {
+                    int wi = di_learn + num_dendrites_per_cell * (target_ci + wi_start);
+
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    vl.weights[byi] |= (1 << bi);
+                }
             }
     }
 }

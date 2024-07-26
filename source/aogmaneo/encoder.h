@@ -50,7 +50,7 @@ public:
 
         Params()
         :
-        vigilance(0.8f)
+        vigilance(0.95f)
         {}
     };
 
@@ -63,25 +63,12 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
     // --- kernels ---
 
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void reconstruct(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        bool learn_enabled,
         unsigned long* state,
         const Params &params
     );
