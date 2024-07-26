@@ -39,7 +39,7 @@ public:
 
         Params()
         :
-        vigilance(0.95f),
+        vigilance(0.9f),
         forget(0.1f)
         {}
     };
