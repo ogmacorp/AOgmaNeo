@@ -34,9 +34,6 @@ public:
 
         Int_Buffer hidden_sums;
 
-        Int_Buffer recon_sums;
-        Int_Buffer recon_cis;
-
         float importance;
 
         Visible_Layer()
@@ -63,6 +60,8 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Float_Buffer hidden_comparisons;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -72,7 +71,12 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        bool learn_enabled,
+        const Params &params
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         unsigned long* state,
         const Params &params
     );
