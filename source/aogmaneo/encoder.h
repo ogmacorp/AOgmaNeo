@@ -34,6 +34,10 @@ public:
 
         Int_Buffer hidden_sums;
 
+        Int_Buffer recon_sums;
+        Float_Buffer recon_acts;
+        Int_Buffer recon_cis;
+
         float importance;
 
         Visible_Layer()
@@ -44,14 +48,10 @@ public:
 
     struct Params {
         float vigilance;
-        float active_ratio;
-        int l_radius;
 
         Params()
         :
-        vigilance(0.95f),
-        active_ratio(0.1f),
-        l_radius(2)
+        vigilance(0.7f)
         {}
     };
 
@@ -60,17 +60,23 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_comparisons;
-
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
+    
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
     // --- kernels ---
 
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void reconstruct(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
