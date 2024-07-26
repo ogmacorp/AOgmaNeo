@@ -146,7 +146,7 @@ void Decoder::forward(
             }
         }
 
-        learn_dis[hidden_cell_index] = max_index;
+        learn_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
 
         if (max_complete_activation > max_compare_activation) {
             max_compare_activation = max_complete_activation;
@@ -170,8 +170,8 @@ void Decoder::learn(
 
     int target_ci = hidden_target_cis[hidden_column_index];
 
-    if (hidden_cis[hidden_column_index] == target_ci)
-        return;
+    //if (hidden_cis[hidden_column_index] == target_ci)
+    //    return;
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
