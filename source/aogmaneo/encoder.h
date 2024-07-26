@@ -47,10 +47,14 @@ public:
 
     struct Params {
         float vigilance;
+        float active_ratio;
+        int l_radius;
 
         Params()
         :
-        vigilance(0.95f)
+        vigilance(0.95f),
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
