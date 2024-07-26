@@ -32,8 +32,10 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
+        Int_Buffer hidden_sums;
+
         Int_Buffer recon_sums;
-        Float_Buffer recon_deltas;
+        Int_Buffer recon_cis;
 
         float importance;
 
@@ -43,14 +45,19 @@ public:
         {}
     };
 
-    struct Params {};
+    struct Params {
+        float vigilance;
+
+        Params()
+        :
+        vigilance(0.8f)
+        {}
+    };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -66,10 +73,16 @@ private:
         const Params &params
     );
 
+    void reconstruct(
+        const Int2 &column_pos,
+        int vli,
+        const Params &params
+    );
+
     void learn(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
+        const Array<Int_Buffer_View> &input_cis,
+        unsigned long* state,
         const Params &params
     );
 
