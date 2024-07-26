@@ -235,7 +235,7 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                if (in_ci != vl.recon_cis[visible_column_index] && randf(state) < 0.5f) {
+                if (in_ci != vl.recon_cis[visible_column_index]) {
                     int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max)); 
 
                     for (int vc = 0; vc < vld.size.z; vc++) {
