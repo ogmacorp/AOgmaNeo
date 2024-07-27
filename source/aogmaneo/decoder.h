@@ -62,7 +62,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer learn_dis;
+    Int_Buffer hidden_dis;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;

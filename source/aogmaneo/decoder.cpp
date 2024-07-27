@@ -146,7 +146,7 @@ void Decoder::forward(
             }
         }
 
-        learn_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
+        hidden_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
 
         if (max_complete_activation > max_compare_activation) {
             max_compare_activation = max_complete_activation;
@@ -170,9 +170,12 @@ void Decoder::learn(
 
     int target_ci = hidden_target_cis[hidden_column_index];
 
+    //if (hidden_cis[hidden_column_index] == target_ci) // early stop
+    //    return;
+
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
-    int learn_di = learn_dis[hidden_cell_index_target];
+    int learn_di = hidden_dis[hidden_cell_index_target];
 
     if (learn_di == -1)
         return;
@@ -264,7 +267,7 @@ void Decoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    learn_dis = Int_Buffer(num_hidden_cells, -1);
+    hidden_dis = Int_Buffer(num_hidden_cells, -1);
 
     // init totals
     for (int i = 0; i < num_hidden_columns; i++) {
@@ -353,11 +356,11 @@ void Decoder::learn(
 
 void Decoder::clear_state() {
     hidden_cis.fill(0);
-    learn_dis.fill(-1);
+    hidden_dis.fill(-1);
 }
 
 long Decoder::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + learn_dis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_dis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -370,7 +373,7 @@ long Decoder::size() const {
 }
 
 long Decoder::state_size() const {
-    return hidden_cis.size() * sizeof(int) + learn_dis.size() * sizeof(int);
+    return hidden_cis.size() * sizeof(int) + hidden_dis.size() * sizeof(int);
 }
 
 long Decoder::weights_size() const {
@@ -392,7 +395,7 @@ void Decoder::write(
     writer.write(&num_dendrites_per_cell, sizeof(int));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    writer.write(&learn_dis[0], learn_dis.size() * sizeof(int));
+    writer.write(&hidden_dis[0], hidden_dis.size() * sizeof(int));
     
     int num_visible_layers = visible_layers.size();
 
@@ -423,10 +426,10 @@ void Decoder::read(
     int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
 
     hidden_cis.resize(num_hidden_columns);
-    learn_dis.resize(num_hidden_cells);
+    hidden_dis.resize(num_hidden_cells);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    reader.read(&learn_dis[0], learn_dis.size() * sizeof(int));
+    reader.read(&hidden_dis[0], hidden_dis.size() * sizeof(int));
 
     int num_visible_layers;
 
@@ -465,14 +468,14 @@ void Decoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    writer.write(&learn_dis[0], learn_dis.size() * sizeof(int));
+    writer.write(&hidden_dis[0], hidden_dis.size() * sizeof(int));
 }
 
 void Decoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    reader.read(&learn_dis[0], learn_dis.size() * sizeof(int));
+    reader.read(&hidden_dis[0], hidden_dis.size() * sizeof(int));
 }
 
 void Decoder::write_weights(
