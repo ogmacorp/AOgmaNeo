@@ -47,12 +47,14 @@ public:
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // ART vigilance
         float lr; // learning rate
+        float fr; // forget rate
 
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
-        lr(0.5f)
+        vigilance(0.7f),
+        lr(0.1f),
+        fr(0.01f)
         {}
     };
 

@@ -233,7 +233,7 @@ void Decoder::learn(
                         int wi = hidden_di_max + num_dendrites_per_cell * (hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
 
                         if (vc == in_ci)
-                            vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr * vl.weights[wi]));
+                            vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.fr * vl.weights[wi]));
 
                         sub_total_max += vl.weights[wi];
                     }
