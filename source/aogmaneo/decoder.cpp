@@ -100,6 +100,8 @@ void Decoder::forward(
     int max_compare_index = 0;
     float max_compare_activation = 0.0f;
 
+    const float byte_inv = 1.0f / 255.0f;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -120,7 +122,7 @@ void Decoder::forward(
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
 
-                float influence = vl.importance / 255.0f;
+                float influence = vl.importance * byte_inv;
 
                 sum += vl.dendrite_sums[dendrite_index] * influence;
                 total += vl.dendrite_totals[dendrite_index] * influence;
