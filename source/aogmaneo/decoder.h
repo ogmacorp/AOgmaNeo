@@ -46,13 +46,15 @@ public:
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // ART vigilance
-        float lr; // learning rate
+        float lr0; // learning rate
+        float lr1; // learning rate
 
         Params()
         :
         choice(0.01f),
         vigilance(0.7f),
-        lr(0.1f)
+        lr0(0.1f),
+        lr1(0.01f)
         {}
     };
 

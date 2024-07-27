@@ -171,20 +171,21 @@ void Decoder::learn(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = hidden_target_cis[hidden_column_index];
-
-    //if (hidden_cis[hidden_column_index] == target_ci) // early stop
-    //    return;
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
-    int hidden_di = hidden_dis[hidden_cell_index_target];
+    int hidden_di_target = hidden_dis[hidden_cell_index_target];
+    int hidden_di_max = hidden_dis[hidden_cell_index_max];
 
-    if (hidden_di == -1)
+    if (hidden_di_target == -1)
         return;
 
     int dendrites_start = num_dendrites_per_cell * hidden_cell_index_target;
 
-    int dendrite_index = hidden_di + dendrites_start;
+    int dendrite_index_target = hidden_di_target + dendrites_start;
+    int dendrite_index_max = hidden_di_max + dendrites_start;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -205,7 +206,8 @@ void Decoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_total = 0;
+        int sub_total_target = 0;
+        int sub_total_max = 0;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -218,16 +220,30 @@ void Decoder::learn(
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = hidden_di + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
+                    int wi = hidden_di_target + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
 
                     if (vc == in_ci)
-                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
+                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr0 * (255.0f - vl.weights[wi])));
 
-                    sub_total += vl.weights[wi];
+                    sub_total_target += vl.weights[wi];
+                }
+
+                if (hidden_ci != target_ci) {
+                    for (int vc = 0; vc < vld.size.z; vc++) {
+                        int wi = hidden_di_max + num_dendrites_per_cell * (hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
+
+                        if (vc == in_ci)
+                            vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.lr1 * vl.weights[wi]));
+
+                        sub_total_max += vl.weights[wi];
+                    }
                 }
             }
 
-        vl.dendrite_totals[dendrite_index] = sub_total;
+        vl.dendrite_totals[dendrite_index_target] = sub_total_target;
+
+        if (hidden_ci != target_ci)
+            vl.dendrite_totals[dendrite_index_max] = sub_total_max;
     }
 }
 
