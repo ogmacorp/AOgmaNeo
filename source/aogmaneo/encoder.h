@@ -46,13 +46,11 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        float stability; // how stable the weights are (inverse of plasticity)
 
         Params()
         :
         scale(2.0f),
-        lr(0.02f),
-        stability(4.0f)
+        lr(0.02f)
         {}
     };
 
