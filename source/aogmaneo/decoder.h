@@ -52,7 +52,7 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
+        vigilance(0.7f),
         lr(0.1f),
         fr(0.01f)
         {}
@@ -82,7 +82,6 @@ private:
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
