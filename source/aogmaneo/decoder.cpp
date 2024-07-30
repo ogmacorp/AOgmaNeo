@@ -135,7 +135,7 @@ void Decoder::forward(
 
             float match = complemented / count_except;
 
-            float activation = complemented / (params.choice + count_all - total);
+            float activation = complemented / max(limit_small, count_all - total);
 
             if (match >= params.vigilance && activation > max_activation) {
                 max_activation = activation;
