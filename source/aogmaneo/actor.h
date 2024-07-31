@@ -58,7 +58,7 @@ public:
         vlr(0.002f),
         plr(0.002f),
         leak(0.01f),
-        value_rate(0.1f),
+        value_rate(0.2f),
         bias(0.5f),
         discount(0.99f),
         min_steps(8),
@@ -84,6 +84,9 @@ private:
     Float_Buffer value_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
+
+    Float_Buffer value_deltas;
+    Float_Buffer policy_deltas;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
