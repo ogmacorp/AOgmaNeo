@@ -441,6 +441,7 @@ void Actor::learn(
                     int wi = di + wi_value_start;
 
                     vl.value_weights[wi] += value_deltas[dendrite_index];
+                    vl.value_weights_delayed[wi] += params.value_rate * (vl.value_weights[wi] - vl.value_weights_delayed[wi]);
                 }
             }
     }
@@ -578,15 +579,6 @@ void Actor::step(
             PARALLEL_FOR
             for (int i = 0; i < num_hidden_columns; i++)
                 learn(Int2(i / hidden_size.y, i % hidden_size.y), t, r, d, mimic, params);
-        }
-
-        // update delayed weights
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-
-            PARALLEL_FOR
-            for (int i = 0; i < vl.value_weights.size(); i++)
-                vl.value_weights_delayed[i] += params.value_rate * (vl.value_weights[i] - vl.value_weights_delayed[i]);
         }
     }
 }
