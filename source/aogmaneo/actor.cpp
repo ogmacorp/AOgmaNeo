@@ -204,7 +204,7 @@ void Actor::forward(
 
         int target_ci = hidden_target_cis_prev[hidden_column_index];
 
-        float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * td_error_value);
+        float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -255,7 +255,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev)
                                     vl.policy_traces[wi] += error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak); // accumulating trace
 
-                                vl.policy_weights[wi] += min(params.policy_clip, max(-params.policy_clip, policy_error_partial * vl.policy_traces[wi]));
+                                vl.policy_weights[wi] += policy_error_partial * vl.policy_traces[wi];
                                 vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }
@@ -268,9 +268,9 @@ void Actor::forward(
                             int wi = di + wi_value_start;
 
                             if (vc == in_ci_prev)
-                                vl.value_traces[wi] += ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak); // accumulating trace
+                                vl.value_traces[wi] = ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak); // replacing trace
 
-                            vl.value_weights[wi] += min(params.value_clip, max(-params.value_clip, value_delta * vl.value_traces[wi]));
+                            vl.value_weights[wi] += value_delta * vl.value_traces[wi];
                             vl.value_traces[wi] *= params.trace_decay;
                         }
                     }
