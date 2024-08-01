@@ -85,9 +85,6 @@ private:
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
-    Float_Buffer value_deltas;
-    Float_Buffer policy_deltas;
-
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors

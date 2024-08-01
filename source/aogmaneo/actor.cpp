@@ -366,7 +366,8 @@ void Actor::learn(
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;
 
-        value_deltas[dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+        // re-use as deltas
+        value_dendrite_acts[dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
     }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -379,7 +380,8 @@ void Actor::learn(
         for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            policy_deltas[dendrite_index] = error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+            // re-use as deltas
+            policy_dendrite_acts[dendrite_index] = error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
         }
     }
 
@@ -429,7 +431,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        vl.policy_weights[wi] += policy_deltas[dendrite_index];
+                        vl.policy_weights[wi] += policy_dendrite_acts[dendrite_index];
                     }
                 }
 
@@ -440,7 +442,7 @@ void Actor::learn(
 
                     int wi = di + wi_value_start;
 
-                    vl.value_weights[wi] += value_deltas[dendrite_index];
+                    vl.value_weights[wi] += value_dendrite_acts[dendrite_index];
                     vl.value_weights_delayed[wi] += params.value_rate * (vl.value_weights[wi] - vl.value_weights_delayed[wi]);
                 }
             }
@@ -499,9 +501,6 @@ void Actor::init_random(
     value_dendrite_acts.resize(value_num_dendrites);
 
     hidden_acts.resize(num_hidden_cells);
-
-    value_deltas.resize(value_num_dendrites);
-    policy_deltas.resize(policy_num_dendrites);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -713,9 +712,6 @@ void Actor::read(
     value_dendrite_acts.resize(value_num_dendrites);
 
     hidden_acts.resize(num_hidden_cells);
-
-    value_deltas.resize(value_num_dendrites);
-    policy_deltas.resize(policy_num_dendrites);
 
     int num_visible_layers;
 
