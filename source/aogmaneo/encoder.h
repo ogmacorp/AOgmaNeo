@@ -51,7 +51,7 @@ public:
         Params()
         :
         scale(2.0f),
-        lr(0.02f),
+        lr(0.04f),
         stability(2.0f)
         {}
     };
@@ -81,7 +81,6 @@ private:
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
-        unsigned long* state,
         const Params &params
     );
 
