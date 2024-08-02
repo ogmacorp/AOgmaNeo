@@ -52,7 +52,7 @@ public:
         :
         vigilance(0.7f),
         lr(0.1f),
-        fr(0.01f)
+        fr(0.1f)
         {}
     };
 
