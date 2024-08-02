@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer policy_weights;
+        Float_Buffer policy_weights_delayed;
         Float_Buffer value_weights;
     };
 
@@ -46,7 +47,8 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float leak; // ReLU leak
-        float bias; // bias of td update
+        float policy_rate; // rate of delayed policy weights
+        float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
@@ -56,7 +58,8 @@ public:
         vlr(0.002f),
         plr(0.002f),
         leak(0.01f),
-        bias(0.5f),
+        policy_rate(0.01f),
+        clip_coef(0.1f),
         discount(0.99f),
         min_steps(8),
         history_iters(8)
