@@ -208,6 +208,14 @@ void Actor::learn(
 
     float new_value = r + d * hidden_values[hidden_column_index];
 
+    int value_dendrites_start = hidden_column_index * value_num_dendrites_per_cell;
+
+    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+        int dendrite_index = di + value_dendrites_start;
+
+        value_dendrite_acts[dendrite_index] = 0.0f;
+    }
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -218,14 +226,6 @@ void Actor::learn(
 
             policy_dendrite_acts[dendrite_index] = 0.0f;
         }
-    }
-
-    int value_dendrites_start = hidden_column_index * value_num_dendrites_per_cell;
-
-    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-        int dendrite_index = di + value_dendrites_start;
-
-        value_dendrite_acts[dendrite_index] = 0.0f;
     }
 
     int count = 0;
@@ -264,6 +264,16 @@ void Actor::learn(
                 int wi_value_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
                 int wi_start_partial = hidden_size.z * wi_value_partial;
 
+                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
+
+                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+                    int dendrite_index = di + value_dendrites_start;
+
+                    int wi = di + wi_value_start;
+
+                    value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
+                }
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
@@ -278,16 +288,6 @@ void Actor::learn(
 
                         policy_dendrite_acts[dendrite_index] += vl.policy_weights[wi];
                     }
-                }
-
-                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
-
-                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-                    int dendrite_index = di + value_dendrites_start;
-
-                    int wi = di + wi_value_start;
-
-                    value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
                 }
             }
     }
@@ -361,7 +361,7 @@ void Actor::learn(
     
     float value_delta = params.vlr * td_error_value;
 
-    float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (td_error_value > 0.0f ? 1.0f : 1.0f - params.bias));
+    float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * td_error_value * (td_error_value > 0.0f ? 1.0f : 1.0f - params.bias));
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;
@@ -417,6 +417,16 @@ void Actor::learn(
                 int wi_value_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
                 int wi_start_partial = hidden_size.z * wi_value_partial;
 
+                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
+
+                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+                    int dendrite_index = di + value_dendrites_start;
+
+                    int wi = di + wi_value_start;
+
+                    vl.value_weights[wi] += value_dendrite_acts[dendrite_index];
+                }
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
@@ -433,16 +443,6 @@ void Actor::learn(
 
                         vl.policy_weights[wi] += policy_dendrite_acts[dendrite_index];
                     }
-                }
-
-                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
-
-                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-                    int dendrite_index = di + value_dendrites_start;
-
-                    int wi = di + wi_value_start;
-
-                    vl.value_weights[wi] += value_dendrite_acts[dendrite_index];
                 }
             }
     }
