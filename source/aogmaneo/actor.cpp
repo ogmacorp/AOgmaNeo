@@ -76,6 +76,16 @@ void Actor::forward(
                 int wi_value_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
                 int wi_start_partial = hidden_size.z * wi_value_partial;
 
+                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
+
+                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+                    int dendrite_index = di + value_dendrites_start;
+
+                    int wi = di + wi_value_start;
+
+                    value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
+                }
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
@@ -90,16 +100,6 @@ void Actor::forward(
 
                         policy_dendrite_acts[dendrite_index] += vl.policy_weights[wi];
                     }
-                }
-
-                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
-
-                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-                    int dendrite_index = di + value_dendrites_start;
-
-                    int wi = di + wi_value_start;
-
-                    value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
                 }
             }
     }

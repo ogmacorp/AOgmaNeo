@@ -96,6 +96,7 @@ void Encoder::learn(
     const Int2 &column_pos,
     Int_Buffer_View input_cis,
     int vli,
+    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -171,8 +172,6 @@ void Encoder::learn(
     int max_index = 0;
     int max_recon_sum = 0;
 
-    float modulation = 0.0f;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -185,24 +184,13 @@ void Encoder::learn(
 
         float recon = expf((recon_sum - count * 255) * recon_scale);
 
-        if (vc != target_ci)
-            modulation += recon;
-
-        vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
+        // re-use recon sums as integer deltas
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
     }
 
     // early stop
     if (max_index == target_ci)
         return;
-
-    modulation = powf(modulation / (vld.size.z - 1), params.stability);
-
-    // re-use recon sums as integer deltas
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        vl.recon_sums[visible_cell_index] = roundf(modulation * vl.recon_deltas[visible_cell_index]);
-    }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -265,7 +253,6 @@ void Encoder::init_random(
             vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
-        vl.recon_deltas.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -302,12 +289,16 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
+        unsigned int base_state = rand();
+
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            learn(pos, input_cis[vli], vli, params);
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+            learn(pos, input_cis[vli], vli, &state, params);
         }
     }
 }
@@ -409,7 +400,6 @@ void Encoder::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
-        vl.recon_deltas.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
