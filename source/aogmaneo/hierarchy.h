@@ -210,6 +210,10 @@ public:
         return encoders[encoders.size() - 1].get_hidden_cis();
     }
 
+    const Int3 &get_top_hidden_size() const {
+        return encoders[encoders.size() - 1].get_hidden_size();
+    }
+
     // whether this layer received on update this timestep
     bool get_update(
         int l
