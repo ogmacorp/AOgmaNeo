@@ -206,13 +206,6 @@ public:
         return decoders[0][d_indices[i]].get_hidden_cis();
     }
 
-    // retrieve prediction activations
-    const Float_Buffer &get_prediction_acts(
-        int i
-    ) const {
-        return decoders[0][d_indices[i]].get_hidden_acts();
-    }
-
     const Int_Buffer &get_top_hidden_cis() const {
         return encoders[encoders.size() - 1].get_hidden_cis();
     }
