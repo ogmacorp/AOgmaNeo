@@ -74,11 +74,9 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_delayed;
 
-    Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_delayed;
     Float_Buffer value_dendrite_acts;
+    Float_Buffer policy_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
