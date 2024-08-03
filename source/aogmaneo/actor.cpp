@@ -479,15 +479,15 @@ void Actor::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
-
-        for (int i = 0; i < vl.policy_weights.size(); i++)
-            vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
-
         vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.value_weights.size(); i++)
             vl.value_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
+
+        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
+
+        for (int i = 0; i < vl.policy_weights.size(); i++)
+            vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -593,7 +593,7 @@ long Actor::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.policy_weights.size() * sizeof(float) + vl.value_weights.size() * sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.value_weights.size() * sizeof(float) + vl.policy_weights.size() * sizeof(float);
     }
 
     size += 3 * sizeof(int);
@@ -635,7 +635,7 @@ long Actor::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.policy_weights.size() * sizeof(float) + vl.value_weights.size() * sizeof(float);
+        size += vl.value_weights.size() * sizeof(float) + vl.policy_weights.size() * sizeof(float);
     }
 
     return size;
@@ -661,8 +661,8 @@ void Actor::write(
 
         writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-        writer.write(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
         writer.write(&vl.value_weights[0], vl.value_weights.size() * sizeof(float));
+        writer.write(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
     }
 
     writer.write(&history_size, sizeof(int));
@@ -729,13 +729,13 @@ void Actor::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
-
-        reader.read(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
-
         vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
 
         reader.read(&vl.value_weights[0], vl.value_weights.size() * sizeof(float));
+
+        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
+
+        reader.read(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
     }
 
     reader.read(&history_size, sizeof(int));
