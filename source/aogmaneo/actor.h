@@ -58,8 +58,8 @@ public:
         leak(0.01f),
         bias(0.5f),
         discount(0.99f),
-        min_steps(8),
-        history_iters(8)
+        min_steps(16),
+        history_iters(16)
         {}
     };
 
