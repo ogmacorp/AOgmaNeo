@@ -125,8 +125,6 @@ void Actor::forward(
 
     value *= value_activation_scale;
 
-    hidden_values[hidden_column_index] = value;
-
     float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -190,6 +188,8 @@ void Actor::forward(
     }
     
     hidden_cis[hidden_column_index] = select_index;
+
+    hidden_values[hidden_column_index] = value;
 }
 
 void Actor::learn(
@@ -312,6 +312,7 @@ void Actor::learn(
 
     value *= value_activation_scale;
 
+    int max_index = 0;
     float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -335,7 +336,10 @@ void Actor::learn(
 
         hidden_acts[hidden_cell_index] = activation;
 
-        max_activation = max(max_activation, activation);
+        if (activation > max_activation) {
+            max_activation = activation;
+            max_index = hc;
+        }
     }
 
     // softmax
