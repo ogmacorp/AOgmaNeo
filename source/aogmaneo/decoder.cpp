@@ -181,11 +181,8 @@ void Decoder::learn(
     if (hidden_di_target == -1)
         return;
 
-    int dendrites_start_target = num_dendrites_per_cell * hidden_cell_index_target;
-    int dendrites_start_max = num_dendrites_per_cell * hidden_cell_index_max;
-
-    int dendrite_index_target = hidden_di_target + dendrites_start_target;
-    int dendrite_index_max = hidden_di_max + dendrites_start_max;
+    int dendrite_index_target = hidden_di_target + num_dendrites_per_cell * hidden_cell_index_target;
+    int dendrite_index_max = hidden_di_max + num_dendrites_per_cell * hidden_cell_index_max;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
