@@ -246,7 +246,7 @@ void Actor::forward(
                             int wi = di + wi_value_start;
 
                             if (vc == in_ci_prev)
-                                vl.value_traces[wi] += ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak); // replacing trace
+                                vl.value_traces[wi] += ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak); // accumulating trace
 
                             vl.value_weights[wi] += min(params.value_clip, max(-params.value_clip, value_delta * vl.value_traces[wi]));
                             vl.value_traces[wi] *= params.trace_decay;
