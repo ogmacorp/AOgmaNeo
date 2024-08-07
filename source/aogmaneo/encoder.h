@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -34,8 +34,6 @@ public:
 
         Int_Buffer recon_sums;
 
-        Float_Buffer recon_acts;
-
         float importance;
 
         Visible_Layer()
@@ -45,15 +43,13 @@ public:
     };
 
     struct Params {
-        float scale;
+        float scale; // recon curve
         float lr; // learning rate
-        int num_iters; // explaining-away iterations
 
         Params()
         :
         scale(4.0f),
-        lr(0.02f),
-        num_iters(4)
+        lr(0.02f)
         {}
     };
 
@@ -75,13 +71,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void backward(
-        const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
         const Params &params
     );
 
@@ -173,6 +162,7 @@ public:
         return hidden_size;
     }
 
+    // merge list of encoders and write to this one
     void merge(
         const Array<Encoder*> &encoders,
         Merge_Mode mode
