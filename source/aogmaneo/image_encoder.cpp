@@ -71,7 +71,7 @@ void Image_Encoder::forward(
                         float w0 = vl.weights0[wi] * byte_inv;
                         float w1 = vl.weights1[wi] * byte_inv;
 
-                        hidden_acts[hidden_cell_index] += min(input, w0) + min(1.0f - input, w1);
+                        hidden_acts[hidden_cell_index] += input * w0 + (1.0f - input) * w1;
                     }
                 }
             }
