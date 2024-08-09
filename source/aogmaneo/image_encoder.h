@@ -30,23 +30,26 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0;
-        Byte_Buffer weights1;
+        Byte_Buffer weights;
         Byte_Buffer recon_weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
+        int radius; // SOM neighborhood radius
         
         Params()
         :
-        lr(0.1f),
+        falloff(0.99f),
+        lr(0.05f),
         scale(2.0f),
-        rr(0.05f)
+        rr(0.01f),
+        radius(2)
         {}
     };
 
@@ -56,6 +59,7 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
+    Float_Buffer hidden_totals;
 
     Float_Buffer hidden_resources;
 
