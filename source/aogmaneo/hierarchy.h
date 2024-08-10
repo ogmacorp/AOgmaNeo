@@ -54,25 +54,33 @@ public:
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
 
+        int vec_size; // VSA vector size
+
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
         int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
+        float positional_scale; // positional embedding scale
+
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
+            int vec_size = 256,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int temporal_horizon = 2,
+            float positional_scale = 1.0f
         )
         :
         hidden_size(hidden_size),
+        vec_size(vec_size),
         up_radius(up_radius),
         down_radius(down_radius),
         ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon)
+        temporal_horizon(temporal_horizon),
+        positional_scale(positional_scale)
         {}
     };
 
