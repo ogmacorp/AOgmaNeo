@@ -38,12 +38,12 @@ public:
 
         S_Byte_Buffer input_vecs;
 
-        Int_Buffer visible_bundles;
-        Int_Buffer hidden_bundles;
+        Int_Buffer visible_bundle_buffer;
+        Int_Buffer hidden_bundle_buffer;
 
         Int_Buffer recon_cis;
 
-        S_Byte_Buffer recon_vecs;
+        S_Byte_Buffer recon_bundle_vecs;
 
         bool use_input;
         bool up_to_date;
@@ -79,7 +79,7 @@ private:
     S_Byte_Buffer hidden_code_vecs;
     S_Byte_Buffer hidden_corr_mats; // correlation matrices
 
-    S_Byte_Buffer hidden_vecs;
+    S_Byte_Buffer hidden_bundle_vecs;
     S_Byte_Buffer hidden_temp_vecs;
 
     Int_Buffer hidden_comparisons;
