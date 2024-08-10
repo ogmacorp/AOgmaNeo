@@ -337,6 +337,9 @@ void Encoder::init_random(
 
         vl.input_cis = Int_Buffer(num_visible_columns, 0);
         vl.recon_cis = Int_Buffer(num_visible_columns, 0);
+
+        vl.input_vecs.resize(vec_size * num_visible_columns);
+        vl.recon_vecs.resize(vec_size * num_visible_columns);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
