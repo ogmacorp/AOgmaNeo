@@ -12,8 +12,7 @@ using namespace aon;
 
 void Encoder::bind_inputs(
     const Int2 &column_pos,
-    int vli,
-    const Params &params
+    int vli
 ) {
     Visible_Layer &vl = visible_layers[vli];
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -31,13 +30,12 @@ void Encoder::bind_inputs(
         int visible_vec_index = vi + visible_vecs_start;
         int visible_code_index = vi + visible_codes_start;
 
-        vl.input_vecs[visible_vec_index] = ((vl.input_code_vecs[visible_code_index] > 0.0f) * 2 - 1) * vl.input_pos_vecs[visible_vec_index];
+        vl.input_vecs[visible_vec_index] = vl.visible_code_vecs[visible_code_index] * vl.visible_pos_vecs[visible_vec_index];
     }
 }
 
 void Encoder::forward(
-    const Int2 &column_pos,
-    const Params &params
+    const Int2 &column_pos
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
@@ -244,7 +242,7 @@ void Encoder::reconstruct(
                     int hidden_code_index = vi + hidden_codes_start_max;
 
                     // un-bind and superimpose
-                    vl.visible_bundles[visible_vec_index] += ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1) * vl.input_pos_vecs[visible_vec_index];
+                    vl.visible_bundles[visible_vec_index] += ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1) * vl.visible_pos_vecs[visible_vec_index];
                 }
             }
         }
@@ -269,7 +267,7 @@ void Encoder::reconstruct(
             int visible_vec_index = vi + visible_vecs_start;
             int visible_code_index = vi + visible_codes_start;
 
-            similarity += vl.recon_vecs[visible_vec_index] * ((hidden_code_vecs[visible_code_index] > 0.0f) * 2 - 1);
+            similarity += vl.recon_vecs[visible_vec_index] * vl.visible_code_vecs[visible_code_index];
         }
 
         if (similarity > max_similarity) {
@@ -283,6 +281,8 @@ void Encoder::reconstruct(
 
 void Encoder::init_random(
     const Int3 &hidden_size,
+    int vec_size,
+    float positional_scale,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
@@ -306,21 +306,37 @@ void Encoder::init_random(
 
         total_num_visible_columns += num_visible_columns;
 
-        int diam = vld.radius * 2 + 1;
-        int area = diam * diam;
+        vl.visible_code_vecs.resize(vec_size * num_visible_cells);
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        for (int i = 0; i < vl.visible_code_vecs.size(); i++)
+            vl.visible_code_vecs[i] = (rand() % 2) * 2 - 1;
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + (rand() % 127);
+        // generate temporary positional matrix
+        Float_Buffer embedding(vec_size * 3);
 
-        vl.hidden_sums.resize(num_hidden_cells);
+        for (int i = 0; i < embedding.size(); i++)
+            embedding[i] = rand_normalf() * positional_scale;
+
+        vl.visible_pos_vecs.resize(vec_size * num_visible_columns);
+
+        for (int x = 0; x < vld.size.x; x++)
+            for (int y = 0; y < vld.size.y; y++) {
+                int visible_column_index = y + x * vld.size.y;
+
+                int visible_vecs_start = vec_size * visible_column_index;
+
+                for (int vi = 0; vi < vec_size; vi++) {
+                    int visible_vec_index = vi + visible_vecs_start;
+
+                    vl.visible_pos_vecs[visible_vec_index] = (modf(embedding[visible_column_index * 3] * x + embedding[visible_column_index * 3 + 1] * y + embedding[visible_column_index * 3 + 2], pi) > 0.0f) * 2 - 1;
+                }
+            }
+
+        vl.visible_bundles.resize(vec_size * num_visible_columns);
+        vl.hidden_bundles.resize(vec_size * num_hidden_columns);
 
         vl.input_cis = Int_Buffer(num_visible_columns, 0);
         vl.recon_cis = Int_Buffer(num_visible_columns, 0);
-
-        vl.recon_deltas.resize(num_visible_cells);
-        vl.recon_sums.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);

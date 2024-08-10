@@ -32,9 +32,9 @@ public:
     struct Visible_Layer {
         Int_Buffer input_cis;
 
-        Float_Buffer input_code_vecs;
+        S_Byte_Buffer visible_code_vecs;
 
-        S_Byte_Buffer input_pos_vecs; // positional encodings
+        S_Byte_Buffer visible_pos_vecs; // positional encodings
 
         S_Byte_Buffer input_vecs;
 
@@ -90,13 +90,11 @@ private:
     
     void bind_inputs(
         const Int2 &column_pos,
-        int vli,
-        const Params &params
+        int vli
     );
 
     void forward(
-        const Int2 &column_pos,
-        const Params &params
+        const Int2 &column_pos
     );
 
     void learn(
@@ -113,6 +111,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int vec_size,
         float positional_scale, // positional encoding scale
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
