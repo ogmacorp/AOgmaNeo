@@ -38,14 +38,12 @@ public:
 
         S_Byte_Buffer input_vecs;
 
-        Float_Buffer visible_bundles;
-        Float_Buffer hidden_bundles;
+        Int_Buffer visible_bundles;
+        Int_Buffer hidden_bundles;
 
         Int_Buffer recon_cis;
 
         S_Byte_Buffer recon_vecs;
-
-        Float_Buffer weights; // weighted superposition
 
         bool use_input;
         bool up_to_date;
@@ -61,17 +59,11 @@ public:
     };
 
     struct Params {
-        float wlr; // weight learning rate
-        float clr; // code learning rate
-        float active_ratio; // activity ratio for 2nd stage inhibition
-        int l_radius; // lateral radius for 2nd stage inhibition
+        float lr; // code learning rate
 
         Params()
         :
-        wlr(0.01f),
-        clr(0.1f),
-        active_ratio(0.5f),
-        l_radius(2)
+        lr(0.01f)
         {}
     };
 
@@ -99,11 +91,8 @@ private:
     );
 
     void forward(
-        const Int2 &column_pos
-    );
-
-    void learn(
         const Int2 &column_pos,
+        bool learn_enabled,
         const Params &params
     );
 
