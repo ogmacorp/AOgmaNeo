@@ -68,9 +68,9 @@ public:
 
         Params()
         :
-        wlr(0.0f),
-        clr(0.01f),
-        active_ratio(1.0f),
+        wlr(0.01f),
+        clr(0.1f),
+        active_ratio(0.5f),
         l_radius(2)
         {}
     };
