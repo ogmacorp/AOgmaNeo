@@ -16,58 +16,57 @@ class Encoder {
 public:
     // visible layer descriptor
     struct Visible_Layer_Desc {
-        Int3 size; // size of input
+        Int4 size; // size of input
 
         int radius; // radius onto input
 
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(4, 4, 4, 16),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
-
-        Float_Buffer hidden_sums;
-
         Int_Buffer input_cis;
-        Int_Buffer recon_cis;
 
-        Float_Buffer recon_deltas;
-        Int_Buffer recon_sums;
+        S_Byte_Buffer input_code_vecs;
+
+        S_Byte_Buffer input_pos_vecs; // positional encodings
+
+        Int_Buffer recon_cis;
 
         bool use_input;
         bool up_to_date;
         
-        float importance;
-
         Visible_Layer()
         :
         use_input(false),
-        up_to_date(false),
-        importance(1.0f)
+        up_to_date(false)
         {}
     };
 
     struct Params {
-        float scale; // scale of exp squash in reconstruction
         float lr; // learning rate
+        int resonate_iters; // resonator network iterations to solve
 
         Params()
         :
-        scale(4.0f),
-        lr(0.04f)
+        lr(0.04f),
+        resonate_iters(16)
         {}
     };
 
 private:
-    Int3 hidden_size; // size of hidden/output layer
+    Int4 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    S_Byte_Buffer hidden_code_vecs; // shared among all hidden columns
+
+    Int_Buffer hidden_bundles;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -97,7 +96,8 @@ private:
 public:
     // create a sparse coding layer with random initialization
     void init_random(
-        const Int3 &hidden_size, // hidden/output size
+        const Int4 &hidden_size, // hidden/output size
+        float positional_scale, // positional encoding scale
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -190,7 +190,7 @@ public:
     }
 
     // get the hidden size
-    const Int3 &get_hidden_size() const {
+    const Int4 &get_hidden_size() const {
         return hidden_size;
     }
 
