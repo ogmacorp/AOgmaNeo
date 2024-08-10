@@ -32,15 +32,18 @@ public:
     struct Visible_Layer {
         Int_Buffer input_cis;
 
-        S_Byte_Buffer input_code_vecs;
+        Float_Buffer input_code_vecs;
 
         S_Byte_Buffer input_pos_vecs; // positional encodings
 
         S_Byte_Buffer input_vecs;
 
+        Int_Buffer visible_bundles;
         Int_Buffer hidden_bundles;
 
         Int_Buffer recon_cis;
+
+        S_Byte_Buffer recon_vecs;
 
         bool use_input;
         bool up_to_date;
@@ -71,9 +74,11 @@ private:
 
     Int_Buffer hidden_cis;
 
-    S_Byte_Buffer hidden_code_vecs; // shared among all hidden columns
+    Float_Buffer hidden_code_vecs; // shared among all hidden columns
 
     Int_Buffer hidden_vecs;
+
+    Int_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

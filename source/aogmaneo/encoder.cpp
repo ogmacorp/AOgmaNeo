@@ -22,14 +22,16 @@ void Encoder::bind_inputs(
 
     int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
 
-    int visible_vecs_start = visible_column_index * vec_size;
-    int visible_codes_start = vec_size * (vl.input_cis[visible_column_index] + vld.size.z * visible_column_index);
+    int visible_cell_index_max = vl.input_cis[visible_column_index] + vld.size.z * visible_column_index;
+
+    int visible_vecs_start = vec_size * visible_column_index;
+    int visible_codes_start = vec_size * visible_cell_index_max;
 
     for (int vi = 0; vi < vec_size; vi++) {
         int visible_vec_index = vi + visible_vecs_start;
         int visible_code_index = vi + visible_codes_start;
 
-        vl.input_vecs[visible_vec_index] = vl.input_code_vecs[visible_code_index] * vl.input_pos_vecs[visible_vec_index];
+        vl.input_vecs[visible_vec_index] = ((vl.input_code_vecs[visible_code_index] > 0.0f) * 2 - 1) * vl.input_pos_vecs[visible_vec_index];
     }
 }
 
@@ -39,9 +41,8 @@ void Encoder::forward(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
-    int hidden_vecs_start = hidden_column_index * vec_size;
+    int hidden_cells_start = hidden_size.z * hidden_column_index;
+    int hidden_vecs_start = vec_size * hidden_column_index;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -78,9 +79,7 @@ void Encoder::forward(
 
                     int in_ci = vl.input_cis[visible_column_index];
 
-                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
-
-                    int visible_vecs_start = vec_size * (offset.y + diam * (offset.x + diam * hidden_column_index));
+                    int visible_vecs_start = visible_column_index * vec_size;
 
                     for (int vi = 0; vi < vec_size; vi++) {
                         int hidden_vec_index = vi + hidden_vecs_start;
@@ -123,7 +122,7 @@ void Encoder::forward(
             int hidden_vec_index = vi + hidden_vecs_start;
             int hidden_code_index = vi + hidden_codes_start;
 
-            similarity += hidden_vecs[hidden_vec_index] * hidden_code_vecs[hidden_code_index];
+            similarity += hidden_vecs[hidden_vec_index] * ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1);
         }
 
         if (similarity > max_similarity) {
@@ -133,6 +132,7 @@ void Encoder::forward(
     }
 
     hidden_cis[hidden_column_index] = max_index;
+    hidden_comparisons[hidden_column_index] = max_similarity;
 }
 
 void Encoder::learn(
@@ -141,11 +141,49 @@ void Encoder::learn(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
+    int hidden_cells_start = hidden_size.z * hidden_column_index;
+    int hidden_vecs_start = vec_size * hidden_column_index;
 
-    int hidden_vecs_start = hidden_column_index * vec_size;
+    int hidden_compare = hidden_comparisons[hidden_column_index];
 
+    int num_higher = 0;
+    int count = 0;
 
+    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+            if (dcx == 0 && dcy == 0)
+                continue;
+
+            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
+
+            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                if (hidden_comparisons[other_hidden_column_index] >= hidden_compare)
+                    num_higher++;
+
+                count++;
+            }
+        }
+
+    float ratio = static_cast<float>(num_higher) / static_cast<float>(max(1, count));
+
+    if (ratio > params.active_ratio)
+        return;
+
+    int hidden_ci = hidden_cis[hidden_column_index];
+
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
+
+    int hidden_codes_start_max = vec_size * hidden_cell_index_max;
+
+    // learn
+    for (int vi = 0; vi < vec_size; vi++) {
+        int hidden_vec_index = vi + hidden_vecs_start;
+        int hidden_code_index = vi + hidden_codes_start_max;
+
+         hidden_code_vecs[hidden_code_index] += params.lr * (hidden_vecs[hidden_vec_index] - hidden_code_vecs[hidden_code_index]);
+    }
 }
 
 void Encoder::reconstruct(
@@ -160,6 +198,7 @@ void Encoder::reconstruct(
     int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
 
     int visible_cells_start = visible_column_index * vld.size.z;
+    int visible_vecs_start = visible_column_index * vec_size;
 
     // projection
     Float2 v_to_h = Float2(static_cast<float>(hidden_size.x) / static_cast<float>(vld.size.x),
@@ -179,11 +218,10 @@ void Encoder::reconstruct(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
-    // clear
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
+    for (int vi = 0; vi < vec_size; vi++) {
+        int visible_vec_index = vi + visible_vecs_start;
 
-        vl.recon_sums[visible_cell_index] = 0;
+        vl.visible_bundles[visible_vec_index] = 0;
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -197,28 +235,45 @@ void Encoder::reconstruct(
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
                 int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
+                int hidden_codes_start_max = vec_size * hidden_cell_index_max;
+
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
+                for (int vi = 0; vi < vec_size; vi++) {
+                    int visible_vec_index = vi + visible_vecs_start;
+                    int hidden_code_index = vi + hidden_codes_start_max;
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
-
-                    int wi = vc + wi_start;
-
-                    vl.recon_sums[visible_cell_index] += vl.weights[wi];
+                    // un-bind and superimpose
+                    vl.visible_bundles[visible_vec_index] += ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1) * vl.input_pos_vecs[visible_vec_index];
                 }
             }
         }
 
+    for (int vi = 0; vi < vec_size; vi++) {
+        int visible_vec_index = vi + visible_vecs_start;
+
+        vl.recon_vecs[visible_vec_index] = (vl.visible_bundles[visible_vec_index] > 0) * 2 - 1;
+    }
+
     int max_index = 0;
-    int max_sum = 0;
+    int max_similarity = limit_min;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        if (vl.recon_sums[visible_cell_index] > max_sum) {
-            max_sum = vl.recon_sums[visible_cell_index];
+        int visible_codes_start = vec_size * visible_cell_index;
+
+        int similarity = 0;
+
+        for (int vi = 0; vi < vec_size; vi++) {
+            int visible_vec_index = vi + visible_vecs_start;
+            int visible_code_index = vi + visible_codes_start;
+
+            similarity += vl.recon_vecs[visible_vec_index] * ((hidden_code_vecs[visible_code_index] > 0.0f) * 2 - 1);
+        }
+
+        if (similarity > max_similarity) {
+            max_similarity = similarity;
             max_index = vc;
         }
     }
