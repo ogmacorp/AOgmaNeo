@@ -16,14 +16,14 @@ class Encoder {
 public:
     // visible layer descriptor
     struct Visible_Layer_Desc {
-        Int3 size; // size of input
+        Int4 size; // size of input
 
         int radius; // radius onto input
 
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(4, 4, 4, 16),
         radius(2)
         {}
     };
@@ -60,22 +60,27 @@ public:
 
     struct Params {
         float lr; // code learning rate
+        int resonate_iters;
 
         Params()
         :
-        lr(0.0f)
+        lr(0.01f),
+        resonate_iters(16)
         {}
     };
 
 private:
-    Int3 hidden_size; // size of hidden/output layer
+    Int4 hidden_size; // size of hidden/output layer
     int vec_size;
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_code_vecs; // shared among all hidden columns
+    Float_Buffer hidden_learn_vecs;
+    S_Byte_Buffer hidden_code_vecs;
+    S_Byte_Buffer hidden_corr_mats; // correlation matrices
 
     S_Byte_Buffer hidden_vecs;
+    S_Byte_Buffer hidden_temp_vecs;
 
     Int_Buffer hidden_comparisons;
 
@@ -104,7 +109,7 @@ private:
 public:
     // create a sparse coding layer with random initialization
     void init_random(
-        const Int3 &hidden_size, // hidden/output size
+        const Int4 &hidden_size, // hidden/output size
         int vec_size,
         float positional_scale, // positional encoding scale
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
@@ -199,7 +204,7 @@ public:
     }
 
     // get the hidden size
-    const Int3 &get_hidden_size() const {
+    const Int4 &get_hidden_size() const {
         return hidden_size;
     }
 };

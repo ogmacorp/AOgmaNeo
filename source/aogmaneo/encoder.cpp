@@ -39,7 +39,6 @@ void Encoder::forward(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_size.z * hidden_column_index;
     int hidden_vecs_start = vec_size * hidden_column_index;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -106,26 +105,83 @@ void Encoder::forward(
         hidden_vecs[hidden_vec_index] = (hidden_bundle > 0.0f) * 2 - 1;
     }
 
-    int max_index = 0;
-    int max_similarity = limit_min;
+    // pre-compute self-correlation vecs
+    for (int fi = 0; fi < hidden_size.z; fi++) {
+        // compute a self-correlation vector per feature
+        int hidden_feature_index = fi + hidden_size.z * hidden_column_index;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        int hidden_codes_start = vec_size * hidden_cell_index;
-
-        int similarity = 0;
+        int hidden_codes_start = hidden_size.w * hidden_feature_index;
 
         for (int vi = 0; vi < vec_size; vi++) {
             int hidden_vec_index = vi + hidden_vecs_start;
-            int hidden_code_index = vi + hidden_codes_start;
 
-            similarity += hidden_vecs[hidden_vec_index] * ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1);
+            for (int ovi = 0; ovi < vec_size; ovi++) {
+                int hidden_vec_index = vi + hidden_vecs_start;
+
+                int sum = 0;
+
+                for (int hc = 0; hc < hidden_size.w; hc++)
+                    sum += hidden_code_vecs[vi + vec_size * (hc + hidden_codes_start)] * hidden_code_vecs[ovi + vec_size * (hc + hidden_codes_start)];
+
+                hidden_corr_mats[ovi + vec_size * (vi + vec_size * hidden_feature_index)] = (sum > 0) * 2 - 1;
+            }
+        }
+    }
+
+    for (int fi = 0; fi < hidden_size.z; fi++) {
+        // set temp to vector we are trying to decode
+        for (int vi = 0; vi < vec_size; vi++) {
+            int hidden_vec_index = vi + hidden_vecs_start;
+
+            hidden_temp_vecs[hidden_vec_index] = hidden_vecs[hidden_vec_index];
         }
 
-        if (similarity > max_similarity) {
-            max_similarity = similarity;
-            max_index = hc;
+        // bind other feature estimates
+        for (int ofi = 0; ofi < hidden_size.z; ofi++) {
+            if (ofi == fi)
+                continue;
+
+            int hidden_codes_start = vec_size * (ofi + hidden_size.z * (hidden_cis[ofi + hidden_size.z * hidden_column_index] + hidden_size.w * hidden_column_index));
+
+            for (int vi = 0; vi < vec_size; vi++) {
+                int hidden_vec_index = vi + hidden_vecs_start;
+
+                hidden_temp_vecs[vi] *= hidden_code_vecs[vi + hidden_codes_start];
+            }
+        }
+
+        // multiply by self-correlations
+        for (int vi = 0; vi < vec_size; vi++) {
+            int hidden_vec_index = vi + hidden_vecs_start;
+
+            int sum = 0;
+
+            for (int ohc = 0; ohc < hidden_size.w; ohc++) {
+                for (int 
+            }
+        }
+
+        int max_index = 0;
+        int max_similarity = limit_min;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            int hidden_codes_start = vec_size * hidden_cell_index;
+
+            int similarity = 0;
+
+            for (int vi = 0; vi < vec_size; vi++) {
+                int hidden_vec_index = vi + hidden_vecs_start;
+                int hidden_code_index = vi + hidden_codes_start;
+
+                similarity += hidden_vecs[hidden_vec_index] * ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1);
+            }
+
+            if (similarity > max_similarity) {
+                max_similarity = similarity;
+                max_index = hc;
+            }
         }
     }
 
