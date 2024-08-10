@@ -69,7 +69,7 @@ void Encoder::forward(
             for (int vi = 0; vi < vec_size; vi++) {
                 int hidden_vec_index = vi + hidden_vecs_start;
 
-                vl.hidden_bundles[hidden_vec_index] = 0;
+                vl.hidden_bundles[hidden_vec_index] = 0.0f;
             }
 
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -378,7 +378,7 @@ void Encoder::init_random(
                 for (int vi = 0; vi < vec_size; vi++) {
                     int visible_vec_index = vi + visible_vecs_start;
 
-                    vl.visible_pos_vecs[visible_vec_index] = (modf(embedding[visible_column_index * 3] * x + embedding[visible_column_index * 3 + 1] * y + embedding[visible_column_index * 3 + 2], pi) > 0.0f) * 2 - 1;
+                    vl.visible_pos_vecs[visible_vec_index] = (modf(embedding[visible_vec_index * 3] * x + embedding[visible_vec_index * 3 + 1] * y + embedding[visible_vec_index * 3 + 2], pi) > 0.0f) * 2 - 1;
                 }
             }
 
