@@ -38,31 +38,38 @@ public:
 
         S_Byte_Buffer input_vecs;
 
-        Int_Buffer visible_bundles;
-        Int_Buffer hidden_bundles;
+        Float_Buffer visible_bundles;
+        Float_Buffer hidden_bundles;
 
         Int_Buffer recon_cis;
 
         S_Byte_Buffer recon_vecs;
 
+        Float_Buffer weights; // weighted superposition
+
         bool use_input;
         bool up_to_date;
         
+        float importance;
+
         Visible_Layer()
         :
         use_input(false),
-        up_to_date(false)
+        up_to_date(false),
+        importance(1.0f)
         {}
     };
 
     struct Params {
-        float lr; // learning rate
+        float wlr; // weight learning rate
+        float clr; // code learning rate
         float active_ratio; // activity ratio for 2nd stage inhibition
         int l_radius; // lateral radius for 2nd stage inhibition
 
         Params()
         :
-        lr(0.04f),
+        wlr(0.01f),
+        clr(0.1f),
         active_ratio(0.1f),
         l_radius(2)
         {}
@@ -83,8 +90,6 @@ private:
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
     // --- kernels ---
     
