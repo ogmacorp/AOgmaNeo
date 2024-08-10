@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -246,8 +245,8 @@ void Encoder::reconstruct(
 
     int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
 
-    int visible_cells_start = visible_column_index * vld.size.z;
-    int visible_vecs_start = visible_column_index * vec_size;
+    int visible_cells_start = vld.size.z * visible_column_index;
+    int visible_vecs_start = vec_size * visible_column_index;
 
     // projection
     Float2 v_to_h = Float2(static_cast<float>(hidden_size.x) / static_cast<float>(vld.size.x),
