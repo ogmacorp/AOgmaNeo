@@ -36,6 +36,8 @@ public:
 
         S_Byte_Buffer input_pos_vecs; // positional encodings
 
+        S_Byte_Buffer input_vecs;
+
         Int_Buffer recon_cis;
 
         bool use_input;
@@ -61,6 +63,7 @@ public:
 
 private:
     Int4 hidden_size; // size of hidden/output layer
+    int vec_size;
 
     Int_Buffer hidden_cis;
 
@@ -76,6 +79,11 @@ private:
     
     // --- kernels ---
     
+    void bind_inputs(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
     void forward(
         const Int2 &column_pos,
         const Params &params
