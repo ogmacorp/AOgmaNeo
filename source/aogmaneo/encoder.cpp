@@ -21,10 +21,8 @@ void Encoder::bind_inputs(
 
     int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
 
-    int visible_cell_index_max = vl.input_cis[visible_column_index] + vld.size.z * visible_column_index;
-
     int visible_vecs_start = vec_size * visible_column_index;
-    int visible_codes_start = vec_size * visible_cell_index_max;
+    int visible_codes_start = vec_size * vl.input_cis[visible_column_index];
 
     for (int vi = 0; vi < vec_size; vi++) {
         int visible_vec_index = vi + visible_vecs_start;
@@ -80,8 +78,6 @@ void Encoder::forward(
                     int visible_vecs_start = vec_size * visible_column_index;
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
-
-                    int wi = offset.y + diam * (offset.x + diam * hidden_column_index);
 
                     for (int vi = 0; vi < vec_size; vi++) {
                         int hidden_vec_index = vi + hidden_vecs_start;
@@ -203,13 +199,11 @@ void Encoder::reconstruct(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                int wi = offset.y + diam * (offset.x + diam * hidden_column_index);
-
                 for (int vi = 0; vi < vec_size; vi++) {
                     int visible_vec_index = vi + visible_vecs_start;
                     int hidden_code_index = vi + hidden_codes_start_max;
 
-                    vl.visible_bundles[visible_vec_index] += ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1);
+                    vl.visible_bundles[visible_vec_index] += hidden_vecs[vi + vec_size * hidden_column_index];
                 }
             }
         }
@@ -218,7 +212,7 @@ void Encoder::reconstruct(
         int visible_vec_index = vi + visible_vecs_start;
 
         // positional unbind
-        vl.recon_vecs[visible_vec_index] = ((vl.visible_bundles[visible_vec_index] > 0.0f) * 2 - 1) * vl.visible_pos_vecs[visible_vec_index];
+        vl.recon_vecs[visible_vec_index] = ((vl.visible_bundles[visible_vec_index] > 0) * 2 - 1) * vl.visible_pos_vecs[visible_vec_index];
     }
 
     int max_index = 0;
@@ -227,7 +221,7 @@ void Encoder::reconstruct(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        int visible_codes_start = vec_size * visible_cell_index;
+        int visible_codes_start = vec_size * vc;
 
         int similarity = 0;
 
@@ -271,7 +265,7 @@ void Encoder::init_random(
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
 
-        vl.visible_code_vecs.resize(vec_size * num_visible_cells);
+        vl.visible_code_vecs.resize(vec_size * vld.size.z);
 
         for (int i = 0; i < vl.visible_code_vecs.size(); i++)
             vl.visible_code_vecs[i] = (rand() % 2) * 2 - 1;
@@ -463,7 +457,7 @@ void Encoder::read(
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
 
-        vl.visible_code_vecs.resize(vec_size * num_visible_cells);
+        vl.visible_code_vecs.resize(vec_size * vld.size.z);
         vl.visible_pos_vecs.resize(vec_size * num_visible_columns);
 
         reader.read(&vl.visible_code_vecs[0], vl.visible_code_vecs.size() * sizeof(S_Byte));
