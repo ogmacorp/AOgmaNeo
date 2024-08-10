@@ -30,10 +30,10 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer policy_weights;
-        Float_Buffer policy_traces;
         Float_Buffer value_weights;
         Float_Buffer value_traces;
+        Float_Buffer policy_weights;
+        Float_Buffer policy_traces;
 
         Int_Buffer input_cis_prev;
     };
@@ -43,34 +43,36 @@ public:
         float plr; // policy learning rate
         float leak; // dendrite ReLU leak
         float discount; // discount factor
-        float trace_scale; // trace squashing scale
+        float value_clip; // value gradient clip
+        float policy_clip; // policy gradient clip
         float trace_decay; // eligibility trace decay
 
         Params()
         :
-        vlr(0.002f),
-        plr(0.002f),
+        vlr(0.001f),
+        plr(0.001f),
         leak(0.01f),
         discount(0.99f),
-        trace_scale(0.5f),
+        value_clip(0.5f),
+        policy_clip(0.1f),
         trace_decay(0.97f)
         {}
     };
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int policy_num_dendrites_per_cell;
     int value_num_dendrites_per_cell;
+    int policy_num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
     Float_Buffer hidden_acts_prev;
 
-    Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_prev;
     Float_Buffer value_dendrite_acts;
     Float_Buffer value_dendrite_acts_prev;
+    Float_Buffer policy_dendrite_acts;
+    Float_Buffer policy_dendrite_acts_prev;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
@@ -95,8 +97,8 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int policy_num_dendrites_per_cell,
         int value_num_dendrites_per_cell,
+        int policy_num_dendrites_per_cell,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 

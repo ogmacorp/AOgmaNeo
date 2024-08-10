@@ -30,27 +30,26 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0; // regular
-        Byte_Buffer weights1; // complement
-        Byte_Buffer weights_recon; // for reconstruction
+        Byte_Buffer weights;
+        Byte_Buffer recon_weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float choice;
-        float vigilance;
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
-        float scale;
+        float scale; // scale of reconstruction
         float rr; // reconstruction rate
+        int radius; // SOM neighborhood radius
         
         Params()
         :
-        choice(0.01f),
-        vigilance(0.99f),
-        lr(0.5f),
+        falloff(0.99f),
+        lr(0.05f),
         scale(2.0f),
-        rr(0.05f)
+        rr(0.01f),
+        radius(2)
         {}
     };
 
@@ -58,6 +57,11 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer hidden_acts;
+    Float_Buffer hidden_totals;
+
+    Float_Buffer hidden_resources;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -96,7 +100,7 @@ public:
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled, // whether to learn
-        bool learn_recon = true // whether to learn reconstruction weights
+        bool learn_recon = true // whether to learn a reconstruction as well (conditional on learn_enabled)
     );
 
     void reconstruct(
@@ -112,7 +116,7 @@ public:
     // serialization
     long size() const; // returns size in bytes
     long state_size() const; // returns state size in bytes
-    long weights_size() const; // returns weights size in bytes
+    long weights_size() const; // returns recon_weights size in bytes
 
     void write(
         Stream_Writer &writer

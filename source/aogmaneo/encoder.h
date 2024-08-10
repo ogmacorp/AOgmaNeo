@@ -32,13 +32,12 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Int_Buffer hidden_sums;
+        Float_Buffer hidden_sums;
 
         Int_Buffer input_cis;
         Int_Buffer recon_cis;
 
-        Int_Buffer hidden_totals;
-
+        Float_Buffer recon_deltas;
         Int_Buffer recon_sums;
 
         bool use_input;
@@ -55,17 +54,13 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float scale; // scale of exp squash in reconstruction
         float lr; // learning rate
-        int min_matches;
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.95f),
-        lr(0.5f),
-        min_matches(3)
+        scale(4.0f),
+        lr(0.04f)
         {}
     };
 
@@ -74,11 +69,11 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
-
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
+
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
     // --- kernels ---
     
@@ -89,6 +84,8 @@ private:
 
     void learn(
         const Int2 &column_pos,
+        int vli,
+        unsigned long* state,
         const Params &params
     );
 
