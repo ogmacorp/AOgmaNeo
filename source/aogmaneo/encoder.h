@@ -70,7 +70,7 @@ public:
         :
         wlr(0.0f),
         clr(0.01f),
-        active_ratio(0.1f),
+        active_ratio(1.0f),
         l_radius(2)
         {}
     };

@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -218,20 +219,18 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int sim = 0;
+                int similarity = 0;
 
                 for (int vi = 0; vi < vec_size; vi++) {
                     int visible_vec_index = vi + visible_vecs_start;
                     int hidden_code_index = vi + hidden_codes_start_max;
 
-                    sim += vl.input_vecs[visible_vec_index] * ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1);
+                    similarity += vl.input_vecs[visible_vec_index] * ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1);
                 }
-
-                float sim_scaled = sim / vec_size_inv;
 
                 int wi = offset.y + diam * (offset.x + diam * hidden_column_index);
 
-                vl.weights[wi] += params.wlr * (sim_scaled - vl.weights[wi]);
+                vl.weights[wi] += params.wlr * (similarity * vec_size_inv - vl.weights[wi]);
             }
     }
 }
@@ -296,7 +295,7 @@ void Encoder::reconstruct(
                     int hidden_code_index = vi + hidden_codes_start_max;
 
                     // un-bind and superimpose
-                    vl.visible_bundles[visible_vec_index] += ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1) * vl.visible_pos_vecs[visible_vec_index] * vl.weights[wi];
+                    vl.visible_bundles[visible_vec_index] += ((hidden_code_vecs[hidden_code_index] > 0.0f) * 2 - 1) * vl.weights[wi];
                 }
             }
         }
@@ -304,7 +303,7 @@ void Encoder::reconstruct(
     for (int vi = 0; vi < vec_size; vi++) {
         int visible_vec_index = vi + visible_vecs_start;
 
-        vl.recon_vecs[visible_vec_index] = (vl.visible_bundles[visible_vec_index] > 0.0f) * 2 - 1;
+        vl.recon_vecs[visible_vec_index] = ((vl.visible_bundles[visible_vec_index] > 0.0f) * 2 - 1) * vl.visible_pos_vecs[visible_vec_index];
     }
 
     int max_index = 0;
