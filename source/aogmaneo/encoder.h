@@ -83,7 +83,7 @@ private:
 
     Float_Buffer hidden_code_vecs; // shared among all hidden columns
 
-    Int_Buffer hidden_vecs;
+    S_Byte_Buffer hidden_vecs;
 
     Int_Buffer hidden_comparisons;
 
