@@ -81,13 +81,11 @@ void Encoder::forward(
 
                     int wi = offset.y + diam * (offset.x + diam * hidden_column_index);
 
-                    float w = vl.weights[wi];
-
                     for (int vi = 0; vi < vec_size; vi++) {
                         int hidden_vec_index = vi + hidden_vecs_start;
                         int visible_vec_index = vi + visible_vecs_start;
 
-                        vl.hidden_bundles[hidden_vec_index] += vl.input_vecs[visible_vec_index] * w;
+                        vl.hidden_bundles[hidden_vec_index] += vl.input_vecs[visible_vec_index] * vl.weights[wi];
                     }
                 }
         }
@@ -220,8 +218,6 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = offset.y + diam * (offset.x + diam * hidden_column_index);
-
                 int sim = 0;
 
                 for (int vi = 0; vi < vec_size; vi++) {
@@ -232,6 +228,8 @@ void Encoder::learn(
                 }
 
                 float sim_scaled = sim / vec_size_inv;
+
+                int wi = offset.y + diam * (offset.x + diam * hidden_column_index);
 
                 vl.weights[wi] += params.wlr * (sim_scaled - vl.weights[wi]);
             }
@@ -273,7 +271,7 @@ void Encoder::reconstruct(
     for (int vi = 0; vi < vec_size; vi++) {
         int visible_vec_index = vi + visible_vecs_start;
 
-        vl.visible_bundles[visible_vec_index] = 0;
+        vl.visible_bundles[visible_vec_index] = 0.0f;
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -306,7 +304,7 @@ void Encoder::reconstruct(
     for (int vi = 0; vi < vec_size; vi++) {
         int visible_vec_index = vi + visible_vecs_start;
 
-        vl.recon_vecs[visible_vec_index] = (vl.visible_bundles[visible_vec_index] > 0) * 2 - 1;
+        vl.recon_vecs[visible_vec_index] = (vl.visible_bundles[visible_vec_index] > 0.0f) * 2 - 1;
     }
 
     int max_index = 0;
