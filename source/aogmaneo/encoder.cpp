@@ -30,7 +30,7 @@ void Encoder::bind_inputs(
     }
 
     for (int fi = 0; fi < vld.size.z; fi++) {
-        int visible_codes_start = vec_size * vl.input_cis[fi + hidden_size.z * visible_column_index];
+        int visible_codes_start = vec_size * vl.input_cis[fi + vld.size.z * visible_column_index];
 
         for (int vi = 0; vi < vec_size; vi++) {
             int visible_vec_index = vi + visible_vecs_start;
@@ -114,29 +114,6 @@ void Encoder::forward(
         hidden_bundle_vecs[hidden_vec_index] = (hidden_bundle > 0.0f) * 2 - 1;
     }
 
-    // pre-compute self-correlation vecs
-    for (int fi = 0; fi < hidden_size.z; fi++) {
-        // compute a self-correlation vector per feature
-        int hidden_feature_index = fi + hidden_size.z * hidden_column_index;
-
-        int hidden_cells_start = hidden_size.w * hidden_feature_index;
-
-        for (int vi = 0; vi < vec_size; vi++) {
-            int hidden_vec_index = vi + hidden_vecs_start;
-
-            for (int ovi = 0; ovi < vec_size; ovi++) {
-                int hidden_vec_index = vi + hidden_vecs_start;
-
-                int sum = 0;
-
-                for (int hc = 0; hc < hidden_size.w; hc++)
-                    sum += hidden_code_vecs[vi + vec_size * (hc + hidden_cells_start)] * hidden_code_vecs[ovi + vec_size * (hc + hidden_cells_start)];
-
-                hidden_corr_mats[ovi + vec_size * (vi + vec_size * hidden_feature_index)] = (sum > 0) * 2 - 1;
-            }
-        }
-    }
-
     // resonate
     for (int it = 0; it < params.resonate_iters; it++) {
         for (int fi = 0; fi < hidden_size.z; fi++) {
@@ -177,7 +154,7 @@ void Encoder::forward(
                 int sum = 0;
 
                 for (int ovi = 0; ovi < vec_size; ovi++)
-                    sum += hidden_corr_mats[ovi + vec_size * (vi + vec_size * hidden_features_index)] * hidden_temp_vecs[vi + hidden_codes_start]; 
+                    sum += hidden_corr_mats[ovi + vec_size * (vi + vec_size * fi)] * hidden_temp_vecs[vi + hidden_codes_start]; 
 
                 hidden_temp_vecs[hidden_vec_index] = ((hidden_temp_vecs[hidden_vec_index] * sum) > 0) * 2 - 1;
             }
@@ -291,29 +268,6 @@ void Encoder::reconstruct(
             }
         }
 
-    // pre-compute self-correlation vecs
-    for (int fi = 0; fi < vld.size.z; fi++) {
-        // compute a self-correlation vector per feature
-        int visible_feature_index = fi + vld.size.z * visible_column_index;
-
-        int visible_cells_start = vld.size.w * visible_feature_index;
-
-        for (int vi = 0; vi < vec_size; vi++) {
-            int visible_vec_index = vi + visible_vecs_start;
-
-            for (int ovi = 0; ovi < vec_size; ovi++) {
-                int visible_vec_index = vi + visible_vecs_start;
-
-                int sum = 0;
-
-                for (int vc = 0; vc < vld.size.w; vc++)
-                    sum += vl.visible_code_vecs[vi + vec_size * (vc + visible_cells_start)] * vl.visible_code_vecs[ovi + vec_size * (vc + visible_cells_start)];
-
-                vl.visible_corr_mats[ovi + vec_size * (vi + vec_size * visible_feature_index)] = (sum > 0) * 2 - 1;
-            }
-        }
-    }
-
     // resonate
     for (int it = 0; it < params.resonate_iters; it++) {
         for (int fi = 0; fi < vld.size.z; fi++) {
@@ -354,7 +308,7 @@ void Encoder::reconstruct(
                 int sum = 0;
 
                 for (int ovi = 0; ovi < vec_size; ovi++)
-                    sum += vl.visible_corr_mats[ovi + vec_size * (vi + vec_size * visible_features_index)] * vl.recon_temp_vecs[vi + visible_codes_start]; 
+                    sum += vl.visible_corr_mats[ovi + vec_size * (vi + vec_size * fi)] * vl.recon_temp_vecs[vi + visible_codes_start]; 
 
                 vl.recon_temp_vecs[visible_vec_index] = ((vl.recon_temp_vecs[visible_vec_index] * sum) > 0) * 2 - 1;
             }
@@ -387,7 +341,7 @@ void Encoder::reconstruct(
 }
 
 void Encoder::init_random(
-    const Int3 &hidden_size,
+    const Int4 &hidden_size,
     int vec_size,
     float positional_scale,
     const Array<Visible_Layer_Desc> &visible_layer_descs
@@ -477,6 +431,22 @@ void Encoder::step(
         for (int i = 0; i < num_visible_columns; i++)
             bind_inputs(Int2(i / vld.size.y, i % vld.size.y), vli);
     }
+
+    // pre-compute self-correlation vecs
+    for (int fi = 0; fi < hidden_size.z; fi++) {
+        int hidden_cells_start = hidden_size.w * fi;
+
+        for (int vi = 0; vi < vec_size; vi++) {
+            for (int ovi = 0; ovi < vec_size; ovi++) {
+                int sum = 0;
+
+                for (int hc = 0; hc < hidden_size.w; hc++)
+                    sum += hidden_code_vecs[vi + vec_size * (hc + hidden_cells_start)] * hidden_code_vecs[ovi + vec_size * (hc + hidden_cells_start)];
+
+                hidden_corr_mats[ovi + vec_size * (vi + vec_size * fi)] = (sum > 0) * 2 - 1;
+            }
+        }
+    }
     
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
@@ -490,15 +460,33 @@ void Encoder::step(
 }
 
 void Encoder::reconstruct(
-    int vli
+    int vli,
+    const Params &params
 ) {
+    Visible_Layer &vl = visible_layers[vli];
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
     int num_visible_columns = vld.size.x * vld.size.y;
 
+    // pre-compute self-correlation vecs
+    for (int fi = 0; fi < vld.size.z; fi++) {
+        int visible_cells_start = vld.size.w * fi;
+
+        for (int vi = 0; vi < vec_size; vi++) {
+            for (int ovi = 0; ovi < vec_size; ovi++) {
+                int sum = 0;
+
+                for (int vc = 0; vc < vld.size.w; vc++)
+                    sum += vl.visible_code_vecs[vi + vec_size * (vc + visible_cells_start)] * vl.visible_code_vecs[ovi + vec_size * (vc + visible_cells_start)];
+
+                vl.visible_corr_mats[ovi + vec_size * (vi + vec_size * fi)] = (sum > 0) * 2 - 1;
+            }
+        }
+    }
+
     PARALLEL_FOR
     for (int i = 0; i < num_visible_columns; i++)
-        reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli);
+        reconstruct(Int2(i / vld.size.y, i % vld.size.y),vli, params);
 }
 
 void Encoder::clear_state() {

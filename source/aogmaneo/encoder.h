@@ -140,7 +140,8 @@ public:
     );
 
     void reconstruct(
-        int vli
+        int vli, // visible layer index to reconstruct
+        const Params &params // parameters
     );
 
     void clear_state();
