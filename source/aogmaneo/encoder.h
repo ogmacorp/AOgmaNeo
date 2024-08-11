@@ -33,6 +33,7 @@ public:
         Int_Buffer input_cis;
 
         S_Byte_Buffer visible_code_vecs;
+        S_Byte_Buffer visible_corr_mats;
 
         S_Byte_Buffer visible_pos_vecs; // positional encodings
 
@@ -44,6 +45,7 @@ public:
         Int_Buffer recon_cis;
 
         S_Byte_Buffer recon_bundle_vecs;
+        S_Byte_Buffer recon_temp_vecs;
 
         bool use_input;
         bool up_to_date;
@@ -102,7 +104,8 @@ private:
 
     void reconstruct(
         const Int2 &column_pos,
-        int vli
+        int vli,
+        const Params &params
     );
 
 public:

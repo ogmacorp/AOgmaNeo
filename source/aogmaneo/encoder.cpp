@@ -230,7 +230,8 @@ void Encoder::forward(
 
 void Encoder::reconstruct(
     const Int2 &column_pos,
-    int vli
+    int vli,
+    const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -290,37 +291,99 @@ void Encoder::reconstruct(
             }
         }
 
-    for (int vi = 0; vi < vec_size; vi++) {
-        int visible_vec_index = vi + visible_vecs_start;
+    // pre-compute self-correlation vecs
+    for (int fi = 0; fi < vld.size.z; fi++) {
+        // compute a self-correlation vector per feature
+        int visible_feature_index = fi + vld.size.z * visible_column_index;
 
-        // positional unbind
-        vl.recon_vecs[visible_vec_index] = ((vl.visible_bundles[visible_vec_index] > 0) * 2 - 1) * vl.visible_pos_vecs[visible_vec_index];
-    }
-
-    int max_index = 0;
-    int max_similarity = limit_min;
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        int visible_codes_start = vec_size * vc;
-
-        int similarity = 0;
+        int visible_cells_start = vld.size.w * visible_feature_index;
 
         for (int vi = 0; vi < vec_size; vi++) {
             int visible_vec_index = vi + visible_vecs_start;
-            int visible_code_index = vi + visible_codes_start;
 
-            similarity += vl.recon_vecs[visible_vec_index] * vl.visible_code_vecs[visible_code_index];
-        }
+            for (int ovi = 0; ovi < vec_size; ovi++) {
+                int visible_vec_index = vi + visible_vecs_start;
 
-        if (similarity > max_similarity) {
-            max_similarity = similarity;
-            max_index = vc;
+                int sum = 0;
+
+                for (int vc = 0; vc < vld.size.w; vc++)
+                    sum += vl.visible_code_vecs[vi + vec_size * (vc + visible_cells_start)] * vl.visible_code_vecs[ovi + vec_size * (vc + visible_cells_start)];
+
+                vl.visible_corr_mats[ovi + vec_size * (vi + vec_size * visible_feature_index)] = (sum > 0) * 2 - 1;
+            }
         }
     }
 
-    vl.recon_cis[visible_column_index] = max_index;
+    // resonate
+    for (int it = 0; it < params.resonate_iters; it++) {
+        for (int fi = 0; fi < vld.size.z; fi++) {
+            // compute a self-correlation vector per feature
+            int visible_features_index = fi + vld.size.z * visible_column_index;
+
+            int visible_cells_start = vld.size.w * visible_features_index;
+
+            // set temp to vector we are trying to decode
+            for (int vi = 0; vi < vec_size; vi++) {
+                int visible_vec_index = vi + vec_size * visible_features_index;
+
+                vl.recon_temp_vecs[visible_vec_index] = (vl.visible_bundle_buffer[visible_vec_index] > 0) * 2 - 1;
+            }
+
+            // bind other feature estimates
+            for (int ofi = 0; ofi < vld.size.z; ofi++) {
+                if (ofi == fi)
+                    continue;
+
+                int other_visible_features_index = ofi + vld.size.z * visible_column_index;
+
+                int other_visible_codes_start = vec_size * (vl.input_cis[ofi + vld.size.z * visible_column_index] + vld.size.w * other_visible_features_index);
+
+                for (int ovi = 0; ovi < vec_size; ovi++) {
+                    int other_visible_vec_index = ovi + visible_vecs_start;
+
+                    vl.recon_temp_vecs[other_visible_vec_index] *= vl.visible_code_vecs[ovi + other_visible_codes_start];
+                }
+            }
+
+            int visible_codes_start = vec_size * (vl.recon_cis[fi + vld.size.z * visible_column_index] + vld.size.w * visible_features_index);
+
+            // multiply by self-correlation matrix
+            for (int vi = 0; vi < vec_size; vi++) {
+                int visible_vec_index = vi + visible_vecs_start;
+
+                int sum = 0;
+
+                for (int ovi = 0; ovi < vec_size; ovi++)
+                    sum += vl.visible_corr_mats[ovi + vec_size * (vi + vec_size * visible_features_index)] * vl.recon_temp_vecs[vi + visible_codes_start]; 
+
+                vl.recon_temp_vecs[visible_vec_index] = ((vl.recon_temp_vecs[visible_vec_index] * sum) > 0) * 2 - 1;
+            }
+
+            // find similarity to code
+            int max_index = 0;
+            int max_similarity = limit_min;
+
+            for (int vc = 0; vc < vld.size.w; vc++) {
+                int visible_cell_index = vc + visible_cells_start;
+
+                int similarity = 0;
+
+                for (int vi = 0; vi < vec_size; vi++) {
+                    int visible_vec_index = vi + vec_size * visible_features_index;
+
+                    similarity += vl.recon_temp_vecs[visible_vec_index] * vl.visible_code_vecs[vi + visible_codes_start];
+                }
+
+                if (similarity > max_similarity) {
+                    max_similarity = similarity;
+                    max_index = vc;
+                }
+            }
+
+            // set to most similar code
+            vl.recon_cis[visible_features_index] = max_index;
+        }
+    }
 }
 
 void Encoder::init_random(
