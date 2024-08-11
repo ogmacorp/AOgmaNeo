@@ -81,8 +81,7 @@ private:
 
     S_Byte_Buffer hidden_bundle_vecs;
     S_Byte_Buffer hidden_temp_vecs;
-
-    Int_Buffer hidden_comparisons;
+    S_Byte_Buffer hidden_vecs;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

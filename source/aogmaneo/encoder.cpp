@@ -22,13 +22,22 @@ void Encoder::bind_inputs(
     int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
 
     int visible_vecs_start = vec_size * visible_column_index;
-    int visible_codes_start = vec_size * vl.input_cis[visible_column_index];
 
     for (int vi = 0; vi < vec_size; vi++) {
         int visible_vec_index = vi + visible_vecs_start;
-        int visible_code_index = vi + visible_codes_start;
 
-        vl.input_vecs[visible_vec_index] = vl.visible_code_vecs[visible_code_index] * vl.visible_pos_vecs[visible_vec_index];
+        vl.input_vecs[visible_vec_index] = vl.visible_pos_vecs[visible_vec_index];
+    }
+
+    for (int fi = 0; fi < vld.size.z; fi++) {
+        int visible_codes_start = vec_size * vl.input_cis[fi + hidden_size.z * visible_column_index];
+
+        for (int vi = 0; vi < vec_size; vi++) {
+            int visible_vec_index = vi + visible_vecs_start;
+            int visible_code_index = vi + visible_codes_start;
+
+            vl.input_vecs[visible_vec_index] *= vl.visible_code_vecs[visible_code_index];
+        }
     }
 }
 
@@ -198,6 +207,25 @@ void Encoder::forward(
             hidden_cis[hidden_features_index] = max_index;
         }
     }
+
+    // find final hidden vec
+    for (int vi = 0; vi < vec_size; vi++) {
+        int hidden_vec_index = vi + hidden_vecs_start;
+
+        hidden_vecs[hidden_vec_index] = 1; // identity
+    }
+
+    for (int fi = 0; fi < hidden_size.z; fi++) {
+        int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+        int hidden_codes_start = vec_size * (hidden_cis[fi + hidden_size.z * hidden_column_index] + hidden_size.w * hidden_features_index);
+
+        for (int vi = 0; vi < vec_size; vi++) {
+            int hidden_vec_index = vi + hidden_vecs_start;
+
+            hidden_vecs[hidden_vec_index] *= hidden_code_vecs[vi + hidden_codes_start];
+        }
+    }
 }
 
 void Encoder::reconstruct(
@@ -235,7 +263,7 @@ void Encoder::reconstruct(
     for (int vi = 0; vi < vec_size; vi++) {
         int visible_vec_index = vi + visible_vecs_start;
 
-        vl.visible_bundles[visible_vec_index] = 0;
+        vl.visible_bundle_buffer[visible_vec_index] = 0;
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -257,7 +285,7 @@ void Encoder::reconstruct(
                     int visible_vec_index = vi + visible_vecs_start;
                     int hidden_code_index = vi + hidden_codes_start_max;
 
-                    vl.visible_bundles[visible_vec_index] += hidden_vecs[vi + vec_size * hidden_column_index];
+                    vl.visible_bundle_buffer[visible_vec_index] += hidden_vecs[vi + vec_size * hidden_column_index];
                 }
             }
         }
