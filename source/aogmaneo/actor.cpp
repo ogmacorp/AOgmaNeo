@@ -200,7 +200,7 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error_value = reward + params.discount * value - value_prev;
         
-        float value_delta = params.vlr * min(params.value_clip, max(-params.value_clip, td_error_value));
+        float value_delta = params.vlr * td_error_value;
 
         int target_ci = hidden_target_cis_prev[hidden_column_index];
 
@@ -270,7 +270,7 @@ void Actor::forward(
                             if (vc == in_ci_prev)
                                 vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index]; // accumulating trace
 
-                            vl.value_weights[wi] += value_delta * vl.value_traces[wi];
+                            vl.value_weights[wi] += min(params.value_clip, max(-params.value_clip, value_delta * vl.value_traces[wi]));
                             vl.value_traces[wi] *= params.trace_decay;
                         }
 
@@ -289,7 +289,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev)
                                     vl.policy_traces[wi] += policy_dendrite_acts_prev[dendrite_index]; // accumulating trace
 
-                                vl.policy_weights[wi] += policy_delta_partial * vl.policy_traces[wi];
+                                vl.policy_weights[wi] += min(params.policy_clip, max(-params.policy_clip, policy_delta_partial * vl.policy_traces[wi]));
                                 vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }
