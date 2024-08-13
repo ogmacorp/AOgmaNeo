@@ -200,7 +200,7 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error_value = reward + params.discount * value - value_prev;
         
-        float value_delta = params.vlr * tanhf(td_error_value);
+        float value_delta = params.vlr * min(params.value_clip, max(-params.value_clip, td_error_value));
 
         int target_ci = hidden_target_cis_prev[hidden_column_index];
 
