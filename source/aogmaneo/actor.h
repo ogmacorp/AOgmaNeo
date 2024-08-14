@@ -58,7 +58,7 @@ public:
         vlr(0.002f),
         plr(0.002f),
         leak(0.01f),
-        policy_rate(0.002f),
+        policy_rate(0.01f),
         clip_coef(0.1f),
         discount(0.99f),
         min_steps(8),
