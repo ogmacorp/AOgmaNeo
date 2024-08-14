@@ -432,8 +432,6 @@ void Actor::learn(
 
                     int dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
-                    float error = policy_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
-
                     int wi_start = policy_num_dendrites_per_cell * (hc + wi_start_partial);
 
                     for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
