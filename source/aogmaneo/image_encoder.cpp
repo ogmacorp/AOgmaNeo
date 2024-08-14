@@ -541,7 +541,7 @@ void Image_Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.recon_weights.size(); i++) {
+            for (int i = 0; i < vl.weights.size(); i++) {
                 int e = rand() % image_encoders.size();                
 
                 vl.weights[i] = image_encoders[e]->visible_layers[vli].weights[i];
@@ -555,7 +555,7 @@ void Image_Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.recon_weights.size(); i++) {
+            for (int i = 0; i < vl.weights.size(); i++) {
                 float total = 0.0f;
                 float recon_total = 0.0f;
 
