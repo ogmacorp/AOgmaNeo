@@ -49,7 +49,7 @@ public:
         lr(0.05f),
         scale(2.0f),
         rr(0.01f),
-        radius(3)
+        radius(1)
         {}
     };
 
@@ -59,7 +59,6 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_totals;
 
     Float_Buffer hidden_resources;
 
@@ -116,7 +115,7 @@ public:
     // serialization
     long size() const; // returns size in bytes
     long state_size() const; // returns state size in bytes
-    long weights_size() const; // returns recon_weights size in bytes
+    long weights_size() const; // returns weights size in bytes
 
     void write(
         Stream_Writer &writer
