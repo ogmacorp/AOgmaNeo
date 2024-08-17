@@ -46,6 +46,7 @@ public:
     struct Params {
         float vlr; // value learning rate
         float plr; // policy learning rate
+        float bias; // bias toward positive updates
         float leak; // ReLU leak
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
@@ -56,6 +57,7 @@ public:
         vlr(0.001f),
         plr(0.001f),
         leak(0.01f),
+        bias(0.5f),
         discount(0.99f),
         min_steps(8),
         history_iters(8)
