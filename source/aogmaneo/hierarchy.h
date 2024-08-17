@@ -58,13 +58,16 @@ public:
         int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
+        int conditioning_horizon; // how many steps into the future to condition decoder on goal state
+
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int temporal_horizon = 2,
+            int conditioning_horizon = 4
         )
         :
         hidden_size(hidden_size),
@@ -72,7 +75,8 @@ public:
         up_radius(up_radius),
         down_radius(down_radius),
         ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon)
+        temporal_horizon(temporal_horizon),
+        conditioning_horizon(conditioning_horizon)
         {}
     };
 
@@ -102,7 +106,6 @@ private:
     // layers
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
-    Array<Int_Buffer> hidden_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -110,12 +113,14 @@ private:
 
     // histories
     Array<Array<Circle_Buffer<Int_Buffer>>> histories;
+    Array<Circle_Buffer<Int_Buffer>> conditions;
 
     // per-layer values
     Byte_Buffer updates;
 
     Int_Buffer ticks;
     Int_Buffer ticks_per_update;
+    Int_Buffer temporal_horizons;
 
     // input dimensions
     Array<Int3> io_sizes;
@@ -126,8 +131,8 @@ private:
         int i,
         float importance
     ) {
-        for (int t = 0; t < histories[0][i].size(); t++)
-            encoders[0].get_visible_layer(i * histories[0][i].size() + t).importance = importance;
+        for (int t = 0; t < temporal_horizons[0]; t++)
+            encoders[0].get_visible_layer(i * temporal_horizons[0] + t).importance = importance;
     }
 
 public:
