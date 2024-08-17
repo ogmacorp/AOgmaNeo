@@ -30,15 +30,15 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer policy_weights;
-        Float_Buffer policy_weights_delayed;
         Float_Buffer value_weights;
+        Float_Buffer policy_weights;
     };
 
     // history sample for delayed updates
     struct History_Sample {
         Array<Int_Buffer> input_cis;
         Int_Buffer hidden_target_cis_prev;
+        Float_Buffer hidden_values;
 
         float reward;
     };
@@ -47,19 +47,15 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float leak; // ReLU leak
-        float policy_rate; // rate of delayed policy weights
-        float clip_coef; // PPO clipping coefficient
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        vlr(0.002f),
-        plr(0.002f),
+        vlr(0.001f),
+        plr(0.001f),
         leak(0.01f),
-        policy_rate(0.002f),
-        clip_coef(0.1f),
         discount(0.99f),
         min_steps(8),
         history_iters(8)
@@ -68,8 +64,8 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int policy_num_dendrites_per_cell;
     int value_num_dendrites_per_cell;
+    int policy_num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
@@ -77,11 +73,9 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_delayed;
 
-    Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_delayed;
     Float_Buffer value_dendrite_acts;
+    Float_Buffer policy_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
