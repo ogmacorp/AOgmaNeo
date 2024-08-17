@@ -115,7 +115,7 @@ void Hierarchy::init_random(
 
             int in_size = layer_descs[l - 1].hidden_size.x * layer_descs[l - 1].hidden_size.y;
 
-            histories[l][0].resize(max(layer_descs[l].temporal_horizon, layer_descs[l].conditioning_horizon));
+            histories[l][0].resize(max(layer_descs[l].temporal_horizon, layer_descs[l].conditioning_horizon * layer_descs[l].ticks_per_update));
 
             for (int t = 0; t < histories[l][0].size(); t++)
                 histories[l][0][t] = Int_Buffer(in_size, 0);
@@ -229,7 +229,7 @@ void Hierarchy::step(
                 for (int d = 0; d < decoders[l].size(); d++) {
                     decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-                    decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][(l == 0 ? 0 : d) + t], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                    decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][(l == 0 ? 0 : d) + t * ticks_per_update[l]], (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
                 }
             }
         }
