@@ -198,15 +198,17 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error_value = reward + params.discount * value - value_prev;
+        float td_error = reward + params.discount * value - value_prev;
         
-        float value_delta = params.vlr * td_error_value;
+        hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
+
+        float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
+
+        float value_delta = params.vlr * td_error;
 
         int target_ci = hidden_target_cis_prev[hidden_column_index];
 
-        hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error_value));
-
-        float policy_delta_partial = params.plr * ((1.0f - mimic) * td_error_value / max(limit_small, hidden_td_scales[hidden_column_index]) + mimic);
+        float policy_delta_partial = params.plr * ((1.0f - mimic) * scaled_td_error + mimic);
 
         for (int di = 0; di < value_num_dendrites_per_cell; di++) {
             int dendrite_index = di + value_dendrites_start;
@@ -270,7 +272,7 @@ void Actor::forward(
                             int wi = di + wi_value_start;
 
                             if (vc == in_ci_prev)
-                                vl.value_traces[wi] = value_dendrite_acts_prev[dendrite_index]; // replacing trace
+                                vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index]; // accumulating trace
 
                             vl.value_weights[wi] += value_delta * vl.value_traces[wi];
                             vl.value_traces[wi] *= params.trace_decay;
