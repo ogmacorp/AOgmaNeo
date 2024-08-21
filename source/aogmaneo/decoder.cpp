@@ -110,7 +110,7 @@ void Decoder::forward(
 
         activation *= activation_scale;
 
-        hidden_acts[hidden_cell_index] = tanhf(max(0.0f, activation));
+        hidden_acts[hidden_cell_index] = min(1.0f, max(0.0f, activation));
 
         if (activation > max_activation) {
             max_activation = activation;

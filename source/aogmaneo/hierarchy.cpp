@@ -227,6 +227,7 @@ void Hierarchy::step(
                 layer_input_cis[0] = conditions[l][t];
                 
                 float strength = 1.0f - static_cast<float>(t) / static_cast<float>(conditions[l].size());
+                strength *= strength; // curve a bit
 
                 for (int d = 0; d < decoders[l].size(); d++) {
                     decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
