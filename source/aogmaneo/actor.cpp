@@ -208,7 +208,7 @@ void Actor::forward(
 
         int target_ci = hidden_target_cis_prev[hidden_column_index];
 
-        float policy_delta_partial = params.plr * ((1.0f - mimic) * scaled_td_error + mimic);
+        float policy_delta = params.plr * (1.0f - mimic) * scaled_td_error;
 
         for (int di = 0; di < value_num_dendrites_per_cell; di++) {
             int dendrite_index = di + value_dendrites_start;
@@ -290,10 +290,13 @@ void Actor::forward(
 
                                 int wi = di + wi_start;
 
-                                if (vc == in_ci_prev)
+                                if (vc == in_ci_prev) {
                                     vl.policy_traces[wi] += policy_dendrite_acts_prev[dendrite_index]; // accumulating trace
 
-                                vl.policy_weights[wi] += policy_delta_partial * vl.policy_traces[wi];
+                                    vl.policy_weights[wi] += params.plr * mimic * policy_dendrite_acts_prev[dendrite_index];
+                                }
+
+                                vl.policy_weights[wi] += policy_delta * vl.policy_traces[wi];
                                 vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }
