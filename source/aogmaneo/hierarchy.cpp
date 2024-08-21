@@ -188,7 +188,7 @@ void Hierarchy::step(
             int index = 0;
 
             for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++) {
+                for (int t = 0; t < temporal_horizons[l]; t++) {
                     layer_input_cis[index] = histories[l][i][t];
 
                     index++;
