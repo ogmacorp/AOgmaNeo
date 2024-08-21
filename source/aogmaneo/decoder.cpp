@@ -163,6 +163,7 @@ void Decoder::learn(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     const Int_Buffer_View hidden_target_cis,
+    float strength,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -349,13 +350,14 @@ void Decoder::activate(
 void Decoder::learn(
     const Array<Int_Buffer_View> &input_cis,
     Int_Buffer_View hidden_target_cis,
+    float strength,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, params);
+        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, strength, params);
 }
 
 void Decoder::clear_state() {
