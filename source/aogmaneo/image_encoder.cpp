@@ -25,6 +25,7 @@ void Image_Encoder::forward(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] = 0.0f;
+        hidden_totals[hidden_cell_index] = 0.0f;
     }
 
     float center = 0.0f;
@@ -115,6 +116,7 @@ void Image_Encoder::forward(
                         float w = vl.weights[wi] * byte_inv * 2.0f - 1.0f;
 
                         hidden_acts[hidden_cell_index] += w * input_centered;
+                        hidden_totals[hidden_cell_index] += w * w;
                     }
                 }
             }
@@ -125,6 +127,8 @@ void Image_Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] /= max(limit_small, sqrtf(hidden_totals[hidden_cell_index]));
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -386,6 +390,7 @@ void Image_Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_totals.resize(num_hidden_cells);
 
     hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
 }
@@ -503,6 +508,7 @@ void Image_Encoder::read(
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_totals.resize(num_hidden_cells);
 
     hidden_resources.resize(num_hidden_cells);
 
