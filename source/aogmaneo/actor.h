@@ -54,7 +54,7 @@ public:
 
         Params()
         :
-        vlr(0.003f),
+        vlr(0.01f),
         plr(0.01f),
         leak(0.01f),
         bias(0.5f),
