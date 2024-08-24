@@ -54,14 +54,14 @@ public:
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.01f),
+        vlr(0.001f),
+        plr(0.005f),
         leak(0.01f),
         bias(0.5f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        min_steps(8),
-        history_iters(8)
+        min_steps(16),
+        history_iters(16)
         {}
     };
 
