@@ -206,7 +206,7 @@ void Actor::learn(
 
     float new_value = hidden_values[hidden_column_index];
 
-    // a rather unusual GAE implementation
+    // GAE
     for (int t2 = 1; t2 <= t; t2++)
         new_value = params.smoothing * history_samples[t2].hidden_values[hidden_column_index] +
             (1.0f - params.smoothing) * (history_samples[t2 - 1].reward + params.discount * new_value);
@@ -359,6 +359,8 @@ void Actor::learn(
 
         hidden_acts[hidden_cell_index] *= total_inv;
     }
+
+    history_samples[t].hidden_values[hidden_column_index] = value; // update to latest estimate (delayed by 1 step but good enough)
 
     float td_error = new_value - value;
 

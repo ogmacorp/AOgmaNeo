@@ -47,7 +47,7 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float leak; // ReLU leak
-        float smoothing; // smooth value function, similar to 1 - lambda in GAE
+        float smoothing; // smooth value function, 1 - lambda in GAE
         float discount; // discount factor
         float td_scale_decay; // decay on td error scaler
         int min_steps; // minimum steps before sample can be used
