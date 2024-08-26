@@ -47,7 +47,7 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float leak; // ReLU leak
-        float smoothing; // smooth value function, similar to 1 - lambda in GAE
+        float smoothing; // smooth value function
         float discount; // discount factor
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
@@ -59,8 +59,8 @@ public:
         leak(0.01f),
         smoothing(0.1f),
         discount(0.99f),
-        min_steps(16),
-        history_iters(16)
+        min_steps(8),
+        history_iters(8)
         {}
     };
 
