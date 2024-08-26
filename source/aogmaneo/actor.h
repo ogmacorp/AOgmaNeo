@@ -49,6 +49,7 @@ public:
         float leak; // ReLU leak
         float smoothing; // smooth value function, similar to 1 - lambda in GAE
         float discount; // discount factor
+        float td_scale_decay; // decay on td error scaler
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
@@ -57,8 +58,9 @@ public:
         vlr(0.01f),
         plr(0.01f),
         leak(0.01f),
-        smoothing(0.1f),
+        smoothing(0.05f),
         discount(0.99f),
+        td_scale_decay(0.999f),
         min_steps(8),
         history_iters(8)
         {}
@@ -80,6 +82,8 @@ private:
     Float_Buffer policy_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
+
+    Float_Buffer hidden_td_scales;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
