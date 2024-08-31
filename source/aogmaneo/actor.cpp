@@ -206,7 +206,7 @@ void Actor::learn(
 
     float new_value = hidden_values[hidden_column_index];
 
-    // GAE
+    // TD(lambda)-like return
     for (int t2 = 1; t2 <= t; t2++)
         new_value = params.smoothing * history_samples[t2].hidden_values[hidden_column_index] +
             (1.0f - params.smoothing) * (history_samples[t2 - 1].reward + params.discount * new_value);
