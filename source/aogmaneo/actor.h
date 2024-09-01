@@ -49,7 +49,6 @@ public:
         float leak; // ReLU leak
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float discount; // discount factor
-        float value_clip; // value gradient clipping
         float td_scale_decay; // decay on td error scaler
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
@@ -61,7 +60,6 @@ public:
         leak(0.01f),
         smoothing(0.02f),
         discount(0.99f),
-        value_clip(1.0f),
         td_scale_decay(0.999f),
         min_steps(8),
         history_iters(8)

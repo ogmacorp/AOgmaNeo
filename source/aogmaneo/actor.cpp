@@ -368,7 +368,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    float value_delta = params.vlr * min(params.value_clip, max(-params.value_clip, td_error));
+    float value_delta = params.vlr * td_error;
 
     float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * scaled_td_error);
 
