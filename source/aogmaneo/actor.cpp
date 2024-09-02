@@ -360,7 +360,7 @@ void Actor::learn(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    history_samples[t].hidden_values[hidden_column_index] = value; // update to latest estimate (delayed by 1 step but good enough)
+    history_samples[t].hidden_values[hidden_column_index] = value; // update to latest estimate (delayed by 1 iteration but good enough)
 
     float td_error = new_value - value;
 
@@ -368,7 +368,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    float value_delta = params.vlr * td_error;
+    float value_delta = params.vlr * scaled_td_error;
 
     float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * scaled_td_error);
 
