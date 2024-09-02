@@ -61,7 +61,7 @@ public:
         smoothing(0.03f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        min_steps(8),
+        min_steps(16),
         history_iters(8)
         {}
     };
