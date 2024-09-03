@@ -385,6 +385,12 @@ inline float tanhf(
 #endif
 }
 
+inline float softplusf(
+    float x
+) {
+    return logf(1.0f + expf(-abs(x))) + max(0.0f, x);
+}
+
 // --- rng ---
 
 // PCG32 https://en.wikipedia.org/wiki/Permuted_congruential_generator
