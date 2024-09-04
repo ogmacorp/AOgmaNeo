@@ -209,7 +209,7 @@ void Encoder::learn(
 
                     float diff = in_value - vl.recons[visible_column_index];
 
-                    vl.protos[wi] = min(1.0f, max(0.0f, rate * diff));
+                    vl.protos[wi] = min(1.0f, max(0.0f, vl.protos[wi] + rate * diff));
                 }
         }
 
