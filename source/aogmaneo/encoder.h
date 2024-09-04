@@ -45,15 +45,13 @@ public:
     struct Params {
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
-        float active_ratio; // 2nd stage inhibition activity ratio
         int n_radius; // SOM neighborhood radius
 
         Params()
         :
         falloff(0.9f),
         lr(0.05f),
-        active_ratio(0.2f),
-        n_radius(2)
+        n_radius(1)
         {}
     };
 
