@@ -31,6 +31,8 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer protos;
+
+        Float_Buffer recons;
         
         float importance;
 
@@ -44,7 +46,6 @@ public:
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // second stage inhibition radius
         int n_radius; // SOM neighborhood radius
 
         Params()
@@ -52,7 +53,6 @@ public:
         falloff(0.9f),
         lr(0.05f),
         active_ratio(0.2f),
-        l_radius(1),
         n_radius(2)
         {}
     };
@@ -70,11 +70,19 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
+    
     // --- kernels ---
     
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void backward(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
