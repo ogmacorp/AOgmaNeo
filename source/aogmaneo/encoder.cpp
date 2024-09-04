@@ -291,6 +291,14 @@ void Encoder::step(
 
     if (learn_enabled) {
         PARALLEL_FOR
+        for (int i = 0; i < visible_pos_vlis.size(); i++) {
+            Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
+            int vli = visible_pos_vlis[i].z;
+
+            backward(pos, vli, params);
+        }
+
+        PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
     }
