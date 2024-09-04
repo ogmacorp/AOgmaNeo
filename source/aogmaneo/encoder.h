@@ -49,11 +49,11 @@ public:
 
         Params()
         :
-        falloff(0.99f),
+        falloff(0.9f),
         lr(0.05f),
-        active_ratio(0.1f),
-        l_radius(2),
-        n_radius(1)
+        active_ratio(0.2f),
+        l_radius(1),
+        n_radius(2)
         {}
     };
 
