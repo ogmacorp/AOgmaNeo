@@ -77,9 +77,9 @@ void Encoder::forward(
 
                     float w = vl.weights[wi] * byte_inv;
 
-                    float diff = 1.0f - w;
+                    float w1 = 1.0f - w;
 
-                    vl.hidden_sums[hidden_cell_index] += diff * diff - w * w;
+                    vl.hidden_sums[hidden_cell_index] += w1 * w1 - w * w;
                 }
             }
     }
