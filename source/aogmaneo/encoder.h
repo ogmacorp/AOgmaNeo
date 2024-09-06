@@ -50,7 +50,7 @@ public:
 
         Params()
         :
-        lr(0.2f),
+        lr(0.5f),
         active_ratio(0.05f),
         l_radius(2)
         {}
