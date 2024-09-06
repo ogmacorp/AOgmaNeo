@@ -84,6 +84,8 @@ void Encoder::forward(
     int max_index = 0;
     float max_activation = 0.0f;
 
+    const float byte_inv = 1.0f / 255.0f;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -94,8 +96,10 @@ void Encoder::forward(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            sum += vl.hidden_sums[hidden_cell_index] * vl.importance;
-            total += vl.hidden_totals[hidden_cell_index] * vl.importance;
+            float influence = vl.importance * byte_inv;
+
+            sum += vl.hidden_sums[hidden_cell_index] * influence;
+            total += vl.hidden_totals[hidden_cell_index] * influence;
         }
         
         sum /= max(limit_small, total_importance);
