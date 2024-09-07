@@ -53,7 +53,7 @@ public:
         Params()
         :
         choice(0.0001f),
-        vigilance(0.9f),
+        vigilance(0.8f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
@@ -64,6 +64,7 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+    Int_Buffer learn_cis;
 
     Float_Buffer hidden_comparisons;
 
