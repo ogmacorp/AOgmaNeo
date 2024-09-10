@@ -75,6 +75,7 @@ public:
         return p[r + c * rs];
     }
 
+    // each column is a VSA vector in the codebook
     void multiply_a_at(
         T* vs, // source vector
         T* vd // destination vector
