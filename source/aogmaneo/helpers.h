@@ -349,6 +349,23 @@ inline int address4(
     return pos.w + dims.w * (pos.z + dims.z * (pos.y + dims.y * pos.x));
 }
 
+// --- bits ---
+
+inline int onecount(
+    Byte b
+) {
+#ifdef USE_STD_MATH
+    return std::popcount(b);
+#else
+    int s = 0;
+
+    for (int i = 0; i < 8; i++)
+        s += (((1 << i) & b) != 0);
+
+    return s;
+#endif
+}
+
 // --- noninearities ---
 
 inline float sigmoidf(

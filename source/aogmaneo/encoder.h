@@ -43,6 +43,8 @@ public:
 
         Int_Buffer recon_cis;
 
+        Int_Buffer recon_sums;
+
         S_Byte_Buffer recon_bundle_vecs;
         S_Byte_Buffer recon_temp_vecs;
 

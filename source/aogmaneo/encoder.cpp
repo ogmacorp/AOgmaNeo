@@ -156,7 +156,7 @@ void Encoder::forward(
             for (int vi = 0; vi < vec_size; vi++) {
                 int hidden_vec_index = vi + hidden_vecs_start;
 
-                hidden_temp_vecs[hidden_vec_index] = (hidden_sums[hidden_vec_index] > 0) * 2 - 1;
+                hidden_temp_vecs[hidden_vec_index] = (hidden_sums[hidden_vec_index] * hidden_temp_vecs[hidden_vec_index] > 0) * 2 - 1;
             }
 
             // find similarity to code
@@ -301,16 +301,15 @@ void Encoder::reconstruct(
 
             int visible_codes_start = vec_size * (vl.recon_cis[fi + vld.size.z * visible_column_index] + vld.size.w * visible_features_index);
 
+            View_Matrix<S_Byte> code_mat(&hidden_code_vecs[visible_codes_start], vec_size, vld.size.z * vld.size.w);
+
+            code_mat.multiply_a_at(&vl.recon_temp_vecs[visible_vecs_start], &vl.recon_sums[visible_vecs_start]);
+
             // multiply by self-correlation matrix
             for (int vi = 0; vi < vec_size; vi++) {
                 int visible_vec_index = vi + visible_vecs_start;
 
-                int sum = 0;
-
-                for (int ovi = 0; ovi < vec_size; ovi++)
-                    sum += vl.visible_corr_mats[ovi + vec_size * (vi + vec_size * fi)] * vl.recon_temp_vecs[vi + visible_codes_start]; 
-
-                vl.recon_temp_vecs[visible_vec_index] = ((vl.recon_temp_vecs[visible_vec_index] * sum) > 0) * 2 - 1;
+                vl.recon_temp_vecs[visible_vec_index] = (vl.recon_sums[visible_vec_index] * vl.recon_temp_vecs[visible_vec_index] > 0) * 2 - 1;
             }
 
             // find similarity to code
@@ -390,14 +389,15 @@ void Encoder::init_random(
                 }
             }
 
-        vl.visible_bundles.resize(vec_size * num_visible_columns);
-        vl.hidden_bundles.resize(vec_size * num_hidden_columns);
+        vl.visible_bundle_buffer.resize(vec_size * num_visible_columns);
+        vl.hidden_bundle_buffer.resize(vec_size * num_hidden_columns);
 
         vl.input_cis = Int_Buffer(num_visible_columns, 0);
         vl.recon_cis = Int_Buffer(num_visible_columns, 0);
 
+        vl.recon_sums.resize(vec_size * num_visible_columns);
+
         vl.input_vecs.resize(vec_size * num_visible_columns);
-        vl.recon_vecs.resize(vec_size * num_visible_columns);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -409,8 +409,6 @@ void Encoder::init_random(
 
     hidden_vecs.resize(vec_size * num_hidden_columns);
     hidden_sums.resize(vec_size * num_hidden_columns);
-
-    hidden_comparisons.resize(num_hidden_columns);
 }
 
 void Encoder::step(
@@ -433,22 +431,6 @@ void Encoder::step(
             bind_inputs(Int2(i / vld.size.y, i % vld.size.y), vli);
     }
 
-    // pre-compute self-correlation vecs
-    for (int fi = 0; fi < hidden_size.z; fi++) {
-        int hidden_cells_start = hidden_size.w * fi;
-
-        for (int vi = 0; vi < vec_size; vi++) {
-            for (int ovi = 0; ovi < vec_size; ovi++) {
-                int sum = 0;
-
-                for (int hc = 0; hc < hidden_size.w; hc++)
-                    sum += hidden_code_vecs[vi + vec_size * (hc + hidden_cells_start)] * hidden_code_vecs[ovi + vec_size * (hc + hidden_cells_start)];
-
-                hidden_corr_mats[ovi + vec_size * (vi + vec_size * fi)] = (sum > 0) * 2 - 1;
-            }
-        }
-    }
-    
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         forward(Int2(i / hidden_size.y, i % hidden_size.y), learn_enabled, params);
@@ -468,22 +450,6 @@ void Encoder::reconstruct(
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
     int num_visible_columns = vld.size.x * vld.size.y;
-
-    // pre-compute self-correlation vecs
-    for (int fi = 0; fi < vld.size.z; fi++) {
-        int visible_cells_start = vld.size.w * fi;
-
-        for (int vi = 0; vi < vec_size; vi++) {
-            for (int ovi = 0; ovi < vec_size; ovi++) {
-                int sum = 0;
-
-                for (int vc = 0; vc < vld.size.w; vc++)
-                    sum += vl.visible_code_vecs[vi + vec_size * (vc + visible_cells_start)] * vl.visible_code_vecs[ovi + vec_size * (vc + visible_cells_start)];
-
-                vl.visible_corr_mats[ovi + vec_size * (vi + vec_size * fi)] = (sum > 0) * 2 - 1;
-            }
-        }
-    }
 
     PARALLEL_FOR
     for (int i = 0; i < num_visible_columns; i++)
@@ -574,8 +540,6 @@ void Encoder::read(
     hidden_vecs.resize(vec_size * num_hidden_columns);
     hidden_sums.resize(vec_size * num_hidden_columns);
 
-    hidden_comparisons.resize(num_hidden_columns);
-
     int num_visible_layers = visible_layers.size();
 
     reader.read(&num_visible_layers, sizeof(int));
@@ -601,11 +565,12 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.visible_bundles.resize(vec_size * num_visible_columns);
-        vl.hidden_bundles.resize(vec_size * num_hidden_columns);
+        vl.visible_bundle_buffer.resize(vec_size * num_visible_columns);
+        vl.hidden_bundle_buffer.resize(vec_size * num_hidden_columns);
+
+        vl.recon_sums.resize(vec_size * num_visible_columns);
 
         vl.input_cis = Int_Buffer(num_visible_columns, 0);
-
         vl.recon_cis.resize(num_visible_columns);
 
         reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
