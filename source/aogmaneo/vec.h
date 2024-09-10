@@ -22,9 +22,7 @@ private:
     Byte buffer[bs];
 
 public:
-    Vec() {
-        randomize();
-    }
+    Vec() {}
 
     Vec(
         S_Byte value
@@ -32,9 +30,15 @@ public:
         fill(value);
     }
 
-    void randomize() {
+    static Vec<S> randomized(
+        unsigned long* state = &global_state
+    ) {
+        Vec<S> result;
+
         for (int i = 0; i < bs; i++)
-            buffer[i] = rand() % 256;
+            result.buffer[i] = rand() % 256;
+
+        return result;
     };
 
     S_Byte set(
@@ -164,6 +168,14 @@ public:
         int value
     ) {
         fill(value);
+    }
+
+    const Bundle<S> &operator=(
+        int value
+    ) {
+        fill(value);
+
+        return *this;
     }
 
     int set(
