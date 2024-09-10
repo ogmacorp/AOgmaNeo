@@ -393,10 +393,18 @@ public:
 
         hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
+        hidden_learn_vecs.resize(num_hidden_features * hidden_size.w * S);
+
+        // learned "weights" - recognized patterns
+        for (int i = 0; i < hidden_learn_vecs.size(); i++)
+            hidden_learn_vecs[i] = randf(-1.0f, 1.0f);
+
         hidden_code_vecs.resize(num_hidden_features * hidden_size.w);
 
-        for (int i = 0; i < hidden_code_vecs.size(); i++)
-            hidden_code_vecs[i] = Vec<S>::randomized();
+        for (int i = 0; i < hidden_code_vecs.size(); i++) {
+            for (int j = 0; j < S; j++)
+                hidden_code_vecs[i].set(j, (hidden_learn_vecs[j + i * S] > 0.0f) * 2 - 1);
+        }
 
         hidden_vecs.resize(num_hidden_columns);
     }
@@ -520,7 +528,6 @@ public:
 
             writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-            writer.write(&vl.visible_code_vecs[0], vl.visible_code_vecs.size() * sizeof(S_Byte));
             writer.write(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
 
             writer.write(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
@@ -533,19 +540,25 @@ public:
         Stream_Reader &reader
     ) {
         reader.read(&hidden_size, sizeof(Int3));
-        reader.read(&vec_size, sizeof(int));
 
         int num_hidden_columns = hidden_size.x * hidden_size.y;
-        int num_hidden_cells = num_hidden_columns * hidden_size.z;
+        int num_hidden_features = num_hidden_columns * hidden_size.z;
 
         hidden_cis.resize(num_hidden_columns);
-        hidden_code_vecs.resize(vec_size * num_hidden_cells);
+        hidden_learn_vecs.resize(num_hidden_features * hidden_size.w * S);
 
         reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-        reader.read(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
 
-        hidden_vecs.resize(vec_size * num_hidden_columns);
-        hidden_sums.resize(vec_size * num_hidden_columns);
+        reader.read(&hidden_learn_vecs[0], hidden_learn_vecs.size() * sizeof(float));
+
+        hidden_code_vecs.resize(num_hidden_features * hidden_size.w);
+
+        for (int i = 0; i < hidden_code_vecs.size(); i++) {
+            for (int j = 0; j < S; j++)
+                hidden_code_vecs[i].set(j, (hidden_learn_vecs[j + i * S] > 0.0f) * 2 - 1);
+        }
+
+        hidden_vecs.resize(num_hidden_columns);
 
         int num_visible_layers = visible_layers.size();
 
@@ -561,23 +574,15 @@ public:
             reader.read(&vld, sizeof(Visible_Layer_Desc));
 
             int num_visible_columns = vld.size.x * vld.size.y;
-            int num_visible_cells = num_visible_columns * vld.size.z;
+            int num_visible_features = num_visible_columns * vld.size.z;
 
-            vl.visible_code_vecs.resize(vec_size * vld.size.z);
-            vl.visible_pos_vecs.resize(vec_size * num_visible_columns);
+            vl.visible_code_vecs.resize(num_visible_features * vld.size.w);
+            vl.visible_pos_vecs.resize(num_visible_columns);
 
-            reader.read(&vl.visible_code_vecs[0], vl.visible_code_vecs.size() * sizeof(S_Byte));
             reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
 
-            int diam = vld.radius * 2 + 1;
-            int area = diam * diam;
-
-            vl.visible_bundle_buffer.resize(vec_size * num_visible_columns);
-            vl.hidden_bundle_buffer.resize(vec_size * num_hidden_columns);
-
-            vl.recon_sums.resize(vec_size * num_visible_columns);
-
             vl.input_cis = Int_Buffer(num_visible_columns, 0);
+
             vl.recon_cis.resize(num_visible_columns);
 
             reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
@@ -613,13 +618,13 @@ public:
     void write_weights(
         Stream_Writer &writer
     ) const {
-        writer.write(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
+        writer.write(&hidden_learn_vecs[0], hidden_learn_vecs.size() * sizeof(float));
     }
 
     void read_weights(
         Stream_Reader &reader
     ) {
-        reader.read(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
+        reader.read(&hidden_learn_vecs[0], hidden_learn_vecs.size() * sizeof(float));
     }
 
     // get the number of visible layers
