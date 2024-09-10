@@ -84,35 +84,38 @@ public:
             vd[c] = 0;
 
         // accumulate from above diagonal (symmetric)
-        for (int r = 0; r < rs; r++) {
-            for (int r2 = 0; r2 < r; r2++) { // only compute up to diagonal
+        for (int c = 0; c < cs; c++) {
+            for (int c2 = 0; c2 < c; c2++) { // only compute up to diagonal
                 int a_at_elem = 0;
 
-                for (int c = 0; c < cs; c++)
-                    a_at_elem += p[r + c * rs] * p[r2 + c * rs];
+                for (int r = 0; r < rs; r++)
+                    a_at_elem += p[r + c * rs] * p[r + c2 * rs];
 
                 // exploit symmetry
-                for (int c = 0; c < cs; c++) {
+                for (int r = 0; r < rs; r++) {
                     // upper triangle
-                    vd[c] += a_at_elem * vs[c];
+                    vd[r] += a_at_elem * vs[c];
 
                     // lower triangle
-                    int c_comp = cs - c;
+                    int r_comp = rs - r;
 
-                    vd[c_comp] += a_at_elem * vs[c_comp];
+                    vd[r_comp] += a_at_elem * vs[r_comp];
                 }
             }
         }
 
         // accumlate from diagonal
-        for (int r = 0; r < rs; r++) {
+        for (int c = 0; c < cs; c++) {
             int a_at_elem = 0;
 
-            for (int c = 0; c < cs; c++)
-                a_at_elem += p[r + c * rs] * p[r + c * rs];
+            for (int c = 0; c < cs; c++) {
+                int index = c + c * rs;
 
-            for (int c = 0; c < cs; c++)
-                vd[c] += a_at_elem * vs[c];
+                a_at_elem += p[index] * p[index];
+            }
+
+            for (int r = 0; r < rs; r++)
+                vd[r] += a_at_elem * vs[c];
         }
     }
 
