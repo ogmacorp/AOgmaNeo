@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include "view_matrix.h"
 
 using namespace aon;
 
@@ -147,16 +148,15 @@ void Encoder::forward(
 
             int hidden_codes_start = vec_size * (hidden_cis[fi + hidden_size.z * hidden_column_index] + hidden_size.w * hidden_features_index);
 
-            // multiply by self-correlation matrix
+            View_Matrix<S_Byte> code_mat(&hidden_code_vecs[hidden_codes_start], vec_size, hidden_size.z * hidden_size.w);
+            
+            code_mat.multiply_a_at(&hidden_temp_vecs[hidden_vecs_start], &hidden_sums[hidden_vecs_start]);
+
+            // threshold
             for (int vi = 0; vi < vec_size; vi++) {
                 int hidden_vec_index = vi + hidden_vecs_start;
 
-                int sum = 0;
-
-                for (int ovi = 0; ovi < vec_size; ovi++)
-                    sum += hidden_corr_mats[ovi + vec_size * (vi + vec_size * fi)] * hidden_temp_vecs[vi + hidden_codes_start]; 
-
-                hidden_temp_vecs[hidden_vec_index] = ((hidden_temp_vecs[hidden_vec_index] * sum) > 0) * 2 - 1;
+                hidden_temp_vecs[hidden_vec_index] = (hidden_sums[hidden_vec_index] > 0) * 2 - 1;
             }
 
             // find similarity to code
@@ -408,6 +408,7 @@ void Encoder::init_random(
         hidden_code_vecs[i] = randf(-init_weight_noisef, init_weight_noisef);
 
     hidden_vecs.resize(vec_size * num_hidden_columns);
+    hidden_sums.resize(vec_size * num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
 }
@@ -571,6 +572,7 @@ void Encoder::read(
     reader.read(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
 
     hidden_vecs.resize(vec_size * num_hidden_columns);
+    hidden_sums.resize(vec_size * num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
 

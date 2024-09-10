@@ -78,7 +78,7 @@ public:
     // each column is a VSA vector in the codebook
     void multiply_a_at(
         T* vs, // source vector
-        T* vd // destination vector
+        int* vd // destination vector
     ) {
         // zero out vd
         for (int c = 0; c < cs; c++)

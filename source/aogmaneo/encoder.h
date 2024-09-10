@@ -33,7 +33,6 @@ public:
         Int_Buffer input_cis;
 
         S_Byte_Buffer visible_code_vecs;
-        S_Byte_Buffer visible_corr_mats;
 
         S_Byte_Buffer visible_pos_vecs; // positional encodings
 
@@ -79,7 +78,8 @@ private:
 
     Float_Buffer hidden_learn_vecs;
     S_Byte_Buffer hidden_code_vecs;
-    S_Byte_Buffer hidden_corr_mats; // correlation matrices
+
+    Int_Buffer hidden_sums;
 
     S_Byte_Buffer hidden_bundle_vecs;
     S_Byte_Buffer hidden_temp_vecs;
