@@ -1,3 +1,11 @@
+// ----------------------------------------------------------------------------
+//  AOgmaNeo
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//
+//  This copy of AOgmaNeo is licensed to you under the terms described
+//  in the AOGMANEO_LICENSE.md file included in this distribution.
+// ----------------------------------------------------------------------------
+
 #pragma once
 
 #include "helpers.h"
@@ -112,7 +120,7 @@ public:
                 if (index >= S)
                     return result;
 
-                result.set(index, (((1 << j) & carry) != 0) + (((1 << j) & sum) != 0) - 1);
+                result[index] = (((1 << j) & carry) != 0) + (((1 << j) & sum) != 0) - 1;
             }
         }
 
@@ -168,6 +176,22 @@ public:
     }
 
     int get(
+        int index
+    ) const {
+        assert(index >= 0 && index < S);
+        
+        return buffer[index];
+    }
+
+    int &operator[](
+        int index
+    ) {
+        assert(index >= 0 && index < S);
+        
+        return buffer[index];
+    }
+
+    const int &operator[](
         int index
     ) const {
         assert(index >= 0 && index < S);
@@ -234,7 +258,5 @@ public:
 
         return result;
     }
-
-    friend class Vec<S>;
 };
 }
