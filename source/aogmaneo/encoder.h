@@ -339,10 +339,67 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int4 &hidden_size, // hidden/output size
-        int vec_size,
         float positional_scale, // positional encoding scale
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
-    );
+    ) {
+        this->visible_layer_descs = visible_layer_descs;
+
+        this->hidden_size = hidden_size;
+
+        visible_layers.resize(visible_layer_descs.size());
+
+        // pre-compute dimensions
+        int num_hidden_columns = hidden_size.x * hidden_size.y;
+        int num_hidden_features = num_hidden_columns * hidden_size.z;
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
+
+            int num_visible_columns = vld.size.x * vld.size.y;
+            int num_visible_features = num_visible_columns * vld.size.z;
+
+            vl.visible_code_vecs.resize(num_hidden_features * vld.size.w);
+
+            for (int i = 0; i < vl.visible_code_vecs.size(); i++)
+                vl.visible_code_vecs[i] = Vec<S>::randomized();
+
+            // generate temporary positional matrix
+            Float_Buffer embedding(S * 3);
+
+            for (int i = 0; i < embedding.size(); i++)
+                embedding[i] = rand_normalf() * positional_scale;
+
+            vl.visible_pos_vecs.resize(num_visible_columns);
+
+            for (int x = 0; x < vld.size.x; x++)
+                for (int y = 0; y < vld.size.y; y++) {
+                    int visible_column_index = y + x * vld.size.y;
+
+                    int visible_vecs_start = S * visible_column_index;
+
+                    for (int i = 0; i < S; i++) {
+                        int visible_vec_index = i + visible_vecs_start;
+
+                        vl.visible_pos_vecs[visible_column_index].set(i, (cosf(embedding[visible_vec_index * 3] * x + embedding[visible_vec_index * 3 + 1] * y + embedding[visible_vec_index * 3 + 2]) > 0.0f) * 2 - 1);
+                    }
+                }
+
+            vl.input_cis = Int_Buffer(num_visible_columns, 0);
+            vl.recon_cis = Int_Buffer(num_visible_columns, 0);
+
+            vl.input_vecs.resize(num_visible_columns);
+        }
+
+        hidden_cis = Int_Buffer(num_hidden_columns, 0);
+
+        hidden_code_vecs.resize(num_hidden_features * hidden_size.w);
+
+        for (int i = 0; i < hidden_code_vecs.size(); i++)
+            hidden_code_vecs[i] = Vec<S>::randomized();
+
+        hidden_vecs.resize(num_hidden_columns);
+    }
 
     void set_ignore(
         int vli
