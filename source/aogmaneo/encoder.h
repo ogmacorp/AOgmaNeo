@@ -483,7 +483,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_code_vecs.size() * sizeof(float) + sizeof(int);
+        long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_learn_vecs.size() * sizeof(float) + sizeof(int);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer &vl = visible_layers[vli];
@@ -507,7 +507,7 @@ public:
     }
 
     long weights_size() const { // returns size of weights in Bytes
-        return hidden_code_vecs.size() * sizeof(float);
+        return hidden_learn_vecs.size() * sizeof(float);
     }
 
     void write(
