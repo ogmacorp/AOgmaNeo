@@ -421,43 +421,206 @@ public:
     void step(
         bool learn_enabled, // whether to learn
         const Params &params // parameters
-    );
+    ) {
+        int num_hidden_columns = hidden_size.x * hidden_size.y;
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            if (!vl.use_input || vl.up_to_date)
+                continue;
+
+            int num_visible_columns = vld.size.x * vld.size.y;
+
+            PARALLEL_FOR
+            for (int i = 0; i < num_visible_columns; i++)
+                bind_inputs(Int2(i / vld.size.y, i % vld.size.y), vli);
+        }
+
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            forward(Int2(i / hidden_size.y, i % hidden_size.y), learn_enabled, params);
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+
+            vl.up_to_date = true;
+        }
+    }
 
     void reconstruct(
         int vli, // visible layer index to reconstruct
         const Params &params // parameters
-    );
+    ) {
+        Visible_Layer &vl = visible_layers[vli];
+        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-    void clear_state();
+        int num_visible_columns = vld.size.x * vld.size.y;
+
+        PARALLEL_FOR
+        for (int i = 0; i < num_visible_columns; i++)
+            reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli, params);
+    }
+
+    void clear_state() {
+        hidden_cis.fill(0);
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+
+            vl.recon_cis.fill(0);
+        }
+    }
 
     // serialization
-    long size() const; // returns size in Bytes
-    long state_size() const; // returns size of state in Bytes
-    long weights_size() const; // returns size of weights in Bytes
+    long size() const { // returns size in Bytes
+        long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_code_vecs.size() * sizeof(float) + sizeof(int);
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            const Visible_Layer &vl = visible_layers[vli];
+
+            size += sizeof(Visible_Layer_Desc) + vl.recon_cis.size() * sizeof(int) + sizeof(float);
+        }
+
+        return size;
+    }
+
+    long state_size() const { // returns size of state in Bytes
+        long size = hidden_cis.size() * sizeof(int);
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            const Visible_Layer &vl = visible_layers[vli];
+
+            size += vl.recon_cis.size() * sizeof(int);
+        }
+
+        return size;
+    }
+
+    long weights_size() const { // returns size of weights in Bytes
+        return hidden_code_vecs.size() * sizeof(float);
+    }
 
     void write(
         Stream_Writer &writer
-    ) const;
+    ) const {
+        writer.write(&hidden_size, sizeof(Int3));
+
+        writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+        writer.write(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
+
+        int num_visible_layers = visible_layers.size();
+
+        writer.write(&num_visible_layers, sizeof(int));
+        
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            const Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            writer.write(&vld, sizeof(Visible_Layer_Desc));
+
+            writer.write(&vl.visible_code_vecs[0], vl.visible_code_vecs.size() * sizeof(S_Byte));
+            writer.write(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
+
+            writer.write(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
+
+            writer.write(&vl.importance, sizeof(float));
+        }
+    }
 
     void read(
         Stream_Reader &reader
-    );
+    ) {
+        reader.read(&hidden_size, sizeof(Int3));
+        reader.read(&vec_size, sizeof(int));
+
+        int num_hidden_columns = hidden_size.x * hidden_size.y;
+        int num_hidden_cells = num_hidden_columns * hidden_size.z;
+
+        hidden_cis.resize(num_hidden_columns);
+        hidden_code_vecs.resize(vec_size * num_hidden_cells);
+
+        reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+        reader.read(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
+
+        hidden_vecs.resize(vec_size * num_hidden_columns);
+        hidden_sums.resize(vec_size * num_hidden_columns);
+
+        int num_visible_layers = visible_layers.size();
+
+        reader.read(&num_visible_layers, sizeof(int));
+
+        visible_layers.resize(num_visible_layers);
+        visible_layer_descs.resize(num_visible_layers);
+        
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            reader.read(&vld, sizeof(Visible_Layer_Desc));
+
+            int num_visible_columns = vld.size.x * vld.size.y;
+            int num_visible_cells = num_visible_columns * vld.size.z;
+
+            vl.visible_code_vecs.resize(vec_size * vld.size.z);
+            vl.visible_pos_vecs.resize(vec_size * num_visible_columns);
+
+            reader.read(&vl.visible_code_vecs[0], vl.visible_code_vecs.size() * sizeof(S_Byte));
+            reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
+
+            int diam = vld.radius * 2 + 1;
+            int area = diam * diam;
+
+            vl.visible_bundle_buffer.resize(vec_size * num_visible_columns);
+            vl.hidden_bundle_buffer.resize(vec_size * num_hidden_columns);
+
+            vl.recon_sums.resize(vec_size * num_visible_columns);
+
+            vl.input_cis = Int_Buffer(num_visible_columns, 0);
+            vl.recon_cis.resize(num_visible_columns);
+
+            reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
+
+            reader.read(&vl.importance, sizeof(float));
+        }
+    }
 
     void write_state(
         Stream_Writer &writer
-    ) const;
+    ) const {
+        writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            const Visible_Layer &vl = visible_layers[vli];
+
+            writer.write(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
+        }
+    }
 
     void read_state(
         Stream_Reader &reader
-    );
+    ) {
+        reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+
+            reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
+        }
+    }
 
     void write_weights(
         Stream_Writer &writer
-    ) const;
+    ) const {
+        writer.write(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
+    }
 
     void read_weights(
         Stream_Reader &reader
-    );
+    ) {
+        reader.read(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
+    }
 
     // get the number of visible layers
     int get_num_visible_layers() const {
