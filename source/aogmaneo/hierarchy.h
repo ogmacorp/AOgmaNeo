@@ -24,7 +24,7 @@ template<int S>
 class Hierarchy {
 public:
     struct IO_Desc {
-        Int3 size;
+        Int4 size;
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
@@ -34,7 +34,7 @@ public:
         int down_radius; // decoder radius, also shared with actor if there is one
 
         IO_Desc(
-            const Int3 &size = Int3(4, 4, 16),
+            const Int4 &size = Int4(4, 4, 4, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
@@ -53,7 +53,7 @@ public:
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
-        Int3 hidden_size; // size of hidden layer
+        Int4 hidden_size; // size of hidden layer
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -64,7 +64,7 @@ public:
         float positional_scale; // positional embedding scale
 
         Layer_Desc(
-            const Int3 &hidden_size = Int3(4, 4, 16),
+            const Int4 &hidden_size = Int4(4, 4, 4, 16),
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
@@ -113,7 +113,7 @@ private:
     Int_Buffer ticks_per_update;
 
     // input dimensions
-    Array<Int3> io_sizes;
+    Array<Int4> io_sizes;
     Array<Byte> io_types;
 
 public:
@@ -459,7 +459,7 @@ public:
 
     // serialization
     long size() const { // returns size in bytes
-        long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+        long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int4) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
 
         for (int l = 0; l < encoders.size(); l++) {
             size += sizeof(int);
@@ -531,7 +531,7 @@ public:
 
         writer.write(&num_io, sizeof(int));
 
-        writer.write(&io_sizes[0], num_io * sizeof(Int3));
+        writer.write(&io_sizes[0], num_io * sizeof(Int4));
         writer.write(&io_types[0], num_io * sizeof(Byte));
 
         writer.write(&updates[0], updates.size() * sizeof(Byte));
@@ -593,7 +593,7 @@ public:
         io_sizes.resize(num_io);
         io_types.resize(num_io);
 
-        reader.read(&io_sizes[0], num_io * sizeof(Int3));
+        reader.read(&io_sizes[0], num_io * sizeof(Int4));
         reader.read(&io_types[0], num_io * sizeof(Byte));
 
         int num_predictions = 0;
@@ -801,7 +801,7 @@ public:
     }
 
     // get input/output sizes
-    const Int3 &get_io_size(
+    const Int4 &get_io_size(
         int i
     ) const {
         return io_sizes[i];
