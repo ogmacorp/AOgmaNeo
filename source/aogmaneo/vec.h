@@ -37,7 +37,7 @@ public:
         Vec<S> result;
 
         for (int i = 0; i < bs; i++)
-            result.buffer[i] = rand() % 256;
+            result.buffer[i] = rand(state) % 256;
 
         return result;
     };
