@@ -9,14 +9,12 @@
 #pragma once
 
 #include "encoder.h"
-#include "actor.h"
 
 namespace aon {
 // type of hierarchy input layer
 enum IO_Type {
     none = 0,
-    prediction = 1,
-    action = 2
+    prediction = 1
 };
 
 // a sph
@@ -85,9 +83,7 @@ public:
         typename Encoder<S>::Params encoder;
     };
 
-    struct IO_Params {
-        Actor::Params actor;
-    };
+    struct IO_Params {};
 
     struct Params {
         Array<Layer_Params> layers;
@@ -97,7 +93,6 @@ public:
 private:
     // layers
     Array<Encoder<S>> encoders;
-    Array<Actor> actors;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -156,7 +151,6 @@ public:
             ticks_per_update[l] = (l == 0 ? 1 : layer_descs[l].ticks_per_update);
 
         int num_predictions = 0;
-        int num_actions = 0;
 
         for (int i = 0; i < io_sizes.size(); i++) {
             io_sizes[i] = io_descs[i].size;
@@ -164,10 +158,6 @@ public:
 
             if (io_descs[i].type == prediction)
                 num_predictions++;
-            else if (io_descs[i].type == action) {
-                num_actions++;
-                num_predictions++;
-            }
         }
 
         // iterate through layers
@@ -207,7 +197,7 @@ public:
                 int prediction_index = 0;
 
                 for (int i = 0; i < io_sizes.size(); i++) {
-                    if (io_descs[i].type == prediction || io_descs[i].type == action) {
+                    if (io_descs[i].type == prediction) {
                         int index = predictions_start + prediction_index;
 
                         e_visible_layer_descs[index].size = io_sizes[i];
@@ -224,30 +214,6 @@ public:
                     
                     e_visible_layer_descs[feedback_index].size = layer_descs[l].hidden_size;
                     e_visible_layer_descs[feedback_index].radius = layer_descs[l].down_radius;
-                }
-
-                actors.resize(num_actions);
-
-                // create actors
-                int action_index = 0;
-
-                for (int i = 0; i < io_sizes.size(); i++) {
-                    if (io_descs[i].type == action) {
-                        // decoder visible layer descriptors
-                        Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(1 + (l < encoders.size() - 1));
-
-                        a_visible_layer_descs[0].size = layer_descs[l].hidden_size;
-                        a_visible_layer_descs[0].radius = io_descs[i].down_radius;
-
-                        if (l < encoders.size() - 1)
-                            a_visible_layer_descs[1] = a_visible_layer_descs[0];
-
-                        actors[action_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, io_descs[i].value_num_dendrites_per_cell, a_visible_layer_descs);
-
-                        i_indices[io_sizes.size() + action_index] = i;
-                        d_indices[i] = action_index;
-                        action_index++;
-                    }
                 }
             }
             else {
@@ -334,7 +300,7 @@ public:
                         int prediction_index = 0;
 
                         for (int i = 0; i < io_sizes.size(); i++) {
-                            if (io_types[i] == prediction || io_types[i] == action) {
+                            if (io_types[i] == prediction) {
                                 int index = predictions_start + prediction_index;
 
                                 encoders[l].set_input_cis(index, input_cis[i]);
@@ -405,7 +371,7 @@ public:
                     int prediction_index = 0;
 
                     for (int i = 0; i < io_sizes.size(); i++) {
-                        if (io_types[i] == prediction || io_types[i] == action) {
+                        if (io_types[i] == prediction) {
                             int index = predictions_start + prediction_index;
 
                             encoders[l].reconstruct(index);
@@ -420,20 +386,6 @@ public:
 
                         encoders[l].reconstruct(index);
                     }
-                }
-
-                if (l == 0 && actors.size() > 0) {
-                    int next_predictions_start = histories[l + 1][0].size(); // temporal horizon
-
-                    Array<Int_Buffer_View> layer_input_cis(1 + (encoders.size() > 1));
-
-                    layer_input_cis[0] = encoders[l].get_hidden_cis();
-
-                    if (encoders.size() > 1)
-                        layer_input_cis[1] = encoders[l + 1].get_visible_layer(next_predictions_start + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis;
-
-                    for (int d = 0; d < actors.size(); d++)
-                        actors[d].step(layer_input_cis, input_cis[i_indices[io_sizes.size() + d]], learn_enabled, reward, mimic, params.ios[i_indices[io_sizes.size() + d]].actor);
                 }
             }
         }
@@ -451,10 +403,6 @@ public:
 
             encoders[l].clear_state();
         }
-
-        // actors
-        for (int d = 0; d < actors.size(); d++)
-            actors[d].clear_state();
     }
 
     // serialization
@@ -473,10 +421,6 @@ public:
 
             size += encoders[l].size();
         }
-
-        // actors
-        for (int d = 0; d < actors.size(); d++)
-            size += actors[d].size();
 
         // params
         size += encoders.size() * sizeof(Layer_Params);
@@ -499,10 +443,6 @@ public:
             size += encoders[l].state_size();
         }
 
-        // actors
-        for (int d = 0; d < actors.size(); d++)
-            size += actors[d].state_size();
-
         return size;
     }
 
@@ -512,10 +452,6 @@ public:
         for (int l = 0; l < encoders.size(); l++) {
             size += encoders[l].weights_size();
         }
-
-        // actors
-        for (int d = 0; d < actors.size(); d++)
-            size += actors[d].weights_size();
 
         return size;
     }
@@ -567,10 +503,6 @@ public:
             encoders[l].write(writer);
         }
         
-        // actors
-        for (int d = 0; d < actors.size(); d++)
-            actors[d].write(writer);
-
         // params
         for (int l = 0; l < encoders.size(); l++)
             writer.write(&params.layers[l], sizeof(Layer_Params));
@@ -597,15 +529,10 @@ public:
         reader.read(&io_types[0], num_io * sizeof(Byte));
 
         int num_predictions = 0;
-        int num_actions = 0;
 
         for (int i = 0; i < io_sizes.size(); i++) {
             if (io_types[i]== prediction)
                 num_predictions++;
-            else if (io_types[i]== action) {
-                num_actions++;
-                num_predictions++;
-            }
         }
 
         encoders.resize(num_layers);
@@ -659,12 +586,6 @@ public:
             encoders[l].read(reader);
         }
 
-        actors.resize(num_actions);
-
-        // actors
-        for (int d = 0; d < actors.size(); d++)
-            actors[d].read(reader);
-
         params.layers.resize(num_layers);
         params.ios.resize(num_io);
 
@@ -693,9 +614,6 @@ public:
 
             encoders[l].write_state(writer);
         }
-
-        for (int d = 0; d < actors.size(); d++)
-            actors[d].write_state(writer);
     }
 
     void read_state(
@@ -718,10 +636,6 @@ public:
 
             encoders[l].read_state(reader);
         }
-
-        // actors
-        for (int d = 0; d < actors.size(); d++)
-            actors[d].read_state(reader);
     }
 
     void write_weights(
@@ -729,9 +643,6 @@ public:
     ) const {
         for (int l = 0; l < encoders.size(); l++)
             encoders[l].write_weights(writer);
-
-        for (int d = 0; d < actors.size(); d++)
-            actors[d].write_weights(writer);
     }
 
     void read_weights(
@@ -739,10 +650,6 @@ public:
     ) {
         for (int l = 0; l < encoders.size(); l++)
             encoders[l].read_weights(reader);
-
-        // actors
-        for (int d = 0; d < actors.size(); d++)
-            actors[d].read_weights(reader);
     }
 
     // get the number of layers (encoders)
@@ -760,9 +667,6 @@ public:
     const Int_Buffer &get_prediction_cis(
         int i
     ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_cis();
-
         int predictions_start = io_sizes.size() * histories[0][0].size();
 
         return encoders[0].get_visible_layer(predictions_start + d_indices[i]).recon_cis;
@@ -832,18 +736,6 @@ public:
         int l
     ) const {
         return encoders[l];
-    }
-
-    Actor &get_actor(
-        int i
-    ) {
-        return actors[d_indices[i]];
-    }
-
-    const Actor &get_actor(
-        int i
-    ) const {
-        return actors[d_indices[i]];
     }
 
     const Int_Buffer &get_i_indices() const {
