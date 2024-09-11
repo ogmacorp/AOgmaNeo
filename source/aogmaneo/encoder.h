@@ -125,12 +125,14 @@ public:
         float lr; // code learning rate
         int resonate_iters;
         int sync_radius;
+        Byte warm_restart;
 
         Params()
         :
         lr(0.1f),
-        resonate_iters(4),
-        sync_radius(1)
+        resonate_iters(8),
+        sync_radius(1),
+        warm_restart(false)
         {}
     };
 
@@ -611,8 +613,8 @@ public:
                 bind_inputs(Int2(i / vld.size.y, i % vld.size.y), vli);
         }
 
-        // clear to same starting state (no warm restart, too inconsistent)
-        hidden_cis.fill(0);
+        if (!params.warm_restart)
+            hidden_cis.fill(0);
 
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
@@ -651,11 +653,12 @@ public:
 
         int num_visible_columns = vld.size.x * vld.size.y;
 
-        // clear to same starting state (no warm restart, too inconsistent)
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
+        if (!params.warm_restart) {
+            for (int vli = 0; vli < visible_layers.size(); vli++) {
+                Visible_Layer &vl = visible_layers[vli];
 
-            vl.recon_cis.fill(0);
+                vl.recon_cis.fill(0);
+            }
         }
 
         PARALLEL_FOR
