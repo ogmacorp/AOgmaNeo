@@ -128,8 +128,8 @@ public:
 
         Params()
         :
-        lr(0.1f),
-        resonate_iters(16),
+        lr(0.0001f),
+        resonate_iters(32),
         sync_radius(1),
         warm_restart(false)
         {}
@@ -142,7 +142,6 @@ private:
     Int_Buffer hidden_cis_temp;
 
     Array<Vec<S>> hidden_vecs;
-    Array<Vec<S>> hidden_temp_vecs;
 
     // weights are ping-pong buffered
     Float_Buffer hidden_learn_vecs_ping;
@@ -250,9 +249,8 @@ private:
                     temp *= hidden_code_vecs[hidden_cis[other_hidden_features_index] + other_hidden_features_index * hidden_size.w];
                 }
 
+                // constrain to codebook
                 temp = (hidden_mats[hidden_features_index] * temp).thin();
-
-                hidden_temp_vecs[hidden_features_index] = temp;
 
                 // find similarity to code
                 int max_index = 0;
@@ -283,6 +281,36 @@ private:
             }
         }
 
+        if (learn_enabled) {
+            for (int fi = 0; fi < hidden_size.z; fi++) {
+                int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+                // complete last step
+                Vec<S> temp = hidden_vec;
+
+                // unbind other feature estimates
+                for (int ofi = 0; ofi < hidden_size.z; ofi++) {
+                    if (ofi == fi)
+                        continue;
+
+                    int other_hidden_features_index = ofi + hidden_size.z * hidden_column_index;
+
+                    temp *= hidden_code_vecs[hidden_cis[other_hidden_features_index] + other_hidden_features_index * hidden_size.w];
+                }
+
+                int hidden_cell_index = hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w;
+
+                // move learned code towards vec
+                for (int i = 0; i < S; i++) {
+                    int index = i + S * hidden_cell_index;
+
+                    // in-place, so can modify read
+                    hidden_learn_vecs_read[index] += params.lr * (temp.get(i) - hidden_learn_vecs_read[index]);
+                }
+            }
+        }
+
+        // get final complete cleaned-up vector
         hidden_vec = 1; // set to identity
 
         // find final hidden vec
@@ -293,24 +321,6 @@ private:
         }
 
         hidden_vecs[hidden_column_index] = hidden_vec;
-
-        if (learn_enabled) {
-            for (int fi = 0; fi < hidden_size.z; fi++) {
-                int hidden_features_index = fi + hidden_size.z * hidden_column_index;
-
-                int hidden_cell_index = hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w;
-
-                const Vec<S> &target = hidden_temp_vecs[hidden_features_index];
-
-                // move learned code towards actual vec
-                for (int i = 0; i < S; i++) {
-                    int index = i + S * hidden_cell_index;
-
-                    // in-place, so can modify read
-                    hidden_learn_vecs_read[index] += params.lr * (target.get(i) - hidden_learn_vecs_read[index]);
-                }
-            }
-        }
     }
 
     void local_sync(
@@ -456,6 +466,7 @@ private:
                     temp *= vl.visible_code_vecs[vl.recon_cis[other_visible_features_index] + vld.size.w * ofi];
                 }
 
+                // constrain to codebook
                 temp = (vl.visible_mats[fi] * temp).thin();
 
                 // find similarity to code
@@ -576,7 +587,6 @@ public:
         }
 
         hidden_vecs.resize(num_hidden_columns);
-        hidden_temp_vecs.resize(num_hidden_features);
 
         // initialize resonator matrices
         hidden_mats.resize(num_hidden_features);
@@ -777,7 +787,6 @@ public:
             hidden_mats[i].set_from(hidden_code_vecs, i * hidden_size.w, hidden_size.w);
 
         hidden_vecs.resize(num_hidden_columns);
-        hidden_temp_vecs.resize(num_hidden_features);
 
         int num_visible_layers = visible_layers.size();
 
