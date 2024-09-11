@@ -249,7 +249,7 @@ public:
             }
             
             // create the sparse coding layer
-            encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].vec_size, layer_descs[l].positional_scale, e_visible_layer_descs);
+            encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].positional_scale, e_visible_layer_descs);
         }
 
         // initialize params
@@ -266,10 +266,6 @@ public:
     ) {
         assert(params.layers.size() == encoders.size());
         assert(params.ios.size() == io_sizes.size());
-
-        // set importances from params
-        for (int i = 0; i < io_sizes.size(); i++)
-            set_input_importance(i, params.ios[i].importance);
 
         // first tick is always 0
         ticks[0] = 0;
@@ -374,7 +370,7 @@ public:
                         if (io_types[i] == prediction) {
                             int index = predictions_start + prediction_index;
 
-                            encoders[l].reconstruct(index);
+                            encoders[l].reconstruct(index, params.layers[l].encoder);
 
                             prediction_index++;
                         }
@@ -384,7 +380,7 @@ public:
                     for (int t = 0; t < ticks_per_update[l]; t++) {
                         int index = histories[l][0].size() + t;
 
-                        encoders[l].reconstruct(index);
+                        encoders[l].reconstruct(index, params.layers[l].encoder);
                     }
                 }
             }

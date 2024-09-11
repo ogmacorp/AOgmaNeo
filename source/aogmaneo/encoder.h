@@ -205,7 +205,7 @@ private:
                     temp *= hidden_code_vecs[hidden_cis[other_hidden_features_index] + other_hidden_features_index * hidden_size.w];
                 }
 
-                temp = multiply_a_at(hidden_code_vecs, hidden_size.w * hidden_features_index).thin() * temp;
+                temp = multiply_a_at(hidden_code_vecs, hidden_size.w * hidden_features_index, temp, hidden_size.w).thin();
 
                 hidden_temp_vecs[hidden_features_index] = temp;
 
@@ -328,10 +328,10 @@ private:
 
                     int other_visible_features_index = ofi + vld.size.z * visible_column_index;
 
-                    temp *= vld.visible_code_vecs[vl.recon_cis[other_visible_features_index] + other_visible_features_index * vld.size.w];
+                    temp *= vl.visible_code_vecs[vl.recon_cis[other_visible_features_index] + other_visible_features_index * vld.size.w];
                 }
 
-                temp = multiply_a_at(vl.visible_code_vecs, vld.size.w * visible_features_index).thin() * temp;
+                temp = multiply_a_at(vl.visible_code_vecs, vld.size.w * visible_features_index, temp, vld.size.w).thin();
 
                 // find similarity to code
                 int max_index = 0;
@@ -340,7 +340,7 @@ private:
                 for (int vc = 0; vc < vld.size.w; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
-                    int similarity = temp.dot(vld.visible_code_vecs[visible_cell_index]);
+                    int similarity = temp.dot(vl.visible_code_vecs[visible_cell_index]);
 
                     if (similarity > max_similarity) {
                         max_similarity = similarity;

@@ -142,7 +142,7 @@ public:
 
     int dot(
         const Vec<S> &other
-    ) {
+    ) const {
         int sum = 0;
 
         for (int i = 0; i < bs; i++) {
