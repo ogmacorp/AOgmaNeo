@@ -64,14 +64,14 @@ public:
                 int start = r * (r + 1) / 2;
 
                 // lower triangle, duplicated into upper triangle as well
-                for (int c = 0; c < r; c++) {
+                for (int c = 0; c < r; c++) { // ignore diagonal for now
                     int index = c + start;
                     
                     result[c] += buffer[index] * v.get(r); // lower triangle (original)
                     result[r] += buffer[index] * v.get(c); // upper triangle (duplicate)
                 }
 
-                // diagonal
+                // now do diagonal (not duplicated)
                 result[r] += buffer[r + start] * v.get(r);
             }
 
@@ -128,7 +128,7 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.1f),
         resonate_iters(8),
         sync_radius(1),
         warm_restart(false)
@@ -240,7 +240,7 @@ private:
 
                 Vec<S> temp = hidden_vec;
 
-                // bind other feature estimates
+                // unbind other feature estimates
                 for (int ofi = 0; ofi < hidden_size.z; ofi++) {
                     if (ofi == fi)
                         continue;
@@ -326,7 +326,6 @@ private:
             for (int hc = 0; hc < hidden_size.w; hc++) {
                 int hidden_cell_index = hc + hidden_features_index * hidden_size.w;
 
-                // move learned code towards actual vec
                 for (int i = 0; i < S; i++) {
                     int index = i + S * hidden_cell_index;
 
@@ -353,7 +352,6 @@ private:
                             int hidden_cell_index = hc + hidden_features_index * hidden_size.w;
                             int other_hidden_cell_index = hc + other_hidden_features_index * hidden_size.w;
 
-                            // move learned code towards actual vec
                             for (int i = 0; i < S; i++) {
                                 int index = i + S * hidden_cell_index;
                                 int other_index = i + S * other_hidden_cell_index;
@@ -448,7 +446,7 @@ private:
 
                 Vec<S> temp = visible_vec;
 
-                // bind other feature estimates
+                // unbind other feature estimates
                 for (int ofi = 0; ofi < vld.size.z; ofi++) {
                     if (ofi == fi)
                         continue;
