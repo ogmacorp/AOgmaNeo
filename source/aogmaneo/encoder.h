@@ -145,7 +145,7 @@ private:
 
             int in_ci = vl.input_cis[visible_features_index];
 
-            vl.input_vecs[visible_column_index] *= vl.visible_code_vecs[in_ci + vld.size.w * visible_features_index];
+            vl.input_vecs[visible_column_index] *= vl.visible_code_vecs[in_ci + vld.size.w * fi];
         }
     }
 
@@ -400,8 +400,6 @@ private:
                 // compute a self-correlation vector per feature
                 int visible_features_index = fi + vld.size.z * visible_column_index;
 
-                int visible_cells_start = vld.size.w * visible_features_index;
-
                 Vec<S> temp = visible_vec;
 
                 // bind other feature estimates
@@ -411,10 +409,10 @@ private:
 
                     int other_visible_features_index = ofi + vld.size.z * visible_column_index;
 
-                    temp *= vl.visible_code_vecs[vl.recon_cis[other_visible_features_index] + other_visible_features_index * vld.size.w];
+                    temp *= vl.visible_code_vecs[vl.recon_cis[other_visible_features_index] + vld.size.w * ofi];
                 }
 
-                temp = multiply_a_at(vl.visible_code_vecs, vld.size.w * visible_features_index, temp, vld.size.w).thin();
+                temp = multiply_a_at(vl.visible_code_vecs, vld.size.w * fi, temp, vld.size.w).thin();
 
                 // find similarity to code
                 int max_index = 0;
@@ -423,7 +421,7 @@ private:
                 for (int vc = 0; vc < vld.size.w; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
-                    int similarity = temp.dot(vl.visible_code_vecs[visible_cell_index]);
+                    int similarity = temp.dot(vl.visible_code_vecs[vc + vld.size.w * fi]);
 
                     if (similarity > max_similarity) {
                         max_similarity = similarity;
@@ -461,7 +459,7 @@ public:
             int num_visible_columns = vld.size.x * vld.size.y;
             int num_visible_features = num_visible_columns * vld.size.z;
 
-            vl.visible_code_vecs.resize(num_hidden_features * vld.size.w);
+            vl.visible_code_vecs.resize(vld.size.z * vld.size.w);
 
             for (int i = 0; i < vl.visible_code_vecs.size(); i++)
                 vl.visible_code_vecs[i] = Vec<S>::randomized();
@@ -702,7 +700,7 @@ public:
             int num_visible_columns = vld.size.x * vld.size.y;
             int num_visible_features = num_visible_columns * vld.size.z;
 
-            vl.visible_code_vecs.resize(num_visible_features * vld.size.w);
+            vl.visible_code_vecs.resize(vld.size.z * vld.size.w);
             vl.visible_pos_vecs.resize(num_visible_columns);
 
             reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
