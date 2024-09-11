@@ -58,28 +58,25 @@ public:
         Bundle<S> operator*(
             const Vec<S> &v
         ) {
-            Bundle<S> result;
+            Bundle<S> result = 0;
 
             for (int r = 0; r < S; r++) {
-                int sum = 0;
-
                 int start = r * (r + 1) / 2;
 
-                // lower triangle
+                // lower triangle, duplicated into upper triangle as well
                 for (int c = 0; c < r; c++) {
                     int index = c + start;
                     
-                    sum += buffer[index] * v.get(c);
+                    result[r] += buffer[index] * v.get(c); // lower triangle (original)
+                    result[c] += buffer[index] * v.get(r); // upper triangle (duplicate)
                 }
 
                 // diagonal
                 {
                     int index = r + start;
                     
-                    sum += buffer[index] * v.get(r);
+                    result[r] += buffer[index] * v.get(r);
                 }
-
-                result[r] = sum;
             }
 
             return result;
@@ -546,7 +543,7 @@ public:
         int num_code_elements_per_column = num_codes_per_column * S;
 
         for (int i = 0; i < num_code_elements_per_column; i++)
-            hidden_learn_vecs_ping[i] = randf(-init_weight_noisef, init_weight_noisef);
+            hidden_learn_vecs_ping[i] = randf(-1.0f, 1.0f);
 
         for (int i = 1; i < num_hidden_columns; i++) {
             for (int j = 0; j < num_code_elements_per_column; j++)
