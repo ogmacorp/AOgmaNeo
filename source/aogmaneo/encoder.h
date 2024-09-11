@@ -20,7 +20,7 @@ public:
     private:
         static const int ss = S * (S + 1) / 2; // swap - 1 instead of + 1 for ignoring diagonal
 
-        S_Byte buffer[ss];
+        int buffer[ss];
 
     public:
         Resonator_Mat()
