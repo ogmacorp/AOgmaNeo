@@ -95,7 +95,7 @@ public:
         Vec<S> result;
 
         for (int i = 0; i < bs; i++)
-            result[i] = ~(buffer[i] ^ other.buffer[i]); 
+            result.buffer[i] = ~(buffer[i] ^ other.buffer[i]); 
 
         return result;
     }
@@ -266,7 +266,7 @@ public:
         Vec<S> result;
 
         for (int i = 0; i < S; i++)
-            result[i].set((buffer[i] > 0) * 2 - 1); 
+            result.set(i, (buffer[i] > 0) * 2 - 1); 
 
         return result;
     }
