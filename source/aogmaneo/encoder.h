@@ -58,8 +58,8 @@ public:
 
         Params()
         :
-        lr(0.01f),
-        resonate_iters(8),
+        lr(0.1f),
+        resonate_iters(4),
         sync_radius(1)
         {}
     };
@@ -200,8 +200,6 @@ private:
                 // compute a self-correlation vector per feature
                 int hidden_features_index = fi + hidden_size.z * hidden_column_index;
 
-                int hidden_cells_start = hidden_size.w * hidden_features_index;
-
                 Vec<S> temp = hidden_vec;
 
                 // bind other feature estimates
@@ -221,6 +219,8 @@ private:
                 // find similarity to code
                 int max_index = 0;
                 int max_similarity = limit_min;
+
+                int hidden_cells_start = hidden_size.w * hidden_features_index;
 
                 for (int hc = 0; hc < hidden_size.w; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
@@ -263,8 +263,6 @@ private:
 
                     // in-place, so can modify read
                     hidden_learn_vecs_read[index] += params.lr * (target.get(i) - hidden_learn_vecs_read[index]);
-
-                    hidden_code_vecs[hidden_cell_index].set(i, (hidden_learn_vecs_read[index] > 0.0f) * 2 - 1);
                 }
             }
         }
@@ -338,6 +336,9 @@ private:
                     int index = i + S * hidden_cell_index;
 
                     hidden_learn_vecs_write[index] *= scale;
+
+                    // update discrete code vecs
+                    hidden_code_vecs[hidden_cell_index].set(i, (hidden_learn_vecs_write[index] > 0.0f) * 2 - 1);
                 }
             }
         }
@@ -496,8 +497,8 @@ public:
 
         hidden_learn_vecs_pong.resize(hidden_learn_vecs_ping.size());
 
-        hidden_learn_vecs_write = hidden_learn_vecs_pong;
         hidden_learn_vecs_read = hidden_learn_vecs_ping;
+        hidden_learn_vecs_write = hidden_learn_vecs_pong;
         ping = true;
 
         hidden_code_vecs.resize(num_hidden_features * hidden_size.w);
@@ -670,8 +671,8 @@ public:
 
         hidden_learn_vecs_pong.resize(hidden_learn_vecs_ping.size());
 
-        hidden_learn_vecs_write = hidden_learn_vecs_pong;
         hidden_learn_vecs_read = hidden_learn_vecs_ping;
+        hidden_learn_vecs_write = hidden_learn_vecs_pong;
         ping = true;
 
         hidden_code_vecs.resize(num_hidden_features * hidden_size.w);
