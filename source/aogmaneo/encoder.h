@@ -231,13 +231,6 @@ private:
 
         Vec<S> hidden_vec = sum.thin();
 
-        // set up correlation matrices
-        for (int fi = 0; fi < hidden_size.z; fi++) {
-            int hidden_features_index = fi + hidden_size.z * hidden_column_index;
-
-            hidden_mats[hidden_features_index].set_from(hidden_code_vecs, hidden_size.w * hidden_features_index, hidden_size.w);
-        }
-
         // resonate
         for (int it = 0; it < params.resonate_iters; it++) {
             for (int fi = 0; fi < hidden_size.z; fi++) {
