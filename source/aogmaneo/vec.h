@@ -18,6 +18,7 @@ template<int S>
 class Vec {
 private:
     static const int bs = (S + 7) / 8;
+    static const int over_bits = 8 - (S % 8); // overflowing bit count
 
     Byte buffer[bs];
 
@@ -115,16 +116,13 @@ public:
         Bundle<S> result;
 
         for (int i = 0; i < bs; i++) {
-            Byte carry =  buffer[bs] & other.buffer[bs];
-            Byte sum = buffer[bs] & other.buffer[bs];
-
             for (int j = 0; j < 8; j++) {
                 int index = j + i * 8;
 
                 if (index >= S)
                     return result;
 
-                result[index] = (((1 << j) & carry) != 0) + (((1 << j) & sum) != 0) - 1;
+                result[index] = ((((1 << j) & buffer[i]) != 0) + (((1 << j) & other.buffer[i]) != 0)) * 2 - 2;
             }
         }
 
@@ -147,8 +145,16 @@ public:
     ) {
         int sum = 0;
 
-        for (int i = 0; i < bs; i++)
-            sum += onecount(buffer[i] & other.buffer[i]) * 2 - 8;
+        for (int i = 0; i < bs; i++) {
+            for (int j = 0; j < 8; j++) {
+                int index = j + i * 8;
+
+                if (index >= S)
+                    return sum;
+
+                sum += ((((1 << j) & buffer[i]) != 0) * 2 - 1) * ((((1 << j) & other.buffer[i]) != 0) * 2 - 1);
+            }
+        }
 
         return sum;
     }
