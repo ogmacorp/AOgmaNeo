@@ -68,6 +68,7 @@ private:
     Int_Buffer hidden_cis;
 
     Array<Vec<S>> hidden_vecs;
+    Array<Vec<S>> hidden_temp_vecs;
 
     Float_Buffer hidden_learn_vecs;
     Array<Vec<S>> hidden_code_vecs;
@@ -206,6 +207,8 @@ private:
 
                 temp = multiply_a_at(hidden_code_vecs, hidden_size.w * hidden_features_index).thin() * temp;
 
+                hidden_temp_vecs[hidden_features_index] = temp;
+
                 // find similarity to code
                 int max_index = 0;
                 int max_similarity = limit_min;
@@ -243,7 +246,7 @@ private:
 
                 int hidden_cell_index = hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w;
 
-                Vec<S> &target = hidden_code_vecs[hidden_cell_index];
+                const Vec<S> &target = hidden_temp_vecs[hidden_features_index];
 
                 // move learned code towards actual vec
                 for (int i = 0; i < S; i++) {
@@ -251,7 +254,7 @@ private:
 
                     hidden_learn_vecs[index] += params.lr * (target.get(i) - hidden_learn_vecs[index]);
 
-                    target.set(i, (hidden_learn_vecs[index] > 0.0f) * 2 - 1);
+                    hidden_code_vecs[hidden_cell_index].set(i, (hidden_learn_vecs[index] > 0.0f) * 2 - 1);
                 }
             }
         }
@@ -423,6 +426,7 @@ public:
         }
 
         hidden_vecs.resize(num_hidden_columns);
+        hidden_temp_vecs.resize(num_hidden_columns);
     }
 
     void set_ignore(
@@ -573,6 +577,7 @@ public:
         }
 
         hidden_vecs.resize(num_hidden_columns);
+        hidden_temp_vecs.resize(num_hidden_columns);
 
         int num_visible_layers = visible_layers.size();
 
