@@ -103,6 +103,8 @@ public:
 
         Array<Vec<S>> input_vecs;
 
+        Array<Bundle<S>> hidden_sums;
+
         Int_Buffer recon_cis;
         Int_Buffer recon_cis_temp;
 
@@ -214,13 +216,19 @@ private:
                 Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
                 Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+                Bundle<S> sub_sum = 0;
+
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                         int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                        sum += vl.input_vecs[visible_column_index];
+                        sub_sum += vl.input_vecs[visible_column_index];
                     }
+
+                vl.hidden_sums[hidden_column_index] = sub_sum;
             }
+
+            sum += vl.hidden_sums[hidden_column_index];
         }
 
         Vec<S> hidden_vec = sum.thin();
@@ -530,6 +538,8 @@ public:
 
             vl.input_vecs.resize(num_visible_columns);
 
+            vl.hidden_sums.resize(num_hidden_columns);
+
             vl.visible_mats.resize(vld.size.z);
 
             for (int i = 0; i < vld.size.z; i++)
@@ -799,6 +809,10 @@ public:
             reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
 
             vl.recon_cis_temp.resize(vl.recon_cis.size());
+
+            vl.input_vecs.resize(num_visible_columns);
+
+            vl.hidden_sums.resize(num_hidden_columns);
 
             vl.visible_mats.resize(vld.size.z);
 
