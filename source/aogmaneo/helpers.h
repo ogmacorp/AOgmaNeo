@@ -14,6 +14,7 @@
 #ifdef USE_STD_MATH
 #include <cmath>
 #include <algorithm>
+#include <bit>
 #endif
 
 #define PARALLEL_FOR _Pragma("omp parallel for")
