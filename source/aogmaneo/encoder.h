@@ -67,8 +67,8 @@ public:
                 for (int c = 0; c < r; c++) {
                     int index = c + start;
                     
-                    result[r] += buffer[index] * v.get(c); // lower triangle (original)
-                    result[c] += buffer[index] * v.get(r); // upper triangle (duplicate)
+                    result[c] += buffer[index] * v.get(r); // lower triangle (original)
+                    result[r] += buffer[index] * v.get(c); // upper triangle (duplicate)
                 }
 
                 // diagonal
@@ -130,7 +130,7 @@ public:
 
         Params()
         :
-        lr(0.1f),
+        lr(0.01f),
         resonate_iters(8),
         sync_radius(1),
         warm_restart(false)
