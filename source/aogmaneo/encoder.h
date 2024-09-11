@@ -98,7 +98,7 @@ private:
                     vd[r] += a_at_elem * v.get(r);
 
                     // lower triangle
-                    int r_comp = S - r;
+                    int r_comp = S - 1 - r;
 
                     vd[r_comp] += a_at_elem * v.get(r_comp);
                 }
@@ -395,22 +395,17 @@ public:
                 for (int y = 0; y < vld.size.y; y++) {
                     int visible_column_index = y + x * vld.size.y;
 
-                    int visible_vecs_start = S * visible_column_index;
-
-                    for (int i = 0; i < S; i++) {
-                        int visible_vec_index = i + visible_vecs_start;
-
-                        vl.visible_pos_vecs[visible_column_index].set(i, (cosf(embedding[visible_vec_index * 3] * x + embedding[visible_vec_index * 3 + 1] * y + embedding[visible_vec_index * 3 + 2]) > 0.0f) * 2 - 1);
-                    }
+                    for (int i = 0; i < S; i++)
+                        vl.visible_pos_vecs[visible_column_index].set(i, (cosf(embedding[i * 3] * x + embedding[i * 3 + 1] * y + embedding[i * 3 + 2]) > 0.0f) * 2 - 1);
                 }
 
-            vl.input_cis = Int_Buffer(num_visible_columns, 0);
-            vl.recon_cis = Int_Buffer(num_visible_columns, 0);
+            vl.input_cis = Int_Buffer(num_visible_features, 0);
+            vl.recon_cis = Int_Buffer(num_visible_features, 0);
 
             vl.input_vecs.resize(num_visible_columns);
         }
 
-        hidden_cis = Int_Buffer(num_hidden_columns, 0);
+        hidden_cis = Int_Buffer(num_hidden_features, 0);
 
         hidden_learn_vecs.resize(num_hidden_features * hidden_size.w * S);
 
@@ -426,7 +421,7 @@ public:
         }
 
         hidden_vecs.resize(num_hidden_columns);
-        hidden_temp_vecs.resize(num_hidden_columns);
+        hidden_temp_vecs.resize(num_hidden_features);
     }
 
     void set_ignore(
@@ -562,7 +557,7 @@ public:
         int num_hidden_columns = hidden_size.x * hidden_size.y;
         int num_hidden_features = num_hidden_columns * hidden_size.z;
 
-        hidden_cis.resize(num_hidden_columns);
+        hidden_cis.resize(num_hidden_features);
         hidden_learn_vecs.resize(num_hidden_features * hidden_size.w * S);
 
         reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
@@ -577,7 +572,7 @@ public:
         }
 
         hidden_vecs.resize(num_hidden_columns);
-        hidden_temp_vecs.resize(num_hidden_columns);
+        hidden_temp_vecs.resize(num_hidden_features);
 
         int num_visible_layers = visible_layers.size();
 
@@ -600,9 +595,9 @@ public:
 
             reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
 
-            vl.input_cis = Int_Buffer(num_visible_columns, 0);
+            vl.input_cis = Int_Buffer(num_visible_features, 0);
 
-            vl.recon_cis.resize(num_visible_columns);
+            vl.recon_cis.resize(num_visible_features);
 
             reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
         }
