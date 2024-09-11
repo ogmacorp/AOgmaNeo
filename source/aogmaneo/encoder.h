@@ -491,10 +491,19 @@ public:
 
         hidden_learn_vecs_ping.resize(num_hidden_features * hidden_size.w * S);
 
-        // learned "weights" - recognized patterns
-        for (int i = 0; i < hidden_learn_vecs_ping.size(); i++)
-            hidden_learn_vecs_ping[i] = randf(-1.0f, 1.0f);
+        // set first part, then copy to all other parts (initialize equal in all columns)
+        int num_codes_per_column = hidden_size.z * hidden_size.w;
+        int num_code_elements_per_column = num_codes_per_column * S;
 
+        for (int i = 0; i < num_code_elements_per_column; i++)
+            hidden_learn_vecs_ping[i] = randf(-init_weight_noisef, init_weight_noisef);
+
+        for (int i = 1; i < num_hidden_columns; i++) {
+            for (int j = 0; j < num_code_elements_per_column; j++)
+                hidden_learn_vecs_ping[j + i * num_code_elements_per_column] = hidden_learn_vecs_ping[j];
+        }
+
+        // set up ping pong
         hidden_learn_vecs_pong.resize(hidden_learn_vecs_ping.size());
 
         hidden_learn_vecs_read = hidden_learn_vecs_ping;
