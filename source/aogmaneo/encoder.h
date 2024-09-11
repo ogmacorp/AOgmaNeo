@@ -97,29 +97,41 @@ private:
         Bundle<S> vd = 0;
 
         // accumulate from above diagonal (symmetric)
-        for (int c = 0; c < num_codes; c++) {
-            for (int c2 = 0; c2 < c; c2++) { // only compute up to diagonal
-                int a_at_elem = codes[codes_start + c].dot(codes[codes_start + c2]);
+        for (int r = 0; r < S; r++) {
+            for (int r2 = 0; r2 < r; r2++) { // only compute up to diagonal
+                int a_at_elem = 0;
+
+                for (int c = 0; c < num_codes; c++) {
+                    int code_index = codes_start + c;
+
+                    a_at_elem += codes[code_index].get(r) * codes[code_index].get(r2);
+                }
 
                 // exploit symmetry
-                for (int r = 0; r < S; r++) {
+                for (int r3 = 0; r3 < S; r3++) {
                     // upper triangle
-                    vd[r] += a_at_elem * v.get(r);
+                    vd[r] += a_at_elem * v.get(r3);
 
                     // lower triangle
-                    int r_comp = S - 1 - r;
+                    int r3_comp = S - 1 - r3;
 
-                    vd[r_comp] += a_at_elem * v.get(r_comp);
+                    vd[r] += a_at_elem * v.get(r3_comp);
                 }
             }
         }
 
         // accumlate from diagonal
-        for (int c = 0; c < num_codes; c++) {
-            int a_at_elem = codes[codes_start + c].dot(codes[codes_start + c]);
+        for (int r = 0; r < S; r++) {
+            int a_at_elem = 0;
 
-            for (int r = 0; r < S; r++)
-                vd[r] += a_at_elem * v.get(r);
+            for (int c = 0; c < num_codes; c++) {
+                int code_index = codes_start + c;
+
+                a_at_elem += codes[code_index].get(r) * codes[code_index].get(r);
+            }
+
+            for (int r3 = 0; r3 < S; r3++)
+                vd[r] += a_at_elem * v.get(r3);
         }
 
         return vd;
