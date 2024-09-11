@@ -524,13 +524,6 @@ public:
         reader.read(&io_sizes[0], num_io * sizeof(Int4));
         reader.read(&io_types[0], num_io * sizeof(Byte));
 
-        int num_predictions = 0;
-
-        for (int i = 0; i < io_sizes.size(); i++) {
-            if (io_types[i]== prediction)
-                num_predictions++;
-        }
-
         encoders.resize(num_layers);
 
         histories.resize(num_layers);
