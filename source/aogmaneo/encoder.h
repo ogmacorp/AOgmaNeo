@@ -129,8 +129,8 @@ public:
 
         Params()
         :
-        lr(0.01f),
-        resonate_iters(16),
+        lr(0.001f),
+        resonate_iters(32),
         sync_radius(1)
         {}
     };
@@ -327,7 +327,7 @@ private:
         for (int fi = 0; fi < hidden_size.z; fi++) {
             int hidden_features_index = fi + hidden_size.z * hidden_column_index;
 
-            hidden_vec *= hidden_code_vecs[hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w];
+            hidden_vec *= hidden_factors[hidden_features_index];//[hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w];
         }
 
         hidden_vecs[hidden_column_index] = hidden_vec;
@@ -490,7 +490,6 @@ private:
 
                 // constrain to codebook
                 vl.recon_factors_temp[visible_features_index] = (vl.visible_mats[fi] * temp).thin();
-
             }
 
             // double buffer
@@ -593,7 +592,7 @@ public:
         int num_code_elements_per_column = num_codes_per_column * S;
 
         for (int i = 0; i < num_code_elements_per_column; i++)
-            hidden_learn_vecs_ping[i] = randf(-1.0f, 1.0f);
+            hidden_learn_vecs_ping[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         for (int i = 1; i < num_hidden_columns; i++) {
             for (int j = 0; j < num_code_elements_per_column; j++)
