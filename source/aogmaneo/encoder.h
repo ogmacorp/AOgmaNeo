@@ -54,11 +54,13 @@ public:
     struct Params {
         float lr; // code learning rate
         int resonate_iters;
+        int sync_radius;
 
         Params()
         :
         lr(0.01f),
-        resonate_iters(16)
+        resonate_iters(8),
+        sync_radius(1)
         {}
     };
 
@@ -70,7 +72,14 @@ private:
     Array<Vec<S>> hidden_vecs;
     Array<Vec<S>> hidden_temp_vecs;
 
-    Float_Buffer hidden_learn_vecs;
+    // weights are ping-pong buffered
+    Float_Buffer hidden_learn_vecs_ping;
+    Float_Buffer hidden_learn_vecs_pong;
+
+    Float_Buffer_View hidden_learn_vecs_read;
+    Float_Buffer_View hidden_learn_vecs_write;
+    bool ping;
+
     Array<Vec<S>> hidden_code_vecs;
 
     // visible layers and associated descriptors
@@ -115,7 +124,7 @@ private:
 
         return vd;
     }
-    
+
     // --- kernels ---
     
     void bind_inputs(
@@ -252,9 +261,83 @@ private:
                 for (int i = 0; i < S; i++) {
                     int index = i + S * hidden_cell_index;
 
-                    hidden_learn_vecs[index] += params.lr * (target.get(i) - hidden_learn_vecs[index]);
+                    // in-place, so can modify read
+                    hidden_learn_vecs_read[index] += params.lr * (target.get(i) - hidden_learn_vecs_read[index]);
 
-                    hidden_code_vecs[hidden_cell_index].set(i, (hidden_learn_vecs[index] > 0.0f) * 2 - 1);
+                    hidden_code_vecs[hidden_cell_index].set(i, (hidden_learn_vecs_read[index] > 0.0f) * 2 - 1);
+                }
+            }
+        }
+    }
+
+    void local_sync(
+        const Int2 &column_pos,
+        const Params &params
+    ) {
+        int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+        
+        // clear write area
+        for (int fi = 0; fi < hidden_size.z; fi++) {
+            int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+            for (int hc = 0; hc < hidden_size.w; hc++) {
+                int hidden_cell_index = hc + hidden_features_index * hidden_size.w;
+
+                // move learned code towards actual vec
+                for (int i = 0; i < S; i++) {
+                    int index = i + S * hidden_cell_index;
+
+                    hidden_learn_vecs_write[index] = 0.0f;
+                }
+            }
+        }
+
+        // merge weights
+        int count = 0;
+
+        for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+            for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+                Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
+
+                if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                    int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                    for (int fi = 0; fi < hidden_size.z; fi++) {
+                        int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+                        int other_hidden_features_index = fi + hidden_size.z * other_hidden_column_index;
+
+                        for (int hc = 0; hc < hidden_size.w; hc++) {
+                            int hidden_cell_index = hc + hidden_features_index * hidden_size.w;
+                            int other_hidden_cell_index = hc + other_hidden_features_index * hidden_size.w;
+
+                            // move learned code towards actual vec
+                            for (int i = 0; i < S; i++) {
+                                int index = i + S * hidden_cell_index;
+                                int other_index = i + S * other_hidden_cell_index;
+
+                                hidden_learn_vecs_write[index] += hidden_learn_vecs_read[other_index];
+                            }
+                        }
+                    }
+
+                    count++;
+                }
+            }
+
+        float scale = 1.0f / max(1, count);
+
+        // scale
+        for (int fi = 0; fi < hidden_size.z; fi++) {
+            int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+            for (int hc = 0; hc < hidden_size.w; hc++) {
+                int hidden_cell_index = hc + hidden_features_index * hidden_size.w;
+
+                // move learned code towards actual vec
+                for (int i = 0; i < S; i++) {
+                    int index = i + S * hidden_cell_index;
+
+                    hidden_learn_vecs_write[index] *= scale;
                 }
             }
         }
@@ -407,17 +490,23 @@ public:
 
         hidden_cis = Int_Buffer(num_hidden_features, 0);
 
-        hidden_learn_vecs.resize(num_hidden_features * hidden_size.w * S);
+        hidden_learn_vecs_ping.resize(num_hidden_features * hidden_size.w * S);
 
         // learned "weights" - recognized patterns
-        for (int i = 0; i < hidden_learn_vecs.size(); i++)
-            hidden_learn_vecs[i] = randf(-1.0f, 1.0f);
+        for (int i = 0; i < hidden_learn_vecs_ping.size(); i++)
+            hidden_learn_vecs_ping[i] = randf(-1.0f, 1.0f);
+
+        hidden_learn_vecs_pong.resize(hidden_learn_vecs_ping.size());
+
+        hidden_learn_vecs_write = hidden_learn_vecs_pong;
+        hidden_learn_vecs_read = hidden_learn_vecs_ping;
+        ping = true;
 
         hidden_code_vecs.resize(num_hidden_features * hidden_size.w);
 
         for (int i = 0; i < hidden_code_vecs.size(); i++) {
             for (int j = 0; j < S; j++)
-                hidden_code_vecs[i].set(j, (hidden_learn_vecs[j + i * S] > 0.0f) * 2 - 1);
+                hidden_code_vecs[i].set(j, (hidden_learn_vecs_read[j + i * S] > 0.0f) * 2 - 1);
         }
 
         hidden_vecs.resize(num_hidden_columns);
@@ -470,6 +559,23 @@ public:
 
             vl.up_to_date = true;
         }
+        
+        // synchronize
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            local_sync(Int2(i / hidden_size.y, i % hidden_size.y), params);
+
+        // update ping-pong
+        ping = !ping;
+
+        if (ping) {
+            hidden_learn_vecs_read = hidden_learn_vecs_ping;
+            hidden_learn_vecs_write = hidden_learn_vecs_pong;
+        }
+        else {
+            hidden_learn_vecs_read = hidden_learn_vecs_pong;
+            hidden_learn_vecs_write = hidden_learn_vecs_ping;
+        }
     }
 
     void reconstruct(
@@ -498,7 +604,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_learn_vecs.size() * sizeof(float) + sizeof(int);
+        long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_learn_vecs_ping.size() * sizeof(float) + sizeof(int);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer &vl = visible_layers[vli];
@@ -522,7 +628,7 @@ public:
     }
 
     long weights_size() const { // returns size of weights in Bytes
-        return hidden_learn_vecs.size() * sizeof(float);
+        return hidden_learn_vecs_ping.size() * sizeof(float);
     }
 
     void write(
@@ -531,7 +637,7 @@ public:
         writer.write(&hidden_size, sizeof(Int3));
 
         writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-        writer.write(&hidden_code_vecs[0], hidden_code_vecs.size() * sizeof(float));
+        writer.write(&hidden_learn_vecs_read[0], hidden_learn_vecs_read.size() * sizeof(float));
 
         int num_visible_layers = visible_layers.size();
 
@@ -558,17 +664,23 @@ public:
         int num_hidden_features = num_hidden_columns * hidden_size.z;
 
         hidden_cis.resize(num_hidden_features);
-        hidden_learn_vecs.resize(num_hidden_features * hidden_size.w * S);
+        hidden_learn_vecs_ping.resize(num_hidden_features * hidden_size.w * S);
 
         reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-        reader.read(&hidden_learn_vecs[0], hidden_learn_vecs.size() * sizeof(float));
+        reader.read(&hidden_learn_vecs_ping[0], hidden_learn_vecs_ping.size() * sizeof(float));
+
+        hidden_learn_vecs_pong.resize(hidden_learn_vecs_ping.size());
+
+        hidden_learn_vecs_write = hidden_learn_vecs_pong;
+        hidden_learn_vecs_read = hidden_learn_vecs_ping;
+        ping = true;
 
         hidden_code_vecs.resize(num_hidden_features * hidden_size.w);
 
         for (int i = 0; i < hidden_code_vecs.size(); i++) {
             for (int j = 0; j < S; j++)
-                hidden_code_vecs[i].set(j, (hidden_learn_vecs[j + i * S] > 0.0f) * 2 - 1);
+                hidden_code_vecs[i].set(j, (hidden_learn_vecs_read[j + i * S] > 0.0f) * 2 - 1);
         }
 
         hidden_vecs.resize(num_hidden_columns);
@@ -630,13 +742,13 @@ public:
     void write_weights(
         Stream_Writer &writer
     ) const {
-        writer.write(&hidden_learn_vecs[0], hidden_learn_vecs.size() * sizeof(float));
+        writer.write(&hidden_learn_vecs_read[0], hidden_learn_vecs_read.size() * sizeof(float));
     }
 
     void read_weights(
         Stream_Reader &reader
     ) {
-        reader.read(&hidden_learn_vecs[0], hidden_learn_vecs.size() * sizeof(float));
+        reader.read(&hidden_learn_vecs_read[0], hidden_learn_vecs_read.size() * sizeof(float));
     }
 
     // get the number of visible layers
