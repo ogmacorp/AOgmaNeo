@@ -301,7 +301,7 @@ private:
                 }
             }
 
-            hidden_cis[hidden_column_index] = max_index;
+            hidden_cis[hidden_features_index] = max_index;
         }
 
         if (learn_enabled) {
