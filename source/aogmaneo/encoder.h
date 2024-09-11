@@ -106,7 +106,9 @@ public:
         Array<Bundle<S>> hidden_sums;
 
         Int_Buffer recon_cis;
-        Int_Buffer recon_cis_temp;
+
+        Array<Vec<S>> recon_factors;
+        Array<Vec<S>> recon_factors_temp;
 
         Array<Resonator_Mat> visible_mats;
 
@@ -124,14 +126,12 @@ public:
         float lr; // code learning rate
         int resonate_iters;
         int sync_radius;
-        Byte warm_restart;
 
         Params()
         :
-        lr(0.0001f),
-        resonate_iters(32),
-        sync_radius(1),
-        warm_restart(false)
+        lr(0.01f),
+        resonate_iters(16),
+        sync_radius(1)
         {}
     };
 
@@ -139,9 +139,11 @@ private:
     Int4 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-    Int_Buffer hidden_cis_temp;
 
     Array<Vec<S>> hidden_vecs;
+
+    Array<Vec<S>> hidden_factors;
+    Array<Vec<S>> hidden_factors_temp;
 
     // weights are ping-pong buffered
     Float_Buffer hidden_learn_vecs_ping;
@@ -232,6 +234,23 @@ private:
 
         Vec<S> hidden_vec = sum.thin();
 
+        // initialize factors to superpositions
+        for (int fi = 0; fi < hidden_size.z; fi++) {
+            int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+            int hidden_cells_start = hidden_size.w * hidden_features_index;
+
+            Bundle<S> init_factor = 0;
+
+            for (int hc = 0; hc < hidden_size.w; hc++) {
+                int hidden_cell_index = hc + hidden_cells_start;
+
+                init_factor += hidden_code_vecs[hidden_cell_index];
+            }
+
+            hidden_factors[hidden_features_index] = init_factor.thin();
+        }
+
         // resonate
         for (int it = 0; it < params.resonate_iters; it++) {
             for (int fi = 0; fi < hidden_size.z; fi++) {
@@ -246,57 +265,48 @@ private:
 
                     int other_hidden_features_index = ofi + hidden_size.z * hidden_column_index;
 
-                    temp *= hidden_code_vecs[hidden_cis[other_hidden_features_index] + other_hidden_features_index * hidden_size.w];
+                    temp *= hidden_factors[other_hidden_features_index];
                 }
 
                 // constrain to codebook
-                temp = (hidden_mats[hidden_features_index] * temp).thin();
-
-                // find similarity to code
-                int max_index = 0;
-                int max_similarity = limit_min;
-
-                int hidden_cells_start = hidden_size.w * hidden_features_index;
-
-                for (int hc = 0; hc < hidden_size.w; hc++) {
-                    int hidden_cell_index = hc + hidden_cells_start;
-
-                    int similarity = temp.dot(hidden_code_vecs[hidden_cell_index]);
-
-                    if (similarity > max_similarity) {
-                        max_similarity = similarity;
-                        max_index = hc;
-                    }
-                }
-
-                // set to most similar code
-                hidden_cis_temp[hidden_features_index] = max_index;
+                hidden_factors_temp[hidden_features_index] = (hidden_mats[hidden_features_index] * temp).thin();
             }
 
             // double buffer
             for (int fi = 0; fi < hidden_size.z; fi++) {
                 int hidden_features_index = fi + hidden_size.z * hidden_column_index;
 
-                hidden_cis[hidden_features_index] = hidden_cis_temp[hidden_features_index];
+                hidden_factors[hidden_features_index] = hidden_factors_temp[hidden_features_index];
             }
+        }
+
+        // clean up
+        for (int fi = 0; fi < hidden_size.z; fi++) {
+            int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+            // find similarity to code
+            int max_index = 0;
+            int max_similarity = limit_min;
+
+            int hidden_cells_start = hidden_size.w * hidden_features_index;
+
+            for (int hc = 0; hc < hidden_size.w; hc++) {
+                int hidden_cell_index = hc + hidden_cells_start;
+
+                int similarity = hidden_factors[hidden_features_index].dot(hidden_code_vecs[hidden_cell_index]);
+
+                if (similarity > max_similarity) {
+                    max_similarity = similarity;
+                    max_index = hc;
+                }
+            }
+
+            hidden_cis[hidden_column_index] = max_index;
         }
 
         if (learn_enabled) {
             for (int fi = 0; fi < hidden_size.z; fi++) {
                 int hidden_features_index = fi + hidden_size.z * hidden_column_index;
-
-                // complete last step
-                Vec<S> temp = hidden_vec;
-
-                // unbind other feature estimates
-                for (int ofi = 0; ofi < hidden_size.z; ofi++) {
-                    if (ofi == fi)
-                        continue;
-
-                    int other_hidden_features_index = ofi + hidden_size.z * hidden_column_index;
-
-                    temp *= hidden_code_vecs[hidden_cis[other_hidden_features_index] + other_hidden_features_index * hidden_size.w];
-                }
 
                 int hidden_cell_index = hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w;
 
@@ -305,7 +315,7 @@ private:
                     int index = i + S * hidden_cell_index;
 
                     // in-place, so can modify read
-                    hidden_learn_vecs_read[index] += params.lr * (temp.get(i) - hidden_learn_vecs_read[index]);
+                    hidden_learn_vecs_read[index] += params.lr * (hidden_factors[hidden_features_index].get(i) - hidden_learn_vecs_read[index]);
                 }
             }
         }
@@ -449,6 +459,18 @@ private:
         // thin and unbind position
         Vec<S> visible_vec = sum.thin() * vl.visible_pos_vecs[visible_column_index];
 
+        // initialize factors to superpositions
+        for (int fi = 0; fi < vld.size.z; fi++) {
+            int visible_features_index = fi + vld.size.z * visible_column_index;
+
+            Bundle<S> init_factor = 0;
+
+            for (int vc = 0; vc < vld.size.w; vc++)
+                init_factor += vl.visible_code_vecs[vc + vld.size.w * fi];
+
+            vl.recon_factors[visible_features_index] = init_factor.thin();
+        }
+
         // resonate
         for (int it = 0; it < params.resonate_iters; it++) {
             for (int fi = 0; fi < vld.size.z; fi++) {
@@ -463,35 +485,40 @@ private:
 
                     int other_visible_features_index = ofi + vld.size.z * visible_column_index;
 
-                    temp *= vl.visible_code_vecs[vl.recon_cis[other_visible_features_index] + vld.size.w * ofi];
+                    temp *= vl.recon_factors[other_visible_features_index];
                 }
 
                 // constrain to codebook
-                temp = (vl.visible_mats[fi] * temp).thin();
+                vl.recon_factors_temp[visible_features_index] = (vl.visible_mats[fi] * temp).thin();
 
-                // find similarity to code
-                int max_index = 0;
-                int max_similarity = limit_min;
-
-                for (int vc = 0; vc < vld.size.w; vc++) {
-                    int similarity = temp.dot(vl.visible_code_vecs[vc + vld.size.w * fi]);
-
-                    if (similarity > max_similarity) {
-                        max_similarity = similarity;
-                        max_index = vc;
-                    }
-                }
-
-                // set to most similar code
-                vl.recon_cis_temp[visible_features_index] = max_index;
             }
 
             // double buffer
             for (int fi = 0; fi < vld.size.z; fi++) {
                 int visible_features_index = fi + vld.size.z * visible_column_index;
 
-                vl.recon_cis[visible_features_index] = vl.recon_cis_temp[visible_features_index];
+                vl.recon_factors[visible_features_index] = vl.recon_factors_temp[visible_features_index];
             }
+        }
+
+        for (int fi = 0; fi < vld.size.z; fi++) {
+            int visible_features_index = fi + vld.size.z * visible_column_index;
+
+            // find similarity to code
+            int max_index = 0;
+            int max_similarity = limit_min;
+
+            for (int vc = 0; vc < vld.size.w; vc++) {
+                int similarity = vl.recon_factors[visible_features_index].dot(vl.visible_code_vecs[vc + vld.size.w * fi]);
+
+                if (similarity > max_similarity) {
+                    max_similarity = similarity;
+                    max_index = vc;
+                }
+            }
+
+            // set to most similar code
+            vl.recon_cis[visible_features_index] = max_index;
         }
     }
 
@@ -543,7 +570,9 @@ public:
             vl.input_cis = Int_Buffer(num_visible_features, 0);
 
             vl.recon_cis = Int_Buffer(num_visible_features, 0);
-            vl.recon_cis_temp.resize(vl.recon_cis.size());
+
+            vl.recon_factors.resize(num_visible_features);
+            vl.recon_factors_temp.resize(vl.recon_factors.size());
 
             vl.input_vecs.resize(num_visible_columns);
 
@@ -556,7 +585,6 @@ public:
         }
 
         hidden_cis = Int_Buffer(num_hidden_features, 0);
-        hidden_cis_temp.resize(hidden_cis.size());
 
         hidden_learn_vecs_ping.resize(num_hidden_features * hidden_size.w * S);
 
@@ -565,7 +593,7 @@ public:
         int num_code_elements_per_column = num_codes_per_column * S;
 
         for (int i = 0; i < num_code_elements_per_column; i++)
-            hidden_learn_vecs_ping[i] = randf(-init_weight_noisef, init_weight_noisef);
+            hidden_learn_vecs_ping[i] = randf(-1.0f, 1.0f);
 
         for (int i = 1; i < num_hidden_columns; i++) {
             for (int j = 0; j < num_code_elements_per_column; j++)
@@ -587,6 +615,9 @@ public:
         }
 
         hidden_vecs.resize(num_hidden_columns);
+
+        hidden_factors.resize(num_hidden_features);
+        hidden_factors_temp.resize(hidden_factors.size());
 
         // initialize resonator matrices
         hidden_mats.resize(num_hidden_features);
@@ -632,9 +663,6 @@ public:
                 bind_inputs(Int2(i / vld.size.y, i % vld.size.y), vli);
         }
 
-        if (!params.warm_restart)
-            hidden_cis.fill(0);
-
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++)
             forward(Int2(i / hidden_size.y, i % hidden_size.y), learn_enabled, params);
@@ -672,14 +700,6 @@ public:
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
         int num_visible_columns = vld.size.x * vld.size.y;
-
-        if (!params.warm_restart) {
-            for (int vli = 0; vli < visible_layers.size(); vli++) {
-                Visible_Layer &vl = visible_layers[vli];
-
-                vl.recon_cis.fill(0);
-            }
-        }
 
         PARALLEL_FOR
         for (int i = 0; i < num_visible_columns; i++)
@@ -763,8 +783,6 @@ public:
 
         reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-        hidden_cis_temp.resize(hidden_cis.size());
-
         reader.read(&hidden_learn_vecs_ping[0], hidden_learn_vecs_ping.size() * sizeof(float));
 
         hidden_learn_vecs_pong.resize(hidden_learn_vecs_ping.size());
@@ -787,6 +805,9 @@ public:
             hidden_mats[i].set_from(hidden_code_vecs, i * hidden_size.w, hidden_size.w);
 
         hidden_vecs.resize(num_hidden_columns);
+
+        hidden_factors.resize(num_hidden_features);
+        hidden_factors_temp.resize(hidden_factors.size());
 
         int num_visible_layers = visible_layers.size();
 
@@ -816,7 +837,8 @@ public:
 
             reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
 
-            vl.recon_cis_temp.resize(vl.recon_cis.size());
+            vl.recon_factors.resize(num_visible_features);
+            vl.recon_factors_temp.resize(vl.recon_factors.size());
 
             vl.input_vecs.resize(num_visible_columns);
 
