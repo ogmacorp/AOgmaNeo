@@ -222,8 +222,6 @@ private:
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                         int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                        Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
-
                         sum += vl.input_vecs[visible_column_index];
                     }
             }
@@ -432,11 +430,8 @@ private:
 
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
-                if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
-
+                if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1)))
                     sum += hidden_vecs[hidden_column_index];
-                }
             }
 
         // thin and unbind position
@@ -466,8 +461,6 @@ private:
                 int max_similarity = limit_min;
 
                 for (int vc = 0; vc < vld.size.w; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
-
                     int similarity = temp.dot(vl.visible_code_vecs[vc + vld.size.w * fi]);
 
                     if (similarity > max_similarity) {
