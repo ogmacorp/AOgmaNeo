@@ -327,7 +327,7 @@ private:
         for (int fi = 0; fi < hidden_size.z; fi++) {
             int hidden_features_index = fi + hidden_size.z * hidden_column_index;
 
-            hidden_vec *= hidden_code_vecs[hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w];
+            hidden_vec *= hidden_code_vecs[hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w];//hidden_factors[hidden_features_index];
         }
 
         hidden_vecs[hidden_column_index] = hidden_vec;
