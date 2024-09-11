@@ -277,4 +277,34 @@ public:
         return result;
     }
 };
+
+template<int S>
+class Vec_Corr_Mat {
+private:
+    static const int ss = S * (S - 1) / 2;
+    static const int bs = (ss + 7) / 8;
+    static const int over_bits = 8 - (ss % 8); // overflowing bit count
+
+    Byte buffer[bs];
+
+public:
+    Vec_Corr_Mat()
+    {}
+
+    Vec_Corr_Mat(
+        const Vec<S> &v
+    ) {
+        set_from(v);
+    }
+
+    void set_from(
+        const Vec<S> &v
+    ) {
+        for (int r = 0; r < S; r++) {
+            for (int c = r; c < S; c++) {
+                int index = 
+            }
+        }
+    }
+};
 }
