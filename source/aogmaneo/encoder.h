@@ -15,6 +15,77 @@ namespace aon {
 template<int S>
 class Encoder {
 public:
+    // helper for implementing XXT in resonator
+    class Resonator_Mat {
+    private:
+        static const int ss = S * (S + 1) / 2; // swap - 1 instead of + 1 for ignoring diagonal
+
+        S_Byte buffer[ss];
+
+    public:
+        Resonator_Mat()
+        {}
+
+        Resonator_Mat(
+            const Array<Vec<S>> &codes,
+            int codes_start,
+            int num_codes
+        ) {
+            set_from(codes);
+        }
+
+        void set_from(
+            const Array<Vec<S>> &codes,
+            int codes_start,
+            int num_codes
+        ) {
+            for (int r = 0; r < S; r++) {
+                int start = r * (r + 1) / 2;
+
+                for (int c = 0; c <= r; c++) {
+                    int index = c + start;
+
+                    int sum = 0;
+
+                    for (int c2 = 0; c2 < num_codes; c2++)
+                        sum += codes[codes_start + c2].get(r) * codes[codes_start + c2].get(c);
+
+                    buffer[index] = sum;
+                }
+            }
+        }
+
+        Bundle<S> operator*(
+            const Vec<S> &v
+        ) {
+            Bundle<S> result;
+
+            for (int r = 0; r < S; r++) {
+                int sum = 0;
+
+                int start = r * (r + 1) / 2;
+
+                // lower triangle
+                for (int c = 0; c < r; c++) {
+                    int index = c + start;
+                    
+                    sum += buffer[index] * v.get(c);
+                }
+
+                // diagonal
+                {
+                    int index = r + start;
+                    
+                    sum += buffer[index] * v.get(r);
+                }
+
+                result[r] = sum;
+            }
+
+            return result;
+        }
+    };
+
     // visible layer descriptor
     struct Visible_Layer_Desc {
         Int4 size; // size of input
@@ -40,6 +111,8 @@ public:
         Array<Vec<S>> input_vecs;
 
         Int_Buffer recon_cis;
+
+        Array<Resonator_Mat> visible_mats;
 
         bool use_input;
         bool up_to_date;
@@ -86,56 +159,7 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    // --- helpers ---
-
-    Bundle<S> multiply_a_at(
-        const Array<Vec<S>> &codes,
-        int codes_start, // start index into codebook
-        Vec<S> v, // vector to multiply
-        int num_codes
-    ) {
-        Bundle<S> vd = 0;
-
-        // accumulate from above diagonal (symmetric)
-        for (int r = 0; r < S; r++) {
-            for (int r2 = 0; r2 < r; r2++) { // only compute up to diagonal
-                int a_at_elem = 0;
-
-                for (int c = 0; c < num_codes; c++) {
-                    int code_index = codes_start + c;
-
-                    a_at_elem += codes[code_index].get(r) * codes[code_index].get(r2);
-                }
-
-                // exploit symmetry
-                for (int r3 = 0; r3 < S; r3++) {
-                    // upper triangle
-                    vd[r] += a_at_elem * v.get(r3);
-
-                    // lower triangle
-                    int r3_comp = S - 1 - r3;
-
-                    vd[r] += a_at_elem * v.get(r3_comp);
-                }
-            }
-        }
-
-        // accumlate from diagonal
-        for (int r = 0; r < S; r++) {
-            int a_at_elem = 0;
-
-            for (int c = 0; c < num_codes; c++) {
-                int code_index = codes_start + c;
-
-                a_at_elem += codes[code_index].get(r) * codes[code_index].get(r);
-            }
-
-            for (int r3 = 0; r3 < S; r3++)
-                vd[r] += a_at_elem * v.get(r3);
-        }
-
-        return vd;
-    }
+    Array<Resonator_Mat> hidden_mats;
 
     // --- kernels ---
     
@@ -206,10 +230,16 @@ private:
 
         Vec<S> hidden_vec = sum.thin();
 
+        // set up correlation matrices
+        for (int fi = 0; fi < hidden_size.z; fi++) {
+            int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+            hidden_mats[hidden_features_index].set_from(hidden_code_vecs, hidden_size.w * hidden_features_index, hidden_size.w);
+        }
+
         // resonate
         for (int it = 0; it < params.resonate_iters; it++) {
             for (int fi = 0; fi < hidden_size.z; fi++) {
-                // compute a self-correlation vector per feature
                 int hidden_features_index = fi + hidden_size.z * hidden_column_index;
 
                 Vec<S> temp = hidden_vec;
@@ -224,7 +254,7 @@ private:
                     temp *= hidden_code_vecs[hidden_cis[other_hidden_features_index] + other_hidden_features_index * hidden_size.w];
                 }
 
-                temp = multiply_a_at(hidden_code_vecs, hidden_size.w * hidden_features_index, temp, hidden_size.w).thin();
+                temp = (hidden_mats[hidden_features_index] * temp).thin();
 
                 hidden_temp_vecs[hidden_features_index] = temp;
 
@@ -353,6 +383,9 @@ private:
                     hidden_code_vecs[hidden_cell_index].set(i, (hidden_learn_vecs_write[index] > 0.0f) * 2 - 1);
                 }
             }
+
+            // update matrix
+            hidden_mats[hidden_features_index].set_from(hidden_code_vecs, hidden_size.w * hidden_features_index, hidden_size.w);
         }
     }
 
@@ -425,7 +458,7 @@ private:
                     temp *= vl.visible_code_vecs[vl.recon_cis[other_visible_features_index] + vld.size.w * ofi];
                 }
 
-                temp = multiply_a_at(vl.visible_code_vecs, vld.size.w * fi, temp, vld.size.w).thin();
+                temp = (vl.visible_mats[fi] * temp).thin();
 
                 // find similarity to code
                 int max_index = 0;
@@ -497,6 +530,11 @@ public:
             vl.recon_cis = Int_Buffer(num_visible_features, 0);
 
             vl.input_vecs.resize(num_visible_columns);
+
+            vl.visible_mats.resize(vld.size.z);
+
+            for (int i = 0; i < vld.size.z; i++)
+                vl.visible_mats[i].set_from(vl.visible_code_vecs, i * vld.size.w, vld.size.w);
         }
 
         hidden_cis = Int_Buffer(num_hidden_features, 0);
@@ -531,6 +569,12 @@ public:
 
         hidden_vecs.resize(num_hidden_columns);
         hidden_temp_vecs.resize(num_hidden_features);
+
+        // initialize resonator matrices
+        hidden_mats.resize(num_hidden_features);
+
+        for (int i = 0; i < num_hidden_features; i++)
+            hidden_mats[i].set_from(hidden_code_vecs, i * hidden_size.w, hidden_size.w);
     }
 
     void set_ignore(
@@ -639,7 +683,7 @@ public:
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer &vl = visible_layers[vli];
 
-            size += sizeof(Visible_Layer_Desc) + vl.recon_cis.size() * sizeof(int) + sizeof(float);
+            size += sizeof(Visible_Layer_Desc) + vl.visible_code_vecs.size() * sizeof(Vec<S>) + vl.visible_pos_vecs.size() * sizeof(Vec<S>) + vl.recon_cis.size() * sizeof(int) + sizeof(float);
         }
 
         return size;
@@ -679,7 +723,8 @@ public:
 
             writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-            writer.write(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
+            writer.write(&vl.visible_code_vecs[0], vl.visible_code_vecs.size() * sizeof(Vec<S>));
+            writer.write(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S>));
 
             writer.write(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
         }
@@ -713,6 +758,12 @@ public:
                 hidden_code_vecs[i].set(j, (hidden_learn_vecs_read[j + i * S] > 0.0f) * 2 - 1);
         }
 
+        // initialize resonator matrices
+        hidden_mats.resize(num_hidden_features);
+
+        for (int i = 0; i < num_hidden_features; i++)
+            hidden_mats[i].set_from(hidden_code_vecs, i * hidden_size.w, hidden_size.w);
+
         hidden_vecs.resize(num_hidden_columns);
         hidden_temp_vecs.resize(num_hidden_features);
 
@@ -735,13 +786,19 @@ public:
             vl.visible_code_vecs.resize(vld.size.z * vld.size.w);
             vl.visible_pos_vecs.resize(num_visible_columns);
 
-            reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
+            reader.read(&vl.visible_code_vecs[0], vl.visible_code_vecs.size() * sizeof(Vec<S>));
+            reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S>));
 
             vl.input_cis = Int_Buffer(num_visible_features, 0);
 
             vl.recon_cis.resize(num_visible_features);
 
             reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
+
+            vl.visible_mats.resize(vld.size.z);
+
+            for (int i = 0; i < vld.size.z; i++)
+                vl.visible_mats[i].set_from(vl.visible_code_vecs, i * vld.size.w, vld.size.w);
         }
     }
 
