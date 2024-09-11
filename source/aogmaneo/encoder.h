@@ -446,10 +446,8 @@ private:
                 }
             }
 
-        Vec<S> visible_vec = sum.thin();
-
-        // unbind position
-        visible_vec *= vl.visible_pos_vecs[visible_column_index];
+        // thin and unbind position
+        Vec<S> visible_vec = sum.thin() * vl.visible_pos_vecs[visible_column_index];
 
         // resonate
         for (int it = 0; it < params.resonate_iters; it++) {
