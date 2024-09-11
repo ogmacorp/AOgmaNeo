@@ -295,8 +295,8 @@ private:
         // merge weights
         int count = 0;
 
-        for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
-            for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+        for (int dcx = -params.sync_radius; dcx <= params.sync_radius; dcx++)
+            for (int dcy = -params.sync_radius; dcy <= params.sync_radius; dcy++) {
                 Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
 
                 if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
