@@ -108,6 +108,7 @@ public:
         Array<Vec<S>> input_vecs;
 
         Int_Buffer recon_cis;
+        Int_Buffer recon_cis_temp;
 
         Array<Resonator_Mat> visible_mats;
 
@@ -140,6 +141,7 @@ private:
     Int4 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+    Int_Buffer hidden_cis_temp;
 
     Array<Vec<S>> hidden_vecs;
     Array<Vec<S>> hidden_temp_vecs;
@@ -275,7 +277,14 @@ private:
                 }
 
                 // set to most similar code
-                hidden_cis[hidden_features_index] = max_index;
+                hidden_cis_temp[hidden_features_index] = max_index;
+            }
+
+            // double buffer
+            for (int fi = 0; fi < hidden_size.z; fi++) {
+                int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+                hidden_cis[hidden_features_index] = hidden_cis_temp[hidden_features_index];
             }
         }
 
@@ -442,7 +451,6 @@ private:
         // resonate
         for (int it = 0; it < params.resonate_iters; it++) {
             for (int fi = 0; fi < vld.size.z; fi++) {
-                // compute a self-correlation vector per feature
                 int visible_features_index = fi + vld.size.z * visible_column_index;
 
                 Vec<S> temp = visible_vec;
@@ -475,7 +483,14 @@ private:
                 }
 
                 // set to most similar code
-                vl.recon_cis[visible_features_index] = max_index;
+                vl.recon_cis_temp[visible_features_index] = max_index;
+            }
+
+            // double buffer
+            for (int fi = 0; fi < vld.size.z; fi++) {
+                int visible_features_index = fi + vld.size.z * visible_column_index;
+
+                vl.recon_cis[visible_features_index] = vl.recon_cis_temp[visible_features_index];
             }
         }
     }
@@ -526,7 +541,9 @@ public:
                 }
 
             vl.input_cis = Int_Buffer(num_visible_features, 0);
+
             vl.recon_cis = Int_Buffer(num_visible_features, 0);
+            vl.recon_cis_temp.resize(vl.recon_cis.size());
 
             vl.input_vecs.resize(num_visible_columns);
 
@@ -537,6 +554,7 @@ public:
         }
 
         hidden_cis = Int_Buffer(num_hidden_features, 0);
+        hidden_cis_temp.resize(hidden_cis.size());
 
         hidden_learn_vecs_ping.resize(num_hidden_features * hidden_size.w * S);
 
@@ -743,6 +761,8 @@ public:
 
         reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
+        hidden_cis_temp.resize(hidden_cis.size());
+
         reader.read(&hidden_learn_vecs_ping[0], hidden_learn_vecs_ping.size() * sizeof(float));
 
         hidden_learn_vecs_pong.resize(hidden_learn_vecs_ping.size());
@@ -794,6 +814,8 @@ public:
             vl.recon_cis.resize(num_visible_features);
 
             reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
+
+            vl.recon_cis_temp.resize(vl.recon_cis.size());
 
             vl.visible_mats.resize(vld.size.z);
 
