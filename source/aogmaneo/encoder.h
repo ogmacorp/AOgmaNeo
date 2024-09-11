@@ -72,11 +72,7 @@ public:
                 }
 
                 // diagonal
-                {
-                    int index = r + start;
-                    
-                    result[r] += buffer[index] * v.get(r);
-                }
+                result[r] += buffer[r + start] * v.get(r);
             }
 
             return result;
