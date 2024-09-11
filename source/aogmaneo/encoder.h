@@ -634,7 +634,8 @@ public:
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
 
-            vl.up_to_date = true;
+            if (vl.use_input)
+                vl.up_to_date = true;
         }
         
         // synchronize
