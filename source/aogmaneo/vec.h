@@ -41,10 +41,10 @@ public:
         return result;
     };
 
-    S_Byte set(
+    void set(
         int index,
         S_Byte value
-    ) const {
+    ) {
         assert(index >= 0 && index < S);
         
         int byi = index / 8;
@@ -178,7 +178,7 @@ public:
         return *this;
     }
 
-    int set(
+    void set(
         int index,
         int value
     ) const {
