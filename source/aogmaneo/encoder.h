@@ -44,13 +44,10 @@ public:
         bool use_input;
         bool up_to_date;
         
-        float importance;
-
         Visible_Layer()
         :
         use_input(false),
-        up_to_date(false),
-        importance(1.0f)
+        up_to_date(false)
         {}
     };
 
@@ -239,6 +236,25 @@ private:
         }
 
         hidden_vecs[hidden_column_index] = hidden_vec;
+
+        if (learn_enabled) {
+            for (int fi = 0; fi < hidden_size.z; fi++) {
+                int hidden_features_index = fi + hidden_size.z * hidden_column_index;
+
+                int hidden_cell_index = hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w;
+
+                Vec<S> &target = hidden_code_vecs[hidden_cell_index];
+
+                // move learned code towards actual vec
+                for (int i = 0; i < S; i++) {
+                    int index = i + S * hidden_cell_index;
+
+                    hidden_learn_vecs[index] += params.lr * (target.get(i) - hidden_learn_vecs[index]);
+
+                    target.set(i, (hidden_learn_vecs[index] > 0.0f) * 2 - 1);
+                }
+            }
+        }
     }
 
     void reconstruct(
@@ -531,8 +547,6 @@ public:
             writer.write(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(S_Byte));
 
             writer.write(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
-
-            writer.write(&vl.importance, sizeof(float));
         }
     }
 
@@ -586,8 +600,6 @@ public:
             vl.recon_cis.resize(num_visible_columns);
 
             reader.read(&vl.recon_cis[0], vl.recon_cis.size() * sizeof(int));
-
-            reader.read(&vl.importance, sizeof(float));
         }
     }
 
