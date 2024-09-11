@@ -135,7 +135,7 @@ public:
         Vec<S> result;
 
         for (int i = 0; i < bs; i++)
-            result.set(i) = get((i + S + shift) % S);
+            result.set(i, get((i + S + shift) % S));
 
         return result;
     }

@@ -129,8 +129,8 @@ public:
 
         Params()
         :
-        lr(0.001f),
-        resonate_iters(32),
+        lr(0.01f),
+        resonate_iters(16),
         sync_radius(1)
         {}
     };
@@ -327,7 +327,7 @@ private:
         for (int fi = 0; fi < hidden_size.z; fi++) {
             int hidden_features_index = fi + hidden_size.z * hidden_column_index;
 
-            hidden_vec *= hidden_factors[hidden_features_index];//[hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w];
+            hidden_vec *= hidden_code_vecs[hidden_cis[hidden_features_index] + hidden_features_index * hidden_size.w];
         }
 
         hidden_vecs[hidden_column_index] = hidden_vec;
