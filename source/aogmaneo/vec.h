@@ -155,6 +155,16 @@ public:
 
         return sum;
     }
+
+    bool operator==(
+        const Vec<S, L> &other
+    ) {
+        for (int i = 0; i < S; i++)
+            if (buffer[i] != other.buffer[i])
+                return false;
+
+        return true;
+    }
 };
 
 template<int S, int L>
@@ -282,6 +292,16 @@ public:
         }
 
         return result;
+    }
+
+    bool operator==(
+        const Bundle<S, L> &other
+    ) {
+        for (int i = 0; i < N; i++)
+            if (buffer[i] != other.buffer[i])
+                return false;
+
+        return true;
     }
 };
 }
