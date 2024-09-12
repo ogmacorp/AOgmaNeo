@@ -158,7 +158,7 @@ public:
 
     bool operator==(
         const Vec<S, L> &other
-    ) {
+    ) const {
         for (int i = 0; i < S; i++)
             if (buffer[i] != other.buffer[i])
                 return false;
@@ -296,7 +296,7 @@ public:
 
     bool operator==(
         const Bundle<S, L> &other
-    ) {
+    ) const {
         for (int i = 0; i < N; i++)
             if (buffer[i] != other.buffer[i])
                 return false;
