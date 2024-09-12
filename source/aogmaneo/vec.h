@@ -80,7 +80,7 @@ public:
     void fill(
         S_Byte value
     ) {
-        if (value > 0) {
+        if (value >= 0) {
             for (int i = 0; i < bs; i++)
                 buffer[i] = 0xff;
         }

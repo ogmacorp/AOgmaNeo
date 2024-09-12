@@ -130,7 +130,7 @@ public:
         Params()
         :
         lr(0.1f),
-        resonate_iters(16),
+        resonate_iters(32),
         sync_radius(1)
         {}
     };
