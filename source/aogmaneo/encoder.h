@@ -286,14 +286,20 @@ private:
 
             // find similarity to code
             int max_index = 0;
-            int max_similarity = limit_min;
+            float max_similarity = limit_min;
 
             int hidden_cells_start = hidden_size.w * hidden_features_index;
 
             for (int hc = 0; hc < hidden_size.w; hc++) {
                 int hidden_cell_index = hc + hidden_cells_start;
 
-                int similarity = hidden_factors[hidden_features_index].dot(hidden_code_vecs[hidden_cell_index]);
+                float similarity = 0.0f;
+
+                for (int i = 0; i < S; i++) {
+                    int index = i + S * hidden_cell_index;
+
+                    similarity += hidden_factors[hidden_features_index].get(i) * hidden_learn_vecs_read[index];
+                }
 
                 if (similarity > max_similarity) {
                     max_similarity = similarity;
@@ -592,7 +598,7 @@ public:
         int num_code_elements_per_column = num_codes_per_column * S;
 
         for (int i = 0; i < num_code_elements_per_column; i++)
-            hidden_learn_vecs_ping[i] = randf(-init_weight_noisef, init_weight_noisef);
+            hidden_learn_vecs_ping[i] = randf(-1.0f, 1.0f);
 
         for (int i = 1; i < num_hidden_columns; i++) {
             for (int j = 0; j < num_code_elements_per_column; j++)
