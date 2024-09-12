@@ -99,6 +99,26 @@ public:
         return *this;
     }
 
+    Vec<S, L> operator/(
+        const Vec<S, L> &other
+    ) {
+        Vec<S, L> result;
+
+        for (int i = 0; i < S; i++)
+            result[i] = (buffer[i] + L - other.buffer[i]) % L;
+
+        return result;
+    }
+
+    const Vec<S, L> &operator/=(
+        const Vec<S, L> &other
+    ) {
+        for (int i = 0; i < S; i++)
+            buffer[i] = (buffer[i] + L - other.buffer[i]) % L; 
+
+        return *this;
+    }
+
     Bundle<S, L> operator+(
         const Vec<S, L> &other
     ) {
@@ -167,7 +187,7 @@ public:
     int &operator[](
         int index
     ) {
-        assert(index >= 0 && index < S);
+        assert(index >= 0 && index < N);
         
         return buffer[index];
     }
@@ -175,7 +195,7 @@ public:
     const int &operator[](
         int index
     ) const {
-        assert(index >= 0 && index < S);
+        assert(index >= 0 && index < N);
         
         return buffer[index];
     }
@@ -198,7 +218,7 @@ public:
     void fill(
         int value
     ) {
-        for (int i = 0; i < S; i++)
+        for (int i = 0; i < N; i++)
             buffer[i] = value;
     }
     
@@ -225,7 +245,7 @@ public:
     Bundle<S, L> operator+(
         const Vec<S, L> &other
     ) {
-        Bundle<S, L> result;
+        Bundle<S, L> result = 0;
 
         for (int i = 0; i < S; i++)
             result[other[i] + i * L]++;
