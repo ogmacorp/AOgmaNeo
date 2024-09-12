@@ -129,7 +129,7 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.1f),
         resonate_iters(16),
         sync_radius(1)
         {}
@@ -412,7 +412,7 @@ private:
             }
 
             // update matrix
-            hidden_mats[hidden_features_index].set_from(hidden_code_vecs, hidden_size.w * hidden_features_index, hidden_size.w);
+            hidden_mats[hidden_features_index].set_from(hidden_code_vecs, hidden_features_index * hidden_size.w, hidden_size.w);
         }
     }
 
