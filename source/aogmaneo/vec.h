@@ -11,164 +11,144 @@
 #include "helpers.h"
 
 namespace aon {
-template<int S>
+template<int S, int L>
 class Bundle;
 
-template<int S>
+template<int S, int L>
 class Vec {
 private:
-    static const int bs = (S + 7) / 8;
-    //static const int over_bits = 8 - (S % 8); // overflowing bit count
+    static const int N = S * L;
 
-    Byte buffer[bs];
+    int buffer[S];
 
 public:
     Vec() {}
 
     Vec(
-        S_Byte value
+        int value
     ) {
         fill(value);
     }
 
-    static Vec<S> randomized(
+    static Vec<S, L> randomized(
         unsigned long* state = &global_state
     ) {
-        Vec<S> result;
+        Vec<S, L> result;
 
-        for (int i = 0; i < bs; i++)
-            result.buffer[i] = rand(state) % 256;
+        for (int i = 0; i < S; i++)
+            result.buffer[i] = rand(state) % L;
 
         return result;
     };
 
-    void set(
-        int index,
-        S_Byte value
+    int &operator[](
+        int index
     ) {
         assert(index >= 0 && index < S);
         
-        int byi = index / 8;
-        int bi = index % 8;
-
-        if (value >= 0)
-            buffer[byi] = buffer[byi] | (1 << bi);
-        else
-            buffer[byi] = buffer[byi] & (~(1 << bi));
+        return buffer[index];
     }
 
-    S_Byte get(
+    const int &operator[](
         int index
     ) const {
         assert(index >= 0 && index < S);
         
-        int byi = index / 8;
-        int bi = index % 8;
-
-        return ((buffer[byi] & (1 << bi)) != 0) * 2 - 1;
+        return buffer[index];
     }
 
-    int size() const {
+    // number of segments
+    int segments() const {
         return S;
     }
 
-    // byte size
-    int bsize() const {
-        return bs;
+    // segment length
+    int length() const {
+        return L;
+    }
+
+    // total size
+    int size() const {
+        return N;
     }
 
     void fill(
-        S_Byte value
+        int value
     ) {
-        if (value >= 0) {
-            for (int i = 0; i < bs; i++)
-                buffer[i] = 0xff;
-        }
-        else {
-            for (int i = 0; i < bs; i++)
-                buffer[i] = 0x0;
-        }
+        for (int i = 0; i < S; i++)
+            buffer[i] = value;
     }
     
-    Vec<S> operator*(
-        const Vec<S> &other
+    Vec<S, L> operator*(
+        const Vec<S, L> &other
     ) {
-        Vec<S> result;
+        Vec<S, L> result;
 
-        for (int i = 0; i < bs; i++)
-            result.buffer[i] = ~(buffer[i] ^ other.buffer[i]); 
+        for (int i = 0; i < S; i++)
+            result[i] = (buffer[i] + other.buffer[i]) % L;
 
         return result;
     }
 
-    const Vec<S> &operator*=(
-        const Vec<S> &other
+    const Vec<S, L> &operator*=(
+        const Vec<S, L> &other
     ) {
-        for (int i = 0; i < bs; i++)
-            buffer[i] = ~(buffer[i] ^ other.buffer[i]); 
+        for (int i = 0; i < S; i++)
+            buffer[i] = (buffer[i] + other.buffer[i]) % L; 
 
         return *this;
     }
 
-    Bundle<S> operator+(
-        const Vec<S> &other
+    Bundle<S, L> operator+(
+        const Vec<S, L> &other
     ) {
-        Bundle<S> result;
+        Bundle<S, L> result = 0;
 
-        for (int i = 0; i < bs; i++) {
-            for (int j = 0; j < 8; j++) {
-                int index = j + i * 8;
+        for (int i = 0; i < S; i++) {
+            int start = i * L;
 
-                if (index >= S)
-                    return result;
-
-                result[index] = ((((1 << j) & buffer[i]) != 0) + (((1 << j) & other.buffer[i]) != 0)) * 2 - 2;
-            }
+            result[buffer[i] + start]++;
+            result[other.buffer[i] + start]++;
         }
 
         return result;
     }
 
-    Vec<S> permute(
+    Vec<S, L> permute(
         int shift = 1
     ) {
-        Vec<S> result;
+        Vec<S, L> result;
 
-        for (int i = 0; i < bs; i++)
-            result.set(i, get((i + S + shift) % S));
+        for (int i = 0; i < S; i++)
+            result[i] = buffer[(i + S + shift) % S];
 
         return result;
     }
 
     int dot(
-        const Vec<S> &other
+        const Vec<S, L> &other
     ) const {
         int sum = 0;
 
-        for (int i = 0; i < bs; i++) {
-            for (int j = 0; j < 8; j++) {
-                int index = j + i * 8;
-
-                if (index >= S)
-                    return sum;
-
-                sum += ((((1 << j) & buffer[i]) != 0) * 2 - 1) * ((((1 << j) & other.buffer[i]) != 0) * 2 - 1);
-            }
+        for (int i = 0; i < S; i++) {
+            if (buffer[i] == other.buffer[i])
+                sum++;
         }
 
         return sum;
     }
 };
 
-template<int S>
+template<int S, int L>
 class Bundle {
 private:
-    int buffer[S];
+    static const int N = S * L;
+
+    int buffer[N];
 
 public:
-    Bundle() {
-        fill(0);
-    }
+    Bundle()
+    {}
 
     Bundle(
         int value
@@ -176,29 +156,12 @@ public:
         fill(value);
     }
 
-    const Bundle<S> &operator=(
+    const Bundle<S, L> &operator=(
         int value
     ) {
         fill(value);
 
         return *this;
-    }
-
-    void set(
-        int index,
-        int value
-    ) const {
-        assert(index >= 0 && index < S);
-        
-        buffer[index] = value;
-    }
-
-    int get(
-        int index
-    ) const {
-        assert(index >= 0 && index < S);
-        
-        return buffer[index];
     }
 
     int &operator[](
@@ -217,8 +180,19 @@ public:
         return buffer[index];
     }
 
-    int size() const {
+    // number of segments
+    int segments() const {
         return S;
+    }
+
+    // segment length
+    int length() const {
+        return L;
+    }
+
+    // total size
+    int size() const {
+        return N;
     }
 
     void fill(
@@ -228,51 +202,66 @@ public:
             buffer[i] = value;
     }
     
-    Bundle<S> operator+(
-        const Bundle<S> &other
+    Bundle<S, L> operator+(
+        const Bundle<S, L> &other
     ) {
-        Bundle<S> result;
+        Bundle<S, L> result;
 
-        for (int i = 0; i < S; i++)
+        for (int i = 0; i < N; i++)
             result[i] = buffer[i] + other.buffer[i];
 
         return result;
     }
 
-    const Bundle<S> &operator+=(
-        const Bundle<S> &other
+    const Bundle<S, L> &operator+=(
+        const Bundle<S, L> &other
     ) {
-        for (int i = 0; i < S; i++)
+        for (int i = 0; i < N; i++)
             buffer[i] += other.buffer[i];
 
         return *this;
     }
 
-    Bundle<S> operator+(
-        const Vec<S> &other
+    Bundle<S, L> operator+(
+        const Vec<S, L> &other
     ) {
-        Bundle<S> result;
+        Bundle<S, L> result;
 
         for (int i = 0; i < S; i++)
-            result[i] = buffer[i] + other.get(i);
+            result[other[i] + i * L]++;
 
         return result;
     }
 
-    const Bundle<S> &operator+=(
-        const Vec<S> &other
+    const Bundle<S, L> &operator+=(
+        const Vec<S, L> &other
     ) {
         for (int i = 0; i < S; i++)
-            buffer[i] += other.get(i);
+            buffer[other[i] + i * L]++;
 
         return *this;
     }
 
-    Vec<S> thin() const {
-        Vec<S> result;
+    Vec<S, L> thin() const {
+        Vec<S, L> result;
 
-        for (int i = 0; i < S; i++)
-            result.set(i, (buffer[i] >= 0) * 2 - 1); 
+        for (int i = 0; i < S; i++) {
+            int start = i * L;
+
+            int mv = 0;
+            int mi = 0;
+
+            for (int j = 0; j < L; j++) {
+                int index = j + start;
+
+                if (buffer[index] > mv) {
+                    mv = buffer[index];
+                    mi = j;
+                }
+            }
+
+            result[i] = mi;
+        }
 
         return result;
     }
