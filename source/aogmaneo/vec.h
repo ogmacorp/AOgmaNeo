@@ -18,7 +18,7 @@ template<int S>
 class Vec {
 private:
     static const int bs = (S + 7) / 8;
-    static const int over_bits = 8 - (S % 8); // overflowing bit count
+    //static const int over_bits = 8 - (S % 8); // overflowing bit count
 
     Byte buffer[bs];
 
