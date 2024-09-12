@@ -139,17 +139,16 @@ public:
     }
 
     void assoc(
-        const Vec<S, L> &v1,
-        const Vec<S, L> &v2,
+        const Vec<S, L> &other,
         int limit = 1024
     ) {
         assert(buffer != nullptr);
 
         for (int i = 0; i < S; i++) {
-            int r = v1[i] + i * L;
+            int r = other[i] + i * L;
 
             for (int j = 0; j < S; j++) {
-                int c = v2[j] + j * L;
+                int c = other[j] + j * L;
 
                 this->operator()(r, c) = min(limit, this->operator()(r, c) + 1); 
             }
