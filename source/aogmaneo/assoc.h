@@ -12,26 +12,38 @@
 
 namespace aon {
 template<int S, int L>
-class Associator {
+class Assoc {
 private:
     static const int N = S * L;
-    static const int N2 = N * N;
 
-    Byte buffer[N * N];
+    int* buffer;
 
 public:
-    Associator() {}
+    static const int C = N * (N + 1) / 2;
 
-    Associator(
-        int value
+    Assoc()
+    :
+    buffer(nullptr)
+    {}
+
+    Assoc(
+        int* buffer
+    ) 
+    :
+    buffer(buffer)
+    {}
+
+    void set_from(
+        int* buffer
     ) {
-        fill(value);
+        this->buffer = buffer;
     }
 
     int &operator[](
         int index
     ) {
-        assert(index >= 0 && index < N2);
+        assert(buffer != nullptr);
+        assert(index >= 0 && index < C);
         
         return buffer[index];
     }
@@ -39,7 +51,8 @@ public:
     const int &operator[](
         int index
     ) const {
-        assert(index >= 0 && index < N2);
+        assert(buffer != nullptr);
+        assert(index >= 0 && index < C);
         
         return buffer[index];
     }
@@ -48,20 +61,36 @@ public:
         int r,
         int c
     ) {
+        assert(buffer != nullptr);
         assert(r >= 0 && r < N);
         assert(c >= 0 && c < N);
         
-        return buffer[c + r * N];
+        int index = c + r * (r + 1) / 2;
+
+        if (c > r)
+            index = r + c * (c + 1) / 2;
+
+        assert(index >= 0 && index < C);
+
+        return buffer[index];
     }
 
     const int &operator()(
         int r,
         int c
     ) const {
+        assert(buffer != nullptr);
         assert(r >= 0 && r < N);
         assert(c >= 0 && c < N);
         
-        return buffer[c + r * N];
+        int index = c + r * (r + 1) / 2;
+
+        if (c > r)
+            index = r + c * (c + 1) / 2;
+
+        assert(index >= 0 && index < C);
+
+        return buffer[index];
     }
 
     // number of segments
@@ -80,28 +109,28 @@ public:
 
     // total size
     int size() const {
-        return N2;
+        return C;
     }
 
     void fill(
         int value
     ) {
-        for (int i = 0; i < N2; i++)
+        for (int i = 0; i < C; i++)
             buffer[i] = value;
     }
     
     Vec<S, L> operator*(
         const Vec<S, L> &other
-    ) {
+    ) const {
+        assert(buffer != nullptr);
+
         Bundle<S, L> result;
 
         for (int r = 0; r < N; r++) {
-            int start = r * N;
-
             int sum = 0;
 
             for (int i = 0; i < S; i++)
-                sum += buffer[other[i] + start];
+                sum += this->operator()(r, other[i] + i * L);
 
             result[r] = sum;
         }
@@ -110,18 +139,19 @@ public:
     }
 
     void assoc(
-        const Vec<S, L> v1, Vec<S, L> v2,
+        const Vec<S, L> &v1,
+        const Vec<S, L> &v2,
         int limit = 1024
     ) {
+        assert(buffer != nullptr);
+
         for (int i = 0; i < S; i++) {
-            int index1 = v1[i] + i * L;
+            int r = v1[i] + i * L;
 
             for (int j = 0; j < S; j++) {
-                int index2 = v2[j] + j * L;
+                int c = v2[j] + j * L;
 
-                int buffer_index = index2 + N * index1;
-
-                buffer[buffer_index] = min(limit, buffer[buffer_index] + 1); 
+                this->operator()(r, c) = min(limit, this->operator()(r, c) + 1); 
             }
         }
     }
