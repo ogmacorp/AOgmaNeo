@@ -16,7 +16,7 @@ template<int S>
 class Encoder {
 public:
     // helper for implementing XXT in resonator
-        class Resonator_Mat {
+    class Resonator_Mat {
     private:
         static const int ss = S * (S + 1) / 2; // swap - 1 instead of + 1 for ignoring diagonal
 
