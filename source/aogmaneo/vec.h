@@ -150,10 +150,8 @@ public:
     ) const {
         int sum = 0;
 
-        for (int i = 0; i < S; i++) {
-            if (buffer[i] == other.buffer[i])
-                sum++;
-        }
+        for (int i = 0; i < S; i++)
+            sum += (buffer[i] == other.buffer[i]);
 
         return sum;
     }
