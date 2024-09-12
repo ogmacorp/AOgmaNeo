@@ -592,7 +592,7 @@ public:
         int num_code_elements_per_column = num_codes_per_column * S;
 
         for (int i = 0; i < num_code_elements_per_column; i++)
-            hidden_learn_vecs_ping[i] = randf(-1.0f, 1.0f);
+            hidden_learn_vecs_ping[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         for (int i = 1; i < num_hidden_columns; i++) {
             for (int j = 0; j < num_code_elements_per_column; j++)

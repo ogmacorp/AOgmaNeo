@@ -51,7 +51,7 @@ public:
         int byi = index / 8;
         int bi = index % 8;
 
-        if (value > 0)
+        if (value >= 0)
             buffer[byi] = buffer[byi] | (1 << bi);
         else
             buffer[byi] = buffer[byi] & (~(1 << bi));
@@ -272,7 +272,7 @@ public:
         Vec<S> result;
 
         for (int i = 0; i < S; i++)
-            result.set(i, (buffer[i] > 0) * 2 - 1); 
+            result.set(i, (buffer[i] >= 0) * 2 - 1); 
 
         return result;
     }
