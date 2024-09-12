@@ -12,73 +12,9 @@
 #include "vec.h"
 
 namespace aon {
-template<int S>
+template<int S, int L>
 class Encoder {
 public:
-    // helper for implementing XXT in resonator
-    class Resonator_Mat {
-    private:
-        static const int ss = S * (S + 1) / 2; // swap - 1 instead of + 1 for ignoring diagonal
-
-        int buffer[ss];
-
-    public:
-        Resonator_Mat()
-        {}
-
-        Resonator_Mat(
-            const Array<Vec<S>> &codes,
-            int codes_start,
-            int num_codes
-        ) {
-            set_from(codes, codes_start, num_codes);
-        }
-
-        void set_from(
-            const Array<Vec<S>> &codes,
-            int codes_start,
-            int num_codes
-        ) {
-            for (int r = 0; r < S; r++) {
-                int start = r * (r + 1) / 2;
-
-                for (int c = 0; c <= r; c++) {
-                    int index = c + start;
-
-                    int sum = 0;
-
-                    for (int c2 = 0; c2 < num_codes; c2++)
-                        sum += codes[codes_start + c2].get(r) * codes[codes_start + c2].get(c);
-
-                    buffer[index] = sum;
-                }
-            }
-        }
-
-        Bundle<S> operator*(
-            const Vec<S> &v
-        ) {
-            Bundle<S> result = 0;
-
-            for (int r = 0; r < S; r++) {
-                int start = r * (r + 1) / 2;
-
-                // lower triangle, duplicated into upper triangle as well
-                for (int c = 0; c < r; c++) { // ignore diagonal for now
-                    int index = c + start;
-                    
-                    result[c] += buffer[index] * v.get(r); // lower triangle (original)
-                    result[r] += buffer[index] * v.get(c); // upper triangle (duplicate)
-                }
-
-                // now do diagonal (not duplicated)
-                result[r] += buffer[r + start] * v.get(r);
-            }
-
-            return result;
-        }
-    };
-
     // visible layer descriptor
     struct Visible_Layer_Desc {
         Int4 size; // size of input
@@ -97,20 +33,13 @@ public:
     struct Visible_Layer {
         Int_Buffer input_cis;
 
-        Array<Vec<S>> visible_code_vecs;
+        Array<Vec<S, L>> visible_pos_vecs; // positional encodings
 
-        Array<Vec<S>> visible_pos_vecs; // positional encodings
+        Array<Vec<S, L>> input_vecs;
 
-        Array<Vec<S>> input_vecs;
+        Array<Bundle<S, L>> hidden_sums;
 
-        Array<Bundle<S>> hidden_sums;
-
-        Int_Buffer recon_cis;
-
-        Array<Vec<S>> recon_factors;
-        Array<Vec<S>> recon_factors_temp;
-
-        Array<Resonator_Mat> visible_mats;
+        Array<Vec<S, L>> recon_vecs;
 
         bool use_input;
         bool up_to_date;
