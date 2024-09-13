@@ -18,7 +18,7 @@ enum IO_Type {
 };
 
 // a sph
-template<int S>
+template<int S, int L>
 class Hierarchy {
 public:
     struct IO_Desc {
@@ -80,7 +80,7 @@ public:
     };
 
     struct Layer_Params {
-        typename Encoder<S>::Params encoder;
+        typename Encoder<S, L>::Params encoder;
     };
 
     struct IO_Params {};
@@ -92,14 +92,14 @@ public:
 
 private:
     // layers
-    Array<Encoder<S>> encoders;
+    Array<Encoder<S, L>> encoders;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
     Int_Buffer d_indices;
 
     // histories
-    Array<Array<Circle_Buffer<Int_Buffer>>> histories;
+    Array<Array<Circle_Buffer<Array<Vec<S, L>>>>> histories;
 
     // per-layer values
     Byte_Buffer updates;
@@ -163,7 +163,7 @@ public:
         // iterate through layers
         for (int l = 0; l < layer_descs.size(); l++) {
             // create sparse coder visible layer descriptors
-            Array<typename Encoder<S>::Visible_Layer_Desc> e_visible_layer_descs;
+            Array<typename Encoder<S, L>::Visible_Layer_Desc> e_visible_layer_descs;
 
             // if first layer
             if (l == 0) {
@@ -179,7 +179,7 @@ public:
                     histories[l][i].resize(layer_descs[l].temporal_horizon);
                     
                     for (int t = 0; t < histories[l][i].size(); t++)
-                        histories[l][i][t] = Int_Buffer(in_size, 0);
+                        histories[l][i][t] = Array<Vec<S, L>>(in_size, 0);
                 }
 
                 e_visible_layer_descs.resize(io_sizes.size() * layer_descs[l].temporal_horizon + num_predictions + (l < layer_descs.size() - 1));
@@ -224,7 +224,7 @@ public:
                 histories[l][0].resize(layer_descs[l].temporal_horizon);
 
                 for (int t = 0; t < histories[l][0].size(); t++)
-                    histories[l][0][t] = Int_Buffer(in_size, 0);
+                    histories[l][0][t] = Array<Vec<S, L>>(in_size, 0);
 
                 e_visible_layer_descs.resize(layer_descs[l].temporal_horizon + layer_descs[l].ticks_per_update + (l < layer_descs.size() - 1));
 
@@ -259,7 +259,7 @@ public:
 
     // simulation step/tick
     void step(
-        const Array<Int_Buffer_View> &input_cis, // inputs to remember
+        const Array<Vec<S, L>> &input_vecs, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
         float reward = 0.0f, // reward
         float mimic = 0.0f // mimicry mode
@@ -274,7 +274,7 @@ public:
         for (int i = 0; i < io_sizes.size(); i++) {
             histories[0][i].push_front();
 
-            histories[0][i][0] = input_cis[i];
+            histories[0][i][0] = input_vecs[i];
         }
 
         // set all updates to no update, will be set to true if an update occurred later
@@ -299,7 +299,7 @@ public:
                             if (io_types[i] == prediction) {
                                 int index = predictions_start + prediction_index;
 
-                                encoders[l].set_input_cis(index, input_cis[i]);
+                                encoders[l].set_input_vecs(index, input_vecs[i]);
 
                                 prediction_index++;
                             }
@@ -309,7 +309,7 @@ public:
                         for (int t = 0; t < ticks_per_update[l]; t++) {
                             int index = histories[l][0].size() + t;
 
-                            encoders[l].set_input_cis(index, histories[l][0][t]);
+                            encoders[l].set_input_vecs(index, histories[l][0][t]);
                         }
                     }
 
@@ -325,7 +325,7 @@ public:
 
                 for (int i = 0; i < histories[l].size(); i++) {
                     for (int t = 0; t < histories[l][i].size(); t++) {
-                        encoders[l].set_input_cis(index, histories[l][i][t]);
+                        encoders[l].set_input_vecs(index, histories[l][i][t]);
 
                         index++;
                     }
@@ -340,7 +340,7 @@ public:
 
                     histories[l_next][0].push_front();
 
-                    histories[l_next][0][0] = encoders[l].get_hidden_cis();
+                    histories[l_next][0][0] = encoders[l].get_hidden_vecs();
 
                     ticks[l_next]++;
                 }
@@ -356,7 +356,7 @@ public:
                     // feedback
                     int feedback_index = encoders[l].get_num_visible_layers() - 1;
 
-                    encoders[l].set_input_cis(feedback_index, encoders[l + 1].get_visible_layer(next_predictions_start + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_cis);
+                    encoders[l].set_input_vecs(feedback_index, encoders[l + 1].get_visible_layer(next_predictions_start + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_vecs);
 
                     encoders[l].step(false, params.layers[l].encoder);
                 }
@@ -653,12 +653,12 @@ public:
     }
 
     // retrieve predictions
-    const Int_Buffer &get_prediction_cis(
+    const Array<Vec<S, L>> &get_prediction_vecs(
         int i
     ) const {
         int predictions_start = io_sizes.size() * histories[0][0].size();
 
-        return encoders[0].get_visible_layer(predictions_start + d_indices[i]).recon_cis;
+        return encoders[0].get_visible_layer(predictions_start + d_indices[i]).recon_vecs;
     }
 
     // whether this layer received on update this timestep
@@ -714,14 +714,14 @@ public:
     }
 
     // retrieve a sparse coding layer
-    Encoder<S> &get_encoder(
+    Encoder<S, L> &get_encoder(
         int l
     ) {
         return encoders[l];
     }
 
     // retrieve a sparse coding layer, const version
-    const Encoder<S> &get_encoder(
+    const Encoder<S, L> &get_encoder(
         int l
     ) const {
         return encoders[l];
@@ -735,7 +735,7 @@ public:
         return d_indices;
     }
 
-    const Array<Circle_Buffer<Int_Buffer>> &get_histories(
+    const Array<Circle_Buffer<Array<Vec<S, L>>>> &get_histories(
         int l
     ) const {
         return histories[l];
