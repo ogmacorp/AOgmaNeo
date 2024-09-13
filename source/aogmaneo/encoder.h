@@ -54,7 +54,7 @@ public:
 
         Params()
         :
-        clean_iters(8)
+        clean_iters(4)
         {}
     };
 
@@ -236,6 +236,7 @@ public:
 
                         if (f < 0.0f)
                             f += 1.0f;
+
                         vl.visible_pos_vecs[visible_column_index][i] = static_cast<int>(f * (L - 1) + 0.5f);
                     }
                 }
