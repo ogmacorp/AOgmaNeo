@@ -17,11 +17,11 @@ class Bundle;
 template<int S, int L>
 class Vec {
 private:
-    static const int N = S * L;
-
     int buffer[S];
 
 public:
+    static const int N = S * L;
+
     Vec() {}
 
     Vec(
@@ -169,12 +169,14 @@ public:
 
 template<int S, int L>
 class Bundle {
-private:
+public:
     static const int N = S * L;
 
+private:
     int buffer[N];
 
 public:
+
     Bundle()
     {}
 
