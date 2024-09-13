@@ -13,7 +13,7 @@
 #include "assoc.h"
 
 namespace aon {
-template<int S, int L>
+template<int S, int L, int SH, int SL>
 class Encoder {
 public:
     // visible layer descriptor
@@ -51,10 +51,14 @@ public:
 
     struct Params {
         int clean_iters;
+        float lr;
+        float variance;
 
         Params()
         :
-        clean_iters(4)
+        clean_iters(4),
+        lr(0.02f),
+        variance(2.0f)
         {}
     };
 
@@ -68,7 +72,7 @@ private:
     Array<Visible_Layer_Desc> visible_layer_descs;
 
     Byte_Buffer hidden_assoc_buffer;
-    Array<Assoc<S, L>> hidden_assocs;
+    Array<Assoc<S, L, SH, SL>> hidden_assocs;
 
     // --- kernels ---
     
@@ -89,6 +93,7 @@ private:
     void forward(
         const Int2 &column_pos,
         bool learn_enabled,
+        unsigned long* state,
         const Params &params
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -144,7 +149,7 @@ private:
         hidden_vecs[hidden_column_index] = hidden_vec_clean;
 
         if (learn_enabled)
-            hidden_assocs[hidden_column_index].assoc(hidden_vec);
+            hidden_assocs[hidden_column_index].assoc(hidden_vec, params.lr, params.variance, state);
     }
 
     void reconstruct(
@@ -250,12 +255,12 @@ public:
 
         hidden_vecs.resize(num_hidden_columns, 0);
 
-        hidden_assoc_buffer = Byte_Buffer(num_hidden_columns * Assoc<S, L>::C, 0);
+        hidden_assoc_buffer = Byte_Buffer(num_hidden_columns * Assoc<S, L, SH, SL>::C, 0);
 
         hidden_assocs.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            hidden_assocs[i].set_from(&hidden_assoc_buffer[i * Assoc<S, L>::C]);
+            hidden_assocs[i].set_from(&hidden_assoc_buffer[i * Assoc<S, L, SH, SL>::C]);
     }
 
     void set_ignore(
@@ -295,9 +300,14 @@ public:
                 bind_inputs(Int2(i / vld.size.y, i % vld.size.y), vli);
         }
 
+        unsigned int base_state = rand();
+
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            forward(Int2(i / hidden_size.y, i % hidden_size.y), learn_enabled, params);
+        for (int i = 0; i < num_hidden_columns; i++) {
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+            forward(Int2(i / hidden_size.y, i % hidden_size.y), learn_enabled, &state, params);
+        }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -423,14 +433,14 @@ public:
 
         reader.read(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
 
-        hidden_assoc_buffer.resize(num_hidden_columns * Assoc<S, L>::C);
+        hidden_assoc_buffer.resize(num_hidden_columns * Assoc<S, L, SH, SL>::C);
 
         reader.read(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(Byte));
 
         hidden_assocs.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            hidden_assocs[i].set_from(&hidden_assoc_buffer[i * Assoc<S, L>::C]);
+            hidden_assocs[i].set_from(&hidden_assoc_buffer[i * Assoc<S, L, SH, SL>::C]);
     }
 
     void write_state(

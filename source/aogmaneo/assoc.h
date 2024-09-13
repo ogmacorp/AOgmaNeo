@@ -11,15 +11,16 @@
 #include "vec.h"
 
 namespace aon {
-template<int S, int L>
+template<int S, int L, int SH, int LH>
 class Assoc {
 private:
     static const int N = S * L;
+    static const int NH = SH * LH;
 
     Byte* buffer;
 
 public:
-    static const int C = N * (N + 1) / 2;
+    static const int C = N * NH;
 
     Assoc()
     :
@@ -37,64 +38,6 @@ public:
         Byte* buffer
     ) {
         this->buffer = buffer;
-    }
-
-    Byte &operator[](
-        int index
-    ) {
-        assert(buffer != nullptr);
-        assert(index >= 0 && index < C);
-        
-        return buffer[index];
-    }
-
-    const Byte &operator[](
-        int index
-    ) const {
-        assert(buffer != nullptr);
-        assert(index >= 0 && index < C);
-        
-        return buffer[index];
-    }
-
-    Byte &operator()(
-        int r,
-        int c
-    ) {
-        assert(buffer != nullptr);
-        assert(r >= 0 && r < N);
-        assert(c >= 0 && c < N);
-        
-        int index;
-
-        if (c > r)
-            index = r + c * (c + 1) / 2;
-        else
-            index = c + r * (r + 1) / 2;
-
-        assert(index >= 0 && index < C);
-
-        return buffer[index];
-    }
-
-    const Byte &operator()(
-        int r,
-        int c
-    ) const {
-        assert(buffer != nullptr);
-        assert(r >= 0 && r < N);
-        assert(c >= 0 && c < N);
-        
-        int index;
-
-        if (c > r)
-            index = r + c * (c + 1) / 2;
-        else
-            index = c + r * (r + 1) / 2;
-
-        assert(index >= 0 && index < C);
-
-        return buffer[index];
     }
 
     // number of segments
@@ -128,32 +71,119 @@ public:
     ) const {
         assert(buffer != nullptr);
 
-        Bundle<S, L> result;
+        // activate hidden
+        Vec<SH, LH> hidden;
 
-        for (int r = 0; r < N; r++) {
-            int sum = 0;
+        for (int hs = 0; hs < SH; hs++) {
+            int max_index = 0;
+            int max_sum = 0;
 
-            for (int i = 0; i < S; i++)
-                sum += this->operator()(r, other[i] + i * L);
+            for (int hl = 0; hl < LH; hl++) {
+                int sum = 0;
 
-            result[r] = sum;
+                for (int vs = 0; vs < S; vs++)
+                    sum += buffer[other[vs] + L * (vs + S * (hl + LH * hs))];
+
+                if (sum > max_sum) {
+                    max_sum = sum;
+                    max_index = hl;
+                }
+            }
+
+            hidden[hs] = max_index;
         }
 
-        return result.thin();
+        // reconstruct
+        Vec<S, L> result;
+
+        for (int vs = 0; vs < S; vs++) {
+            int max_index = 0;
+            int max_sum = 0;
+
+            for (int vl = 0; vl < L; vl++) {
+                int sum = 0;
+
+                for (int hs = 0; hs < SH; hs++)
+                    sum += buffer[vl + L * (vs + S * (hidden[hs] + LH * hs))];
+
+                if (sum > max_sum) {
+                    max_sum = sum;
+                    max_index = vl;
+                }
+            }
+
+            result[vs] = max_index;
+        }
+
+        return result;
     }
 
     void assoc(
-        const Vec<S, L> &other
+        const Vec<S, L> &other,
+        float lr,
+        float variance,
+        unsigned long* state = &global_state
     ) {
         assert(buffer != nullptr);
 
-        for (int i = 0; i < S; i++) {
-            int r = other[i] + i * L;
+        // activate hidden
+        Vec<SH, LH> hidden;
 
-            for (int j = 0; j < S; j++) {
-                int c = other[j] + j * L;
+        for (int hs = 0; hs < SH; hs++) {
+            int max_index = 0;
+            int max_sum = 0;
 
-                this->operator()(r, c) = 1; 
+            for (int hl = 0; hl < LH; hl++) {
+                int sum = 0;
+
+                for (int vs = 0; vs < S; vs++)
+                    sum += buffer[other[vs] + L * (vs + S * (hl + LH * hs))];
+
+                if (sum > max_sum) {
+                    max_sum = sum;
+                    max_index = hl;
+                }
+            }
+
+            hidden[hs] = max_index;
+        }
+
+        // reconstruct
+        Vec<S, L> result;
+        Bundle<S, L> sums;
+
+        const float scale = variance * sqrtf(1.0f / SH);
+
+        for (int vs = 0; vs < S; vs++) {
+            int max_index = 0;
+            int max_sum = 0;
+
+            for (int vl = 0; vl < L; vl++) {
+                int sum = 0;
+
+                for (int hs = 0; hs < SH; hs++)
+                    sum += buffer[vl + L * (vs + S * (hidden[hs] + LH * hs))];
+
+                sums[vl + L * vs] = sum;
+
+                if (sum > max_sum) {
+                    max_sum = sum;
+                    max_index = vl;
+                }
+            }
+
+            if (max_index != other[vs]) {
+                for (int vl = 0; vl < L; vl++) {
+                    float recon = expf(sums[vl + L * vs] * scale - 1.0f);
+
+                    int delta = rand_roundf((vl == other[vs]) - recon, state);
+
+                    for (int hs = 0; hs < SH; hs++) {
+                        int index = vl + L * (vs + S * (hidden[hs] + LH * hs));
+
+                        buffer[index] = min(255, max(0, buffer[index] + delta));
+                    }
+                }
             }
         }
     }
