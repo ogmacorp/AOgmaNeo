@@ -236,7 +236,7 @@ public:
                 }
 
                 // activate sparse coder
-                layers[l].forward(layer_inputs, learn_enabled, params.layers[l]);
+                layers[l].forward(layer_inputs);
 
                 // add to next layer's history
                 if (l < layers.size() - 1) {
@@ -254,13 +254,19 @@ public:
         // backward
         for (int l = layers.size() - 1; l >= 0; l--) {
             if (updates[l]) {
+                Array_View<Vec<S, L>> feedback;
+
                 if (l < layers.size() - 1)
-                    layers[l].add_feedback(layers[l + 1].get_visible_layer(ticks_per_update[l + 1] - 1 - ticks[l + 1]).pred_vecs);
+                    feedback = layers[l + 1].get_visible_layer(ticks_per_update[l + 1] - 1 - ticks[l + 1]).pred_vecs;
+                else
+                    feedback = layers[l].get_hidden_vecs(); // set to self, does nothing since already have self
+
+                layers[l].predict(feedback, learn_enabled, params.layers[l]);
 
                 // reconstruct
                 if (l > 0) { // first layer is reconstructed in get_prediction_vecs for needed layers
                     for (int t = 0; t < ticks_per_update[l]; t++)
-                        layers[l].backward(t, params.layers[l]);
+                        layers[l].backward(t);
                 }
             }
         }
