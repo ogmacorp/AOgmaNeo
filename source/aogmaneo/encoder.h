@@ -57,7 +57,7 @@ public:
         Params()
         :
         clean_iters(1),
-        lr(0.02f),
+        lr(0.1f),
         variance(2.0f)
         {}
     };

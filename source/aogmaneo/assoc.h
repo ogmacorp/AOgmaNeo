@@ -94,10 +94,12 @@ public:
             int max_sum = 0;
 
             for (int hl = 0; hl < HL; hl++) {
+                int hindex = hl + HL * hs;
+
                 int sum = 0;
 
                 for (int vs = 0; vs < S; vs++)
-                    sum += weights[other[vs] + L * (vs + S * (hl + HL * hs))];
+                    sum += weights[other[vs] + L * (vs + S * hindex)];
 
                 if (sum > max_sum) {
                     max_sum = sum;
@@ -146,10 +148,12 @@ public:
             int max_sum = 0;
 
             for (int hl = 0; hl < HL; hl++) {
+                int hindex = hl + HL * hs;
+
                 int sum = 0;
 
                 for (int vs = 0; vs < S; vs++)
-                    sum += weights[other[vs] + L * (vs + S * (hl + HL * hs))];
+                    sum += weights[other[vs] + L * (vs + S * hindex)];
 
                 if (sum > max_sum) {
                     max_sum = sum;
