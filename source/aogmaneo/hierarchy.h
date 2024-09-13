@@ -116,8 +116,6 @@ public:
 
         histories.resize(layer_descs.size());
         
-        ticks_per_update.resize(layer_descs.size());
-
         // default update state is no update
         updates = Byte_Buffer(layer_descs.size(), false);
 
@@ -129,6 +127,8 @@ public:
             io_sizes[i] = io_descs[i].size;
             io_types[i] = io_descs[i].type;
         }
+
+        ticks_per_update.resize(layer_descs.size());
 
         // determine ticks per update, first layer is always 1
         for (int l = 0; l < layer_descs.size(); l++)
@@ -320,9 +320,8 @@ public:
     long weights_size() const { // returns size of weights in bytes
         long size = 0;
 
-        for (int l = 0; l < layers.size(); l++) {
+        for (int l = 0; l < layers.size(); l++)
             size += layers[l].weights_size();
-        }
 
         return size;
     }
