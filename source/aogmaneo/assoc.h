@@ -152,7 +152,7 @@ public:
         Vec<S, L> result;
         Bundle<S, L> sums;
 
-        const float scale = variance * sqrtf(1.0f / SH);
+        const float scale = variance * sqrtf(1.0f / SH) / 255.0f;
 
         for (int vs = 0; vs < S; vs++) {
             int max_index = 0;
