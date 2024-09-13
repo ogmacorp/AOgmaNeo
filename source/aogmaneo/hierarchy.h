@@ -281,7 +281,7 @@ public:
 
     // serialization
     long size() const { // returns size in bytes
-        long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int2) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+        long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int2) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int);
 
         for (int l = 0; l < layers.size(); l++) {
             size += sizeof(int);
@@ -297,7 +297,7 @@ public:
         }
 
         // params
-        size += layers.size() * sizeof(Layer_Params);
+        size += layers.size() * sizeof(typename Layer<S, L>::Params);
         size += io_sizes.size() * sizeof(IO_Params);
 
         return size;
@@ -348,9 +348,6 @@ public:
         writer.write(&ticks[0], ticks.size() * sizeof(int));
         writer.write(&ticks_per_update[0], ticks_per_update.size() * sizeof(int));
 
-        writer.write(&i_indices[0], i_indices.size() * sizeof(int));
-        writer.write(&d_indices[0], d_indices.size() * sizeof(int));
-
         for (int l = 0; l < num_layers; l++) {
             int num_layer_inputs = histories[l].size();
 
@@ -379,7 +376,7 @@ public:
         
         // params
         for (int l = 0; l < layers.size(); l++)
-            writer.write(&params.layers[l], sizeof(Layer_Params));
+            writer.write(&params.layers[l], sizeof(typename Layer<S, L>::Params));
 
         for (int i = 0; i < io_sizes.size(); i++)
             writer.write(&params.ios[i], sizeof(IO_Params));
@@ -414,12 +411,6 @@ public:
         reader.read(&ticks[0], ticks.size() * sizeof(int));
         reader.read(&ticks_per_update[0], ticks_per_update.size() * sizeof(int));
 
-        i_indices.resize(2 * num_io);
-        d_indices.resize(num_io);
-
-        reader.read(&i_indices[0], i_indices.size() * sizeof(int));
-        reader.read(&d_indices[0], d_indices.size() * sizeof(int));
-        
         for (int l = 0; l < num_layers; l++) {
             int num_layer_inputs;
             
@@ -457,7 +448,7 @@ public:
         params.ios.resize(num_io);
 
         for (int l = 0; l < num_layers; l++)
-            reader.read(&params.layers[l], sizeof(Layer_Params));
+            reader.read(&params.layers[l], sizeof(typename Layer<S, L>::Params));
 
         for (int i = 0; i < num_io; i++)
             reader.read(&params.ios[i], sizeof(IO_Params));
@@ -524,19 +515,15 @@ public:
         return layers.size();
     }
 
-    bool a_layer_exists(
-        int i
-    ) const {
-        return d_indices[i] != -1;
-    }
-
     // retrieve predictions
     const Array<Vec<S, L>> &get_prediction_vecs(
         int i
     ) const {
-        int predictions_start = io_sizes.size() * histories[0][0].size();
+        int index = io_sizes.size() * histories[0][0].size();
 
-        return layers[0].get_visible_layer(predictions_start + d_indices[i]).recon_vecs;
+        layers[0].backward(index, params.layers[0]);
+
+        return layers[0].get_visible_layer(index).pred_vecs;
     }
 
     // whether this layer received on update this timestep
@@ -603,14 +590,6 @@ public:
         int l
     ) const {
         return layers[l];
-    }
-
-    const Int_Buffer &get_i_indices() const {
-        return i_indices;
-    }
-
-    const Int_Buffer &get_d_indices() const {
-        return d_indices;
     }
 
     const Array<Circle_Buffer<Array<Vec<S, L>>>> &get_histories(
