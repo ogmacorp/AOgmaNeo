@@ -54,7 +54,6 @@ private:
     Int2 hidden_size; // size of hidden/output layer
 
     Array<Vec<S, L>> hidden_vecs;
-    Array<Vec<S, L>> hidden_vecs_prev;
     Array<Vec<S, L>> hidden_vecs_pred;
     Array<Vec<S, L>> hidden_vecs_pred_fb; // with feedback
 
@@ -64,7 +63,7 @@ private:
 
     Byte_Buffer predictor_weights;
     Float_Buffer predictor_hiddens;
-    Array<Predictor<S * 2, L, S, L>> predictors;
+    Array<Predictor<S, L>> predictors;
 
     // --- kernels ---
     
@@ -117,7 +116,7 @@ private:
                 }
         }
 
-        hidden_vecs_prev[hidden_column_index] = hidden_vecs[hidden_column_index];
+        Vec<S, L> hidden_vec_prev = hidden_vecs[hidden_column_index];
 
         Vec<S, L> hidden_vec = sum.thin();
 
@@ -127,20 +126,18 @@ private:
         Vec<S, L> hidden_vec_pred = predictors[hidden_column_index].multiply(hidden_vec, params);
 
         hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
+
+        if (learn_enabled)
+            predictors[hidden_column_index].learn(hidden_vec_prev, hidden_vec, params);
     }
 
     void add_feedback(
         const Int2 &column_pos,
-        Array_View<Vec<S, L>> feedback_vecs,
-        bool learn_enabled,
-        const Params &params
+        Array_View<Vec<S, L>> feedback_vecs
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         hidden_vecs_pred_fb[hidden_column_index] = (hidden_vecs_pred[hidden_column_index] + feedback_vecs[hidden_column_index]).thin();
-
-        if (learn_enabled)
-            predictors[hidden_column_index].learn(hidden_vecs_prev[hidden_column_index], hidden_vecs[hidden_column_index], params);
     }
 
     void backward(
@@ -238,7 +235,6 @@ public:
                 }
 
             vl.visible_vecs.resize(num_visible_columns);
-
             vl.pred_vecs = Array<Vec<S, L>>(num_visible_columns, 0);
         }
 
