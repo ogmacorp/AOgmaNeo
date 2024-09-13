@@ -528,7 +528,7 @@ public:
     ) {
         int index = i * histories[0][0].size();
 
-        layers[0].backward(index, params.layers[0]);
+        layers[0].backward(index);
 
         return layers[0].get_visible_layer(index).pred_vecs;
     }

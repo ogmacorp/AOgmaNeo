@@ -78,14 +78,14 @@ public:
         return C;
     }
     
-    Vec<S, L> activate(
+    Vec<PS, PL> activate(
         const Vec<S, L> &src,
         const typename Layer<S, L>::Params &params
     ) const {
         assert(weights != nullptr);
         assert(hiddens != nullptr);
 
-        Vec<S, L> result;
+        Vec<PS, PL> result;
 
         // activate
         for (int hs = 0; hs < PS; hs++) {
@@ -114,7 +114,7 @@ public:
 
     void learn(
         const Vec<S, L> &src,
-        const Vec<S, L> &target,
+        const Vec<PS, PL> &target,
         const typename Layer<S, L>::Params &params
     ) {
         assert(weights != nullptr);
