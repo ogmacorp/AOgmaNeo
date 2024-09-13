@@ -231,8 +231,13 @@ public:
                 for (int y = 0; y < vld.size.y; y++) {
                     int visible_column_index = y + x * vld.size.y;
 
-                    for (int i = 0; i < S; i++)
-                        vl.visible_pos_vecs[visible_column_index][i] = static_cast<int>(modf(embedding[i * 3] * x + embedding[i * 3 + 1] * y + embedding[i * 3 + 2], 1.0f) * (L - 1) + 0.5f);
+                    for (int i = 0; i < S; i++) {
+                        float f = modf(embedding[i * 3] * x + embedding[i * 3 + 1] * y + embedding[i * 3 + 2], 1.0f);
+
+                        if (f < 0.0f)
+                            f += 1.0f;
+                        vl.visible_pos_vecs[visible_column_index][i] = static_cast<int>(f * (L - 1) + 0.5f);
+                    }
                 }
 
             vl.input_vecs.resize(num_visible_columns);
