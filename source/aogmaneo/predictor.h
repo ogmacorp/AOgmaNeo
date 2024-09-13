@@ -14,7 +14,7 @@ namespace aon {
 template<int S, int L>
 class Layer;
 
-template<int S, int L, int PS, int PL>
+template<int S, int L, int IS, int IL>
 class Predictor {
 private:
     Byte* weights;
@@ -22,8 +22,8 @@ private:
 
 public:
     static const int N = S * L;
-    static const int PN = PS * PL;
-    static const int C = PN * N;
+    static const int IN = IS * IL;
+    static const int C = IN * N;
 
     Predictor()
     :
@@ -60,17 +60,17 @@ public:
         return N;
     }
 
-    int pred_segments() const {
-        return PS;
+    int in_segments() const {
+        return IS;
     }
 
     // segment length
-    int pred_length() const {
-        return PL;
+    int in_length() const {
+        return IL;
     }
 
-    int pred_vsize() const {
-        return PN;
+    int in_vsize() const {
+        return IN;
     }
 
     // total size
@@ -78,27 +78,27 @@ public:
         return C;
     }
     
-    Vec<PS, PL> activate(
-        const Vec<S, L> &src,
+    Vec<S, L> activate(
+        const Vec<IS, IL> &src,
         const typename Layer<S, L>::Params &params
     ) const {
         assert(weights != nullptr);
         assert(hiddens != nullptr);
 
-        Vec<PS, PL> result;
+        Vec<S, L> result;
 
         // activate
-        for (int hs = 0; hs < PS; hs++) {
+        for (int hs = 0; hs < S; hs++) {
             int max_index = 0;
             int max_sum = 0;
 
-            for (int hl = 0; hl < PL; hl++) {
-                int hindex = hl + PL * hs;
+            for (int hl = 0; hl < L; hl++) {
+                int hindex = hl + L * hs;
 
                 int sum = 0;
 
-                for (int vs = 0; vs < S; vs++)
-                    sum += weights[src[vs] + L * (vs + S * hindex)];
+                for (int vs = 0; vs < IS; vs++)
+                    sum += weights[src[vs] + IL * (vs + S * hindex)];
 
                 if (sum > max_sum) {
                     max_sum = sum;
@@ -113,8 +113,8 @@ public:
     }
 
     void learn(
-        const Vec<S, L> &src,
-        const Vec<PS, PL> &target,
+        const Vec<IS, IL> &src,
+        const Vec<S, L> &target,
         const typename Layer<S, L>::Params &params
     ) {
         assert(weights != nullptr);
@@ -123,18 +123,18 @@ public:
         const float byte_inv = 1.0f / 255.0f;
 
         // activate hidden
-        for (int hs = 0; hs < PS; hs++) {
+        for (int hs = 0; hs < S; hs++) {
             float max_hidden = 0.0f;
 
-            for (int hl = 0; hl < PL; hl++) {
-                int hindex = hl + PL * hs;
+            for (int hl = 0; hl < L; hl++) {
+                int hindex = hl + L * hs;
 
                 int sum = 0;
 
-                for (int vs = 0; vs < S; vs++)
-                    sum += weights[src[vs] + L * (vs + S * hindex)];
+                for (int vs = 0; vs < IS; vs++)
+                    sum += weights[src[vs] + IL * (vs + IS * hindex)];
 
-                hiddens[hindex] = static_cast<float>(sum) * byte_inv / S * params.scale;
+                hiddens[hindex] = static_cast<float>(sum) * byte_inv / IS * params.scale;
 
                 max_hidden = max(max_hidden, hiddens[hindex]);
             }
@@ -142,8 +142,8 @@ public:
             // softmax
             float total = 0.0f;
 
-            for (int hl = 0; hl < PL; hl++) {
-                int hindex = hl + PL * hs;
+            for (int hl = 0; hl < L; hl++) {
+                int hindex = hl + L * hs;
 
                 hiddens[hindex] = expf(hiddens[hindex] - max_hidden);
 
@@ -152,8 +152,8 @@ public:
 
             float total_inv = 1.0f / max(limit_small, total);
 
-            for (int hl = 0; hl < PL; hl++) {
-                int hindex = hl + PL * hs;
+            for (int hl = 0; hl < L; hl++) {
+                int hindex = hl + L * hs;
 
                 hiddens[hindex] *= total_inv;
 
@@ -163,7 +163,7 @@ public:
                 int delta = roundf(params.lr * 255.0f * error);
 
                 for (int vs = 0; vs < S; vs++) {
-                    int wi = src[vs] + L * (vs + S * hindex);
+                    int wi = src[vs] + IL * (vs + IS * hindex);
 
                     weights[wi] = min(255, max(0, weights[wi] + delta));
                 }
