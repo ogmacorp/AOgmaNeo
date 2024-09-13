@@ -65,10 +65,12 @@ public:
         assert(r >= 0 && r < N);
         assert(c >= 0 && c < N);
         
-        int index = c + r * (r + 1) / 2;
+        int index;
 
         if (c > r)
             index = r + c * (c + 1) / 2;
+        else
+            index = c + r * (r + 1) / 2;
 
         assert(index >= 0 && index < C);
 
