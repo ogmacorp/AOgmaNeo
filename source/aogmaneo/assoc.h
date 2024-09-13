@@ -176,7 +176,7 @@ public:
                 for (int vl = 0; vl < L; vl++) {
                     float recon = expf(sums[vl + L * vs] * scale - 1.0f);
 
-                    int delta = rand_roundf((vl == other[vs]) - recon, state);
+                    int delta = rand_roundf(lr * 255.0f * (vl == other[vs]) - recon, state);
 
                     for (int hs = 0; hs < SH; hs++) {
                         int index = vl + L * (vs + S * (hidden[hs] + LH * hs));
