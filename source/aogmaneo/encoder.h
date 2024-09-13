@@ -57,7 +57,7 @@ public:
         Params()
         :
         clean_iters(1),
-        lr(0.1f),
+        lr(0.04f),
         variance(2.0f)
         {}
     };
@@ -268,7 +268,7 @@ public:
         hidden_assoc_weights.resize(num_hidden_columns * C);
 
         for (int i = 0; i < hidden_assoc_weights.size(); i++)
-            hidden_assoc_weights[i] = (rand() % init_weight_noisei);
+            hidden_assoc_weights[i] = 127 - (rand() % init_weight_noisei);
 
         hidden_assoc_hiddens.resize(num_hidden_columns * HS);
 
