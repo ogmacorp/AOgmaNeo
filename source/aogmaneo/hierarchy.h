@@ -65,7 +65,7 @@ public:
 
         Layer_Desc(
             const Int2 &hidden_size = Int2(4, 4),
-            int HS = 16,
+            int HS = 32,
             int HL = 64,
             int up_radius = 2,
             int down_radius = 2,
