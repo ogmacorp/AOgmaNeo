@@ -255,7 +255,10 @@ public:
 
         hidden_vecs.resize(num_hidden_columns, 0);
 
-        hidden_assoc_buffer = Byte_Buffer(num_hidden_columns * Assoc<S, L, SH, SL>::C, 0);
+        hidden_assoc_buffer = Byte_Buffer(num_hidden_columns * Assoc<S, L, SH, SL>::C);
+
+        for (int i = 0; i < hidden_assoc_buffer.size(); i++)
+            hidden_assoc_buffer[i] = 255 - rand() % init_weight_noisei;
 
         hidden_assocs.resize(num_hidden_columns);
 
