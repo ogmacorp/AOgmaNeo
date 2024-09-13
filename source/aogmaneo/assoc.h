@@ -149,7 +149,6 @@ public:
         }
 
         // reconstruct
-        Vec<S, L> result;
         Bundle<S, L> sums;
 
         const float scale = variance * sqrtf(1.0f / SH) / 255.0f;
@@ -174,9 +173,9 @@ public:
 
             if (max_index != other[vs]) {
                 for (int vl = 0; vl < L; vl++) {
-                    float recon = expf((sums[vl + L * vs] - 255 * S) * scale);
+                    float recon = expf(min(0, sums[vl + L * vs] - 127 * S) * scale);
 
-                    int delta = rand_roundf(lr * 255.0f * (vl == other[vs]) - recon, state);
+                    int delta = rand_roundf(lr * 255.0f * ((vl == other[vs]) - recon), state);
 
                     for (int hs = 0; hs < SH; hs++) {
                         int index = vl + L * (vs + S * (hidden[hs] + LH * hs));
