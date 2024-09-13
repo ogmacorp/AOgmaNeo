@@ -13,8 +13,7 @@
 namespace aon {
 // type of hierarchy input layer
 enum IO_Type {
-    none = 0,
-    prediction = 1
+    prediction = 0
 };
 
 // a sph
@@ -125,6 +124,11 @@ public:
         // cache input sizes
         io_sizes.resize(io_descs.size());
         io_types.resize(io_descs.size());
+
+        for (int i = 0; i < io_descs.size(); i++) {
+            io_sizes[i] = io_descs[i].size;
+            io_types[i] = io_descs[i].type;
+        }
 
         // determine ticks per update, first layer is always 1
         for (int l = 0; l < layer_descs.size(); l++)
@@ -519,7 +523,7 @@ public:
     const Array<Vec<S, L>> &get_prediction_vecs(
         int i
     ) {
-        int index = io_sizes.size() * histories[0][0].size();
+        int index = i * histories[0][0].size();
 
         layers[0].backward(index, params.layers[0]);
 
