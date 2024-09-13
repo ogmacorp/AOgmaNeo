@@ -182,9 +182,7 @@ private:
             }
 
         // thin and unbind position
-        Vec<S, L> visible_vec = sum.thin() / vl.visible_pos_vecs[visible_column_index];
-
-        vl.pred_vecs[visible_column_index] = visible_vec;
+        vl.pred_vecs[visible_column_index] = sum.thin() / vl.visible_pos_vecs[visible_column_index];
     }
 
 public:
