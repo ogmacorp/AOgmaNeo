@@ -14,7 +14,7 @@ namespace aon {
 template<int S, int L>
 class Layer;
 
-template<int S, int L>
+template<int S, int L, int PS, int PL>
 class Predictor {
 private:
     Byte* weights;
@@ -22,7 +22,8 @@ private:
 
 public:
     static const int N = S * L;
-    static const int C = N * N;
+    static const int PN = PS * PL;
+    static const int C = PN * N;
 
     Predictor()
     :
@@ -59,12 +60,25 @@ public:
         return N;
     }
 
+    int pred_segments() const {
+        return PS;
+    }
+
+    // segment length
+    int pred_length() const {
+        return PL;
+    }
+
+    int pred_vsize() const {
+        return PN;
+    }
+
     // total size
     int size() const {
         return C;
     }
     
-    Vec<S, L> multiply(
+    Vec<S, L> activate(
         const Vec<S, L> &src,
         const typename Layer<S, L>::Params &params
     ) const {
@@ -74,12 +88,12 @@ public:
         Vec<S, L> result;
 
         // activate
-        for (int hs = 0; hs < S; hs++) {
+        for (int hs = 0; hs < PS; hs++) {
             int max_index = 0;
             int max_sum = 0;
 
-            for (int hl = 0; hl < L; hl++) {
-                int hindex = hl + L * hs;
+            for (int hl = 0; hl < PL; hl++) {
+                int hindex = hl + PL * hs;
 
                 int sum = 0;
 
@@ -109,11 +123,11 @@ public:
         const float byte_inv = 1.0f / 255.0f;
 
         // activate hidden
-        for (int hs = 0; hs < S; hs++) {
+        for (int hs = 0; hs < PS; hs++) {
             float max_hidden = 0.0f;
 
-            for (int hl = 0; hl < L; hl++) {
-                int hindex = hl + L * hs;
+            for (int hl = 0; hl < PL; hl++) {
+                int hindex = hl + PL * hs;
 
                 int sum = 0;
 
@@ -128,8 +142,8 @@ public:
             // softmax
             float total = 0.0f;
 
-            for (int hl = 0; hl < L; hl++) {
-                int hindex = hl + L * hs;
+            for (int hl = 0; hl < PL; hl++) {
+                int hindex = hl + PL * hs;
 
                 hiddens[hindex] = expf(hiddens[hindex] - max_hidden);
 
@@ -138,8 +152,8 @@ public:
 
             float total_inv = 1.0f / max(limit_small, total);
 
-            for (int hl = 0; hl < L; hl++) {
-                int hindex = hl + L * hs;
+            for (int hl = 0; hl < PL; hl++) {
+                int hindex = hl + PL * hs;
 
                 hiddens[hindex] *= total_inv;
 
