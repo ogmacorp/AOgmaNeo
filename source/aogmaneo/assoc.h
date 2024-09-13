@@ -173,7 +173,7 @@ public:
 
             if (max_index != other[vs]) {
                 for (int vl = 0; vl < L; vl++) {
-                    float recon = expf(min(0, sums[vl + L * vs] - 127 * S) * scale);
+                    float recon = expf(min(0, sums[vl + L * vs] - 127 * SH) * scale);
 
                     int delta = rand_roundf(lr * 255.0f * ((vl == other[vs]) - recon), state);
 
