@@ -149,39 +149,23 @@ public:
         }
 
         // reconstruct
-        Bundle<S, L> sums;
-
         const float scale = variance * sqrtf(1.0f / SH) / 255.0f;
 
         for (int vs = 0; vs < S; vs++) {
-            int max_index = 0;
-            int max_sum = 0;
-
             for (int vl = 0; vl < L; vl++) {
                 int sum = 0;
 
                 for (int hs = 0; hs < SH; hs++)
                     sum += buffer[vl + L * (vs + S * (hidden[hs] + LH * hs))];
 
-                sums[vl + L * vs] = sum;
+                float recon = max(0.0f, 1.0f + min(0, sum - 127 * SH) * scale);
 
-                if (sum > max_sum) {
-                    max_sum = sum;
-                    max_index = vl;
-                }
-            }
+                int delta = rand_roundf(lr * 255.0f * ((vl == other[vs]) - recon), state);
 
-            if (max_index != other[vs]) {
-                for (int vl = 0; vl < L; vl++) {
-                    float recon = expf(min(0, sums[vl + L * vs] - 127 * SH) * scale);
+                for (int hs = 0; hs < SH; hs++) {
+                    int index = vl + L * (vs + S * (hidden[hs] + LH * hs));
 
-                    int delta = rand_roundf(lr * 255.0f * ((vl == other[vs]) - recon), state);
-
-                    for (int hs = 0; hs < SH; hs++) {
-                        int index = vl + L * (vs + S * (hidden[hs] + LH * hs));
-
-                        buffer[index] = min(255, max(0, buffer[index] + delta));
-                    }
+                    buffer[index] = min(255, max(0, buffer[index] + delta));
                 }
             }
         }
