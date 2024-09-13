@@ -259,11 +259,8 @@ public:
 
                 // reconstruct
                 if (l > 0) { // first layer is reconstructed in get_prediction_vecs for needed layers
-                    for (int t = 0; t < ticks_per_update[l]; t++) {
-                        int index = histories[l][0].size() + t;
-
-                        layers[l].backward(index, params.layers[l]);
-                    }
+                    for (int t = 0; t < ticks_per_update[l]; t++)
+                        layers[l].backward(t, params.layers[l]);
                 }
             }
         }
