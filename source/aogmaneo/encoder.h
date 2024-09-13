@@ -51,10 +51,12 @@ public:
 
     struct Params {
         int clean_iters;
+        int assoc_limit;
 
         Params()
         :
-        clean_iters(32)
+        clean_iters(32),
+        assoc_limit(1024)
         {}
     };
 
@@ -144,7 +146,7 @@ private:
         hidden_vecs[hidden_column_index] = hidden_vec_clean;
 
         if (learn_enabled)
-            hidden_assocs[hidden_column_index].assoc(hidden_vec);
+            hidden_assocs[hidden_column_index].assoc(hidden_vec, params.assoc_limit);
     }
 
     void reconstruct(
