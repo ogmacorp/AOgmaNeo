@@ -81,8 +81,9 @@ public:
         return C;
     }
     
-    Vec<S, L> operator*(
-        const Vec<S, L> &other
+    Vec<S, L> multiply(
+        const Vec<S, L> &other,
+        const typename Encoder<S, L>::Params &params
     ) const {
         assert(weights != nullptr);
         assert(hiddens != nullptr);
@@ -134,9 +135,7 @@ public:
 
     void assoc(
         const Vec<S, L> &other,
-        float lr,
-        float variance,
-        unsigned long* state = &global_state
+        const typename Encoder<S, L>::Params &params
     ) {
         assert(weights != nullptr);
         assert(hiddens != nullptr);
@@ -162,7 +161,7 @@ public:
         }
 
         // reconstruct
-        const float scale = variance * sqrtf(1.0f / HS) / 127.0f;
+        const float scale = params.variance * sqrtf(1.0f / HS) / 127.0f;
 
         for (int vs = 0; vs < S; vs++) {
             for (int vl = 0; vl < L; vl++) {
@@ -173,7 +172,7 @@ public:
 
                 float recon = max(0.0f, 1.0f + min(0, sum - 127 * HS) * scale);
 
-                int delta = rand_roundf(lr * 255.0f * ((vl == other[vs]) - recon), state);
+                int delta = roundf(params.lr * 255.0f * ((vl == other[vs]) - recon));
 
                 for (int hs = 0; hs < HS; hs++) {
                     int index = vl + L * (vs + S * (hiddens[hs] + HL * hs));

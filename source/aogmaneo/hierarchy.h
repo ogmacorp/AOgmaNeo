@@ -52,6 +52,8 @@ public:
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
         Int2 hidden_size; // size of hidden layer
+        int HS;
+        int HL;
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -63,6 +65,8 @@ public:
 
         Layer_Desc(
             const Int2 &hidden_size = Int2(4, 4),
+            int HS = 3,
+            int HL = 512,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
@@ -71,6 +75,8 @@ public:
         )
         :
         hidden_size(hidden_size),
+        HS(HS),
+        HL(HL),
         up_radius(up_radius),
         down_radius(down_radius),
         ticks_per_update(ticks_per_update),
@@ -249,7 +255,7 @@ public:
             }
             
             // create the sparse coding layer
-            encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].positional_scale, e_visible_layer_descs);
+            encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].HS, layer_descs[l].HL, layer_descs[l].positional_scale, e_visible_layer_descs);
         }
 
         // initialize params

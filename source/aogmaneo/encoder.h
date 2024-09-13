@@ -52,11 +52,13 @@ public:
     struct Params {
         int clean_iters;
         float lr;
+        float variance;
 
         Params()
         :
         clean_iters(1),
-        lr(0.1f)
+        lr(0.02f),
+        variance(2.0f)
         {}
     };
 
