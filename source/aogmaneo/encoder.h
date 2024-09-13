@@ -159,8 +159,6 @@ private:
 
         int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
 
-        int visible_cells_start = vld.size.z * visible_column_index;
-
         // projection
         Float2 v_to_h = Float2(static_cast<float>(hidden_size.x) / static_cast<float>(vld.size.x),
             static_cast<float>(hidden_size.y) / static_cast<float>(vld.size.y));
@@ -260,15 +258,15 @@ public:
         visible_layers[vli].use_input = false;
     }
 
-    void set_input_cis(
+    void set_input_vecs(
         int vli,
-        Int_Buffer_View input_cis
+        Array_View<Vec<S, L>> input_vecs
     ) {
-        assert(input_cis.size() == visible_layers[vli].input_cis.size());
+        assert(input_vecs.size() == visible_layers[vli].input_vecs.size());
 
         visible_layers[vli].use_input = true;
         visible_layers[vli].up_to_date = false;
-        visible_layers[vli].input_cis = input_cis;
+        visible_layers[vli].input_vecs = input_vecs;
     }
 
     void step(

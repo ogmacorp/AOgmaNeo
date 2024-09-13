@@ -22,7 +22,7 @@ template<int S, int L>
 class Hierarchy {
 public:
     struct IO_Desc {
-        Int4 size;
+        Int2 size;
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
@@ -32,7 +32,7 @@ public:
         int down_radius; // decoder radius, also shared with actor if there is one
 
         IO_Desc(
-            const Int4 &size = Int4(4, 4, 4, 16),
+            const Int2 &size = Int2(4, 4),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
@@ -51,7 +51,7 @@ public:
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
-        Int4 hidden_size; // size of hidden layer
+        Int2 hidden_size; // size of hidden layer
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -62,7 +62,7 @@ public:
         float positional_scale; // positional embedding scale
 
         Layer_Desc(
-            const Int4 &hidden_size = Int4(4, 4, 4, 16),
+            const Int2 &hidden_size = Int2(4, 4),
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
@@ -108,7 +108,7 @@ private:
     Int_Buffer ticks_per_update;
 
     // input dimensions
-    Array<Int4> io_sizes;
+    Array<Int2> io_sizes;
     Array<Byte> io_types;
 
 public:
@@ -259,7 +259,7 @@ public:
 
     // simulation step/tick
     void step(
-        const Array<Vec<S, L>> &input_vecs, // inputs to remember
+        const Array<Array_View<Vec<S, L>>> &input_vecs, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
         float reward = 0.0f, // reward
         float mimic = 0.0f // mimicry mode
@@ -403,7 +403,7 @@ public:
 
     // serialization
     long size() const { // returns size in bytes
-        long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int4) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+        long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int2) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
 
         for (int l = 0; l < encoders.size(); l++) {
             size += sizeof(int);
@@ -463,7 +463,7 @@ public:
 
         writer.write(&num_io, sizeof(int));
 
-        writer.write(&io_sizes[0], num_io * sizeof(Int4));
+        writer.write(&io_sizes[0], num_io * sizeof(Int2));
         writer.write(&io_types[0], num_io * sizeof(Byte));
 
         writer.write(&updates[0], updates.size() * sizeof(Byte));
@@ -521,7 +521,7 @@ public:
         io_sizes.resize(num_io);
         io_types.resize(num_io);
 
-        reader.read(&io_sizes[0], num_io * sizeof(Int4));
+        reader.read(&io_sizes[0], num_io * sizeof(Int2));
         reader.read(&io_types[0], num_io * sizeof(Byte));
 
         encoders.resize(num_layers);
@@ -694,7 +694,7 @@ public:
     }
 
     // get input/output sizes
-    const Int4 &get_io_size(
+    const Int2 &get_io_size(
         int i
     ) const {
         return io_sizes[i];
