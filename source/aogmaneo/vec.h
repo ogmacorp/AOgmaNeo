@@ -176,7 +176,6 @@ private:
     int buffer[N];
 
 public:
-
     Bundle()
     {}
 

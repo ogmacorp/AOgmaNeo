@@ -237,8 +237,7 @@ public:
 
         hidden_vecs = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_pred = Array<Vec<S, L>>(num_hidden_columns, 0);
-
-        hidden_vecs_pred_fb.resize(num_hidden_columns);
+        hidden_vecs_pred_fb = Array<Vec<S, L>>(num_hidden_columns, 0);
 
         predictor_weights.resize(num_hidden_columns * Predictor<S, L>::C);
 
@@ -310,6 +309,7 @@ public:
 
         hidden_vecs.fill(0);
         hidden_vecs_pred.fill(0);
+        hidden_vecs_pred_fb.fill(0);
     }
 
     // serialization
@@ -322,7 +322,7 @@ public:
             size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size () * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>);
         }
 
-        size += 2 * hidden_vecs.size() * sizeof(Vec<S, L>);
+        size += 3 * hidden_vecs.size() * sizeof(Vec<S, L>);
 
         size += predictor_weights.size() * sizeof(Byte);
 
@@ -338,7 +338,7 @@ public:
             size += vl.pred_vecs.size() * sizeof(Vec<S, L>);
         }
 
-        size += 2 * hidden_vecs.size() * sizeof(Vec<S, L>);
+        size += 3 * hidden_vecs.size() * sizeof(Vec<S, L>);
 
         return size;
     }
@@ -368,6 +368,8 @@ public:
 
         writer.write(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
+
+        writer.write(&hidden_vecs_pred_fb[0], hidden_vecs_pred_fb.size() * sizeof(Vec<S, L>));
 
         writer.write(&num_visible_layers, sizeof(int));
 
@@ -404,10 +406,13 @@ public:
             reader.read(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
         }
 
+        hidden_vecs.resize(num_hidden_columns);
+        hidden_vecs_pred.resize(num_hidden_columns);
+        hidden_vecs_pred_fb.resize(num_hidden_columns);
+
         reader.read(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
-
-        hidden_vecs_pred_fb.resize(num_hidden_columns);
+        reader.read(&hidden_vecs_pred_fb[0], hidden_vecs_pred_fb.size() * sizeof(Vec<S, L>));
 
         predictor_weights.resize(num_hidden_columns * Predictor<S, L>::C);
 
@@ -432,6 +437,7 @@ public:
 
         writer.write(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_pred_fb[0], hidden_vecs_pred_fb.size() * sizeof(Vec<S, L>));
     }
 
     void read_state(
@@ -445,6 +451,7 @@ public:
 
         reader.read(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_pred_fb[0], hidden_vecs_pred_fb.size() * sizeof(Vec<S, L>));
     }
 
     void write_weights(
