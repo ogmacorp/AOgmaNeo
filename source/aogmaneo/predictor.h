@@ -134,7 +134,7 @@ public:
                 for (int vs = 0; vs < IS; vs++)
                     sum += weights[src[vs] + IL * (vs + IS * hindex)];
 
-                hiddens[hindex] = static_cast<float>(sum) * byte_inv / IS * params.scale;
+                hiddens[hindex] = sum * byte_inv / IS * params.scale;
 
                 max_hidden = max(max_hidden, hiddens[hindex]);
             }
