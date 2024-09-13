@@ -51,12 +51,10 @@ public:
 
     struct Params {
         int clean_iters;
-        int assoc_limit;
 
         Params()
         :
-        clean_iters(32),
-        assoc_limit(1024)
+        clean_iters(16)
         {}
     };
 
@@ -69,7 +67,7 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Int_Buffer hidden_assoc_buffer;
+    Byte_Buffer hidden_assoc_buffer;
     Array<Assoc<S, L>> hidden_assocs;
 
     // --- kernels ---
@@ -146,7 +144,7 @@ private:
         hidden_vecs[hidden_column_index] = hidden_vec_clean;
 
         if (learn_enabled)
-            hidden_assocs[hidden_column_index].assoc(hidden_vec, params.assoc_limit);
+            hidden_assocs[hidden_column_index].assoc(hidden_vec);
     }
 
     void reconstruct(
@@ -246,7 +244,7 @@ public:
 
         hidden_vecs.resize(num_hidden_columns, 0);
 
-        hidden_assoc_buffer.resize(num_hidden_columns * Assoc<S, L>::C);
+        hidden_assoc_buffer = Byte_Buffer(num_hidden_columns * Assoc<S, L>::C, 0);
 
         hidden_assocs.resize(num_hidden_columns);
 
@@ -339,7 +337,7 @@ public:
 
         size += hidden_vecs.size() * sizeof(Vec<S, L>);
 
-        size += hidden_assoc_buffer.size() * sizeof(int);
+        size += hidden_assoc_buffer.size() * sizeof(Byte);
 
         return size;
     }
@@ -359,7 +357,7 @@ public:
     }
 
     long weights_size() const { // returns size of weights in Bytes
-        return hidden_assoc_buffer.size() * sizeof(int);
+        return hidden_assoc_buffer.size() * sizeof(Byte);
     }
 
     void write(
@@ -383,7 +381,7 @@ public:
 
         writer.write(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
 
-        writer.write(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(int));
+        writer.write(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(Byte));
     }
 
     void read(
@@ -421,7 +419,7 @@ public:
 
         hidden_assoc_buffer.resize(num_hidden_columns * Assoc<S, L>::C);
 
-        reader.read(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(int));
+        reader.read(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(Byte));
 
         hidden_assocs.resize(num_hidden_columns);
 
@@ -456,13 +454,13 @@ public:
     void write_weights(
         Stream_Writer &writer
     ) const {
-        writer.write(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(int));
+        writer.write(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(Byte));
     }
 
     void read_weights(
         Stream_Reader &reader
     ) {
-        reader.read(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(int));
+        reader.read(&hidden_assoc_buffer[0], hidden_assoc_buffer.size() * sizeof(Byte));
     }
 
     // get the number of visible layers

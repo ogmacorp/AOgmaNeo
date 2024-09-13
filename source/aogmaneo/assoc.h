@@ -16,7 +16,7 @@ class Assoc {
 private:
     static const int N = S * L;
 
-    int* buffer;
+    Byte* buffer;
 
 public:
     static const int C = N * (N + 1) / 2;
@@ -27,19 +27,19 @@ public:
     {}
 
     Assoc(
-        int* buffer
+        Byte* buffer
     ) 
     :
     buffer(buffer)
     {}
 
     void set_from(
-        int* buffer
+        Byte* buffer
     ) {
         this->buffer = buffer;
     }
 
-    int &operator[](
+    Byte &operator[](
         int index
     ) {
         assert(buffer != nullptr);
@@ -48,7 +48,7 @@ public:
         return buffer[index];
     }
 
-    const int &operator[](
+    const Byte &operator[](
         int index
     ) const {
         assert(buffer != nullptr);
@@ -57,7 +57,7 @@ public:
         return buffer[index];
     }
 
-    int &operator()(
+    Byte &operator()(
         int r,
         int c
     ) {
@@ -75,7 +75,7 @@ public:
         return buffer[index];
     }
 
-    const int &operator()(
+    const Byte &operator()(
         int r,
         int c
     ) const {
@@ -113,7 +113,7 @@ public:
     }
 
     void fill(
-        int value
+        Byte value
     ) {
         for (int i = 0; i < C; i++)
             buffer[i] = value;
@@ -139,8 +139,7 @@ public:
     }
 
     void assoc(
-        const Vec<S, L> &other,
-        int limit = 1024
+        const Vec<S, L> &other
     ) {
         assert(buffer != nullptr);
 
@@ -150,7 +149,7 @@ public:
             for (int j = 0; j < S; j++) {
                 int c = other[j] + j * L;
 
-                this->operator()(r, c) = min(limit, this->operator()(r, c) + 1); 
+                this->operator()(r, c) = 1; 
             }
         }
     }
