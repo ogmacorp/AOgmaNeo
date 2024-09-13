@@ -14,7 +14,7 @@ namespace aon {
 template<int S, int L>
 class Layer;
 
-template<int S, int L, int IS, int IL>
+template<int S, int L, int VS, int VL>
 class Predictor {
 private:
     Byte* weights;
@@ -22,8 +22,8 @@ private:
 
 public:
     static const int N = S * L;
-    static const int IN = IS * IL;
-    static const int C = IN * N;
+    static const int VN = VS * VL;
+    static const int C = VN * N;
 
     Predictor()
     :
@@ -61,16 +61,16 @@ public:
     }
 
     int in_segments() const {
-        return IS;
+        return VS;
     }
 
     // segment length
     int in_length() const {
-        return IL;
+        return VL;
     }
 
     int in_vsize() const {
-        return IN;
+        return VN;
     }
 
     // total size
@@ -79,7 +79,7 @@ public:
     }
     
     Vec<S, L> activate(
-        const Vec<IS, IL> &src,
+        const Vec<VS, VL> &src,
         const typename Layer<S, L>::Params &params
     ) const {
         assert(weights != nullptr);
@@ -97,8 +97,8 @@ public:
 
                 int sum = 0;
 
-                for (int vs = 0; vs < IS; vs++)
-                    sum += weights[src[vs] + IL * (vs + IS * hindex)];
+                for (int vs = 0; vs < VS; vs++)
+                    sum += weights[src[vs] + VL * (vs + VS * hindex)];
 
                 if (sum > max_sum) {
                     max_sum = sum;
@@ -113,7 +113,7 @@ public:
     }
 
     void learn(
-        const Vec<IS, IL> &src,
+        const Vec<VS, VL> &src,
         const Vec<S, L> &target,
         const typename Layer<S, L>::Params &params
     ) {
@@ -131,10 +131,10 @@ public:
 
                 int sum = 0;
 
-                for (int vs = 0; vs < IS; vs++)
-                    sum += weights[src[vs] + IL * (vs + IS * hindex)];
+                for (int vs = 0; vs < VS; vs++)
+                    sum += weights[src[vs] + VL * (vs + VS * hindex)];
 
-                hiddens[hindex] = sum * byte_inv / IS * params.scale;
+                hiddens[hindex] = sum * byte_inv / VS * params.scale;
 
                 max_hidden = max(max_hidden, hiddens[hindex]);
             }
@@ -163,7 +163,7 @@ public:
                 int delta = roundf(params.lr * 255.0f * error);
 
                 for (int vs = 0; vs < S; vs++) {
-                    int wi = src[vs] + IL * (vs + IS * hindex);
+                    int wi = src[vs] + VL * (vs + VS * hindex);
 
                     weights[wi] = min(255, max(0, weights[wi] + delta));
                 }
