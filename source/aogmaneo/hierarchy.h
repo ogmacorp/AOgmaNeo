@@ -232,7 +232,7 @@ public:
                 }
 
                 // activate sparse coder
-                layers[l].forward(layer_inputs, learn_enabled, params.layers[l].layer);
+                layers[l].forward(layer_inputs, learn_enabled, params.layers[l]);
 
                 // add to next layer's history
                 if (l < layers.size() - 1) {
@@ -251,14 +251,14 @@ public:
         for (int l = layers.size() - 1; l >= 0; l--) {
             if (updates[l]) {
                 if (l < layers.size() - 1)
-                    layers[l].add_feedback(layers[l + 1].get_visible_layer(ticks_per_update[l + 1] - 1 - ticks[l + 1]));
+                    layers[l].add_feedback(layers[l + 1].get_visible_layer(ticks_per_update[l + 1] - 1 - ticks[l + 1]).pred_vecs);
 
                 // reconstruct
                 if (l > 0) { // first layer is reconstructed in get_prediction_vecs for needed layers
                     for (int t = 0; t < ticks_per_update[l]; t++) {
                         int index = histories[l][0].size() + t;
 
-                        layers[l].backward(index, params.layers[l].layer);
+                        layers[l].backward(index, params.layers[l]);
                     }
                 }
             }
@@ -518,7 +518,7 @@ public:
     // retrieve predictions
     const Array<Vec<S, L>> &get_prediction_vecs(
         int i
-    ) const {
+    ) {
         int index = io_sizes.size() * histories[0][0].size();
 
         layers[0].backward(index, params.layers[0]);

@@ -12,7 +12,7 @@
 
 namespace aon {
 template<int S, int L>
-class Encoder;
+class Layer;
 
 template<int S, int L>
 class Predictor {
@@ -32,14 +32,14 @@ public:
 
     Predictor(
         Byte* weights,
-        int* hiddens
+        float* hiddens
     ) {
         set_from(weights, hiddens);
     }
 
     void set_from(
         Byte* weights,
-        int* hiddens
+        float* hiddens
     ) {
         this->weights = weights;
         this->hiddens = hiddens;
@@ -66,7 +66,7 @@ public:
     
     Vec<S, L> multiply(
         const Vec<S, L> &src,
-        const typename Encoder<S, L>::Params &params
+        const typename Layer<S, L>::Params &params
     ) const {
         assert(weights != nullptr);
         assert(hiddens != nullptr);
@@ -101,7 +101,7 @@ public:
     void learn(
         const Vec<S, L> &src,
         const Vec<S, L> &target,
-        const typename Encoder<S, L>::Params &params
+        const typename Layer<S, L>::Params &params
     ) {
         assert(weights != nullptr);
         assert(hiddens != nullptr);
