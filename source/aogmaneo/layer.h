@@ -140,8 +140,7 @@ private:
 
     void backward(
         const Int2 &column_pos,
-        int vli,
-        const Params &params
+        int vli
     ) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -290,8 +289,7 @@ public:
     }
 
     void backward(
-        int vli, // visible layer index to reconstruct
-        const Params &params // parameters
+        int vli // visible layer index to reconstruct
     ) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -300,7 +298,7 @@ public:
 
         PARALLEL_FOR
         for (int i = 0; i < num_visible_columns; i++)
-            backward(Int2(i / vld.size.y, i % vld.size.y), vli, params);
+            backward(Int2(i / vld.size.y, i % vld.size.y), vli);
     }
 
     void clear_state() {

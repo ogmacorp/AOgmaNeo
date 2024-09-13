@@ -112,14 +112,14 @@ public:
         // create layers
         layers.resize(layer_descs.size());
 
-        ticks.resize(layer_descs.size(), 0);
+        ticks = Int_Buffer(layer_descs.size(), 0);
 
         histories.resize(layer_descs.size());
         
         ticks_per_update.resize(layer_descs.size());
 
         // default update state is no update
-        updates.resize(layer_descs.size(), false);
+        updates = Byte_Buffer(layer_descs.size(), false);
 
         // cache input sizes
         io_sizes.resize(io_descs.size());
@@ -254,14 +254,19 @@ public:
         // backward
         for (int l = layers.size() - 1; l >= 0; l--) {
             if (updates[l]) {
-                if (l < layers.size() - 1)
-                    layers[l].add_feedback(layers[l + 1].get_visible_layer(ticks_per_update[l + 1] - 1 - ticks[l + 1]).pred_vecs);
+                Array_View<Vec<S, L>> feedback;
 
-                // reconstruct
-                if (l > 0) { // first layer is reconstructed in get_prediction_vecs for needed layers
-                    for (int t = 0; t < ticks_per_update[l]; t++)
-                        layers[l].backward(t, params.layers[l]);
+                if (l < layers.size() - 1) {
+                    int t = ticks_per_update[l + 1] - 1 - ticks[l + 1];
+
+                    layers[l + 1].backward(t);
+
+                    feedback = layers[l + 1].get_visible_layer(t).pred_vecs;
                 }
+                else
+                    feedback = layers[l].get_hidden_vecs(); // set to self, does nothing since already have self
+
+                layers[l].add_feedback(feedback);
             }
         }
     }
@@ -522,7 +527,7 @@ public:
     ) {
         int index = i * histories[0][0].size();
 
-        layers[0].backward(index, params.layers[0]);
+        layers[0].backward(index);
 
         return layers[0].get_visible_layer(index).pred_vecs;
     }
