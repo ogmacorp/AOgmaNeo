@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "encoder.h"
+#include "layer.h"
 
 namespace aon {
 // type of hierarchy input layer
@@ -25,38 +25,26 @@ public:
         Int2 size;
         IO_Type type;
 
-        int num_dendrites_per_cell; // also for policy
-        int value_num_dendrites_per_cell; // just value
-
-        int up_radius; // encoder radius
-        int down_radius; // decoder radius, also shared with actor if there is one
+        int radius; // layer radius
 
         IO_Desc(
             const Int2 &size = Int2(4, 4),
             IO_Type type = prediction,
-            int num_dendrites_per_cell = 4,
-            int value_num_dendrites_per_cell = 8,
-            int up_radius = 2,
+            int radius = 2,
             int down_radius = 2
         )
         :
         size(size),
         type(type),
-        num_dendrites_per_cell(num_dendrites_per_cell),
-        value_num_dendrites_per_cell(value_num_dendrites_per_cell),
-        up_radius(up_radius),
-        down_radius(down_radius)
+        radius(radius)
         {}
     };
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
         Int2 hidden_size; // size of hidden layer
-        int HS;
-        int HL;
 
-        int up_radius; // encoder radius
-        int down_radius; // decoder radius, also shared with actor if there is one
+        int radius; // layer radius
 
         int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
@@ -65,44 +53,30 @@ public:
 
         Layer_Desc(
             const Int2 &hidden_size = Int2(4, 4),
-            int HS = 32,
-            int HL = 64,
-            int up_radius = 2,
-            int down_radius = 2,
+            int radius = 2,
             int ticks_per_update = 2,
             int temporal_horizon = 2,
             float positional_scale = 1.0f
         )
         :
         hidden_size(hidden_size),
-        HS(HS),
-        HL(HL),
-        up_radius(up_radius),
-        down_radius(down_radius),
+        radius(radius),
         ticks_per_update(ticks_per_update),
         temporal_horizon(temporal_horizon),
         positional_scale(positional_scale)
         {}
     };
 
-    struct Layer_Params {
-        typename Encoder<S, L>::Params encoder;
-    };
-
     struct IO_Params {};
 
     struct Params {
-        Array<Layer_Params> layers;
+        Array<typename Layer<S, L>::Params> layers;
         Array<IO_Params> ios;
     };
 
 private:
     // layers
-    Array<Encoder<S, L>> encoders;
-
-    // for mapping first layer Decoders
-    Int_Buffer i_indices;
-    Int_Buffer d_indices;
+    Array<Layer<S, L>> layers;
 
     // histories
     Array<Array<Circle_Buffer<Array<Vec<S, L>>>>> histories;
@@ -137,7 +111,7 @@ public:
         const Array<Layer_Desc> &layer_descs // descriptors for layers
     ) {
         // create layers
-        encoders.resize(layer_descs.size());
+        layers.resize(layer_descs.size());
 
         ticks.resize(layer_descs.size(), 0);
 
@@ -156,26 +130,13 @@ public:
         for (int l = 0; l < layer_descs.size(); l++)
             ticks_per_update[l] = (l == 0 ? 1 : layer_descs[l].ticks_per_update);
 
-        int num_predictions = 0;
-
-        for (int i = 0; i < io_sizes.size(); i++) {
-            io_sizes[i] = io_descs[i].size;
-            io_types[i] = static_cast<Byte>(io_descs[i].type);
-
-            if (io_descs[i].type == prediction)
-                num_predictions++;
-        }
-
         // iterate through layers
         for (int l = 0; l < layer_descs.size(); l++) {
             // create sparse coder visible layer descriptors
-            Array<typename Encoder<S, L>::Visible_Layer_Desc> e_visible_layer_descs;
+            Array<typename Layer<S, L>::Visible_Layer_Desc> visible_layer_descs;
 
             // if first layer
             if (l == 0) {
-                i_indices.resize(io_sizes.size() * 2);
-                d_indices = Int_Buffer(io_sizes.size(), -1);
-
                 // initialize history buffers
                 histories[l].resize(io_sizes.size());
 
@@ -188,38 +149,15 @@ public:
                         histories[l][i][t] = Array<Vec<S, L>>(in_size, 0);
                 }
 
-                e_visible_layer_descs.resize(io_sizes.size() * layer_descs[l].temporal_horizon + num_predictions + (l < layer_descs.size() - 1));
+                visible_layer_descs.resize(io_sizes.size() * layer_descs[l].temporal_horizon);
 
                 for (int i = 0; i < io_sizes.size(); i++) {
                     for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
                         int index = t + layer_descs[l].temporal_horizon * i;
 
-                        e_visible_layer_descs[index].size = io_sizes[i];
-                        e_visible_layer_descs[index].radius = io_descs[i].up_radius;
+                        visible_layer_descs[index].size = io_sizes[i];
+                        visible_layer_descs[index].radius = io_descs[i].radius;
                     }
-                }
-
-                int predictions_start = io_sizes.size() * layer_descs[l].temporal_horizon;
-                int prediction_index = 0;
-
-                for (int i = 0; i < io_sizes.size(); i++) {
-                    if (io_descs[i].type == prediction) {
-                        int index = predictions_start + prediction_index;
-
-                        e_visible_layer_descs[index].size = io_sizes[i];
-                        e_visible_layer_descs[index].radius = io_descs[i].up_radius;
-
-                        i_indices[prediction_index] = i;
-                        d_indices[i] = prediction_index;
-                        prediction_index++;
-                    }
-                }
-
-                if (l < layer_descs.size() - 1) {
-                    int feedback_index = e_visible_layer_descs.size() - 1;
-                    
-                    e_visible_layer_descs[feedback_index].size = layer_descs[l].hidden_size;
-                    e_visible_layer_descs[feedback_index].radius = layer_descs[l].down_radius;
                 }
             }
             else {
@@ -232,45 +170,29 @@ public:
                 for (int t = 0; t < histories[l][0].size(); t++)
                     histories[l][0][t] = Array<Vec<S, L>>(in_size, 0);
 
-                e_visible_layer_descs.resize(layer_descs[l].temporal_horizon + layer_descs[l].ticks_per_update + (l < layer_descs.size() - 1));
+                visible_layer_descs.resize(layer_descs[l].temporal_horizon);
 
                 for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
-                    e_visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
-                    e_visible_layer_descs[t].radius = layer_descs[l].up_radius;
-                }
-
-                for (int t = 0; t < layer_descs[l].ticks_per_update; t++) {
-                    int index = layer_descs[l].temporal_horizon + t;
-
-                    e_visible_layer_descs[index].size = layer_descs[l - 1].hidden_size;
-                    e_visible_layer_descs[index].radius = layer_descs[l].up_radius;
-                }
-
-                if (l < layer_descs.size() - 1) {
-                    int feedback_index = e_visible_layer_descs.size() - 1;
-                    
-                    e_visible_layer_descs[feedback_index].size = layer_descs[l].hidden_size;
-                    e_visible_layer_descs[feedback_index].radius = layer_descs[l].down_radius;
+                    visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
+                    visible_layer_descs[t].radius = layer_descs[l].radius;
                 }
             }
             
             // create the sparse coding layer
-            encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].HS, layer_descs[l].HL, layer_descs[l].positional_scale, e_visible_layer_descs);
+            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].positional_scale, visible_layer_descs);
         }
 
         // initialize params
-        params.layers = Array<Layer_Params>(layer_descs.size());
+        params.layers = Array<typename Layer<S, L>::Params>(layer_descs.size());
         params.ios = Array<IO_Params>(io_descs.size());
     }
 
     // simulation step/tick
     void step(
         const Array<Array_View<Vec<S, L>>> &input_vecs, // inputs to remember
-        bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        bool learn_enabled = true // whether learning is enabled
     ) {
-        assert(params.layers.size() == encoders.size());
+        assert(params.layers.size() == layers.size());
         assert(params.ios.size() == io_sizes.size());
 
         // first tick is always 0
@@ -287,7 +209,7 @@ public:
         updates.fill(false);
 
         // forward
-        for (int l = 0; l < encoders.size(); l++) {
+        for (int l = 0; l < layers.size(); l++) {
             // if is time for layer to tick
             if (l == 0 || ticks[l] >= ticks_per_update[l]) {
                 // reset tick
@@ -296,57 +218,29 @@ public:
                 // updated
                 updates[l] = true;
 
-                if (learn_enabled && encoders[l].get_visible_layer(0).use_input) { // check if used at least once
-                    if (l == 0) {
-                        int predictions_start = io_sizes.size() * histories[l][0].size();
-                        int prediction_index = 0;
-
-                        for (int i = 0; i < io_sizes.size(); i++) {
-                            if (io_types[i] == prediction) {
-                                int index = predictions_start + prediction_index;
-
-                                encoders[l].set_input_vecs(index, input_vecs[i]);
-
-                                prediction_index++;
-                            }
-                        }
-                    }
-                    else {
-                        for (int t = 0; t < ticks_per_update[l]; t++) {
-                            int index = histories[l][0].size() + t;
-
-                            encoders[l].set_input_vecs(index, histories[l][0][t]);
-                        }
-                    }
-
-                    encoders[l].step(true, params.layers[l].encoder);
-                }
-
-                // ignore all (clear)
-                for (int i = 0; i < encoders[l].get_num_visible_layers(); i++)
-                    encoders[l].set_ignore(i);
+                Array<Array_View<Vec<S, L>>> layer_inputs(layers[l].get_num_visible_layers());
 
                 // set inputs
                 int index = 0;
 
                 for (int i = 0; i < histories[l].size(); i++) {
                     for (int t = 0; t < histories[l][i].size(); t++) {
-                        encoders[l].set_input_vecs(index, histories[l][i][t]);
+                        layer_inputs[index] = histories[l][i][t];
 
                         index++;
                     }
                 }
 
                 // activate sparse coder
-                encoders[l].step(false, params.layers[l].encoder);
+                layers[l].forward(layer_inputs, learn_enabled, params.layers[l].layer);
 
                 // add to next layer's history
-                if (l < encoders.size() - 1) {
+                if (l < layers.size() - 1) {
                     int l_next = l + 1;
 
                     histories[l_next][0].push_front();
 
-                    histories[l_next][0][0] = encoders[l].get_hidden_vecs();
+                    histories[l_next][0][0] = layers[l].get_hidden_vecs();
 
                     ticks[l_next]++;
                 }
@@ -354,39 +248,17 @@ public:
         }
 
         // backward
-        for (int l = encoders.size() - 1; l >= 0; l--) {
+        for (int l = layers.size() - 1; l >= 0; l--) {
             if (updates[l]) {
-                if (l < encoders.size() - 1) {
-                    int next_predictions_start = histories[l + 1][0].size(); // temporal horizon
-
-                    // feedback
-                    int feedback_index = encoders[l].get_num_visible_layers() - 1;
-
-                    encoders[l].set_input_vecs(feedback_index, encoders[l + 1].get_visible_layer(next_predictions_start + ticks_per_update[l + 1] - 1 - ticks[l + 1]).recon_vecs);
-
-                    encoders[l].step(false, params.layers[l].encoder);
-                }
+                if (l < layers.size() - 1)
+                    layers[l].add_feedback(layers[l + 1].get_visible_layer(ticks_per_update[l + 1] - 1 - ticks[l + 1]));
 
                 // reconstruct
-                if (l == 0) {
-                    int predictions_start = io_sizes.size() * histories[l][0].size();
-                    int prediction_index = 0;
-
-                    for (int i = 0; i < io_sizes.size(); i++) {
-                        if (io_types[i] == prediction) {
-                            int index = predictions_start + prediction_index;
-
-                            encoders[l].reconstruct(index, params.layers[l].encoder);
-
-                            prediction_index++;
-                        }
-                    }
-                }
-                else {
+                if (l > 0) { // first layer is reconstructed in get_prediction_vecs for needed layers
                     for (int t = 0; t < ticks_per_update[l]; t++) {
                         int index = histories[l][0].size() + t;
 
-                        encoders[l].reconstruct(index, params.layers[l].encoder);
+                        layers[l].backward(index, params.layers[l].layer);
                     }
                 }
             }
@@ -397,13 +269,13 @@ public:
         updates.fill(false);
         ticks.fill(0);
 
-        for (int l = 0; l < encoders.size(); l++) {
+        for (int l = 0; l < layers.size(); l++) {
             for (int i = 0; i < histories[l].size(); i++) {
                 for (int t = 0; t < histories[l][i].size(); t++)
                     histories[l][i][t].fill(0);
             }
 
-            encoders[l].clear_state();
+            layers[l].clear_state();
         }
     }
 
@@ -411,7 +283,7 @@ public:
     long size() const { // returns size in bytes
         long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int2) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
 
-        for (int l = 0; l < encoders.size(); l++) {
+        for (int l = 0; l < layers.size(); l++) {
             size += sizeof(int);
 
             for (int i = 0; i < histories[l].size(); i++) {
@@ -421,11 +293,11 @@ public:
                     size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
             }
 
-            size += encoders[l].size();
+            size += layers[l].size();
         }
 
         // params
-        size += encoders.size() * sizeof(Layer_Params);
+        size += layers.size() * sizeof(Layer_Params);
         size += io_sizes.size() * sizeof(IO_Params);
 
         return size;
@@ -434,7 +306,7 @@ public:
     long state_size() const { // returns size of state in bytes
         long size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
 
-        for (int l = 0; l < encoders.size(); l++) {
+        for (int l = 0; l < layers.size(); l++) {
             for (int i = 0; i < histories[l].size(); i++) {
                 size += sizeof(int);
 
@@ -442,7 +314,7 @@ public:
                     size += histories[l][i][t].size() * sizeof(int);
             }
 
-            size += encoders[l].state_size();
+            size += layers[l].state_size();
         }
 
         return size;
@@ -451,8 +323,8 @@ public:
     long weights_size() const { // returns size of weights in bytes
         long size = 0;
 
-        for (int l = 0; l < encoders.size(); l++) {
-            size += encoders[l].weights_size();
+        for (int l = 0; l < layers.size(); l++) {
+            size += layers[l].weights_size();
         }
 
         return size;
@@ -461,7 +333,7 @@ public:
     void write(
         Stream_Writer &writer
     ) const {
-        int num_layers = encoders.size();
+        int num_layers = layers.size();
 
         writer.write(&num_layers, sizeof(int));
 
@@ -502,11 +374,11 @@ public:
                 }
             }
 
-            encoders[l].write(writer);
+            layers[l].write(writer);
         }
         
         // params
-        for (int l = 0; l < encoders.size(); l++)
+        for (int l = 0; l < layers.size(); l++)
             writer.write(&params.layers[l], sizeof(Layer_Params));
 
         for (int i = 0; i < io_sizes.size(); i++)
@@ -530,7 +402,7 @@ public:
         reader.read(&io_sizes[0], num_io * sizeof(Int2));
         reader.read(&io_types[0], num_io * sizeof(Byte));
 
-        encoders.resize(num_layers);
+        layers.resize(num_layers);
 
         histories.resize(num_layers);
         
@@ -578,7 +450,7 @@ public:
                 }
             }
 
-            encoders[l].read(reader);
+            layers[l].read(reader);
         }
 
         params.layers.resize(num_layers);
@@ -597,7 +469,7 @@ public:
         writer.write(&updates[0], updates.size() * sizeof(Byte));
         writer.write(&ticks[0], ticks.size() * sizeof(int));
 
-        for (int l = 0; l < encoders.size(); l++) {
+        for (int l = 0; l < layers.size(); l++) {
             for (int i = 0; i < histories[l].size(); i++) {
                 int history_start = histories[l][i].start;
 
@@ -607,7 +479,7 @@ public:
                     writer.write(&histories[l][i][t][0], histories[l][i][t].size() * sizeof(int));
             }
 
-            encoders[l].write_state(writer);
+            layers[l].write_state(writer);
         }
     }
 
@@ -617,7 +489,7 @@ public:
         reader.read(&updates[0], updates.size() * sizeof(Byte));
         reader.read(&ticks[0], ticks.size() * sizeof(int));
         
-        for (int l = 0; l < encoders.size(); l++) {
+        for (int l = 0; l < layers.size(); l++) {
             for (int i = 0; i < histories[l].size(); i++) {
                 int history_start;
                 
@@ -629,27 +501,27 @@ public:
                     reader.read(&histories[l][i][t][0], histories[l][i][t].size() * sizeof(int));
             }
 
-            encoders[l].read_state(reader);
+            layers[l].read_state(reader);
         }
     }
 
     void write_weights(
         Stream_Writer &writer
     ) const {
-        for (int l = 0; l < encoders.size(); l++)
-            encoders[l].write_weights(writer);
+        for (int l = 0; l < layers.size(); l++)
+            layers[l].write_weights(writer);
     }
 
     void read_weights(
         Stream_Reader &reader
     ) {
-        for (int l = 0; l < encoders.size(); l++)
-            encoders[l].read_weights(reader);
+        for (int l = 0; l < layers.size(); l++)
+            layers[l].read_weights(reader);
     }
 
-    // get the number of layers (encoders)
+    // get the number of layers (layers)
     int get_num_layers() const {
-        return encoders.size();
+        return layers.size();
     }
 
     bool a_layer_exists(
@@ -664,7 +536,7 @@ public:
     ) const {
         int predictions_start = io_sizes.size() * histories[0][0].size();
 
-        return encoders[0].get_visible_layer(predictions_start + d_indices[i]).recon_vecs;
+        return layers[0].get_visible_layer(predictions_start + d_indices[i]).recon_vecs;
     }
 
     // whether this layer received on update this timestep
@@ -713,24 +585,24 @@ public:
         return static_cast<IO_Type>(io_types[i]);
     }
 
-    int get_num_encoder_visible_layers(
+    int get_num_layer_visible_layers(
         int l
     ) const {
-        return encoders[l].get_num_visible_layers();
+        return layers[l].get_num_visible_layers();
     }
 
     // retrieve a sparse coding layer
-    Encoder<S, L> &get_encoder(
+    Layer<S, L> &get_layer(
         int l
     ) {
-        return encoders[l];
+        return layers[l];
     }
 
     // retrieve a sparse coding layer, const version
-    const Encoder<S, L> &get_encoder(
+    const Layer<S, L> &get_layer(
         int l
     ) const {
-        return encoders[l];
+        return layers[l];
     }
 
     const Int_Buffer &get_i_indices() const {
