@@ -252,21 +252,13 @@ public:
         }
 
         // backward
-        for (int l = layers.size() - 1; l >= 0; l--) {
+        for (int l = layers.size() - 2; l >= 0; l--) {
             if (updates[l]) {
-                Array_View<Vec<S, L>> feedback;
+                int t = ticks_per_update[l + 1] - 1 - ticks[l + 1];
 
-                if (l < layers.size() - 1) {
-                    int t = ticks_per_update[l + 1] - 1 - ticks[l + 1];
+                layers[l + 1].backward(t);
 
-                    layers[l + 1].backward(t);
-
-                    feedback = layers[l + 1].get_visible_layer(t).pred_vecs;
-                }
-                else
-                    feedback = layers[l].get_hidden_vecs(); // set to self, does nothing since already have self
-
-                layers[l].add_feedback(feedback);
+                layers[l].add_feedback(layers[l + 1].get_visible_layer(t).pred_vecs);
             }
         }
     }
