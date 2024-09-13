@@ -98,7 +98,7 @@ public:
                 int sum = 0;
 
                 for (int vs = 0; vs < IS; vs++)
-                    sum += weights[src[vs] + IL * (vs + S * hindex)];
+                    sum += weights[src[vs] + IL * (vs + IS * hindex)];
 
                 if (sum > max_sum) {
                     max_sum = sum;
