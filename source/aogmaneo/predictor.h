@@ -64,7 +64,7 @@ public:
         return C;
     }
     
-    Vec<S, L> multiply(
+    Vec<S, L> predict(
         const Vec<S, L> &src,
         const typename Layer<S, L>::Params &params
     ) const {

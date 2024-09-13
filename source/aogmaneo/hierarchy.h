@@ -235,7 +235,6 @@ public:
                     }
                 }
 
-                // activate sparse coder
                 layers[l].forward(layer_inputs, learn_enabled, params.layers[l]);
 
                 // add to next layer's history

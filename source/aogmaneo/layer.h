@@ -121,7 +121,7 @@ private:
         hidden_vecs[hidden_column_index] = hidden_vec;
 
         // clean up
-        Vec<S, L> hidden_vec_pred = predictors[hidden_column_index].multiply(hidden_vec, params);
+        Vec<S, L> hidden_vec_pred = predictors[hidden_column_index].predict(hidden_vec, params);
 
         hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
 
