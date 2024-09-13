@@ -38,15 +38,13 @@ public:
     };
 
     struct Params {
-        int clean_iters;
         float scale;
         float lr;
 
         Params()
         :
-        clean_iters(1),
-        scale(4.0f),
-        lr(0.04f)
+        scale(8.0f),
+        lr(0.05f)
         {}
     };
 
