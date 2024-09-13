@@ -11,33 +11,55 @@
 #include "vec.h"
 
 namespace aon {
-template<int S, int L, int SH, int LH>
+template<int S, int L>
+class Encoder;
+
+template<int S, int L>
 class Assoc {
 private:
     static const int N = S * L;
-    static const int NH = SH * LH;
 
-    Byte* buffer;
+    int HS;
+    int HL;
+
+    Byte* weights;
+    int* hiddens;
 
 public:
-    static const int C = N * NH;
+    int C;
 
     Assoc()
     :
-    buffer(nullptr)
+    weights(nullptr),
+    hiddens(nullptr),
+    HS(0),
+    HL(0),
+    C(0)
     {}
 
     Assoc(
-        Byte* buffer
-    ) 
-    :
-    buffer(buffer)
-    {}
+        int HS,
+        int HL,
+        Byte* weights,
+        int* hiddens
+    ) {
+        set_from(HS, HL, weights, hiddens);
+    }
 
     void set_from(
-        Byte* buffer
+        int HS,
+        int HL,
+        Byte* weights,
+        int* hiddens
     ) {
-        this->buffer = buffer;
+        this->HS = HS;
+        this->HL = HL;
+
+        int HN = HS * HL;
+        C = N * HN;
+
+        this->weights = weights;
+        this->hiddens = hiddens;
     }
 
     // number of segments
@@ -58,31 +80,23 @@ public:
     int size() const {
         return C;
     }
-
-    void fill(
-        Byte value
-    ) {
-        for (int i = 0; i < C; i++)
-            buffer[i] = value;
-    }
     
     Vec<S, L> operator*(
         const Vec<S, L> &other
     ) const {
-        assert(buffer != nullptr);
+        assert(weights != nullptr);
+        assert(hiddens != nullptr);
 
         // activate hidden
-        Vec<SH, LH> hidden;
-
-        for (int hs = 0; hs < SH; hs++) {
+        for (int hs = 0; hs < HS; hs++) {
             int max_index = 0;
             int max_sum = 0;
 
-            for (int hl = 0; hl < LH; hl++) {
+            for (int hl = 0; hl < HL; hl++) {
                 int sum = 0;
 
                 for (int vs = 0; vs < S; vs++)
-                    sum += buffer[other[vs] + L * (vs + S * (hl + LH * hs))];
+                    sum += weights[other[vs] + L * (vs + S * (hl + HL * hs))];
 
                 if (sum > max_sum) {
                     max_sum = sum;
@@ -90,7 +104,7 @@ public:
                 }
             }
 
-            hidden[hs] = max_index;
+            hiddens[hs] = max_index;
         }
 
         // reconstruct
@@ -103,8 +117,8 @@ public:
             for (int vl = 0; vl < L; vl++) {
                 int sum = 0;
 
-                for (int hs = 0; hs < SH; hs++)
-                    sum += buffer[vl + L * (vs + S * (hidden[hs] + LH * hs))];
+                for (int hs = 0; hs < HS; hs++)
+                    sum += weights[vl + L * (vs + S * (hiddens[hs] + HL * hs))];
 
                 if (sum > max_sum) {
                     max_sum = sum;
@@ -124,20 +138,19 @@ public:
         float variance,
         unsigned long* state = &global_state
     ) {
-        assert(buffer != nullptr);
+        assert(weights != nullptr);
+        assert(hiddens != nullptr);
 
         // activate hidden
-        Vec<SH, LH> hidden;
-
-        for (int hs = 0; hs < SH; hs++) {
+        for (int hs = 0; hs < HS; hs++) {
             int max_index = 0;
             int max_sum = 0;
 
-            for (int hl = 0; hl < LH; hl++) {
+            for (int hl = 0; hl < HL; hl++) {
                 int sum = 0;
 
                 for (int vs = 0; vs < S; vs++)
-                    sum += buffer[other[vs] + L * (vs + S * (hl + LH * hs))];
+                    sum += weights[other[vs] + L * (vs + S * (hl + HL * hs))];
 
                 if (sum > max_sum) {
                     max_sum = sum;
@@ -145,27 +158,27 @@ public:
                 }
             }
 
-            hidden[hs] = max_index;
+            hiddens[hs] = max_index;
         }
 
         // reconstruct
-        const float scale = variance * sqrtf(1.0f / SH) / 255.0f;
+        const float scale = variance * sqrtf(1.0f / HS) / 127.0f;
 
         for (int vs = 0; vs < S; vs++) {
             for (int vl = 0; vl < L; vl++) {
                 int sum = 0;
 
-                for (int hs = 0; hs < SH; hs++)
-                    sum += buffer[vl + L * (vs + S * (hidden[hs] + LH * hs))];
+                for (int hs = 0; hs < HS; hs++)
+                    sum += weights[vl + L * (vs + S * (hiddens[hs] + HL * hs))];
 
-                float recon = max(0.0f, 1.0f + min(0, sum - 127 * SH) * scale);
+                float recon = max(0.0f, 1.0f + min(0, sum - 127 * HS) * scale);
 
                 int delta = rand_roundf(lr * 255.0f * ((vl == other[vs]) - recon), state);
 
-                for (int hs = 0; hs < SH; hs++) {
-                    int index = vl + L * (vs + S * (hidden[hs] + LH * hs));
+                for (int hs = 0; hs < HS; hs++) {
+                    int index = vl + L * (vs + S * (hiddens[hs] + HL * hs));
 
-                    buffer[index] = min(255, max(0, buffer[index] + delta));
+                    weights[index] = min(255, max(0, weights[index] + delta));
                 }
             }
         }

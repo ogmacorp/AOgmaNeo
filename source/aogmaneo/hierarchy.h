@@ -18,7 +18,7 @@ enum IO_Type {
 };
 
 // a sph
-template<int S, int L, int SH, int SL>
+template<int S, int L>
 class Hierarchy {
 public:
     struct IO_Desc {
@@ -80,7 +80,7 @@ public:
     };
 
     struct Layer_Params {
-        typename Encoder<S, L, SH, SL>::Params encoder;
+        typename Encoder<S, L>::Params encoder;
     };
 
     struct IO_Params {};
@@ -92,7 +92,7 @@ public:
 
 private:
     // layers
-    Array<Encoder<S, L, SH, SL>> encoders;
+    Array<Encoder<S, L>> encoders;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -163,7 +163,7 @@ public:
         // iterate through layers
         for (int l = 0; l < layer_descs.size(); l++) {
             // create sparse coder visible layer descriptors
-            Array<typename Encoder<S, L, SH, SL>::Visible_Layer_Desc> e_visible_layer_descs;
+            Array<typename Encoder<S, L>::Visible_Layer_Desc> e_visible_layer_descs;
 
             // if first layer
             if (l == 0) {
@@ -714,14 +714,14 @@ public:
     }
 
     // retrieve a sparse coding layer
-    Encoder<S, L, SH, SL> &get_encoder(
+    Encoder<S, L> &get_encoder(
         int l
     ) {
         return encoders[l];
     }
 
     // retrieve a sparse coding layer, const version
-    const Encoder<S, L, SH, SL> &get_encoder(
+    const Encoder<S, L> &get_encoder(
         int l
     ) const {
         return encoders[l];
