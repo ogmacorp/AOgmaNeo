@@ -85,6 +85,7 @@ private:
     void forward(
         const Int2 &column_pos,
         bool learn_enabled,
+        unsigned long* state,
         const Params &params
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -130,7 +131,7 @@ private:
         hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
 
         if (learn_enabled)
-            predictors[hidden_column_index].learn(hidden_vec_prev, hidden_vec, params);
+            predictors[hidden_column_index].learn(hidden_vec_prev, hidden_vec, state, params);
     }
 
     void add_feedback(
@@ -277,9 +278,14 @@ public:
                 bind_inputs(Int2(i / vld.size.y, i % vld.size.y), input_vecs[vli], vli);
         }
 
+        unsigned int base_state = rand();
+
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            forward(Int2(i / hidden_size.y, i % hidden_size.y), learn_enabled, params);
+        for (int i = 0; i < num_hidden_columns; i++) {
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+            forward(Int2(i / hidden_size.y, i % hidden_size.y), learn_enabled, &state, params);
+        }
 
         hidden_vecs_pred_fb = hidden_vecs_pred; // copy in case no feedback is added
     }
