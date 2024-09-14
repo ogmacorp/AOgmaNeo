@@ -17,7 +17,7 @@ class Bundle;
 template<int S, int L>
 class Vec {
 private:
-    int buffer[S];
+    Byte buffer[S];
 
 public:
     static const int N = S * L;
@@ -25,7 +25,7 @@ public:
     Vec() {}
 
     Vec(
-        int value
+        Byte value
     ) {
         fill(value);
     }
@@ -41,7 +41,7 @@ public:
         return result;
     };
 
-    int &operator[](
+    Byte &operator[](
         int index
     ) {
         assert(index >= 0 && index < S);
@@ -49,7 +49,7 @@ public:
         return buffer[index];
     }
 
-    const int &operator[](
+    const Byte &operator[](
         int index
     ) const {
         assert(index >= 0 && index < S);
@@ -73,7 +73,7 @@ public:
     }
 
     void fill(
-        int value
+        Byte value
     ) {
         for (int i = 0; i < S; i++)
             buffer[i] = value;
