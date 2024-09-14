@@ -91,7 +91,7 @@ public:
 
         Vec<S, L> result;
 
-        const float rescale = params.scale * sqrtf(1.0f / S) / 127.0f;
+        const float rescale_stim = params.scale * sqrtf(1.0f / S) / 127.0f;
 
         // activate
         for (int hs = 0; hs < S; hs++) {
@@ -111,7 +111,7 @@ public:
                     for (int vs = 0; vs < S; vs++)
                         sum += weights[src[vs] + L * (vs + S * dindex)];
 
-                    float stim = (sum - S * 127) * rescale;
+                    float stim = (sum - S * 127) * rescale_stim;
 
                     float dendrite_act = max(stim * params.leak, stim);
 
@@ -139,7 +139,8 @@ public:
         assert(dendrite_acts != nullptr);
         assert(output_acts != nullptr);
 
-        const float rescale = params.scale * sqrtf(1.0f / S) / 127.0f;
+        const float rescale_stim = params.scale * sqrtf(1.0f / S) / 127.0f;
+        const float rescale_act = sqrtf(1.0f / D);
 
         // activate output
         for (int hs = 0; hs < S; hs++) {
@@ -158,7 +159,7 @@ public:
                     for (int vs = 0; vs < S; vs++)
                         sum += weights[src[vs] + L * (vs + S * dindex)];
 
-                    float stim = (sum - S * 127) * rescale;
+                    float stim = (sum - S * 127) * rescale_stim;
 
                     float dendrite_act = max(stim * params.leak, stim);
 
@@ -166,6 +167,8 @@ public:
 
                     activation += dendrite_act * ((hd >= D / 2) * 2.0f - 1.0f);
                 }
+
+                activation * rescale_act;
 
                 output_acts[hindex] = activation;
 
