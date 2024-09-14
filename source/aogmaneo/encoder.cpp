@@ -179,16 +179,29 @@ void Encoder::learn(
             max_recon_sum = recon_sum;
             max_index = vc;
         }
-
-        float recon = expf(min(0, recon_sum - count * 127) * recon_scale);
-
-        // re-use recon sums as integer deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
     }
 
-    // early stop
-    if (max_index == target_ci)
-        return;
+    // softmax
+    float total = 0.0f;
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+    
+        vl.visible_acts[visible_cell_index] = expf((vl.recon_sums[visible_cell_index] - max_recon_sum) * recon_scale);
+
+        total += vl.visible_acts[visible_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int vc = 0; vc < vld.size.z; vc++) {
+        int visible_cell_index = vc + visible_cells_start;
+
+        vl.visible_acts[visible_cell_index] *= total_inv;
+
+        // re-use recon sums as integer deltas
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - vl.visible_acts[visible_cell_index]), state);
+    }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -248,9 +261,11 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - (rand() % init_weight_noisei);
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
+
+        vl.visible_acts.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -398,6 +413,8 @@ void Encoder::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
+
+        vl.visible_acts.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
