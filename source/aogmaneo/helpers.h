@@ -14,7 +14,6 @@
 #ifdef USE_STD_MATH
 #include <cmath>
 #include <algorithm>
-#include <bit>
 #endif
 
 #define PARALLEL_FOR _Pragma("omp parallel for")
@@ -348,23 +347,6 @@ inline int address4(
     const Int4 &dims // dimensions to ravel with
 ) {
     return pos.w + dims.w * (pos.z + dims.z * (pos.y + dims.y * pos.x));
-}
-
-// --- bits ---
-
-inline int onecount(
-    Byte b
-) {
-#ifdef USE_STD_MATH
-    return std::popcount(b);
-#else
-    int s = 0;
-
-    for (int i = 0; i < 8; i++)
-        s += (((1 << i) & b) != 0);
-
-    return s;
-#endif
 }
 
 // --- noninearities ---

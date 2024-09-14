@@ -165,6 +165,12 @@ public:
 
         return true;
     }
+
+    bool operator!=(
+        const Vec<S, L> &other
+    ) const {
+        return !this->operator==(other);
+    }
 };
 
 template<int S, int L>
@@ -176,6 +182,7 @@ private:
     int buffer[N];
 
 public:
+
     Bundle()
     {}
 
@@ -303,6 +310,12 @@ public:
                 return false;
 
         return true;
+    }
+
+    bool operator!=(
+        const Bundle<S, L> &other
+    ) const {
+        return !this->operator==(other);
     }
 };
 }
