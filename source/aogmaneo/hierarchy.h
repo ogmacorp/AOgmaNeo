@@ -57,7 +57,7 @@ public:
             int radius = 2,
             int ticks_per_update = 2,
             int temporal_horizon = 2,
-            float positional_scale = 1.0f
+            float positional_scale = 0.1f
         )
         :
         hidden_size(hidden_size),
