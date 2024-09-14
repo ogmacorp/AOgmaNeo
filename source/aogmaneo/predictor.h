@@ -91,7 +91,7 @@ public:
 
         Vec<S, L> result;
 
-        const float rescale = params.scale * sqrtf(1.0f / S) / 255.0f;
+        const float rescale = params.scale * sqrtf(1.0f / S) / 127.0f;
 
         // activate
         for (int hs = 0; hs < S; hs++) {
@@ -139,7 +139,7 @@ public:
         assert(dendrite_acts != nullptr);
         assert(output_acts != nullptr);
 
-        const float rescale = params.scale * sqrtf(1.0f / S) / 255.0f;
+        const float rescale = params.scale * sqrtf(1.0f / S) / 127.0f;
 
         // activate output
         for (int hs = 0; hs < S; hs++) {
@@ -199,7 +199,7 @@ public:
                     int delta = roundf(params.lr * 255.0f * error * ((hd >= D / 2) * 2.0f - 1.0f) * ((dendrite_acts[dindex] > 0.0f) * (1.0f - params.leak) + params.leak));
 
                     for (int vs = 0; vs < S; vs++) {
-                        int wi = src[vs] + L * (vs + S * hindex);
+                        int wi = src[vs] + L * (vs + S * dindex);
 
                         weights[wi] = min(255, max(0, weights[wi] + delta));
                     }
