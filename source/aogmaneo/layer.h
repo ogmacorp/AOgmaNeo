@@ -40,11 +40,13 @@ public:
     struct Params {
         float scale;
         float lr;
+        float leak;
 
         Params()
         :
         scale(8.0f),
-        lr(0.05f)
+        lr(0.05f),
+        leak(0.01f)
         {}
     };
 
@@ -60,7 +62,8 @@ private:
     Array<Visible_Layer_Desc> visible_layer_descs;
 
     Byte_Buffer predictor_weights;
-    Float_Buffer predictor_hiddens;
+    Float_Buffer predictor_dendrite_acts;
+    Float_Buffer predictor_output_acts;
     Array<Predictor<S, L>> predictors;
 
     // --- kernels ---
@@ -189,6 +192,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int2 &hidden_size, // hidden/output size
+        int D,
         float positional_scale, // positional encoding scale
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     ) {
@@ -242,12 +246,13 @@ public:
         for (int i = 0; i < predictor_weights.size(); i++)
             predictor_weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
 
-        predictor_hiddens.resize(num_hidden_columns * Predictor<S, L>::N);
+        predictor_dendrite_acts.resize(num_hidden_columns * Predictor<S, L>::N * D);
+        predictor_output_acts.resize(num_hidden_columns * Predictor<S, L>::N);
 
         predictors.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            predictors[i].set_from(&predictor_weights[i * Predictor<S, L>::C], &predictor_hiddens[i * Predictor<S, L>::N]);
+            predictors[i].set_from(D, &predictor_weights[i * Predictor<S, L>::C], &predictor_dendrite_acts[i * Predictor<S, L>::N * D], &predictor_output_acts[i * Predictor<S, L>::N]);
     }
 
     void forward(

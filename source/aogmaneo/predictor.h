@@ -18,31 +18,44 @@ template<int S, int L>
 class Predictor {
 private:
     Byte* weights;
-    float* hiddens;
+    float* dendrite_acts;
+    float* output_acts;
+
+    int D;
+    int C;
 
 public:
     static const int N = S * L;
-    static const int C = N * N;
 
     Predictor()
     :
     weights(nullptr),
-    hiddens(nullptr)
+    dendrite_acts(nullptr),
+    output_acts(nullptr)
     {}
 
     Predictor(
+        int D,
         Byte* weights,
-        float* hiddens
+        float* dendrite_acts,
+        float* output_acts
     ) {
-        set_from(weights, hiddens);
+        set_from(D, weights, dendrite_acts, output_acts);
     }
 
     void set_from(
+        int D,
         Byte* weights,
-        float* hiddens
+        float* dendrite_acts,
+        float* output_acts
     ) {
+        this->D = D;
+
+        C = N * D * N;
+
         this->weights = weights;
-        this->hiddens = hiddens;
+        this->dendrite_acts = dendrite_acts;
+        this->output_acts = output_acts;
     }
 
     // number of segments
@@ -53,6 +66,10 @@ public:
     // segment length
     int length() const {
         return L;
+    }
+
+    int dendrites() const {
+        return D;
     }
 
     int vsize() const {
@@ -69,25 +86,40 @@ public:
         const typename Layer<S, L>::Params &params
     ) const {
         assert(weights != nullptr);
-        assert(hiddens != nullptr);
+        assert(dendrite_acts != nullptr);
+        assert(output_acts != nullptr);
 
         Vec<S, L> result;
+
+        const float rescale = params.scale * sqrtf(1.0f / S) / 255.0f;
 
         // activate
         for (int hs = 0; hs < S; hs++) {
             int max_index = 0;
-            int max_sum = 0;
+            float max_activation = limit_min;
 
             for (int hl = 0; hl < L; hl++) {
                 int hindex = hl + L * hs;
 
-                int sum = 0;
+                float activation = 0.0f;
 
-                for (int vs = 0; vs < S; vs++)
-                    sum += weights[src[vs] + L * (vs + S * hindex)];
+                for (int hd = 0; hd < D; hd++) {
+                    int dindex = hd + D * hindex;
 
-                if (sum > max_sum) {
-                    max_sum = sum;
+                    int sum = 0;
+
+                    for (int vs = 0; vs < S; vs++)
+                        sum += weights[src[vs] + L * (vs + S * dindex)];
+
+                    float stim = (sum - S * 127) * rescale;
+
+                    float dendrite_act = max(stim * params.leak, stim);
+
+                    activation += dendrite_act * ((hd >= D / 2) * 2.0f - 1.0f);
+                }
+
+                if (activation > max_activation) {
+                    max_activation = activation;
                     max_index = hl;
                 }
             }
@@ -104,25 +136,40 @@ public:
         const typename Layer<S, L>::Params &params
     ) {
         assert(weights != nullptr);
-        assert(hiddens != nullptr);
+        assert(dendrite_acts != nullptr);
+        assert(output_acts != nullptr);
 
-        const float byte_inv = 1.0f / 255.0f;
+        const float rescale = params.scale * sqrtf(1.0f / S) / 255.0f;
 
-        // activate hidden
+        // activate output
         for (int hs = 0; hs < S; hs++) {
-            float max_hidden = 0.0f;
+            float max_activation = limit_min;
 
             for (int hl = 0; hl < L; hl++) {
                 int hindex = hl + L * hs;
 
-                int sum = 0;
+                float activation = 0.0f;
 
-                for (int vs = 0; vs < S; vs++)
-                    sum += weights[src[vs] + L * (vs + S * hindex)];
+                for (int hd = 0; hd < D; hd++) {
+                    int dindex = hd + D * hindex;
 
-                hiddens[hindex] = static_cast<float>(sum) * byte_inv / S * params.scale;
+                    int sum = 0;
 
-                max_hidden = max(max_hidden, hiddens[hindex]);
+                    for (int vs = 0; vs < S; vs++)
+                        sum += weights[src[vs] + L * (vs + S * dindex)];
+
+                    float stim = (sum - S * 127) * rescale;
+
+                    float dendrite_act = max(stim * params.leak, stim);
+
+                    dendrite_acts[dindex] = dendrite_act;
+
+                    activation += dendrite_act * ((hd >= D / 2) * 2.0f - 1.0f);
+                }
+
+                output_acts[hindex] = activation;
+
+                max_activation = max(max_activation, activation);
             }
 
             // softmax
@@ -131,9 +178,9 @@ public:
             for (int hl = 0; hl < L; hl++) {
                 int hindex = hl + L * hs;
 
-                hiddens[hindex] = expf(hiddens[hindex] - max_hidden);
+                output_acts[hindex] = expf(output_acts[hindex] - max_activation);
 
-                total += hiddens[hindex];
+                total += output_acts[hindex];
             }
 
             float total_inv = 1.0f / max(limit_small, total);
@@ -141,17 +188,21 @@ public:
             for (int hl = 0; hl < L; hl++) {
                 int hindex = hl + L * hs;
 
-                hiddens[hindex] *= total_inv;
+                output_acts[hindex] *= total_inv;
 
                 // learn on target
-                float error = (hl == target[hs]) - hiddens[hindex];
+                float error = (hl == target[hs]) - output_acts[hindex];
 
-                int delta = roundf(params.lr * 255.0f * error);
+                for (int hd = 0; hd < D; hd++) {
+                    int dindex = hd + D * hindex;
 
-                for (int vs = 0; vs < S; vs++) {
-                    int wi = src[vs] + L * (vs + S * hindex);
+                    int delta = roundf(params.lr * 255.0f * error * ((hd >= D / 2) * 2.0f - 1.0f) * ((dendrite_acts[dindex] > 0.0f) * (1.0f - params.leak) + params.leak));
 
-                    weights[wi] = min(255, max(0, weights[wi] + delta));
+                    for (int vs = 0; vs < S; vs++) {
+                        int wi = src[vs] + L * (vs + S * hindex);
+
+                        weights[wi] = min(255, max(0, weights[wi] + delta));
+                    }
                 }
             }
         }
