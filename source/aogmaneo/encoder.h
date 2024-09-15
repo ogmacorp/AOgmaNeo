@@ -43,12 +43,10 @@ public:
     };
 
     struct Params {
-        float exponent; // recon curve
         float lr; // learning rate
 
         Params()
         :
-        exponent(4.0f),
         lr(0.02f)
         {}
     };

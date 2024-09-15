@@ -188,7 +188,7 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
     
-        float recon = powf(vl.recon_sums[visible_cell_index] * rescale, params.exponent);
+        float recon = vl.recon_sums[visible_cell_index] * rescale;
 
         // re-use recon sums as integer deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
