@@ -165,8 +165,6 @@ void Encoder::learn(
             }
         }
 
-    const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
-
     int max_index = 0;
     int max_recon_sum = 0;
 
@@ -185,26 +183,15 @@ void Encoder::learn(
     if (max_index == target_ci)
         return;
 
-    // softmax
-    float total = 0.0f;
+    const float rescale = 1.0f / (count * 255);
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
     
-        vl.visible_acts[visible_cell_index] = expf((vl.recon_sums[visible_cell_index] - max_recon_sum) * recon_scale);
-
-        total += vl.visible_acts[visible_cell_index];
-    }
-
-    float total_inv = 1.0f / max(limit_small, total);
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        vl.visible_acts[visible_cell_index] *= total_inv;
+        float recon = powf(vl.recon_sums[visible_cell_index] * rescale, params.exponent);
 
         // re-use recon sums as integer deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - vl.visible_acts[visible_cell_index]), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -268,8 +255,6 @@ void Encoder::init_random(
             vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
-
-        vl.visible_acts.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -417,8 +402,6 @@ void Encoder::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
-
-        vl.visible_acts.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }

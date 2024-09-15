@@ -34,8 +34,6 @@ public:
 
         Int_Buffer recon_sums;
 
-        Float_Buffer visible_acts;
-
         float importance;
 
         Visible_Layer()
@@ -45,13 +43,13 @@ public:
     };
 
     struct Params {
-        float scale; // recon curve
+        float exponent; // recon curve
         float lr; // learning rate
 
         Params()
         :
-        scale(8.0f),
-        lr(0.04f)
+        exponent(2.0f),
+        lr(0.02f)
         {}
     };
 
