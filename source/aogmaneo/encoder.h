@@ -48,7 +48,7 @@ public:
 
         Params()
         :
-        exponent(2.0f),
+        exponent(4.0f),
         lr(0.02f)
         {}
     };
