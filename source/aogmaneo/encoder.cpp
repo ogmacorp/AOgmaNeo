@@ -181,6 +181,10 @@ void Encoder::learn(
         }
     }
 
+    // early stop
+    if (max_index == target_ci)
+        return;
+
     // softmax
     float total = 0.0f;
 
