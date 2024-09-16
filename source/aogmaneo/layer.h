@@ -54,6 +54,8 @@ private:
     Int2 hidden_size; // size of hidden/output layer
     int D; // number of dendrites per cell in predictor
 
+    Array<Vec<S, L>> hidden_pos_vecs; // positional encodings
+
     Array<Vec<S, L>> hidden_vecs;
     Array<Vec<S, L>> hidden_vecs_pred;
     Array<Vec<S, L>> hidden_vecs_prev;
@@ -116,7 +118,7 @@ private:
                 }
         }
 
-        Vec<S, L> hidden_vec = sum.thin();
+        Vec<S, L> hidden_vec = sum.thin() * hidden_pos_vecs[hidden_column_index];
 
         hidden_vecs[hidden_column_index] = hidden_vec;
     }
@@ -187,7 +189,7 @@ private:
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1)))
-                    sum += hidden_vecs_pred[hidden_column_index];
+                    sum += hidden_vecs_pred[hidden_column_index] / hidden_pos_vecs[hidden_column_index];
             }
 
         // thin and unbind position
@@ -248,6 +250,29 @@ public:
             vl.visible_vecs.resize(num_visible_columns);
             vl.pred_vecs = Array<Vec<S, L>>(num_visible_columns, 0);
         }
+
+        // generate temporary positional matrix
+        Float_Buffer embedding(S * 3);
+
+        for (int i = 0; i < embedding.size(); i++)
+            embedding[i] = rand_normalf() * positional_scale;
+
+        const float hidden_size_x_inv = 1.0f / hidden_size.x;
+        const float hidden_size_y_inv = 1.0f / hidden_size.y;
+
+        for (int x = 0; x < hidden_size.x; x++)
+            for (int y = 0; y < hidden_size.y; y++) {
+                int hidden_column_index = y + x * hidden_size.y;
+
+                for (int i = 0; i < S; i++) {
+                    float f = modf((embedding[i * 3] * x * hidden_size_x_inv + embedding[i * 3 + 1] * y * hidden_size_y_inv + embedding[i * 3 + 2]) * L_inv, 1.0f);
+
+                    if (f < 0.0f)
+                        f += 1.0f;
+
+                    hidden_pos_vecs[hidden_column_index][i] = static_cast<int>(f * L);
+                }
+            }
 
         hidden_vecs = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_pred = Array<Vec<S, L>>(num_hidden_columns, 0);
@@ -342,6 +367,8 @@ public:
             size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size() * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>);
         }
 
+        size += hidden_pos_vecs.size() * sizeof(Vec<S, L>);
+
         size += 3 * hidden_vecs.size() * sizeof(Vec<S, L>);
 
         size += predictor_weights.size() * sizeof(Byte);
@@ -387,6 +414,8 @@ public:
             writer.write(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
         }
 
+        writer.write(&hidden_pos_vecs[0], hidden_pos_vecs.size() * sizeof(Vec<S, L>));
+
         writer.write(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
@@ -424,6 +453,10 @@ public:
             reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S, L>));
             reader.read(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
         }
+
+        hidden_pos_vecs.resize(num_hidden_columns);
+
+        reader.read(&hidden_pos_vecs[0], hidden_pos_vecs.size() * sizeof(Vec<S, L>));
 
         hidden_vecs.resize(num_hidden_columns);
         hidden_vecs_pred.resize(num_hidden_columns);
