@@ -67,8 +67,10 @@ private:
     Array<Visible_Layer_Desc> visible_layer_descs;
 
     Byte_Buffer predictor_weights;
+    Int_Buffer predictor_dendrite_sums;
     Float_Buffer predictor_dendrite_acts;
     Float_Buffer predictor_output_acts;
+    Int_Buffer predictor_output_deltas;
     Array<Predictor<S, L>> predictors;
 
     // --- kernels ---
@@ -269,13 +271,20 @@ public:
         for (int i = 0; i < predictor_weights.size(); i++)
             predictor_weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
 
+        predictor_dendrite_sums.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
         predictor_dendrite_acts.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
         predictor_output_acts.resize(num_hidden_columns * Predictor<S, L>::N);
+        predictor_output_deltas.resize(num_hidden_columns * Predictor<S, L>::N);
 
         predictors.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            predictors[i].set_from(num_dendrites, &predictor_weights[i * C], &predictor_dendrite_acts[i * Predictor<S, L>::N * num_dendrites], &predictor_output_acts[i * Predictor<S, L>::N]);
+            predictors[i].set_from(num_dendrites,
+                &predictor_weights[i * C],
+                &predictor_dendrite_sums[i * Predictor<S, L>::N * num_dendrites],
+                &predictor_dendrite_acts[i * Predictor<S, L>::N * num_dendrites],
+                &predictor_output_acts[i * Predictor<S, L>::N],
+                &predictor_output_deltas[i * Predictor<S, L>::N]);
     }
 
     void forward(
@@ -452,13 +461,20 @@ public:
 
         reader.read(&predictor_weights[0], predictor_weights.size() * sizeof(Byte));
 
+        predictor_dendrite_sums.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
         predictor_dendrite_acts.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
         predictor_output_acts.resize(num_hidden_columns * Predictor<S, L>::N);
+        predictor_output_deltas.resize(num_hidden_columns * Predictor<S, L>::N);
 
         predictors.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            predictors[i].set_from(num_dendrites, &predictor_weights[i * C], &predictor_dendrite_acts[i * Predictor<S, L>::N * num_dendrites], &predictor_output_acts[i * Predictor<S, L>::N]);
+            predictors[i].set_from(num_dendrites,
+                &predictor_weights[i * C],
+                &predictor_dendrite_sums[i * Predictor<S, L>::N * num_dendrites],
+                &predictor_dendrite_acts[i * Predictor<S, L>::N * num_dendrites],
+                &predictor_output_acts[i * Predictor<S, L>::N],
+                &predictor_output_deltas[i * Predictor<S, L>::N]);
     }
 
     void write_state(

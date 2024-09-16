@@ -18,8 +18,10 @@ template<int S, int L>
 class Predictor {
 private:
     Byte* weights;
+    int* dendrite_sums;
     float* dendrite_acts;
     float* output_acts;
+    int* output_deltas;
 
     int D;
     int C;
@@ -31,31 +33,38 @@ public:
     :
     weights(nullptr),
     dendrite_acts(nullptr),
-    output_acts(nullptr)
+    output_acts(nullptr),
+    output_deltas(nullptr)
     {}
 
     Predictor(
         int D,
         Byte* weights,
+        int* dendrite_sums,
         float* dendrite_acts,
-        float* output_acts
+        float* output_acts,
+        int* output_deltas
     ) {
-        set_from(D, weights, dendrite_acts, output_acts);
+        set_from(D, weights, dendrite_sums, dendrite_acts, output_acts, output_deltas);
     }
 
     void set_from(
         int D,
         Byte* weights,
+        int* dendrite_sums,
         float* dendrite_acts,
-        float* output_acts
+        float* output_acts,
+        int* output_deltas
     ) {
         this->D = D;
 
         C = N * D * N;
 
         this->weights = weights;
+        this->dendrite_sums = dendrite_sums;
         this->dendrite_acts = dendrite_acts;
         this->output_acts = output_acts;
+        this->output_deltas = output_deltas;
     }
 
     // number of segments
@@ -86,14 +95,36 @@ public:
         const typename Layer<S, L>::Params &params
     ) const {
         assert(weights != nullptr);
-        assert(dendrite_acts != nullptr);
-        assert(output_acts != nullptr);
+
+        for (int i = 0; i < N; i++)
+            dendrite_sums[i] = 0;
+
+        const int total_num_dendrites = N * D;
+
+        for (int vs = 0; vs < S; vs++) {
+            int sindex = src[vs] + L * vs;
+
+            for (int hs = 0; hs < S; hs++) {
+                int max_index = 0;
+                float max_activation = limit_min;
+
+                for (int hl = 0; hl < L; hl++) {
+                    int hindex = hl + L * hs;
+
+                    for (int hd = 0; hd < D; hd++) {
+                        int dindex = hd + D * hindex;
+
+                        dendrite_sums[dindex] += weights[dindex + total_num_dendrites * sindex];
+                    }
+                }
+            }
+        }
+
+        const float rescale_stim = params.scale * sqrtf(1.0f / S) / 127.0f;
+        const float rescale_act = sqrtf(1.0f / D);
 
         Vec<S, L> result;
 
-        const float rescale_stim = params.scale * sqrtf(1.0f / S) / 127.0f;
-
-        // activate
         for (int hs = 0; hs < S; hs++) {
             int max_index = 0;
             float max_activation = limit_min;
@@ -106,17 +137,16 @@ public:
                 for (int hd = 0; hd < D; hd++) {
                     int dindex = hd + D * hindex;
 
-                    int sum = 0;
+                    float stim = (dendrite_sums[dindex] - S * 127.0f) * rescale_stim;
 
-                    for (int vs = 0; vs < S; vs++)
-                        sum += weights[src[vs] + L * (vs + S * dindex)];
+                    dendrite_acts[dindex] = max(stim * params.leak, stim);
 
-                    float stim = (sum - S * 127) * rescale_stim;
-
-                    float dendrite_act = max(stim * params.leak, stim);
-
-                    activation += dendrite_act * ((hd >= D / 2) * 2.0f - 1.0f);
+                    activation += dendrite_acts[dindex] * ((hd >= D / 2) * 2.0f - 1.0f);
                 }
+
+                activation * rescale_act;
+
+                output_acts[hindex] = activation;
 
                 if (activation > max_activation) {
                     max_activation = activation;
@@ -130,6 +160,7 @@ public:
         return result;
     }
 
+    // reqires predict to have been called first
     void learn(
         const Vec<S, L> &src,
         const Vec<S, L> &target,
@@ -137,43 +168,18 @@ public:
         const typename Layer<S, L>::Params &params
     ) {
         assert(weights != nullptr);
-        assert(dendrite_acts != nullptr);
-        assert(output_acts != nullptr);
 
         const float rescale_stim = params.scale * sqrtf(1.0f / S) / 127.0f;
         const float rescale_act = sqrtf(1.0f / D);
 
-        // activate output
+        // learn from existing state (predict was called with the same src)
         for (int hs = 0; hs < S; hs++) {
             float max_activation = limit_min;
 
             for (int hl = 0; hl < L; hl++) {
                 int hindex = hl + L * hs;
 
-                float activation = 0.0f;
-
-                for (int hd = 0; hd < D; hd++) {
-                    int dindex = hd + D * hindex;
-
-                    int sum = 0;
-
-                    for (int vs = 0; vs < S; vs++)
-                        sum += weights[src[vs] + L * (vs + S * dindex)];
-
-                    float stim = (sum - S * 127) * rescale_stim;
-
-                    float dendrite_act = max(stim * params.leak, stim);
-
-                    dendrite_acts[dindex] = dendrite_act;
-
-                    activation += dendrite_act * ((hd >= D / 2) * 2.0f - 1.0f);
-                }
-
-                activation * rescale_act;
-
-                output_acts[hindex] = activation;
-
-                max_activation = max(max_activation, activation);
+                max_activation = max(max_activation, output_acts[hindex]);
             }
 
             // softmax
@@ -202,10 +208,29 @@ public:
 
                     int delta = rand_roundf(params.lr * 255.0f * error * ((hd >= D / 2) * 2.0f - 1.0f) * ((dendrite_acts[dindex] > 0.0f) * (1.0f - params.leak) + params.leak), state);
 
-                    for (int vs = 0; vs < S; vs++) {
-                        int wi = src[vs] + L * (vs + S * dindex);
+                    output_deltas[dindex] = delta;
+                }
+            }
+        }
 
-                        weights[wi] = min(255, max(0, weights[wi] + delta));
+        const int total_num_dendrites = N * D;
+
+        for (int vs = 0; vs < S; vs++) {
+            int sindex = src[vs] + L * vs;
+
+            for (int hs = 0; hs < S; hs++) {
+                int max_index = 0;
+                float max_activation = limit_min;
+
+                for (int hl = 0; hl < L; hl++) {
+                    int hindex = hl + L * hs;
+
+                    for (int hd = 0; hd < D; hd++) {
+                        int dindex = hd + D * hindex;
+
+                        int wi = dindex + total_num_dendrites * sindex;
+
+                        weights[wi] = min(255, max(0, weights[wi] + output_deltas[dindex]));
                     }
                 }
             }
