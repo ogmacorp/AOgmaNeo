@@ -13,7 +13,8 @@
 namespace aon {
 // type of hierarchy input layer
 enum IO_Type {
-    prediction = 0
+    none = 0,
+    prediction = 1
 };
 
 // a sph
@@ -164,6 +165,9 @@ public:
 
                         visible_layer_descs[index].size = io_sizes[i];
                         visible_layer_descs[index].radius = io_descs[i].radius;
+
+                        if (t < layer_descs[l].ticks_per_update && io_types[i] == prediction)
+                            visible_layer_descs[index].predictable = true;
                     }
                 }
             }
@@ -182,6 +186,9 @@ public:
                 for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
                     visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
                     visible_layer_descs[t].radius = layer_descs[l].radius;
+
+                    if (t < layer_descs[l].ticks_per_update)
+                        visible_layer_descs[t].predictable = true;
                 }
             }
             
