@@ -208,6 +208,8 @@ public:
         // pre-compute dimensions
         int num_hidden_columns = hidden_size.x * hidden_size.y;
 
+        const float L_inv = 1.0f / L;
+
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
@@ -227,12 +229,12 @@ public:
                     int visible_column_index = y + x * vld.size.y;
 
                     for (int i = 0; i < S; i++) {
-                        float f = modf(embedding[i * 3] * x + embedding[i * 3 + 1] * y + embedding[i * 3 + 2], 1.0f);
+                        float f = modf((embedding[i * 3] * x + embedding[i * 3 + 1] * y + embedding[i * 3 + 2]) * L_inv, 1.0f);
 
                         if (f < 0.0f)
                             f += 1.0f;
 
-                        vl.visible_pos_vecs[visible_column_index][i] = static_cast<int>(f * (L - 1) + 0.5f);
+                        vl.visible_pos_vecs[visible_column_index][i] = static_cast<int>(f * L);
                     }
                 }
 
