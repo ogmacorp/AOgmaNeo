@@ -81,7 +81,7 @@ public:
     
     Vec<S, L> operator*(
         const Vec<S, L> &other
-    ) {
+    ) const {
         Vec<S, L> result;
 
         for (int i = 0; i < S; i++)
@@ -101,7 +101,7 @@ public:
 
     Vec<S, L> operator/(
         const Vec<S, L> &other
-    ) {
+    ) const {
         Vec<S, L> result;
 
         for (int i = 0; i < S; i++)
@@ -121,7 +121,7 @@ public:
 
     Bundle<S, L> operator+(
         const Vec<S, L> &other
-    ) {
+    ) const {
         Bundle<S, L> result = 0;
 
         for (int i = 0; i < S; i++) {
@@ -240,7 +240,7 @@ public:
     
     Bundle<S, L> operator+(
         const Bundle<S, L> &other
-    ) {
+    ) const {
         Bundle<S, L> result;
 
         for (int i = 0; i < N; i++)
@@ -260,7 +260,7 @@ public:
 
     Bundle<S, L> operator+(
         const Vec<S, L> &other
-    ) {
+    ) const {
         Bundle<S, L> result = 0;
 
         for (int i = 0; i < S; i++)
