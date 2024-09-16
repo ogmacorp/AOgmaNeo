@@ -35,6 +35,8 @@ public:
         Array<Vec<S, L>> visible_pos_vecs; // positional encodings
         Array<Vec<S, L>> visible_vecs; // input with bound position
         Array<Vec<S, L>> pred_vecs; // reconstructed input
+
+        Vec<S, L> visible_layer_index_vec;
     };
 
     struct Params {
@@ -111,12 +113,16 @@ private:
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+            Bundle<S, L> sub_sum = 0;
+
             for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    sum += vl.visible_vecs[visible_column_index];
+                    sub_sum += vl.visible_vecs[visible_column_index];
                 }
+
+            sum += sub_sum.thin() * vl.visible_layer_index_vec;
         }
 
         Vec<S, L> hidden_vec_prev = hidden_vecs[hidden_column_index];
@@ -183,7 +189,7 @@ private:
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1)))
-                    sum += hidden_vecs_pred_fb[hidden_column_index];
+                    sum += hidden_vecs_pred_fb[hidden_column_index] / vl.visible_layer_index_vec;
             }
 
         // thin and unbind position
@@ -237,6 +243,8 @@ public:
                         vl.visible_pos_vecs[visible_column_index][i] = static_cast<int>(f * L);
                     }
                 }
+
+            vl.visible_layer_index_vec = Vec<S, L>::randomized();
 
             vl.visible_vecs.resize(num_visible_columns);
             vl.pred_vecs = Array<Vec<S, L>>(num_visible_columns, 0);
@@ -334,7 +342,7 @@ public:
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer &vl = visible_layers[vli];
 
-            size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size () * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>);
+            size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size() * sizeof(Vec<S, L>) + sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>);
         }
 
         size += 3 * hidden_vecs.size() * sizeof(Vec<S, L>);
@@ -379,6 +387,7 @@ public:
             writer.write(&vld, sizeof(Visible_Layer_Desc));
 
             writer.write(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S, L>));
+            writer.write(&vl.visible_layer_index_vec, sizeof(Vec<S, L>));
             writer.write(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
         }
 
@@ -420,6 +429,7 @@ public:
             vl.pred_vecs.resize(num_visible_columns);
 
             reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S, L>));
+            reader.read(&vl.visible_layer_index_vec, sizeof(Vec<S, L>));
             reader.read(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
         }
 
