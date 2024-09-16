@@ -105,7 +105,7 @@ public:
 
         for (int vs = 0; vs < S; vs++) {
             int sindex1 = src1[vs] + L * vs;
-            int sindex2 = N + src2[vs] + L * vs;
+            int sindex2 = src2[vs] + L * (vs + S);
 
             for (int hs = 0; hs < S; hs++) {
                 for (int hl = 0; hl < L; hl++) {
@@ -219,7 +219,7 @@ public:
 
         for (int vs = 0; vs < S; vs++) {
             int sindex1 = src1[vs] + L * vs;
-            int sindex2 = N + src2[vs] + L * vs;
+            int sindex2 = src2[vs] + L * (vs + S);
 
             for (int hs = 0; hs < S; hs++) {
                 for (int hl = 0; hl < L; hl++) {

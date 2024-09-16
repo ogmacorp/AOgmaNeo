@@ -271,7 +271,7 @@ public:
         hidden_vecs_prev2 = Array<Vec<S, L>>(num_hidden_columns, 0);
 
         int total_num_dendrites = num_dendrites * Predictor<S, L>::N;
-        int C = Predictor<S, L>::N * total_num_dendrites;
+        int C = 2 * Predictor<S, L>::N * total_num_dendrites;
 
         predictor_weights.resize(num_hidden_columns * C);
 
@@ -467,7 +467,7 @@ public:
         reader.read(&hidden_vecs_prev2[0], hidden_vecs_prev2.size() * sizeof(Vec<S, L>));
 
         int total_num_dendrites = num_dendrites * Predictor<S, L>::N;
-        int C = Predictor<S, L>::N * total_num_dendrites;
+        int C = 2 * Predictor<S, L>::N * total_num_dendrites;
 
         predictor_weights.resize(num_hidden_columns * C);
 
