@@ -105,9 +105,6 @@ public:
             int sindex = src[vs] + L * vs;
 
             for (int hs = 0; hs < S; hs++) {
-                int max_index = 0;
-                float max_activation = limit_min;
-
                 for (int hl = 0; hl < L; hl++) {
                     int hindex = hl + L * hs;
 
