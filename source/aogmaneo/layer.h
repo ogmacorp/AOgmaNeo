@@ -62,7 +62,8 @@ private:
     Array<Vec<S, L>> hidden_vecs_all;
     Array<Vec<S, L>> hidden_vecs_pred;
     Array<Vec<S, L>> hidden_vecs_pred_next;
-    Array<Vec<S, L>> hidden_vecs_prev;
+    Array<Vec<S, L>> hidden_vecs_prev1;
+    Array<Vec<S, L>> hidden_vecs_prev2;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -145,20 +146,22 @@ private:
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         if (learn_enabled)
-            predictors[hidden_column_index].learn(hidden_vecs_prev[hidden_column_index], hidden_vecs_pred[hidden_column_index], state, params);
+            predictors[hidden_column_index].learn(hidden_vecs_prev1[hidden_column_index], hidden_vecs_prev2[hidden_column_index], hidden_vecs_pred[hidden_column_index], state, params);
 
-        Vec<S, L> pred_input_vec;
+        Vec<S, L> pred_input_vec1 = hidden_vecs_all[hidden_column_index];
+        Vec<S, L> pred_input_vec2;
 
         if (feedback_vecs.size() == 0)
-            pred_input_vec = hidden_vecs_all[hidden_column_index];
+            pred_input_vec2 = hidden_vecs_all[hidden_column_index];
         else
-            pred_input_vec = (hidden_vecs_all[hidden_column_index] + feedback_vecs[hidden_column_index]).thin(); // bind or add, both works
+            pred_input_vec2 = feedback_vecs[hidden_column_index];
 
-        Vec<S, L> hidden_vec_pred_next = predictors[hidden_column_index].predict(pred_input_vec, params);
+        Vec<S, L> hidden_vec_pred_next = predictors[hidden_column_index].predict(pred_input_vec1, pred_input_vec2, params);
 
         hidden_vecs_pred_next[hidden_column_index] = hidden_vec_pred_next;
 
-        hidden_vecs_prev[hidden_column_index] = pred_input_vec;
+        hidden_vecs_prev1[hidden_column_index] = pred_input_vec1;
+        hidden_vecs_prev2[hidden_column_index] = pred_input_vec2;
     }
 
     void backward(
@@ -264,7 +267,8 @@ public:
         hidden_vecs_all = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_pred = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_pred_next = Array<Vec<S, L>>(num_hidden_columns, 0);
-        hidden_vecs_prev = Array<Vec<S, L>>(num_hidden_columns, 0);
+        hidden_vecs_prev1 = Array<Vec<S, L>>(num_hidden_columns, 0);
+        hidden_vecs_prev2 = Array<Vec<S, L>>(num_hidden_columns, 0);
 
         int total_num_dendrites = num_dendrites * Predictor<S, L>::N;
         int C = Predictor<S, L>::N * total_num_dendrites;
@@ -351,7 +355,8 @@ public:
         hidden_vecs_all.fill(0);
         hidden_vecs_pred.fill(0);
         hidden_vecs_pred_next.fill(0);
-        hidden_vecs_prev.fill(0);
+        hidden_vecs_prev1.fill(0);
+        hidden_vecs_prev2.fill(0);
     }
 
     // serialization
@@ -412,7 +417,8 @@ public:
         writer.write(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
-        writer.write(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_prev1[0], hidden_vecs_prev1.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_prev2[0], hidden_vecs_prev2.size() * sizeof(Vec<S, L>));
 
         writer.write(&predictor_weights[0], predictor_weights.size() * sizeof(Byte));
     }
@@ -451,12 +457,14 @@ public:
         hidden_vecs_all.resize(num_hidden_columns);
         hidden_vecs_pred.resize(num_hidden_columns);
         hidden_vecs_pred_next.resize(num_hidden_columns);
-        hidden_vecs_prev.resize(num_hidden_columns);
+        hidden_vecs_prev1.resize(num_hidden_columns);
+        hidden_vecs_prev2.resize(num_hidden_columns);
 
         reader.read(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
-        reader.read(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_prev1[0], hidden_vecs_prev1.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_prev2[0], hidden_vecs_prev2.size() * sizeof(Vec<S, L>));
 
         int total_num_dendrites = num_dendrites * Predictor<S, L>::N;
         int C = Predictor<S, L>::N * total_num_dendrites;
@@ -493,7 +501,8 @@ public:
         writer.write(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
-        writer.write(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_prev1[0], hidden_vecs_prev1.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_prev2[0], hidden_vecs_prev2.size() * sizeof(Vec<S, L>));
     }
 
     void read_state(
@@ -508,7 +517,8 @@ public:
         reader.read(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
-        reader.read(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_prev1[0], hidden_vecs_prev1.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_prev2[0], hidden_vecs_prev2.size() * sizeof(Vec<S, L>));
     }
 
     void write_weights(
