@@ -238,7 +238,7 @@ public:
                     }
                 }
 
-                layers[l].forward(layer_inputs, learn_enabled, params.layers[l]);
+                layers[l].forward(layer_inputs);
 
                 // add to next layer's history
                 if (l < layers.size() - 1) {
@@ -254,13 +254,19 @@ public:
         }
 
         // backward
-        for (int l = layers.size() - 2; l >= 0; l--) {
+        for (int l = layers.size() - 1; l >= 0; l--) {
             if (updates[l]) {
-                int t = ticks_per_update[l + 1] - 1 - ticks[l + 1];
+                Array_View<Vec<S, L>> feedback;
 
-                layers[l + 1].backward(t);
+                if (l < layers.size() - 1) {
+                    int t = ticks_per_update[l + 1] - 1 - ticks[l + 1];
 
-                layers[l].add_feedback(layers[l + 1].get_visible_layer(t).pred_vecs);
+                    layers[l + 1].backward(t);
+
+                    feedback = layers[l + 1].get_visible_layer(t).pred_vecs;
+                }
+
+                layers[l].predict(feedback, learn_enabled, params.layers[l]);
             }
         }
     }

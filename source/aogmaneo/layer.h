@@ -58,7 +58,7 @@ private:
 
     Array<Vec<S, L>> hidden_vecs;
     Array<Vec<S, L>> hidden_vecs_pred;
-    Array<Vec<S, L>> hidden_vecs_pred_fb; // with feedback
+    Array<Vec<S, L>> hidden_vecs_prev;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -85,10 +85,7 @@ private:
     }
 
     void forward(
-        const Int2 &column_pos,
-        bool learn_enabled,
-        unsigned long* state,
-        const Params &params
+        const Int2 &column_pos
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
@@ -125,28 +122,35 @@ private:
             sum += sub_sum.thin() * vl.visible_layer_index_vec;
         }
 
-        Vec<S, L> hidden_vec_prev = hidden_vecs[hidden_column_index];
-
         Vec<S, L> hidden_vec = sum.thin();
 
         hidden_vecs[hidden_column_index] = hidden_vec;
-
-        // clean up
-        Vec<S, L> hidden_vec_pred = predictors[hidden_column_index].predict(hidden_vec, params);
-
-        hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
-
-        if (learn_enabled)
-            predictors[hidden_column_index].learn(hidden_vec_prev, hidden_vec, state, params);
     }
 
-    void add_feedback(
+    void predict(
         const Int2 &column_pos,
-        Array_View<Vec<S, L>> feedback_vecs
+        Array_View<Vec<S, L>> feedback_vecs,
+        bool learn_enabled,
+        unsigned long* state,
+        const Params &params
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-        hidden_vecs_pred_fb[hidden_column_index] = (hidden_vecs_pred[hidden_column_index] + feedback_vecs[hidden_column_index]).thin();
+        if (learn_enabled)
+            predictors[hidden_column_index].learn(hidden_vecs_prev[hidden_column_index], hidden_vecs[hidden_column_index], state, params);
+
+        Vec<S, L> pred_input_vec;
+
+        if (feedback_vecs.size() == 0)
+            pred_input_vec = hidden_vecs[hidden_column_index];
+        else
+            pred_input_vec = (hidden_vecs[hidden_column_index] + feedback_vecs[hidden_column_index]).thin();
+
+        Vec<S, L> hidden_vec_pred = predictors[hidden_column_index].predict(pred_input_vec, params);
+
+        hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
+
+        hidden_vecs_prev[hidden_column_index] = pred_input_vec;
     }
 
     void backward(
@@ -189,7 +193,7 @@ private:
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1)))
-                    sum += hidden_vecs_pred_fb[hidden_column_index] / vl.visible_layer_index_vec;
+                    sum += hidden_vecs_pred[hidden_column_index] / vl.visible_layer_index_vec;
             }
 
         // thin and unbind position
@@ -252,7 +256,7 @@ public:
 
         hidden_vecs = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_pred = Array<Vec<S, L>>(num_hidden_columns, 0);
-        hidden_vecs_pred_fb = Array<Vec<S, L>>(num_hidden_columns, 0);
+        hidden_vecs_prev = Array<Vec<S, L>>(num_hidden_columns, 0);
 
         int C = Predictor<S, L>::N * D * Predictor<S, L>::N;
 
@@ -271,9 +275,7 @@ public:
     }
 
     void forward(
-        Array<Array_View<Vec<S, L>>> input_vecs,
-        bool learn_enabled, // whether to learn
-        const Params &params // parameters
+        Array<Array_View<Vec<S, L>>> input_vecs
     ) {
         int num_hidden_columns = hidden_size.x * hidden_size.y;
 
@@ -288,26 +290,26 @@ public:
                 bind_inputs(Int2(i / vld.size.y, i % vld.size.y), input_vecs[vli], vli);
         }
 
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            forward(Int2(i / hidden_size.y, i % hidden_size.y));
+    }
+
+    void predict(
+        Array_View<Vec<S, L>> feedback_vecs, // can be empty
+        bool learn_enabled, // whether to learn
+        const Params &params // parameters
+    ) {
+        int num_hidden_columns = hidden_size.x * hidden_size.y;
+
         unsigned int base_state = rand();
 
         PARALLEL_FOR
         for (int i = 0; i < num_hidden_columns; i++) {
             unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-            forward(Int2(i / hidden_size.y, i % hidden_size.y), learn_enabled, &state, params);
+            predict(Int2(i / hidden_size.y, i % hidden_size.y), feedback_vecs, learn_enabled, &state, params);
         }
-
-        hidden_vecs_pred_fb = hidden_vecs_pred; // copy in case no feedback is added
-    }
-
-    void add_feedback(
-        Array_View<Vec<S, L>> feedback_vecs
-    ) {
-        int num_hidden_columns = hidden_size.x * hidden_size.y;
-
-        PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            add_feedback(Int2(i / hidden_size.y, i % hidden_size.y), feedback_vecs);
     }
 
     void backward(
@@ -332,7 +334,7 @@ public:
 
         hidden_vecs.fill(0);
         hidden_vecs_pred.fill(0);
-        hidden_vecs_pred_fb.fill(0);
+        hidden_vecs_prev.fill(0);
     }
 
     // serialization
@@ -394,7 +396,7 @@ public:
         writer.write(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
 
-        writer.write(&hidden_vecs_pred_fb[0], hidden_vecs_pred_fb.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
 
         writer.write(&num_visible_layers, sizeof(int));
 
@@ -435,11 +437,11 @@ public:
 
         hidden_vecs.resize(num_hidden_columns);
         hidden_vecs_pred.resize(num_hidden_columns);
-        hidden_vecs_pred_fb.resize(num_hidden_columns);
+        hidden_vecs_prev.resize(num_hidden_columns);
 
         reader.read(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
-        reader.read(&hidden_vecs_pred_fb[0], hidden_vecs_pred_fb.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
 
         int C = Predictor<S, L>::N * D * Predictor<S, L>::N;
 
@@ -467,7 +469,7 @@ public:
 
         writer.write(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
-        writer.write(&hidden_vecs_pred_fb[0], hidden_vecs_pred_fb.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
     }
 
     void read_state(
@@ -481,7 +483,7 @@ public:
 
         reader.read(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
-        reader.read(&hidden_vecs_pred_fb[0], hidden_vecs_pred_fb.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
     }
 
     void write_weights(
