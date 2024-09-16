@@ -72,7 +72,7 @@ private:
     Int_Buffer predictor_dendrite_sums;
     Float_Buffer predictor_dendrite_acts;
     Float_Buffer predictor_output_acts;
-    Int_Buffer predictor_output_deltas;
+    Int_Buffer predictor_dendrite_deltas;
     Array<Predictor<S, L>> predictors;
 
     // --- kernels ---
@@ -277,7 +277,7 @@ public:
         predictor_dendrite_sums.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
         predictor_dendrite_acts.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
         predictor_output_acts.resize(num_hidden_columns * Predictor<S, L>::N);
-        predictor_output_deltas.resize(num_hidden_columns * Predictor<S, L>::N);
+        predictor_dendrite_deltas.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
 
         predictors.resize(num_hidden_columns);
 
@@ -287,7 +287,7 @@ public:
                 &predictor_dendrite_sums[i * total_num_dendrites],
                 &predictor_dendrite_acts[i * total_num_dendrites],
                 &predictor_output_acts[i * Predictor<S, L>::N],
-                &predictor_output_deltas[i * Predictor<S, L>::N]);
+                &predictor_dendrite_deltas[i * Predictor<S, L>::N]);
     }
 
     void forward(
@@ -468,7 +468,7 @@ public:
         predictor_dendrite_sums.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
         predictor_dendrite_acts.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
         predictor_output_acts.resize(num_hidden_columns * Predictor<S, L>::N);
-        predictor_output_deltas.resize(num_hidden_columns * Predictor<S, L>::N);
+        predictor_dendrite_deltas.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
 
         predictors.resize(num_hidden_columns);
 
@@ -478,7 +478,7 @@ public:
                 &predictor_dendrite_sums[i * total_num_dendrites],
                 &predictor_dendrite_acts[i * total_num_dendrites],
                 &predictor_output_acts[i * Predictor<S, L>::N],
-                &predictor_output_deltas[i * Predictor<S, L>::N]);
+                &predictor_dendrite_deltas[i * Predictor<S, L>::N]);
     }
 
     void write_state(

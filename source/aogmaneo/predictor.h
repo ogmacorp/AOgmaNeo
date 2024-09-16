@@ -21,7 +21,7 @@ private:
     int* dendrite_sums;
     float* dendrite_acts;
     float* output_acts;
-    int* output_deltas;
+    int* dendrite_deltas;
 
     int D;
     int C;
@@ -34,7 +34,7 @@ public:
     weights(nullptr),
     dendrite_acts(nullptr),
     output_acts(nullptr),
-    output_deltas(nullptr)
+    dendrite_deltas(nullptr)
     {}
 
     Predictor(
@@ -43,9 +43,9 @@ public:
         int* dendrite_sums,
         float* dendrite_acts,
         float* output_acts,
-        int* output_deltas
+        int* dendrite_deltas
     ) {
-        set_from(D, weights, dendrite_sums, dendrite_acts, output_acts, output_deltas);
+        set_from(D, weights, dendrite_sums, dendrite_acts, output_acts, dendrite_deltas);
     }
 
     void set_from(
@@ -54,7 +54,7 @@ public:
         int* dendrite_sums,
         float* dendrite_acts,
         float* output_acts,
-        int* output_deltas
+        int* dendrite_deltas
     ) {
         this->D = D;
 
@@ -64,7 +64,7 @@ public:
         this->dendrite_sums = dendrite_sums;
         this->dendrite_acts = dendrite_acts;
         this->output_acts = output_acts;
-        this->output_deltas = output_deltas;
+        this->dendrite_deltas = dendrite_deltas;
     }
 
     // number of segments
@@ -205,7 +205,7 @@ public:
 
                     int delta = rand_roundf(params.lr * 255.0f * error * ((hd >= D / 2) * 2.0f - 1.0f) * ((dendrite_acts[dindex] > 0.0f) * (1.0f - params.leak) + params.leak), state);
 
-                    output_deltas[dindex] = delta;
+                    dendrite_deltas[dindex] = delta;
                 }
             }
         }
@@ -227,7 +227,7 @@ public:
 
                         int wi = dindex + total_num_dendrites * sindex;
 
-                        weights[wi] = min(255, max(0, weights[wi] + output_deltas[dindex]));
+                        weights[wi] = min(255, max(0, weights[wi] + dendrite_deltas[dindex]));
                     }
                 }
             }
