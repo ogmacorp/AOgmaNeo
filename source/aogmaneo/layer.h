@@ -334,7 +334,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        long size = sizeof(Int2) + sizeof(int);
+        long size = sizeof(Int2) + 2 * sizeof(int);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer &vl = visible_layers[vli];
@@ -389,10 +389,7 @@ public:
 
         writer.write(&hidden_vecs[0], hidden_vecs.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
-
         writer.write(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
-
-        writer.write(&num_visible_layers, sizeof(int));
 
         writer.write(&predictor_weights[0], predictor_weights.size() * sizeof(Byte));
     }
