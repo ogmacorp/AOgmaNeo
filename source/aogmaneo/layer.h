@@ -47,8 +47,8 @@ public:
 
         Params()
         :
-        scale(8.0f),
-        lr(0.05f),
+        scale(4.0f),
+        lr(0.04f),
         leak(0.01f)
         {}
     };
@@ -56,6 +56,8 @@ public:
 private:
     Int2 hidden_size; // size of hidden/output layer
     int num_dendrites; // number of dendrites per cell in predictor
+
+    Array<Vec<S, L>> hidden_pos_vecs;
 
     Array<Vec<S, L>> hidden_vecs_all;
     Array<Vec<S, L>> hidden_vecs_pred;
