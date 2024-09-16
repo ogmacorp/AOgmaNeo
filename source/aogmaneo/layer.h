@@ -44,8 +44,8 @@ public:
 
         Params()
         :
-        scale(8.0f),
-        lr(0.05f),
+        scale(4.0f),
+        lr(0.04f),
         leak(0.01f)
         {}
     };
@@ -127,13 +127,12 @@ private:
         const Int2 &column_pos,
         Array_View<Vec<S, L>> feedback_vecs,
         bool learn_enabled,
-        unsigned long* state,
         const Params &params
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         if (learn_enabled)
-            predictors[hidden_column_index].learn(hidden_vecs_prev[hidden_column_index], hidden_vecs[hidden_column_index], state, params);
+            predictors[hidden_column_index].learn(hidden_vecs_prev[hidden_column_index], hidden_vecs[hidden_column_index], params);
 
         Vec<S, L> pred_input_vec;
 
@@ -324,14 +323,9 @@ public:
     ) {
         int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-        unsigned int base_state = rand();
-
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++) {
-            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-            predict(Int2(i / hidden_size.y, i % hidden_size.y), feedback_vecs, learn_enabled, &state, params);
-        }
+        for (int i = 0; i < num_hidden_columns; i++)
+            predict(Int2(i / hidden_size.y, i % hidden_size.y), feedback_vecs, learn_enabled, params);
     }
 
     void backward(

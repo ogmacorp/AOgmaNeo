@@ -133,7 +133,6 @@ public:
     void learn(
         const Vec<S, L> &src,
         const Vec<S, L> &target,
-        unsigned long* state,
         const typename Layer<S, L>::Params &params
     ) {
         assert(weights != nullptr);
@@ -200,7 +199,7 @@ public:
                 for (int hd = 0; hd < D; hd++) {
                     int dindex = hd + D * hindex;
 
-                    int delta = rand_roundf(params.lr * 255.0f * error * ((hd >= D / 2) * 2.0f - 1.0f) * ((dendrite_acts[dindex] > 0.0f) * (1.0f - params.leak) + params.leak), state);
+                    int delta = roundf(params.lr * 255.0f * error * ((hd >= D / 2) * 2.0f - 1.0f) * ((dendrite_acts[dindex] > 0.0f) * (1.0f - params.leak) + params.leak));
 
                     for (int vs = 0; vs < S; vs++) {
                         int wi = src[vs] + L * (vs + S * dindex);
