@@ -144,7 +144,7 @@ private:
 
         Vec<S, L> hidden_vec_pred = predictors[hidden_column_index].predict(pred_input_vec, params);
 
-        hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
+        hidden_vecs_pred[hidden_column_index] = hidden_vec_pred / hidden_pos_vecs[hidden_column_index]; // pre-unbind hidden pos for backward as well
 
         hidden_vecs_prev[hidden_column_index] = pred_input_vec;
     }
@@ -189,7 +189,7 @@ private:
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1)))
-                    sum += hidden_vecs_pred[hidden_column_index] / hidden_pos_vecs[hidden_column_index];
+                    sum += hidden_vecs_pred[hidden_column_index];
             }
 
         // thin and unbind position
