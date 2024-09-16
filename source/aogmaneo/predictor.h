@@ -96,10 +96,10 @@ public:
     ) const {
         assert(weights != nullptr);
 
-        for (int i = 0; i < N; i++)
-            dendrite_sums[i] = 0;
-
         const int total_num_dendrites = N * D;
+
+        for (int i = 0; i < total_num_dendrites; i++)
+            dendrite_sums[i] = 0;
 
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
