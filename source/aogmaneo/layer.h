@@ -266,7 +266,8 @@ public:
         hidden_vecs_pred_next = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_prev = Array<Vec<S, L>>(num_hidden_columns, 0);
 
-        int C = Predictor<S, L>::N * num_dendrites * Predictor<S, L>::N;
+        int total_num_dendrites = num_dendrites * Predictor<S, L>::N;
+        int C = Predictor<S, L>::N * total_num_dendrites;
 
         predictor_weights.resize(num_hidden_columns * C);
 
@@ -283,8 +284,8 @@ public:
         for (int i = 0; i < num_hidden_columns; i++)
             predictors[i].set_from(num_dendrites,
                 &predictor_weights[i * C],
-                &predictor_dendrite_sums[i * Predictor<S, L>::N * num_dendrites],
-                &predictor_dendrite_acts[i * Predictor<S, L>::N * num_dendrites],
+                &predictor_dendrite_sums[i * total_num_dendrites],
+                &predictor_dendrite_acts[i * total_num_dendrites],
                 &predictor_output_acts[i * Predictor<S, L>::N],
                 &predictor_output_deltas[i * Predictor<S, L>::N]);
     }
@@ -457,7 +458,8 @@ public:
         reader.read(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
 
-        int C = Predictor<S, L>::N * num_dendrites * Predictor<S, L>::N;
+        int total_num_dendrites = num_dendrites * Predictor<S, L>::N;
+        int C = Predictor<S, L>::N * total_num_dendrites;
 
         predictor_weights.resize(num_hidden_columns * C);
 
@@ -473,8 +475,8 @@ public:
         for (int i = 0; i < num_hidden_columns; i++)
             predictors[i].set_from(num_dendrites,
                 &predictor_weights[i * C],
-                &predictor_dendrite_sums[i * Predictor<S, L>::N * num_dendrites],
-                &predictor_dendrite_acts[i * Predictor<S, L>::N * num_dendrites],
+                &predictor_dendrite_sums[i * total_num_dendrites],
+                &predictor_dendrite_acts[i * total_num_dendrites],
                 &predictor_output_acts[i * Predictor<S, L>::N],
                 &predictor_output_deltas[i * Predictor<S, L>::N]);
     }
