@@ -49,19 +49,23 @@ public:
         int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
+        float positional_scale; // positional embedding scale
+
         Layer_Desc(
             const Int2 &hidden_size = Int2(4, 4),
             int D = 1,
             int radius = 2,
             int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int temporal_horizon = 2,
+            float positional_scale = 16.0f
         )
         :
         hidden_size(hidden_size),
         D(D),
         radius(radius),
         ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon)
+        temporal_horizon(temporal_horizon),
+        positional_scale(positional_scale)
         {}
     };
 
@@ -182,7 +186,7 @@ public:
             }
             
             // create the sparse coding layer
-            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].D, visible_layer_descs);
+            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].D, layer_descs[l].positional_scale, visible_layer_descs);
         }
 
         // initialize params
