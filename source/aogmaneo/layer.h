@@ -55,7 +55,7 @@ public:
 
 private:
     Int2 hidden_size; // size of hidden/output layer
-    int num_dendrites; // number of dendrites per cell in predictor
+    int num_hidden; // number of hidden units in predictor
 
     Array<Vec<S, L>> hidden_pos_vecs;
 
@@ -69,11 +69,7 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Byte_Buffer predictor_weights;
-    Int_Buffer predictor_dendrite_sums;
-    Float_Buffer predictor_dendrite_acts;
-    Float_Buffer predictor_output_acts;
-    Int_Buffer predictor_dendrite_deltas;
+    Byte_Buffer predictor_data;
     Array<Predictor<S, L>> predictors;
 
     // --- kernels ---
@@ -146,7 +142,7 @@ private:
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         if (learn_enabled)
-            predictors[hidden_column_index].learn(hidden_vecs_prev1[hidden_column_index], hidden_vecs_prev2[hidden_column_index], hidden_vecs_pred[hidden_column_index], state, params);
+            predictors[hidden_column_index].learn(hidden_vecs_prev1[hidden_column_index], hidden_vecs_prev2[hidden_column_index], hidden_vecs_pred_next[hidden_column_index], hidden_vecs_pred[hidden_column_index], state, params);
 
         Vec<S, L> pred_input_vec1 = hidden_vecs_all[hidden_column_index];
         Vec<S, L> pred_input_vec2;
@@ -215,14 +211,14 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int2 &hidden_size, // hidden/output size
-        int num_dendrites,
+        int num_hidden,
         float positional_scale, // positional encoding scale
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     ) {
         this->visible_layer_descs = visible_layer_descs;
 
         this->hidden_size = hidden_size;
-        this->num_dendrites = num_dendrites;
+        this->num_hidden = num_hidden;
 
         visible_layers.resize(visible_layer_descs.size());
 
@@ -272,28 +268,15 @@ public:
         hidden_vecs_prev1 = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_prev2 = Array<Vec<S, L>>(num_hidden_columns, 0);
 
-        int total_num_dendrites = num_dendrites * Predictor<S, L>::N;
-        int C = 2 * Predictor<S, L>::N * total_num_dendrites;
-
-        predictor_weights.resize(num_hidden_columns * C);
-
-        for (int i = 0; i < predictor_weights.size(); i++)
-            predictor_weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
-
-        predictor_dendrite_sums.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
-        predictor_dendrite_acts.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
-        predictor_output_acts.resize(num_hidden_columns * Predictor<S, L>::N);
-        predictor_dendrite_deltas.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
+        predictor_data.resize(num_hidden_columns * Predictor<S, L>::data_size(num_hidden));
 
         predictors.resize(num_hidden_columns);
 
-        for (int i = 0; i < num_hidden_columns; i++)
-            predictors[i].set_from(num_dendrites,
-                &predictor_weights[i * C],
-                &predictor_dendrite_sums[i * total_num_dendrites],
-                &predictor_dendrite_acts[i * total_num_dendrites],
-                &predictor_output_acts[i * Predictor<S, L>::N],
-                &predictor_dendrite_deltas[i * Predictor<S, L>::N]);
+        for (int i = 0; i < num_hidden_columns; i++) {
+            predictors[i].set_from(num_hidden, &predictor_data[i * Predictor<S, L>::data_size(num_hidden)]);
+
+            predictors[i].init_random();
+        }
     }
 
     void forward(
@@ -373,7 +356,7 @@ public:
 
         size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>);
 
-        size += predictor_weights.size() * sizeof(Byte);
+        size += predictor_data.size() * sizeof(Byte);
 
         return size;
     }
@@ -393,14 +376,14 @@ public:
     }
 
     long weights_size() const { // returns size of weights in Bytes
-        return predictor_weights.size() * sizeof(Byte);
+        return predictor_data.size() * sizeof(Byte);
     }
 
     void write(
         Stream_Writer &writer
     ) const {
         writer.write(&hidden_size, sizeof(Int2));
-        writer.write(&num_dendrites, sizeof(int));
+        writer.write(&num_hidden, sizeof(int));
 
         int num_visible_layers = visible_layers.size();
 
@@ -422,14 +405,14 @@ public:
         writer.write(&hidden_vecs_prev1[0], hidden_vecs_prev1.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_prev2[0], hidden_vecs_prev2.size() * sizeof(Vec<S, L>));
 
-        writer.write(&predictor_weights[0], predictor_weights.size() * sizeof(Byte));
+        writer.write(&predictor_data[0], predictor_data.size() * sizeof(Byte));
     }
 
     void read(
         Stream_Reader &reader
     ) {
         reader.read(&hidden_size, sizeof(Int2));
-        reader.read(&num_dendrites, sizeof(int));
+        reader.read(&num_hidden, sizeof(int));
 
         int num_hidden_columns = hidden_size.x * hidden_size.y;
 
@@ -468,27 +451,17 @@ public:
         reader.read(&hidden_vecs_prev1[0], hidden_vecs_prev1.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_prev2[0], hidden_vecs_prev2.size() * sizeof(Vec<S, L>));
 
-        int total_num_dendrites = num_dendrites * Predictor<S, L>::N;
-        int C = 2 * Predictor<S, L>::N * total_num_dendrites;
+        int total_num_hidden = num_hidden * Predictor<S, L>::N;
+        int C = 2 * Predictor<S, L>::N * total_num_hidden;
 
-        predictor_weights.resize(num_hidden_columns * C);
+        predictor_data.resize(num_hidden_columns * Predictor<S, L>::data_size(num_hidden));
 
-        reader.read(&predictor_weights[0], predictor_weights.size() * sizeof(Byte));
-
-        predictor_dendrite_sums.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
-        predictor_dendrite_acts.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
-        predictor_output_acts.resize(num_hidden_columns * Predictor<S, L>::N);
-        predictor_dendrite_deltas.resize(num_hidden_columns * Predictor<S, L>::N * num_dendrites);
+        reader.read(&predictor_data[0], predictor_data.size() * sizeof(Byte));
 
         predictors.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            predictors[i].set_from(num_dendrites,
-                &predictor_weights[i * C],
-                &predictor_dendrite_sums[i * total_num_dendrites],
-                &predictor_dendrite_acts[i * total_num_dendrites],
-                &predictor_output_acts[i * Predictor<S, L>::N],
-                &predictor_dendrite_deltas[i * Predictor<S, L>::N]);
+            predictors[i].set_from(num_hidden, &predictor_data[i * Predictor<S, L>::data_size(num_hidden)]);
     }
 
     void write_state(
@@ -526,13 +499,13 @@ public:
     void write_weights(
         Stream_Writer &writer
     ) const {
-        writer.write(&predictor_weights[0], predictor_weights.size() * sizeof(Byte));
+        writer.write(&predictor_data[0], predictor_data.size() * sizeof(Byte));
     }
 
     void read_weights(
         Stream_Reader &reader
     ) {
-        reader.read(&predictor_weights[0], predictor_weights.size() * sizeof(Byte));
+        reader.read(&predictor_data[0], predictor_data.size() * sizeof(Byte));
     }
 
     // get the number of visible layers

@@ -18,54 +18,83 @@ class Layer;
 template<int S, int L>
 class Predictor {
 private:
-    Byte* weights;
-    int* dendrite_sums;
-    float* dendrite_acts;
-    float* output_acts;
-    int* dendrite_deltas;
+    Byte* data;
 
-    int D;
-    int C;
+    S_Byte* weights_ih; // input to hidden
+    S_Byte* weights_ho; // hidden to output
+    float* hidden_acts;
+    float* output_acts;
+    int* hidden_deltas;
+    int* output_deltas;
+
+    int num_hidden;
 
 public:
     static const int N = S * L;
 
     Predictor()
     :
-    weights(nullptr),
-    dendrite_acts(nullptr),
-    output_acts(nullptr),
-    dendrite_deltas(nullptr)
+    data(nullptr)
     {}
 
     Predictor(
-        int D,
-        Byte* weights,
-        int* dendrite_sums,
-        float* dendrite_acts,
-        float* output_acts,
-        int* dendrite_deltas
+        int num_hidden,
+        Byte* data
     ) {
-        set_from(D, weights, dendrite_sums, dendrite_acts, output_acts, dendrite_deltas);
+        set_from(num_hidden, data);
     }
 
     void set_from(
-        int D,
-        Byte* weights,
-        int* dendrite_sums,
-        float* dendrite_acts,
-        float* output_acts,
-        int* dendrite_deltas
+        int num_hidden,
+        Byte* data
     ) {
-        this->D = D;
+        this->num_input_vecs;
+        this->num_hidden = num_hidden;
+        this->data = data;
 
-        C = 2 * N * D * N;
+        int num_ih = 2 * S * L * num_hidden;
+        int num_ho = num_hidden * S * L;
 
-        this->weights = weights;
-        this->dendrite_sums = dendrite_sums;
-        this->dendrite_acts = dendrite_acts;
-        this->output_acts = output_acts;
-        this->dendrite_deltas = dendrite_deltas;
+        int offset = 0;
+
+        this->weights_ih = &data[offset];
+
+        offset += num_ih * sizeof(S_Byte);
+
+        this->weights_oh = &data[offset];
+
+        offset += num_ho * sizeof(S_Byte);
+
+        this->hidden_acts = &data[offset];
+
+        offset += num_hidden * sizeof(float);
+
+        this->output_acts = &data[offset];
+
+        offset += S * L * sizeof(float);
+
+        this->hidden_deltas = &data[offset];
+
+        offset += num_hidden * sizeof(int);
+
+        this->output_deltas = &data[offset];
+    }
+
+    void init_random() {
+        for (int i = 0; i < num_hidden; i++)
+            hidden_acts[i] = 0.0f;
+
+        for (int i = 0; i < N; i++)
+            output_acts[i] = 0.0f;
+
+        int num_ih = 2 * S * L * num_hidden;
+        int num_ho = num_hidden * S * L;
+
+        for (int i = 0; i < num_ih; i++)
+            weights_ih[i] = (rand() % init_weight_noisei) - init_weight_noisei / 2;
+
+        for (int i = 0; i < num_ho; i++)
+            weights_ho[i] = (rand() % init_weight_noisei) - init_weight_noisei / 2;
     }
 
     // number of segments
@@ -78,17 +107,30 @@ public:
         return L;
     }
 
-    int dendrites() const {
-        return D;
+    int get_num_hidden() const {
+        return num_hidden;
     }
 
     int vsize() const {
         return N;
     }
 
-    // total size
-    int size() const {
-        return C;
+    static int weights_size(
+        int num_hidden
+    ) {
+        int num_ih = 2 * S * L * num_hidden;
+        int num_ho = num_hidden * S * L;
+
+        return (num_ih + num_ho) * sizeof(S_Byte);
+    }
+
+    static int data_size(
+        int num_hidden
+    ) {
+        int num_ih = 2 * S * L * num_hidden;
+        int num_ho = num_hidden * S * L;
+
+        return (num_ih + num_ho) * sizeof(S_Byte) + (num_hidden + S * L) * (sizeof(float) + sizeof(int));
     }
     
     Vec<S, L> predict(
@@ -96,66 +138,54 @@ public:
         const Vec<S, L> &src2,
         const typename Layer<S, L>::Params &params
     ) const {
-        assert(weights != nullptr);
+        assert(data != nullptr);
 
-        const int total_num_dendrites = N * D;
+        for (int i = 0; i < num_hidden; i++)
+            hidden_acts[i] = 0.0f;
 
-        for (int i = 0; i < total_num_dendrites; i++)
-            dendrite_sums[i] = 0;
+        for (int i = 0; i < N; i++)
+            output_acts[i] = 0.0f;
 
         for (int vs = 0; vs < S; vs++) {
             int sindex1 = src1[vs] + L * vs;
             int sindex2 = src2[vs] + L * (vs + S);
 
-            for (int hs = 0; hs < S; hs++) {
-                for (int hl = 0; hl < L; hl++) {
-                    int hindex = hl + L * hs;
-
-                    for (int hd = 0; hd < D; hd++) {
-                        int dindex = hd + D * hindex;
-
-                        dendrite_sums[dindex] += weights[dindex + total_num_dendrites * sindex1];
-                        dendrite_sums[dindex] += weights[dindex + total_num_dendrites * sindex2];
-                    }
-                }
+            for (int hi = 0; hi < num_hidden; hi++) {
+                hidden_acts[hi] += weights_ih[hi + num_hidden * sindex1];
+                hidden_acts[hi] += weights_ih[hi + num_hidden * sindex1];
             }
         }
 
-        const float rescale_stim = params.scale * sqrtf(1.0f / S) / 127.0f;
-        const float rescale_act = sqrtf(1.0f / D);
+        const float rescale_hidden = params.scale * sqrtf(1.0f / (2 * S)) / 127.0f;
+
+        for (int hi = 0; hi < num_hidden; hi++) {
+            hidden_acts[hi] = max(0.0f, hidden_acts[hi] * rescale_hidden); // ReLU
+
+            // sum for output
+            for (int oi = 0; oi < N; oi++)
+                output_acts[oi] += weights_ho[oi + N * hi] * hidden_acts[hi];
+        }
+
+        const float rescale_output = params.scale * sqrtf(1.0f / num_hidden) / 127.0f;
 
         Vec<S, L> result;
 
-        for (int hs = 0; hs < S; hs++) {
+        for (int os = 0; os < S; os++) {
             int max_index = 0;
             float max_activation = limit_min;
 
-            for (int hl = 0; hl < L; hl++) {
-                int hindex = hl + L * hs;
+            for (int ol = 0; ol < L; ol++) {
+                int oi = ol + L * os;
 
-                float activation = 0.0f;
-
-                for (int hd = 0; hd < D; hd++) {
-                    int dindex = hd + D * hindex;
-
-                    float stim = (dendrite_sums[dindex] - S * 127.0f) * rescale_stim;
-
-                    dendrite_acts[dindex] = max(stim * params.leak, stim);
-
-                    activation += dendrite_acts[dindex] * ((hd >= D / 2) * 2.0f - 1.0f);
-                }
-
-                activation * rescale_act;
-
-                output_acts[hindex] = activation;
-
-                if (activation > max_activation) {
-                    max_activation = activation;
-                    max_index = hl;
+                output_acts[oi] *= rescale_output;
+                
+                if (output_acts[oi] > max_activation) {
+                    max_activation = output_acts[oi];
+                    max_index = ol;
                 }
             }
 
-            result[hs] = max_index;
+            result[os] = max_index;
         }
 
         return result;
@@ -165,76 +195,54 @@ public:
     void learn(
         const Vec<S, L> &src1,
         const Vec<S, L> &src2,
+        const Vec<S, L> &pred,
         const Vec<S, L> &target,
         unsigned long* state,
         const typename Layer<S, L>::Params &params
     ) {
-        assert(weights != nullptr);
+        assert(data != nullptr);
 
-        const float rescale_stim = params.scale * sqrtf(1.0f / S) / 127.0f;
-        const float rescale_act = sqrtf(1.0f / D);
+        const float rescale_error = params.scale * sqrtf(1.0f / N) / 127.0f;
 
-        // learn from existing state (predict was called with the same src)
-        for (int hs = 0; hs < S; hs++) {
-            float max_activation = limit_min;
+        // backward
+        for (int hi = 0; hi < num_hidden; hi++) {
+            if (hidden_acts[hi] <= 0.0f) // ReLU gradient, can skip entirely if in linear portion
+                continue;
 
-            for (int hl = 0; hl < L; hl++) {
-                int hindex = hl + L * hs;
+            float error = 0.0f;
 
-                max_activation = max(max_activation, output_acts[hindex]);
+            for (int os = 0; os < S; os++) {
+                error -= weights_ho[(pred[os] + L * os) + N * hi];
+                error += weights_ho[(target[os] + L * os) + N * hi];
             }
 
-            // softmax
-            float total = 0.0f;
+            error *= rescale_error;
 
-            for (int hl = 0; hl < L; hl++) {
-                int hindex = hl + L * hs;
+            int delta = rand_roundf(params.lr * 127.0f * error);
 
-                output_acts[hindex] = expf(output_acts[hindex] - max_activation);
+            for (int vs = 0; vs < S; vs++) {
+                int sindex1 = src1[vs] + L * vs;
+                int sindex2 = src2[vs] + L * (vs + S);
 
-                total += output_acts[hindex];
-            }
+                int wi1 = hi + num_hidden * sindex1;
+                int wi2 = hi + num_hidden * sindex2;
 
-            float total_inv = 1.0f / max(limit_small, total);
-
-            for (int hl = 0; hl < L; hl++) {
-                int hindex = hl + L * hs;
-
-                output_acts[hindex] *= total_inv;
-
-                // learn on target
-                float error = (hl == target[hs]) - output_acts[hindex];
-
-                for (int hd = 0; hd < D; hd++) {
-                    int dindex = hd + D * hindex;
-
-                    int delta = rand_roundf(params.lr * 255.0f * error * ((hd >= D / 2) * 2.0f - 1.0f) * ((dendrite_acts[dindex] > 0.0f) * (1.0f - params.leak) + params.leak), state);
-
-                    dendrite_deltas[dindex] = delta;
-                }
+                weights_ih[wi1] = min(127, max(-127, weights_ih[wi1] + delta)); 
+                weights_ih[wi2] = min(127, max(-127, weights_ih[wi2] + delta)); 
             }
         }
 
-        const int total_num_dendrites = N * D;
+        // update output weights
+        for (int os = 0; os < S; os++) {
+            int delta_target = rand_roundf(params.lr * 127.0f);
+            int delta_pred = -delta_target;
 
-        for (int vs = 0; vs < S; vs++) {
-            int sindex1 = src1[vs] + L * vs;
-            int sindex2 = src2[vs] + L * (vs + S);
+            for (int hi = 0; hi < num_hidden; hi++) {
+                int wi_target = (os + L * target[os]) + N * hi;
+                int wi_pred = (os + L * pred[os]) + N * hi;
 
-            for (int hs = 0; hs < S; hs++) {
-                for (int hl = 0; hl < L; hl++) {
-                    int hindex = hl + L * hs;
-
-                    for (int hd = 0; hd < D; hd++) {
-                        int dindex = hd + D * hindex;
-
-                        int wi1 = dindex + total_num_dendrites * sindex1;
-                        int wi2 = dindex + total_num_dendrites * sindex2;
-
-                        weights[wi1] = min(255, max(0, weights[wi1] + dendrite_deltas[dindex]));
-                        weights[wi2] = min(255, max(0, weights[wi2] + dendrite_deltas[dindex]));
-                    }
-                }
+                weights_ho[wi_target] = min(127, weights_ho[wi_target] + delta_target);
+                weights_ho[wi_pred] = max(-127, weights_ho[wi_pred] + delta_pred);
             }
         }
     }

@@ -43,7 +43,7 @@ public:
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
         Int2 hidden_size; // size of hidden layer
-        int num_dendrites; // number of dendrites per cell in predictor
+        int num_hidden; // number of dendrites per cell in predictor
 
         int radius; // layer radius
 
@@ -54,7 +54,7 @@ public:
 
         Layer_Desc(
             const Int2 &hidden_size = Int2(4, 4),
-            int num_dendrites = 1,
+            int num_hidden = 64,
             int radius = 2,
             int ticks_per_update = 2,
             int temporal_horizon = 2,
@@ -62,7 +62,7 @@ public:
         )
         :
         hidden_size(hidden_size),
-        num_dendrites(num_dendrites),
+        num_hidden(num_hidden),
         radius(radius),
         ticks_per_update(ticks_per_update),
         temporal_horizon(temporal_horizon),
@@ -193,7 +193,7 @@ public:
             }
             
             // create the sparse coding layer
-            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].num_dendrites, layer_descs[l].positional_scale, visible_layer_descs);
+            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].num_hidden, layer_descs[l].positional_scale, visible_layer_descs);
         }
 
         // initialize params
