@@ -9,7 +9,6 @@
 #pragma once
 
 #include "vec.h"
-#include <iostream>
 
 namespace aon {
 template<int S, int L>
@@ -227,8 +226,8 @@ public:
                 int wi_target = os + L * target[os] + N * hi;
                 int wi_pred = os + L * pred[os] + N * hi;
 
-                weights_ho[wi_target] = min(127, weights_ho[wi_target] + delta);
-                weights_ho[wi_pred] = max(-127, weights_ho[wi_pred] - delta);
+                weights_ho[wi_target] = min(127, max(-127, weights_ho[wi_target] + delta));
+                weights_ho[wi_pred] = min(127, max(-127, weights_ho[wi_pred] - delta));
             }
         }
     }
