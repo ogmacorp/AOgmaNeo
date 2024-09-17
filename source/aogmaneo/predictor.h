@@ -49,7 +49,7 @@ public:
         this->num_hidden = num_hidden;
         this->data = data;
 
-        int num_ih = 2 * S * L * num_hidden;
+        int num_ih = S * L * num_hidden;
         int num_ho = num_hidden * S * L;
 
         int offset = 0;
@@ -78,7 +78,7 @@ public:
         for (int i = 0; i < N; i++)
             output_acts[i] = 0.0f;
 
-        int num_ih = 2 * S * L * num_hidden;
+        int num_ih = S * L * num_hidden;
         int num_ho = num_hidden * S * L;
 
         for (int i = 0; i < num_ih; i++)
@@ -109,7 +109,7 @@ public:
     static int weights_size(
         int num_hidden
     ) {
-        int num_ih = 2 * S * L * num_hidden;
+        int num_ih = S * L * num_hidden;
         int num_ho = num_hidden * S * L;
 
         return (num_ih + num_ho) * sizeof(S_Byte);
@@ -118,15 +118,14 @@ public:
     static int data_size(
         int num_hidden
     ) {
-        int num_ih = 2 * S * L * num_hidden;
+        int num_ih = S * L * num_hidden;
         int num_ho = num_hidden * S * L;
 
         return (num_ih + num_ho) * sizeof(S_Byte) + (num_hidden + S * L) * sizeof(float);
     }
     
     Vec<S, L> predict(
-        const Vec<S, L> &src1,
-        const Vec<S, L> &src2,
+        const Vec<S, L> &src,
         const typename Layer<S, L>::Params &params
     ) const {
         assert(data != nullptr);
@@ -138,16 +137,13 @@ public:
             output_acts[i] = 0.0f;
 
         for (int vs = 0; vs < S; vs++) {
-            int sindex1 = src1[vs] + L * vs;
-            int sindex2 = src2[vs] + L * (vs + S);
+            int sindex = src[vs] + L * vs;
 
-            for (int hi = 0; hi < num_hidden; hi++) {
-                hidden_acts[hi] += weights_ih[hi + num_hidden * sindex1];
-                hidden_acts[hi] += weights_ih[hi + num_hidden * sindex2];
-            }
+            for (int hi = 0; hi < num_hidden; hi++)
+                hidden_acts[hi] += weights_ih[hi + num_hidden * sindex];
         }
 
-        const float rescale_hidden = params.scale * sqrtf(1.0f / (2 * S)) / 127.0f;
+        const float rescale_hidden = params.scale * sqrtf(1.0f / S) / 127.0f;
 
         for (int hi = 0; hi < num_hidden; hi++) {
             hidden_acts[hi] = sigmoidf(hidden_acts[hi] * rescale_hidden); // nonlinearity
@@ -180,8 +176,7 @@ public:
 
     // reqires predict to have been called first
     void learn(
-        const Vec<S, L> &src1,
-        const Vec<S, L> &src2,
+        const Vec<S, L> &src,
         const Vec<S, L> &pred,
         const Vec<S, L> &target,
         unsigned long* state,
@@ -207,14 +202,11 @@ public:
             int delta = rand_roundf(rate * error, state);
 
             for (int vs = 0; vs < S; vs++) {
-                int sindex1 = src1[vs] + L * vs;
-                int sindex2 = src2[vs] + L * (vs + S);
+                int sindex = src[vs] + L * vs;
 
-                int wi1 = hi + num_hidden * sindex1;
-                int wi2 = hi + num_hidden * sindex2;
+                int wi = hi + num_hidden * sindex;
 
-                weights_ih[wi1] = min(127, max(-127, weights_ih[wi1] + delta)); 
-                weights_ih[wi2] = min(127, max(-127, weights_ih[wi2] + delta)); 
+                weights_ih[wi] = min(127, max(-127, weights_ih[wi] + delta)); 
             }
         }
 
