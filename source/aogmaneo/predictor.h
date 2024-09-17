@@ -48,7 +48,6 @@ public:
         int num_hidden,
         Byte* data
     ) {
-        this->num_input_vecs;
         this->num_hidden = num_hidden;
         this->data = data;
 
@@ -57,27 +56,27 @@ public:
 
         int offset = 0;
 
-        this->weights_ih = &data[offset];
+        this->weights_ih = reinterpret_cast<S_Byte*>(data + offset);
 
         offset += num_ih * sizeof(S_Byte);
 
-        this->weights_oh = &data[offset];
+        this->weights_ho = reinterpret_cast<S_Byte*>(data + offset);
 
         offset += num_ho * sizeof(S_Byte);
 
-        this->hidden_acts = &data[offset];
+        this->hidden_acts = reinterpret_cast<float*>(data + offset);
 
         offset += num_hidden * sizeof(float);
 
-        this->output_acts = &data[offset];
+        this->output_acts = reinterpret_cast<float*>(data + offset);
 
         offset += S * L * sizeof(float);
 
-        this->hidden_deltas = &data[offset];
+        this->hidden_deltas = reinterpret_cast<int*>(data + offset);
 
         offset += num_hidden * sizeof(int);
 
-        this->output_deltas = &data[offset];
+        this->output_deltas = reinterpret_cast<int*>(data + offset);
     }
 
     void init_random() {
