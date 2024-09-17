@@ -217,7 +217,7 @@ public:
 
             error *= rescale_error;
 
-            int delta = rand_roundf(params.lr * 127.0f * error);
+            int delta = rand_roundf(params.lr * 127.0f * error, state);
 
             for (int vs = 0; vs < S; vs++) {
                 int sindex1 = src1[vs] + L * vs;
@@ -233,7 +233,7 @@ public:
 
         // update output weights
         for (int os = 0; os < S; os++) {
-            int delta_target = rand_roundf(params.lr * 127.0f);
+            int delta_target = rand_roundf(params.lr * 127.0f, state);
             int delta_pred = -delta_target;
 
             for (int hi = 0; hi < num_hidden; hi++) {
