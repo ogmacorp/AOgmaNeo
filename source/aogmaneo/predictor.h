@@ -198,8 +198,8 @@ public:
             float error = 0.0f;
 
             for (int os = 0; os < S; os++) {
-                error -= weights_ho[(pred[os] + L * os) + N * hi];
                 error += weights_ho[(target[os] + L * os) + N * hi];
+                error -= weights_ho[(pred[os] + L * os) + N * hi];
             }
 
             error *= rescale_error * (1.0f - hidden_acts[hi] * hidden_acts[hi]); // rescale and tanh gradient
@@ -223,8 +223,8 @@ public:
             int delta = rand_roundf(rate * hidden_acts[hi]);
 
             for (int os = 0; os < S; os++) {
-                int wi_target = os + L * target[os] + N * hi;
-                int wi_pred = os + L * pred[os] + N * hi;
+                int wi_target = (target[os] + L * os) + N * hi;
+                int wi_pred = (pred[os] + L * os) + N * hi;
 
                 weights_ho[wi_target] = min(127, max(-127, weights_ho[wi_target] + delta));
                 weights_ho[wi_pred] = min(127, max(-127, weights_ho[wi_pred] - delta));
