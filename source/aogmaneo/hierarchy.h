@@ -54,7 +54,7 @@ public:
 
         Layer_Desc(
             const Int2 &hidden_size = Int2(4, 4),
-            int num_hidden = 256,
+            int num_hidden = 128,
             int radius = 2,
             int ticks_per_update = 2,
             int temporal_horizon = 2,
