@@ -204,11 +204,11 @@ private:
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1)))
-                    sum += hidden_vecs_pred_next[hidden_column_index] / vl.visible_pos_vecs[visible_column_index];
+                    sum += hidden_vecs_pred_next[hidden_column_index];
             }
 
         // thin and unbind position
-        vl.pred_vecs[visible_column_index] = sum.thin();
+        vl.pred_vecs[visible_column_index] = sum.thin() / vl.visible_pos_vecs[visible_column_index];
     }
 
 public:
