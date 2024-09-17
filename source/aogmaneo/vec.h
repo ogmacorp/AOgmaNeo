@@ -85,7 +85,7 @@ public:
         Vec<S, L> result;
 
         for (int i = 0; i < S; i++)
-            result[i] = (buffer[i] + other.buffer[i]) % L;
+            result[i] = (other.buffer[i] + L - buffer[i]) % L;
 
         return result;
     }
@@ -94,7 +94,7 @@ public:
         const Vec<S, L> &other
     ) {
         for (int i = 0; i < S; i++)
-            buffer[i] = (buffer[i] + other.buffer[i]) % L; 
+            buffer[i] = (other.buffer[i] + L - buffer[i]) % L; 
 
         return *this;
     }
@@ -105,7 +105,7 @@ public:
         Vec<S, L> result;
 
         for (int i = 0; i < S; i++)
-            result[i] = (buffer[i] + L - other.buffer[i]) % L;
+            result[i] = (other.buffer[i] + buffer[i]) % L;
 
         return result;
     }
@@ -114,7 +114,7 @@ public:
         const Vec<S, L> &other
     ) {
         for (int i = 0; i < S; i++)
-            buffer[i] = (buffer[i] + L - other.buffer[i]) % L; 
+            buffer[i] = (other.buffer[i] + buffer[i]) % L; 
 
         return *this;
     }
@@ -293,6 +293,40 @@ public:
                 if (buffer[index] > mv) {
                     mv = buffer[index];
                     mi = j;
+                }
+            }
+
+            // check for multiple maxima and do context-dependent thinning in that case
+            int index_sum = 0;
+            int mcount = 0;
+
+            for (int j = 0; j < L; j++) {
+                int index = j + start;
+
+                if (buffer[index] == mv) {
+                    index_sum += j;
+                    mcount++;
+                }
+            }
+
+            if (mcount > 0) {
+                // context-dependent thinning
+                int p = index_sum % mcount;
+
+                mcount = 0;
+
+                for (int j = 0; j < L; j++) {
+                    int index = j + start;
+
+                    if (buffer[index] == mv) {
+                        if (mcount == p) {
+                            mi = j;
+
+                            break;
+                        }
+
+                        mcount++;
+                    }
                 }
             }
 
