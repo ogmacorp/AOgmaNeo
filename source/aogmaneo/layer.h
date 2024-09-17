@@ -43,13 +43,11 @@ public:
     struct Params {
         float scale;
         float lr;
-        float leak;
 
         Params()
         :
-        scale(8.0f),
-        lr(0.04f),
-        leak(0.01f)
+        scale(1.0f),
+        lr(0.04f)
         {}
     };
 

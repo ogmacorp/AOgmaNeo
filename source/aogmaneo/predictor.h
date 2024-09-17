@@ -9,6 +9,7 @@
 #pragma once
 
 #include "vec.h"
+#include <iostream>
 
 namespace aon {
 template<int S, int L>
@@ -24,8 +25,6 @@ private:
     S_Byte* weights_ho; // hidden to output
     float* hidden_acts;
     float* output_acts;
-    int* hidden_deltas;
-    int* output_deltas;
 
     int num_hidden;
 
@@ -69,17 +68,11 @@ public:
         offset += num_hidden * sizeof(float);
 
         this->output_acts = reinterpret_cast<float*>(data + offset);
-
-        offset += S * L * sizeof(float);
-
-        this->hidden_deltas = reinterpret_cast<int*>(data + offset);
-
-        offset += num_hidden * sizeof(int);
-
-        this->output_deltas = reinterpret_cast<int*>(data + offset);
     }
 
     void init_random() {
+        assert(data != nullptr);
+
         for (int i = 0; i < num_hidden; i++)
             hidden_acts[i] = 0.0f;
 
@@ -129,7 +122,7 @@ public:
         int num_ih = 2 * S * L * num_hidden;
         int num_ho = num_hidden * S * L;
 
-        return (num_ih + num_ho) * sizeof(S_Byte) + (num_hidden + S * L) * (sizeof(float) + sizeof(int));
+        return (num_ih + num_ho) * sizeof(S_Byte) + (num_hidden + S * L) * sizeof(float);
     }
     
     Vec<S, L> predict(
@@ -151,21 +144,20 @@ public:
 
             for (int hi = 0; hi < num_hidden; hi++) {
                 hidden_acts[hi] += weights_ih[hi + num_hidden * sindex1];
-                hidden_acts[hi] += weights_ih[hi + num_hidden * sindex1];
+                hidden_acts[hi] += weights_ih[hi + num_hidden * sindex2];
             }
         }
 
         const float rescale_hidden = params.scale * sqrtf(1.0f / (2 * S)) / 127.0f;
 
         for (int hi = 0; hi < num_hidden; hi++) {
-            hidden_acts[hi] = max(0.0f, hidden_acts[hi] * rescale_hidden); // ReLU
+            hidden_acts[hi] = tanhf(hidden_acts[hi] * rescale_hidden); // tanhf
 
+            std::cout << hidden_acts[hi] << std::endl;
             // sum for output
             for (int oi = 0; oi < N; oi++)
                 output_acts[oi] += weights_ho[oi + N * hi] * hidden_acts[hi];
         }
-
-        const float rescale_output = params.scale * sqrtf(1.0f / num_hidden) / 127.0f;
 
         Vec<S, L> result;
 
@@ -176,8 +168,6 @@ public:
             for (int ol = 0; ol < L; ol++) {
                 int oi = ol + L * os;
 
-                output_acts[oi] *= rescale_output;
-                
                 if (output_acts[oi] > max_activation) {
                     max_activation = output_acts[oi];
                     max_index = ol;
@@ -201,13 +191,12 @@ public:
     ) {
         assert(data != nullptr);
 
-        const float rescale_error = params.scale * sqrtf(1.0f / N) / 127.0f;
+        const float rescale_error = params.scale * sqrtf(1.0f / S) / 127.0f;
+
+        const float rate = params.lr * 127.0f;
 
         // backward
         for (int hi = 0; hi < num_hidden; hi++) {
-            if (hidden_acts[hi] <= 0.0f) // ReLU gradient, can skip entirely if in linear portion
-                continue;
-
             float error = 0.0f;
 
             for (int os = 0; os < S; os++) {
@@ -215,9 +204,9 @@ public:
                 error += weights_ho[(target[os] + L * os) + N * hi];
             }
 
-            error *= rescale_error;
+            error *= rescale_error * (1.0f - hidden_acts[hi] * hidden_acts[hi]); // rescale and tanh gradient
 
-            int delta = rand_roundf(params.lr * 127.0f * error, state);
+            int delta = rand_roundf(rate * error, state);
 
             for (int vs = 0; vs < S; vs++) {
                 int sindex1 = src1[vs] + L * vs;
@@ -232,16 +221,15 @@ public:
         }
 
         // update output weights
-        for (int os = 0; os < S; os++) {
-            int delta_target = rand_roundf(params.lr * 127.0f, state);
-            int delta_pred = -delta_target;
+        for (int hi = 0; hi < num_hidden; hi++) {
+            int delta = rand_roundf(rate * hidden_acts[hi]);
 
-            for (int hi = 0; hi < num_hidden; hi++) {
-                int wi_target = (os + L * target[os]) + N * hi;
-                int wi_pred = (os + L * pred[os]) + N * hi;
+            for (int os = 0; os < S; os++) {
+                int wi_target = os + L * target[os] + N * hi;
+                int wi_pred = os + L * pred[os] + N * hi;
 
-                weights_ho[wi_target] = min(127, weights_ho[wi_target] + delta_target);
-                weights_ho[wi_pred] = max(-127, weights_ho[wi_pred] + delta_pred);
+                weights_ho[wi_target] = min(127, weights_ho[wi_target] + delta);
+                weights_ho[wi_pred] = max(-127, weights_ho[wi_pred] - delta);
             }
         }
     }
