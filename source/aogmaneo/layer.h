@@ -144,7 +144,7 @@ private:
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
 
         if (feedback_vecs.size() != 0)
-            pred_input_vec = feedback_vecs[hidden_column_index] * pred_input_vec;
+            pred_input_vec = (feedback_vecs[hidden_column_index] + pred_input_vec).thin();
 
         Vec<S, L> hidden_vec_pred_next = predictors[hidden_column_index].predict(pred_input_vec, params);
 
