@@ -150,7 +150,7 @@ public:
         const float rescale_hidden = params.scale * sqrtf(1.0f / (2 * S)) / 127.0f;
 
         for (int hi = 0; hi < num_hidden; hi++) {
-            hidden_acts[hi] = tanhf(hidden_acts[hi] * rescale_hidden); // tanhf
+            hidden_acts[hi] = sigmoidf(hidden_acts[hi] * rescale_hidden); // nonlinearity
 
             // sum for output
             for (int oi = 0; oi < N; oi++)
@@ -202,7 +202,7 @@ public:
                 error -= weights_ho[(pred[os] + L * os) + N * hi];
             }
 
-            error *= rescale_error * (1.0f - hidden_acts[hi] * hidden_acts[hi]); // rescale and tanh gradient
+            error *= rescale_error * (1.0f - hidden_acts[hi]) * hidden_acts[hi]; // rescale and sigmoid gradient
 
             int delta = rand_roundf(rate * error, state);
 
@@ -223,6 +223,9 @@ public:
             int delta = rand_roundf(rate * hidden_acts[hi]);
 
             for (int os = 0; os < S; os++) {
+                if (target[os] == pred[os])
+                    continue;
+
                 int wi_target = (target[os] + L * os) + N * hi;
                 int wi_pred = (pred[os] + L * os) + N * hi;
 
