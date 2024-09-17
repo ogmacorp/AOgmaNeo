@@ -166,7 +166,7 @@ public:
                         visible_layer_descs[index].size = io_sizes[i];
                         visible_layer_descs[index].radius = io_descs[i].radius;
 
-                        if (t < layer_descs[l].ticks_per_update && io_types[i] == prediction)
+                        if (t == 0 && io_types[i] == prediction)
                             visible_layer_descs[index].predictable = true;
                     }
                 }
