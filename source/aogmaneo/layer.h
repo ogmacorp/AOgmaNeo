@@ -204,11 +204,11 @@ private:
                 Int2 visible_center = project(hidden_pos, h_to_v);
 
                 if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1)))
-                    sum += hidden_vecs_pred_next[hidden_column_index];
+                    sum += hidden_vecs_pred_next[hidden_column_index] / vl.visible_pos_vecs[visible_column_index];
             }
 
         // thin and unbind position
-        vl.pred_vecs[visible_column_index] = sum.thin() / vl.visible_pos_vecs[visible_column_index];
+        vl.pred_vecs[visible_column_index] = sum.thin();
     }
 
 public:
@@ -251,10 +251,12 @@ public:
                     int visible_column_index = y + x * vld.size.y;
 
                     for (int i = 0; i < S; i++) {
-                        float f = modf(embedding[i * 3] * (x * vld_size_x_inv - 0.5f) * 2.0f + embedding[i * 3 + 1] * (y * vld_size_y_inv - 0.5f) * 2.0f + (embedding[i * 3 + 2] * 2.0f - 1.0f), 1.0f);
+                        float f = embedding[i * 3] * x * vld_size_x_inv + embedding[i * 3 + 1] * y * vld_size_y_inv + embedding[i * 3 + 2];
 
                         if (f < 0.0f)
-                            f += 1.0f;
+                            f = 1.0f - modf(-f, 1.0f);
+                        else
+                            f = modf(f, 1.0f);
 
                         vl.visible_pos_vecs[visible_column_index][i] = static_cast<int>(f * L);
                     }
