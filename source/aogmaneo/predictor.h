@@ -153,7 +153,6 @@ public:
         for (int hi = 0; hi < num_hidden; hi++) {
             hidden_acts[hi] = tanhf(hidden_acts[hi] * rescale_hidden); // tanhf
 
-            std::cout << hidden_acts[hi] << std::endl;
             // sum for output
             for (int oi = 0; oi < N; oi++)
                 output_acts[oi] += weights_ho[oi + N * hi] * hidden_acts[hi];
