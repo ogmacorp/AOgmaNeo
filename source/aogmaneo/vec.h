@@ -85,7 +85,7 @@ public:
         Vec<S, L> result;
 
         for (int i = 0; i < S; i++)
-            result[i] = (other.buffer[i] + L - buffer[i]) % L;
+            result[i] = (buffer[i] + other.buffer[i]) % L;
 
         return result;
     }
@@ -94,7 +94,7 @@ public:
         const Vec<S, L> &other
     ) {
         for (int i = 0; i < S; i++)
-            buffer[i] = (other.buffer[i] + L - buffer[i]) % L; 
+            buffer[i] = (buffer[i] + other.buffer[i]) % L; 
 
         return *this;
     }
@@ -105,7 +105,7 @@ public:
         Vec<S, L> result;
 
         for (int i = 0; i < S; i++)
-            result[i] = (other.buffer[i] + buffer[i]) % L;
+            result[i] = (buffer[i] + L - other.buffer[i]) % L;
 
         return result;
     }
@@ -114,7 +114,7 @@ public:
         const Vec<S, L> &other
     ) {
         for (int i = 0; i < S; i++)
-            buffer[i] = (other.buffer[i] + buffer[i]) % L; 
+            buffer[i] = (buffer[i] + L - other.buffer[i]) % L; 
 
         return *this;
     }
