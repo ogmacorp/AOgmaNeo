@@ -63,8 +63,6 @@ public:
 private:
     Int2 hidden_size; // size of hidden/output layer
 
-    Array<Vec<S, L>> hidden_pos_vecs;
-
     Array<Vec<S, L>> hidden_vecs_all;
     Array<Vec<S, L>> hidden_vecs_pred;
     Array<Vec<S, L>> hidden_vecs_pred_next;
