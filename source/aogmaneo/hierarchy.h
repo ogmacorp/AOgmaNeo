@@ -116,30 +116,23 @@ public:
 
             // if first layer
             if (l == 0) {
-                visible_layer_descs.resize(io_sizes.size() * layer_descs[l].temporal_horizon);
+                visible_layer_descs.resize(io_sizes.size());
 
                 for (int i = 0; i < io_sizes.size(); i++) {
-                    for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
-                        int index = t + layer_descs[l].temporal_horizon * i;
+                    visible_layer_descs[i].size = io_sizes[i];
+                    visible_layer_descs[i].radius = io_descs[i].radius;
 
-                        visible_layer_descs[index].size = io_sizes[i];
-                        visible_layer_descs[index].radius = io_descs[i].radius;
-
-                        if (t == 0 && io_types[i] == prediction)
-                            visible_layer_descs[index].predictable = true;
-                    }
+                    if (io_types[i] == prediction)
+                        visible_layer_descs[i].predictable = true;
                 }
             }
             else {
-                visible_layer_descs.resize(layer_descs[l].temporal_horizon);
+                visible_layer_descs.resize(1);
 
-                for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
-                    visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
-                    visible_layer_descs[t].radius = layer_descs[l].radius;
+                visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
+                visible_layer_descs[0].radius = layer_descs[l].radius;
 
-                    if (t < layer_descs[l].ticks_per_update)
-                        visible_layer_descs[t].predictable = true;
-                }
+                visible_layer_descs[0].predictable = true;
             }
             
             // create the sparse coding layer
