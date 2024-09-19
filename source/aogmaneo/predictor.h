@@ -82,10 +82,10 @@ public:
         int num_ho = num_hidden * S * L;
 
         for (int i = 0; i < num_ih; i++)
-            weights_ih[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+            weights_ih[i] = (rand() % (init_weight_large_noisei + 1)) - init_weight_large_noisei / 2;
 
         for (int i = 0; i < num_ho; i++)
-            weights_ho[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+            weights_ho[i] = (rand() % (init_weight_small_noisei + 1)) - init_weight_small_noisei / 2;
     }
 
     // number of segments
@@ -199,7 +199,7 @@ public:
                 error -= weights_ho[(pred[os] + L * os) + N * hi];
             }
 
-            error *= rescale_error * (1.0f - hidden_acts[hi]) * hidden_acts[hi]; // rescale and sigmoid gradient
+            error *= rescale_error * (1.0f - hidden_acts[hi]) * hidden_acts[hi]; // rescale and gradient
 
             int delta = rand_roundf(rate * error, state);
 

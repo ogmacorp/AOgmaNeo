@@ -38,16 +38,25 @@ public:
         Array<Vec<S, L>> visible_pos_vecs; // positional encodings
         Array<Vec<S, L>> visible_vecs; // input with bound position
         Array<Vec<S, L>> pred_vecs; // reconstructed input
+
+        float importance;
+
+        Visible_Layer()
+        :
+        importance(1.0f)
+        {}
     };
 
     struct Params {
         float scale;
         float lr;
+        float leak;
 
         Params()
         :
         scale(1.0f),
-        lr(0.02f)
+        lr(0.02f),
+        leak(0.01f)
         {}
     };
 
@@ -115,7 +124,7 @@ private:
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    sum_all += vl.visible_vecs[visible_column_index];
+                    sum_all += vl.visible_vecs[visible_column_index] * vl.importance;
 
                     if (vld.predictable)
                         sum_pred += vl.visible_vecs[visible_column_index];
