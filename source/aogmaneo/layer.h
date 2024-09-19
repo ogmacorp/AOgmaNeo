@@ -62,7 +62,6 @@ public:
 
 private:
     Int2 hidden_size; // size of hidden/output layer
-    int num_hidden; // number of hidden units in predictor
 
     Array<Vec<S, L>> hidden_pos_vecs;
 
@@ -213,14 +212,12 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int2 &hidden_size, // hidden/output size
-        int num_hidden,
         float positional_scale, // positional encoding scale
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     ) {
         this->visible_layer_descs = visible_layer_descs;
 
         this->hidden_size = hidden_size;
-        this->num_hidden = num_hidden;
 
         visible_layers.resize(visible_layer_descs.size());
 
@@ -269,12 +266,12 @@ public:
         hidden_vecs_pred_next = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_prev = Array<Vec<S, L>>(num_hidden_columns, 0);
 
-        predictor_data.resize(num_hidden_columns * Predictor<S, L>::data_size(num_hidden));
+        predictor_data.resize(num_hidden_columns * Predictor<S, L>::data_size());
 
         predictors.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++) {
-            predictors[i].set_from(num_hidden, &predictor_data[i * Predictor<S, L>::data_size(num_hidden)]);
+            predictors[i].set_from(&predictor_data[i * Predictor<S, L>::data_size()]);
 
             predictors[i].init_random();
         }
@@ -346,7 +343,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        long size = sizeof(Int2) + 2 * sizeof(int);
+        long size = sizeof(Int2) + sizeof(int);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer &vl = visible_layers[vli];
@@ -383,7 +380,6 @@ public:
         Stream_Writer &writer
     ) const {
         writer.write(&hidden_size, sizeof(Int2));
-        writer.write(&num_hidden, sizeof(int));
 
         int num_visible_layers = visible_layers.size();
 
@@ -411,7 +407,6 @@ public:
         Stream_Reader &reader
     ) {
         reader.read(&hidden_size, sizeof(Int2));
-        reader.read(&num_hidden, sizeof(int));
 
         int num_hidden_columns = hidden_size.x * hidden_size.y;
 
@@ -448,17 +443,14 @@ public:
         reader.read(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
 
-        int total_num_hidden = num_hidden * Predictor<S, L>::N;
-        int C = 2 * Predictor<S, L>::N * total_num_hidden;
-
-        predictor_data.resize(num_hidden_columns * Predictor<S, L>::data_size(num_hidden));
+        predictor_data.resize(num_hidden_columns * Predictor<S, L>::data_size());
 
         reader.read(&predictor_data[0], predictor_data.size() * sizeof(Byte));
 
         predictors.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            predictors[i].set_from(num_hidden, &predictor_data[i * Predictor<S, L>::data_size(num_hidden)]);
+            predictors[i].set_from(&predictor_data[i * Predictor<S, L>::data_size()]);
     }
 
     void write_state(

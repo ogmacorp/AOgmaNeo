@@ -32,17 +32,14 @@ public:
     {}
 
     Predictor(
-        int num_hidden,
         Byte* data
     ) {
-        set_from(num_hidden, data);
+        set_from( data);
     }
 
     void set_from(
-        int num_hidden,
         Byte* data
     ) {
-        this->num_hidden = num_hidden;
         this->data = data;
 
         int num_weights = N * N;
@@ -82,9 +79,7 @@ public:
         return N;
     }
 
-    static int weights_size(
-        int num_hidden
-    ) {
+    static int weights_size() {
         return N * N;
     }
 
