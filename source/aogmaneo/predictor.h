@@ -20,12 +20,8 @@ class Predictor {
 private:
     Byte* data;
 
-    S_Byte* weights_ih; // input to hidden
-    S_Byte* weights_ho; // hidden to output
-    float* hidden_acts;
+    S_Byte* weights;
     float* output_acts;
-
-    int num_hidden;
 
 public:
     static const int N = S * L;
@@ -49,22 +45,13 @@ public:
         this->num_hidden = num_hidden;
         this->data = data;
 
-        int num_ih = S * L * num_hidden;
-        int num_ho = num_hidden * S * L;
+        int num_weights = N * N;
 
         int offset = 0;
 
-        this->weights_ih = reinterpret_cast<S_Byte*>(data + offset);
+        this->weights = reinterpret_cast<S_Byte*>(data + offset);
 
-        offset += num_ih * sizeof(S_Byte);
-
-        this->weights_ho = reinterpret_cast<S_Byte*>(data + offset);
-
-        offset += num_ho * sizeof(S_Byte);
-
-        this->hidden_acts = reinterpret_cast<float*>(data + offset);
-
-        offset += num_hidden * sizeof(float);
+        offset += num_weights * sizeof(S_Byte);
 
         this->output_acts = reinterpret_cast<float*>(data + offset);
     }
@@ -72,20 +59,13 @@ public:
     void init_random() {
         assert(data != nullptr);
 
-        for (int i = 0; i < num_hidden; i++)
-            hidden_acts[i] = 0.0f;
-
         for (int i = 0; i < N; i++)
             output_acts[i] = 0.0f;
 
-        int num_ih = S * L * num_hidden;
-        int num_ho = num_hidden * S * L;
+        int num_weights = N * N;
 
-        for (int i = 0; i < num_ih; i++)
-            weights_ih[i] = (rand() % (init_weight_large_noisei + 1)) - init_weight_large_noisei / 2;
-
-        for (int i = 0; i < num_ho; i++)
-            weights_ho[i] = (rand() % (init_weight_small_noisei + 1)) - init_weight_small_noisei / 2;
+        for (int i = 0; i < num_weights; i++)
+            weights[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
     }
 
     // number of segments
@@ -98,10 +78,6 @@ public:
         return L;
     }
 
-    int get_num_hidden() const {
-        return num_hidden;
-    }
-
     int vsize() const {
         return N;
     }
@@ -109,19 +85,11 @@ public:
     static int weights_size(
         int num_hidden
     ) {
-        int num_ih = S * L * num_hidden;
-        int num_ho = num_hidden * S * L;
-
-        return (num_ih + num_ho) * sizeof(S_Byte);
+        return N * N;
     }
 
-    static int data_size(
-        int num_hidden
-    ) {
-        int num_ih = S * L * num_hidden;
-        int num_ho = num_hidden * S * L;
-
-        return (num_ih + num_ho) * sizeof(S_Byte) + (num_hidden + S * L) * sizeof(float);
+    static int data_size() {
+        return N * N * sizeof(S_Byte) + N * sizeof(float);
     }
     
     Vec<S, L> predict(
@@ -130,29 +98,14 @@ public:
     ) const {
         assert(data != nullptr);
 
-        for (int i = 0; i < num_hidden; i++)
-            hidden_acts[i] = 0.0f;
-
         for (int i = 0; i < N; i++)
             output_acts[i] = 0.0f;
 
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
 
-            for (int hi = 0; hi < num_hidden; hi++)
-                hidden_acts[hi] += weights_ih[hi + num_hidden * sindex];
-        }
-
-        const float rescale_hidden = params.scale * sqrtf(1.0f / S) / 127.0f;
-
-        for (int hi = 0; hi < num_hidden; hi++) {
-            hidden_acts[hi] *= rescale_hidden;
-
-            hidden_acts[hi] = sigmoidf(hidden_acts[hi]); // nonlinearity
-
-            // sum for output
             for (int oi = 0; oi < N; oi++)
-                output_acts[oi] += weights_ho[oi + N * hi] * hidden_acts[hi];
+                output_acts[oi] += weights[oi + N * sindex];
         }
 
         Vec<S, L> result;
@@ -186,45 +139,23 @@ public:
     ) {
         assert(data != nullptr);
 
-        const float rescale_error = params.scale * sqrtf(1.0f / S) / 127.0f;
-
         const float rate = params.lr * 127.0f;
 
-        // backward
-        for (int hi = 0; hi < num_hidden; hi++) {
-            float error = 0.0f;
-
-            for (int os = 0; os < S; os++) {
-                error += weights_ho[(target[os] + L * os) + N * hi];
-                error -= weights_ho[(pred[os] + L * os) + N * hi];
-            }
-
-            error *= rescale_error * (1.0f - hidden_acts[hi]) * hidden_acts[hi]; // rescale and gradient
-
-            int delta = rand_roundf(rate * error, state);
-
-            for (int vs = 0; vs < S; vs++) {
-                int sindex = src[vs] + L * vs;
-
-                int wi = hi + num_hidden * sindex;
-
-                weights_ih[wi] = min(127, max(-127, weights_ih[wi] + delta)); 
-            }
-        }
-
         // update output weights
-        for (int hi = 0; hi < num_hidden; hi++) {
-            int delta = rand_roundf(rate * hidden_acts[hi], state);
+        for (int vs = 0; vs < S; vs++) {
+            int sindex = src[vs] + L * vs;
+
+            int delta = rand_roundf(rate, state);
 
             for (int os = 0; os < S; os++) {
                 if (target[os] == pred[os])
                     continue;
 
-                int wi_target = (target[os] + L * os) + N * hi;
-                int wi_pred = (pred[os] + L * os) + N * hi;
+                int wi_target = (target[os] + L * os) + N * sindex;
+                int wi_pred = (pred[os] + L * os) + N * sindex;
 
-                weights_ho[wi_target] = min(127, max(-127, weights_ho[wi_target] + delta));
-                weights_ho[wi_pred] = min(127, max(-127, weights_ho[wi_pred] - delta));
+                weights[wi_target] = min(127, max(-127, weights[wi_target] + delta));
+                weights[wi_pred] = min(127, max(-127, weights[wi_pred] - delta));
             }
         }
     }
