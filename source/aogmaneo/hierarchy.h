@@ -47,25 +47,18 @@ public:
 
         int radius; // layer radius
 
-        int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
-        int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
-
         float positional_scale; // positional embedding scale
 
         Layer_Desc(
             const Int2 &hidden_size = Int2(4, 4),
             int num_hidden = 128,
             int radius = 2,
-            int ticks_per_update = 2,
-            int temporal_horizon = 2,
             float positional_scale = 1.0f
         )
         :
         hidden_size(hidden_size),
         num_hidden(num_hidden),
         radius(radius),
-        ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon),
         positional_scale(positional_scale)
         {}
     };
@@ -80,15 +73,6 @@ public:
 private:
     // layers
     Array<Layer<S, L>> layers;
-
-    // histories
-    Array<Array<Circle_Buffer<Array<Vec<S, L>>>>> histories;
-
-    // per-layer values
-    Byte_Buffer updates;
-
-    Int_Buffer ticks;
-    Int_Buffer ticks_per_update;
 
     // input dimensions
     Array<Int2> io_sizes;
@@ -116,13 +100,6 @@ public:
         // create layers
         layers.resize(layer_descs.size());
 
-        ticks = Int_Buffer(layer_descs.size(), 0);
-
-        histories.resize(layer_descs.size());
-        
-        // default update state is no update
-        updates = Byte_Buffer(layer_descs.size(), false);
-
         // cache input sizes
         io_sizes.resize(io_descs.size());
         io_types.resize(io_descs.size());
@@ -132,12 +109,6 @@ public:
             io_types[i] = io_descs[i].type;
         }
 
-        ticks_per_update.resize(layer_descs.size());
-
-        // determine ticks per update, first layer is always 1
-        for (int l = 0; l < layer_descs.size(); l++)
-            ticks_per_update[l] = (l == 0 ? 1 : layer_descs[l].ticks_per_update);
-
         // iterate through layers
         for (int l = 0; l < layer_descs.size(); l++) {
             // create sparse coder visible layer descriptors
@@ -145,18 +116,6 @@ public:
 
             // if first layer
             if (l == 0) {
-                // initialize history buffers
-                histories[l].resize(io_sizes.size());
-
-                for (int i = 0; i < histories[l].size(); i++) {
-                    int in_size = io_sizes[i].x * io_sizes[i].y;
-
-                    histories[l][i].resize(layer_descs[l].temporal_horizon);
-                    
-                    for (int t = 0; t < histories[l][i].size(); t++)
-                        histories[l][i][t] = Array<Vec<S, L>>(in_size, 0);
-                }
-
                 visible_layer_descs.resize(io_sizes.size() * layer_descs[l].temporal_horizon);
 
                 for (int i = 0; i < io_sizes.size(); i++) {
@@ -172,15 +131,6 @@ public:
                 }
             }
             else {
-                histories[l].resize(1);
-
-                int in_size = layer_descs[l - 1].hidden_size.x * layer_descs[l - 1].hidden_size.y;
-
-                histories[l][0].resize(layer_descs[l].temporal_horizon);
-
-                for (int t = 0; t < histories[l][0].size(); t++)
-                    histories[l][0][t] = Array<Vec<S, L>>(in_size, 0);
-
                 visible_layer_descs.resize(layer_descs[l].temporal_horizon);
 
                 for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
@@ -209,105 +159,46 @@ public:
         assert(params.layers.size() == layers.size());
         assert(params.ios.size() == io_sizes.size());
 
-        // first tick is always 0
-        ticks[0] = 0;
-
-        // add input to first layer history   
-        for (int i = 0; i < io_sizes.size(); i++) {
-            histories[0][i].push_front();
-
-            histories[0][i][0] = input_vecs[i];
-        }
-
-        // set all updates to no update, will be set to true if an update occurred later
-        updates.fill(false);
-
         // forward
         for (int l = 0; l < layers.size(); l++) {
-            // if is time for layer to tick
-            if (l == 0 || ticks[l] >= ticks_per_update[l]) {
-                // reset tick
-                ticks[l] = 0;
+            Array<Array_View<Vec<S, L>>> layer_inputs(layers[l].get_num_visible_layers());
 
-                // updated
-                updates[l] = true;
-
-                Array<Array_View<Vec<S, L>>> layer_inputs(layers[l].get_num_visible_layers());
-
-                // set inputs
-                int index = 0;
-
-                for (int i = 0; i < histories[l].size(); i++) {
-                    for (int t = 0; t < histories[l][i].size(); t++) {
-                        layer_inputs[index] = histories[l][i][t];
-
-                        index++;
-                    }
-                }
-
-                layers[l].forward(layer_inputs);
-
-                // add to next layer's history
-                if (l < layers.size() - 1) {
-                    int l_next = l + 1;
-
-                    histories[l_next][0].push_front();
-
-                    histories[l_next][0][0] = layers[l].get_hidden_vecs();
-
-                    ticks[l_next]++;
-                }
+            // set inputs
+            if (l == 0) {
+                for (int i = 0; i < io_sizes.size(); i++)
+                    layer_inputs[i] = input_vecs[i];
             }
+            else
+                layer_inputs[0] = layers[l - 1].get_hidden_vecs();
+
+            layers[l].forward(layer_inputs);
         }
 
         // backward
         for (int l = layers.size() - 1; l >= 0; l--) {
-            if (updates[l]) {
-                Array_View<Vec<S, L>> feedback;
+            Array_View<Vec<S, L>> feedback;
 
-                if (l < layers.size() - 1) {
-                    int t = ticks_per_update[l + 1] - 1 - ticks[l + 1];
+            if (l < layers.size() - 1) {
+                layers[l + 1].backward(0);
 
-                    layers[l + 1].backward(t);
-
-                    feedback = layers[l + 1].get_visible_layer(t).pred_vecs;
-                }
-
-                layers[l].predict(feedback, learn_enabled, params.layers[l]);
+                feedback = layers[l + 1].get_visible_layer(0).pred_vecs;
             }
+
+            layers[l].predict(feedback, learn_enabled, params.layers[l]);
         }
     }
 
     void clear_state() {
-        updates.fill(false);
-        ticks.fill(0);
-
-        for (int l = 0; l < layers.size(); l++) {
-            for (int i = 0; i < histories[l].size(); i++) {
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t].fill(0);
-            }
-
+        for (int l = 0; l < layers.size(); l++)
             layers[l].clear_state();
-        }
     }
 
     // serialization
     long size() const { // returns size in bytes
-        long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int2) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int);
+        long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int2) + io_types.size() * sizeof(Byte);
 
-        for (int l = 0; l < layers.size(); l++) {
-            size += sizeof(int);
-
-            for (int i = 0; i < histories[l].size(); i++) {
-                size += 2 * sizeof(int);
-
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    size += sizeof(int) + histories[l][i][t].size() * sizeof(int);
-            }
-
+        for (int l = 0; l < layers.size(); l++)
             size += layers[l].size();
-        }
 
         // params
         size += layers.size() * sizeof(typename Layer<S, L>::Params);
@@ -317,18 +208,10 @@ public:
     }
 
     long state_size() const { // returns size of state in bytes
-        long size = updates.size() * sizeof(Byte) + ticks.size() * sizeof(int);
+        long size = 0;
 
-        for (int l = 0; l < layers.size(); l++) {
-            for (int i = 0; i < histories[l].size(); i++) {
-                size += sizeof(int);
-
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    size += histories[l][i][t].size() * sizeof(int);
-            }
-
+        for (int l = 0; l < layers.size(); l++)
             size += layers[l].state_size();
-        }
 
         return size;
     }
@@ -356,35 +239,8 @@ public:
         writer.write(&io_sizes[0], num_io * sizeof(Int2));
         writer.write(&io_types[0], num_io * sizeof(Byte));
 
-        writer.write(&updates[0], updates.size() * sizeof(Byte));
-        writer.write(&ticks[0], ticks.size() * sizeof(int));
-        writer.write(&ticks_per_update[0], ticks_per_update.size() * sizeof(int));
-
-        for (int l = 0; l < num_layers; l++) {
-            int num_layer_inputs = histories[l].size();
-
-            writer.write(&num_layer_inputs, sizeof(int));
-
-            for (int i = 0; i < histories[l].size(); i++) {
-                int history_size = histories[l][i].size();
-
-                writer.write(&history_size, sizeof(int));
-
-                int history_start = histories[l][i].start;
-
-                writer.write(&history_start, sizeof(int));
-
-                for (int t = 0; t < histories[l][i].size(); t++) {
-                    int buffer_size = histories[l][i][t].size();
-
-                    writer.write(&buffer_size, sizeof(int));
-
-                    writer.write(&histories[l][i][t][0], histories[l][i][t].size() * sizeof(int));
-                }
-            }
-
+        for (int l = 0; l < num_layers; l++)
             layers[l].write(writer);
-        }
         
         // params
         for (int l = 0; l < layers.size(); l++)
@@ -413,48 +269,8 @@ public:
 
         layers.resize(num_layers);
 
-        histories.resize(num_layers);
-        
-        updates.resize(num_layers);
-        ticks.resize(num_layers);
-        ticks_per_update.resize(num_layers);
-
-        reader.read(&updates[0], updates.size() * sizeof(Byte));
-        reader.read(&ticks[0], ticks.size() * sizeof(int));
-        reader.read(&ticks_per_update[0], ticks_per_update.size() * sizeof(int));
-
-        for (int l = 0; l < num_layers; l++) {
-            int num_layer_inputs;
-            
-            reader.read(&num_layer_inputs, sizeof(int));
-
-            histories[l].resize(num_layer_inputs);
-
-            for (int i = 0; i < histories[l].size(); i++) {
-                int history_size;
-
-                reader.read(&history_size, sizeof(int));
-
-                int history_start;
-                
-                reader.read(&history_start, sizeof(int));
-
-                histories[l][i].resize(history_size);
-                histories[l][i].start = history_start;
-
-                for (int t = 0; t < histories[l][i].size(); t++) {
-                    int buffer_size;
-
-                    reader.read(&buffer_size, sizeof(int));
-
-                    histories[l][i][t].resize(buffer_size);
-
-                    reader.read(&histories[l][i][t][0], histories[l][i][t].size() * sizeof(int));
-                }
-            }
-
+        for (int l = 0; l < num_layers; l++)
             layers[l].read(reader);
-        }
 
         params.layers.resize(num_layers);
         params.ios.resize(num_io);
@@ -469,43 +285,15 @@ public:
     void write_state(
         Stream_Writer &writer
     ) const {
-        writer.write(&updates[0], updates.size() * sizeof(Byte));
-        writer.write(&ticks[0], ticks.size() * sizeof(int));
-
-        for (int l = 0; l < layers.size(); l++) {
-            for (int i = 0; i < histories[l].size(); i++) {
-                int history_start = histories[l][i].start;
-
-                writer.write(&history_start, sizeof(int));
-
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    writer.write(&histories[l][i][t][0], histories[l][i][t].size() * sizeof(int));
-            }
-
+        for (int l = 0; l < layers.size(); l++)
             layers[l].write_state(writer);
-        }
     }
 
     void read_state(
         Stream_Reader &reader
     ) {
-        reader.read(&updates[0], updates.size() * sizeof(Byte));
-        reader.read(&ticks[0], ticks.size() * sizeof(int));
-        
-        for (int l = 0; l < layers.size(); l++) {
-            for (int i = 0; i < histories[l].size(); i++) {
-                int history_start;
-                
-                reader.read(&history_start, sizeof(int));
-
-                histories[l][i].start = history_start;
-
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    reader.read(&histories[l][i][t][0], histories[l][i][t].size() * sizeof(int));
-            }
-
+        for (int l = 0; l < layers.size(); l++)
             layers[l].read_state(reader);
-        }
     }
 
     void write_weights(
@@ -531,38 +319,9 @@ public:
     const Array<Vec<S, L>> &get_prediction_vecs(
         int i
     ) {
-        int index = i * histories[0][0].size();
+        layers[0].backward(i);
 
-        layers[0].backward(index);
-
-        return layers[0].get_visible_layer(index).pred_vecs;
-    }
-
-    // whether this layer received on update this timestep
-    bool get_update(
-        int l
-    ) const {
-        return updates[l];
-    }
-
-    // get current layer ticks, relative to previous layer
-    int get_ticks(
-        int l
-    ) const {
-        return ticks[l];
-    }
-
-    // get layer ticks per update, relative to previous layer
-    int get_ticks_per_update(
-        int l
-    ) const {
-        return ticks_per_update[l];
-    }
-
-    int get_temporal_horizon(
-        int l
-    ) const {
-        return histories[l][0].size();
+        return layers[0].get_visible_layer(i).pred_vecs;
     }
 
     // number of io layers
@@ -602,12 +361,6 @@ public:
         int l
     ) const {
         return layers[l];
-    }
-
-    const Array<Circle_Buffer<Array<Vec<S, L>>>> &get_histories(
-        int l
-    ) const {
-        return histories[l];
     }
 };
 }
