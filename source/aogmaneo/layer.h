@@ -348,7 +348,7 @@ public:
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer &vl = visible_layers[vli];
 
-            size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size() * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>);
+            size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size() * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>) + sizeof(float);
         }
 
         size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>);
@@ -393,6 +393,8 @@ public:
 
             writer.write(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S, L>));
             writer.write(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
+
+            writer.write(&vl.importance, sizeof(float));
         }
 
         writer.write(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
@@ -431,6 +433,8 @@ public:
 
             reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S, L>));
             reader.read(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
+
+            reader.read(&vl.importance, sizeof(float));
         }
 
         hidden_vecs_all.resize(num_hidden_columns);
