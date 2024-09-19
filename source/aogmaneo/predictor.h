@@ -82,10 +82,10 @@ public:
         int num_ho = num_hidden * S * L;
 
         for (int i = 0; i < num_ih; i++)
-            weights_ih[i] = (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            weights_ih[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
 
         for (int i = 0; i < num_ho; i++)
-            weights_ho[i] = (rand() % init_weight_noisei) - init_weight_noisei / 2;
+            weights_ho[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
     }
 
     // number of segments
@@ -146,7 +146,9 @@ public:
         const float rescale_hidden = params.scale * sqrtf(1.0f / S) / 127.0f;
 
         for (int hi = 0; hi < num_hidden; hi++) {
-            hidden_acts[hi] = sigmoidf(hidden_acts[hi] * rescale_hidden); // nonlinearity
+            hidden_acts[hi] *= rescale_hidden;
+
+            hidden_acts[hi] = sigmoidf(hidden_acts[hi]); // nonlinearity
 
             // sum for output
             for (int oi = 0; oi < N; oi++)
