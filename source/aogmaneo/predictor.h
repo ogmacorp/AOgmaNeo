@@ -212,7 +212,7 @@ public:
 
         // update output weights
         for (int hi = 0; hi < num_hidden; hi++) {
-            int delta = rand_roundf(rate * hidden_acts[hi]);
+            int delta = rand_roundf(rate * hidden_acts[hi], state);
 
             for (int os = 0; os < S; os++) {
                 if (target[os] == pred[os])
