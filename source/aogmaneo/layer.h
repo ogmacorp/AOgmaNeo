@@ -40,15 +40,6 @@ public:
         Array<Vec<S, L>> pred_vecs; // reconstructed input
     };
 
-    struct Params {
-        float lr;
-
-        Params()
-        :
-        lr(0.01f)
-        {}
-    };
-
 private:
     Int2 hidden_size; // size of hidden/output layer
 
@@ -129,7 +120,7 @@ private:
         Array_View<Vec<S, L>> feedback_vecs,
         bool learn_enabled,
         unsigned long* state,
-        const Params &params
+        const Layer_Params &params
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
@@ -288,7 +279,7 @@ public:
     void predict(
         Array_View<Vec<S, L>> feedback_vecs, // can be empty
         bool learn_enabled, // whether to learn
-        const Params &params // parameters
+        const Layer_Params &params // parameters
     ) {
         int num_hidden_columns = hidden_size.x * hidden_size.y;
 

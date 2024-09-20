@@ -17,56 +17,56 @@ enum IO_Type {
     prediction = 1
 };
 
+struct IO_Desc {
+    Int2 size;
+    IO_Type type;
+
+    int radius; // layer radius
+
+    IO_Desc(
+        const Int2 &size = Int2(4, 4),
+        IO_Type type = prediction,
+        int radius = 2,
+        int down_radius = 2
+    )
+    :
+    size(size),
+    type(type),
+    radius(radius)
+    {}
+};
+
+// describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
+struct Layer_Desc {
+    Int2 hidden_size; // size of hidden layer
+
+    int radius; // layer radius
+
+    float positional_scale; // positional embedding scale
+
+    Layer_Desc(
+        const Int2 &hidden_size = Int2(4, 4),
+        int radius = 2,
+        float positional_scale = 1.0f
+    )
+    :
+    hidden_size(hidden_size),
+    radius(radius),
+    positional_scale(positional_scale)
+    {}
+};
+
+struct IO_Params {};
+
+struct Params {
+    Array<Layer_Params> layers;
+    Array<IO_Params> ios;
+};
+
 // a sph
 template<int S, int L>
 class Hierarchy {
 public:
-    struct IO_Desc {
-        Int2 size;
-        IO_Type type;
-
-        int radius; // layer radius
-
-        IO_Desc(
-            const Int2 &size = Int2(4, 4),
-            IO_Type type = prediction,
-            int radius = 2,
-            int down_radius = 2
-        )
-        :
-        size(size),
-        type(type),
-        radius(radius)
-        {}
-    };
-
-    // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
-    struct Layer_Desc {
-        Int2 hidden_size; // size of hidden layer
-
-        int radius; // layer radius
-
-        float positional_scale; // positional embedding scale
-
-        Layer_Desc(
-            const Int2 &hidden_size = Int2(4, 4),
-            int radius = 2,
-            float positional_scale = 1.0f
-        )
-        :
-        hidden_size(hidden_size),
-        radius(radius),
-        positional_scale(positional_scale)
-        {}
-    };
-
-    struct IO_Params {};
-
-    struct Params {
-        Array<typename Layer<S, L>::Params> layers;
-        Array<IO_Params> ios;
-    };
-
 private:
     // layers
     Array<Layer<S, L>> layers;
@@ -137,7 +137,7 @@ public:
         }
 
         // initialize params
-        params.layers = Array<typename Layer<S, L>::Params>(layer_descs.size());
+        params.layers = Array<Layer_Params>(layer_descs.size());
         params.ios = Array<IO_Params>(io_descs.size());
     }
 
@@ -191,7 +191,7 @@ public:
             size += layers[l].size();
 
         // params
-        size += layers.size() * sizeof(typename Layer<S, L>::Params);
+        size += layers.size() * sizeof(Layer_Params);
         size += io_sizes.size() * sizeof(IO_Params);
 
         return size;
@@ -234,7 +234,7 @@ public:
         
         // params
         for (int l = 0; l < layers.size(); l++)
-            writer.write(&params.layers[l], sizeof(typename Layer<S, L>::Params));
+            writer.write(&params.layers[l], sizeof(Layer_Params));
 
         for (int i = 0; i < io_sizes.size(); i++)
             writer.write(&params.ios[i], sizeof(IO_Params));
@@ -266,7 +266,7 @@ public:
         params.ios.resize(num_io);
 
         for (int l = 0; l < num_layers; l++)
-            reader.read(&params.layers[l], sizeof(typename Layer<S, L>::Params));
+            reader.read(&params.layers[l], sizeof(Layer_Params));
 
         for (int i = 0; i < num_io; i++)
             reader.read(&params.ios[i], sizeof(IO_Params));

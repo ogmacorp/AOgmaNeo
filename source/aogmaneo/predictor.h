@@ -11,8 +11,15 @@
 #include "vec.h"
 
 namespace aon {
-template<int S, int L>
-class Layer;
+struct Layer_Params {
+    float lr;
+
+    Layer_Params()
+    :
+    lr(0.01f)
+    {}
+};
+
 
 // take 2 vectors and map to 1
 template<int S, int L>
@@ -89,7 +96,7 @@ public:
     
     Vec<S, L> predict(
         const Vec<S, L> &src,
-        const typename Layer<S, L>::Params &params
+        const Layer_Params &params
     ) const {
         assert(data != nullptr);
 
@@ -130,7 +137,7 @@ public:
         const Vec<S, L> &pred,
         const Vec<S, L> &target,
         unsigned long* state,
-        const typename Layer<S, L>::Params &params
+        const Layer_Params &params
     ) {
         assert(data != nullptr);
 
