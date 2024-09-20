@@ -26,8 +26,7 @@ struct IO_Desc {
     IO_Desc(
         const Int2 &size = Int2(4, 4),
         IO_Type type = prediction,
-        int radius = 2,
-        int down_radius = 2
+        int radius = 2
     )
     :
     size(size),
