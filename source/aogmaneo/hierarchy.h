@@ -23,15 +23,19 @@ struct IO_Desc {
 
     int radius; // layer radius
 
+    float positional_scale;
+
     IO_Desc(
         const Int2 &size = Int2(4, 4),
         IO_Type type = prediction,
-        int radius = 2
+        int radius = 2,
+        float positional_scale = 1.0f
     )
     :
     size(size),
     type(type),
-    radius(radius)
+    radius(radius),
+    positional_scale(positional_scale)
     {}
 };
 
@@ -160,6 +164,7 @@ public:
 
                         visible_layer_descs[index].size = io_sizes[i];
                         visible_layer_descs[index].radius = io_descs[i].radius;
+                        visible_layer_descs[index].positional_scale = io_descs[i].positional_scale;
 
                         if (t == 0 && io_types[i] == prediction)
                             visible_layer_descs[index].predictable = true;
@@ -181,6 +186,7 @@ public:
                 for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
                     visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
                     visible_layer_descs[t].radius = layer_descs[l].radius;
+                    visible_layer_descs[t].positional_scale = layer_descs[l].positional_scale;
 
                     if (t < layer_descs[l].ticks_per_update)
                         visible_layer_descs[t].predictable = true;
@@ -188,7 +194,7 @@ public:
             }
             
             // create the sparse coding layer
-            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].positional_scale, visible_layer_descs);
+            layers[l].init_random(layer_descs[l].hidden_size, visible_layer_descs);
         }
 
         // initialize params
