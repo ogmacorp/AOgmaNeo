@@ -20,7 +20,6 @@ struct Layer_Params {
     {}
 };
 
-
 // take 2 vectors and map to 1
 template<int S, int L>
 class Predictor {
@@ -28,7 +27,7 @@ private:
     Byte* data;
 
     S_Byte* weights;
-    float* output_acts;
+    int* output_acts;
 
 public:
     static const int N = S * L;
@@ -57,7 +56,7 @@ public:
 
         offset += num_weights * sizeof(S_Byte);
 
-        this->output_acts = reinterpret_cast<float*>(data + offset);
+        this->output_acts = reinterpret_cast<int*>(data + offset);
     }
 
     void init_random() {
@@ -91,7 +90,7 @@ public:
     }
 
     static int data_size() {
-        return N * N * sizeof(S_Byte) + N * sizeof(float);
+        return N * N * sizeof(S_Byte) + N * sizeof(int);
     }
     
     Vec<S, L> predict(
@@ -114,7 +113,7 @@ public:
 
         for (int os = 0; os < S; os++) {
             int max_index = 0;
-            float max_activation = limit_min;
+            int max_activation = limit_min;
 
             for (int ol = 0; ol < L; ol++) {
                 int oi = ol + L * os;
@@ -141,13 +140,11 @@ public:
     ) {
         assert(data != nullptr);
 
-        const float rate = params.lr * 127.0f;
+        const int rate = ceilf(params.lr * 127.0f);
 
         // update output weights
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
-
-            int delta = rand_roundf(rate, state);
 
             for (int os = 0; os < S; os++) {
                 if (target[os] == pred[os])
@@ -156,8 +153,8 @@ public:
                 int wi_target = (target[os] + L * os) + N * sindex;
                 int wi_pred = (pred[os] + L * os) + N * sindex;
 
-                weights[wi_target] = min(127, max(-127, weights[wi_target] + delta));
-                weights[wi_pred] = min(127, max(-127, weights[wi_pred] - delta));
+                weights[wi_target] = min(127, weights[wi_target] + rate);
+                weights[wi_pred] = max(-127, weights[wi_pred] - rate);
             }
         }
     }
