@@ -23,15 +23,19 @@ struct IO_Desc {
 
     int radius; // layer radius
 
+    float positional_scale;
+
     IO_Desc(
         const Int2 &size = Int2(4, 4),
         IO_Type type = prediction,
-        int radius = 2
+        int radius = 2,
+        float positional_scale = 1.0f
     )
     :
     size(size),
     type(type),
-    radius(radius)
+    radius(radius),
+    positional_scale(positional_scale)
     {}
 };
 

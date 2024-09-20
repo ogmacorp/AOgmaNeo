@@ -22,6 +22,8 @@ public:
 
         int radius; // radius onto input
 
+        float positional_scale;
+
         Byte predictable;
 
         // defaults
@@ -29,6 +31,7 @@ public:
         :
         size(4, 4),
         radius(2),
+        positional_scale(1.0f),
         predictable(false)
         {}
     };
@@ -190,7 +193,6 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int2 &hidden_size, // hidden/output size
-        float positional_scale, // positional encoding scale
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     ) {
         this->visible_layer_descs = visible_layer_descs;
@@ -212,7 +214,7 @@ public:
             Float_Buffer embedding(S * 3);
 
             for (int i = 0; i < embedding.size(); i++)
-                embedding[i] = rand_normalf() * positional_scale;
+                embedding[i] = rand_normalf() * vld.positional_scale;
 
             vl.visible_pos_vecs.resize(num_visible_columns);
 
