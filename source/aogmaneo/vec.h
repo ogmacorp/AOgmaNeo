@@ -58,17 +58,17 @@ public:
     }
 
     // number of segments
-    int segments() const {
+    static int segments() {
         return S;
     }
 
     // segment length
-    int length() const {
+    static int length() {
         return L;
     }
 
     // total size
-    int size() const {
+    static int size() {
         return N;
     }
 
