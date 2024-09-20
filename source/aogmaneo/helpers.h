@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "ptr.h"
 #include "array.h"
 
 #ifdef USE_STD_MATH
