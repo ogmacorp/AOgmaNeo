@@ -121,6 +121,7 @@ public:
                 for (int i = 0; i < io_sizes.size(); i++) {
                     visible_layer_descs[i].size = io_sizes[i];
                     visible_layer_descs[i].radius = io_descs[i].radius;
+                    visible_layer_descs[i].positional_scale = io_descs[i].positional_scale;
 
                     if (io_types[i] == prediction)
                         visible_layer_descs[i].predictable = true;
@@ -131,12 +132,13 @@ public:
 
                 visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
                 visible_layer_descs[0].radius = layer_descs[l].radius;
+                visible_layer_descs[0].positional_scale = layer_descs[l].positional_scale;
 
                 visible_layer_descs[0].predictable = true;
             }
             
             // create the sparse coding layer
-            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].positional_scale, visible_layer_descs);
+            layers[l].init_random(layer_descs[l].hidden_size, visible_layer_descs);
         }
 
         // initialize params
