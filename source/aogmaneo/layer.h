@@ -38,13 +38,6 @@ public:
         Array<Vec<S, L>> visible_pos_vecs; // positional encodings
         Array<Vec<S, L>> visible_vecs; // input with bound position
         Array<Vec<S, L>> pred_vecs; // reconstructed input
-
-        float importance;
-
-        Visible_Layer()
-        :
-        importance(1.0f)
-        {}
     };
 
     struct Params {
@@ -117,7 +110,7 @@ private:
                 for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                     int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    sum_all += vl.visible_vecs[visible_column_index] * vl.importance;
+                    sum_all += vl.visible_vecs[visible_column_index];
 
                     if (vld.predictable)
                         sum_pred += vl.visible_vecs[visible_column_index];
@@ -342,7 +335,7 @@ public:
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             const Visible_Layer &vl = visible_layers[vli];
 
-            size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size() * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>) + sizeof(float);
+            size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size() * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>);
         }
 
         size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>);
@@ -387,8 +380,6 @@ public:
 
             writer.write(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S, L>));
             writer.write(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
-
-            writer.write(&vl.importance, sizeof(float));
         }
 
         writer.write(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
@@ -427,8 +418,6 @@ public:
 
             reader.read(&vl.visible_pos_vecs[0], vl.visible_pos_vecs.size() * sizeof(Vec<S, L>));
             reader.read(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
-
-            reader.read(&vl.importance, sizeof(float));
         }
 
         hidden_vecs_all.resize(num_hidden_columns);

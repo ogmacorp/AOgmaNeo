@@ -179,7 +179,7 @@ public:
     static const int N = S * L;
 
 private:
-    float buffer[N];
+    int buffer[N];
 
 public:
 
@@ -187,20 +187,20 @@ public:
     {}
 
     Bundle(
-        float value
+        int value
     ) {
         fill(value);
     }
 
     const Bundle<S, L> &operator=(
-        float value
+        int value
     ) {
         fill(value);
 
         return *this;
     }
 
-    float &operator[](
+    int &operator[](
         int index
     ) {
         assert(index >= 0 && index < N);
@@ -208,7 +208,7 @@ public:
         return buffer[index];
     }
 
-    const float &operator[](
+    const int &operator[](
         int index
     ) const {
         assert(index >= 0 && index < N);
@@ -232,32 +232,12 @@ public:
     }
 
     void fill(
-        float value
+        int value
     ) {
         for (int i = 0; i < N; i++)
             buffer[i] = value;
     }
 
-    Bundle<S, L> operator*(
-        float scalar
-    ) const {
-        Bundle<S, L> result;
-
-        for (int i = 0; i < N; i++)
-            result[i] = buffer[i] * scalar;
-
-        return result;
-    }
-
-    const Bundle<S, L> &operator*=(
-        float scalar
-    ) {
-        for (int i = 0; i < N; i++)
-            buffer[i] *= scalar;
-
-        return *this;
-    }
-    
     Bundle<S, L> operator+(
         const Bundle<S, L> &other
     ) const {
@@ -304,7 +284,7 @@ public:
         for (int i = 0; i < S; i++) {
             int start = i * L;
 
-            float mv = 0.0f;
+            int mv = 0;
             int mi = 0;
 
             for (int j = 0; j < L; j++) {
@@ -384,35 +364,6 @@ Bundle<S, L> operator+(
         int start = i * L;
 
         result[vec[i] + start]++;
-    }
-
-    return result;
-}
-
-template<int S, int L>
-Bundle<S, L> operator*(
-    float scalar,
-    const Bundle<S, L> &bundle
-) {
-    Bundle<S, L> result;
-
-    for (int i = 0; i < Bundle<S, L>::N; i++)
-        result[i] = bundle[i] * scalar;
-
-    return result;
-}
-
-template<int S, int L>
-Bundle<S, L> operator*(
-    float scalar,
-    const Vec<S, L> &vec
-) {
-    Bundle<S, L> result = 0;
-
-    for (int i = 0; i < S; i++) {
-        int start = i * L;
-
-        result[vec[i] + start] += scalar;
     }
 
     return result;
