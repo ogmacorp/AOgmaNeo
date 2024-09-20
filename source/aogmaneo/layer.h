@@ -111,7 +111,7 @@ private:
         Vec<S, L> hidden_vec_all = sum_all.thin();
         Vec<S, L> hidden_vec_pred = sum_pred.thin();
 
-        hidden_vecs_all[hidden_column_index] = (hidden_vec_all + hidden_vec_all * hidden_vecs_all[hidden_column_index]).thin(); // recurrent bind
+        hidden_vecs_all[hidden_column_index] = hidden_vec_all;
         hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
     }
 
