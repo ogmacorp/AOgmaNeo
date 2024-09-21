@@ -26,7 +26,7 @@ class Predictor {
 private:
     Byte* data;
 
-    S_Byte* weights;
+    Byte* weights;
     int* output_acts;
 
 public:
@@ -50,8 +50,8 @@ public:
 
         int num_weights = N * N;
 
-        this->weights = reinterpret_cast<S_Byte*>(data);
-        this->output_acts = reinterpret_cast<int*>(data + num_weights * sizeof(S_Byte));
+        this->weights = reinterpret_cast<Byte*>(data);
+        this->output_acts = reinterpret_cast<int*>(data + num_weights * sizeof(Byte));
     }
 
     void init_random() {
@@ -63,7 +63,7 @@ public:
         int num_weights = N * N;
 
         for (int i = 0; i < num_weights; i++)
-            weights[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+            weights[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
     }
 
     // number of segments
@@ -85,7 +85,7 @@ public:
     }
 
     static int data_size() {
-        return N * N * sizeof(S_Byte) + N * sizeof(int);
+        return N * N * sizeof(Byte) + N * sizeof(int);
     }
     
     Vec<S, L> predict(
@@ -135,7 +135,7 @@ public:
     ) {
         assert(data != nullptr);
 
-        const float rate = params.lr * 127.0f;
+        const float rate = params.lr * 255.0f;
 
         // update output weights
         for (int vs = 0; vs < S; vs++) {
@@ -150,8 +150,8 @@ public:
                 int wi_target = (target[os] + L * os) + N * sindex;
                 int wi_pred = (pred[os] + L * os) + N * sindex;
 
-                weights[wi_target] = min(127, weights[wi_target] + delta);
-                weights[wi_pred] = max(-127, weights[wi_pred] - delta);
+                weights[wi_target] = min(255, weights[wi_target] + delta);
+                weights[wi_pred] = max(0, weights[wi_pred] - delta);
             }
         }
     }
