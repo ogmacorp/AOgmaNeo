@@ -28,7 +28,7 @@ private:
     Byte* data;
 
     S_Byte* weights;
-    float* output_acts;
+    int* output_acts;
 
 public:
     static const int N = S * L;
@@ -41,7 +41,7 @@ public:
     Predictor(
         Byte* data
     ) {
-        set_from( data);
+        set_from(data);
     }
 
     void set_from(
@@ -57,14 +57,14 @@ public:
 
         offset += num_weights * sizeof(S_Byte);
 
-        this->output_acts = reinterpret_cast<float*>(data + offset);
+        this->output_acts = reinterpret_cast<int*>(data + offset);
     }
 
     void init_random() {
         assert(data != nullptr);
 
         for (int i = 0; i < N; i++)
-            output_acts[i] = 0.0f;
+            output_acts[i] = 0.;
 
         int num_weights = N * N;
 
@@ -91,7 +91,7 @@ public:
     }
 
     static int data_size() {
-        return N * N * sizeof(S_Byte) + N * sizeof(float);
+        return N * N * sizeof(S_Byte) + N * sizeof(int);
     }
     
     Vec<S, L> predict(
@@ -101,7 +101,7 @@ public:
         assert(data != nullptr);
 
         for (int i = 0; i < N; i++)
-            output_acts[i] = 0.0f;
+            output_acts[i] = 0;
 
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
@@ -114,7 +114,7 @@ public:
 
         for (int os = 0; os < S; os++) {
             int max_index = 0;
-            float max_activation = limit_min;
+            int max_activation = 0;
 
             for (int ol = 0; ol < L; ol++) {
                 int oi = ol + L * os;
@@ -141,13 +141,11 @@ public:
     ) {
         assert(data != nullptr);
 
-        const float rate = params.lr * 127.0f;
+        const int delta = ceilf(params.lr * 127.0f);
 
         // update output weights
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
-
-            int delta = rand_roundf(rate, state);
 
             for (int os = 0; os < S; os++) {
                 if (target[os] == pred[os])
