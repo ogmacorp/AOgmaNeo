@@ -309,16 +309,7 @@ public:
     }
 
     void clear_state() {
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-
-            vl.pred_vecs.fill(0);
-        }
-
         hidden_vecs_all.fill(0);
-        hidden_vecs_pred.fill(0);
-        hidden_vecs_pred_next.fill(0);
-        hidden_vecs_prev.fill(0);
     }
 
     // serialization
@@ -339,17 +330,7 @@ public:
     }
 
     long state_size() const { // returns size of state in Bytes
-        long size = 0;
-
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            const Visible_Layer &vl = visible_layers[vli];
-
-            size += vl.pred_vecs.size() * sizeof(Vec<S, L>);
-        }
-
-        size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>);
-
-        return size;
+        return hidden_vecs_all.size() * sizeof(Vec<S, L>);
     }
 
     long weights_size() const { // returns size of weights in Bytes
@@ -436,31 +417,13 @@ public:
     void write_state(
         Stream_Writer &writer
     ) const {
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            const Visible_Layer &vl = visible_layers[vli];
-
-            writer.write(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
-        }
-
         writer.write(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
-        writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
-        writer.write(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
-        writer.write(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
     }
 
     void read_state(
         Stream_Reader &reader
     ) {
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-
-            reader.read(&vl.pred_vecs[0], vl.pred_vecs.size() * sizeof(Vec<S, L>));
-        }
-
         reader.read(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
-        reader.read(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
-        reader.read(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
-        reader.read(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
     }
 
     void write_weights(
