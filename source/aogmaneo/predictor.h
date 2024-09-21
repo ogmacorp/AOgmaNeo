@@ -63,7 +63,7 @@ public:
         int num_weights = N * N;
 
         for (int i = 0; i < num_weights; i++)
-            weights[i] = (rand() % init_weight_noisei);
+            weights[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
     }
 
     // number of segments
