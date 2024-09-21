@@ -50,20 +50,15 @@ public:
 
         int num_weights = N * N;
 
-        int offset = 0;
-
-        this->weights = reinterpret_cast<S_Byte*>(data + offset);
-
-        offset += num_weights * sizeof(S_Byte);
-
-        this->output_acts = reinterpret_cast<int*>(data + offset);
+        this->weights = reinterpret_cast<S_Byte*>(data);
+        this->output_acts = reinterpret_cast<int*>(data + num_weights * sizeof(S_Byte));
     }
 
     void init_random() {
         assert(data != nullptr);
 
         for (int i = 0; i < N; i++)
-            output_acts[i] = 0.;
+            output_acts[i] = 0;
 
         int num_weights = N * N;
 
