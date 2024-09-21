@@ -26,7 +26,7 @@ class Predictor {
 private:
     Byte* data;
 
-    S_Byte* weights;
+    Byte* weights;
     int* output_acts;
 
 public:
@@ -40,7 +40,7 @@ public:
     Predictor(
         Byte* data
     ) {
-        set_from( data);
+        set_from(data);
     }
 
     void set_from(
@@ -50,25 +50,20 @@ public:
 
         int num_weights = N * N;
 
-        int offset = 0;
-
-        this->weights = reinterpret_cast<S_Byte*>(data + offset);
-
-        offset += num_weights * sizeof(S_Byte);
-
-        this->output_acts = reinterpret_cast<int*>(data + offset);
+        this->weights = reinterpret_cast<Byte*>(data);
+        this->output_acts = reinterpret_cast<int*>(data + num_weights * sizeof(Byte));
     }
 
     void init_random() {
         assert(data != nullptr);
 
         for (int i = 0; i < N; i++)
-            output_acts[i] = 0.0f;
+            output_acts[i] = 0;
 
         int num_weights = N * N;
 
         for (int i = 0; i < num_weights; i++)
-            weights[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+            weights[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
     }
 
     // number of segments
@@ -90,7 +85,7 @@ public:
     }
 
     static int data_size() {
-        return N * N * sizeof(S_Byte) + N * sizeof(int);
+        return N * N * sizeof(Byte) + N * sizeof(int);
     }
     
     Vec<S, L> predict(
@@ -100,7 +95,7 @@ public:
         assert(data != nullptr);
 
         for (int i = 0; i < N; i++)
-            output_acts[i] = 0.0f;
+            output_acts[i] = 0;
 
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
@@ -140,11 +135,13 @@ public:
     ) {
         assert(data != nullptr);
 
-        const int rate = ceilf(params.lr * 127.0f);
+        const float rate = params.lr * 255.0f;
 
         // update output weights
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
+
+            const int delta = rand_roundf(rate, state);
 
             for (int os = 0; os < S; os++) {
                 if (target[os] == pred[os])
@@ -153,8 +150,8 @@ public:
                 int wi_target = (target[os] + L * os) + N * sindex;
                 int wi_pred = (pred[os] + L * os) + N * sindex;
 
-                weights[wi_target] = min(127, weights[wi_target] + rate);
-                weights[wi_pred] = max(-127, weights[wi_pred] - rate);
+                weights[wi_target] = min(255, weights[wi_target] + delta);
+                weights[wi_pred] = max(0, weights[wi_pred] - delta);
             }
         }
     }
