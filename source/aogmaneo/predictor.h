@@ -69,7 +69,7 @@ public:
         int num_weights = N * N;
 
         for (int i = 0; i < num_weights; i++)
-            weights[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+            weights[i] = (rand() % init_weight_noisei);
     }
 
     // number of segments
@@ -114,7 +114,7 @@ public:
 
         for (int os = 0; os < S; os++) {
             int max_index = 0;
-            int max_activation = 0;
+            int max_activation = limit_min;
 
             for (int ol = 0; ol < L; ol++) {
                 int oi = ol + L * os;
@@ -156,8 +156,8 @@ public:
                 int wi_target = (target[os] + L * os) + N * sindex;
                 int wi_pred = (pred[os] + L * os) + N * sindex;
 
-                weights[wi_target] = min(127, max(-127, weights[wi_target] + delta));
-                weights[wi_pred] = min(127, max(-127, weights[wi_pred] - delta));
+                weights[wi_target] = min(127, weights[wi_target] + delta);
+                weights[wi_pred] = max(-127, weights[wi_pred] - delta);
             }
         }
     }
