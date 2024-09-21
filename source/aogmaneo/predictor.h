@@ -20,7 +20,6 @@ struct Layer_Params {
     {}
 };
 
-
 // take 2 vectors and map to 1
 template<int S, int L>
 class Predictor {
