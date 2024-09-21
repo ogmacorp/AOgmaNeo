@@ -141,11 +141,13 @@ public:
     ) {
         assert(data != nullptr);
 
+        const float rate = params.lr * 127.0f;
+
         // update output weights
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
 
-            const int delta = rand_roundf(params.lr * 127.0f, state);
+            const int delta = rand_roundf(rate, state);
 
             for (int os = 0; os < S; os++) {
                 if (target[os] == pred[os])
