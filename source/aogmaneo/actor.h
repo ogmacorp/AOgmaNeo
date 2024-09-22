@@ -30,9 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer value_weights; // value function weights
-        Float_Buffer policy_weights; // action function weights
-        Float_Buffer policy_weights_delayed;
+        Float_Buffer value_weights;
+        Float_Buffer policy_weights;
     };
 
     // history sample for delayed updates
@@ -40,6 +39,7 @@ public:
         Array<Int_Buffer> input_cis;
         Array<Float_Buffer> input_acts;
         Int_Buffer hidden_target_cis_prev;
+        Float_Buffer hidden_values;
 
         float reward;
     };
@@ -47,36 +47,46 @@ public:
     struct Params {
         float vlr; // value learning rate
         float plr; // policy learning rate
-        float discount; // discount fActor
-        float delay_rate; // delay rate of delayed weights
-        float clip_coef; // PPO clip coefficient
+        float leak; // ReLU leak
+        float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
+        float bias; // bias toward positive policy updates
+        float discount; // discount factor
+        float td_scale_decay; // decay on td error scaler
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        vlr(0.001f),
-        plr(0.001f),
-        delay_rate(0.01f),
-        clip_coef(0.1f),
+        vlr(0.002f),
+        plr(0.002f),
+        leak(0.01f),
+        smoothing(0.03f),
+        bias(0.5f),
         discount(0.99f),
-        min_steps(8),
-        history_iters(8)
+        td_scale_decay(0.999f),
+        min_steps(16),
+        history_iters(16)
         {}
     };
 
 private:
     Int3 hidden_size; // hidden/output/action size
+    int value_num_dendrites_per_cell;
+    int policy_num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
 
-    Float_Buffer hidden_acts; // temporary buffer
-    Float_Buffer hidden_acts_delayed; // temporary buffer
-
     Int_Buffer hidden_cis; // hidden states
 
+    Float_Buffer hidden_acts;
+
+    Float_Buffer value_dendrite_acts;
+    Float_Buffer policy_dendrite_acts;
+
     Float_Buffer hidden_values; // hidden value function output buffer
+
+    Float_Buffer hidden_td_scales;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
@@ -97,8 +107,6 @@ private:
     void learn(
         const Int2 &column_pos,
         int t,
-        float r,
-        float d,
         float mimic,
         const Params &params
     );
@@ -107,6 +115,8 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
+        int value_num_dendrites_per_cell,
+        int policy_num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
@@ -116,8 +126,8 @@ public:
         const Array<Int_Buffer_View> &input_cis,
         const Array<Float_Buffer_View> &input_acts,
         Int_Buffer_View hidden_target_cis_prev,
-        float reward,
         bool learn_enabled,
+        float reward,
         float mimic,
         const Params &params
     );
@@ -195,7 +205,7 @@ public:
         return history_size;
     }
 
-    // merge list of actors and write to this one
+    // merge list of decoders and write to this one
     void merge(
         const Array<Actor*> &actors,
         Merge_Mode mode

@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -38,7 +38,7 @@ public:
             IO_Type type = prediction,
             int up_radius = 2,
             int down_radius = 2,
-            int history_capacity = 256
+            int history_capacity = 512
         )
         :
         size(size),
@@ -143,7 +143,7 @@ public:
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
         float reward = 0.0f, // reward
-        float mimic = 0.0f
+        float mimic = 0.0f // mimicry mode, [0.0, 1.0]
     );
 
     void clear_state();

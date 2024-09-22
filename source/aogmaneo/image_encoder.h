@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -37,19 +37,19 @@ public:
     };
 
     struct Params {
-        float threshold; // early stopping threshold distance
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
+        int radius; // SOM neighborhood radius
         
         Params()
         :
-        threshold(0.001f),
         falloff(0.99f),
         lr(0.1f),
         scale(2.0f),
-        rr(0.1f)
+        rr(0.01f),
+        radius(1)
         {}
     };
 
@@ -57,6 +57,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
+
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_resources;
 
@@ -69,8 +71,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Byte_Buffer_View> &inputs,
-        bool learn_enabled,
-        unsigned long* state
+        bool learn_enabled
     );
 
     void learn_reconstruction(
@@ -114,7 +115,7 @@ public:
     // serialization
     long size() const; // returns size in bytes
     long state_size() const; // returns state size in bytes
-    long weights_size() const; // returns recon_weights size in bytes
+    long weights_size() const; // returns weights size in bytes
 
     void write(
         Stream_Writer &writer
