@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "ptr.h"
 #include "array.h"
 
 #ifdef USE_STD_MATH
@@ -32,7 +31,7 @@ const float limit_max = 999999.0f;
 const float limit_small = 0.000001f;
 
 const int rand_subseed_offset = 12345;
-const int init_weight_noisei = 9;
+const int init_weight_noisei = 8;
 const float init_weight_noisef = 0.01f;
 
 inline float modf(
@@ -383,6 +382,12 @@ inline float tanhf(
 
     return -(z - 1.0f) / (z + 1.0f);
 #endif
+}
+
+inline float softplusf(
+    float x
+) {
+    return logf(1.0f + expf(-abs(x))) + max(0.0f, x);
 }
 
 // --- rng ---
