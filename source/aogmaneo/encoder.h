@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -32,6 +32,9 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
         
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
+
         float importance;
 
         Visible_Layer()
@@ -41,16 +44,18 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter, lower makes it select matchier columns over ones with less overall weights (total)
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // ART vigilance
         float lr; // learning rate
+        float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
 
         Params()
         :
         choice(0.0001f),
-        vigilance(0.5f),
-        lr(0.1f),
+        vigilance(0.9f),
+        lr(0.5f),
+        active_ratio(0.1f),
         l_radius(2)
         {}
     };
@@ -60,13 +65,7 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
-
-    Float_Buffer hidden_sums;
-
-    Float_Buffer hidden_totals;
-
-    Float_Buffer hidden_maxs;
+    Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
