@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -42,9 +42,9 @@ public:
 
         Params()
         :
-        scale(8.0f),
+        scale(4.0f),
         lr(0.01f),
-        clip(4.0f)
+        clip(1.0f)
         {}
     };
 

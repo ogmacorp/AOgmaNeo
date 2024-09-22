@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -31,7 +31,8 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer value_weights; // value function weights
-        Float_Buffer action_weights; // action function weights
+        Float_Buffer policy_weights; // action function weights
+        Float_Buffer policy_weights_delayed;
     };
 
     // history sample for delayed updates
@@ -45,18 +46,22 @@ public:
 
     struct Params {
         float vlr; // value learning rate
-        float alr; // action learning rate
+        float plr; // policy learning rate
         float discount; // discount fActor
+        float delay_rate; // delay rate of delayed weights
+        float clip_coef; // PPO clip coefficient
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        vlr(0.01f),
-        alr(0.01f),
+        vlr(0.001f),
+        plr(0.001f),
+        delay_rate(0.01f),
+        clip_coef(0.1f),
         discount(0.99f),
-        min_steps(16),
-        history_iters(16)
+        min_steps(8),
+        history_iters(8)
         {}
     };
 
@@ -67,6 +72,7 @@ private:
     int history_size;
 
     Float_Buffer hidden_acts; // temporary buffer
+    Float_Buffer hidden_acts_delayed; // temporary buffer
 
     Int_Buffer hidden_cis; // hidden states
 

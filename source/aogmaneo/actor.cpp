@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -72,14 +72,16 @@ void Actor::forward(
 
                     int wi = hc + wi_start;
 
-                    hidden_acts[hidden_cell_index] += vl.action_weights[wi] * in_act;
+                    hidden_acts[hidden_cell_index] += vl.policy_weights[wi] * in_act;
                 }
 
                 value += vl.value_weights[wi_value] * in_act;
             }
     }
 
-    value /= count;
+    const float activation_scale = sqrtf(1.0f / count);
+
+    value *= activation_scale;
 
     hidden_values[hidden_column_index] = value;
 
@@ -88,7 +90,7 @@ void Actor::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= count;
+        hidden_acts[hidden_cell_index] *= activation_scale;
 
         max_activation = max(max_activation, hidden_acts[hidden_cell_index]);
     }
@@ -103,7 +105,15 @@ void Actor::forward(
         total += hidden_acts[hidden_cell_index];
     }
 
-    float cusp = randf(state) * total;
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
+    }
+
+    float cusp = randf(state);
 
     int select_index = 0;
     float sum_so_far = 0.0f;
@@ -178,7 +188,9 @@ void Actor::learn(
             }
     }
 
-    value /= count;
+    const float activation_scale = sqrtf(1.0f / count);
+
+    value *= activation_scale;
 
     float td_error_value = new_value - value;
     
@@ -187,6 +199,7 @@ void Actor::learn(
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] = 0.0f;
+        hidden_acts_delayed[hidden_cell_index] = 0.0f;
     }
 
     float delta_value = params.vlr * td_error_value;
@@ -230,7 +243,8 @@ void Actor::learn(
 
                     int wi = hc + wi_start;
 
-                    hidden_acts[hidden_cell_index] += vl.action_weights[wi] * in_act;
+                    hidden_acts[hidden_cell_index] += vl.policy_weights[wi] * in_act;
+                    hidden_acts_delayed[hidden_cell_index] += vl.policy_weights_delayed[wi] * in_act;
                 }
 
                 vl.value_weights[wi_value] += delta_value * in_act;
@@ -240,36 +254,59 @@ void Actor::learn(
     // --- action ---
 
     float max_activation = limit_min;
+    float max_activation_delayed = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] /= count;
+        hidden_acts[hidden_cell_index] *= activation_scale;
+        hidden_acts_delayed[hidden_cell_index] *= activation_scale;
 
         max_activation = max(max_activation, hidden_acts[hidden_cell_index]);
+        max_activation_delayed = max(max_activation_delayed, hidden_acts_delayed[hidden_cell_index]);
     }
 
     float total = 0.0f;
+    float total_delayed = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+        hidden_acts_delayed[hidden_cell_index] = expf(hidden_acts_delayed[hidden_cell_index] - max_activation_delayed);
 
         total += hidden_acts[hidden_cell_index];
+        total_delayed += hidden_acts_delayed[hidden_cell_index];
     }
 
     float total_inv = 1.0f / max(limit_small, total);
-
-    float rate = params.alr * (mimic + (1.0f - mimic) * tanhf(td_error_value));
+    float total_inv_delayed = 1.0f / max(limit_small, total_delayed);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_acts[hidden_cell_index] *= total_inv;
+        hidden_acts_delayed[hidden_cell_index] *= total_inv_delayed;
+    }
+
+    float value_delta = params.vlr * td_error_value;
+
+    // probability ratio
+    float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
+
+    // https://huggingface.co/blog/deep-rl-ppo
+    bool clip = (ratio < (1.0f - params.clip_coef) && td_error_value < 0.0f) || (ratio > (1.0f + params.clip_coef) && td_error_value > 0.0f);
+    
+    float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * tanhf(td_error_value) * (!clip));
+
+    if (policy_error_partial == 0.0f)
+        return;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
         // re-use as deltas
-        hidden_acts[hidden_cell_index] = rate * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        hidden_acts[hidden_cell_index] = policy_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -309,7 +346,7 @@ void Actor::learn(
 
                     int wi = hc + wi_start;
 
-                    vl.action_weights[wi] += hidden_acts[hidden_cell_index] * in_act;
+                    vl.policy_weights[wi] += hidden_acts[hidden_cell_index] * in_act;
                 }
             }
     }
@@ -346,10 +383,12 @@ void Actor::init_random(
         for (int i = 0; i < vl.value_weights.size(); i++)
             vl.value_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
-        vl.action_weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.policy_weights.resize(num_hidden_cells * area * vld.size.z);
 
-        for (int i = 0; i < vl.action_weights.size(); i++)
-            vl.action_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
+        for (int i = 0; i < vl.policy_weights.size(); i++)
+            vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
+
+        vl.policy_weights_delayed = vl.policy_weights;
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -357,6 +396,7 @@ void Actor::init_random(
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_acts_delayed.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -442,6 +482,15 @@ void Actor::step(
             for (int i = 0; i < num_hidden_columns; i++)
                 learn(Int2(i / hidden_size.y, i % hidden_size.y), t, r, d, mimic, params);
         }
+
+        // update delayed weights
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+        
+            PARALLEL_FOR
+            for (int i = 0; i < vl.policy_weights.size(); i++)
+                vl.policy_weights_delayed[i] += params.delay_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
+        }
     }
 }
 
@@ -459,7 +508,7 @@ long Actor::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.value_weights.size() * sizeof(float) + vl.action_weights.size() * sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.value_weights.size() * sizeof(float) + vl.policy_weights.size() * sizeof(float);
     }
 
     size += 3 * sizeof(int);
@@ -501,7 +550,7 @@ long Actor::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.value_weights.size() * sizeof(float) + vl.action_weights.size() * sizeof(float);
+        size += vl.value_weights.size() * sizeof(float) + vl.policy_weights.size() * sizeof(float);
     }
     return size;
 }
@@ -525,7 +574,7 @@ void Actor::write(
         writer.write(reinterpret_cast<const void*>(&vld), sizeof(Visible_Layer_Desc));
 
         writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
     }
 
     writer.write(reinterpret_cast<const void*>(&history_size), sizeof(int));
@@ -567,6 +616,7 @@ void Actor::read(
     reader.read(reinterpret_cast<void*>(&hidden_values[0]), hidden_values.size() * sizeof(float));
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_acts_delayed.resize(num_hidden_cells);
 
     int num_visible_layers;
 
@@ -588,10 +638,12 @@ void Actor::read(
         int area = diam * diam;
 
         vl.value_weights.resize(num_hidden_columns * area * vld.size.z);
-        vl.action_weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.policy_weights.resize(num_hidden_cells * area * vld.size.z);
 
         reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
+
+        vl.policy_weights_delayed = vl.policy_weights;
     }
 
     reader.read(reinterpret_cast<void*>(&history_size), sizeof(int));
@@ -694,7 +746,7 @@ void Actor::write_weights(
         const Visible_Layer &vl = visible_layers[vli];
 
         writer.write(reinterpret_cast<const void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
-        writer.write(reinterpret_cast<const void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
+        writer.write(reinterpret_cast<const void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
     }
 }
 
@@ -705,7 +757,7 @@ void Actor::read_weights(
         Visible_Layer &vl = visible_layers[vli];
 
         reader.read(reinterpret_cast<void*>(&vl.value_weights[0]), vl.value_weights.size() * sizeof(float));
-        reader.read(reinterpret_cast<void*>(&vl.action_weights[0]), vl.action_weights.size() * sizeof(float));
+        reader.read(reinterpret_cast<void*>(&vl.policy_weights[0]), vl.policy_weights.size() * sizeof(float));
     }
 }
 
@@ -725,10 +777,10 @@ void Actor::merge(
                 vl.value_weights[i] = actors[e]->visible_layers[vli].value_weights[i];
             }
 
-            for (int i = 0; i < vl.action_weights.size(); i++) {
+            for (int i = 0; i < vl.policy_weights.size(); i++) {
                 int e = rand() % actors.size();                
 
-                vl.action_weights[i] = actors[e]->visible_layers[vli].action_weights[i];
+                vl.policy_weights[i] = actors[e]->visible_layers[vli].policy_weights[i];
             }
         }
 
@@ -747,13 +799,13 @@ void Actor::merge(
                 vl.value_weights[i] = total / actors.size();
             }
         
-            for (int i = 0; i < vl.action_weights.size(); i++) {
+            for (int i = 0; i < vl.policy_weights.size(); i++) {
                 float total = 0.0f;
 
                 for (int e = 0; e < actors.size(); e++)
-                    total += actors[e]->visible_layers[vli].action_weights[i];
+                    total += actors[e]->visible_layers[vli].policy_weights[i];
 
-                vl.action_weights[i] = total / actors.size();
+                vl.policy_weights[i] = total / actors.size();
             }
         }
 

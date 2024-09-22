@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -63,15 +63,15 @@ void Routed_Layer::forward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float w = vl.weights[wi] * weight_scale + 1.0f;
+                float w = vl.weights[wi] * weight_scale;
 
                 activation += w * in_act;
             }
     }
 
-    activation /= count;
+    activation *= sqrtf(1.0f / count);
 
-    hidden_acts[hidden_column_index] = activation;
+    hidden_acts[hidden_column_index] = 1.0f + tanhf(activation);
 }
 
 void Routed_Layer::backward(
@@ -135,19 +135,21 @@ void Routed_Layer::backward(
 
                 int wi = route_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                float error = min(params.clip, max(-params.clip, errors[hidden_column_index]));
+                float unshift_act = hidden_acts[hidden_column_index] - 1.0f;
 
-                float w = vl.weights[wi] * weight_scale + 1.0f;
+                float error = errors[hidden_column_index] * (1.0f - unshift_act * unshift_act);
+
+                float w = vl.weights[wi] * weight_scale;
 
                 sum += error * w;
                 count++;
 
                 if (learn_enabled)
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + rand_roundf(params.lr * 127.0f * error * in_act, state)));
+                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + rand_roundf(params.lr * 127.0f * min(params.clip, max(-params.clip, error * in_act)), state)));
             }
         }
 
-    sum /= max(1, count);
+    sum *= sqrtf(1.0f / max(1, count));
 
     vl.errors[visible_column_index] = sum;
 }
@@ -183,7 +185,7 @@ void Routed_Layer::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = -(rand() % init_weight_noisei);
+            vl.weights[i] = (rand() % init_weight_noisei) - init_weight_noisei / 2;
 
         vl.errors.resize(num_visible_columns);
     }
