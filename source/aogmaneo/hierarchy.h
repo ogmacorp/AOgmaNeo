@@ -43,17 +43,24 @@ struct IO_Desc {
 struct Layer_Desc {
     Int2 hidden_size; // size of hidden layer
 
+    int hidden_segments;
+    int hidden_length;
+
     int radius; // layer radius
 
     float positional_scale; // positional embedding scale
 
     Layer_Desc(
         const Int2 &hidden_size = Int2(4, 4),
+        int hidden_segments = 8,
+        int hidden_length = 32,
         int radius = 2,
         float positional_scale = 1.0f
     )
     :
     hidden_size(hidden_size),
+    hidden_segments(hidden_segments),
+    hidden_length(hidden_length),
     radius(radius),
     positional_scale(positional_scale)
     {}
@@ -138,7 +145,7 @@ public:
             }
             
             // create the sparse coding layer
-            layers[l].init_random(layer_descs[l].hidden_size, visible_layer_descs);
+            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].hidden_segments, layer_descs[l].hidden_length, visible_layer_descs);
         }
 
         // initialize params
