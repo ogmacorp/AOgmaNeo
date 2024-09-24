@@ -10,7 +10,6 @@
 
 #include "helpers.h"
 #include "vec.h"
-#include <iostream>
 
 namespace aon {
 struct Layer_Params {
@@ -103,17 +102,18 @@ public:
             for (int hs = 0; hs < hidden_segments; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
                     int hi = hl + hidden_length * hs;
-                    int wi = hi + num_hidden * sindex;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
+                    int swi = hi + num_hidden * sindex;
 
-                    sums[hi] += ((weights[byi] & (1 << bi)) != 0);
+                    int sbyi = swi / 8;
+                    int sbi = swi % 8;
+
+                    sums[hi] += ((weights[sbyi] & (1 << sbi)) != 0);
                 }
             }
         }
 
-        Vec<S, L> hidden;
+        Vec<S, L> hidden = 0;
 
         for (int hs = 0; hs < global_commits; hs++) {
             int max_index = -1;
@@ -155,19 +155,19 @@ public:
             int max_activation = 0;
 
             for (int vl = 0; vl < L; vl++) {
-                int vi = vl + L * vs + N; // + N to shift to prediction weights
+                int tvi = vl + L * vs + N; // + N to shift to prediction weights
 
                 int sum = 0;
 
                 for (int hs = 0; hs < global_commits; hs++) {
                     int hi = hidden[hs] + hidden_length * hs;
 
-                    int wi = hi + num_hidden * vi;
+                    int twi = hi + num_hidden * tvi;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
+                    int tbyi = twi / 8;
+                    int tbi = twi % 8;
 
-                    sum += ((weights[byi] & (1 << bi)) != 0);
+                    sum += ((weights[tbyi] & (1 << tbi)) != 0);
                 }
 
                 if (sum > max_activation) {
@@ -216,7 +216,7 @@ public:
             }
         }
 
-        Vec<S, L> hidden;
+        Vec<S, L> hidden = 0;
 
         int max_global_index = 0;
         float max_global_activation = 0.0f;
@@ -309,7 +309,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        return 2 * sizeof(int) + weights.size() * sizeof(Byte) + 2 * totals_src.size() * sizeof(int) + commits.size() * sizeof(int);
+        return 2 * sizeof(int) + weights.size() * sizeof(Byte) + 2 * totals_src.size() * sizeof(int) + commits.size() * sizeof(int) + sizeof(int);
     }
 
     long weights_size() const { // returns size of weights in Bytes
@@ -326,6 +326,8 @@ public:
         writer.write(&totals_src[0], totals_src.size() * sizeof(int));
         writer.write(&totals_pred[0], totals_pred.size() * sizeof(int));
         writer.write(&commits[0], commits.size() * sizeof(int));
+
+        writer.write(&global_commits, sizeof(int));
     }
 
     void read(
@@ -346,6 +348,8 @@ public:
         reader.read(&totals_src[0], totals_src.size() * sizeof(int));
         reader.read(&totals_pred[0], totals_pred.size() * sizeof(int));
         reader.read(&commits[0], commits.size() * sizeof(int));
+
+        reader.read(&global_commits, sizeof(int));
 
         sums.resize(num_hidden);
     }
