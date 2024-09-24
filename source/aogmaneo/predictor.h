@@ -138,7 +138,10 @@ public:
             }
 
             hidden[hs] = (max_index == -1 ? max_complete_index : max_index);
+
+            std::cout << (int)hidden[hs] << " ";
         }
+        std::cout << std::endl;
 
         // reconstruct
         Vec<S, L> result;
@@ -257,7 +260,7 @@ public:
         }
 
         if (!global_matched) {
-            if (commits[max_global_index] < L) {
+            if (commits[max_global_index] < hidden_length) {
                 hidden[max_global_index] = commits[max_global_index];
                 commits[max_global_index]++;
             }
