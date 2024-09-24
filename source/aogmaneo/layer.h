@@ -55,7 +55,6 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Byte_Buffer predictor_data;
     Array<Predictor<S, L>> predictors;
 
     // --- kernels ---
@@ -193,6 +192,8 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int2 &hidden_size, // hidden/output size
+        int hidden_segments,
+        int hidden_length,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     ) {
         this->visible_layer_descs = visible_layer_descs;
@@ -246,15 +247,10 @@ public:
         hidden_vecs_pred_next = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_prev = Array<Vec<S, L>>(num_hidden_columns, 0);
 
-        predictor_data.resize(num_hidden_columns * Predictor<S, L>::data_size());
-
         predictors.resize(num_hidden_columns);
 
-        for (int i = 0; i < num_hidden_columns; i++) {
-            predictors[i].set_from(&predictor_data[i * Predictor<S, L>::data_size()]);
-
-            predictors[i].init_random();
-        }
+        for (int i = 0; i < num_hidden_columns; i++)
+            predictors[i].init(hidden_segments, hidden_length);
     }
 
     void forward(
@@ -324,17 +320,14 @@ public:
 
         size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>);
 
-        size += predictor_data.size() * sizeof(Byte);
+        size += predictors.size() * predictors[0].size();
 
         return size;
     }
 
-    long state_size() const { // returns size of state in Bytes
-        return hidden_vecs_all.size() * sizeof(Vec<S, L>);
-    }
 
     long weights_size() const { // returns size of weights in Bytes
-        return predictor_data.size() * sizeof(Byte);
+        return predictors.size() * predictors[0].weights_size();
     }
 
     void write(
@@ -361,7 +354,8 @@ public:
         writer.write(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
 
-        writer.write(&predictor_data[0], predictor_data.size() * sizeof(Byte));
+        for (int i = 0; i < predictors.size(); i++)
+            predictors[i].write(writer);
     }
 
     void read(
@@ -404,14 +398,10 @@ public:
         reader.read(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_prev[0], hidden_vecs_prev.size() * sizeof(Vec<S, L>));
 
-        predictor_data.resize(num_hidden_columns * Predictor<S, L>::data_size());
-
-        reader.read(&predictor_data[0], predictor_data.size() * sizeof(Byte));
-
         predictors.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            predictors[i].set_from(&predictor_data[i * Predictor<S, L>::data_size()]);
+            predictors[i].read(reader);
     }
 
     void write_state(
@@ -429,13 +419,15 @@ public:
     void write_weights(
         Stream_Writer &writer
     ) const {
-        writer.write(&predictor_data[0], predictor_data.size() * sizeof(Byte));
+        for (int i = 0; i < predictors.size(); i++)
+            predictors.write(writer);
     }
 
     void read_weights(
         Stream_Reader &reader
     ) {
-        reader.read(&predictor_data[0], predictor_data.size() * sizeof(Byte));
+        for (int i = 0; i < predictors.size(); i++)
+            predictors.read(reader);
     }
 
     // get the number of visible layers
