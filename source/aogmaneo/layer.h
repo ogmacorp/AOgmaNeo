@@ -414,14 +414,14 @@ public:
         Stream_Writer &writer
     ) const {
         for (int i = 0; i < predictors.size(); i++)
-            predictors.write(writer);
+            predictors[i].write(writer);
     }
 
     void read_weights(
         Stream_Reader &reader
     ) {
         for (int i = 0; i < predictors.size(); i++)
-            predictors.read(reader);
+            predictors[i].read(reader);
     }
 
     // get the number of visible layers
