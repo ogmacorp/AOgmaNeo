@@ -89,7 +89,7 @@ public:
     ) {
         int num_hidden = hidden_segments * hidden_length;
 
-        for (int i = 0; i < hidden_segments; i++)
+        for (int i = 0; i < num_hidden; i++)
             sums[i] = 0;
 
         for (int vs = 0; vs < S; vs++) {
@@ -185,7 +185,7 @@ public:
     ) {
         int num_hidden = hidden_segments * hidden_length;
 
-        for (int i = 0; i < hidden_segments; i++)
+        for (int i = 0; i < num_hidden; i++)
             sums[i] = 0;
 
         for (int vs = 0; vs < S; vs++) {
