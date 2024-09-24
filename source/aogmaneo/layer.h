@@ -319,6 +319,9 @@ public:
         return size;
     }
 
+    long state_size() const { // returns size of state in Bytes
+        return hidden_vecs_all.size() * sizeof(Vec<S, L>);
+    }
 
     long weights_size() const { // returns size of weights in Bytes
         return predictors.size() * predictors[0].weights_size();
