@@ -155,7 +155,9 @@ public:
                 int sum = 0;
 
                 for (int hs = 0; hs < hidden_segments; hs++) {
-                    int wi = (hidden[hs] + hidden_length * hs) + num_hidden * vi;
+                    int hi = hidden[hs] + hidden_length * hs;
+
+                    int wi = hi + num_hidden * vi;
 
                     int byi = wi / 8;
                     int bi = wi % 8;
@@ -323,7 +325,7 @@ public:
         int num_hidden = hidden_segments * hidden_length;
         int num_weights = num_hidden * N * 2;
 
-        weights.resize(num_weights);
+        weights.resize((num_weights + 7) / 8);
         totals_src.resize(num_hidden);
         totals_pred.resize(num_hidden);
         commits.resize(num_hidden);
