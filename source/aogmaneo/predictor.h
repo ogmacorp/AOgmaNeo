@@ -8,15 +8,16 @@
 
 #pragma once
 
+#include "helpers.h"
 #include "vec.h"
 
 namespace aon {
 struct Layer_Params {
-    float lr;
+    int iters;
 
     Layer_Params()
     :
-    lr(0.01f)
+    iters(3)
     {}
 };
 
@@ -24,46 +25,39 @@ struct Layer_Params {
 template<int S, int L>
 class Predictor {
 private:
-    Byte* data;
+    int hidden_segments;
+    int hidden_length;
 
-    Byte* weights;
-    int* output_acts;
+    Byte_Buffer weights;
+    Int_Buffer commits;
+
+    Int_Buffer sums;
 
 public:
     static const int N = S * L;
 
     Predictor()
-    :
-    data(nullptr)
     {}
 
     Predictor(
-        Byte* data
+        int hidden_segments,
+        int hidden_length
     ) {
-        set_from(data);
+        set_from(hidden_segments, hidden_length);
     }
 
     void set_from(
-        Byte* data
+        int hidden_segments,
+        int hidden_length
     ) {
-        this->data = data;
+        this->hidden_segments = hidden_segments;
+        this->hidden_length = hidden_length;
 
-        int num_weights = N * N;
+        int num_hidden = hidden_segments * hidden_length;
+        int num_weights = num_hidden * N * 2;
 
-        this->weights = reinterpret_cast<Byte*>(data);
-        this->output_acts = reinterpret_cast<int*>(data + num_weights * sizeof(Byte));
-    }
-
-    void init_random() {
-        assert(data != nullptr);
-
-        for (int i = 0; i < N; i++)
-            output_acts[i] = 0;
-
-        int num_weights = N * N;
-
-        for (int i = 0; i < num_weights; i++)
-            weights[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+        weights = Byte_Buffer((num_weights + 7) / 8, 0);
+        commits = Int_Buffer(hidden_segments, 0);
     }
 
     // number of segments
@@ -80,46 +74,46 @@ public:
         return N;
     }
 
-    static int weights_size() {
-        return N * N;
-    }
-
-    static int data_size() {
-        return N * N * sizeof(Byte) + N * sizeof(int);
-    }
-    
     Vec<S, L> predict(
         const Vec<S, L> &src,
         const Layer_Params &params
-    ) const {
-        assert(data != nullptr);
+    ) {
+        int num_hidden = hidden_segments * hidden_length;
 
-        for (int i = 0; i < N; i++)
-            output_acts[i] = 0;
+        for (int i = 0; i < hidden_segments; i++)
+            sums[i] = 0;
 
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
 
-            for (int oi = 0; oi < N; oi++)
-                output_acts[oi] += weights[oi + N * sindex];
+            for (int hi = 0; hi < num_hidden; hi++) {
+                int wi = hi + num_hidden * sindex;
+
+                int byi = wi / 8;
+                int bi = wi % 8;
+
+                sums[hi] += ((weights[wi] & (1 << bi)) != 0);
+            }
         }
 
         Vec<S, L> result;
 
-        for (int os = 0; os < S; os++) {
+        for (int hs = 0; hs < S; hs++) {
             int max_index = 0;
             int max_activation = limit_min;
 
-            for (int ol = 0; ol < L; ol++) {
-                int oi = ol + L * os;
+            for (int hl = 0; hl < L; hl++) {
+                int hi = hl + L * hs;
 
-                if (output_acts[oi] > max_activation) {
-                    max_activation = output_acts[oi];
-                    max_index = ol;
+                float complemented = (
+                float activation = 
+                if (sums[hi] > max_activation) {
+                    max_activation = sums[hi];
+                    max_index = hl;
                 }
             }
 
-            result[os] = max_index;
+            result[hs] = max_index;
         }
 
         return result;
