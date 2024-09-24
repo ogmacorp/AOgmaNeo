@@ -64,6 +64,8 @@ public:
         totals_src = Int_Buffer(num_hidden, 0);
         totals_pred = Int_Buffer(num_hidden, 0);
         commits = Int_Buffer(hidden_segments, 0);
+
+        sums.resize(num_hidden);
     }
 
     // number of segments
@@ -92,7 +94,7 @@ public:
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
 
-            for (int hs = 0; hs < S; hs++) {
+            for (int hs = 0; hs < hidden_segments; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
                     int hi = hl + L * hs;
                     int wi = hi + num_hidden * sindex;
@@ -100,14 +102,14 @@ public:
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    sums[hi] += ((weights[wi] & (1 << bi)) != 0);
+                    sums[hi] += ((weights[byi] & (1 << bi)) != 0);
                 }
             }
         }
 
         Vec<S, L> hidden;
 
-        for (int hs = 0; hs < S; hs++) {
+        for (int hs = 0; hs < hidden_segments; hs++) {
             int max_index = -1;
             float max_activation = 0.0f;
 
@@ -187,7 +189,7 @@ public:
             int sindex = src[vs] + L * vs;
             int tindex = target[vs] + L * vs + N;
 
-            for (int hs = 0; hs < S; hs++) {
+            for (int hs = 0; hs < hidden_segments; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
                     int hi = hl + L * hs;
 
@@ -212,7 +214,7 @@ public:
         float max_global_activation = 0.0f;
         bool global_matched = false;
 
-        for (int hs = 0; hs < S; hs++) {
+        for (int hs = 0; hs < hidden_segments; hs++) {
             int max_index = -1;
             float max_activation = 0.0f;
 
@@ -252,11 +254,9 @@ public:
         }
 
         if (!global_matched) {
-            int hi = hidden[max_global_index] + L * max_global_index;
-
-            if (commits[hi] < L) {
-                hidden[max_global_index] = commits[hi];
-                commits[hi]++;
+            if (commits[max_global_index] < L) {
+                hidden[max_global_index] = commits[max_global_index];
+                commits[max_global_index]++;
             }
         }
 
@@ -331,6 +331,8 @@ public:
         reader.read(&totals_src[0], totals_src.size() * sizeof(int));
         reader.read(&totals_pred[0], totals_pred.size() * sizeof(int));
         reader.read(&commits[0], commits.size() * sizeof(int));
+
+        sums.resize(num_hidden);
     }
 };
 }

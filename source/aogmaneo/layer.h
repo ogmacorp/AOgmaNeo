@@ -126,7 +126,7 @@ private:
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         if (learn_enabled)
-            predictors[hidden_column_index].learn(hidden_vecs_prev[hidden_column_index], hidden_vecs_pred_next[hidden_column_index], hidden_vecs_pred[hidden_column_index], params);
+            predictors[hidden_column_index].learn(hidden_vecs_prev[hidden_column_index], hidden_vecs_pred[hidden_column_index], params);
 
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
 
