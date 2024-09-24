@@ -15,12 +15,14 @@
 namespace aon {
 struct Layer_Params {
     float choice;
-    float vigilance;
+    float vigilance_low;
+    float vigilance_high;
 
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance(0.9f)
+    vigilance_low(0.8f),
+    vigilance_high(0.9f)
     {}
 };
 
@@ -35,6 +37,7 @@ private:
     Int_Buffer totals_src;
     Int_Buffer totals_pred;
     Int_Buffer commits;
+    int global_commits;
 
     Int_Buffer sums;
 
@@ -65,6 +68,8 @@ public:
         totals_src = Int_Buffer(num_hidden, 0);
         totals_pred = Int_Buffer(num_hidden, 0);
         commits = Int_Buffer(hidden_segments, 0);
+
+        global_commits = 0;
 
         sums.resize(num_hidden);
     }
@@ -110,7 +115,7 @@ public:
 
         Vec<S, L> hidden;
 
-        for (int hs = 0; hs < hidden_segments; hs++) {
+        for (int hs = 0; hs < global_commits; hs++) {
             int max_index = -1;
             float max_activation = 0.0f;
 
@@ -126,7 +131,7 @@ public:
 
                 float activation = complemented / (params.choice + N - totals_src[hi]);
 
-                if (activation > max_activation && match >= params.vigilance) {
+                if (activation > max_activation && match >= params.vigilance_high) {
                     max_activation = activation;
                     max_index = hl;
                 }
@@ -138,10 +143,7 @@ public:
             }
 
             hidden[hs] = (max_index == -1 ? max_complete_index : max_index);
-
-            std::cout << (int)hidden[hs] << " ";
         }
-        std::cout << std::endl;
 
         // reconstruct
         Vec<S, L> result;
@@ -157,7 +159,7 @@ public:
 
                 int sum = 0;
 
-                for (int hs = 0; hs < hidden_segments; hs++) {
+                for (int hs = 0; hs < global_commits; hs++) {
                     int hi = hidden[hs] + hidden_length * hs;
 
                     int wi = hi + num_hidden * vi;
@@ -195,7 +197,7 @@ public:
             int sindex = src[vs] + L * vs;
             int tindex = target[vs] + L * vs + N;
 
-            for (int hs = 0; hs < hidden_segments; hs++) {
+            for (int hs = 0; hs < global_commits; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
                     int hi = hl + hidden_length * hs;
 
@@ -218,11 +220,13 @@ public:
 
         int max_global_index = 0;
         float max_global_activation = 0.0f;
+        float max_global_match = 0.0f;
         bool global_matched = false;
 
-        for (int hs = 0; hs < hidden_segments; hs++) {
+        for (int hs = 0; hs < global_commits; hs++) {
             int max_index = -1;
             float max_activation = 0.0f;
+            float max_match = 0.0f;
 
             int max_complete_index = 0;
             float max_complete_activation = 0.0f;
@@ -236,8 +240,9 @@ public:
 
                 float activation = complemented / (params.choice + N * 2 - (totals_src[hi] + totals_pred[hi]));
 
-                if (activation > max_activation && match >= params.vigilance) {
+                if (activation > max_activation && match >= params.vigilance_high) {
                     max_activation = activation;
+                    max_match = match;
                     max_index = hl;
                 }
 
@@ -253,17 +258,21 @@ public:
 
             if (global_activation > max_global_activation) {
                 max_global_activation = global_activation;
+                max_global_match = max_match;
                 max_global_index = hs;
 
                 global_matched = (max_index != -1);
             }
         }
 
-        if (!global_matched) {
-            if (commits[max_global_index] < hidden_length) {
-                hidden[max_global_index] = commits[max_global_index];
-                commits[max_global_index]++;
-            }
+        if (max_global_match < params.vigilance_low && global_commits < hidden_segments) {
+            max_global_index = global_commits;
+            global_commits++;
+        }
+
+        if (!global_matched && commits[max_global_index] < hidden_length) {
+            hidden[max_global_index] = commits[max_global_index];
+            commits[max_global_index]++;
         }
 
         for (int vs = 0; vs < S; vs++) {
