@@ -10,6 +10,7 @@
 
 #include "helpers.h"
 #include "vec.h"
+#include <iostream>
 
 namespace aon {
 struct Layer_Params {
@@ -96,7 +97,7 @@ public:
 
             for (int hs = 0; hs < hidden_segments; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
-                    int hi = hl + L * hs;
+                    int hi = hl + hidden_length * hs;
                     int wi = hi + num_hidden * sindex;
 
                     int byi = wi / 8;
@@ -117,7 +118,7 @@ public:
             float max_complete_activation = 0.0f;
 
             for (int hl = 0; hl < commits[hs]; hl++) {
-                int hi = hl + L * hs;
+                int hi = hl + hidden_length * hs;
 
                 float complemented = (N - totals_src[hi]) - (S - sums[hi]);
 
@@ -132,7 +133,7 @@ public:
 
                 if (activation > max_complete_activation) {
                     max_complete_activation = activation;
-                    max_complete_index = max_index;
+                    max_complete_index = hl;
                 }
             }
 
@@ -154,7 +155,7 @@ public:
                 int sum = 0;
 
                 for (int hs = 0; hs < hidden_segments; hs++) {
-                    int wi = hidden[hs] + num_hidden * vi;
+                    int wi = (hidden[hs] + hidden_length * hs) + num_hidden * vi;
 
                     int byi = wi / 8;
                     int bi = wi % 8;
@@ -191,7 +192,7 @@ public:
 
             for (int hs = 0; hs < hidden_segments; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
-                    int hi = hl + L * hs;
+                    int hi = hl + hidden_length * hs;
 
                     int swi = hi + num_hidden * sindex;
                     int twi = hi + num_hidden * tindex;
@@ -222,7 +223,7 @@ public:
             float max_complete_activation = 0.0f;
 
             for (int hl = 0; hl < commits[hs]; hl++) {
-                int hi = hl + L * hs;
+                int hi = hl + hidden_length * hs;
 
                 float complemented = (N * 2 - (totals_src[hi] + totals_pred[hi])) - (S * 2 - sums[hi]);
 
@@ -237,7 +238,7 @@ public:
 
                 if (activation > max_complete_activation) {
                     max_complete_activation = activation;
-                    max_complete_index = max_index;
+                    max_complete_index = hl;
                 }
             }
 
@@ -264,7 +265,7 @@ public:
             int sindex = src[vs] + L * vs;
             int tindex = target[vs] + L * vs + N;
 
-            int hi = hidden[max_global_index] + L * max_global_index;
+            int hi = hidden[max_global_index] + hidden_length * max_global_index;
 
             int swi = hi + num_hidden * sindex;
             int twi = hi + num_hidden * tindex;
