@@ -99,7 +99,7 @@ public:
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
 
-            for (int hs = 0; hs < hidden_segments; hs++) {
+            for (int hs = 0; hs < global_commits; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
                     int hi = hl + hidden_length * hs;
 
