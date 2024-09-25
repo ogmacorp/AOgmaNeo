@@ -24,6 +24,7 @@ struct Layer_Params {
 template<int S, int L>
 class Predictor {
 private:
+    int radius;
     Byte* data;
 
     Byte* weights;
@@ -38,17 +39,21 @@ public:
     {}
 
     Predictor(
+        int radius,
         Byte* data
     ) {
-        set_from(data);
+        set_from(radius, data);
     }
 
     void set_from(
+        int radius,
         Byte* data
     ) {
+        this->radius = radius;
         this->data = data;
 
-        int num_weights = N * N;
+        const int diam = radius * 2 + 1;
+        const int num_weights = N * diam * L;
 
         this->weights = reinterpret_cast<Byte*>(data);
         this->output_acts = reinterpret_cast<int*>(data + num_weights * sizeof(Byte));
@@ -60,7 +65,8 @@ public:
         for (int i = 0; i < N; i++)
             output_acts[i] = 0;
 
-        int num_weights = N * N;
+        const int diam = radius * 2 + 1;
+        const int num_weights = N * diam * L;
 
         for (int i = 0; i < num_weights; i++)
             weights[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
@@ -80,12 +86,17 @@ public:
         return N;
     }
 
-    static int weights_size() {
-        return N * N;
+    static int data_size(
+        int radius
+    ) {
+        const int diam = radius * 2 + 1;
+        const int num_weights = N * diam * L;
+
+        return num_weights * sizeof(Byte) + N * sizeof(int);
     }
 
-    static int data_size() {
-        return N * N * sizeof(Byte) + N * sizeof(int);
+    int get_radius() const {
+        return radius;
     }
     
     Vec<S, L> predict(
@@ -94,14 +105,29 @@ public:
     ) const {
         assert(data != nullptr);
 
+        const int diam = radius * 2 + 1;
+
         for (int i = 0; i < N; i++)
             output_acts[i] = 0;
 
-        for (int vs = 0; vs < S; vs++) {
-            int sindex = src[vs] + L * vs;
+        for (int os = 0; os < S; os++) {
+            for (int dvs = -radius; dvs <= radius; dvs++) {
+                int vs = os + dvs;
 
-            for (int oi = 0; oi < N; oi++)
-                output_acts[oi] += weights[oi + N * sindex];
+                // wrap
+                if (vs < 0)
+                    vs += S;
+                else if (vs >= S)
+                    vs -= S;
+
+                int sindex = src[vs] + L * vs;
+
+                for (int ol = 0; ol < L; ol++) {
+                    int oi = ol + L * os;
+
+                    output_acts[oi] += weights[ol + L * ((dvs + radius) + diam * sindex)];
+                }
+            }
         }
 
         Vec<S, L> result;
@@ -130,28 +156,44 @@ public:
         const Vec<S, L> &src,
         const Vec<S, L> &pred,
         const Vec<S, L> &target,
-        unsigned long* state,
         const Layer_Params &params
     ) {
         assert(data != nullptr);
 
-        const float rate = params.lr * 255.0f;
+        const int delta = ceilf(params.lr * 255.0f);
 
-        // update output weights
-        for (int vs = 0; vs < S; vs++) {
-            int sindex = src[vs] + L * vs;
+        const int diam = radius * 2 + 1;
 
-            const int delta = rand_roundf(rate, state);
+        for (int os = 0; os < S; os++) {
+            if (target[os] == pred[os])
+                continue;
 
-            for (int os = 0; os < S; os++) {
-                if (target[os] == pred[os])
-                    continue;
+            for (int dvs = -radius; dvs <= radius; dvs++) {
+                int vs = os + dvs;
 
-                int wi_target = (target[os] + L * os) + N * sindex;
-                int wi_pred = (pred[os] + L * os) + N * sindex;
+                // wrap
+                if (vs < 0)
+                    vs += S;
+                else if (vs >= S)
+                    vs -= S;
 
-                weights[wi_target] = min(255, weights[wi_target] + delta);
-                weights[wi_pred] = max(0, weights[wi_pred] - delta);
+                int sindex = src[vs] + L * vs;
+
+                {
+                    int ol = target[os];
+
+                    int wi = ol + L * ((dvs + radius) + diam * sindex);
+
+                    weights[wi] = min(255, weights[wi] + delta);
+                }
+
+                {
+                    int ol = pred[os];
+
+                    int wi = ol + L * ((dvs + radius) + diam * sindex);
+
+                    weights[wi] = max(0, weights[wi] - delta);
+                }
             }
         }
     }
