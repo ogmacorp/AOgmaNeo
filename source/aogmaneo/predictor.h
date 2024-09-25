@@ -20,8 +20,8 @@ struct Layer_Params {
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance_low(0.9f),
-    vigilance_high(0.95f)
+    vigilance_low(0.95f),
+    vigilance_high(0.98f)
     {}
 };
 
@@ -32,10 +32,10 @@ private:
     int hidden_segments;
     int hidden_length;
 
-    Byte_Buffer weights;
+    Byte_Buffer weights_encode;
+    Byte_Buffer weights_decode;
     Int_Buffer hidden_max_indices;
-    Int_Buffer totals_src;
-    Int_Buffer totals_pred;
+    Int_Buffer totals;
     Int_Buffer commits;
     int global_commits;
 
@@ -64,12 +64,12 @@ public:
         this->hidden_length = hidden_length;
 
         int num_hidden = hidden_segments * hidden_length;
-        int num_weights = num_hidden * N * 2;
+        int num_weights = num_hidden * N;
 
-        weights = Byte_Buffer((num_weights + 7) / 8, 0);
+        weights_encode = Byte_Buffer((num_weights + 7) / 8, 0);
+        weights_decode = Byte_Buffer((num_weights + 7) / 8, 0);
         hidden_max_indices = Int_Buffer(hidden_segments, -1);
-        totals_src = Int_Buffer(num_hidden, 0);
-        totals_pred = Int_Buffer(num_hidden, 0);
+        totals = Int_Buffer(num_hidden, 0);
         commits = Int_Buffer(hidden_segments, 0);
 
         global_commits = 0;
@@ -115,12 +115,12 @@ public:
                 for (int hl = 0; hl < commits[hs]; hl++) {
                     int hi = hl + hidden_length * hs;
 
-                    int swi = hi + num_hidden * sindex;
+                    int wi = hi + num_hidden * sindex;
 
-                    int sbyi = swi / 8;
-                    int sbi = swi % 8;
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                    sums[hi] += ((weights[sbyi] & (1 << sbi)) != 0);
+                    sums[hi] += ((weights_encode[byi] & (1 << bi)) != 0);
                 }
             }
         }
@@ -137,11 +137,11 @@ public:
             for (int hl = 0; hl < commits[hs]; hl++) {
                 int hi = hl + hidden_length * hs;
 
-                float complemented = (N - totals_src[hi]) - (S - sums[hi]);
+                float complemented = (N - totals[hi]) - (S - sums[hi]);
 
                 float match = complemented / (S * (L - 1));
 
-                float activation = complemented / (params.choice + N - totals_src[hi]);
+                float activation = complemented / (params.choice + N - totals[hi]);
 
                 if (activation > max_activation && match >= params.vigilance_high) {
                     max_activation = activation;
@@ -167,19 +167,22 @@ public:
             int max_activation = 0;
 
             for (int vl = 0; vl < L; vl++) {
-                int tvi = vl + L * vs + N; // + N to shift to prediction weights
+                int tvi = vl + L * vs;
 
                 int sum = 0;
 
                 for (int hs = 0; hs < global_commits; hs++) {
+                    if (commits[hs] == 0)
+                        continue;
+
                     int hi = hidden[hs] + hidden_length * hs;
 
-                    int twi = hi + num_hidden * tvi;
+                    int wi = hi + num_hidden * tvi;
 
-                    int tbyi = twi / 8;
-                    int tbi = twi % 8;
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                    sum += ((weights[tbyi] & (1 << tbi)) != 0);
+                    sum += ((weights_decode[byi] & (1 << bi)) != 0);
                 }
 
                 if (sum > max_activation) {
@@ -207,23 +210,17 @@ public:
 
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
-            int tindex = target[vs] + L * vs + N;
 
             for (int hs = 0; hs < global_commits; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
                     int hi = hl + hidden_length * hs;
 
-                    int swi = hi + num_hidden * sindex;
-                    int twi = hi + num_hidden * tindex;
+                    int wi = hi + num_hidden * sindex;
 
-                    int sbyi = swi / 8;
-                    int sbi = swi % 8;
+                    int byi = wi / 8;
+                    int bi = wi % 8;
 
-                    int tbyi = twi / 8;
-                    int tbi = twi % 8;
-
-                    sums[hi] += ((weights[sbyi] & (1 << sbi)) != 0);
-                    sums[hi] += ((weights[tbyi] & (1 << tbi)) != 0);
+                    sums[hi] += ((weights_encode[byi] & (1 << bi)) != 0);
                 }
             }
         }
@@ -245,11 +242,11 @@ public:
             for (int hl = 0; hl < commits[hs]; hl++) {
                 int hi = hl + hidden_length * hs;
 
-                float complemented = (N * 2 - (totals_src[hi] + totals_pred[hi])) - (S * 2 - sums[hi]);
+                float complemented = (N - totals[hi]) - (S - sums[hi]);
 
-                float match = complemented / (S * 2 * (L - 1));
+                float match = complemented / (S * (L - 1));
 
-                float activation = complemented / (params.choice + N * 2 - (totals_src[hi] + totals_pred[hi]));
+                float activation = complemented / (params.choice + N - totals[hi]);
 
                 if (activation > max_activation && match >= params.vigilance_high) {
                     max_activation = activation;
@@ -285,43 +282,46 @@ public:
 
         for (int vs = 0; vs < S; vs++) {
             int sindex = src[vs] + L * vs;
-            int tindex = target[vs] + L * vs + N;
 
-            int hi = hidden[max_global_index] + hidden_length * max_global_index;
+            // encoder
+            {
+                int hi = hidden[max_global_index] + hidden_length * max_global_index;
 
-            int swi = hi + num_hidden * sindex;
-            int twi = hi + num_hidden * tindex;
+                int wi = hi + num_hidden * sindex;
 
-            int sbyi = swi / 8;
-            int sbi = swi % 8;
+                int byi = wi / 8;
+                int bi = wi % 8;
 
-            int tbyi = twi / 8;
-            int tbi = twi % 8;
+                bool w_old = ((weights_encode[byi] & (1 << bi)) != 0);
 
-            bool sw_old = ((weights[sbyi] & (1 << sbi)) != 0);
-            bool tw_old = ((weights[tbyi] & (1 << tbi)) != 0);
+                if (!w_old) {
+                    weights_encode[byi] |= (1 << bi);
 
-            if (!sw_old) {
-                weights[sbyi] |= (1 << sbi);
-
-                totals_src[hi]++;
+                    totals[hi]++;
+                }
             }
 
-            if (!tw_old) {
-                weights[tbyi] |= (1 << tbi);
+            // decoder
+            for (int hs = 0; hs < hidden_segments; hs++) {
+                int hi = hidden[hs] + hidden_length * hs;
 
-                totals_pred[hi]++;
+                int wi = hi + num_hidden * sindex;
+
+                int byi = wi / 8;
+                int bi = wi % 8;
+
+                weights_decode[byi] |= (1 << bi);
             }
         }
     }
 
     // serialization
     long size() const { // returns size in Bytes
-        return 2 * sizeof(int) + weights.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + 2 * totals_src.size() * sizeof(int) + commits.size() * sizeof(int) + sizeof(int);
+        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + totals.size() * sizeof(int) + commits.size() * sizeof(int) + sizeof(int);
     }
 
     long weights_size() const { // returns size of weights in Bytes
-        return weights.size() * sizeof(Byte);
+        return weights_encode.size() * sizeof(Byte);
     }
 
     void write(
@@ -330,10 +330,10 @@ public:
         writer.write(&hidden_segments, sizeof(int));
         writer.write(&hidden_length, sizeof(int));
 
-        writer.write(&weights[0], weights.size() * sizeof(Byte));
+        writer.write(&weights_encode[0], weights_encode.size() * sizeof(Byte));
+        writer.write(&weights_decode[0], weights_decode.size() * sizeof(Byte));
         writer.write(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
-        writer.write(&totals_src[0], totals_src.size() * sizeof(int));
-        writer.write(&totals_pred[0], totals_pred.size() * sizeof(int));
+        writer.write(&totals[0], totals.size() * sizeof(int));
         writer.write(&commits[0], commits.size() * sizeof(int));
 
         writer.write(&global_commits, sizeof(int));
@@ -348,16 +348,16 @@ public:
         int num_hidden = hidden_segments * hidden_length;
         int num_weights = num_hidden * N * 2;
 
-        weights.resize((num_weights + 7) / 8);
+        weights_encode.resize((num_weights + 7) / 8);
+        weights_decode.resize((num_weights + 7) / 8);
         hidden_max_indices.resize(hidden_segments);
-        totals_src.resize(num_hidden);
-        totals_pred.resize(num_hidden);
+        totals.resize(num_hidden);
         commits.resize(num_hidden);
 
-        reader.read(&weights[0], weights.size() * sizeof(Byte));
+        reader.read(&weights_encode[0], weights_encode.size() * sizeof(Byte));
+        reader.read(&weights_decode[0], weights_decode.size() * sizeof(Byte));
         reader.read(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
-        reader.read(&totals_src[0], totals_src.size() * sizeof(int));
-        reader.read(&totals_pred[0], totals_pred.size() * sizeof(int));
+        reader.read(&totals[0], totals.size() * sizeof(int));
         reader.read(&commits[0], commits.size() * sizeof(int));
 
         reader.read(&global_commits, sizeof(int));
@@ -365,8 +365,12 @@ public:
         sums.resize(num_hidden);
     }
 
-    const Byte_Buffer &get_weights() const {
-        return weights;
+    const Byte_Buffer &get_weights_encode() const {
+        return weights_encode;
+    }
+
+    const Byte_Buffer &get_weights_decode() const {
+        return weights_decode;
     }
 
     const Vec<S, L> &get_hidden() const {
