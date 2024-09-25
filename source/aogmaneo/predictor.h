@@ -15,11 +15,13 @@ namespace aon {
 struct Layer_Params {
     float choice;
     float vigilance;
+    float lr;
 
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance(0.9f)
+    vigilance(0.9f),
+    lr(0.5f)
     {}
 };
 
@@ -243,7 +245,7 @@ public:
 
                 Byte w_old = weights_encode[wi];
 
-                weights_encode[wi] = 255;
+                weights_encode[wi] = min(255, weights_encode[wi] + ceilf(params.lr * (255.0f - weights_encode[wi])));
 
                 totals[hi_max_global] += weights_encode[wi] - w_old;
             }
