@@ -40,6 +40,8 @@ private:
 
     Int_Buffer sums;
 
+    Vec<S, L> hidden;
+
 public:
     static const int N = S * L;
 
@@ -86,6 +88,14 @@ public:
     static int vsize() {
         return N;
     }
+    
+    int get_hidden_segments() const {
+        return hidden_segments;
+    }
+
+    int get_hidden_length() const {
+        return hidden_length;
+    }
 
     Vec<S, L> predict(
         const Vec<S, L> &src,
@@ -113,7 +123,7 @@ public:
             }
         }
 
-        Vec<S, L> hidden = 0;
+        hidden = 0;
 
         for (int hs = 0; hs < global_commits; hs++) {
             int max_index = -1;
@@ -216,7 +226,7 @@ public:
             }
         }
 
-        Vec<S, L> hidden = 0;
+        hidden = 0;
 
         int max_global_index = 0;
         float max_global_activation = 0.0f;
@@ -352,6 +362,14 @@ public:
         reader.read(&global_commits, sizeof(int));
 
         sums.resize(num_hidden);
+    }
+
+    const Byte_Buffer &get_weights() const {
+        return weights;
+    }
+
+    const Vec<S, L> &get_hidden() const {
+        return hidden;
     }
 };
 }
