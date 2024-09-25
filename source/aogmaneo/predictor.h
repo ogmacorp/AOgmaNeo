@@ -134,10 +134,13 @@ public:
                     continue;
 
                 int tindex = targets[vs] + L * vs;
+                int pindex = preds[vs] + L * vs;
 
-                int wi = hi_max_global + num_hidden * tindex;
+                int twi = hi_max_global + num_hidden * tindex;
+                int pwi = hi_max_global + num_hidden * pindex;
 
-                weights_decode[wi] = min(255, weights_decode[wi] + 1);
+                weights_decode[twi] = min(255, weights_decode[twi] + 1);
+                weights_decode[pwi] = max(0, weights_decode[pwi] - 1);
             }
         }
 
