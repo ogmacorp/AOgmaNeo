@@ -20,8 +20,8 @@ struct Layer_Params {
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance_low(0.95f),
-    vigilance_high(0.97f)
+    vigilance_low(0.9f),
+    vigilance_high(0.95f)
     {}
 };
 
@@ -116,22 +116,20 @@ public:
 
         // decoder learn
         if (learn_enabled && max_global_index != -1) { // check max_global_index to see that ran at least once
+            int hi_max_global = hiddens[max_global_index] + hidden_length * max_global_index;
+
             for (int vs = 0; vs < S; vs++) {
                 if (preds[vs] == targets[vs])
                     continue;
 
                 int tindex = targets[vs] + L * vs;
 
-                for (int hs = 0; hs < global_commits; hs++) {
-                    int hi = hiddens[hs] + hidden_length * hs;
+                int wi = hi_max_global + num_hidden * tindex;
 
-                    int wi = hi + num_hidden * tindex;
+                int byi = wi / 8;
+                int bi = wi % 8;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    weights_decode[byi] |= (1 << bi);
-                }
+                weights_decode[byi] |= (1 << bi);
             }
         }
 
