@@ -230,14 +230,14 @@ public:
     ) {
         int num_hidden = hidden_segments * hidden_length;
 
+        int hi_max_global = hidden[max_global_index] + hidden_length * max_global_index;
+
         for (int vs = 0; vs < S; vs++) {
             // encoder
             {
                 int iindex = inputs[vs] + L * vs;
 
-                int hi = hidden[max_global_index] + hidden_length * max_global_index;
-
-                int wi = hi + num_hidden * iindex;
+                int wi = hi_max_global + num_hidden * iindex;
 
                 int byi = wi / 8;
                 int bi = wi % 8;
@@ -247,7 +247,7 @@ public:
                 if (!w_old) {
                     weights_encode[byi] |= (1 << bi);
 
-                    totals[hi]++;
+                    totals[hi_max_global]++;
                 }
             }
 
@@ -255,19 +255,12 @@ public:
             if (preds[vs] != targets[vs]) {
                 int tindex = targets[vs] + L * vs;
 
-                for (int hs = 0; hs < hidden_segments; hs++) {
-                    if (commits[hs] == 0)
-                        continue;
+                int wi = hi_max_global + num_hidden * tindex;
 
-                    int hi = hidden[hs] + hidden_length * hs;
+                int byi = wi / 8;
+                int bi = wi % 8;
 
-                    int wi = hi + num_hidden * tindex;
-
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    weights_decode[byi] |= (1 << bi);
-                }
+                weights_decode[byi] |= (1 << bi);
             }
         }
     }
