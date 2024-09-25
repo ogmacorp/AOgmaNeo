@@ -20,8 +20,8 @@ struct Layer_Params {
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance_low(0.95f),
-    vigilance_high(0.98f)
+    vigilance_low(0.9f),
+    vigilance_high(0.95f)
     {}
 };
 
@@ -102,11 +102,29 @@ public:
         return hidden_length;
     }
 
-    Vec<S, L> predict(
+    Vec<S, L> step(
         const Vec<S, L> &inputs,
+        const Vec<S, L> &targets,
+        bool learn_enabled,
         const Layer_Params &params
     ) {
         int num_hidden = hidden_segments * hidden_length;
+
+        // decoder learn
+        if (learn_enabled) {
+            int hi_max_global = hidden[max_global_index] + hidden_length * max_global_index;
+
+            for (int vs = 0; vs < S; vs++) {
+                int tindex = targets[vs] + L * vs;
+
+                int wi = hi_max_global + num_hidden * tindex;
+
+                int byi = wi / 8;
+                int bi = wi % 8;
+
+                weights_decode[byi] |= (1 << bi);
+            }
+        }
 
         for (int i = 0; i < num_hidden; i++)
             sums[i] = 0;
@@ -166,24 +184,48 @@ public:
             hidden_max_indices[hs] = max_index;
             hidden[hs] = (max_index == -1 ? max_complete_index : max_index);
 
-            if (max_complete_activation > max_global_activation) {
-                max_global_activation = max_complete_activation;
+            float global_activation = (max_index == -1 ? 0.0f : max_complete_activation);
+
+            if (global_activation > max_global_activation) {
+                max_global_activation = global_activation;
                 max_global_match = max_match;
                 max_global_index = hs;
             }
         }
 
-        if (max_global_match < params.vigilance_low && global_commits < hidden_segments) {
-            max_global_index = global_commits;
-            global_commits++;
+        // learn encoder
+        if (learn_enabled) {
+            if (max_global_match < params.vigilance_low && global_commits < hidden_segments) {
+                max_global_index = global_commits;
+                global_commits++;
+            }
+
+            if (hidden_max_indices[max_global_index] == -1 && commits[max_global_index] < hidden_length) {
+                hidden[max_global_index] = commits[max_global_index];
+                commits[max_global_index]++;
+            }
+
+            int hi_max_global = hidden[max_global_index] + hidden_length * max_global_index;
+
+            for (int vs = 0; vs < S; vs++) {
+                int iindex = inputs[vs] + L * vs;
+
+                int wi = hi_max_global + num_hidden * iindex;
+
+                int byi = wi / 8;
+                int bi = wi % 8;
+
+                bool w_old = ((weights_encode[byi] & (1 << bi)) != 0);
+
+                if (!w_old) {
+                    weights_encode[byi] |= (1 << bi);
+
+                    totals[hi_max_global]++;
+                }
+            }
         }
 
-        if (hidden_max_indices[max_global_index] == -1 && commits[max_global_index] < hidden_length) {
-            hidden[max_global_index] = commits[max_global_index];
-            commits[max_global_index]++;
-        }
-
-        // reconstruct
+        // next prediction
         Vec<S, L> result;
 
         for (int vs = 0; vs < S; vs++) {
@@ -219,50 +261,6 @@ public:
         }
 
         return result;
-    }
-
-    // reqires predict to have been called first
-    void learn(
-        const Vec<S, L> &inputs,
-        const Vec<S, L> &preds,
-        const Vec<S, L> &targets,
-        const Layer_Params &params
-    ) {
-        int num_hidden = hidden_segments * hidden_length;
-
-        int hi_max_global = hidden[max_global_index] + hidden_length * max_global_index;
-
-        for (int vs = 0; vs < S; vs++) {
-            // encoder
-            {
-                int iindex = inputs[vs] + L * vs;
-
-                int wi = hi_max_global + num_hidden * iindex;
-
-                int byi = wi / 8;
-                int bi = wi % 8;
-
-                bool w_old = ((weights_encode[byi] & (1 << bi)) != 0);
-
-                if (!w_old) {
-                    weights_encode[byi] |= (1 << bi);
-
-                    totals[hi_max_global]++;
-                }
-            }
-
-            // decoder
-            if (preds[vs] != targets[vs]) {
-                int tindex = targets[vs] + L * vs;
-
-                int wi = hi_max_global + num_hidden * tindex;
-
-                int byi = wi / 8;
-                int bi = wi % 8;
-
-                weights_decode[byi] |= (1 << bi);
-            }
-        }
     }
 
     // serialization
