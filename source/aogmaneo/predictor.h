@@ -155,7 +155,7 @@ public:
 
         hiddens = 0;
 
-        int max_global_index = 0;
+        max_global_index = 0;
         float max_global_activation = 0.0f;
         float max_global_match = 0.0f;
 
