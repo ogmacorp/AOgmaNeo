@@ -10,6 +10,7 @@
 
 #include "helpers.h"
 #include "vec.h"
+#include <iostream>
 
 namespace aon {
 struct Layer_Params {
@@ -20,8 +21,8 @@ struct Layer_Params {
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance_low(0.8f),
-    vigilance_high(0.9f)
+    vigilance_low(0.97f),
+    vigilance_high(0.97f)
     {}
 };
 
@@ -33,6 +34,7 @@ private:
     int hidden_length;
 
     Byte_Buffer weights;
+    Int_Buffer hidden_max_indices;
     Int_Buffer totals_src;
     Int_Buffer totals_pred;
     Int_Buffer commits;
@@ -66,6 +68,7 @@ public:
         int num_weights = num_hidden * N * 2;
 
         weights = Byte_Buffer((num_weights + 7) / 8, 0);
+        hidden_max_indices = Int_Buffer(hidden_segments, -1);
         totals_src = Int_Buffer(num_hidden, 0);
         totals_pred = Int_Buffer(num_hidden, 0);
         commits = Int_Buffer(hidden_segments, 0);
@@ -231,15 +234,14 @@ public:
         int max_global_index = 0;
         float max_global_activation = 0.0f;
         float max_global_match = 0.0f;
-        bool global_matched = false;
 
         for (int hs = 0; hs < global_commits; hs++) {
             int max_index = -1;
             float max_activation = 0.0f;
-            float max_match = 0.0f;
 
             int max_complete_index = 0;
             float max_complete_activation = 0.0f;
+            float max_complete_match = 0.0f;
 
             for (int hl = 0; hl < commits[hs]; hl++) {
                 int hi = hl + hidden_length * hs;
@@ -252,7 +254,6 @@ public:
 
                 if (activation > max_activation && match >= params.vigilance_high) {
                     max_activation = activation;
-                    max_match = match;
                     max_index = hl;
                 }
 
@@ -260,18 +261,19 @@ public:
                     max_complete_activation = activation;
                     max_complete_index = hl;
                 }
+
+                max_complete_match = max(max_complete_match, match);
             }
 
+            hidden_max_indices[hs] = max_index;
             hidden[hs] = (max_index == -1 ? max_complete_index : max_index);
 
-            float global_activation = (max_index == -1 ? 0.0f : max_complete_activation);
+            float global_activation = max_complete_activation;
 
             if (global_activation > max_global_activation) {
                 max_global_activation = global_activation;
-                max_global_match = max_match;
+                max_global_match = max_complete_match;
                 max_global_index = hs;
-
-                global_matched = (max_index != -1);
             }
         }
 
@@ -280,7 +282,7 @@ public:
             global_commits++;
         }
 
-        if (!global_matched && commits[max_global_index] < hidden_length) {
+        if (hidden_max_indices[max_global_index] == -1 && commits[max_global_index] < hidden_length) {
             hidden[max_global_index] = commits[max_global_index];
             commits[max_global_index]++;
         }
@@ -319,7 +321,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        return 2 * sizeof(int) + weights.size() * sizeof(Byte) + 2 * totals_src.size() * sizeof(int) + commits.size() * sizeof(int) + sizeof(int);
+        return 2 * sizeof(int) + weights.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + 2 * totals_src.size() * sizeof(int) + commits.size() * sizeof(int) + sizeof(int);
     }
 
     long weights_size() const { // returns size of weights in Bytes
@@ -333,6 +335,7 @@ public:
         writer.write(&hidden_length, sizeof(int));
 
         writer.write(&weights[0], weights.size() * sizeof(Byte));
+        writer.write(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
         writer.write(&totals_src[0], totals_src.size() * sizeof(int));
         writer.write(&totals_pred[0], totals_pred.size() * sizeof(int));
         writer.write(&commits[0], commits.size() * sizeof(int));
@@ -350,11 +353,13 @@ public:
         int num_weights = num_hidden * N * 2;
 
         weights.resize((num_weights + 7) / 8);
+        hidden_max_indices.resize(hidden_segments);
         totals_src.resize(num_hidden);
         totals_pred.resize(num_hidden);
         commits.resize(num_hidden);
 
         reader.read(&weights[0], weights.size() * sizeof(Byte));
+        reader.read(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
         reader.read(&totals_src[0], totals_src.size() * sizeof(int));
         reader.read(&totals_pred[0], totals_pred.size() * sizeof(int));
         reader.read(&commits[0], commits.size() * sizeof(int));
