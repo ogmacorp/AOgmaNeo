@@ -52,7 +52,7 @@ struct Layer_Desc {
 
     Layer_Desc(
         const Int2 &hidden_size = Int2(4, 4),
-        int hidden_segments = 8,
+        int hidden_segments = 16,
         int hidden_length = 32,
         int radius = 2,
         float positional_scale = 1.0f

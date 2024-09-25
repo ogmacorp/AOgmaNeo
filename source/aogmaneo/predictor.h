@@ -200,6 +200,7 @@ public:
     // reqires predict to have been called first
     void learn(
         const Vec<S, L> &src,
+        const Vec<S, L> &pred,
         const Vec<S, L> &target,
         const Layer_Params &params
     ) {
@@ -281,10 +282,10 @@ public:
         }
 
         for (int vs = 0; vs < S; vs++) {
-            int sindex = src[vs] + L * vs;
-
             // encoder
             {
+                int sindex = src[vs] + L * vs;
+
                 int hi = hidden[max_global_index] + hidden_length * max_global_index;
 
                 int wi = hi + num_hidden * sindex;
@@ -301,16 +302,20 @@ public:
                 }
             }
 
-            // decoder
-            for (int hs = 0; hs < hidden_segments; hs++) {
-                int hi = hidden[hs] + hidden_length * hs;
+            if (pred[vs] != target[vs]) {
+                int tindex = target[vs] + L * vs;
 
-                int wi = hi + num_hidden * sindex;
+                // decoder
+                for (int hs = 0; hs < hidden_segments; hs++) {
+                    int hi = hidden[hs] + hidden_length * hs;
 
-                int byi = wi / 8;
-                int bi = wi % 8;
+                    int wi = hi + num_hidden * tindex;
 
-                weights_decode[byi] |= (1 << bi);
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    weights_decode[byi] |= (1 << bi);
+                }
             }
         }
     }
