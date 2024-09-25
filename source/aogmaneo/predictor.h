@@ -67,14 +67,13 @@ public:
         int num_weights = num_hidden * N;
 
         weights_encode.resize(num_weights);
-        weights_decode.resize(weights_encode.size());
 
-        for (int i = 0; i < weights_encode.size(); i++) {
+        for (int i = 0; i < weights_encode.size(); i++)
             weights_encode[i] = (rand() % init_weight_noisei);
-            weights_decode[i] = 0;
-        }
 
-        totals = Int_Buffer(num_hidden);
+        weights_decode = Byte_Buffer(weights_encode.size(), 127);
+
+        totals.resize(num_hidden);
 
         for (int hi = 0; hi < num_hidden; hi++) {
             int total = 0;
