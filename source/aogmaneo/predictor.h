@@ -20,7 +20,7 @@ struct Layer_Params {
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance(0.95f),
+    vigilance(0.9f),
     lr(0.5f)
     {}
 };
@@ -127,8 +127,6 @@ public:
 
         // decoder learn
         if (learn_enabled && max_global_index != -1) { // check max_global_index to see that ran at least once
-            int hi_max_global = hiddens[max_global_index] + hidden_length * max_global_index;
-
             for (int vs = 0; vs < S; vs++) {
                 if (preds[vs] == targets[vs])
                     continue;
@@ -136,11 +134,15 @@ public:
                 int tindex = targets[vs] + L * vs;
                 int pindex = preds[vs] + L * vs;
 
-                int twi = hi_max_global + num_hidden * tindex;
-                int pwi = hi_max_global + num_hidden * pindex;
+                for (int hs = 0; hs < hidden_segments; hs++) {
+                    int hi = hiddens[hs] + hidden_length * hs;
 
-                weights_decode[twi] = min(255, weights_decode[twi] + 1);
-                weights_decode[pwi] = max(0, weights_decode[pwi] - 1);
+                    int twi = hi + num_hidden * tindex;
+                    int pwi = hi + num_hidden * pindex;
+
+                    weights_decode[twi] = min(255, weights_decode[twi] + 1);
+                    weights_decode[pwi] = max(0, weights_decode[pwi] - 1);
+                }
             }
         }
 
