@@ -242,7 +242,7 @@ public:
         predictors.resize(num_hidden_columns);
 
         for (int i = 0; i < num_hidden_columns; i++)
-            predictors[i].init(hidden_segments, hidden_length);
+            predictors[i].init_random(hidden_segments, hidden_length);
     }
 
     void forward(

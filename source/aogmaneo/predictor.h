@@ -14,14 +14,12 @@
 namespace aon {
 struct Layer_Params {
     float choice;
-    float vigilance_low;
-    float vigilance_high;
+    float vigilance;
 
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance_low(0.9f),
-    vigilance_high(0.95f)
+    vigilance(0.9f)
     {}
 };
 
@@ -36,15 +34,13 @@ private:
     Byte_Buffer weights_decode;
     Int_Buffer hidden_max_indices;
     Int_Buffer totals;
-    Int_Buffer commits;
-    int global_commits;
+
+    Vec<S, L> hiddens;
+    Vec<S, L> preds;
 
     int max_global_index;
 
     Int_Buffer sums;
-
-    Vec<S, L> hiddens;
-    Vec<S, L> preds;
 
 public:
     static const int N = S * L;
@@ -56,10 +52,10 @@ public:
         int hidden_segments,
         int hidden_length
     ) {
-        init(hidden_segments, hidden_length);
+        init_random(hidden_segments, hidden_length);
     }
 
-    void init(
+    void init_random(
         int hidden_segments,
         int hidden_length
     ) {
@@ -69,16 +65,33 @@ public:
         int num_hidden = hidden_segments * hidden_length;
         int num_weights = num_hidden * N;
 
-        weights_encode = Byte_Buffer((num_weights + 7) / 8, 0);
-        weights_decode = Byte_Buffer((num_weights + 7) / 8, 0);
+        weights_encode.resize(num_weights);
+        weights_decode.resize(weights_encode.size());
+
+        for (int i = 0; i < weights_encode.size(); i++) {
+            weights_encode[i] = (rand() % init_weight_noisei);
+            weights_decode[i] = 0;
+        }
+
         hidden_max_indices = Int_Buffer(hidden_segments, -1);
-        totals = Int_Buffer(num_hidden, 0);
-        commits = Int_Buffer(hidden_segments, 0);
-        
+
+        totals = Int_Buffer(num_hidden);
+
+        for (int hi = 0; hi < num_hidden; hi++) {
+            int total = 0;
+
+            for (int vi = 0; vi < N; vi++) {
+                int wi = hi + num_hidden * vi;
+
+                total += weights_encode[wi];
+            }
+
+            totals[hi] = total;
+        }
+
         hiddens = 0;
         preds = 0;
 
-        global_commits = 0;
         max_global_index = -1;
 
         sums.resize(num_hidden);
@@ -126,10 +139,7 @@ public:
 
                 int wi = hi_max_global + num_hidden * tindex;
 
-                int byi = wi / 8;
-                int bi = wi % 8;
-
-                weights_decode[byi] |= (1 << bi);
+                weights_decode[wi] = min(255, weights_decode[wi] + 1);
             }
         }
 
@@ -139,16 +149,13 @@ public:
         for (int vs = 0; vs < S; vs++) {
             int iindex = inputs[vs] + L * vs;
 
-            for (int hs = 0; hs < global_commits; hs++) {
-                for (int hl = 0; hl < commits[hs]; hl++) {
+            for (int hs = 0; hs < hidden_segments; hs++) {
+                for (int hl = 0; hl < hidden_length; hl++) {
                     int hi = hl + hidden_length * hs;
 
                     int wi = hi + num_hidden * iindex;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    sums[hi] += ((weights_encode[byi] & (1 << bi)) != 0);
+                    sums[hi] += weights_encode[wi];
                 }
             }
         }
@@ -159,24 +166,26 @@ public:
         float max_global_activation = 0.0f;
         float max_global_match = 0.0f;
 
-        for (int hs = 0; hs < global_commits; hs++) {
+        for (int hs = 0; hs < hidden_segments; hs++) {
             int max_index = -1;
             float max_activation = 0.0f;
 
             int max_complete_index = 0;
             float max_complete_activation = 0.0f;
-            float max_complete_match = 0.0f;
 
-            for (int hl = 0; hl < commits[hs]; hl++) {
+            for (int hl = 0; hl < hidden_length; hl++) {
                 int hi = hl + hidden_length * hs;
 
-                float complemented = (N - totals[hi]) - (S - sums[hi]);
+                float sum = sums[hi] / 255.0f;
+                float total = totals[hi] / 255.0f;
+
+                float complemented = (N - total) - (S - sum);
 
                 float match = complemented / (S * (L - 1));
 
-                float activation = complemented / (params.choice + N - totals[hi]);
+                float activation = complemented / (params.choice + N - total);
 
-                if (activation > max_activation && match >= params.vigilance_high) {
+                if (activation > max_activation && match >= params.vigilance) {
                     max_activation = activation;
                     max_index = hl;
                 }
@@ -185,16 +194,15 @@ public:
                     max_complete_activation = activation;
                     max_complete_index = hl;
                 }
-
-                max_complete_match = max(max_complete_match, match);
             }
 
             hidden_max_indices[hs] = max_index;
             hiddens[hs] = (max_index == -1 ? max_complete_index : max_index);
 
-            if (max_complete_activation > max_global_activation) {
-                max_global_activation = max_complete_activation;
-                max_global_match = max_complete_match;
+            float global_activation = (max_index == -1 ? 0.0f : max_complete_activation);
+
+            if (global_activation > max_global_activation) {
+                max_global_activation = global_activation;
                 max_global_index = hs;
             }
         }
@@ -209,18 +217,12 @@ public:
 
                 int sum = 0;
 
-                for (int hs = 0; hs < global_commits; hs++) {
-                    if (commits[hs] == 0)
-                        continue;
-
+                for (int hs = 0; hs < hidden_segments; hs++) {
                     int hi = hiddens[hs] + hidden_length * hs;
 
                     int wi = hi + num_hidden * vi;
 
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    sum += ((weights_decode[byi] & (1 << bi)) != 0);
+                    sum += weights_decode[wi];
                 }
 
                 if (sum > max_activation) {
@@ -234,16 +236,6 @@ public:
 
         // learn encoder
         if (learn_enabled) {
-            if (max_global_match < params.vigilance_low && global_commits < hidden_segments) {
-                max_global_index = global_commits;
-                global_commits++;
-            }
-
-            if (hidden_max_indices[max_global_index] == -1 && commits[max_global_index] < hidden_length) {
-                hiddens[max_global_index] = commits[max_global_index];
-                commits[max_global_index]++;
-            }
-
             int hi_max_global = hiddens[max_global_index] + hidden_length * max_global_index;
 
             for (int vs = 0; vs < S; vs++) {
@@ -251,16 +243,11 @@ public:
 
                 int wi = hi_max_global + num_hidden * iindex;
 
-                int byi = wi / 8;
-                int bi = wi % 8;
+                Byte w_old = weights_encode[wi];
 
-                bool w_old = ((weights_encode[byi] & (1 << bi)) != 0);
+                weights_encode[wi] = 255;
 
-                if (!w_old) {
-                    weights_encode[byi] |= (1 << bi);
-
-                    totals[hi_max_global]++;
-                }
+                totals[hi_max_global] += weights_encode[wi] - w_old;
             }
         }
 
@@ -269,7 +256,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + totals.size() * sizeof(int) + commits.size() * sizeof(int) + 2 * sizeof(Vec<S, L>) + 2 * sizeof(int);
+        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + totals.size() * sizeof(int) + 2 * sizeof(Vec<S, L>) + sizeof(int);
     }
 
     long weights_size() const { // returns size of weights in Bytes
@@ -286,12 +273,10 @@ public:
         writer.write(&weights_decode[0], weights_decode.size() * sizeof(Byte));
         writer.write(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
         writer.write(&totals[0], totals.size() * sizeof(int));
-        writer.write(&commits[0], commits.size() * sizeof(int));
 
         writer.write(&hiddens, sizeof(Vec<S, L>));
         writer.write(&preds, sizeof(Vec<S, L>));
 
-        writer.write(&global_commits, sizeof(int));
         writer.write(&max_global_index, sizeof(int));
     }
 
@@ -304,22 +289,19 @@ public:
         int num_hidden = hidden_segments * hidden_length;
         int num_weights = num_hidden * N * 2;
 
-        weights_encode.resize((num_weights + 7) / 8);
-        weights_decode.resize((num_weights + 7) / 8);
+        weights_encode.resize(num_weights);
+        weights_decode.resize(num_weights);
         hidden_max_indices.resize(hidden_segments);
         totals.resize(num_hidden);
-        commits.resize(num_hidden);
 
         reader.read(&weights_encode[0], weights_encode.size() * sizeof(Byte));
         reader.read(&weights_decode[0], weights_decode.size() * sizeof(Byte));
         reader.read(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
         reader.read(&totals[0], totals.size() * sizeof(int));
-        reader.read(&commits[0], commits.size() * sizeof(int));
 
         reader.read(&hiddens, sizeof(Vec<S, L>));
         reader.read(&preds, sizeof(Vec<S, L>));
 
-        reader.read(&global_commits, sizeof(int));
         reader.read(&max_global_index, sizeof(int));
 
         sums.resize(num_hidden);
@@ -335,14 +317,6 @@ public:
 
     const Vec<S, L> &get_hiddens() const {
         return hiddens;
-    }
-
-    const Int_Buffer &get_commits() const {
-        return commits;
-    }
-
-    int get_global_commits() const {
-        return global_commits;
     }
 };
 }
