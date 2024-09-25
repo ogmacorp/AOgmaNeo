@@ -20,8 +20,8 @@ struct Layer_Params {
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance_low(0.9f),
-    vigilance_high(0.95f)
+    vigilance_low(0.95f),
+    vigilance_high(0.98f)
     {}
 };
 
