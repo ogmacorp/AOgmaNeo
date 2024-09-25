@@ -32,7 +32,6 @@ private:
 
     Byte_Buffer weights_encode;
     Byte_Buffer weights_decode;
-    Int_Buffer hidden_max_indices;
     Int_Buffer totals;
 
     Vec<S, L> hiddens;
@@ -72,8 +71,6 @@ public:
             weights_encode[i] = (rand() % init_weight_noisei);
             weights_decode[i] = 0;
         }
-
-        hidden_max_indices = Int_Buffer(hidden_segments, -1);
 
         totals = Int_Buffer(num_hidden);
 
@@ -166,6 +163,8 @@ public:
         float max_global_activation = 0.0f;
         float max_global_match = 0.0f;
 
+        const float byte_inv = 1.0f / 255.0f;
+
         for (int hs = 0; hs < hidden_segments; hs++) {
             int max_index = -1;
             float max_activation = 0.0f;
@@ -176,8 +175,8 @@ public:
             for (int hl = 0; hl < hidden_length; hl++) {
                 int hi = hl + hidden_length * hs;
 
-                float sum = sums[hi] / 255.0f;
-                float total = totals[hi] / 255.0f;
+                float sum = sums[hi] * byte_inv;
+                float total = totals[hi] * byte_inv;
 
                 float complemented = (N - total) - (S - sum);
 
@@ -196,7 +195,6 @@ public:
                 }
             }
 
-            hidden_max_indices[hs] = max_index;
             hiddens[hs] = (max_index == -1 ? max_complete_index : max_index);
 
             float global_activation = (max_index == -1 ? 0.0f : max_complete_activation);
@@ -256,7 +254,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + totals.size() * sizeof(int) + 2 * sizeof(Vec<S, L>) + sizeof(int);
+        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + totals.size() * sizeof(int) + 2 * sizeof(Vec<S, L>) + sizeof(int);
     }
 
     long weights_size() const { // returns size of weights in Bytes
@@ -271,7 +269,6 @@ public:
 
         writer.write(&weights_encode[0], weights_encode.size() * sizeof(Byte));
         writer.write(&weights_decode[0], weights_decode.size() * sizeof(Byte));
-        writer.write(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
         writer.write(&totals[0], totals.size() * sizeof(int));
 
         writer.write(&hiddens, sizeof(Vec<S, L>));
@@ -291,12 +288,10 @@ public:
 
         weights_encode.resize(num_weights);
         weights_decode.resize(num_weights);
-        hidden_max_indices.resize(hidden_segments);
         totals.resize(num_hidden);
 
         reader.read(&weights_encode[0], weights_encode.size() * sizeof(Byte));
         reader.read(&weights_decode[0], weights_decode.size() * sizeof(Byte));
-        reader.read(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
         reader.read(&totals[0], totals.size() * sizeof(int));
 
         reader.read(&hiddens, sizeof(Vec<S, L>));
