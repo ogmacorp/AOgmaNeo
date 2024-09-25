@@ -115,7 +115,7 @@ public:
         int num_hidden = hidden_segments * hidden_length;
 
         // decoder learn
-        if (learn_enabled && max_global_index != -1) {
+        if (learn_enabled && max_global_index != -1) { // check max_global_index to see that ran at least once
             for (int vs = 0; vs < S; vs++) {
                 if (preds[vs] == targets[vs])
                     continue;
