@@ -20,8 +20,8 @@ struct Layer_Params {
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance_low(0.8f),
-    vigilance_high(0.9f)
+    vigilance_low(0.9f),
+    vigilance_high(0.95f)
     {}
 };
 
@@ -237,10 +237,10 @@ public:
         for (int hs = 0; hs < global_commits; hs++) {
             int max_index = -1;
             float max_activation = 0.0f;
+            float max_match = 0.0f;
 
             int max_complete_index = 0;
             float max_complete_activation = 0.0f;
-            float max_complete_match = 0.0f;
 
             for (int hl = 0; hl < commits[hs]; hl++) {
                 int hi = hl + hidden_length * hs;
@@ -253,6 +253,7 @@ public:
 
                 if (activation > max_activation && match >= params.vigilance_high) {
                     max_activation = activation;
+                    max_match = match;
                     max_index = hl;
                 }
 
@@ -260,18 +261,14 @@ public:
                     max_complete_activation = activation;
                     max_complete_index = hl;
                 }
-
-                max_complete_match = max(max_complete_match, match);
             }
 
             hidden_max_indices[hs] = max_index;
             hidden[hs] = (max_index == -1 ? max_complete_index : max_index);
 
-            float global_activation = max_complete_activation;
-
-            if (global_activation > max_global_activation) {
-                max_global_activation = global_activation;
-                max_global_match = max_complete_match;
+            if (max_complete_activation > max_global_activation) {
+                max_global_activation = max_complete_activation;
+                max_global_match = max_match;
                 max_global_index = hs;
             }
         }
@@ -374,6 +371,14 @@ public:
 
     const Vec<S, L> &get_hidden() const {
         return hidden;
+    }
+
+    const Int_Buffer &get_commits() const {
+        return commits;
+    }
+
+    int get_global_commits() const {
+        return global_commits;
     }
 };
 }
