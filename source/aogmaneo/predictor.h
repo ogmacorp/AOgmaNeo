@@ -333,8 +333,8 @@ public:
         return weights_decode;
     }
 
-    const Vec<S, L> &get_hidden() const {
-        return hidden;
+    const Vec<S, L> &get_hiddens() const {
+        return hiddens;
     }
 
     const Int_Buffer &get_commits() const {
