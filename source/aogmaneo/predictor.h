@@ -43,7 +43,8 @@ private:
 
     Int_Buffer sums;
 
-    Vec<S, L> hidden;
+    Vec<S, L> hiddens;
+    Vec<S, L> preds;
 
 public:
     static const int N = S * L;
@@ -73,6 +74,9 @@ public:
         hidden_max_indices = Int_Buffer(hidden_segments, -1);
         totals = Int_Buffer(num_hidden, 0);
         commits = Int_Buffer(hidden_segments, 0);
+        
+        hiddens = 0;
+        preds = 0;
 
         global_commits = 0;
         max_global_index = -1;
@@ -112,9 +116,12 @@ public:
 
         // decoder learn
         if (learn_enabled && max_global_index != -1) {
-            int hi_max_global = hidden[max_global_index] + hidden_length * max_global_index;
+            int hi_max_global = hiddens[max_global_index] + hidden_length * max_global_index;
 
             for (int vs = 0; vs < S; vs++) {
+                if (preds[vs] == targets[vs])
+                    continue;
+
                 int tindex = targets[vs] + L * vs;
 
                 int wi = hi_max_global + num_hidden * tindex;
@@ -146,7 +153,7 @@ public:
             }
         }
 
-        hidden = 0;
+        hiddens = 0;
 
         int max_global_index = 0;
         float max_global_activation = 0.0f;
@@ -183,13 +190,46 @@ public:
             }
 
             hidden_max_indices[hs] = max_index;
-            hidden[hs] = (max_index == -1 ? max_complete_index : max_index);
+            hiddens[hs] = (max_index == -1 ? max_complete_index : max_index);
 
             if (max_complete_activation > max_global_activation) {
                 max_global_activation = max_complete_activation;
                 max_global_match = max_complete_match;
                 max_global_index = hs;
             }
+        }
+
+        // next prediction
+        for (int vs = 0; vs < S; vs++) {
+            int max_index = 0;
+            int max_activation = 0;
+
+            for (int vl = 0; vl < L; vl++) {
+                int vi = vl + L * vs;
+
+                int sum = 0;
+
+                for (int hs = 0; hs < global_commits; hs++) {
+                    if (commits[hs] == 0)
+                        continue;
+
+                    int hi = hiddens[hs] + hidden_length * hs;
+
+                    int wi = hi + num_hidden * vi;
+
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    sum += ((weights_decode[byi] & (1 << bi)) != 0);
+                }
+
+                if (sum > max_activation) {
+                    max_activation = sum;
+                    max_index = vl;
+                }
+            }
+
+            preds[vs] = max_index;
         }
 
         // learn encoder
@@ -200,11 +240,11 @@ public:
             }
 
             if (hidden_max_indices[max_global_index] == -1 && commits[max_global_index] < hidden_length) {
-                hidden[max_global_index] = commits[max_global_index];
+                hiddens[max_global_index] = commits[max_global_index];
                 commits[max_global_index]++;
             }
 
-            int hi_max_global = hidden[max_global_index] + hidden_length * max_global_index;
+            int hi_max_global = hiddens[max_global_index] + hidden_length * max_global_index;
 
             for (int vs = 0; vs < S; vs++) {
                 int iindex = inputs[vs] + L * vs;
@@ -224,47 +264,12 @@ public:
             }
         }
 
-        // next prediction
-        Vec<S, L> result;
-
-        for (int vs = 0; vs < S; vs++) {
-            int max_index = 0;
-            int max_activation = 0;
-
-            for (int vl = 0; vl < L; vl++) {
-                int vi = vl + L * vs;
-
-                int sum = 0;
-
-                for (int hs = 0; hs < global_commits; hs++) {
-                    if (commits[hs] == 0)
-                        continue;
-
-                    int hi = hidden[hs] + hidden_length * hs;
-
-                    int wi = hi + num_hidden * vi;
-
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    sum += ((weights_decode[byi] & (1 << bi)) != 0);
-                }
-
-                if (sum > max_activation) {
-                    max_activation = sum;
-                    max_index = vl;
-                }
-            }
-
-            result[vs] = max_index;
-        }
-
-        return result;
+        return preds;
     }
 
     // serialization
     long size() const { // returns size in Bytes
-        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + totals.size() * sizeof(int) + commits.size() * sizeof(int) + 2 * sizeof(int);
+        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + totals.size() * sizeof(int) + commits.size() * sizeof(int) + 2 * sizeof(Vec<S, L>) + 2 * sizeof(int);
     }
 
     long weights_size() const { // returns size of weights in Bytes
@@ -282,6 +287,9 @@ public:
         writer.write(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
         writer.write(&totals[0], totals.size() * sizeof(int));
         writer.write(&commits[0], commits.size() * sizeof(int));
+
+        writer.write(&hiddens, sizeof(Vec<S, L>));
+        writer.write(&preds, sizeof(Vec<S, L>));
 
         writer.write(&global_commits, sizeof(int));
         writer.write(&max_global_index, sizeof(int));
@@ -307,6 +315,9 @@ public:
         reader.read(&hidden_max_indices[0], hidden_max_indices.size() * sizeof(int));
         reader.read(&totals[0], totals.size() * sizeof(int));
         reader.read(&commits[0], commits.size() * sizeof(int));
+
+        reader.read(&hiddens, sizeof(Vec<S, L>));
+        reader.read(&preds, sizeof(Vec<S, L>));
 
         reader.read(&global_commits, sizeof(int));
         reader.read(&max_global_index, sizeof(int));
