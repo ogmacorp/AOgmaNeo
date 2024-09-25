@@ -10,7 +10,6 @@
 
 #include "helpers.h"
 #include "vec.h"
-#include <iostream>
 
 namespace aon {
 struct Layer_Params {
