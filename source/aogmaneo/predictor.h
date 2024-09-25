@@ -20,8 +20,8 @@ struct Layer_Params {
     Layer_Params()
     :
     choice(0.0001f),
-    vigilance_low(0.95f),
-    vigilance_high(0.98f)
+    vigilance_low(0.9f),
+    vigilance_high(0.95f)
     {}
 };
 
@@ -38,6 +38,8 @@ private:
     Int_Buffer totals;
     Int_Buffer commits;
     int global_commits;
+
+    int max_global_index;
 
     Int_Buffer sums;
 
@@ -73,6 +75,7 @@ public:
         commits = Int_Buffer(hidden_segments, 0);
 
         global_commits = 0;
+        max_global_index = 0;
 
         sums.resize(num_hidden);
     }
@@ -100,7 +103,7 @@ public:
     }
 
     Vec<S, L> predict(
-        const Vec<S, L> &src,
+        const Vec<S, L> &inputs,
         const Layer_Params &params
     ) {
         int num_hidden = hidden_segments * hidden_length;
@@ -109,114 +112,13 @@ public:
             sums[i] = 0;
 
         for (int vs = 0; vs < S; vs++) {
-            int sindex = src[vs] + L * vs;
+            int iindex = inputs[vs] + L * vs;
 
             for (int hs = 0; hs < global_commits; hs++) {
                 for (int hl = 0; hl < commits[hs]; hl++) {
                     int hi = hl + hidden_length * hs;
 
-                    int wi = hi + num_hidden * sindex;
-
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    sums[hi] += ((weights_encode[byi] & (1 << bi)) != 0);
-                }
-            }
-        }
-
-        hidden = 0;
-
-        for (int hs = 0; hs < global_commits; hs++) {
-            int max_index = -1;
-            float max_activation = 0.0f;
-
-            int max_complete_index = 0;
-            float max_complete_activation = 0.0f;
-
-            for (int hl = 0; hl < commits[hs]; hl++) {
-                int hi = hl + hidden_length * hs;
-
-                float complemented = (N - totals[hi]) - (S - sums[hi]);
-
-                float match = complemented / (S * (L - 1));
-
-                float activation = complemented / (params.choice + N - totals[hi]);
-
-                if (activation > max_activation && match >= params.vigilance_high) {
-                    max_activation = activation;
-                    max_index = hl;
-                }
-
-                if (activation > max_complete_activation) {
-                    max_complete_activation = activation;
-                    max_complete_index = hl;
-                }
-            }
-
-            hidden[hs] = (max_index == -1 ? max_complete_index : max_index);
-        }
-
-        // reconstruct
-        Vec<S, L> result;
-
-        for (int vs = 0; vs < S; vs++) {
-            int sindex = src[vs] + L * vs;
-
-            int max_index = 0;
-            int max_activation = 0;
-
-            for (int vl = 0; vl < L; vl++) {
-                int tvi = vl + L * vs;
-
-                int sum = 0;
-
-                for (int hs = 0; hs < global_commits; hs++) {
-                    if (commits[hs] == 0)
-                        continue;
-
-                    int hi = hidden[hs] + hidden_length * hs;
-
-                    int wi = hi + num_hidden * tvi;
-
-                    int byi = wi / 8;
-                    int bi = wi % 8;
-
-                    sum += ((weights_decode[byi] & (1 << bi)) != 0);
-                }
-
-                if (sum > max_activation) {
-                    max_activation = sum;
-                    max_index = vl;
-                }
-            }
-
-            result[vs] = max_index;
-        }
-
-        return result;
-    }
-
-    // reqires predict to have been called first
-    void learn(
-        const Vec<S, L> &src,
-        const Vec<S, L> &pred,
-        const Vec<S, L> &target,
-        const Layer_Params &params
-    ) {
-        int num_hidden = hidden_segments * hidden_length;
-
-        for (int i = 0; i < num_hidden; i++)
-            sums[i] = 0;
-
-        for (int vs = 0; vs < S; vs++) {
-            int sindex = src[vs] + L * vs;
-
-            for (int hs = 0; hs < global_commits; hs++) {
-                for (int hl = 0; hl < commits[hs]; hl++) {
-                    int hi = hl + hidden_length * hs;
-
-                    int wi = hi + num_hidden * sindex;
+                    int wi = hi + num_hidden * iindex;
 
                     int byi = wi / 8;
                     int bi = wi % 8;
@@ -281,14 +183,61 @@ public:
             commits[max_global_index]++;
         }
 
+        // reconstruct
+        Vec<S, L> result;
+
+        for (int vs = 0; vs < S; vs++) {
+            int max_index = 0;
+            int max_activation = 0;
+
+            for (int vl = 0; vl < L; vl++) {
+                int vi = vl + L * vs;
+
+                int sum = 0;
+
+                for (int hs = 0; hs < global_commits; hs++) {
+                    if (commits[hs] == 0)
+                        continue;
+
+                    int hi = hidden[hs] + hidden_length * hs;
+
+                    int wi = hi + num_hidden * vi;
+
+                    int byi = wi / 8;
+                    int bi = wi % 8;
+
+                    sum += ((weights_decode[byi] & (1 << bi)) != 0);
+                }
+
+                if (sum > max_activation) {
+                    max_activation = sum;
+                    max_index = vl;
+                }
+            }
+
+            result[vs] = max_index;
+        }
+
+        return result;
+    }
+
+    // reqires predict to have been called first
+    void learn(
+        const Vec<S, L> &inputs,
+        const Vec<S, L> &preds,
+        const Vec<S, L> &targets,
+        const Layer_Params &params
+    ) {
+        int num_hidden = hidden_segments * hidden_length;
+
         for (int vs = 0; vs < S; vs++) {
             // encoder
             {
-                int sindex = src[vs] + L * vs;
+                int iindex = inputs[vs] + L * vs;
 
                 int hi = hidden[max_global_index] + hidden_length * max_global_index;
 
-                int wi = hi + num_hidden * sindex;
+                int wi = hi + num_hidden * iindex;
 
                 int byi = wi / 8;
                 int bi = wi % 8;
@@ -302,11 +251,14 @@ public:
                 }
             }
 
-            if (pred[vs] != target[vs]) {
-                int tindex = target[vs] + L * vs;
+            // decoder
+            if (preds[vs] != targets[vs]) {
+                int tindex = targets[vs] + L * vs;
 
-                // decoder
                 for (int hs = 0; hs < hidden_segments; hs++) {
+                    if (commits[hs] == 0)
+                        continue;
+
                     int hi = hidden[hs] + hidden_length * hs;
 
                     int wi = hi + num_hidden * tindex;
@@ -322,7 +274,7 @@ public:
 
     // serialization
     long size() const { // returns size in Bytes
-        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + totals.size() * sizeof(int) + commits.size() * sizeof(int) + sizeof(int);
+        return 2 * sizeof(int) + 2 * weights_encode.size() * sizeof(Byte) + hidden_max_indices.size() * sizeof(int) + totals.size() * sizeof(int) + commits.size() * sizeof(int) + 2 * sizeof(int);
     }
 
     long weights_size() const { // returns size of weights in Bytes
@@ -342,6 +294,7 @@ public:
         writer.write(&commits[0], commits.size() * sizeof(int));
 
         writer.write(&global_commits, sizeof(int));
+        writer.write(&max_global_index, sizeof(int));
     }
 
     void read(
@@ -366,6 +319,7 @@ public:
         reader.read(&commits[0], commits.size() * sizeof(int));
 
         reader.read(&global_commits, sizeof(int));
+        reader.read(&max_global_index, sizeof(int));
 
         sums.resize(num_hidden);
     }
