@@ -75,7 +75,7 @@ public:
         commits = Int_Buffer(hidden_segments, 0);
 
         global_commits = 0;
-        max_global_index = 0;
+        max_global_index = -1;
 
         sums.resize(num_hidden);
     }
@@ -111,7 +111,7 @@ public:
         int num_hidden = hidden_segments * hidden_length;
 
         // decoder learn
-        if (learn_enabled) {
+        if (learn_enabled && max_global_index != -1) {
             int hi_max_global = hidden[max_global_index] + hidden_length * max_global_index;
 
             for (int vs = 0; vs < S; vs++) {
