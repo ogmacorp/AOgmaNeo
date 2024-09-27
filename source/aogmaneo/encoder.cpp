@@ -10,6 +10,8 @@
 
 using namespace aon;
 
+static const float max_resource = 0.5f;
+
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
@@ -82,6 +84,8 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= (params.choice + (1.0f - params.choice) * (max_resource - hidden_resources[hidden_cell_index]));
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -216,7 +220,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
+    hidden_resources = Float_Buffer(num_hidden_cells, max_resource);
 
     hidden_acts.resize(num_hidden_cells);
 }

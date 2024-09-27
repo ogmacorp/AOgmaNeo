@@ -41,6 +41,7 @@ public:
     };
 
     struct Params {
+        float choice; // how much to choose "already winning" columns to learn at first, in [0, 1]
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
@@ -49,6 +50,7 @@ public:
 
         Params()
         :
+        choice(0.1f),
         falloff(0.9f),
         lr(0.1f),
         active_ratio(0.1f),
