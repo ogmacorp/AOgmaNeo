@@ -106,23 +106,26 @@ void Encoder::learn(
     float hidden_max = hidden_acts[hidden_cell_index_max];
 
     int num_higher = 0;
-    int count = 0;
+    int count = 1; // 1 since we skip looping over self
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+            if (dcx == 0 && dcy == 0)
+                continue;
+
             Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
 
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_acts[hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z] > hidden_max)
+                if (hidden_acts[hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z] >= hidden_max)
                     num_higher++;
 
                 count++;
             }
         }
 
-    float ratio = static_cast<float>(num_higher) / static_cast<float>(max(1, count));
+    float ratio = static_cast<float>(num_higher) / static_cast<float>(count);
 
     if (ratio > params.active_ratio)
         return;
