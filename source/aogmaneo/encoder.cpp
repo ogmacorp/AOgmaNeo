@@ -10,6 +10,8 @@
 
 using namespace aon;
 
+static const int encoder_base_weight = 127;
+
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
@@ -183,12 +185,12 @@ void Encoder::learn(
     if (max_index == target_ci)
         return;
 
-    const float rescale = 1.0f / (count * 255);
+    const float rescale = 1.0f / (count * encoder_base_weight);
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
     
-        float recon = vl.recon_sums[visible_cell_index] * rescale;
+        float recon = min(1.0f, vl.recon_sums[visible_cell_index] * rescale);
 
         // re-use recon sums as integer deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
@@ -252,7 +254,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights[i] = encoder_base_weight - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
     }
