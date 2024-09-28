@@ -134,6 +134,17 @@ public:
         return result;
     }
 
+    Bundle<S, L> operator*(
+        float value
+    ) const {
+        Bundle<S, L> result = 0.0f;
+
+        for (int i = 0; i < N; i++)
+            result[buffer[i] + L * i] = value;
+
+        return result;
+    }
+
     Vec<S, L> permute(
         int shift = 1
     ) {
@@ -400,6 +411,19 @@ Bundle<S, L> operator*(
 
     for (int i = 0; i < N; i++)
         result[i] = bundle[i] * value;
+
+    return result;
+}
+
+template<int S, int L>
+Bundle<S, L> operator*(
+    float value,
+    const Vec<S, L> &vec
+) {
+    Bundle<S, L> result = 0.0f;
+
+    for (int i = 0; i < S; i++)
+        result[vec[i] + L * i] = value;
 
     return result;
 }
