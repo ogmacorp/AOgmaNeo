@@ -179,7 +179,7 @@ public:
     static const int N = S * L;
 
 private:
-    int buffer[N];
+    float buffer[N];
 
 public:
 
@@ -187,20 +187,20 @@ public:
     {}
 
     Bundle(
-        int value
+        float value
     ) {
         fill(value);
     }
 
     const Bundle<S, L> &operator=(
-        int value
+        float value
     ) {
         fill(value);
 
         return *this;
     }
 
-    int &operator[](
+    float &operator[](
         int index
     ) {
         assert(index >= 0 && index < N);
@@ -208,7 +208,7 @@ public:
         return buffer[index];
     }
 
-    const int &operator[](
+    const float &operator[](
         int index
     ) const {
         assert(index >= 0 && index < N);
@@ -232,7 +232,7 @@ public:
     }
 
     void fill(
-        int value
+        float value
     ) {
         for (int i = 0; i < N; i++)
             buffer[i] = value;
@@ -278,13 +278,33 @@ public:
         return *this;
     }
 
+    Bundle<S, L> operator*(
+        float value
+    ) const {
+        Bundle<S, L> result;
+
+        for (int i = 0; i < N; i++)
+            result[i] = buffer[i] * value;
+
+        return result;
+    }
+
+    const Bundle<S, L> &operator*=(
+        float value
+    ) {
+        for (int i = 0; i < N; i++)
+            buffer[i] *= value;
+
+        return *this;
+    }
+
     Vec<S, L> thin() const {
         Vec<S, L> result;
 
         for (int i = 0; i < S; i++) {
             int start = i * L;
 
-            int mv = 0;
+            float mv = 0.0f;
             int mi = 0;
 
             for (int j = 0; j < L; j++) {
@@ -365,6 +385,21 @@ Bundle<S, L> operator+(
 
         result[vec[i] + start]++;
     }
+
+    return result;
+}
+
+template<int S, int L>
+Bundle<S, L> operator*(
+    float value,
+    const Bundle<S, L> &bundle
+) {
+    Bundle<S, L> result;
+
+    const int N = Bundle<S, L>::N;
+
+    for (int i = 0; i < N; i++)
+        result[i] = bundle[i] * value;
 
     return result;
 }
