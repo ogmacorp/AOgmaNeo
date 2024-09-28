@@ -13,11 +13,11 @@
 
 namespace aon {
 struct Layer_Params {
-    float lr;
+    float decay;
 
     Layer_Params()
     :
-    lr(0.01f)
+    decay(0.99f)
     {}
 };
 
@@ -55,6 +55,7 @@ private:
     Int2 hidden_size; // size of hidden/output layer
 
     Array<Vec<S, L>> hidden_vecs_all;
+    Array<Vec<S, L>> hidden_vecs_all_prev;
     Array<Vec<S, L>> hidden_vecs_pred;
     Array<Vec<S, L>> hidden_vecs_pred_next;
 
@@ -132,12 +133,17 @@ private:
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
+        hidden_memories[hidden_column_index] *= params.decay;
+        hidden_memories[hidden_column_index] += hidden_vecs_all_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index];
+
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
 
         if (feedback_vecs.size() != 0)
             pred_input_vec = (feedback_vecs[hidden_column_index] + pred_input_vec).thin();
 
-        Vec<S, L> hidden_vec_pred_next = predictors[hidden_column_index].step(pred_input_vec, hidden_vecs_pred[hidden_column_index], learn_enabled, params);
+        hidden_vecs_all_prev[hidden_column_index] = pred_input_vec;
+
+        Vec<S, L> hidden_vec_pred_next = hidden_memories[hidden_column_index] / pred_input_vec;;
 
         hidden_vecs_pred_next[hidden_column_index] = hidden_vec_pred_next;
     }
@@ -242,6 +248,7 @@ public:
         }
 
         hidden_vecs_all = Array<Vec<S, L>>(num_hidden_columns, 0);
+        hidden_vecs_all_prev = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_pred = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_pred_next = Array<Vec<S, L>>(num_hidden_columns, 0);
 
@@ -296,6 +303,7 @@ public:
 
     void clear_state() {
         hidden_vecs_all.fill(0);
+        hidden_vecs_all_prev.fill(0);
     }
 
     // serialization
@@ -308,7 +316,7 @@ public:
             size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size() * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>);
         }
 
-        size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>);
+        size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>) + hidden_memories.size() * sizeof(Bundle<S, L>);
 
         return size;
     }
@@ -341,6 +349,7 @@ public:
         }
 
         writer.write(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_all_prev[0], hidden_vecs_all_prev.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
         writer.write(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
 
@@ -378,10 +387,12 @@ public:
         }
 
         hidden_vecs_all.resize(num_hidden_columns);
+        hidden_vecs_all_prev.resize(num_hidden_columns);
         hidden_vecs_pred.resize(num_hidden_columns);
         hidden_vecs_pred_next.resize(num_hidden_columns);
 
         reader.read(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_all_prev[0], hidden_vecs_all_prev.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred[0], hidden_vecs_pred.size() * sizeof(Vec<S, L>));
         reader.read(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
 
@@ -394,12 +405,14 @@ public:
         Stream_Writer &writer
     ) const {
         writer.write(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
+        writer.write(&hidden_vecs_all_prev[0], hidden_vecs_all_prev.size() * sizeof(Vec<S, L>));
     }
 
     void read_state(
         Stream_Reader &reader
     ) {
         reader.read(&hidden_vecs_all[0], hidden_vecs_all.size() * sizeof(Vec<S, L>));
+        reader.read(&hidden_vecs_all_prev[0], hidden_vecs_all_prev.size() * sizeof(Vec<S, L>));
     }
 
     void write_weights(
