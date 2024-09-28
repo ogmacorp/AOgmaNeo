@@ -143,7 +143,7 @@ private:
 
         hidden_vecs_prev[hidden_column_index] = pred_input_vec;
 
-        Vec<S, L> hidden_vec_pred_next = hidden_memories[hidden_column_index] / pred_input_vec;;
+        Vec<S, L> hidden_vec_pred_next = hidden_memories[hidden_column_index].thin() / pred_input_vec;;
 
         hidden_vecs_pred_next[hidden_column_index] = hidden_vec_pred_next;
     }

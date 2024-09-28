@@ -194,7 +194,7 @@ public:
             }
             
             // create the sparse coding layer
-            layers[l].init_random(layer_descs[l].hidden_size, layer_descs[l].hidden_segments, layer_descs[l].hidden_length, visible_layer_descs);
+            layers[l].init_random(layer_descs[l].hidden_size, visible_layer_descs);
         }
 
         // initialize params
