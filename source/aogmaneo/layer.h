@@ -17,7 +17,7 @@ struct Layer_Params {
 
     Layer_Params()
     :
-    lr(0.0001f)
+    lr(0.001f)
     {}
 };
 
@@ -252,7 +252,7 @@ public:
         hidden_vecs_pred = Array<Vec<S, L>>(num_hidden_columns, 0);
         hidden_vecs_pred_next = Array<Vec<S, L>>(num_hidden_columns, 0);
 
-        hidden_memories = Array<Bundle<S, L>>(num_hidden_columns, 0);
+        hidden_memories = Array<Bundle<S, L>>(num_hidden_columns, 0.0f);
     }
 
     void forward(

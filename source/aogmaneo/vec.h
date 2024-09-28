@@ -139,7 +139,7 @@ public:
     ) const {
         Bundle<S, L> result = 0.0f;
 
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < S; i++)
             result[buffer[i] + L * i] = value;
 
         return result;
