@@ -146,7 +146,7 @@ private:
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
 
         if (feedback_vecs.size() != 0)
-            pred_input_vec = (feedback_vecs[hidden_column_index] + pred_input_vec).thin();
+            pred_input_vec = (pred_input_vec + feedback_vecs[hidden_column_index]).thin();
 
         Vec<S, L> hidden_vec_pred_next = hidden_memories[hidden_column_index].thin() / pred_input_vec;
 
