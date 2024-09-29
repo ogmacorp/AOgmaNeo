@@ -49,7 +49,7 @@ public:
         return buffer[index];
     }
 
-    const Byte &operator[](
+    Byte operator[](
         int index
     ) const {
         assert(index >= 0 && index < S);
@@ -221,7 +221,7 @@ public:
         return buffer[index];
     }
 
-    const float &operator[](
+    float operator[](
         int index
     ) const {
         assert(index >= 0 && index < N);
@@ -393,11 +393,8 @@ Bundle<S, L> operator+(
 ) {
     Bundle<S, L> result = bundle;
 
-    for (int i = 0; i < S; i++) {
-        int start = i * L;
-
-        result[vec[i] + start]++;
-    }
+    for (int i = 0; i < S; i++)
+        result[vec[i] + L * i]++;
 
     return result;
 }
