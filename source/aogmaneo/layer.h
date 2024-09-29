@@ -19,7 +19,7 @@ struct Layer_Params {
     Layer_Params()
     :
     lr(0.0001f),
-    min_similarity(0.1f)
+    min_similarity(0.065f)
     {}
 };
 
