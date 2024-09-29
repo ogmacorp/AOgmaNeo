@@ -49,7 +49,7 @@ public:
         return buffer[index];
     }
 
-    const Byte &operator[](
+    Byte operator[](
         int index
     ) const {
         assert(index >= 0 && index < S);
@@ -221,7 +221,7 @@ public:
         return buffer[index];
     }
 
-    const float &operator[](
+    float operator[](
         int index
     ) const {
         assert(index >= 0 && index < N);
