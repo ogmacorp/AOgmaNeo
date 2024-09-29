@@ -134,7 +134,7 @@ private:
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         hidden_memories[hidden_column_index] *= 1.0f - params.lr;
-        hidden_memories[hidden_column_index] += params.lr * (hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index]);
+        hidden_memories[hidden_column_index] += hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index];
 
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
 
