@@ -17,7 +17,7 @@ struct Layer_Params {
 
     Layer_Params()
     :
-    lr(0.001f)
+    lr(0.0001f)
     {}
 };
 
@@ -134,14 +134,14 @@ private:
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         hidden_memories[hidden_column_index] *= 1.0f - params.lr;
-        hidden_memories[hidden_column_index] += params.lr * (hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index].permute(1));
+        hidden_memories[hidden_column_index] += params.lr * (hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index]);
 
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
 
         if (feedback_vecs.size() != 0)
             pred_input_vec = (feedback_vecs[hidden_column_index] + pred_input_vec).thin();
 
-        Vec<S, L> hidden_vec_pred_next = (hidden_memories[hidden_column_index].thin() / pred_input_vec).permute(-1);
+        Vec<S, L> hidden_vec_pred_next = (hidden_memories[hidden_column_index].thin() / pred_input_vec);
 
         hidden_vecs_pred_next[hidden_column_index] = hidden_vec_pred_next;
 
