@@ -148,6 +148,8 @@ public:
     Vec<S, L> permute(
         int shift = 1
     ) {
+        assert(shift > -S && shift < S);
+
         Vec<S, L> result;
 
         for (int i = 0; i < S; i++)
