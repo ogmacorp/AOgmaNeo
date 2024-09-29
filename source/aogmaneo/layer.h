@@ -135,17 +135,12 @@ private:
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
+        float similarityf = static_cast<float>(hidden_vecs_pred_next[hidden_column_index].dot(hidden_vecs_pred[hidden_column_index])) / static_cast<float>(S);
+
         // gated learning
-        Vec<S, L> item = hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index];
-
-        for (int i = 0; i < S; i++) {
-            if (hidden_vecs_pred_next[hidden_column_index][i] == hidden_vecs_pred[hidden_column_index][i])
-                continue;
-
-            for (int j = 0; j < L; j++)
-                hidden_memories[hidden_column_index][j + L * i] *= 1.0f - params.lr;
-
-            hidden_memories[hidden_column_index][item[i] + L * i]++;
+        if (similarityf < params.min_similarity) {
+            hidden_memories[hidden_column_index] *= 1.0f - params.lr;
+            hidden_memories[hidden_column_index] += hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index];
         }
 
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
