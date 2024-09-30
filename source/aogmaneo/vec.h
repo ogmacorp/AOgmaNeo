@@ -122,7 +122,7 @@ public:
     Bundle<S, L> operator+(
         const Vec<S, L> &other
     ) const {
-        Bundle<S, L> result = 0;
+        Bundle<S, L> result = 0.0f;
 
         for (int i = 0; i < S; i++) {
             int start = L * i;
@@ -274,7 +274,7 @@ public:
     Bundle<S, L> operator+(
         const Vec<S, L> &other
     ) const {
-        Bundle<S, L> result = 0;
+        Bundle<S, L> result = 0.0f;
 
         for (int i = 0; i < S; i++)
             result[other[i] + L * i]++;

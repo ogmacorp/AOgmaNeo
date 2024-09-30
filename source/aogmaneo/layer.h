@@ -14,12 +14,10 @@
 namespace aon {
 struct Layer_Params {
     float lr;
-    float min_similarity;
 
     Layer_Params()
     :
-    lr(0.0001f),
-    min_similarity(0.07f)
+    lr(0.001f)
     {}
 };
 
@@ -132,13 +130,8 @@ private:
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-        float similarityf = static_cast<float>(hidden_vecs_pred_next[hidden_column_index].dot(hidden_vecs_pred[hidden_column_index])) / static_cast<float>(S);
-
-        // gated learning
-        if (similarityf < params.min_similarity) {
-            hidden_memories[hidden_column_index] *= 1.0f - params.lr;
-            hidden_memories[hidden_column_index] += hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index];
-        }
+        hidden_memories[hidden_column_index] *= 1.0f - params.lr;
+        hidden_memories[hidden_column_index] += hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index];
 
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
 
