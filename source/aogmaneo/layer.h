@@ -19,7 +19,7 @@ struct Layer_Params {
     Layer_Params()
     :
     lr(0.0001f),
-    min_similarity(0.065f)
+    min_similarity(0.1f)
     {}
 };
 
@@ -120,11 +120,8 @@ private:
                 }
         }
 
-        Vec<S, L> hidden_vec_all = sum_all.thin();
-        Vec<S, L> hidden_vec_pred = sum_pred.thin();
-
-        hidden_vecs_all[hidden_column_index] = hidden_vec_all;
-        hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
+        hidden_vecs_all[hidden_column_index] = sum_all.thin();
+        hidden_vecs_pred[hidden_column_index] = sum_pred.thin();
     }
 
     void predict(
