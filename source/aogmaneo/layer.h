@@ -19,7 +19,7 @@ struct Layer_Params {
 
     Layer_Params()
     :
-    lr(0.001f),
+    lr(0.0001f),
     threshold_rate(0.01f),
     update_sparsity(0.05f)
     {}
