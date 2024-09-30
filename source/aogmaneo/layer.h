@@ -14,12 +14,14 @@
 namespace aon {
 struct Layer_Params {
     float lr;
-    float min_similarity;
+    float threshold_rate;
+    float update_sparsity;
 
     Layer_Params()
     :
     lr(0.0001f),
-    min_similarity(0.5f)
+    threshold_rate(0.01f),
+    update_sparsity(0.05f)
     {}
 };
 
@@ -63,6 +65,8 @@ private:
 
     Array<Bundle<S, L>> hidden_memories;
 
+    Float_Buffer hidden_thresholds;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -87,8 +91,8 @@ private:
     ) {
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-        Bundle<S, L> sum_all = 0;
-        Bundle<S, L> sum_pred = 0;
+        Bundle<S, L> sum_all = 0.0f;
+        Bundle<S, L> sum_pred = 0.0f;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -121,10 +125,9 @@ private:
         }
 
         Vec<S, L> hidden_vec_all = sum_all.thin();
-        Vec<S, L> hidden_vec_pred = sum_pred.thin();
 
-        hidden_vecs_all[hidden_column_index] = (hidden_vec_all + hidden_vec_all * hidden_vecs_all[hidden_column_index]).thin(); // recurrent bind
-        hidden_vecs_pred[hidden_column_index] = hidden_vec_pred;
+        hidden_vecs_all[hidden_column_index] = (hidden_vec_all + hidden_vecs_all[hidden_column_index] * hidden_vec_all).thin().permute();
+        hidden_vecs_pred[hidden_column_index] = sum_pred.thin();
     }
 
     void predict(
@@ -137,18 +140,22 @@ private:
 
         float similarityf = static_cast<float>(hidden_vecs_pred_next[hidden_column_index].dot(hidden_vecs_pred[hidden_column_index])) / static_cast<float>(S);
 
+        bool update = (similarityf < hidden_thresholds[hidden_column_index]);
+
         // gated learning
-        if (similarityf < params.min_similarity) {
+        if (update) {
             hidden_memories[hidden_column_index] *= 1.0f - params.lr;
-            hidden_memories[hidden_column_index] += hidden_vecs_prev[hidden_column_index] * hidden_vecs_pred[hidden_column_index];
+            hidden_memories[hidden_column_index] += hidden_vecs_prev[hidden_column_index].permute() * hidden_vecs_pred[hidden_column_index];
         }
+
+        hidden_thresholds[hidden_column_index] += params.threshold_rate * (params.update_sparsity - update);
 
         Vec<S, L> pred_input_vec = hidden_vecs_all[hidden_column_index];
 
         if (feedback_vecs.size() != 0)
             pred_input_vec = (pred_input_vec + feedback_vecs[hidden_column_index]).thin();
 
-        Vec<S, L> hidden_vec_pred_next = hidden_memories[hidden_column_index].thin() / pred_input_vec;
+        Vec<S, L> hidden_vec_pred_next = hidden_memories[hidden_column_index].thin() / pred_input_vec.permute();
 
         hidden_vecs_pred_next[hidden_column_index] = hidden_vec_pred_next;
 
@@ -260,6 +267,8 @@ public:
         hidden_vecs_pred_next = Array<Vec<S, L>>(num_hidden_columns, 0);
 
         hidden_memories = Array<Bundle<S, L>>(num_hidden_columns, 0.0f);
+
+        hidden_thresholds = Float_Buffer(num_hidden_columns, 0.0f);
     }
 
     void forward(
@@ -323,7 +332,7 @@ public:
             size += sizeof(Visible_Layer_Desc) + vl.visible_pos_vecs.size() * sizeof(Vec<S, L>) + vl.pred_vecs.size() * sizeof(Vec<S, L>);
         }
 
-        size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>) + hidden_memories.size() * sizeof(Bundle<S, L>);
+        size += 4 * hidden_vecs_all.size() * sizeof(Vec<S, L>) + hidden_memories.size() * sizeof(Bundle<S, L>) + hidden_thresholds.size() * sizeof(float);
 
         return size;
     }
@@ -361,6 +370,8 @@ public:
         writer.write(&hidden_vecs_pred_next[0], hidden_vecs_pred_next.size() * sizeof(Vec<S, L>));
 
         writer.write(&hidden_memories[0], hidden_memories.size() * sizeof(Bundle<S, L>));
+
+        writer.write(&hidden_thresholds[0], hidden_thresholds.size() * sizeof(float));
     }
 
     void read(
@@ -406,6 +417,10 @@ public:
         hidden_memories.resize(num_hidden_columns);
 
         reader.read(&hidden_memories[0], hidden_memories.size() * sizeof(Bundle<S, L>));
+
+        hidden_thresholds.resize(num_hidden_columns);
+
+        reader.read(&hidden_thresholds[0], hidden_thresholds.size() * sizeof(float));
     }
 
     void write_state(
