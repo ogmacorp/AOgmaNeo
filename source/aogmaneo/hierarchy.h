@@ -19,7 +19,7 @@ enum IO_Type {
 
 struct IO_Desc {
     Int2 size;
-    IO_Type type;
+    IO_Type io_type;
 
     int radius; // layer radius
 
@@ -27,13 +27,13 @@ struct IO_Desc {
 
     IO_Desc(
         const Int2 &size = Int2(4, 4),
-        IO_Type type = prediction,
+        IO_Type io_type = prediction,
         int radius = 2,
         float positional_scale = 1.0f
     )
     :
     size(size),
-    type(type),
+    io_type(io_type),
     radius(radius),
     positional_scale(positional_scale)
     {}
@@ -128,7 +128,7 @@ public:
 
         for (int i = 0; i < io_descs.size(); i++) {
             io_sizes[i] = io_descs[i].size;
-            io_types[i] = io_descs[i].type;
+            io_types[i] = io_descs[i].io_type;
         }
 
         ticks_per_update.resize(layer_descs.size());
