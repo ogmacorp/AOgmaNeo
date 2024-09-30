@@ -126,7 +126,7 @@ private:
 
         Vec<S, L> hidden_vec_all = sum_all.thin();
 
-        hidden_vecs_all[hidden_column_index] = (hidden_vec_all + hidden_vecs_all[hidden_column_index] * hidden_vec_all).thin().permute();
+        hidden_vecs_all[hidden_column_index] = (hidden_vecs_all[hidden_column_index] + hidden_vecs_all[hidden_column_index] * hidden_vec_all).thin().permute();
         hidden_vecs_pred[hidden_column_index] = sum_pred.thin();
     }
 
