@@ -50,7 +50,7 @@ public:
         Params()
         :
         lr(0.06f),
-        stability(8.0f)
+        stability(10.0f)
         {}
     };
 
