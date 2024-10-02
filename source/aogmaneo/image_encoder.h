@@ -45,11 +45,11 @@ public:
         
         Params()
         :
-        falloff(0.99f),
+        falloff(0.9f),
         lr(0.1f),
         scale(2.0f),
         rr(0.01f),
-        radius(1)
+        radius(2)
         {}
     };
 
