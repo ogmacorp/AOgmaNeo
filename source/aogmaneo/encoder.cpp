@@ -200,7 +200,7 @@ void Encoder::learn(
         vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
     }
 
-    modulation = powf(modulation / (vld.size.z - 1), params.stability);
+    modulation = powf(modulation, params.stability);
 
     // re-use recon sums as integer deltas
     for (int vc = 0; vc < vld.size.z; vc++) {
