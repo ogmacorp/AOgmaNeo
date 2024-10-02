@@ -115,7 +115,7 @@ public:
     // serialization
     long size() const; // returns size in bytes
     long state_size() const; // returns state size in bytes
-    long weights_size() const; // returns recon_weights size in bytes
+    long weights_size() const; // returns weights size in bytes
 
     void write(
         Stream_Writer &writer
