@@ -49,8 +49,8 @@ public:
 
         Params()
         :
-        lr(0.02f),
-        stability(4.0f)
+        lr(0.04f),
+        stability(8.0f)
         {}
     };
 
