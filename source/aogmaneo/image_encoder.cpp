@@ -345,7 +345,7 @@ void Image_Encoder::init_random(
 
     hidden_acts.resize(num_hidden_cells);
 
-    hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
+    hidden_resources = Float_Buffer(num_hidden_cells, 1.0f);
 }
 
 void Image_Encoder::step(
