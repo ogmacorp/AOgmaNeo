@@ -44,11 +44,13 @@ public:
     };
 
     struct Params {
+        float scale;
         float lr; // learning rate
         float stability; // inverse of plasticity
 
         Params()
         :
+        scale(1.0f),
         lr(0.05f),
         stability(4.0f)
         {}

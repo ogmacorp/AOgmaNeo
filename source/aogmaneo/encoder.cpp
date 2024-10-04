@@ -185,14 +185,14 @@ void Encoder::learn(
     if (max_index == target_ci)
         return;
 
-    const float rescale = 1.0f / max(1, count * encoder_base_weight);
+    const float rescale = sqrtf(1.0f / max(1, count)) / encoder_base_weight * params.scale;
 
     float modulation = 1.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
     
-        float recon = min(1.0f, vl.recon_sums[visible_cell_index] * rescale);
+        float recon = expf(min(0, vl.recon_sums[visible_cell_index] - count * encoder_base_weight) * rescale);
 
         modulation = min(modulation, recon);
 
