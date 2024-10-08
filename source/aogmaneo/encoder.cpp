@@ -192,9 +192,9 @@ void Encoder::learn(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
     
-        float recon = sigmoidf((vl.recon_sums[visible_cell_index] - count * encoder_base_weight) * rescale);
+        float recon = expf(min(0, vl.recon_sums[visible_cell_index] - count * encoder_base_weight) * rescale);
 
-        modulation = min(modulation, 1.0f - 2.0f * abs(0.5f - recon));
+        modulation = min(modulation, recon);
 
         // re-use recon sums as integer deltas
         vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
