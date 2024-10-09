@@ -52,7 +52,7 @@ public:
         :
         scale(2.0f),
         lr(0.05f),
-        stability(4.0f)
+        stability(8.0f)
         {}
     };
 
