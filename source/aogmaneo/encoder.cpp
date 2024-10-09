@@ -267,7 +267,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = encoder_base_weight + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+            vl.weights[i] = encoder_base_weight - (rand() % init_weight_noisei);
 
         vl.recon_deltas.resize(num_visible_cells);
         vl.recon_sums.resize(num_visible_cells);
