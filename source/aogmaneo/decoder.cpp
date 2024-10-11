@@ -259,7 +259,7 @@ void Decoder::init_random(
 
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
-    dendrite_acts.resize(num_dendrites);
+    dendrite_acts = Float_Buffer(num_dendrites, 0.0f);
 
     dendrite_deltas.resize(num_dendrites);
 }
@@ -311,7 +311,7 @@ long Decoder::size() const {
 }
 
 long Decoder::state_size() const {
-    return hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float);
+    return hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + dendrite_acts.size() * sizeof(float);
 }
 
 long Decoder::weights_size() const {
@@ -334,6 +334,7 @@ void Decoder::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     writer.write(&hidden_acts[0], hidden_acts.size() * sizeof(float));
+    writer.write(&dendrite_acts[0], dendrite_acts.size() * sizeof(float));
     
     int num_visible_layers = visible_layers.size();
 
@@ -361,11 +362,11 @@ void Decoder::read(
 
     hidden_cis.resize(num_hidden_columns);
     hidden_acts.resize(num_hidden_cells);
+    dendrite_acts.resize(num_dendrites);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_acts[0], hidden_acts.size() * sizeof(float));
-
-    dendrite_acts.resize(num_dendrites);
+    reader.read(&dendrite_acts[0], dendrite_acts.size() * sizeof(float));
 
     dendrite_deltas.resize(num_dendrites);
 
@@ -399,6 +400,7 @@ void Decoder::write_state(
 ) const {
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     writer.write(&hidden_acts[0], hidden_acts.size() * sizeof(float));
+    writer.write(&dendrite_acts[0], dendrite_acts.size() * sizeof(float));
 }
 
 void Decoder::read_state(
@@ -406,6 +408,7 @@ void Decoder::read_state(
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_acts[0], hidden_acts.size() * sizeof(float));
+    reader.read(&dendrite_acts[0], dendrite_acts.size() * sizeof(float));
 }
 
 void Decoder::write_weights(
