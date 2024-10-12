@@ -146,7 +146,7 @@ void Encoder::learn(
     float hidden_max = hidden_comparisons[hidden_column_index];
 
     int num_higher = 0;
-    int count = 0;
+    int count = 1; // start at 1 since self is skipped
 
     for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
         for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
@@ -165,7 +165,7 @@ void Encoder::learn(
             }
         }
 
-    float ratio = static_cast<float>(num_higher) / static_cast<float>(max(1, count));
+    float ratio = static_cast<float>(num_higher) / static_cast<float>(count);
 
     if (ratio > params.active_ratio)
         return;
