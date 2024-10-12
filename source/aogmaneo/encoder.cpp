@@ -187,20 +187,21 @@ void Encoder::learn(
 
     const float rescale = 1.0f / max(1, count * encoder_base_weight);
 
-    float modulation = 1.0f;
+    float modulation = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
     
         float recon = min(1.0f, vl.recon_sums[visible_cell_index] * rescale);
 
-        modulation = min(modulation, recon);
+        if (vc != max_index)
+            modulation += recon;
 
         // re-use recon sums as integer deltas
         vl.recon_deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - recon);
     }
 
-    modulation = powf(modulation, params.stability);
+    modulation = powf(modulation / (vld.size.z - 1), params.stability);
 
     // re-use recon sums as integer deltas
     for (int vc = 0; vc < vld.size.z; vc++) {
