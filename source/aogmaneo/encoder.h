@@ -32,7 +32,7 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Float_Buffer recon_acts;
+        Float_Buffer recon_deltas;
         Int_Buffer recon_sums;
 
         float importance;
@@ -44,15 +44,13 @@ public:
     };
 
     struct Params {
-        float scale;
         float lr; // learning rate
         float stability; // inverse of plasticity
 
         Params()
         :
-        scale(4.0f),
         lr(0.05f),
-        stability(4.0f)
+        stability(8.0f)
         {}
     };
 
