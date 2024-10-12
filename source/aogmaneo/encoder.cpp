@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-static const int encoder_base_weight = 255;
+static const int encoder_base_weight = 127;
 
 void Encoder::forward(
     const Int2 &column_pos,
