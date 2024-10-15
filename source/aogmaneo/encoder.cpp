@@ -185,11 +185,14 @@ void Encoder::learn(
 
         vl.recon_acts[visible_cell_index] = expf(min(0, recon_sum - count * 127) * recon_scale);
 
-        modulation = min(modulation, vl.recon_acts[visible_cell_index]);
+        if (vc != target_ci)
+            modulation = min(modulation, vl.recon_acts[visible_cell_index]);
     }
 
     if (num_higher < params.early_stop_cells)
         return;
+
+    modulation = powf(modulation, params.stability);
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
