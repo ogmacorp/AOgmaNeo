@@ -37,7 +37,6 @@ public:
         float scale; // scale of activations
         float lr; // weight learning rate
         float leak; // relu leak
-        float stability; // how stable the weights are (inverse of plasticity)
 
         Params()
         :
