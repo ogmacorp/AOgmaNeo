@@ -32,7 +32,6 @@ public:
     struct Visible_Layer {
         Float_Buffer value_weights;
         Float_Buffer policy_weights;
-        Float_Buffer policy_weights_delayed;
     };
 
     // history sample for delayed updates
@@ -49,9 +48,9 @@ public:
         float plr; // policy learning rate
         float leak; // ReLU leak
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
-        float policy_rate; // rate of delayed policy weights
-        float clip_coef; // PPO clipping coefficient
+        float bias; // bias toward positive policy updates
         float discount; // discount factor
+        float td_scale_decay; // decay on td error scaler
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
@@ -61,11 +60,11 @@ public:
         plr(0.002f),
         leak(0.01f),
         smoothing(0.03f),
-        policy_rate(0.002f),
-        clip_coef(0.1f),
+        bias(0.5f),
         discount(0.99f),
-        min_steps(8),
-        history_iters(8)
+        td_scale_decay(0.999f),
+        min_steps(16),
+        history_iters(16)
         {}
     };
 
@@ -80,13 +79,13 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_delayed;
 
     Float_Buffer value_dendrite_acts;
     Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_delayed;
 
     Float_Buffer hidden_values; // hidden value function output buffer
+
+    Float_Buffer hidden_td_scales;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
