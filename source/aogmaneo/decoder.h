@@ -53,8 +53,8 @@ public:
         :
         choice(0.0001f),
         vigilance(0.7f),
-        lr(0.1f),
-        fr(0.01f)
+        lr(0.05f),
+        fr(0.005f)
         {}
     };
 
