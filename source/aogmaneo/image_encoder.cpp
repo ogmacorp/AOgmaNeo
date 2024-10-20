@@ -72,7 +72,7 @@ void Image_Encoder::forward(
 
                         float diff = input - w;
 
-                        hidden_acts[hidden_cell_index] -= abs(diff);
+                        hidden_acts[hidden_cell_index] -= diff * diff;
                     }
                 }
             }
