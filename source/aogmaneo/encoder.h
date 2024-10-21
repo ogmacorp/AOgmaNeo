@@ -33,7 +33,6 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer recon_sums;
-        Float_Buffer recon_acts;
 
         float importance;
 
@@ -46,14 +45,12 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        float stability; // inverse of plasticity
         int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
         scale(2.0f),
-        lr(0.02f),
-        stability(4.0f),
+        lr(0.01f),
         early_stop_cells(2)
         {}
     };

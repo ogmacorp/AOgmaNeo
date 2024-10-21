@@ -37,14 +37,12 @@ public:
         float scale; // scale of activations
         float lr; // weight learning rate
         float leak; // relu leak
-        float stability; // inverse of plasticity
 
         Params()
         :
         scale(4.0f),
         lr(0.02f),
-        leak(0.01f),
-        stability(4.0f)
+        leak(0.01f)
         {}
     };
 
