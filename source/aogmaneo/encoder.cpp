@@ -165,7 +165,7 @@ void Encoder::learn(
             }
         }
 
-    const float recon_scale = sqrtf(1.0f / max(1, count)) / 127.0f * params.scale;
+    const float recon_scale = 1.0f / max(1, count * 255);
 
     int target_sum = vl.recon_sums[target_ci + visible_cells_start];
 
@@ -180,7 +180,7 @@ void Encoder::learn(
             num_higher++;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 127.0f * ((vc == target_ci) - expf(min(0, recon_sum - count * 127) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon_sum * recon_scale), state);
     }
 
     if (num_higher < params.early_stop_cells)
@@ -244,7 +244,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 - (rand() % init_weight_noisei);
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
     }
