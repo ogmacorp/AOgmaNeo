@@ -45,11 +45,11 @@ public:
         
         Params()
         :
-        falloff(0.9f),
+        falloff(0.99f),
         lr(0.1f),
         scale(2.0f),
         rr(0.01f),
-        radius(2)
+        radius(1)
         {}
     };
 
@@ -115,7 +115,7 @@ public:
     // serialization
     long size() const; // returns size in bytes
     long state_size() const; // returns state size in bytes
-    long weights_size() const; // returns recon_weights size in bytes
+    long weights_size() const; // returns weights size in bytes
 
     void write(
         Stream_Writer &writer
