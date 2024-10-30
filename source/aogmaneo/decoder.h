@@ -44,13 +44,11 @@ public:
     };
 
     struct Params {
-        float vigilance;
         float lr; // learning rate
         float fr; // forget rate
 
         Params()
         :
-        vigilance(0.7f),
         lr(0.1f),
         fr(0.01f)
         {}
