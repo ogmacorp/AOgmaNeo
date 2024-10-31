@@ -140,7 +140,7 @@ void Encoder::learn(
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = hidden_resources[hidden_cell_index] * powf(params.falloff, abs(dhc));
+        float rate = hidden_resources[hidden_cell_index];
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
