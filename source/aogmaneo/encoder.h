@@ -49,9 +49,9 @@ public:
         Params()
         :
         lr(0.1f),
-        active_ratio(1.0f),
+        active_ratio(0.1f),
         l_radius(2),
-        n_radius(3)
+        n_radius(1)
         {}
     };
 
