@@ -31,7 +31,6 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
-        Byte_Buffer alignments;
     };
 
     struct Params {
@@ -40,8 +39,8 @@ public:
 
         Params()
         :
-        scale(4.0f),
-        lr(0.05f)
+        scale(8.0f),
+        lr(0.02f)
         {}
     };
 
