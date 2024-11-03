@@ -368,9 +368,9 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    float value_delta = params.vlr * scaled_td_error;
+    float value_delta = params.vlr * td_error;
 
-    float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * scaled_td_error);
+    float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * scaled_td_error * (scaled_td_error > 0.0f ? 1.0f : 1.0f - params.bias));
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;

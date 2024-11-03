@@ -48,6 +48,7 @@ public:
         float plr; // policy learning rate
         float leak; // ReLU leak
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
+        float bias; // bias toward positive policy updates
         float discount; // discount factor
         float td_scale_decay; // decay on td error scaler
         int min_steps; // minimum steps before sample can be used
@@ -59,6 +60,7 @@ public:
         plr(0.002f),
         leak(0.01f),
         smoothing(0.03f),
+        bias(0.5f),
         discount(0.99f),
         td_scale_decay(0.999f),
         min_steps(16),
