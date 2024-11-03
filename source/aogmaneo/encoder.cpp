@@ -24,7 +24,7 @@ void Encoder::forward(
 
     float error = errors[hidden_column_index];
 
-    if (learn_enabled && error > 0.0f) {
+    if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
         int hidden_cell_index_prev = hidden_ci_prev + hidden_cells_start;
