@@ -276,9 +276,13 @@ void Decoder::init_random(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.alignments.resize(vl.weights.size());
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 127 + (rand() % init_weight_noisei) - init_weight_noisei / 2;
+        for (int i = 0; i < vl.weights.size(); i++) {
+            vl.weights[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+
+            vl.alignments[i] = (rand() % 256);
+        }
     }
 
     // hidden cis
@@ -402,6 +406,7 @@ void Decoder::write(
         writer.write(&vld, sizeof(Visible_Layer_Desc));
 
         writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
+        writer.write(&vl.alignments[0], vl.alignments.size() * sizeof(Byte));
     }
 }
 
@@ -445,8 +450,10 @@ void Decoder::read(
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.alignments.resize(vl.weights.size());
 
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
+        reader.read(&vl.alignments[0], vl.alignments.size() * sizeof(Byte));
     }
 
     // generate helper buffers for parallelization
@@ -486,6 +493,7 @@ void Decoder::write_weights(
         const Visible_Layer &vl = visible_layers[vli];
 
         writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
+        writer.write(&vl.alignments[0], vl.alignments.size() * sizeof(Byte));
     }
 }
 
@@ -496,6 +504,7 @@ void Decoder::read_weights(
         Visible_Layer &vl = visible_layers[vli];
 
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
+        reader.read(&vl.alignments[0], vl.alignments.size() * sizeof(Byte));
     }
 }
 
@@ -513,6 +522,7 @@ void Decoder::merge(
                 int d = rand() % decoders.size();                
 
                 vl.weights[i] = decoders[d]->visible_layers[vli].weights[i];
+                vl.alignments[i] = decoders[d]->visible_layers[vli].alignments[i];
             }
         }
 
@@ -524,11 +534,15 @@ void Decoder::merge(
         
             for (int i = 0; i < vl.weights.size(); i++) {
                 float total_weight = 0.0f;
+                float total_alignment = 0.0f;
 
-                for (int d = 0; d < decoders.size(); d++)
+                for (int d = 0; d < decoders.size(); d++) {
                     total_weight += decoders[d]->visible_layers[vli].weights[i];
+                    total_alignment += decoders[d]->visible_layers[vli].alignments[i];
+                }
 
                 vl.weights[i] = roundf(total_weight / decoders.size());
+                vl.alignments[i] = roundf(total_alignment / decoders.size());
             }
         }
 
