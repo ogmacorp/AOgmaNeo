@@ -228,16 +228,9 @@ void Decoder::generate_errors(
 
                 int target_ci = hidden_target_cis[hidden_column_index];
 
-                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+                int wi = target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                for (int hc =  0; hc < hidden_size.z; hc++) {
-                    int hidden_cell_index = hc + hidden_cells_start;
-
-                    int wi = hc + wi_start;
-
-                    sum += (vl.weights[wi] - 127.0f) * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
-                }
-
+                sum += vl.weights[wi] - 127;
                 count++;
             }
         }
