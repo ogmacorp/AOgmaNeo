@@ -48,7 +48,7 @@ public:
 
         Params()
         :
-        fr(0.05f)
+        fr(0.01f)
         {}
     };
 
