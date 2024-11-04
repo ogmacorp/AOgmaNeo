@@ -533,7 +533,7 @@ void Decoder::merge(
                                 int byi = wi / 8;
                                 int bi = wi % 8;
 
-                                sub_total += ((vl.weights[wi] & (1 << bi)) != 0);
+                                sub_total += ((vl.weights[byi] & (1 << bi)) != 0);
                             }
                         }
 
