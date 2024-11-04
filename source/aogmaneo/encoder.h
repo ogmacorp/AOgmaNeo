@@ -45,7 +45,14 @@ public:
         {}
     };
 
-    struct Params {};
+    struct Params {
+        float threshold; // learning threshold
+
+        Params()
+        :
+        threshold(0.9f)
+        {}
+    };
 
 private:
     Int3 hidden_size; // size of hidden/output layer

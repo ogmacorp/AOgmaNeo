@@ -184,7 +184,7 @@ void Encoder::backward(
 
     float recon = sum * recon_scale;
 
-    vl.recon_deltas[visible_column_index] = (recon < 0.5f);
+    vl.recon_deltas[visible_column_index] = (recon < params.threshold);
 }
 
 void Encoder::learn(
