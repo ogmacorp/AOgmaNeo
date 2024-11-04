@@ -180,7 +180,7 @@ void Encoder::backward(
             }
         }
 
-    const float recon_scale = 1.0f / max(1, count * 255);
+    const float recon_scale = 1.0f / max(1, count);
 
     float recon = sum * recon_scale;
 
