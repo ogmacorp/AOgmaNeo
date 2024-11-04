@@ -13,12 +13,14 @@ using namespace aon;
 void Decoder::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -39,6 +41,10 @@ void Decoder::forward(
         // bounds of receptive field, clamped to input size
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+
+        count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
 
@@ -87,6 +93,8 @@ void Decoder::forward(
             }
     }
 
+    count_all /= max(limit_small, total_importance);
+
     int max_compare_index = 0;
     float max_compare_activation = limit_min;
 
@@ -116,7 +124,7 @@ void Decoder::forward(
             sum /= max(limit_small, total_importance);
             total /= max(limit_small, total_importance);
 
-            float activation = 2.0f * sum - total;
+            float activation = 2.0f * sum - total + randf(state) / count_all; // small noise added for tiebreaking
 
             if (activation > max_activation) {
                 max_activation = activation;
@@ -264,9 +272,14 @@ void Decoder::activate(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
+    unsigned int base_state = rand();
+
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
+    }
 }
 
 void Decoder::learn(

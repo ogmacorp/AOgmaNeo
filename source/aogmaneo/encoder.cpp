@@ -105,7 +105,7 @@ void Encoder::forward(
         sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
 
-        float activation = 2.0f * sum - total + randf(state) + randf(state) / count_all; // small noise added for tiebreaking
+        float activation = 2.0f * sum - total + randf(state) / count_all; // small noise added for tiebreaking
 
         if (activation > max_activation) {
             max_activation = activation;
