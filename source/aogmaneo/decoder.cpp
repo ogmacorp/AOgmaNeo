@@ -121,9 +121,10 @@ void Decoder::forward(
 
             if (activation > max_activation) {
                 max_activation = activation;
-                compare_activation = sum;
                 max_index = di;
             }
+
+            compare_activation = max(compare_activation, sum);
         }
 
         hidden_dis[hidden_cell_index] = max_index;
