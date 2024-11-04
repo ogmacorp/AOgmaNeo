@@ -151,9 +151,6 @@ void Decoder::learn(
     int target_ci = hidden_target_cis[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    if (hidden_ci == target_ci)
-        return;
-
     int hidden_cell_index_target = target_ci + hidden_cells_start;
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
@@ -208,7 +205,7 @@ void Decoder::learn(
                     vl.dendrite_totals[dendrite_index_target] += !w_old;
                 }
 
-                if (randf(state) < params.fr) {
+                if (hidden_ci != target_ci && randf(state) < params.fr) {
                     int wi = hidden_di_max + num_dendrites_per_cell * (hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
 
                     int byi = wi / 8;
