@@ -35,7 +35,7 @@ public:
         Int_Buffer hidden_sums;
         Int_Buffer hidden_totals;
         
-        Int_Buffer recon_deltas;
+        Byte_Buffer recon_deltas;
 
         float importance;
 
@@ -45,14 +45,7 @@ public:
         {}
     };
 
-    struct Params {
-        float lr; // learning rate
-
-        Params()
-        :
-        lr(1.0f)
-        {}
-    };
+    struct Params {};
 
 private:
     Int3 hidden_size; // size of hidden/output layer
@@ -70,6 +63,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        unsigned long* state,
         const Params &params
     );
 
