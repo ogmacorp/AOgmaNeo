@@ -50,7 +50,7 @@ public:
 
         Params()
         :
-        threshold(0.05f)
+        threshold(0.5f)
         {}
     };
 
