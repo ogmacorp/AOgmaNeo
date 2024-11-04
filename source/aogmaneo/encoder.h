@@ -35,9 +35,7 @@ public:
         Int_Buffer hidden_sums;
         Int_Buffer hidden_totals;
         
-        Int_Buffer recon_sums;
-
-        Byte_Buffer updates;
+        Int_Buffer recon_deltas;
 
         float importance;
 
@@ -52,7 +50,7 @@ public:
 
         Params()
         :
-        lr(0.05f)
+        lr(1.0f)
         {}
     };
 

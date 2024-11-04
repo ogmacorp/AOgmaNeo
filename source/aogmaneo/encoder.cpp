@@ -154,13 +154,7 @@ void Encoder::backward(
 
     int target_ci = input_cis[visible_column_index];
 
-    // clear
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        vl.recon_sums[visible_cell_index] = 0;
-    }
-
+    int sum = 0;
     int count = 0;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -176,42 +170,18 @@ void Encoder::backward(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (target_ci + vld.size.z * hidden_column_index)));
 
-                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
-
-                    vl.recon_sums[visible_cell_index] += vl.weights[wi];
-                }
-
+                sum += vl.weights[wi];
                 count++;
             }
         }
 
-    int max_index = 0;
-    int max_recon_sum = 0;
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        int recon_sum = vl.recon_sums[visible_cell_index];
-
-        if (recon_sum > max_recon_sum) {
-            max_recon_sum = recon_sum;
-            max_index = vc;
-        }
-    }
-
-    vl.updates[visible_column_index] = (max_index != target_ci);
-
-    int visible_cell_index_target = target_ci + visible_cells_start;
-
     const float recon_scale = 1.0f / max(1, count * 255);
 
-    float recon = vl.recon_sums[visible_cell_index_target] * recon_scale;
+    float recon = sum * recon_scale;
 
-    // re-use recon sums as integer deltas
-    vl.recon_sums[visible_cell_index_target] = static_cast<int>(params.lr * 255.0f * (1.0f - recon));
+    vl.recon_deltas[visible_column_index] = static_cast<int>(params.lr * 255.0f * (1.0f - recon));
 }
 
 void Encoder::learn(
@@ -252,14 +222,9 @@ void Encoder::learn(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                if (!vl.updates[visible_column_index])
-                    continue;
-
                 int visible_cells_start = visible_column_index * vld.size.z;
 
                 int in_ci = vl_input_cis[visible_column_index];
-
-                int visible_cell_index_target = in_ci + visible_cells_start;
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -267,7 +232,7 @@ void Encoder::learn(
 
                 Byte w_old = vl.weights[wi];
 
-                vl.weights[wi] = min(255, vl.weights[wi] + vl.recon_sums[visible_cell_index_target]);
+                vl.weights[wi] = min(255, vl.weights[wi] + vl.recon_deltas[visible_column_index]);
 
                 vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
             }
@@ -311,8 +276,7 @@ void Encoder::init_random(
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
 
-        vl.recon_sums.resize(num_visible_cells);
-        vl.updates.resize(num_visible_columns);
+        vl.recon_deltas.resize(num_visible_columns);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -512,8 +476,7 @@ void Encoder::read(
 
         reader.read(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
 
-        vl.recon_sums.resize(num_visible_cells);
-        vl.updates.resize(num_visible_columns);
+        vl.recon_deltas.resize(num_visible_columns);
 
         reader.read(&vl.importance, sizeof(float));
     }
