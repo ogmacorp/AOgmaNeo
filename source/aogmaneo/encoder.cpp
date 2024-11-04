@@ -77,7 +77,7 @@ void Encoder::forward(
                     int byi = wi / 8;
                     int bi = wi % 8;
 
-                    vl.hidden_sums[hidden_cell_index] += ((vl.weights[wi] & (1 << bi)) != 0);
+                    vl.hidden_sums[hidden_cell_index] += ((vl.weights[byi] & (1 << bi)) != 0);
                 }
             }
     }
@@ -175,7 +175,7 @@ void Encoder::backward(
                 int byi = wi / 8;
                 int bi = wi % 8;
 
-                sum += ((vl.weights[wi] & (1 << bi)) != 0);
+                sum += ((vl.weights[byi] & (1 << bi)) != 0);
                 count++;
             }
         }
@@ -224,6 +224,9 @@ void Encoder::learn(
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                if (!vl.recon_deltas[visible_column_index])
+                    continue;
 
                 int visible_cells_start = visible_column_index * vld.size.z;
 
@@ -571,7 +574,7 @@ void Encoder::merge(
                             int byi = wi / 8;
                             int bi = wi % 8;
 
-                            sub_total += ((vl.weights[wi] & (1 << bi)) != 0);
+                            sub_total += ((vl.weights[byi] & (1 << bi)) != 0);
                         }
                     }
 

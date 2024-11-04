@@ -158,6 +158,9 @@ void Decoder::learn(
     int target_ci = hidden_target_cis[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
 
+    if (hidden_ci == target_ci)
+        return;
+
     int hidden_cell_index_target = target_ci + hidden_cells_start;
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
