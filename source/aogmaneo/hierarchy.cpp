@@ -421,6 +421,7 @@ void Hierarchy::read(
     decoders.resize(num_layers);
 
     histories.resize(num_layers);
+    conditions.resize(num_layers);
     
     updates.resize(num_layers);
     ticks.resize(num_layers);
@@ -480,7 +481,7 @@ void Hierarchy::read(
 
         reader.read(&conditioning_horizon, sizeof(int));
 
-        conditions.resize(conditioning_horizon);
+        conditions[l].resize(conditioning_horizon);
 
         for (int t = 0; t < conditioning_horizon; t++) {
             conditions[l][t].resize(encoders[l].get_hidden_cis().size());;
