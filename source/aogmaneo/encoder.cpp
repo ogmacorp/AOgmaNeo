@@ -81,10 +81,8 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_acts[hidden_cell_index];
-
-        if (activation > max_activation) {
-            max_activation = activation;
+        if (hidden_acts[hidden_cell_index] > max_activation) {
+            max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
     }
@@ -167,29 +165,25 @@ void Encoder::learn(
             }
         }
 
-    const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
+    const float recon_scale = sqrtf(1.0f / max(1, count)) / 127.0f * params.scale;
 
-    int max_index = 0;
-    int max_recon_sum = 0;
+    int target_sum = vl.recon_sums[target_ci + visible_cells_start];
+
+    int num_higher = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        if (recon_sum > max_recon_sum) {
-            max_recon_sum = recon_sum;
-            max_index = vc;
-        }
+        if (vc != target_ci && recon_sum >= target_sum)
+            num_higher++;
 
-        float recon = sigmoidf((recon_sum - count * 127) * recon_scale);
-
-        // re-use recon sums as integer deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon), state);
+        // re-use sums as deltas
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 127.0f * ((vc == target_ci) - expf(min(0, recon_sum - count * 127) * recon_scale)), state);
     }
 
-    // early stop
-    if (max_index == target_ci)
+    if (num_higher < params.early_stop_cells)
         return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -250,7 +244,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % 127);
+            vl.weights[i] = 127 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
     }

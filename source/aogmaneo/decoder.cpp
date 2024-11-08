@@ -19,9 +19,6 @@ void Decoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    float count = 0.0f;
-    float count_except = 0.0f;
-    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -42,12 +39,6 @@ void Decoder::forward(
         // bounds of receptive field, clamped to input size
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
-        count += vl.importance * sub_count;
-        count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
 
@@ -93,12 +84,8 @@ void Decoder::forward(
             }
     }
 
-    count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
-
     int max_compare_index = 0;
-    float max_compare_activation = 0.0f;
+    float max_compare_activation = limit_min;
 
     const float byte_inv = 1.0f / 255.0f;
 
@@ -107,11 +94,10 @@ void Decoder::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        int max_index = -1;
-        float max_activation = 0.0f;
+        int max_index = 0;
+        float max_activation = limit_min;
 
-        int max_complete_index = 0;
-        float max_complete_activation = 0.0f;
+        float compare_activation = limit_min;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -131,27 +117,19 @@ void Decoder::forward(
             sum /= max(limit_small, total_importance);
             total /= max(limit_small, total_importance);
 
-            float complemented = (count_all - total) - (count - sum);
+            float activation = 2.0f * sum - total;
 
-            float match = complemented / count_except;
-
-            float activation = complemented / (params.choice + count_all - total);
-
-            if (match >= params.vigilance && activation > max_activation) {
+            if (activation > max_activation) {
                 max_activation = activation;
+                compare_activation = sum;
                 max_index = di;
-            }
-
-            if (activation > max_complete_activation) {
-                max_complete_activation = activation;
-                max_complete_index = di;
             }
         }
 
-        hidden_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
+        hidden_dis[hidden_cell_index] = max_index;
 
-        if (max_complete_activation > max_compare_activation) {
-            max_compare_activation = max_complete_activation;
+        if (compare_activation > max_compare_activation) {
+            max_compare_activation = compare_activation;
             max_compare_index = hc;
         }
     }
@@ -181,10 +159,8 @@ void Decoder::learn(
     if (hidden_di_target == -1)
         return;
 
-    int dendrites_start = num_dendrites_per_cell * hidden_cell_index_target;
-
-    int dendrite_index_target = hidden_di_target + dendrites_start;
-    int dendrite_index_max = hidden_di_max + dendrites_start;
+    int dendrite_index_target = hidden_di_target + num_dendrites_per_cell * hidden_cell_index_target;
+    int dendrite_index_max = hidden_di_max + num_dendrites_per_cell * hidden_cell_index_max;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -220,7 +196,7 @@ void Decoder::learn(
 
                     Byte w_old = vl.weights[wi];
 
-                    vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
+                    vl.weights[wi] = min(255, vl.weights[wi] + static_cast<int>(params.lr * (255.0f - vl.weights[wi])));
 
                     vl.dendrite_totals[dendrite_index_target] += vl.weights[wi] - w_old;
                 }
@@ -230,7 +206,7 @@ void Decoder::learn(
 
                     Byte w_old = vl.weights[wi];
 
-                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.fr * vl.weights[wi]));
+                    vl.weights[wi] = max(0, vl.weights[wi] - static_cast<int>(params.fr * vl.weights[wi]));
 
                     vl.dendrite_totals[dendrite_index_max] += vl.weights[wi] - w_old;
                 }

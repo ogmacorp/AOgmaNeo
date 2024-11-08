@@ -44,15 +44,11 @@ public:
     };
 
     struct Params {
-        float choice; // ART choice parameter
-        float vigilance; // ART vigilance
         float lr; // learning rate
         float fr; // forget rate
 
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.7f),
         lr(0.1f),
         fr(0.01f)
         {}

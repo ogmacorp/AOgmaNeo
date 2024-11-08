@@ -101,7 +101,7 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : powf(params.falloff, abs(dhc)));
+            float rate = hidden_resources[hidden_cell_index] * (dhc == 0 ? 1.0f : params.falloff);
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
