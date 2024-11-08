@@ -53,10 +53,10 @@ public:
 
         Params()
         :
-        lr(0.001f),
+        lr(0.002f),
         leak(0.01f),
         discount(0.99f),
-        max_factor(1.0f),
+        max_factor(4.0f),
         clip(1.0f),
         n_steps(8),
         history_iters(8)
