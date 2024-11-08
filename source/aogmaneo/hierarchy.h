@@ -100,6 +100,13 @@ public:
     struct Params {
         Array<Layer_Params> layers;
         Array<IO_Params> ios;
+
+        float min_strength;
+
+        Params()
+        :
+        min_strength(0.2f)
+        {}
     };
 
 private:
