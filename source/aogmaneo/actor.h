@@ -169,11 +169,6 @@ public:
         return hidden_cis;
     }
 
-    // get hidden advs
-    const Float_Buffer &get_hidden_qs() const {
-        return hidden_qs;
-    }
-
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
