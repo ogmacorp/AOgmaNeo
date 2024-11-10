@@ -491,7 +491,7 @@ void Actor::init_random(
     dendrite_acts.resize(num_dendrites);
     hidden_advs.resize(num_hidden_cells);
 
-    hidden_td_scales = Float_Buffer(num_hidden_cells, 0.0f);
+    hidden_td_scales = Float_Buffer(num_hidden_columns, 0.0f);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -679,7 +679,7 @@ void Actor::read(
     int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
     
     hidden_cis.resize(num_hidden_columns);
-    hidden_td_scales.resize(num_hidden_cells);
+    hidden_td_scales.resize(num_hidden_columns);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
