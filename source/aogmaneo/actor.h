@@ -46,7 +46,6 @@ public:
         float lr; // Q learning rate
         float leak; // ReLU leak
         float discount; // discount fActor
-        float max_factor; // omega in mellow max
         float td_scale_decay; // decay on td error scaler
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
@@ -56,7 +55,6 @@ public:
         lr(0.01f),
         leak(0.01f),
         discount(0.99f),
-        max_factor(2.0f),
         td_scale_decay(0.001f),
         n_steps(4),
         history_iters(8)
