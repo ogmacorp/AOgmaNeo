@@ -47,7 +47,7 @@ public:
         float leak; // ReLU leak
         float discount; // discount fActor
         float max_factor; // omega in mellow max
-        float clip; // Q update clip
+        float td_scale_decay; // decay on td error scaler
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
@@ -57,7 +57,7 @@ public:
         leak(0.01f),
         discount(0.99f),
         max_factor(4.0f),
-        clip(1.0f),
+        td_scale_decay(0.001f),
         n_steps(8),
         history_iters(8)
         {}
@@ -75,6 +75,8 @@ private:
     Float_Buffer dendrite_acts;
 
     Float_Buffer hidden_advs;
+
+    Float_Buffer hidden_td_scales;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 

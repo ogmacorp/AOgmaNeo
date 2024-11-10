@@ -371,7 +371,11 @@ void Actor::learn(
 
     float td_error = target_q - q_prev;
 
-    float value_delta = params.lr * min(params.clip, max(-params.clip, td_error)); // clip for stability
+    hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
+
+    float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
+
+    float value_delta = params.lr * scaled_td_error;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -487,6 +491,8 @@ void Actor::init_random(
     dendrite_acts.resize(num_dendrites);
     hidden_advs.resize(num_hidden_cells);
 
+    hidden_td_scales = Float_Buffer(num_hidden_cells, 0.0f);
+
     // create (pre-allocated) history samples
     history_size = 0;
     history_samples.resize(history_capacity);
@@ -563,7 +569,7 @@ void Actor::clear_state() {
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_td_scales.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -624,6 +630,7 @@ void Actor::write(
     writer.write(&num_dendrites_per_cell, sizeof(int));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -672,8 +679,10 @@ void Actor::read(
     int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
     
     hidden_cis.resize(num_hidden_columns);
+    hidden_td_scales.resize(num_hidden_cells);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     dendrite_acts.resize(num_dendrites);
     hidden_advs.resize(num_hidden_cells);
@@ -769,6 +778,7 @@ void Actor::read_state(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     reader.read(&history_size, sizeof(int));
 
