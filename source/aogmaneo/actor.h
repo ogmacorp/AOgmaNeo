@@ -30,8 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer value_weights;
-        Float_Buffer adv_weights;
+        Float_Buffer weights;
     };
 
     // history sample for delayed updates
@@ -72,7 +71,7 @@ private:
 
     Float_Buffer dendrite_acts;
 
-    Float_Buffer hidden_advs;
+    Float_Buffer hidden_qs;
 
     Float_Buffer hidden_td_scales;
 
@@ -171,8 +170,8 @@ public:
     }
 
     // get hidden advs
-    const Float_Buffer &get_hidden_advs() const {
-        return hidden_advs;
+    const Float_Buffer &get_hidden_qs() const {
+        return hidden_qs;
     }
 
     // get the hidden size
