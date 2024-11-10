@@ -59,6 +59,7 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
+    Float_Buffer hidden_totals;
 
     Float_Buffer hidden_resources;
 
