@@ -344,7 +344,7 @@ void Image_Encoder::reconstruct(
                 }
             }
 
-        sum /= max(1, count) * 255;
+        sum /= max(1, count * 255);
 
         vl.reconstruction[visible_cell_index] = roundf(min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f)) * 255.0f);
     }
