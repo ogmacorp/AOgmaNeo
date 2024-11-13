@@ -233,7 +233,7 @@ void Hierarchy::step(
                 for (int d = 0; d < decoders[l].size(); d++) {
                     decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
 
-                    decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], strength, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                    decoders[l][d].learn(layer_input_cis, histories[l][l == 0 ? i_indices[d] : 0][(l == 0 ? 0 : d) + t * ticks_per_update[l]], strength, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
                 }
             }
         }
