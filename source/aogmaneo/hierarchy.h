@@ -105,7 +105,7 @@ public:
 
         Params()
         :
-        min_strength(0.2f)
+        min_strength(0.1f)
         {}
     };
 
