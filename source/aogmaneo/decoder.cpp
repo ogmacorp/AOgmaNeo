@@ -197,7 +197,7 @@ void Decoder::learn(
 
                     Byte w_old = vl.weights[wi];
 
-                    vl.weights[wi] = min(255, vl.weights[wi] + static_cast<int>(params.lr * (strength * 255.0f - vl.weights[wi])));
+                    vl.weights[wi] = min(255, vl.weights[wi] + static_cast<int>(params.lr * max(0.0f, strength * 255.0f - vl.weights[wi])));
 
                     vl.dendrite_totals[dendrite_index_target] += vl.weights[wi] - w_old;
                 }

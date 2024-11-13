@@ -45,7 +45,7 @@ public:
         
         Params()
         :
-        falloff(1.0f),
+        falloff(0.9f),
         lr(0.1f),
         scale(2.0f),
         rr(0.01f),
@@ -59,6 +59,7 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
+    Float_Buffer hidden_totals;
 
     Float_Buffer hidden_resources;
 
