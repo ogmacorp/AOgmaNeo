@@ -33,7 +33,6 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
 
         Int_Buffer input_cis_prev;
         
@@ -50,7 +49,7 @@ public:
 
         Params()
         :
-        lr(1.0f)
+        lr(0.1f)
         {}
     };
 
