@@ -32,7 +32,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
             
-            hidden_deltas[hidden_cell_index] = rand_roundf(255.0f * min(1.0f, max(-1.0f, params.lr * error * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]))), state);
+            hidden_deltas[hidden_cell_index] = rand_roundf(params.lr * error * 255.0f * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]), state);
         }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
