@@ -28,7 +28,7 @@ void Encoder::forward(
 
         int hidden_cell_index_prev = hidden_ci_prev + hidden_cells_start;
 
-        int delta = roundf(255.0f * tanhf(params.lr * error));
+        int delta = roundf(255.0f * min(1.0f, max(-1.0f, params.lr * error)));
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
