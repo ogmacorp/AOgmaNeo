@@ -70,7 +70,6 @@ private:
         const Array<Int_Buffer_View> &input_cis,
         Float_Buffer_View errors,
         bool learn_enabled,
-        unsigned long* state,
         const Params &params
     );
 
