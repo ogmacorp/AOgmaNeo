@@ -48,10 +48,9 @@ private:
     Int3 hidden_size; // size of the output/hidden/prediction
 
     Int_Buffer hidden_cis; // hidden state
-
-    Int_Buffer hidden_sums;
     Float_Buffer hidden_acts;
 
+    Int_Buffer hidden_sums;
     Int_Buffer hidden_deltas;
 
     // visible layers and descs

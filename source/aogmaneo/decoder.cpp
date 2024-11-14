@@ -120,9 +120,6 @@ void Decoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    if (hidden_acts[hidden_cells_start] == -1.0f)
-        return;
-
     int target_ci = hidden_target_cis[hidden_column_index];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -281,10 +278,10 @@ void Decoder::init_random(
 
     // hidden cis
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
+    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
     hidden_sums.resize(num_hidden_cells);
     hidden_deltas.resize(num_hidden_cells);
-    hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -351,10 +348,11 @@ void Decoder::generate_errors(
 
 void Decoder::clear_state() {
     hidden_cis.fill(0);
+    hidden_acts.fill(0.0f);
 }
 
 long Decoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -367,7 +365,7 @@ long Decoder::size() const {
 }
 
 long Decoder::state_size() const {
-    return hidden_cis.size() * sizeof(int);
+    return hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float);
 }
 
 long Decoder::weights_size() const {
@@ -388,6 +386,7 @@ void Decoder::write(
     writer.write(&hidden_size, sizeof(Int3));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_acts[0], hidden_acts.size() * sizeof(float));
     
     int num_visible_layers = visible_layers.size();
 
@@ -412,12 +411,13 @@ void Decoder::read(
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
     hidden_cis.resize(num_hidden_columns);
+    hidden_acts.resize(num_hidden_cells);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_acts[0], hidden_acts.size() * sizeof(float));
 
     hidden_sums.resize(num_hidden_cells);
     hidden_deltas.resize(num_hidden_cells);
-    hidden_acts = Float_Buffer(num_hidden_cells, -1.0f);
 
     int num_visible_layers;
 
@@ -469,12 +469,14 @@ void Decoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_acts[0], hidden_acts.size() * sizeof(float));
 }
 
 void Decoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_acts[0], hidden_acts.size() * sizeof(float));
 }
 
 void Decoder::write_weights(
