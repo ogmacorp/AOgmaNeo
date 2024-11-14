@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        S_Byte_Buffer weights;
     };
 
     struct Params {
@@ -40,7 +40,7 @@ public:
         Params()
         :
         scale(8.0f),
-        lr(0.02f)
+        lr(0.01f)
         {}
     };
 
