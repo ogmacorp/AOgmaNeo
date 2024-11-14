@@ -156,8 +156,8 @@ void Encoder::forward(
 
         hidden_acts[hidden_cell_index] = sum * params.scale;
 
-        if (sum > max_activation) {
-            max_activation = sum;
+        if (hidden_acts[hidden_cell_index] > max_activation) {
+            max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
     }
