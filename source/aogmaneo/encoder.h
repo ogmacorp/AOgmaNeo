@@ -50,8 +50,8 @@ public:
 
         Params()
         :
-        scale(4.0f),
-        lr(0.1f)
+        scale(8.0f),
+        lr(0.01f)
         {}
     };
 
@@ -74,6 +74,7 @@ private:
         const Array<Int_Buffer_View> &input_cis,
         Float_Buffer_View errors,
         bool learn_enabled,
+        unsigned long* state,
         const Params &params
     );
 

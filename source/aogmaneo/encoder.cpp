@@ -15,6 +15,7 @@ void Encoder::forward(
     const Array<Int_Buffer_View> &input_cis,
     Float_Buffer_View errors,
     bool learn_enabled,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -31,7 +32,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
             
-            hidden_deltas[hidden_cell_index] = roundf(255.0f * min(1.0f, max(-1.0f, params.lr * error * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]))));
+            hidden_deltas[hidden_cell_index] = rand_roundf(255.0f * min(1.0f, max(-1.0f, params.lr * error * ((hc == hidden_ci_prev) - hidden_acts[hidden_cell_index]))), state);
         }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -231,9 +232,14 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
+    unsigned int base_state = rand();
+
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, errors, learn_enabled, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, errors, learn_enabled, &state, params);
+    }
 
     // copy to prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
