@@ -205,7 +205,7 @@ void Encoder::learn(
 
                 Byte w_old = vl.weights[wi];
 
-                vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
+                vl.weights[wi] = min(255, vl.weights[wi] + static_cast<int>(params.lr * (255.0f - vl.weights[wi])));
 
                 vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
             }
