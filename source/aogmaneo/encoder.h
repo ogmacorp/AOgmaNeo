@@ -46,12 +46,10 @@ public:
 
     struct Params {
         float lr; // learning rate
-        float leak;
 
         Params()
         :
-        lr(0.01f),
-        leak(0.1f)
+        lr(0.01f)
         {}
     };
 
@@ -59,8 +57,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Int_Buffer hidden_deltas;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;

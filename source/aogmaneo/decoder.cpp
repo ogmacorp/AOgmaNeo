@@ -172,6 +172,7 @@ void Decoder::learn(
 
 void Decoder::generate_errors(
     const Int2 &column_pos,
+    Int_Buffer_View input_cis,
     Int_Buffer_View hidden_target_cis,
     Float_Buffer_View errors,
     int vli,
@@ -204,43 +205,41 @@ void Decoder::generate_errors(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
     
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
+    int in_ci = input_cis[visible_column_index];
 
-        float sum = 0.0f;
-        int count = 0;
+    float sum = 0.0f;
+    int count = 0;
 
-        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                Int2 hidden_pos = Int2(ix, iy);
+    for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+        for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+            Int2 hidden_pos = Int2(ix, iy);
 
-                int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
+            int hidden_column_index = address2(hidden_pos, Int2(hidden_size.x, hidden_size.y));
 
-                Int2 visible_center = project(hidden_pos, h_to_v);
+            Int2 visible_center = project(hidden_pos, h_to_v);
 
-                if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                    int hidden_cells_start = hidden_column_index * hidden_size.z;
+            if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
+                int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-                    Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
+                Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                    int target_ci = hidden_target_cis[hidden_column_index];
+                int target_ci = hidden_target_cis[hidden_column_index];
 
-                    int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
+                int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                    for (int hc = 0; hc < hidden_size.z; hc++) {
-                        int wi = hc + wi_start;
+                for (int hc = 0; hc < hidden_size.z; hc++) {
+                    int wi = hc + wi_start;
 
-                        sum += vl.weights[wi] * ((hc == target_ci) - hidden_acts[hc + hidden_cells_start]);
-                    }
-
-                    count++;
+                    sum += vl.weights[wi] * ((hc == target_ci) - hidden_acts[hc + hidden_cells_start]);
                 }
+
+                count++;
             }
+        }
 
-        sum *= sqrtf(1.0f / max(1, count)) / 127.0f;
+    sum *= sqrtf(1.0f / max(1, count)) / 127.0f;
 
-        errors[visible_cell_index] += sum;
-    }
+    errors[visible_column_index] += sum;
 }
 
 void Decoder::init_random(
@@ -331,6 +330,7 @@ void Decoder::learn(
 }
 
 void Decoder::generate_errors(
+    Int_Buffer_View input_cis,
     Int_Buffer_View hidden_target_cis,
     Float_Buffer_View errors,
     int vli,
@@ -343,7 +343,7 @@ void Decoder::generate_errors(
 
     PARALLEL_FOR
     for (int i = 0; i < num_visible_columns; i++)
-        generate_errors(Int2(i / vld.size.y, i % vld.size.y), hidden_target_cis, errors, vli, params);
+        generate_errors(Int2(i / vld.size.y, i % vld.size.y), input_cis, hidden_target_cis, errors, vli, params);
 }
 
 void Decoder::clear_state() {

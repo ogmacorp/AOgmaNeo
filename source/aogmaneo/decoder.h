@@ -77,6 +77,7 @@ private:
 
     void generate_errors(
         const Int2 &column_pos,
+        Int_Buffer_View input_cis,
         Int_Buffer_View hidden_target_cis,
         Float_Buffer_View errors,
         int vli,
@@ -102,6 +103,7 @@ public:
     );
 
     void generate_errors(
+        Int_Buffer_View input_cis,
         Int_Buffer_View hidden_target_cis,
         Float_Buffer_View errors,
         int vli,

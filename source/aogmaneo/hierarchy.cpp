@@ -173,7 +173,7 @@ void Hierarchy::init_random(
         if (l < encoders.size() - 1)
             feedback_cis_prev[l] = encoders[l].get_hidden_cis();
 
-        errors[l].resize(hidden_cis_prev[l].size() * layer_descs[l].hidden_size.z);
+        errors[l].resize(hidden_cis_prev[l].size());
     }
 
     // initialize params
@@ -239,7 +239,7 @@ void Hierarchy::step(
                 errors[l].fill(0.0f);
 
                 for (int d = 0; d < decoders[l].size(); d++)
-                    decoders[l][d].generate_errors(histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], errors[l], 0, params.layers[l].decoder);
+                    decoders[l][d].generate_errors(hidden_cis_prev[l], histories[l][l == 0 ? i_indices[d] : 0][l == 0 ? 0 : d], errors[l], 0, params.layers[l].decoder);
 
                 // Rescale
                 float decoders_inv = 1.0f / decoders[l].size();
@@ -567,7 +567,7 @@ void Hierarchy::read(
         if (l < encoders.size() - 1)
             feedback_cis_prev[l] = encoders[l].get_hidden_cis();
 
-        errors[l].resize(hidden_cis_prev[l].size() * encoders[l].get_hidden_size().z);
+        errors[l].resize(hidden_cis_prev[l].size());
     }
 
     actors.resize(num_actions);
