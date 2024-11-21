@@ -70,7 +70,7 @@ void Decoder::forward(
             }
     }
 
-    const float activation_scale = sqrtf(1.0f / count) / 127.0f * params.scale;
+    const float activation_scale = sqrtf(1.0f / count);
 
     int max_index = 0;
     float max_activation = limit_min;
@@ -113,7 +113,6 @@ void Decoder::learn(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     Int_Buffer_View hidden_target_cis,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -125,7 +124,7 @@ void Decoder::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_deltas[hidden_cell_index] = rand_roundf(params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]), state);
+        hidden_deltas[hidden_cell_index] = params.lr * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
     }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -164,7 +163,7 @@ void Decoder::learn(
 
                     int wi = hc + wi_start;
 
-                    vl.weights[wi] = min(127, max(-127, vl.weights[wi] + hidden_deltas[hidden_cell_index]));
+                    vl.weights[wi] += hidden_deltas[hidden_cell_index];
                 }
             }
     }
@@ -237,7 +236,7 @@ void Decoder::generate_errors(
             }
         }
 
-    sum *= sqrtf(1.0f / max(1, count)) / 127.0f;
+    sum *= sqrtf(1.0f / max(1, count));
 
     errors[visible_column_index] += sum;
 }
@@ -273,7 +272,7 @@ void Decoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+            vl.weights[i] = randf(-init_weight_noisef, init_weight_noisef);
     }
 
     // hidden cis
@@ -319,14 +318,9 @@ void Decoder::learn(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    unsigned int base_state = rand();
-
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, params);
 }
 
 void Decoder::generate_errors(
@@ -358,7 +352,7 @@ long Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(S_Byte);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(float);
     }
 
     return size;
@@ -374,7 +368,7 @@ long Decoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.weights.size() * sizeof(S_Byte);
+        size += vl.weights.size() * sizeof(float);
     }
 
     return size;
@@ -398,7 +392,7 @@ void Decoder::write(
 
         writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-        writer.write(&vl.weights[0], vl.weights.size() * sizeof(S_Byte));
+        writer.write(&vl.weights[0], vl.weights.size() * sizeof(float));
     }
 }
 
@@ -444,7 +438,7 @@ void Decoder::read(
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        reader.read(&vl.weights[0], vl.weights.size() * sizeof(S_Byte));
+        reader.read(&vl.weights[0], vl.weights.size() * sizeof(float));
     }
 
     // generate helper buffers for parallelization
@@ -485,7 +479,7 @@ void Decoder::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(&vl.weights[0], vl.weights.size() * sizeof(S_Byte));
+        writer.write(&vl.weights[0], vl.weights.size() * sizeof(float));
     }
 }
 
@@ -495,7 +489,7 @@ void Decoder::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(&vl.weights[0], vl.weights.size() * sizeof(S_Byte));
+        reader.read(&vl.weights[0], vl.weights.size() * sizeof(float));
     }
 }
 

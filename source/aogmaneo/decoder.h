@@ -30,17 +30,15 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
+        Float_Buffer weights;
     };
 
     struct Params {
-        float scale; // scale of softmax
         float lr; // learning rate
 
         Params()
         :
-        scale(8.0f),
-        lr(0.02f)
+        lr(0.1f)
         {}
     };
 
@@ -50,8 +48,8 @@ private:
     Int_Buffer hidden_cis; // hidden state
     Float_Buffer hidden_acts;
 
-    Int_Buffer hidden_sums;
-    Int_Buffer hidden_deltas;
+    Float_Buffer hidden_sums;
+    Float_Buffer hidden_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -71,7 +69,6 @@ private:
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
@@ -113,9 +110,9 @@ public:
     void clear_state();
 
     // serialization
-    long size() const; // returns size in Bytes
-    long state_size() const; // returns size of state in Bytes
-    long weights_size() const; // returns size of weights in Bytes
+    long size() const; // returns size in bytes
+    long state_size() const; // returns size of state in bytes
+    long weights_size() const; // returns size of weights in bytes
 
     void write(
         Stream_Writer &writer
