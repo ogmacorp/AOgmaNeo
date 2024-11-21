@@ -22,7 +22,7 @@ void Decoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_sums[hidden_cell_index] = 0;
+        hidden_sums[hidden_cell_index] = 0.0f;
     }
 
     int count = 0;
