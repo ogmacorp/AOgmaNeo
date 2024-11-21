@@ -46,10 +46,12 @@ public:
 
     struct Params {
         float lr; // learning rate
+        float leak;
 
         Params()
         :
-        lr(0.01f)
+        lr(0.01f),
+        leak(0.1f)
         {}
     };
 

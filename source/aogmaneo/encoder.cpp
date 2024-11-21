@@ -24,12 +24,10 @@ void Encoder::forward(
     if (learn_enabled) {
         int hidden_ci_prev = hidden_cis[hidden_column_index];
 
-        int hidden_cell_index_prev = hidden_ci_prev + hidden_cells_start;
-
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_deltas[hidden_cell_index] = roundf(255.0f * min(1.0f, max(-1.0f, params.lr * errors[hidden_cell_index])));
+            hidden_deltas[hidden_cell_index] = roundf(255.0f * min(1.0f, max(-1.0f, params.lr * errors[hidden_cell_index] * (hc == hidden_ci_prev ? 1.0f : params.leak))));
         }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
