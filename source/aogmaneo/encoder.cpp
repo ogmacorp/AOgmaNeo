@@ -93,7 +93,7 @@ void Encoder::forward(
 
     int hidden_cell_index_max = max_index + hidden_cells_start;
 
-    hidden_comparisons[hidden_column_index] = (0.5f + limit_small - hidden_resources[hidden_cell_index_max]) * expf(hidden_acts[hidden_cell_index_max]);
+    hidden_comparisons[hidden_column_index] = (0.5f + rand_noise_small - hidden_resources[hidden_cell_index_max]) * hidden_acts[hidden_cell_index_max];
 }
 
 void Encoder::learn(
