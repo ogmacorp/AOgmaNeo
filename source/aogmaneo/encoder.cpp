@@ -10,8 +10,6 @@
 
 using namespace aon;
 
-static const float max_resource = 0.5f;
-
 void Encoder::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
@@ -218,7 +216,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_resources = Float_Buffer(num_hidden_cells, max_resource);
+    hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
 
     hidden_acts.resize(num_hidden_cells);
 }
