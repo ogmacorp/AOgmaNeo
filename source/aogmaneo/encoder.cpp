@@ -90,6 +90,10 @@ void Encoder::forward(
     }
 
     hidden_cis[hidden_column_index] = max_index;
+
+    int hidden_cell_index_max = max_index + hidden_cells_start;
+
+    hidden_comparisons[hidden_column_index] = (0.5f + limit_small - hidden_resources[hidden_cell_index_max]) * expf(hidden_acts[hidden_cell_index_max]);
 }
 
 void Encoder::learn(
@@ -103,7 +107,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_cells_start;
 
-    float hidden_max = hidden_acts[hidden_cell_index_max];
+    float hidden_max = hidden_comparisons[hidden_column_index];
 
     int num_higher = 0;
     int count = 1; // 1 since we skip looping over self
@@ -118,7 +122,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_acts[hidden_cis[other_hidden_column_index] + other_hidden_column_index * hidden_size.z] >= hidden_max)
+                if (hidden_comparisons[other_hidden_column_index] >= hidden_max)
                     num_higher++;
 
                 count++;
@@ -219,6 +223,8 @@ void Encoder::init_random(
     hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
 
     hidden_acts.resize(num_hidden_cells);
+
+    hidden_comparisons.resize(num_hidden_columns);
 }
 
 void Encoder::step(
@@ -306,6 +312,8 @@ void Encoder::read(
     reader.read(&hidden_resources[0], hidden_resources.size() * sizeof(float));
 
     hidden_acts.resize(num_hidden_cells);
+
+    hidden_comparisons.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
