@@ -541,7 +541,7 @@ void Actor::learn(
 }
 
 void Actor::init_random(
-    const Int3 &hidden_size,
+    const Int4 &hidden_size,
     int value_num_dendrites_per_cell,
     int policy_num_dendrites_per_cell,
     int history_capacity,
@@ -557,8 +557,9 @@ void Actor::init_random(
 
     // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
-    int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int value_num_dendrites = num_hidden_columns * value_num_dendrites_per_cell;
+    int num_hidden_cells_per_column = hidden_size.z * hidden_size.w;
+    int num_hidden_cells = num_hidden_columns * num_hidden_cells_per_column;
+    int value_num_dendrites = num_hidden_columns * hidden_size.z * value_num_dendrites_per_cell;
     int policy_num_dendrites = num_hidden_cells * policy_num_dendrites_per_cell;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -606,9 +607,9 @@ void Actor::init_random(
             history_samples[i].input_cis[vli].resize(num_visible_columns);
         }
 
-        history_samples[i].hidden_target_cis_prev.resize(num_hidden_columns);
+        history_samples[i].hidden_target_cis_prev.resize(num_hidden_columns * hidden_size.z);
 
-        history_samples[i].hidden_values.resize(num_hidden_columns);
+        history_samples[i].hidden_values.resize(num_hidden_columns * hidden_size.z);
     }
 }
 
@@ -783,8 +784,9 @@ void Actor::read(
     reader.read(&policy_num_dendrites_per_cell, sizeof(int));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
-    int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int value_num_dendrites = num_hidden_columns * value_num_dendrites_per_cell;
+    int num_hidden_cells_per_column = hidden_size.z * hidden_size.w;
+    int num_hidden_cells = num_hidden_columns * num_hidden_cells_per_column;
+    int value_num_dendrites = num_hidden_columns * hidden_size.z * value_num_dendrites_per_cell;
     int policy_num_dendrites = num_hidden_cells * policy_num_dendrites_per_cell;
     
     hidden_cis.resize(num_hidden_columns);
@@ -854,11 +856,11 @@ void Actor::read(
             reader.read(&s.input_cis[vli][0], s.input_cis[vli].size() * sizeof(int));
         }
 
-        s.hidden_target_cis_prev.resize(num_hidden_columns);
+        s.hidden_target_cis_prev.resize(num_hidden_columns * hidden_size.z);
 
         reader.read(&s.hidden_target_cis_prev[0], s.hidden_target_cis_prev.size() * sizeof(int));
 
-        s.hidden_values.resize(num_hidden_columns);
+        s.hidden_values.resize(num_hidden_columns * hidden_size.z);
 
         reader.read(&s.hidden_values[0], s.hidden_values.size() * sizeof(float));
 
