@@ -292,7 +292,7 @@ void Decoder::init_random(
             vl.weights[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
     }
 
-    hidden_cis = Int_Buffer(num_hidden_columns, 0);
+    hidden_cis = Int_Buffer(num_hidden_columns * hidden_size.z, 0);
 
     hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
@@ -332,6 +332,7 @@ void Decoder::learn(
 void Decoder::clear_state() {
     hidden_cis.fill(0);
     hidden_acts.fill(0.0f);
+    dendrite_acts.fill(0.0f);
 }
 
 long Decoder::size() const {
@@ -398,7 +399,7 @@ void Decoder::read(
     int num_hidden_cells = num_hidden_columns * num_hidden_cells_per_column;
     int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
 
-    hidden_cis.resize(num_hidden_columns);
+    hidden_cis.resize(num_hidden_columns * hidden_size.z);
     hidden_acts.resize(num_hidden_cells);
     dendrite_acts.resize(num_dendrites);
 

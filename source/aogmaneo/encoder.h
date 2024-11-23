@@ -33,7 +33,6 @@ public:
         Byte_Buffer weights;
         
         Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
 
         float importance;
 
@@ -45,14 +44,10 @@ public:
 
     struct Params {
         float lr; // learning rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // second stage inhibition radius
 
         Params()
         :
-        lr(0.1f),
-        active_ratio(0.1f),
-        l_radius(2)
+        lr(0.02f)
         {}
     };
 
