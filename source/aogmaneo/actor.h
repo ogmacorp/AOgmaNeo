@@ -50,7 +50,6 @@ public:
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float bias; // bias toward positive policy updates
         float discount; // discount factor
-        float td_scale_decay; // decay on td error scaler
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
@@ -59,10 +58,9 @@ public:
         vlr(0.002f),
         plr(0.002f),
         leak(0.01f),
-        smoothing(0.03f),
+        smoothing(0.02f),
         bias(0.5f),
         discount(0.99f),
-        td_scale_decay(0.999f),
         min_steps(16),
         history_iters(16)
         {}
@@ -84,8 +82,6 @@ private:
     Float_Buffer policy_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
-
-    Float_Buffer hidden_td_scales;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
