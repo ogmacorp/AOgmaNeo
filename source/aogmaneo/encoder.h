@@ -16,14 +16,14 @@ class Encoder {
 public:
     // visible layer descriptor
     struct Visible_Layer_Desc {
-        Int3 size; // size of input
+        Int4 size; // size of input
 
         int radius; // radius onto input
 
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(4, 4, 1, 16),
         radius(2)
         {}
     };
@@ -31,8 +31,9 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
-
-        Int_Buffer recon_sums;
+        
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
 
         float importance;
 
@@ -43,43 +44,33 @@ public:
     };
 
     struct Params {
-        float scale; // recon curve
         float lr; // learning rate
-        int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
+        float active_ratio; // 2nd stage inhibition activity ratio
+        int l_radius; // second stage inhibition radius
 
         Params()
         :
-        scale(4.0f),
-        lr(0.02f),
-        early_stop_cells(2)
+        lr(0.1f),
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
 private:
-    Int3 hidden_size; // size of hidden/output layer
+    Int4 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
     // --- kernels ---
-
+    
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
+        bool learn_enabled,
         unsigned long* state,
         const Params &params
     );
@@ -87,7 +78,7 @@ private:
 public:
     // create a sparse coding layer with random initialization
     void init_random(
-        const Int3 &hidden_size, // hidden/output size
+        const Int4 &hidden_size, // hidden/output size
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -100,9 +91,9 @@ public:
     void clear_state();
 
     // serialization
-    long size() const; // returns size in bytes
-    long state_size() const; // returns size of state in bytes
-    long weights_size() const; // returns size of weights in bytes
+    long size() const; // returns size in Bytes
+    long state_size() const; // returns size of state in Bytes
+    long weights_size() const; // returns size of weights in Bytes
 
     void write(
         Stream_Writer &writer
@@ -160,7 +151,7 @@ public:
     }
 
     // get the hidden size
-    const Int3 &get_hidden_size() const {
+    const Int4 &get_hidden_size() const {
         return hidden_size;
     }
 
