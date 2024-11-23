@@ -572,12 +572,12 @@ void Actor::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
+        vl.value_weights.resize(value_num_dendrites * area * vld.size.z * vld.size.w);
 
         for (int i = 0; i < vl.value_weights.size(); i++)
             vl.value_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
-        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
+        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z * vld.size.w);
 
         for (int i = 0; i < vl.policy_weights.size(); i++)
             vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
@@ -822,11 +822,11 @@ void Actor::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
+        vl.value_weights.resize(value_num_dendrites * area * vld.size.z * vld.size.w);
 
         reader.read(&vl.value_weights[0], vl.value_weights.size() * sizeof(float));
 
-        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
+        vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z * vld.size.w);
 
         reader.read(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
     }

@@ -72,7 +72,7 @@ void Hierarchy::init_random(
             histories[l].resize(io_sizes.size());
 
             for (int i = 0; i < histories[l].size(); i++) {
-                int in_size = io_sizes[i].x * io_sizes[i].y;
+                int in_size = io_sizes[i].x * io_sizes[i].y * io_sizes[i].z;
 
                 histories[l][i].resize(layer_descs[l].temporal_horizon);
                 
@@ -139,7 +139,7 @@ void Hierarchy::init_random(
 
             histories[l].resize(1);
 
-            int in_size = layer_descs[l - 1].hidden_size.x * layer_descs[l - 1].hidden_size.y;
+            int in_size = layer_descs[l - 1].hidden_size.x * layer_descs[l - 1].hidden_size.y * layer_descs[l - 1].hidden_size.z;
 
             histories[l][0].resize(layer_descs[l].temporal_horizon);
 
