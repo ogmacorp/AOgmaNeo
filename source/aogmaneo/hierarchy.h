@@ -36,12 +36,12 @@ public:
         int history_capacity; // credit assignment buffer capacity
 
         IO_Desc(
-            const Int4 &size = Int4(4, 4, 1, 16),
+            const Int4 &size = Int4(3, 3, 1, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
-            int up_radius = 2,
-            int down_radius = 2,
+            int up_radius = 1,
+            int down_radius = 1,
             int history_capacity = 512
         )
         :
@@ -68,10 +68,10 @@ public:
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
         Layer_Desc(
-            const Int4 &hidden_size = Int4(4, 4, 1, 16),
+            const Int4 &hidden_size = Int4(3, 3, 1, 16),
             int num_dendrites_per_cell = 4,
-            int up_radius = 2,
-            int down_radius = 2,
+            int up_radius = 1,
+            int down_radius = 1,
             int ticks_per_update = 2,
             int temporal_horizon = 2
         )
