@@ -24,7 +24,7 @@ enum IO_Type {
 class Hierarchy {
 public:
     struct IO_Desc {
-        Int3 size;
+        Int4 size;
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
@@ -36,7 +36,7 @@ public:
         int history_capacity; // credit assignment buffer capacity
 
         IO_Desc(
-            const Int3 &size = Int3(4, 4, 16),
+            const Int4 &size = Int4(4, 4, 1, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
@@ -57,7 +57,7 @@ public:
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
-        Int3 hidden_size; // size of hidden layer
+        Int4 hidden_size; // size of hidden layer
 
         int num_dendrites_per_cell;
 
@@ -68,7 +68,7 @@ public:
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
         Layer_Desc(
-            const Int3 &hidden_size = Int3(4, 4, 16),
+            const Int4 &hidden_size = Int4(4, 4, 1, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
@@ -137,7 +137,7 @@ private:
     Int_Buffer ticks_per_update;
 
     // input dimensions
-    Array<Int3> io_sizes;
+    Array<Int4> io_sizes;
     Array<Byte> io_types;
 
     // importance control
@@ -266,7 +266,7 @@ public:
     }
 
     // get input/output sizes
-    const Int3 &get_io_size(
+    const Int4 &get_io_size(
         int i
     ) const {
         return io_sizes[i];

@@ -318,7 +318,7 @@ void Hierarchy::clear_state() {
 }
 
 long Hierarchy::size() const {
-    long size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+    long size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int4) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += sizeof(int);
@@ -407,7 +407,7 @@ void Hierarchy::write(
     writer.write(&num_predictions, sizeof(int));
     writer.write(&num_actions, sizeof(int));
 
-    writer.write(&io_sizes[0], num_io * sizeof(Int3));
+    writer.write(&io_sizes[0], num_io * sizeof(Int4));
     writer.write(&io_types[0], num_io * sizeof(Byte));
 
     writer.write(&updates[0], updates.size() * sizeof(Byte));
@@ -481,7 +481,7 @@ void Hierarchy::read(
     io_sizes.resize(num_io);
     io_types.resize(num_io);
 
-    reader.read(&io_sizes[0], num_io * sizeof(Int3));
+    reader.read(&io_sizes[0], num_io * sizeof(Int4));
     reader.read(&io_types[0], num_io * sizeof(Byte));
 
     encoders.resize(num_layers);

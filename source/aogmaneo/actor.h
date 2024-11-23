@@ -16,14 +16,14 @@ class Actor {
 public:
     // visible layer descriptor
     struct Visible_Layer_Desc {
-        Int3 size; // visible/input size
+        Int4 size; // visible/input size
 
         int radius; // radius onto input
 
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(4, 4, 1, 16),
         radius(2)
         {}
     };
@@ -67,7 +67,7 @@ public:
     };
 
 private:
-    Int3 hidden_size; // hidden/output/action size
+    Int4 hidden_size; // hidden/output/action size
     int value_num_dendrites_per_cell;
     int policy_num_dendrites_per_cell;
 
@@ -82,6 +82,8 @@ private:
     Float_Buffer policy_dendrite_acts;
 
     Float_Buffer hidden_values; // hidden value function output buffer
+
+    Float_Buffer hidden_new_values; // temporary buffer
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
@@ -108,7 +110,7 @@ private:
 public:
     // initialized randomly
     void init_random(
-        const Int3 &hidden_size,
+        const Int4 &hidden_size,
         int value_num_dendrites_per_cell,
         int policy_num_dendrites_per_cell,
         int history_capacity,
@@ -186,7 +188,7 @@ public:
     }
 
     // get the hidden size
-    const Int3 &get_hidden_size() const {
+    const Int4 &get_hidden_size() const {
         return hidden_size;
     }
 
