@@ -194,7 +194,6 @@ void Encoder::init_random(
 
     visible_layers.resize(visible_layer_descs.size());
 
-    // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells_per_column = hidden_size.z * hidden_size.w;
     int num_hidden_cells = num_hidden_columns * num_hidden_cells_per_column;
@@ -209,7 +208,7 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights = Byte_Buffer(num_hidden_cells * area * vld.size.z, 0);
+        vl.weights = Byte_Buffer(num_hidden_cells * area * vld.size.z * vld.size.w, 0);
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
@@ -374,7 +373,7 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights.resize(num_hidden_cells * area * vld.size.z);
+        vl.weights.resize(num_hidden_cells * area * vld.size.z * vld.size.w);
 
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 

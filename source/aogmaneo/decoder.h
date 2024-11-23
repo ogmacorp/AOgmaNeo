@@ -16,14 +16,14 @@ class Decoder {
 public:
     // visible layer descriptor
     struct Visible_Layer_Desc {
-        Int3 size; // size of input
+        Int4 size; // size of input
 
         int radius; // radius onto input
 
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(4, 4, 1, 16),
         radius(2)
         {}
     };
@@ -47,7 +47,7 @@ public:
     };
 
 private:
-    Int3 hidden_size; // size of the output/hidden/prediction
+    Int4 hidden_size; // size of the output/hidden/prediction
     int num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden state
@@ -81,7 +81,7 @@ private:
 public:
     // create with random initialization
     void init_random(
-        const Int3 &hidden_size, // hidden/output/prediction size
+        const Int4 &hidden_size, // hidden/output/prediction size
         int num_dendrites_per_cell,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
@@ -166,7 +166,7 @@ public:
     }
 
     // get the hidden size
-    const Int3 &get_hidden_size() const {
+    const Int4 &get_hidden_size() const {
         return hidden_size;
     }
 
