@@ -36,7 +36,6 @@ public:
         Int_Buffer input_cis_prev;
 
         Int_Buffer recon_sums;
-        Float_Buffer recon_acts;
 
         float importance;
 

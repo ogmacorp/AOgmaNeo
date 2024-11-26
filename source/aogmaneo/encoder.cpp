@@ -319,7 +319,6 @@ void Encoder::init_random(
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
 
         vl.recon_sums.resize(num_visible_cells);
-        vl.recon_acts.resize(num_visible_cells);
     }
 
     hidden_self_cis = Int_Buffer(num_hidden_columns, 0);
@@ -504,7 +503,6 @@ void Encoder::read(
         reader.read(&vl.input_cis_prev[0], vl.input_cis_prev.size() * sizeof(int));
 
         vl.recon_sums.resize(num_visible_cells);
-        vl.recon_acts.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
