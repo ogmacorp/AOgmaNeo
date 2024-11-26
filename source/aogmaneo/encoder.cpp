@@ -291,6 +291,8 @@ void Encoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
+        vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
+
         vl.recon_sums.resize(num_visible_cells);
     }
 
@@ -342,7 +344,12 @@ void Encoder::step(
         }
     }
 
-    // update prevs
+    // copy to prevs
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        vl.input_cis_prev = input_cis[vli];
+    }
 }
 
 void Encoder::clear_state() {
@@ -355,14 +362,22 @@ long Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
 }
 
 long Encoder::state_size() const {
-    return hidden_cis.size() * sizeof(int);
+    long size = hidden_cis.size() * sizeof(int);
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.input_cis_prev.size() * sizeof(int);
+    }
+
+    return size;
 }
 
 long Encoder::weights_size() const {
@@ -371,7 +386,7 @@ long Encoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.weights.size() * sizeof(Byte);
+        size += vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
     }
 
     return size;
@@ -395,6 +410,8 @@ void Encoder::write(
         writer.write(&vld, sizeof(Visible_Layer_Desc));
 
         writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
+
+        writer.write(&vl.input_cis_prev[0], vl.input_cis_prev.size() * sizeof(int));
 
         writer.write(&vl.importance, sizeof(float));
     }
@@ -440,6 +457,10 @@ void Encoder::read(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
+
+        vl.input_cis_prev.resize(num_visible_columns);
+
+        reader.read(&vl.input_cis_prev[0], vl.input_cis_prev.size() * sizeof(int));
 
         vl.recon_sums.resize(num_visible_cells);
 
