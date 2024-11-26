@@ -49,11 +49,13 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
+        int early_stop_cells;
 
         Params()
         :
         scale(8.0f),
-        lr(0.04f)
+        lr(0.04f),
+        early_stop_cells(2)
         {}
     };
 
@@ -79,12 +81,14 @@ private:
         const Array<Int_Buffer_View> &input_cis,
         Float_Buffer_View errors,
         bool learn_enabled,
+        unsigned long* state,
         const Params &params
     );
 
-    void reconstruct(
+    void self_learn(
         const Int2 &column_pos,
         int vli,
+        unsigned long* state,
         const Params &params
     );
 
