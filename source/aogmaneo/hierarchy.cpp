@@ -168,10 +168,10 @@ void Hierarchy::init_random(
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+        hidden_cis_prev[l] = encoders[l].get_hidden_extern_cis();
 
         if (l < encoders.size() - 1)
-            feedback_cis_prev[l] = encoders[l].get_hidden_cis();
+            feedback_cis_prev[l] = encoders[l].get_hidden_self_cis();
 
         errors[l].resize(hidden_cis_prev[l].size());
     }
@@ -562,10 +562,10 @@ void Hierarchy::read(
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].read(reader);
 
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+        hidden_cis_prev[l] = encoders[l].get_hidden_extern_cis();
 
         if (l < encoders.size() - 1)
-            feedback_cis_prev[l] = encoders[l].get_hidden_cis();
+            feedback_cis_prev[l] = encoders[l].get_hidden_self_cis();
 
         errors[l].resize(hidden_cis_prev[l].size());
     }
