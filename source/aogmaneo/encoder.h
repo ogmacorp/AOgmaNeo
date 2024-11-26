@@ -48,11 +48,11 @@ public:
     struct Params {
         float scale; // scale of softmax
         float lr; // learning rate
-        int early_stop_cells;
+        int early_stop_cells; // how close to correct prediction in "cells off" before disable learning
 
         Params()
         :
-        scale(8.0f),
+        scale(4.0f),
         lr(0.04f),
         early_stop_cells(2)
         {}
