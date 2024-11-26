@@ -386,7 +386,7 @@ long Encoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.weights.size() * sizeof(Byte) + vl.input_cis_prev.size() * sizeof(int);
+        size += vl.weights.size() * sizeof(Byte);
     }
 
     return size;
@@ -489,12 +489,24 @@ void Encoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(&vl.input_cis_prev[0], vl.input_cis_prev.size() * sizeof(int));
+    }
 }
 
 void Encoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(&vl.input_cis_prev[0], vl.input_cis_prev.size() * sizeof(int));
+    }
 }
 
 void Encoder::write_weights(
