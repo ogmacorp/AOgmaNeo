@@ -212,24 +212,24 @@ void Encoder::learn(
 
     int target_sum = vl.recon_sums[target_ci + visible_cells_start];
 
-    int num_higher = 0;
+    int max_index = 0;
+    int max_recon_sum = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        bool is_higher = (vc != target_ci && recon_sum >= target_sum);
-
-        if (is_higher)
-            num_higher++;
-
-        // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - is_higher), state);
+        if (recon_sum > max_recon_sum) {
+            max_recon_sum = recon_sum;
+            max_index = vc;
+        }
     }
 
-    if (num_higher < params.early_stop_cells)
+    if (max_index == target_ci)
         return;
+
+    int delta = roundf(params.lr * 255.0f);
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -246,13 +246,11 @@ void Encoder::learn(
 
                 int wi_start = vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index_max));
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                int wi_target = target_ci + wi_start;
+                int wi_max = max_index + wi_start;
 
-                    int wi = vc + wi_start;
-
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
-                }
+                vl.weights[wi_target] = min(255, vl.weights[wi_target] + delta);
+                vl.weights[wi_max] = max(0, vl.weights[wi_max] - delta);
             }
         }
 }

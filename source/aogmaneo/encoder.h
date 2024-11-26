@@ -46,12 +46,10 @@ public:
 
     struct Params {
         float lr; // learning rate
-        int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
-        lr(0.04f),
-        early_stop_cells(2)
+        lr(0.04f)
         {}
     };
 
