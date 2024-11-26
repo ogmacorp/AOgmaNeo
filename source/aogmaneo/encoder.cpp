@@ -57,7 +57,7 @@ void Encoder::forward(
 
                     Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = hidden_ci_prev + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
+                    int wi = in_ci_prev + vld.size.z * (offset.y + diam * (offset.x + diam * (hidden_ci_prev + hidden_cells_start)));
 
                     vl.weights[wi] = min(255, max(0, vl.weights[wi] + delta));
                 }
