@@ -35,6 +35,7 @@ public:
         Int_Buffer input_cis_prev;
 
         Int_Buffer recon_sums;
+        Float_Buffer recon_acts;
 
         float importance;
 
@@ -45,11 +46,13 @@ public:
     };
 
     struct Params {
+        float scale; // scale of softmax
         float lr; // learning rate
 
         Params()
         :
-        lr(0.04f)
+        scale(8.0f),
+        lr(0.02f)
         {}
     };
 
@@ -71,14 +74,14 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        Float_Buffer_View errors,
+        bool learn_enabled,
         const Params &params
     );
 
-    void learn(
+    void reconstruct(
         const Int2 &column_pos,
         int vli,
-        Float_Buffer_View errors,
-        unsigned long* state,
         const Params &params
     );
 
