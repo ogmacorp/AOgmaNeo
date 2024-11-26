@@ -71,15 +71,13 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        Float_Buffer_View errors,
-        bool learn_enabled,
         const Params &params
     );
 
     void learn(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
         int vli,
+        Float_Buffer_View errors,
         unsigned long* state,
         const Params &params
     );
