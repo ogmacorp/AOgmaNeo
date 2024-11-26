@@ -218,7 +218,7 @@ void Hierarchy::step(
             updates[l] = true;
 
             // copy to prev
-            hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+            hidden_cis_prev[l] = encoders[l].get_hidden_extern_cis();
 
             if (l < encoders.size() - 1)
                 feedback_cis_prev[l] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
@@ -257,7 +257,7 @@ void Hierarchy::step(
 
                 histories[l_next][0].push_front();
 
-                histories[l_next][0][0] = encoders[l].get_hidden_cis();
+                histories[l_next][0][0] = encoders[l].get_hidden_self_cis();
 
                 ticks[l_next]++;
             }
@@ -281,7 +281,7 @@ void Hierarchy::step(
 
                     if (params.anticipation) {
                         // learn on actual
-                        layer_input_cis[1] = encoders[l].get_hidden_cis();
+                        layer_input_cis[1] = encoders[l].get_hidden_self_cis();
 
                         for (int d = 0; d < decoders[l].size(); d++) {
                             // need to re-activate for this
@@ -297,7 +297,7 @@ void Hierarchy::step(
                 }
             }
 
-            layer_input_cis[0] = encoders[l].get_hidden_cis();
+            layer_input_cis[0] = encoders[l].get_hidden_extern_cis();
             
             if (l < encoders.size() - 1)
                 layer_input_cis[1] = decoders[l + 1][ticks_per_update[l + 1] - 1 - ticks[l + 1]].get_hidden_cis();
