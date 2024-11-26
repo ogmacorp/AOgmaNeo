@@ -30,7 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Byte_Buffer self_weights;
+        Byte_Buffer extern_weights;
 
         Int_Buffer input_cis_prev;
 
@@ -52,16 +53,18 @@ public:
         Params()
         :
         scale(8.0f),
-        lr(0.02f)
+        lr(0.04f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
 
-    Int_Buffer hidden_cis;
+    Int_Buffer hidden_self_cis;
+    Int_Buffer hidden_extern_cis;
 
-    Float_Buffer hidden_acts;
+    Float_Buffer hidden_self_acts;
+    Float_Buffer hidden_extern_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -157,8 +160,13 @@ public:
     }
 
     // get the hidden states
-    const Int_Buffer &get_hidden_cis() const {
-        return hidden_cis;
+    const Int_Buffer &get_hidden_self_cis() const {
+        return hidden_self_cis;
+    }
+
+    // get the hidden states
+    const Int_Buffer &get_hidden_extern_cis() const {
+        return hidden_extern_cis;
     }
 
     // get the hidden size
