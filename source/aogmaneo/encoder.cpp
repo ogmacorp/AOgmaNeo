@@ -249,7 +249,7 @@ void Encoder::learn(
                 int wi_target = target_ci + wi_start;
                 int wi_max = max_index + wi_start;
 
-                vl.weights[wi_target] = min(255, vl.weights[wi_target] + delta);
+                //vl.weights[wi_target] = min(255, vl.weights[wi_target] + delta);
                 vl.weights[wi_max] = max(0, vl.weights[wi_max] - delta);
             }
         }
