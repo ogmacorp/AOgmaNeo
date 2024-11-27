@@ -20,8 +20,6 @@ void Encoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
-    float count_except = 0.0f;
-    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -46,8 +44,6 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         count += vl.importance * sub_count;
-        count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
 
@@ -80,8 +76,6 @@ void Encoder::forward(
     }
 
     count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
     float max_activation = 0.0f;
@@ -110,11 +104,9 @@ void Encoder::forward(
         sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
 
-        float complemented = (count_all - total) - (count - sum);
+        float match = sum / count;
 
-        float match = complemented / count_except;
-
-        float activation = complemented / (params.choice + count_all - total);
+        float activation = sum / (params.choice + total);
 
         if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
@@ -201,13 +193,18 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+                for (int vc = 0; vc < vld.size.z; vc++) {
+                    if (vc == in_ci)
+                        continue;
 
-                Byte w_old = vl.weights[wi];
+                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                vl.weights[wi] = min(255, vl.weights[wi] + static_cast<int>(params.lr * (255.0f - vl.weights[wi])));
+                    Byte w_old = vl.weights[wi];
 
-                vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
+                    vl.weights[wi] = max(0, vl.weights[wi] - static_cast<int>(params.lr * vl.weights[wi]));
+
+                    vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
+                }
             }
     }
 }
@@ -239,7 +236,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = (rand() % init_weight_noisei);
+            vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
