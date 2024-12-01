@@ -20,22 +20,23 @@ public:
 
         int radius; // radius onto input
 
-        Byte is_recurrent;
-
         // defaults
         Visible_Layer_Desc()
         :
         size(4, 4, 16),
-        radius(2),
-        is_recurrent(false)
+        radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Byte_Buffer weights_forward;
+        S_Byte_Buffer weights_backward;
+
+        Float_Buffer traces;
 
         Int_Buffer recon_sums;
+        Float_Buffer recon_acts;
 
         float importance;
 
@@ -47,14 +48,16 @@ public:
 
     struct Params {
         float scale; // recon curve
-        float lr; // learning rate
-        int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
+        float flr; // forward learning rate
+        float blr; // backward learning rate
+        float trace_decay;
 
         Params()
         :
-        scale(4.0f),
-        lr(0.01f),
-        early_stop_cells(2)
+        scale(8.0f),
+        flr(0.01f),
+        blr(0.1f),
+        trace_decay(0.9f)
         {}
     };
 
@@ -64,6 +67,8 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
+
+    Float_Buffer hidden_traces;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -79,11 +84,25 @@ private:
         const Params &params
     );
 
+    void backward(
+        const Int2 &column_pos,
+        int vli,
+        Int_Buffer_View input_cis,
+        unsigned long* state,
+        const Params &params
+    );
+
     void learn(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
+        const Array<Int_Buffer_View> &input_cis,
         unsigned long* state,
+        const Params &params
+    );
+
+    void input_trace_update(
+        const Int2 &column_pos,
+        int vli,
+        Int_Buffer_View input_cis,
         const Params &params
     );
 
