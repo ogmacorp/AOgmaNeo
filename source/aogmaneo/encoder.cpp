@@ -236,15 +236,22 @@ void Encoder::init_random(
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
 
-        total_num_visible_columns += num_visible_columns;
+        if (!vld.is_recurrent)
+            total_num_visible_columns += num_visible_columns;
 
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noisei);
+        if (vld.is_recurrent) {
+            for (int i = 0; i < vl.weights.size(); i++)
+                vl.weights[i] = (rand() % 256);
+        }
+        else {
+            for (int i = 0; i < vl.weights.size(); i++)
+                vl.weights[i] = 255 - (rand() % init_weight_noisei);
+        }
 
         vl.recon_sums.resize(num_visible_cells);
     }
@@ -261,6 +268,9 @@ void Encoder::init_random(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
+
+        if (vld.is_recurrent)
+            continue;
 
         int num_visible_columns = vld.size.x * vld.size.y;
 
@@ -384,7 +394,8 @@ void Encoder::read(
         int num_visible_columns = vld.size.x * vld.size.y;
         int num_visible_cells = num_visible_columns * vld.size.z;
 
-        total_num_visible_columns += num_visible_columns;
+        if (!vld.is_recurrent)
+            total_num_visible_columns += num_visible_columns;
 
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
@@ -406,6 +417,9 @@ void Encoder::read(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = this->visible_layer_descs[vli];
+
+        if (vld.is_recurrent)
+            continue;
 
         int num_visible_columns = vld.size.x * vld.size.y;
 
