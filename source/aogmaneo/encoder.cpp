@@ -22,8 +22,6 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] = 0.0f;
-
         // update traces from last time (delayed by 1 step)
         hidden_traces[hidden_cell_index] *= params.trace_decay;
     }
@@ -81,7 +79,7 @@ void Encoder::forward(
     }
 
     int max_index = 0;
-    float max_activation = limit_min;
+    float max_activation = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -93,6 +91,7 @@ void Encoder::forward(
     }
 
     hidden_cis[hidden_column_index] = max_index;
+    hidden_acts[max_index + hidden_cells_start] = 0.0f; // reset (fired)
 }
 
 void Encoder::backward(
@@ -451,7 +450,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_acts.resize(num_hidden_cells);
+    hidden_acts = Float_Buffer(num_hidden_cells, 0.0f);
 
     hidden_traces = Float_Buffer(num_hidden_cells, 0.0f);
 
@@ -522,19 +521,27 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + hidden_traces.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights_forward.size() * sizeof(Byte) + vl.weights_backward.size() * sizeof(S_Byte) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights_forward.size() * sizeof(Byte) + vl.weights_backward.size() * sizeof(S_Byte) + vl.traces.size() * sizeof(float) + sizeof(float);
     }
 
     return size;
 }
 
 long Encoder::state_size() const {
-    return hidden_cis.size() * sizeof(int);
+    long size = hidden_cis.size() * sizeof(int) + hidden_acts.size() * sizeof(float) + hidden_traces.size() * sizeof(float);
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        size += vl.traces.size() * sizeof(float);
+    }
+
+    return size;
 }
 
 long Encoder::weights_size() const {
@@ -555,6 +562,8 @@ void Encoder::write(
     writer.write(&hidden_size, sizeof(Int3));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_acts[0], hidden_acts.size() * sizeof(float));
+    writer.write(&hidden_traces[0], hidden_traces.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -569,6 +578,8 @@ void Encoder::write(
         writer.write(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(Byte));
         writer.write(&vl.weights_backward[0], vl.weights_backward.size() * sizeof(S_Byte));
 
+        writer.write(&vl.traces[0], vl.traces.size() * sizeof(float));
+
         writer.write(&vl.importance, sizeof(float));
     }
 }
@@ -582,10 +593,12 @@ void Encoder::read(
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
 
     hidden_cis.resize(num_hidden_columns);
+    hidden_acts.resize(num_hidden_cells);
+    hidden_traces.resize(num_hidden_cells);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-
-    hidden_acts.resize(num_hidden_cells);
+    reader.read(&hidden_acts[0], hidden_cis.size() * sizeof(float));
+    reader.read(&hidden_traces[0], hidden_traces.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -616,6 +629,10 @@ void Encoder::read(
         reader.read(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(Byte));
         reader.read(&vl.weights_backward[0], vl.weights_backward.size() * sizeof(S_Byte));
 
+        vl.traces.resize(num_visible_cells);
+
+        reader.read(&vl.traces[0], vl.traces.size() * sizeof(float));
+
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_acts.resize(num_visible_cells);
 
@@ -644,12 +661,28 @@ void Encoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_acts[0], hidden_acts.size() * sizeof(float));
+    writer.write(&hidden_traces[0], hidden_traces.size() * sizeof(float));
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        const Visible_Layer &vl = visible_layers[vli];
+
+        writer.write(&vl.traces[0], vl.traces.size() * sizeof(float));
+    }
 }
 
 void Encoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&hidden_acts[0], hidden_acts.size() * sizeof(float));
+    reader.read(&hidden_traces[0], hidden_traces.size() * sizeof(float));
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+
+        reader.read(&vl.traces[0], vl.traces.size() * sizeof(float));
+    }
 }
 
 void Encoder::write_weights(
