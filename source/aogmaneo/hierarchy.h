@@ -33,7 +33,7 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int history_capacity;
+        int history_capacity; // credit assignment buffer capacity
 
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
@@ -89,7 +89,7 @@ public:
 
         Layer_Params()
         :
-        recurrent_importance(1.0f)
+        recurrent_importance(0.5f)
         {}
     };
 
