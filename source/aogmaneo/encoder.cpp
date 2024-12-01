@@ -54,7 +54,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        const float influence = vl.importance * sqrtf(1.0f / sub_count) / 255.0f;
+        const float influence = vl.importance * sqrtf(1.0f / sub_count) / 127.0f;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -88,6 +88,8 @@ void Encoder::forward(
             max_activation = hidden_acts[hidden_cell_index];
             max_index = hc;
         }
+
+        hidden_acts[hidden_cell_index] = max(0.0f, hidden_acts[hidden_cell_index] * params.trace_decay);
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -333,7 +335,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    vl.weights_forward[wi] = min(255, max(0, vl.weights_forward[wi] + roundf(params.flr * 255.0f * error * vl.traces[visible_cell_index])));
+                    vl.weights_forward[wi] = min(127, max(-127, vl.weights_forward[wi] + roundf(params.flr * 127.0f * error * vl.traces[visible_cell_index])));
                 }
             }
     }
@@ -380,7 +382,7 @@ void Encoder::learn(
 
                     int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                    vl.weights_forward[wi] = min(255, max(0, vl.weights_forward[wi] - roundf(params.flr * 255.0f * error * hidden_traces[hidden_cell_index])));
+                    vl.weights_forward[wi] = min(127, max(-127, vl.weights_forward[wi] - roundf(params.flr * 127.0f * error * hidden_traces[hidden_cell_index])));
                 }
             }
     }
@@ -438,7 +440,7 @@ void Encoder::init_random(
         vl.weights_backward.resize(vl.weights_forward.size());
 
         for (int i = 0; i < vl.weights_forward.size(); i++) {
-            vl.weights_forward[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights_forward[i] = (rand() % 255) - 127;
             vl.weights_backward[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
         }
 
@@ -526,7 +528,7 @@ long Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights_forward.size() * sizeof(Byte) + vl.weights_backward.size() * sizeof(S_Byte) + vl.traces.size() * sizeof(float) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights_forward.size() * sizeof(S_Byte) + vl.weights_backward.size() * sizeof(S_Byte) + vl.traces.size() * sizeof(float) + sizeof(float);
     }
 
     return size;
@@ -550,7 +552,7 @@ long Encoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.weights_forward.size() * sizeof(Byte) + vl.weights_backward.size() * sizeof(S_Byte);
+        size += vl.weights_forward.size() * sizeof(S_Byte) + vl.weights_backward.size() * sizeof(S_Byte);
     }
 
     return size;
@@ -575,7 +577,7 @@ void Encoder::write(
 
         writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-        writer.write(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(Byte));
+        writer.write(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(S_Byte));
         writer.write(&vl.weights_backward[0], vl.weights_backward.size() * sizeof(S_Byte));
 
         writer.write(&vl.traces[0], vl.traces.size() * sizeof(float));
@@ -626,7 +628,7 @@ void Encoder::read(
         vl.weights_forward.resize(num_hidden_cells * area * vld.size.z);
         vl.weights_backward.resize(vl.weights_forward.size());
 
-        reader.read(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(Byte));
+        reader.read(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(S_Byte));
         reader.read(&vl.weights_backward[0], vl.weights_backward.size() * sizeof(S_Byte));
 
         vl.traces.resize(num_visible_cells);
@@ -691,7 +693,7 @@ void Encoder::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(Byte));
+        writer.write(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(S_Byte));
         writer.write(&vl.weights_backward[0], vl.weights_backward.size() * sizeof(S_Byte));
     }
 }
@@ -702,7 +704,7 @@ void Encoder::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(Byte));
+        reader.read(&vl.weights_forward[0], vl.weights_forward.size() * sizeof(S_Byte));
         reader.read(&vl.weights_backward[0], vl.weights_backward.size() * sizeof(S_Byte));
     }
 }

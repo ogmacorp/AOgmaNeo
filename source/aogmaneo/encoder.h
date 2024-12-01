@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights_forward;
+        S_Byte_Buffer weights_forward;
         S_Byte_Buffer weights_backward;
 
         Float_Buffer traces;
