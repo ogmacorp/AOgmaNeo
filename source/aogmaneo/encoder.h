@@ -57,7 +57,7 @@ public:
         scale(8.0f),
         flr(0.01f),
         blr(0.1f),
-        trace_decay(0.9f)
+        trace_decay(0.8f)
         {}
     };
 
