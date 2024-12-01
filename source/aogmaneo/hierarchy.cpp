@@ -166,7 +166,7 @@ void Hierarchy::step(
             layer_input_cis[0] = encoders[l - 1].get_hidden_cis();
 
         // activate sparse coder
-        encoders[l].step(layer_input_cis, false, params.layers[l].encoder);
+        encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
     }
 
     // backward
