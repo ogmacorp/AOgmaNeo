@@ -117,10 +117,10 @@ void Layer::plan(
     // Start
     hidden_plan_dists[hidden_cis[hidden_column_index] + hidden_cells_start] = 0.0f;
 
-    bool empty = false;
+    while (true) {
+        bool empty = true;
 
-    while (!empty) {
-        int uhc = -1;
+        int uhc = 0;
         float min_dist = limit_max;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -130,9 +130,14 @@ void Layer::plan(
                 if (hidden_plan_dists[hidden_cell_index] < min_dist) {
                     min_dist = hidden_plan_dists[hidden_cell_index];
                     uhc = hc;
+
+                    empty = false;
                 }
             }
         }
+
+        if (empty)
+            break;
 
         if (uhc == goal_ci) {
             int uhc_prev = uhc;
@@ -163,19 +168,9 @@ void Layer::plan(
                 }
             }
         }
-
-        empty = true;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            if (hidden_plan_opens[hc + hidden_cells_start]) {
-                empty = false;
-
-                break;
-            }
-        }
     }
 
-    assert(false);
+    hidden_plan_cis[hidden_column_index] = hidden_cis[hidden_column_index];
 }
 
 void Layer::learn_reconstruction(
@@ -429,7 +424,7 @@ void Layer::init_random(
 
     hidden_plan_cis.resize(num_hidden_columns);
 
-    hidden_transitions.resize(num_hidden_cells * hidden_size.z);
+    hidden_transitions = Byte_Buffer(num_hidden_cells * hidden_size.z, 0);
 
     for (int i = 0; i < hidden_transitions.size(); i++)
         hidden_transitions[i] = (rand() % init_weight_noisei);
