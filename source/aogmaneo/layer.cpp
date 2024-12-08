@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "layer.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -155,9 +154,9 @@ void Layer::plan(
             if (hidden_plan_opens[nhc + hidden_cells_start]) {
                 float p = (1 + hidden_transitions[nhc + hidden_size.z * (uhc + hidden_cells_start)]) * byte_inv1;
 
-                float alt = hidden_plan_dists[uhc + hidden_cells_start] + min(limit_max - 1.0f, 1.0f / p);
+                float alt = hidden_plan_dists[uhc + hidden_cells_start] + 1.0f / p;
 
-                if (alt < hidden_plan_dists[nhc + hidden_cells_start]) {
+                if (alt < hidden_plan_dists[nhc + hidden_cells_start] && p != 1.0f) {
                     hidden_plan_dists[nhc + hidden_cells_start] = alt;
                     hidden_plan_prevs[nhc + hidden_cells_start] = uhc;
                 }
