@@ -166,10 +166,25 @@ void Hierarchy::step(
 
     // backward
     for (int l = layers.size() - 1; l >= 0; l--) {
-        if (l < layers.size() - 1) {
-            layers[l + 1].reconstruct(ticks_per_update[l + 1] - 1 - ticks[l + 1]);
+        Int_Buffer_View goal_cis;
 
-            layers[l].s
+        if (l < layers.size() - 1) {
+            int vli = ticks_per_update[l + 1] - 1 - ticks[l + 1];
+
+            layers[l + 1].reconstruct(vli);
+
+            goal_cis = layers[l + 1].get_reconstruction(vli);
+        }
+        else
+            goal_cis = top_goal_cis;
+
+        layers[l].plan(goal_cis, params.layers[l]);
+    }
+
+    // reconstruct all output predictions
+    for (int i = 0; i < io_sizes.size(); i++) {
+        if (io_types[i] == prediction)
+            layers[0].reconstruct(i * histories[0][i].size());
     }
 }
 
@@ -184,10 +199,6 @@ void Hierarchy::clear_state() {
         }
 
         layers[l].clear_state();
-        
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].clear_state();
     }
 }
 
