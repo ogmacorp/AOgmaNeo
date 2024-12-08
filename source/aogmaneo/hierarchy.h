@@ -24,22 +24,18 @@ public:
         Int3 size;
         IO_Type type;
 
-        int num_dendrites_per_cell; // also for policy
-
         int up_radius; // encoder radius
-        int down_radius; // decoder radius, also shared with actor if there is one
+        int down_radius; // decoder radius
 
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
-            int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2
         )
         :
         size(size),
         type(type),
-        num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius)
         {}
@@ -49,33 +45,25 @@ public:
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
 
-        int num_dendrites_per_cell;
-
         int up_radius; // encoder radius
-        int down_radius; // decoder radius, also shared with actor if there is one
+        int down_radius; // decoder radius
 
         int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
-        int conditioning_horizon; // how many steps into the future to condition decoder on goal state
-
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
-            int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
-            int temporal_horizon = 2,
-            int conditioning_horizon = 2
+            int temporal_horizon = 2
         )
         :
         hidden_size(hidden_size),
-        num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius),
         ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon),
-        conditioning_horizon(conditioning_horizon)
+        temporal_horizon(temporal_horizon)
         {}
     };
 
@@ -116,8 +104,8 @@ private:
         int i,
         float importance
     ) {
-        for (int t = 0; t < ; t++)
-            encoders[0].get_visible_layer(i * temporal_horizons[0] + t).importance = importance;
+        for (int t = 0; t < histories[0][i].size(); t++)
+            layers[0].get_visible_layer(i * histories[0][i].size() + t).importance = importance;
     }
 
 public:
@@ -143,7 +131,7 @@ public:
     // simulation step/tick
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
-        Int_Buffer_View top_feedback_cis, // top feed back ("program")
+        Int_Buffer_View top_feedback_cis,
         bool learn_enabled = true // whether learning is enabled
     );
 
@@ -178,30 +166,16 @@ public:
         Stream_Reader &reader
     );
 
-    // get the number of layers (encoders)
+    // get the number of layers (layers)
     int get_num_layers() const {
-        return encoders.size();
-    }
-
-    bool io_layer_exists(
-        int i
-    ) const {
-        return d_indices[i] != -1;
+        return layers.size();
     }
 
     // retrieve predictions
     const Int_Buffer &get_prediction_cis(
         int i
     ) const {
-        return decoders[0][d_indices[i]].get_hidden_cis();
-    }
-
-    const Int_Buffer &get_top_hidden_cis() const {
-        return encoders[encoders.size() - 1].get_hidden_cis();
-    }
-
-    const Int3 &get_top_hidden_size() const {
-        return encoders[encoders.size() - 1].get_hidden_size();
+        return layers[0].get_reconstruction(i * histories[0][i].size());
     }
 
     // whether this layer received on update this timestep
@@ -247,56 +221,21 @@ public:
     int get_num_encoder_visible_layers(
         int l
     ) const {
-        return encoders[l].get_num_visible_layers();
+        return layers[l].get_num_visible_layers();
     }
 
     // retrieve a sparse coding layer
-    Encoder &get_encoder(
+    Layer &get_layer(
         int l
     ) {
-        return encoders[l];
+        return layers[l];
     }
 
     // retrieve a sparse coding layer, const version
-    const Encoder &get_encoder(
+    const Layer &get_layer(
         int l
     ) const {
-        return encoders[l];
-    }
-
-    int get_num_decoders(
-        int l
-    ) const {
-        return decoders[l].size();
-    }
-
-    // retrieve by index
-    Decoder &get_decoder(
-        int l,
-        int i
-    ) {
-        if (l == 0)
-            return decoders[l][d_indices[i]];
-
-        return decoders[l][i];
-    }
-
-    const Decoder &get_decoder(
-        int l,
-        int i
-    ) const {
-        if (l == 0)
-            return decoders[l][d_indices[i]];
-
-        return decoders[l][i];
-    }
-
-    const Int_Buffer &get_i_indices() const {
-        return i_indices;
-    }
-
-    const Int_Buffer &get_d_indices() const {
-        return d_indices;
+        return layers[l];
     }
 
     const Array<Circle_Buffer<Int_Buffer>> &get_histories(
