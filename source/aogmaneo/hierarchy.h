@@ -241,5 +241,9 @@ public:
     const Int_Buffer &get_top_hidden_cis() const {
         return layers[layers.size() - 1].get_hidden_cis();
     }
+
+    const Int3 &get_top_hidden_size() const {
+        return layers[layers.size() - 1].get_hidden_size();
+    }
 };
 }
