@@ -503,6 +503,17 @@ void Layer::clear_state() {
     hidden_cis.fill(0);
 }
 
+void Layer::reconstruct(
+    int vli
+) {
+    const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+    int num_visible_columns = vld.size.x * vld.size.y;
+
+    for (int i = 0; i < num_visible_columns; i++)
+        reconstruct(Int2(i / vld.size.y, i % vld.size.y), vli);
+}
+
 long Layer::size() const {
     long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
