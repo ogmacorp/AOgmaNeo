@@ -494,6 +494,9 @@ void Layer::plan(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
+    hidden_plan_dists.fill(limit_max);
+    hidden_plan_prevs.fill(-1);
+
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
         plan(Int2(i / hidden_size.y, i % hidden_size.y), goal_cis, 1, params);
