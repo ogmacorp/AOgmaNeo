@@ -152,11 +152,13 @@ void Layer::plan(
 
         for (int nhc = 0; nhc < hidden_size.z; nhc++) {
             if (hidden_plan_opens[nhc + hidden_cells_start]) {
-                float p = (1 + hidden_transitions[nhc + hidden_size.z * (uhc + hidden_cells_start)]) * byte_inv1;
+                int transition = hidden_transitions[nhc + hidden_size.z * (uhc + hidden_cells_start)];
+
+                float p = (1 + transition) * byte_inv1;
 
                 float alt = hidden_plan_dists[uhc + hidden_cells_start] + 1.0f / p;
 
-                if (alt < hidden_plan_dists[nhc + hidden_cells_start] && p != 1.0f) {
+                if (alt < hidden_plan_dists[nhc + hidden_cells_start] && transition != 0) {
                     hidden_plan_dists[nhc + hidden_cells_start] = alt;
                     hidden_plan_prevs[nhc + hidden_cells_start] = uhc;
                 }
