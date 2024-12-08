@@ -237,5 +237,9 @@ public:
     ) const {
         return histories[l];
     }
+
+    const Int_Buffer &get_top_hidden_cis() const {
+        return layers[layers.size() - 1].get_hidden_cis();
+    }
 };
 }
