@@ -13,11 +13,14 @@ using namespace aon;
 void Layer::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
+    bool learn_enabled,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
+    
+    int hidden_ci_prev = hidden_cis[hidden_column_index];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -88,6 +91,15 @@ void Layer::forward(
     }
 
     hidden_cis[hidden_column_index] = max_index;
+
+    // learn transition matrix
+    if (learn_enabled) {
+        for (int nhc = 0; nhc < hidden_size.z; nhc++) {
+            int ti = nhc + hidden_size.z * (hidden_ci_prev + hidden_cells_start);
+
+            hidden_transitions[ti] = min(255, max(0, hidden_transitions[ti] + roundf(params.tlr * ((nhc == max_index) * 255.0f - hidden_transitions[ti]))));
+        }
+    }
 }
 
 void Layer::plan(
@@ -101,6 +113,8 @@ void Layer::plan(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int goal_ci = goal_cis[hidden_column_index];
+
+    const float byte_inv1 = 1.0f / 256.0f;
 
     // Start
     hidden_plan_dists[hidden_cis[hidden_column_index] + hidden_cells_start] = 0.0f;
@@ -149,7 +163,7 @@ void Layer::plan(
         hidden_plan_opens[uhc + hidden_cells_start] = false;
 
         for (int nhc = 0; nhc < hidden_size.z; nhc++) {
-            float p = hidden_transitions[nhc + hidden_size.z * (uhc + hidden_cells_start)];
+            float p = (1 + hidden_transitions[nhc + hidden_size.z * (uhc + hidden_cells_start)]) * byte_inv1;
 
             float alt = hidden_plan_dists[uhc + hidden_cells_start] + 1.0f / (limit_min + p);
 
@@ -173,7 +187,7 @@ void Layer::plan(
     assert(false);
 }
 
-void Layer::learn(
+void Layer::learn_reconstruction(
     const Int2 &column_pos,
     Int_Buffer_View input_cis,
     int vli,
@@ -263,7 +277,7 @@ void Layer::learn(
             num_higher++;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.rlr * 255.0f * ((vc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
     }
 
     if (num_higher < params.early_stop_cells)
@@ -446,7 +460,7 @@ void Layer::step(
     
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, learn_enabled, params);
 
     if (learn_enabled) {
         unsigned int base_state = rand();
@@ -458,9 +472,20 @@ void Layer::step(
 
             unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-            learn(pos, input_cis[vli], vli, &state, params);
+            learn_reconstruction(pos, input_cis[vli], vli, &state, params);
         }
     }
+}
+
+void Layer::plan(
+    Int_Buffer_View goal_cis,
+    const Params &params
+) {
+    int num_hidden_columns = hidden_size.x * hidden_size.y;
+
+    PARALLEL_FOR
+    for (int i = 0; i < num_hidden_columns; i++)
+        plan(Int2(i / hidden_size.y, i % hidden_size.y), params);
 }
 
 void Layer::clear_state() {

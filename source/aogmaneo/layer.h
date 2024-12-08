@@ -46,14 +46,16 @@ public:
 
     struct Params {
         float scale; // recon curve
-        float lr; // learning rate
+        float rlr; // recon learning rate
+        float tlr; // transition learning rate
         int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
         scale(4.0f),
-        lr(0.01f),
-        early_stop_cells(2)
+        rlr(0.01f),
+        tlr(0.1f),
+        early_stop_cells(1)
         {}
     };
 
@@ -69,7 +71,7 @@ private:
     Byte_Buffer hidden_plan_opens;
     Int_Buffer hidden_plan_prevs;
     Int_Buffer hidden_plan_cis;
-    Float_Buffer hidden_transitions;
+    Byte_Buffer hidden_transitions;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -82,6 +84,7 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -92,7 +95,7 @@ private:
         const Params &params
     );
 
-    void learn(
+    void learn_reconstruction(
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
@@ -116,6 +119,11 @@ public:
         const Array<Int_Buffer_View> &input_cis, // input states
         bool learn_enabled, // whether to learn
         const Params &params // parameters
+    );
+
+    void plan(
+        Int_Buffer_View goal_cis,
+        const Params &params
     );
 
     void reconstruct(

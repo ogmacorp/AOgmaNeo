@@ -103,7 +103,7 @@ void Hierarchy::init_random(
 
 void Hierarchy::step(
     const Array<Int_Buffer_View> &input_cis,
-    Int_Buffer_View top_feedback_cis,
+    Int_Buffer_View top_goal_cis,
     bool learn_enabled
 ) {
     assert(params.layers.size() == layers.size());
