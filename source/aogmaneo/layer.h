@@ -48,7 +48,6 @@ public:
         float scale; // recon curve
         float rlr; // recon learning rate
         float tlr; // transition learning rate
-        float greed; // transition greed exponent
         int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
@@ -56,7 +55,6 @@ public:
         scale(4.0f),
         rlr(0.02f),
         tlr(0.2f),
-        greed(0.5f),
         early_stop_cells(1)
         {}
     };
