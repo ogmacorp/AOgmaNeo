@@ -54,7 +54,7 @@ public:
         :
         scale(4.0f),
         rlr(0.02f),
-        tlr(0.2f),
+        tlr(0.1f),
         early_stop_cells(1)
         {}
     };
@@ -85,6 +85,7 @@ private:
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         bool learn_enabled,
+        bool passive_mode,
         const Params &params
     );
 
@@ -117,6 +118,7 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // input states
         bool learn_enabled, // whether to learn
+        bool passive_mode, // learn passively
         const Params &params // parameters
     );
 

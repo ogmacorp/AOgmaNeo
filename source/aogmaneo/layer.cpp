@@ -14,6 +14,7 @@ void Layer::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled,
+    bool passive_mode,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -94,11 +95,9 @@ void Layer::forward(
 
     // learn transition matrix
     if (learn_enabled) {
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int ti = max_index + hidden_size.z * (hc + hidden_cells_start);
+        int ti = max_index + hidden_size.z * (hidden_ci_prev + hidden_cells_start);
 
-            hidden_transitions[ti] = min(255, max(0, hidden_transitions[ti] + roundf(params.tlr * ((hc == hidden_ci_prev) * 255.0f - hidden_transitions[ti]))));
-        }
+        hidden_transitions[ti] = min(255, max(0, hidden_transitions[ti] + roundf(params.tlr * ((max_index == hidden_plan_cis[hidden_column_index] || passive_mode) * 255.0f - hidden_transitions[ti]))));
     }
 }
 
@@ -456,13 +455,14 @@ void Layer::init_random(
 void Layer::step(
     const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled,
+    bool passive_mode,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, learn_enabled, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, learn_enabled, passive_mode, params);
 
     if (learn_enabled) {
         unsigned int base_state = rand();

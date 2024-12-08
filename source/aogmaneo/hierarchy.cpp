@@ -99,7 +99,8 @@ void Hierarchy::init_random(
 void Hierarchy::step(
     const Array<Int_Buffer_View> &input_cis,
     Int_Buffer_View top_goal_cis,
-    bool learn_enabled
+    bool learn_enabled,
+    bool passive_mode
 ) {
     assert(params.layers.size() == layers.size());
     assert(params.ios.size() == io_sizes.size());
@@ -144,7 +145,7 @@ void Hierarchy::step(
             }
 
             // activate sparse coder
-            layers[l].step(layer_input_cis, learn_enabled, params.layers[l]);
+            layers[l].step(layer_input_cis, learn_enabled, passive_mode, params.layers[l]);
 
             // add to next layer's history
             if (l < layers.size() - 1) {

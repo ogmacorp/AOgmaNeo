@@ -126,7 +126,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         Int_Buffer_View top_goal_cis,
-        bool learn_enabled = true // whether learning is enabled
+        bool learn_enabled = true, // whether learning is enabled
+        bool passive_mode = false // learn passively
     );
 
     void clear_state();
