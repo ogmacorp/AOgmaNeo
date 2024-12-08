@@ -164,7 +164,7 @@ void Hierarchy::step(
         Int_Buffer_View goal_cis;
 
         if (l < layers.size() - 1) {
-            int vli = ticks_per_update[l + 1] - 1 - ticks[l + 1];
+            int vli = 0;//ticks_per_update[l + 1] - 1 - ticks[l + 1];
 
             layers[l + 1].reconstruct(vli);
 
