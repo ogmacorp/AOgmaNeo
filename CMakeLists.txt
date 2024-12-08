@@ -32,7 +32,6 @@ set(SOURCES
     "${SOURCE_PATH}/aogmaneo/helpers.cpp"
     "${SOURCE_PATH}/aogmaneo/layer.cpp"
     "${SOURCE_PATH}/aogmaneo/hierarchy.cpp"
-    "${SOURCE_PATH}/aogmaneo/searcher.cpp"
     "${SOURCE_PATH}/aogmaneo/image_encoder.cpp"
 )
 
