@@ -129,7 +129,7 @@ void Layer::plan(
             int hidden_cell_index = hc + hidden_cells_start;
 
             if (hidden_plan_opens[hidden_cell_index]) {
-                if (hidden_plan_dists[hidden_cell_index] < min_dist || uhc == -1) {
+                if (hidden_plan_dists[hidden_cell_index] < min_dist) {
                     min_dist = hidden_plan_dists[hidden_cell_index];
                     uhc = hc;
                 }
@@ -165,7 +165,7 @@ void Layer::plan(
         for (int nhc = 0; nhc < hidden_size.z; nhc++) {
             float p = (1 + hidden_transitions[nhc + hidden_size.z * (uhc + hidden_cells_start)]) * byte_inv1;
 
-            float alt = hidden_plan_dists[uhc + hidden_cells_start] + 1.0f / (limit_min + p);
+            float alt = hidden_plan_dists[uhc + hidden_cells_start] + 1.0f / p;
 
             if (alt < hidden_plan_dists[nhc + hidden_cells_start]) {
                 hidden_plan_dists[nhc + hidden_cells_start] = alt;
@@ -359,7 +359,7 @@ void Layer::reconstruct(
             Int2 visible_center = project(hidden_pos, h_to_v);
 
             if (in_bounds(column_pos, Int2(visible_center.x - vld.radius, visible_center.y - vld.radius), Int2(visible_center.x + vld.radius + 1, visible_center.y + vld.radius + 1))) {
-                int hidden_cell_index_max = hidden_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
+                int hidden_cell_index_max = hidden_plan_cis[hidden_column_index] + hidden_column_index * hidden_size.z;
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
@@ -427,6 +427,8 @@ void Layer::init_random(
             vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
+
+        vl.recon_cis = Int_Buffer(num_visible_columns, 0);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -496,6 +498,7 @@ void Layer::plan(
 
     hidden_plan_dists.fill(limit_max);
     hidden_plan_prevs.fill(-1);
+    hidden_plan_opens.fill(true);
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
@@ -622,6 +625,8 @@ void Layer::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
+
+        vl.recon_cis = Int_Buffer(num_visible_columns, 0);
 
         reader.read(&vl.importance, sizeof(float));
     }
