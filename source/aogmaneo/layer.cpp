@@ -97,7 +97,7 @@ void Layer::forward(
     if (learn_enabled) {
         int ti = max_index + hidden_size.z * (hidden_ci_prev + hidden_cells_start);
 
-        hidden_transitions[ti] = min(255, max(0, hidden_transitions[ti] + roundf(params.tlr * ((max_index == hidden_plan_cis[hidden_column_index] || passive_mode) * 255.0f - hidden_transitions[ti]))));
+        hidden_transitions[ti] = min(255, max(0, hidden_transitions[ti] + ceilf(params.tlr * ((max_index == hidden_plan_cis[hidden_column_index] || passive_mode) * 255.0f - hidden_transitions[ti]))));
     }
 }
 
