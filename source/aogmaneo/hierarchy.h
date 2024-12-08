@@ -8,8 +8,7 @@
 
 #pragma once
 
-#include "encoder.h"
-#include "decoder.h"
+#include "layer.h"
 
 namespace aon {
 // type of hierarchy input layer
@@ -80,14 +79,7 @@ public:
         {}
     };
 
-    struct Layer_Params {
-        Decoder::Params decoder;
-        Encoder::Params encoder;
-    };
-
     struct IO_Params {
-        Decoder::Params decoder;
-
         // additional
         float importance;
 
@@ -98,36 +90,22 @@ public:
     };
 
     struct Params {
-        Array<Layer_Params> layers;
+        Array<Layer::Params> layers;
         Array<IO_Params> ios;
-
-        float min_strength;
-
-        Params()
-        :
-        min_strength(0.1f)
-        {}
     };
 
 private:
     // layers
-    Array<Encoder> encoders;
-    Array<Array<Decoder>> decoders;
-
-    // for mapping first layer Decoders
-    Int_Buffer i_indices;
-    Int_Buffer d_indices;
+    Array<Layer> layers;
 
     // histories
     Array<Array<Circle_Buffer<Int_Buffer>>> histories;
-    Array<Circle_Buffer<Int_Buffer>> conditions;
 
     // per-layer values
     Byte_Buffer updates;
 
     Int_Buffer ticks;
     Int_Buffer ticks_per_update;
-    Int_Buffer temporal_horizons;
 
     // input dimensions
     Array<Int3> io_sizes;
@@ -138,7 +116,7 @@ private:
         int i,
         float importance
     ) {
-        for (int t = 0; t < temporal_horizons[0]; t++)
+        for (int t = 0; t < ; t++)
             encoders[0].get_visible_layer(i * temporal_horizons[0] + t).importance = importance;
     }
 
