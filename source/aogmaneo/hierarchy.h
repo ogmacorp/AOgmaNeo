@@ -243,11 +243,5 @@ public:
     ) const {
         return histories[l];
     }
-
-    // merge list of hierarchies and write to this one
-    void merge(
-        const Array<Hierarchy*> &hierarchies,
-        Merge_Mode mode
-    );
 };
 }

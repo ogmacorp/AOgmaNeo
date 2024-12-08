@@ -34,14 +34,9 @@ void Hierarchy::init_random(
     for (int l = 0; l < layer_descs.size(); l++)
         ticks_per_update[l] = (l == 0 ? 1 : layer_descs[l].ticks_per_update);
 
-    int num_predictions = 0;
-
     for (int i = 0; i < io_sizes.size(); i++) {
         io_sizes[i] = io_descs[i].size;
         io_types[i] = static_cast<Byte>(io_descs[i].type);
-
-        if (io_descs[i].type == prediction)
-            num_predictions++;
     }
 
     // iterate through layers
@@ -203,7 +198,7 @@ void Hierarchy::clear_state() {
 }
 
 long Hierarchy::size() const {
-    long size = 3 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+    long size = 2 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + updates.size() * sizeof(Byte) + 2 * ticks.size() * sizeof(int);
 
     for (int l = 0; l < layers.size(); l++) {
         size += sizeof(int);
@@ -216,15 +211,11 @@ long Hierarchy::size() const {
         }
 
         size += layers[l].size();
-
-        for (int d = 0; d < decoders[l].size(); d++)
-            size += decoders[l][d].size();
     }
 
     // params
-    size += layers.size() * sizeof(Layer_Params);
+    size += layers.size() * sizeof(Layer::Params);
     size += io_sizes.size() * sizeof(IO_Params);
-    size += sizeof(Byte);
 
     return size;
 }
@@ -241,10 +232,6 @@ long Hierarchy::state_size() const {
         }
 
         size += layers[l].state_size();
-        
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            size += decoders[l][d].state_size();
     }
 
     return size;
@@ -253,12 +240,8 @@ long Hierarchy::state_size() const {
 long Hierarchy::weights_size() const {
     long size = 0;
 
-    for (int l = 0; l < layers.size(); l++) {
+    for (int l = 0; l < layers.size(); l++)
         size += layers[l].weights_size();
-
-        for (int d = 0; d < decoders[l].size(); d++)
-            size += decoders[l][d].weights_size();
-    }
 
     return size;
 }
@@ -274,19 +257,12 @@ void Hierarchy::write(
 
     writer.write(&num_io, sizeof(int));
 
-    int num_predictions = decoders[0].size();
-
-    writer.write(&num_predictions, sizeof(int));
-
     writer.write(&io_sizes[0], num_io * sizeof(Int3));
     writer.write(&io_types[0], num_io * sizeof(Byte));
 
     writer.write(&updates[0], updates.size() * sizeof(Byte));
     writer.write(&ticks[0], ticks.size() * sizeof(int));
     writer.write(&ticks_per_update[0], ticks_per_update.size() * sizeof(int));
-
-    writer.write(&i_indices[0], i_indices.size() * sizeof(int));
-    writer.write(&d_indices[0], d_indices.size() * sizeof(int));
 
     for (int l = 0; l < num_layers; l++) {
         int num_layer_inputs = histories[l].size();
@@ -312,20 +288,14 @@ void Hierarchy::write(
         }
 
         layers[l].write(writer);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].write(writer);
     }
 
     // params
     for (int l = 0; l < layers.size(); l++)
-        writer.write(&params.layers[l], sizeof(Layer_Params));
+        writer.write(&params.layers[l], sizeof(Layer::Params));
 
     for (int i = 0; i < io_sizes.size(); i++)
         writer.write(&params.ios[i], sizeof(IO_Params));
-
-    writer.write(&params.anticipation, sizeof(Byte));
 }
 
 void Hierarchy::read(
@@ -339,10 +309,6 @@ void Hierarchy::read(
 
     reader.read(&num_io, sizeof(int));
 
-    int num_predictions;
-
-    reader.read(&num_predictions, sizeof(int));
-
     io_sizes.resize(num_io);
     io_types.resize(num_io);
 
@@ -350,9 +316,6 @@ void Hierarchy::read(
     reader.read(&io_types[0], num_io * sizeof(Byte));
 
     layers.resize(num_layers);
-    decoders.resize(num_layers);
-    hidden_cis_prev.resize(num_layers);
-    feedback_cis_prev.resize(num_layers - 1);
 
     histories.resize(num_layers);
     
@@ -363,12 +326,6 @@ void Hierarchy::read(
     reader.read(&updates[0], updates.size() * sizeof(Byte));
     reader.read(&ticks[0], ticks.size() * sizeof(int));
     reader.read(&ticks_per_update[0], ticks_per_update.size() * sizeof(int));
-
-    i_indices.resize(num_io * 2);
-    d_indices.resize(num_io);
-
-    reader.read(&i_indices[0], i_indices.size() * sizeof(int));
-    reader.read(&d_indices[0], d_indices.size() * sizeof(int));
     
     for (int l = 0; l < num_layers; l++) {
         int num_layer_inputs;
@@ -401,29 +358,16 @@ void Hierarchy::read(
         }
 
         layers[l].read(reader);
-        
-        decoders[l].resize(l == 0 ? num_predictions : ticks_per_update[l]);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].read(reader);
-
-        hidden_cis_prev[l] = layers[l].get_hidden_cis();
-
-        if (l < layers.size() - 1)
-            feedback_cis_prev[l] = layers[l].get_hidden_cis();
     }
 
     params.layers.resize(num_layers);
     params.ios.resize(num_io);
 
     for (int l = 0; l < num_layers; l++)
-        reader.read(&params.layers[l], sizeof(Layer_Params));
+        reader.read(&params.layers[l], sizeof(Layer::Params));
 
     for (int i = 0; i < num_io; i++)
         reader.read(&params.ios[i], sizeof(IO_Params));
-
-    reader.read(&params.anticipation, sizeof(Byte));
 }
 
 void Hierarchy::write_state(
@@ -443,10 +387,6 @@ void Hierarchy::write_state(
         }
 
         layers[l].write_state(writer);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].write_state(writer);
     }
 }
 
@@ -469,56 +409,19 @@ void Hierarchy::read_state(
         }
 
         layers[l].read_state(reader);
-        
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].read_state(reader);
     }
 }
 
 void Hierarchy::write_weights(
     Stream_Writer &writer
 ) const {
-    for (int l = 0; l < layers.size(); l++) {
+    for (int l = 0; l < layers.size(); l++)
         layers[l].write_weights(writer);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].write_weights(writer);
-    }
 }
 
 void Hierarchy::read_weights(
     Stream_Reader &reader
 ) {
-    for (int l = 0; l < layers.size(); l++) {
+    for (int l = 0; l < layers.size(); l++)
         layers[l].read_weights(reader);
-        
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++)
-            decoders[l][d].read_weights(reader);
-    }
-}
-
-void Hierarchy::merge(
-    const Array<Hierarchy*> &hierarchies,
-    Merge_Mode mode
-) {
-    Array<Encoder*> merge_layers(hierarchies.size());
-    Array<Decoder*> merge_decoders(hierarchies.size());
-
-    for (int l = 0; l < layers.size(); l++) {
-        for (int h = 0; h < hierarchies.size(); h++)
-            merge_layers[h] = &hierarchies[h]->layers[l];
-
-        layers[l].merge(merge_layers, mode);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++) {
-            for (int h = 0; h < hierarchies.size(); h++)
-                merge_decoders[h] = &hierarchies[h]->decoders[l][d];
-
-            decoders[l][d].merge(merge_decoders, mode);
-        }
-    }
 }
