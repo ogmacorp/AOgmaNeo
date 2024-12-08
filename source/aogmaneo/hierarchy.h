@@ -24,20 +24,17 @@ public:
         Int3 size;
         IO_Type type;
 
-        int up_radius; // encoder radius
-        int down_radius; // decoder radius
+        int radius; // layer up radius
 
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
-            int up_radius = 2,
-            int down_radius = 2
+            int radius = 2
         )
         :
         size(size),
         type(type),
-        up_radius(up_radius),
-        down_radius(down_radius)
+        radius(radius)
         {}
     };
 
@@ -45,23 +42,20 @@ public:
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
 
-        int up_radius; // encoder radius
-        int down_radius; // decoder radius
+        int radius; // layer up radius
 
         int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
         int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
-            int up_radius = 2,
-            int down_radius = 2,
+            int radius = 2,
             int ticks_per_update = 2,
             int temporal_horizon = 2
         )
         :
         hidden_size(hidden_size),
-        up_radius(up_radius),
-        down_radius(down_radius),
+        radius(radius),
         ticks_per_update(ticks_per_update),
         temporal_horizon(temporal_horizon)
         {}
@@ -218,7 +212,7 @@ public:
         return static_cast<IO_Type>(io_types[i]);
     }
 
-    int get_num_encoder_visible_layers(
+    int get_num_layer_visible_layers(
         int l
     ) const {
         return layers[l].get_num_visible_layers();

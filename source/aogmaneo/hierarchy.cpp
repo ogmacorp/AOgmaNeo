@@ -53,7 +53,7 @@ void Hierarchy::init_random(
                     int index = t + layer_descs[l].temporal_horizon * i;
 
                     visible_layer_descs[index].size = io_sizes[i];
-                    visible_layer_descs[index].radius = io_descs[i].up_radius;
+                    visible_layer_descs[index].radius = io_descs[i].radius;
                 }
             }
             
@@ -74,7 +74,7 @@ void Hierarchy::init_random(
 
             for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
                 visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
-                visible_layer_descs[t].radius = layer_descs[l].up_radius;
+                visible_layer_descs[t].radius = layer_descs[l].radius;
             }
 
             histories[l].resize(1);
