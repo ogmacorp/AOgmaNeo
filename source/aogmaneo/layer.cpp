@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "layer.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -94,10 +95,10 @@ void Layer::forward(
 
     // learn transition matrix
     if (learn_enabled) {
-        for (int nhc = 0; nhc < hidden_size.z; nhc++) {
-            int ti = nhc + hidden_size.z * (hidden_ci_prev + hidden_cells_start);
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int ti = max_index + hidden_size.z * (hc + hidden_cells_start);
 
-            hidden_transitions[ti] = min(255, max(0, hidden_transitions[ti] + roundf(params.tlr * ((nhc == max_index) * 255.0f - hidden_transitions[ti]))));
+            hidden_transitions[ti] = min(255, max(0, hidden_transitions[ti] + roundf(params.tlr * ((hc == hidden_ci_prev) * 255.0f - hidden_transitions[ti]))));
         }
     }
 }
@@ -105,7 +106,6 @@ void Layer::forward(
 void Layer::plan(
     const Int2 &column_pos,
     const Int_Buffer_View goal_cis,
-    int t,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -137,25 +137,14 @@ void Layer::plan(
         }
 
         if (uhc == goal_ci) {
-            int uhc_old = uhc;
-
-            int plan_length = 0;
+            int uhc_prev = uhc;
 
             while (hidden_plan_prevs[uhc + hidden_cells_start] != -1) {
+                uhc_prev = uhc;
                 uhc = hidden_plan_prevs[uhc + hidden_cells_start];
-                plan_length++;
             }
 
-            t = min(t, plan_length - 1);
-
-            int target_length = plan_length - 1 - t;
-
-            uhc = uhc_old;
-
-            for (int i = 0; i < target_length; i++)
-                uhc = hidden_plan_prevs[uhc + hidden_cells_start];
-
-            hidden_plan_cis[hidden_column_index] = uhc;
+            hidden_plan_cis[hidden_column_index] = uhc_prev;
 
             return;
         }
@@ -163,13 +152,15 @@ void Layer::plan(
         hidden_plan_opens[uhc + hidden_cells_start] = false;
 
         for (int nhc = 0; nhc < hidden_size.z; nhc++) {
-            float p = (1 + hidden_transitions[nhc + hidden_size.z * (uhc + hidden_cells_start)]) * byte_inv1;
+            if (hidden_plan_opens[nhc + hidden_cells_start]) {
+                float p = powf((1 + hidden_transitions[nhc + hidden_size.z * (uhc + hidden_cells_start)]) * byte_inv1, params.greed);
 
-            float alt = hidden_plan_dists[uhc + hidden_cells_start] + 1.0f / p;
+                float alt = hidden_plan_dists[uhc + hidden_cells_start] + min(limit_max - 1.0f, 1.0f / p);
 
-            if (alt < hidden_plan_dists[nhc + hidden_cells_start]) {
-                hidden_plan_dists[nhc + hidden_cells_start] = alt;
-                hidden_plan_prevs[nhc + hidden_cells_start] = uhc;
+                if (alt < hidden_plan_dists[nhc + hidden_cells_start]) {
+                    hidden_plan_dists[nhc + hidden_cells_start] = alt;
+                    hidden_plan_prevs[nhc + hidden_cells_start] = uhc;
+                }
             }
         }
 
@@ -316,9 +307,6 @@ void Layer::reconstruct(
     Visible_Layer &vl = visible_layers[vli];
     const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-    if (vl.importance == 0.0f)
-        return;
-
     int diam = vld.radius * 2 + 1;
 
     int visible_column_index = address2(column_pos, Int2(vld.size.x, vld.size.y));
@@ -444,7 +432,7 @@ void Layer::init_random(
     hidden_transitions.resize(num_hidden_cells * hidden_size.z);
 
     for (int i = 0; i < hidden_transitions.size(); i++)
-        hidden_transitions[i] = rand() % init_weight_noisei;
+        hidden_transitions[i] = (rand() % init_weight_noisei);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -496,13 +484,14 @@ void Layer::plan(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
+    // reset variables
     hidden_plan_dists.fill(limit_max);
     hidden_plan_prevs.fill(-1);
     hidden_plan_opens.fill(true);
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        plan(Int2(i / hidden_size.y, i % hidden_size.y), goal_cis, 1, params);
+        plan(Int2(i / hidden_size.y, i % hidden_size.y), goal_cis, params);
 }
 
 void Layer::clear_state() {
