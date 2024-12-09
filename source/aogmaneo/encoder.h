@@ -30,11 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer protos;
         
-        Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
-
         float importance;
 
         Visible_Layer()
@@ -44,19 +41,19 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float choice; // choose used columns more
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
+        int n_radius; // SOM neighborhood radius
 
         Params()
         :
         choice(0.01f),
-        vigilance(0.8f),
-        lr(0.5f),
-        active_ratio(0.05f),
-        l_radius(2)
+        lr(0.1f),
+        active_ratio(0.1f),
+        l_radius(2),
+        n_radius(1)
         {}
     };
 
@@ -65,7 +62,9 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
+    Float_Buffer hidden_resources;
+
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_comparisons;
 
@@ -100,12 +99,14 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state();
+    void clear_state() {
+        hidden_cis.fill(0);
+    }
 
     // serialization
-    long size() const; // returns size in Bytes
-    long state_size() const; // returns size of state in Bytes
-    long weights_size() const; // returns size of weights in Bytes
+    long size() const; // returns size in bytes
+    long state_size() const; // returns size of state in bytes
+    long weights_size() const; // returns size of weights in bytes
 
     void write(
         Stream_Writer &writer
