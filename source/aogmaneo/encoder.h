@@ -52,7 +52,7 @@ public:
         choice(0.1f),
         lr(0.1f),
         active_ratio(0.05f),
-        l_radius(2),
+        l_radius(4),
         n_radius(1)
         {}
     };
