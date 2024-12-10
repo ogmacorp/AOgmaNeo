@@ -61,6 +61,8 @@ void Encoder::forward(
 
                 int in_ci = input_cis[vli][visible_column_index];
 
+                float in_value = (in_ci + 0.5f) * vld_size_z_inv;
+
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
@@ -70,11 +72,9 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    float in_value = (in_ci + 0.5f) * vld_size_z_inv;
-
                     float diff = in_value - vl.protos[wi];
 
-                    hidden_acts[hidden_cell_index] -= diff * diff * vl.importance;
+                    hidden_acts[hidden_cell_index] -= abs(diff) * vl.importance;
                 }
             }
     }
