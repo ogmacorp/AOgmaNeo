@@ -41,6 +41,7 @@ public:
     };
 
     struct Params {
+        float falloff; // SOM neighborhood falloff
         float choice; // choose used columns more
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
@@ -49,6 +50,7 @@ public:
 
         Params()
         :
+        falloff(0.9f),
         choice(0.1f),
         lr(0.1f),
         active_ratio(0.05f),

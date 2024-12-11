@@ -37,6 +37,7 @@ public:
     };
 
     struct Params {
+        float falloff; // SOM neighborhood falloff
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
@@ -44,6 +45,7 @@ public:
         
         Params()
         :
+        falloff(0.9f),
         lr(0.1f),
         scale(2.0f),
         rr(0.01f),
