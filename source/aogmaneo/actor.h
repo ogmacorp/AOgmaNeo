@@ -61,7 +61,7 @@ public:
         vlr(0.005f),
         plr(0.005f),
         leak(0.01f),
-        smoothing(0.01f),
+        smoothing(0.02f),
         delay_rate(0.002f),
         policy_clip(0.2f),
         discount(0.99f),
