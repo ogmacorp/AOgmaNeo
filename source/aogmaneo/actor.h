@@ -47,17 +47,19 @@ public:
         float policy_clip; // PPO policy clipping coefficient
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
+        float trace_squash; // squash traces to be in a smaller range
         float td_scale_decay; // decay of td error scale normalizer
 
         Params()
         :
-        vlr(0.05f),
-        plr(0.05f),
+        vlr(0.1f),
+        plr(0.1f),
         leak(0.01f),
-        delay_rate(0.001f),
+        delay_rate(0.002f),
         policy_clip(0.2f),
         discount(0.99f),
         trace_decay(0.97f),
+        trace_squash(1.0f),
         td_scale_decay(0.999f)
         {}
     };
