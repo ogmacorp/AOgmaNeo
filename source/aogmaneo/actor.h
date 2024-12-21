@@ -48,19 +48,17 @@ public:
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
         float trace_squash; // squash traces to be in a smaller range
-        float td_scale_decay; // decay of td error scale normalizer
 
         Params()
         :
-        vlr(0.1f),
-        plr(0.1f),
+        vlr(0.001f),
+        plr(0.001f),
         leak(0.01f),
         delay_rate(0.002f),
         policy_clip(0.2f),
         discount(0.99f),
         trace_decay(0.97f),
-        trace_squash(1.0f),
-        td_scale_decay(0.999f)
+        trace_squash(1.0f)
         {}
     };
 
@@ -83,7 +81,6 @@ private:
     Float_Buffer policy_dendrite_acts_delayed;
 
     Float_Buffer hidden_values; // hidden value function output buffer
-    Float_Buffer hidden_td_scales;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
