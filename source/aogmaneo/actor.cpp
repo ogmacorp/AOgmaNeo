@@ -366,6 +366,8 @@ void Actor::init_random(
         for (int i = 0; i < vl.policy_weights.size(); i++)
             vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
+        vl.policy_weights_delayed = vl.policy_weights;
+
         vl.policy_traces = Float_Buffer(vl.policy_weights.size(), 0.0f);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
@@ -417,6 +419,10 @@ void Actor::step(
         Visible_Layer &vl = visible_layers[vli];
 
         vl.input_cis_prev = input_cis[vli];
+
+        PARALLEL_FOR
+        for (int i = 0; i < vl.policy_weights.size(); i++)
+            vl.policy_weights_delayed[i] += params.delay_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
     }
 
     hidden_acts_prev = hidden_acts;
@@ -579,6 +585,8 @@ void Actor::read(
 
         reader.read(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
         reader.read(&vl.policy_traces[0], vl.policy_traces.size() * sizeof(float));
+
+        vl.policy_weights_delayed = vl.policy_weights;
 
         vl.input_cis_prev.resize(num_visible_columns);
 
