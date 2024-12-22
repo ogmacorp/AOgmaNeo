@@ -540,11 +540,10 @@ void Actor::read(
     reader.read(&value_dendrite_acts_prev[0], value_dendrite_acts_prev.size() * sizeof(float));
     reader.read(&policy_dendrite_acts_prev[0], policy_dendrite_acts_prev.size() * sizeof(float));
 
+    hidden_acts.resize(num_hidden_cells);
     value_dendrite_acts.resize(value_num_dendrites);
     policy_dendrite_acts.resize(policy_num_dendrites);
     policy_dendrite_acts_delayed.resize(policy_num_dendrites);
-
-    hidden_acts.resize(num_hidden_cells);
 
     int num_visible_layers;
 
@@ -668,6 +667,8 @@ void Actor::merge(
 
                 vl.policy_weights[i] = actors[d]->visible_layers[vli].policy_weights[i];
             }
+
+            vl.policy_weights_delayed = vl.policy_weights;
         }
 
         break;
@@ -693,6 +694,8 @@ void Actor::merge(
 
                 vl.policy_weights[i] = total / actors.size();
             }
+
+            vl.policy_weights_delayed = vl.policy_weights;
         }
 
         break;
