@@ -50,8 +50,8 @@ public:
         Params()
         :
         scale(4.0f),
-        lr(0.02f),
-        early_stop_cells(2)
+        lr(0.2f),
+        early_stop_cells(3)
         {}
     };
 
