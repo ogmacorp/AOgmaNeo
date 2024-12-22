@@ -223,7 +223,7 @@ void Actor::forward(
         // https://huggingface.co/blog/deep-rl-ppo
         bool clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
-        float value_delta = params.vlr * td_error * (!clip);
+        float value_delta = params.vlr * td_error;
 
         float policy_delta_partial = params.plr * ((1.0f - mimic) * td_error * (!clip) + mimic);
 
