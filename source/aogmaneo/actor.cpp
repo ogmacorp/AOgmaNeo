@@ -541,6 +541,7 @@ void Actor::read(
     reader.read(&policy_dendrite_acts_prev[0], policy_dendrite_acts_prev.size() * sizeof(float));
 
     hidden_acts.resize(num_hidden_cells);
+    hidden_acts_delayed.resize(num_hidden_cells);
     value_dendrite_acts.resize(value_num_dendrites);
     policy_dendrite_acts.resize(policy_num_dendrites);
     policy_dendrite_acts_delayed.resize(policy_num_dendrites);
