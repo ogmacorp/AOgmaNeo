@@ -383,13 +383,13 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
     
-    float value_delta = params.vlr * scaled_td_error;
+    float value_delta = params.vlr * td_error;
 
     // probability ratio
     float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
 
     // https://huggingface.co/blog/deep-rl-ppo
-    bool policy_clip = (ratio < (1.0f - params.policy_clip) && scaled_td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && scaled_td_error > 0.0f);
+    bool policy_clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
     float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * scaled_td_error * (!policy_clip));
 
