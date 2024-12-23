@@ -39,8 +39,6 @@ private:
 
     Float_Buffer weights;
 
-    float activation;
-
 public:
     Params params;
 
@@ -97,10 +95,6 @@ public:
         return config_size;
     }
     
-    float get_activation() const {
-        return activation;
-    }
-
     // merge list of decoders and write to this one
     void merge(
         const Array<Searcher*> &decoders,

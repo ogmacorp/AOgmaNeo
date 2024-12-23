@@ -31,8 +31,6 @@ void Searcher::init_random(
     dendrite_acts.resize(num_dendrites);
 
     dendrite_deltas.resize(num_dendrites);
-
-    activation = 0.0f;
 }
 
 void Searcher::step(
@@ -42,6 +40,36 @@ void Searcher::step(
     int num_config_columns = config_size.x * config_size.y;
 
     const int half_num_dendrites = num_dendrites / 2;
+
+    // activate dendrites
+    for (int di = 0; di < num_dendrites; di++)
+        dendrite_acts[di] = 0.0f;
+
+    for (int i = 0; i < num_config_columns; i++) {
+        int config_ci = config_cis[i];
+
+        for (int di = 0; di < num_dendrites; di++) {
+            float w = weights[di + num_dendrites * (config_ci + config_size.z * i)];
+
+            dendrite_acts[di] += w;
+        }
+    }
+
+    // reward prediction
+    float activation = 0.0f;
+
+    const float dendrite_scale = sqrtf(1.0f / num_config_columns);
+    const float activation_scale = sqrtf(1.0f / num_dendrites);
+
+    for (int di = 0; di < num_dendrites; di++) {
+        float act = dendrite_acts[di] * dendrite_scale;
+
+        dendrite_acts[di] = max(act * params.leak, act); // relu
+
+        activation += dendrite_acts[di] * ((di >= half_num_dendrites) * 2.0f - 1.0f);
+    }
+
+    activation *= activation_scale;
 
     if (learn_enabled) { // learn from last activation
         float error = reward - activation;
@@ -59,36 +87,6 @@ void Searcher::step(
             }
         }
     }
-
-    // activate dendrites
-    for (int di = 0; di < num_dendrites; di++)
-        dendrite_acts[di] = 0.0f;
-
-    for (int i = 0; i < num_config_columns; i++) {
-        int config_ci = config_cis[i];
-
-        for (int di = 0; di < num_dendrites; di++) {
-            float w = weights[di + num_dendrites * (config_ci + config_size.z * i)];
-
-            dendrite_acts[di] += w;
-        }
-    }
-
-    // reward prediction
-    activation = 0.0f;
-
-    const float dendrite_scale = sqrtf(1.0f / num_config_columns);
-    const float activation_scale = sqrtf(1.0f / num_dendrites);
-
-    for (int di = 0; di < num_dendrites; di++) {
-        float act = dendrite_acts[di] * dendrite_scale;
-
-        dendrite_acts[di] = max(act * params.leak, act); // relu
-
-        activation += dendrite_acts[di] * ((di >= half_num_dendrites) * 2.0f - 1.0f);
-    }
-
-    activation *= activation_scale;
 
     // determine new representation with gradient of 1
     for (int di = 0; di < num_dendrites; di++)
