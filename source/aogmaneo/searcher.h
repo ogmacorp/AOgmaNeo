@@ -21,7 +21,7 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.001f),
         leak(0.01f),
         exploration(0.05f)
         {}
