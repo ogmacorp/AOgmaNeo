@@ -56,29 +56,32 @@ public:
         int recurrent_radius; // recurrent radius for short-term memory
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int conditioning_horizon; // how many steps into the future to condition decoder on goal state
-
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int recurrent_radius = 0,
-            int down_radius = 2,
-            int conditioning_horizon = 2
+            int down_radius = 2
         )
         :
         hidden_size(hidden_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         recurrent_radius(recurrent_radius),
-        down_radius(down_radius),
-        conditioning_horizon(conditioning_horizon)
+        down_radius(down_radius)
         {}
     };
 
     struct Layer_Params {
         Decoder::Params decoder;
         Encoder::Params encoder;
+
+        float recurrent_importance;
+
+        Layer_Params()
+        :
+        recurrent_importance(0.5f)
+        {}
     };
 
     struct IO_Params {
@@ -102,12 +105,11 @@ private:
     // layers
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
+    Array<Int_Buffer> hidden_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
     Int_Buffer d_indices;
-
-    Array<Circle_Buffer<Int_Buffer>> conditions;
 
     // input dimensions
     Array<Int3> io_sizes;
