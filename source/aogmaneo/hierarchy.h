@@ -106,7 +106,6 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Int_Buffer> hidden_cis_prev;
-    Array<Int_Buffer> feedback_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
@@ -148,7 +147,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         Int_Buffer_View top_feedback_cis, // top feed back ("program")
-        bool learn_enabled = true // whether learning is enabled
+        bool learn_enabled = true, // whether learning is enabled
+        bool marginalize = true // whether to marginalize the policy
     );
 
     void clear_state();
