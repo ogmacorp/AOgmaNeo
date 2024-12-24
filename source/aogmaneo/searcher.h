@@ -22,8 +22,8 @@ public:
         Params()
         :
         lr(0.001f),
-        explore_chance(0.05f),
-        max_dist(10)
+        explore_chance(0.1f),
+        max_dist(5)
         {}
     };
 
