@@ -53,6 +53,7 @@ public:
         int num_dendrites_per_cell;
 
         int up_radius; // encoder radius
+        int recurrent_radius; // recurrent radius for short-term memory
         int down_radius; // decoder radius, also shared with actor if there is one
 
         int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
@@ -64,18 +65,16 @@ public:
             const Int3 &hidden_size = Int3(4, 4, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
+            int recurrent_radius = 0,
             int down_radius = 2,
-            int ticks_per_update = 2,
-            int temporal_horizon = 2,
-            int conditioning_horizon = 1
+            int conditioning_horizon = 2
         )
         :
         hidden_size(hidden_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
+        recurrent_radius(recurrent_radius),
         down_radius(down_radius),
-        ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon),
         conditioning_horizon(conditioning_horizon)
         {}
     };
@@ -111,16 +110,7 @@ private:
     Int_Buffer i_indices;
     Int_Buffer d_indices;
 
-    // histories
-    Array<Array<Circle_Buffer<Int_Buffer>>> histories;
     Array<Circle_Buffer<Int_Buffer>> conditions;
-
-    // per-layer values
-    Byte_Buffer updates;
-
-    Int_Buffer ticks;
-    Int_Buffer ticks_per_update;
-    Int_Buffer temporal_horizons;
 
     // input dimensions
     Array<Int3> io_sizes;
@@ -131,8 +121,7 @@ private:
         int i,
         float importance
     ) {
-        for (int t = 0; t < temporal_horizons[0]; t++)
-            encoders[0].get_visible_layer(i * temporal_horizons[0] + t).importance = importance;
+        encoders[0].get_visible_layer(i).importance = importance;
     }
 
 public:
