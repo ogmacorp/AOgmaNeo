@@ -92,6 +92,13 @@ void Hierarchy::init_random(
                 decoders[l][t].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
         }
         
+        if (layer_descs[l].recurrent_radius > -1) {
+            int last_index = e_visible_layer_descs.size() - 1;
+
+            e_visible_layer_descs[last_index].size = layer_descs[l].hidden_size;
+            e_visible_layer_descs[last_index].radius = layer_descs[l].recurrent_radius;
+        }
+
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
