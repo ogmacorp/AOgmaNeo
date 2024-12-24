@@ -56,9 +56,6 @@ public:
         int recurrent_radius; // recurrent radius for short-term memory
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
-        int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
-
         int conditioning_horizon; // how many steps into the future to condition decoder on goal state
 
         Layer_Desc(
@@ -193,6 +190,12 @@ public:
         return d_indices[i] != -1;
     }
 
+    bool is_layer_recurrent(
+        int l
+    ) const {
+        return (l == 0 ? encoders[l].get_num_visible_layers() > io_sizes.size() : encoders[l].get_num_visible_layers() > 1);
+    }
+
     // retrieve predictions
     const Int_Buffer &get_prediction_cis(
         int i
@@ -206,27 +209,6 @@ public:
 
     const Int3 &get_top_hidden_size() const {
         return encoders[encoders.size() - 1].get_hidden_size();
-    }
-
-    // whether this layer received on update this timestep
-    bool get_update(
-        int l
-    ) const {
-        return updates[l];
-    }
-
-    // get current layer ticks, relative to previous layer
-    int get_ticks(
-        int l
-    ) const {
-        return ticks[l];
-    }
-
-    // get layer ticks per update, relative to previous layer
-    int get_ticks_per_update(
-        int l
-    ) const {
-        return ticks_per_update[l];
     }
 
     // number of io layers
@@ -301,12 +283,6 @@ public:
 
     const Int_Buffer &get_d_indices() const {
         return d_indices;
-    }
-
-    const Array<Circle_Buffer<Int_Buffer>> &get_histories(
-        int l
-    ) const {
-        return histories[l];
     }
 
     // merge list of hierarchies and write to this one

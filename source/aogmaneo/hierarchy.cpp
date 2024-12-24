@@ -18,23 +18,11 @@ void Hierarchy::init_random(
     encoders.resize(layer_descs.size());
     decoders.resize(layer_descs.size());
 
-    histories.resize(layer_descs.size());
     conditions.resize(layer_descs.size());
     
-    ticks.resize(layer_descs.size(), 0);
-    ticks_per_update.resize(layer_descs.size());
-    temporal_horizons.resize(layer_descs.size());
-
-    // default update state is no update
-    updates.resize(layer_descs.size(), false);
-
     // cache input sizes
     io_sizes.resize(io_descs.size());
     io_types.resize(io_descs.size());
-
-    // determine ticks per update, first layer is always 1
-    for (int l = 0; l < layer_descs.size(); l++)
-        ticks_per_update[l] = (l == 0 ? 1 : layer_descs[l].ticks_per_update);
 
     int num_predictions = 0;
 
@@ -48,36 +36,18 @@ void Hierarchy::init_random(
 
     // iterate through layers
     for (int l = 0; l < layer_descs.size(); l++) {
-        temporal_horizons[l] = layer_descs[l].temporal_horizon;
-
         // create sparse coder visible layer descriptors
         Array<Encoder::Visible_Layer_Desc> e_visible_layer_descs;
 
         // if first layer
         if (l == 0) {
-            e_visible_layer_descs.resize(io_sizes.size() * layer_descs[l].temporal_horizon);
+            e_visible_layer_descs.resize(io_sizes.size() + (layer_descs[l].recurrent_radius > -1));
 
             for (int i = 0; i < io_sizes.size(); i++) {
-                for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
-                    int index = t + layer_descs[l].temporal_horizon * i;
-
-                    e_visible_layer_descs[index].size = io_sizes[i];
-                    e_visible_layer_descs[index].radius = io_descs[i].up_radius;
-                }
+                e_visible_layer_descs[i].size = io_sizes[i];
+                e_visible_layer_descs[i].radius = io_descs[i].up_radius;
             }
             
-            // initialize history buffers
-            histories[l].resize(io_sizes.size());
-
-            for (int i = 0; i < histories[l].size(); i++) {
-                int in_size = io_sizes[i].x * io_sizes[i].y;
-
-                histories[l][i].resize(max(layer_descs[l].temporal_horizon, layer_descs[l].conditioning_horizon));
-                
-                for (int t = 0; t < histories[l][i].size(); t++)
-                    histories[l][i][t] = Int_Buffer(in_size, 0);
-            }
-
             decoders[l].resize(num_predictions);
 
             i_indices.resize(io_sizes.size());
@@ -104,23 +74,12 @@ void Hierarchy::init_random(
             }
         }
         else {
-            e_visible_layer_descs.resize(layer_descs[l].temporal_horizon);
+            e_visible_layer_descs.resize(1 + (layer_descs[l].recurrent_radius > -1));
 
-            for (int t = 0; t < layer_descs[l].temporal_horizon; t++) {
-                e_visible_layer_descs[t].size = layer_descs[l - 1].hidden_size;
-                e_visible_layer_descs[t].radius = layer_descs[l].up_radius;
-            }
+            e_visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
+            e_visible_layer_descs[0].radius = layer_descs[l].up_radius;
 
-            histories[l].resize(1);
-
-            int in_size = layer_descs[l - 1].hidden_size.x * layer_descs[l - 1].hidden_size.y;
-
-            histories[l][0].resize(max(layer_descs[l].temporal_horizon, layer_descs[l].conditioning_horizon * layer_descs[l].ticks_per_update));
-
-            for (int t = 0; t < histories[l][0].size(); t++)
-                histories[l][0][t] = Int_Buffer(in_size, 0);
-
-            decoders[l].resize(layer_descs[l].ticks_per_update);
+            decoders[l].resize(1);
 
             // decoder visible layer descriptors
             Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(2);
@@ -159,19 +118,6 @@ void Hierarchy::step(
     // set importances from params
     for (int i = 0; i < io_sizes.size(); i++)
         set_input_importance(i, params.ios[i].importance);
-
-    // first tick is always 0
-    ticks[0] = 0;
-
-    // add input to first layer history   
-    for (int i = 0; i < io_sizes.size(); i++) {
-        histories[0][i].push_front();
-
-        histories[0][i][0] = input_cis[i];
-    }
-
-    // set all updates to no update, will be set to true if an update occurred later
-    updates.fill(false);
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
