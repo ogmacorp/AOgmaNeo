@@ -67,7 +67,7 @@ public:
             int down_radius = 2,
             int ticks_per_update = 2,
             int temporal_horizon = 2,
-            int conditioning_horizon = 2
+            int conditioning_horizon = 1
         )
         :
         hidden_size(hidden_size),
