@@ -117,6 +117,8 @@ void Hierarchy::step(
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
+        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+
         Array<Int_Buffer_View> layer_input_cis(encoders[l].get_num_visible_layers());
 
         if (l == 0) {
