@@ -18,7 +18,7 @@ void Hierarchy::init_random(
     encoders.resize(layer_descs.size());
     decoders.resize(layer_descs.size());
     hidden_cis_prev.resize(layer_descs.size());
-    feedback_cis_prev.resize(layer_descs.size());
+    feedback_cis_prev.resize(layer_descs.size() - 1);
 
     // cache input sizes
     io_sizes.resize(io_descs.size());
@@ -104,7 +104,9 @@ void Hierarchy::init_random(
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
-        feedback_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        if (l < layer_descs.size() - 1)
+            feedback_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     // initialize params
@@ -128,8 +130,6 @@ void Hierarchy::step(
     for (int l = 0; l < encoders.size(); l++) {
         if (l < encoders.size() - 1)
             feedback_cis_prev[l] = decoders[l + 1][0].get_hidden_cis();
-        else
-            feedback_cis_prev[l] = top_feedback_cis;
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
@@ -161,7 +161,7 @@ void Hierarchy::step(
         if (learn_enabled) {
             // on-policy component
             layer_input_cis[0] = hidden_cis_prev[l];
-            layer_input_cis[1] = feedback_cis_prev[l];
+            layer_input_cis[1] = (l < encoders.size() - 1 ? feedback_cis_prev[l] : top_feedback_cis);
                 
             for (int d = 0; d < decoders[l].size(); d++)
                 decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
@@ -305,7 +305,7 @@ void Hierarchy::read(
     encoders.resize(num_layers);
     decoders.resize(num_layers);
     hidden_cis_prev.resize(num_layers);
-    feedback_cis_prev.resize(num_layers);
+    feedback_cis_prev.resize(num_layers - 1);
 
     i_indices.resize(num_io);
     d_indices.resize(num_io);
@@ -323,7 +323,9 @@ void Hierarchy::read(
             decoders[l][d].read(reader);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
-        feedback_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        if (l < num_layers - 1)
+            feedback_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     params.layers.resize(num_layers);
