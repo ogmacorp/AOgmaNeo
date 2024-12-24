@@ -158,8 +158,11 @@ void Hierarchy::step(
                 layer_input_cis[0] = hidden_cis_prev[l];
                 layer_input_cis[1] = top_feedback_cis;
                     
-                for (int d = 0; d < decoders[l].size(); d++)
+                for (int d = 0; d < decoders[l].size(); d++) {
+                    decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+
                     decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                }
             }
 
             // off-policy component
