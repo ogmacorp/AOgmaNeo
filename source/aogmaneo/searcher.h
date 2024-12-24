@@ -16,16 +16,14 @@ class Searcher {
 public:
     struct Params {
         float lr; // weight learning rate
-        float leak; // relu leak
         int max_dist; // maximum hamming distance from margin CSDR
         int num_explore; // number of units to mutate randomly
 
         Params()
         :
         lr(0.001f),
-        leak(0.01f),
-        max_dist(8),
-        num_explore(4)
+        max_dist(10),
+        num_explore(5)
         {}
     };
 
