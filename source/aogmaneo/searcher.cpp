@@ -84,10 +84,9 @@ void Searcher::step(
     }
 
     // explore
-    for (int c = 0; c < params.num_explore; c++) {
-        int rand_index = rand() % config_cis.size();
-
-        config_cis[rand_index] = rand() % config_size.z;    
+    for (int i = 0; i < num_config_columns; i++) {
+        if (randf() < params.explore_chance)
+            config_cis[i] = rand() % config_size.z;    
     }
 }
 

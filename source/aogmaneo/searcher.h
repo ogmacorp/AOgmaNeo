@@ -16,14 +16,14 @@ class Searcher {
 public:
     struct Params {
         float lr; // weight learning rate
+        float explore_chance; // chance for mutation
         int max_dist; // maximum hamming distance from margin CSDR
-        int num_explore; // number of units to mutate randomly
 
         Params()
         :
         lr(0.001f),
-        max_dist(10),
-        num_explore(5)
+        explore_chance(0.05f),
+        max_dist(10)
         {}
     };
 
