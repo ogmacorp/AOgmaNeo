@@ -23,7 +23,7 @@ public:
         :
         lr(0.001f),
         explore_chance(0.05f),
-        max_dist(16)
+        max_dist(8)
         {}
     };
 
