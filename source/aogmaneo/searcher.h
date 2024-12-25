@@ -24,8 +24,8 @@ public:
         :
         lr(0.001f),
         leak(0.01f),
-        explore_chance(0.05f),
-        max_dist(8)
+        explore_chance(0.03f),
+        max_dist(16)
         {}
     };
 
