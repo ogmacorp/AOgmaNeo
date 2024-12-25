@@ -181,7 +181,7 @@ void Decoder::learn(
     int hidden_di_target = hidden_dis[hidden_cell_index_target];
     int hidden_di_max = hidden_dis[hidden_cell_index_max];
 
-    if (hidden_di_target == -1)
+    if (hidden_di_target == -1 || hidden_di_max == -1)
         return;
 
     int dendrite_index_target = hidden_di_target + num_dendrites_per_cell * hidden_cell_index_target;
