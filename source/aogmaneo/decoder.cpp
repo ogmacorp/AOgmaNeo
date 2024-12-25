@@ -142,8 +142,8 @@ void Decoder::forward(
                 max_index = di;
             }
 
-            if (activation > max_complete_activation) {
-                max_complete_activation = activation;
+            if (sum > max_complete_activation) {
+                max_complete_activation = sum;
                 max_complete_index = di;
             }
         }
