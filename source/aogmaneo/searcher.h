@@ -22,7 +22,7 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.001f),
         leak(0.01f),
         explore_chance(0.05f),
         max_dist(8)

@@ -122,7 +122,9 @@ void Searcher::step(
 
     config_cis = margin_cis;
 
-    for (int c = 0; c < params.max_dist; c++) {
+    int dist = min(params.max_dist, num_config_columns);
+
+    for (int c = 0; c < dist; c++) {
         int max_index = 0;
         float max_temp = limit_min;
 
