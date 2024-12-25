@@ -16,25 +16,32 @@ class Searcher {
 public:
     struct Params {
         float lr; // weight learning rate
-        float explore_chance; // chance for mutation
+        float leak; // relu leak
+        float explore_chance; // column mutation chance
         int max_dist; // maximum hamming distance from margin CSDR
 
         Params()
         :
         lr(0.001f),
-        explore_chance(0.05f),
+        leak(0.01f),
+        explore_chance(0.1f),
         max_dist(8)
         {}
     };
 
 private:
     Int3 config_size; // size of the configuration
+    int num_dendrites;
 
     Int_Buffer config_cis;
 
     Int_Buffer temp_cis;
 
-    Float_Buffer rewards;
+    Float_Buffer dendrite_acts;
+
+    Float_Buffer dendrite_deltas;
+
+    Float_Buffer weights;
 
     Float_Buffer max_temps;
 
@@ -43,7 +50,8 @@ public:
 
     // create with random initialization
     void init_random(
-        const Int3 &config_size // configuration size
+        const Int3 &config_size, // configuration size
+        int num_dendrites
     );
 
     // step the search
