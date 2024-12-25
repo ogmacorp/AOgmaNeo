@@ -25,7 +25,7 @@ public:
         lr(0.001f),
         leak(0.01f),
         explore_chance(0.05f),
-        max_dist(5)
+        max_dist(8)
         {}
     };
 
