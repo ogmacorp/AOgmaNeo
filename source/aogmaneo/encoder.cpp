@@ -20,6 +20,7 @@ void Encoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
+    float count_except = 0.0f;
     float count_all = 0.0f;
     float total_importance = 0.0f;
 
@@ -45,6 +46,7 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         count += vl.importance * sub_count;
+        count_except += vl.importance * sub_count * (vld.size.z - 1);
         count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
@@ -54,8 +56,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            vl.hidden_sums0[hidden_cell_index] = 0;
-            vl.hidden_sums1[hidden_cell_index] = 0;
+            vl.hidden_sums[hidden_cell_index] = 0;
         }
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -73,13 +74,13 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    vl.hidden_sums0[hidden_cell_index] += vl.weights0[wi];
-                    vl.hidden_sums1[hidden_cell_index] += vl.weights1[wi];
+                    vl.hidden_sums[hidden_cell_index] += vl.weights[wi];
                 }
             }
     }
 
     count /= max(limit_small, total_importance);
+    count_except /= max(limit_small, total_importance);
     count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
@@ -93,10 +94,8 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float sum0 = 0.0f;
-        float sum1 = 0.0f;
+        float sum = 0.0f;
         float total = 0.0f;
-        float total1 = 0.0f;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -104,23 +103,18 @@ void Encoder::forward(
 
             float influence = vl.importance * byte_inv;
 
-            sum0 += vl.hidden_sums0[hidden_cell_index] * influence;
-            sum1 += vl.hidden_sums1[hidden_cell_index] * influence;
+            sum += vl.hidden_sums[hidden_cell_index] * influence;
             total += vl.hidden_totals[hidden_cell_index] * influence;
-            total1 += vl.hidden_totals1[hidden_cell_index] * influence;
         }
 
-        sum0 /= max(limit_small, total_importance);
-        sum1 /= max(limit_small, total_importance);
+        sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
-        total1 /= max(limit_small, total_importance);
 
-        // complement
-        sum1 = total1 - sum1;
+        float complemented = (count_all - total) - (count - sum);
 
-        float match = (sum0 + sum1) / count_all;
+        float match = complemented / count_except;
 
-        float activation = (sum0 + sum1) / (params.choice + total);
+        float activation = complemented / (params.choice + count_all - total);
 
         if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
@@ -212,27 +206,13 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    if (vc == in_ci)
-                        continue;
-
-                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
-
-                    Byte w_old0 = vl.weights0[wi];
-
-                    vl.weights0[wi] = max(0, vl.weights0[wi] - ceilf(params.lr * vl.weights0[wi]));
-
-                    vl.hidden_totals[hidden_cell_index_max] += vl.weights0[wi] - w_old0;
-                }
-
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                Byte w_old1 = vl.weights1[wi];
+                Byte w_old = vl.weights[wi];
 
-                vl.weights1[wi] = max(0, vl.weights1[wi] - ceilf(params.lr * vl.weights1[wi]));
+                vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
 
-                vl.hidden_totals[hidden_cell_index_max] += vl.weights1[wi] - w_old1;
-                vl.hidden_totals1[hidden_cell_index_max] += vl.weights1[wi] - w_old1;
+                vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
             }
     }
 }
@@ -261,18 +241,13 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights0.resize(num_hidden_cells * area * vld.size.z);
-        vl.weights1.resize(vl.weights0.size());
+        vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = 255 - (rand() % init_weight_noisei);
-            vl.weights1[i] = 255 - (rand() % init_weight_noisei);
-        }
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = (rand() % init_weight_noisei);
 
-        vl.hidden_sums0.resize(num_hidden_cells);
-        vl.hidden_sums1.resize(num_hidden_cells);
+        vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
-        vl.hidden_totals1.resize(num_hidden_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -312,7 +287,6 @@ void Encoder::init_random(
                 Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
                 int sub_total = 0;
-                int sub_total1 = 0;
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -323,13 +297,11 @@ void Encoder::init_random(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                            sub_total += vl.weights0[wi] + vl.weights1[wi];
-                            sub_total1 += vl.weights1[wi];
+                            sub_total += vl.weights[wi];
                         }
                     }
 
                 vl.hidden_totals[hidden_cell_index] = sub_total;
-                vl.hidden_totals1[hidden_cell_index] = sub_total1;
             }
         }
     }
@@ -363,7 +335,7 @@ long Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights0.size() * sizeof(Byte) + 2 * vl.hidden_totals.size() * sizeof(int) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.hidden_totals.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
@@ -379,7 +351,7 @@ long Encoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += 2 * vl.weights0.size() * sizeof(Byte);
+        size += vl.weights.size() * sizeof(Byte);
     }
 
     return size;
@@ -402,11 +374,9 @@ void Encoder::write(
 
         writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-        writer.write(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
-        writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         writer.write(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
-        writer.write(&vl.hidden_totals1[0], vl.hidden_totals1.size() * sizeof(int));
 
         writer.write(&vl.importance, sizeof(float));
     }
@@ -447,20 +417,15 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights0.resize(num_hidden_cells * area * vld.size.z);
-        vl.weights1.resize(vl.weights0.size());
+        vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
-        reader.read(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
-        reader.read(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
-        vl.hidden_sums0.resize(num_hidden_cells);
-        vl.hidden_sums1.resize(num_hidden_cells);
+        vl.hidden_sums.resize(num_hidden_cells);
 
         vl.hidden_totals.resize(num_hidden_cells);
-        vl.hidden_totals1.resize(num_hidden_cells);
 
         reader.read(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
-        reader.read(&vl.hidden_totals1[0], vl.hidden_totals1.size() * sizeof(int));
 
         reader.read(&vl.importance, sizeof(float));
     }
@@ -484,8 +449,7 @@ void Encoder::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
-        writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
     }
 }
 
@@ -495,8 +459,7 @@ void Encoder::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
-        reader.read(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
     }
 }
 
@@ -510,11 +473,10 @@ void Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights0.size(); i++) {
+            for (int i = 0; i < vl.weights.size(); i++) {
                 int e = rand() % encoders.size();                
 
-                vl.weights0[i] = encoders[e]->visible_layers[vli].weights0[i];
-                vl.weights1[i] = encoders[e]->visible_layers[vli].weights1[i];
+                vl.weights[i] = encoders[e]->visible_layers[vli].weights[i];
             }
         }
 
@@ -524,17 +486,13 @@ void Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights0.size(); i++) {
-                float total0 = 0.0f;
-                float total1 = 0.0f;
+            for (int i = 0; i < vl.weights.size(); i++) {
+                float total = 0.0f;
 
-                for (int e = 0; e < encoders.size(); e++) {
-                    total0 += encoders[e]->visible_layers[vli].weights0[i];
-                    total1 += encoders[e]->visible_layers[vli].weights1[i];
-                }
+                for (int e = 0; e < encoders.size(); e++)
+                    total += encoders[e]->visible_layers[vli].weights[i];
 
-                vl.weights0[i] = roundf(total0 / encoders.size());
-                vl.weights1[i] = roundf(total1 / encoders.size());
+                vl.weights[i] = roundf(total / encoders.size());
             }
         }
 
@@ -574,7 +532,6 @@ void Encoder::merge(
                 Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
                 int sub_total = 0;
-                int sub_total1 = 0;
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -585,13 +542,11 @@ void Encoder::merge(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                            sub_total += vl.weights0[wi] + vl.weights1[wi];
-                            sub_total1 += vl.weights1[wi];
+                            sub_total += vl.weights[wi];
                         }
                     }
 
                 vl.hidden_totals[hidden_cell_index] = sub_total;
-                vl.hidden_totals1[hidden_cell_index] = sub_total1;
             }
         }
     }
