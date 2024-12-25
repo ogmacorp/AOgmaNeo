@@ -28,12 +28,17 @@ void Searcher::init_random(
 
     config_cis = Int_Buffer(num_config_columns, 0);
 
+    temp_cis.resize(num_config_columns);
+
     dendrite_acts.resize(num_dendrites);
 
     dendrite_deltas.resize(num_dendrites);
+
+    max_temps.resize(num_config_columns);
 }
 
 void Searcher::step(
+    Int_Buffer_View margin_cis,
     float reward,
     bool learn_enabled
 ) {
@@ -93,29 +98,49 @@ void Searcher::step(
         dendrite_deltas[di] = ((di >= half_num_dendrites) * 2.0f - 1.0f) * ((dendrite_acts[di] > 0.0f) * (1.0f - params.leak) + params.leak);
 
     for (int i = 0; i < num_config_columns; i++) {
-        if (randf() < params.exploration) 
-            config_cis[i] = rand() % config_size.z;
-        else {
-            int config_ci = 0;
-            float max_grad = limit_min;
+        int config_ci = 0;
+        float max_grad = limit_min;
 
-            for (int cc = 0; cc < config_size.z; cc++) {
-                float grad = 0.0f;
+        for (int cc = 0; cc < config_size.z; cc++) {
+            float grad = 0.0f;
 
-                for (int di = 0; di < num_dendrites; di++) {
-                    int wi = di + num_dendrites * (cc + config_size.z * i);
+            for (int di = 0; di < num_dendrites; di++) {
+                int wi = di + num_dendrites * (cc + config_size.z * i);
 
-                    grad += weights[wi] * dendrite_deltas[di];
-                }
-
-                if (grad > max_grad) {
-                    max_grad = grad;
-                    config_ci = cc;
-                }
+                grad += weights[wi] * dendrite_deltas[di];
             }
 
-            config_cis[i] = config_ci;
+            if (grad > max_grad) {
+                max_grad = grad;
+                config_ci = cc;
+            }
         }
+
+        temp_cis[i] = config_ci;
+        max_temps[i] = max_grad;
+    }
+
+    config_cis = margin_cis;
+
+    for (int c = 0; c < params.max_dist; c++) {
+        int max_index = 0;
+        float max_temp = limit_min;
+
+        for (int i = 0; i < num_config_columns; i++) {
+            if (max_temps[i] > max_temp) {
+                max_temp = max_temps[i];
+                max_index = i;
+            }
+        }
+        
+        config_cis[max_index] = temp_cis[max_index];
+        max_temps[max_index] = limit_min; // reset
+    }
+
+    // explore
+    for (int i = 0; i < num_config_columns; i++) {
+        if (randf() < params.explore_chance)
+            config_cis[i] = rand() % config_size.z;    
     }
 }
 
@@ -163,6 +188,8 @@ void Searcher::read(
 
     reader.read(&config_cis[0], config_cis.size() * sizeof(int));
 
+    temp_cis.resize(num_config_columns);
+
     dendrite_acts.resize(num_dendrites);
 
     dendrite_deltas.resize(num_dendrites);
@@ -170,6 +197,8 @@ void Searcher::read(
     weights.resize(num_dendrites * num_config_cells);
 
     reader.read(&weights[0], weights.size() * sizeof(float));
+
+    max_temps.resize(num_config_columns);
 }
 
 void Searcher::write_state(

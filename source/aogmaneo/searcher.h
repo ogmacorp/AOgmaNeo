@@ -17,13 +17,15 @@ public:
     struct Params {
         float lr; // weight learning rate
         float leak; // relu leak
-        float exploration; // exploration amount
+        float explore_chance; // column mutation chance
+        int max_dist; // maximum hamming distance from margin CSDR
 
         Params()
         :
         lr(0.001f),
         leak(0.01f),
-        exploration(0.05f)
+        explore_chance(0.1f),
+        max_dist(8)
         {}
     };
 
@@ -33,11 +35,15 @@ private:
 
     Int_Buffer config_cis;
 
+    Int_Buffer temp_cis;
+
     Float_Buffer dendrite_acts;
 
     Float_Buffer dendrite_deltas;
 
     Float_Buffer weights;
+
+    Float_Buffer max_temps;
 
 public:
     Params params;
@@ -50,6 +56,7 @@ public:
 
     // step the search
     void step(
+        Int_Buffer_View margin_cis,
         float reward,
         bool learn_enabled
     );
