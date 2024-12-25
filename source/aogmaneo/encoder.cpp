@@ -121,8 +121,8 @@ void Encoder::forward(
             max_index = hc;
         }
 
-        if (sum > max_complete_activation) {
-            max_complete_activation = sum;
+        if (activation > max_complete_activation) {
+            max_complete_activation = activation;
             max_complete_index = hc;
         }
     }
