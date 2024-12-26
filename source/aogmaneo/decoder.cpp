@@ -240,7 +240,7 @@ void Decoder::learn(
                     vl.dendrite_totals[dendrite_index_target] += vl.weights[wi] - w_old;
                 }
 
-                if (hidden_ci != target_ci) {
+                if (hidden_ci != target_ci && hidden_di_max != -1) {
                     int wi = hidden_di_max + num_dendrites_per_cell * (hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
 
                     Byte w_old = vl.weights[wi];
