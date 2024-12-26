@@ -353,7 +353,7 @@ long Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + 2 * vl.hidden_totals.size() * sizeof(int) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.hidden_totals.size() * sizeof(int) + vl.hidden_counts.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
@@ -443,9 +443,11 @@ void Encoder::read(
         vl.hidden_sums.resize(num_hidden_cells);
 
         vl.hidden_totals.resize(num_hidden_cells);
-        vl.hidden_counts.resize(num_hidden_columns);
 
         reader.read(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
+
+        vl.hidden_counts.resize(num_hidden_columns);
+
         reader.read(&vl.hidden_counts[0], vl.hidden_counts.size() * sizeof(int));
 
         reader.read(&vl.importance, sizeof(float));
