@@ -89,8 +89,6 @@ void Encoder::forward(
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
     
-    float max_match = 0.0f;
-
     const float byte_inv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -127,13 +125,11 @@ void Encoder::forward(
             max_complete_activation = activation;
             max_complete_index = hc;
         }
-
-        max_match = max(max_match, match);
     }
 
-    hidden_comparisons[hidden_column_index] = max_match;
+    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
-    hidden_cis[hidden_column_index] = max_complete_index;
+    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
     learn_cis[hidden_column_index] = max_index;
 }
