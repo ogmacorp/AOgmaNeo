@@ -109,7 +109,7 @@ void Encoder::forward(
             int sub_count_except = sub_count * (vld.size.z - 1);
             int sub_count_all = sub_count * vld.size.z;
 
-            float complemented = (sub_count_all - vl.hidden_totals[hidden_cell_index]) - (sub_count - vl.hidden_sums[hidden_cell_index]);
+            float complemented = (sub_count_all - vl.hidden_totals[hidden_cell_index] * byte_inv) - (sub_count - vl.hidden_sums[hidden_cell_index] * byte_inv);
 
             float match = complemented / sub_count_except;
 
