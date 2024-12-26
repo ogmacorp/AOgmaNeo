@@ -106,12 +106,12 @@ void Encoder::forward(
             float influence = vl.importance * byte_inv;
 
             int sub_count = vl.hidden_counts[hidden_column_index];
-            int sub_count_except = vl.hidden_counts[hidden_column_index] * (vld.size.z - 1);
+            int sub_count_except = sub_count * (vld.size.z - 1);
             int sub_count_all = sub_count * vld.size.z;
 
             float complemented = (sub_count_all - vl.hidden_totals[hidden_cell_index]) - (sub_count - vl.hidden_sums[hidden_cell_index]);
 
-            float match = complemented / count_except;
+            float match = complemented / sub_count_except;
 
             float vigilance = 1.0f - params.mismatch / vld.size.z;
 
