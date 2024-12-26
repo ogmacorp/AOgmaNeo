@@ -195,9 +195,6 @@ void Decoder::learn(
     int hidden_di_target = hidden_dis[hidden_cell_index_target];
     int hidden_di_max = hidden_dis[hidden_cell_index_max];
 
-    if (hidden_di_target == -1)
-        return;
-
     int dendrite_index_target = hidden_di_target + num_dendrites_per_cell * hidden_cell_index_target;
     int dendrite_index_max = hidden_di_max + num_dendrites_per_cell * hidden_cell_index_max;
 
@@ -230,7 +227,7 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                {
+                if (hidden_di_target != -1) {
                     int wi = hidden_di_target + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
 
                     Byte w_old = vl.weights[wi];
