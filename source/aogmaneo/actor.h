@@ -32,6 +32,7 @@ public:
     struct Visible_Layer {
         Float_Buffer value_weights;
         Float_Buffer adv_weights;
+        Float_Buffer policy_weights;
     };
 
     // history sample for delayed updates
@@ -43,18 +44,24 @@ public:
     };
 
     struct Params {
-        float lr; // Q learning rate
+        float qlr; // V/A/Q learning rate
+        float plr; // policy learning rate
         float leak; // ReLU leak
         float discount; // discount fActor
+        float reweight_temp; // AWAC reweight temperature (lambda)
+        float max_reweight; // max reweight weight
         float td_scale_decay; // scaling factor slight decay
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        lr(0.01f),
+        qlr(0.01f),
+        plr(0.01f),
         leak(0.01f),
         discount(0.99f),
+        reweight_temp(1.0f),
+        max_reweight(16.0f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
@@ -73,7 +80,9 @@ private:
     Float_Buffer hidden_td_scales;
 
     Float_Buffer hidden_advs;
+    Float_Buffer hidden_acts;
 
+    Float_Buffer dendrite_advs;
     Float_Buffer dendrite_acts;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
