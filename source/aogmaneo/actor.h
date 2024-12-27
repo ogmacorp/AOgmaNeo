@@ -61,7 +61,7 @@ public:
         leak(0.01f),
         discount(0.99f),
         reweight_temp(1.0f),
-        max_reweight(16.0f),
+        max_reweight(128.0f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
