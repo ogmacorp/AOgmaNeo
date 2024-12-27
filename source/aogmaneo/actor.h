@@ -57,10 +57,10 @@ public:
         Params()
         :
         qlr(0.01f),
-        plr(0.1f),
+        plr(0.01f),
         leak(0.01f),
         discount(0.99f),
-        reweight_temp(8.0f),
+        reweight_temp(1.0f),
         max_reweight(128.0f),
         td_scale_decay(0.999f),
         n_steps(8),
