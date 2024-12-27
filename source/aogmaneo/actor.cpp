@@ -512,6 +512,7 @@ void Actor::init_random(
     hidden_advs.resize(num_hidden_cells);
     hidden_acts.resize(num_hidden_cells);
 
+    dendrite_advs.resize(num_dendrites);
     dendrite_acts.resize(num_dendrites);
 
     // create (pre-allocated) history samples
@@ -709,6 +710,7 @@ void Actor::read(
     hidden_advs.resize(num_hidden_cells);
     hidden_acts.resize(num_hidden_cells);
 
+    dendrite_advs.resize(num_dendrites);
     dendrite_acts.resize(num_dendrites);
 
     int num_visible_layers;
