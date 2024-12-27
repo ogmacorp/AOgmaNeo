@@ -34,6 +34,7 @@ public:
         
         Int_Buffer hidden_sums;
         Int_Buffer hidden_totals;
+        Int_Buffer hidden_counts;
 
         float importance;
 
@@ -45,15 +46,15 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float mismatch; // used to determine vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.8f),
+        choice(0.0001f),
+        mismatch(2.0f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
