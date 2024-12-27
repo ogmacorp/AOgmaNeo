@@ -155,7 +155,7 @@ void Actor::forward(
         }
     }
     
-    hidden_cis[hidden_column_index] = select_index;
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Actor::learn(
