@@ -439,7 +439,7 @@ void Actor::learn(
 
             // re-use as deltas
             dendrite_advs[dendrite_index] = adv_error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_advs[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
-            dendrite_acts[dendrite_index] = policy_error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_advs[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+            dendrite_acts[dendrite_index] = policy_error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
         }
     }
 
