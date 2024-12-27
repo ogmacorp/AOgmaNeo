@@ -496,9 +496,12 @@ void Actor::init_random(
             vl.value_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         vl.adv_weights.resize(num_dendrites * area * vld.size.z);
+        vl.policy_weights.resize(vl.adv_weights.size());
 
-        for (int i = 0; i < vl.adv_weights.size(); i++)
+        for (int i = 0; i < vl.adv_weights.size(); i++) {
             vl.adv_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
+            vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
+        }
     }
 
     // hidden cis
@@ -593,7 +596,7 @@ long Actor::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.value_weights.size() * sizeof(float) + vl.adv_weights.size() * sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.value_weights.size() * sizeof(float) + 2 * vl.adv_weights.size() * sizeof(float);
     }
 
     size += 3 * sizeof(int);
@@ -635,7 +638,7 @@ long Actor::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += vl.value_weights.size() * sizeof(float) + vl.adv_weights.size() * sizeof(float);
+        size += vl.value_weights.size() * sizeof(float) + 2 * vl.adv_weights.size() * sizeof(float);
     }
 
     return size;
@@ -662,6 +665,7 @@ void Actor::write(
 
         writer.write(&vl.value_weights[0], vl.value_weights.size() * sizeof(float));
         writer.write(&vl.adv_weights[0], vl.adv_weights.size() * sizeof(float));
+        writer.write(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
     }
 
     writer.write(&history_size, sizeof(int));
@@ -731,8 +735,10 @@ void Actor::read(
         reader.read(&vl.value_weights[0], vl.value_weights.size() * sizeof(float));
 
         vl.adv_weights.resize(num_dendrites * area * vld.size.z);
+        vl.policy_weights.resize(vl.adv_weights.size());
 
         reader.read(&vl.adv_weights[0], vl.adv_weights.size() * sizeof(float));
+        reader.read(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
     }
 
     reader.read(&history_size, sizeof(int));
@@ -827,6 +833,7 @@ void Actor::write_weights(
 
         writer.write(&vl.value_weights[0], vl.value_weights.size() * sizeof(float));
         writer.write(&vl.adv_weights[0], vl.adv_weights.size() * sizeof(float));
+        writer.write(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
     }
 }
 
@@ -838,6 +845,7 @@ void Actor::read_weights(
 
         reader.read(&vl.value_weights[0], vl.value_weights.size() * sizeof(float));
         reader.read(&vl.adv_weights[0], vl.adv_weights.size() * sizeof(float));
+        reader.read(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
     }
 }
 
@@ -861,6 +869,12 @@ void Actor::merge(
                 int d = rand() % actors.size();                
 
                 vl.adv_weights[i] = actors[d]->visible_layers[vli].adv_weights[i];
+            }
+
+            for (int i = 0; i < vl.policy_weights.size(); i++) {
+                int d = rand() % actors.size();                
+
+                vl.policy_weights[i] = actors[d]->visible_layers[vli].policy_weights[i];
             }
         }
 
@@ -886,6 +900,15 @@ void Actor::merge(
                     total += actors[d]->visible_layers[vli].adv_weights[i];
 
                 vl.adv_weights[i] = total / actors.size();
+            }
+
+            for (int i = 0; i < vl.policy_weights.size(); i++) {
+                float total = 0.0f;
+
+                for (int d = 0; d < actors.size(); d++)
+                    total += actors[d]->visible_layers[vli].policy_weights[i];
+
+                vl.policy_weights[i] = total / actors.size();
             }
         }
 
