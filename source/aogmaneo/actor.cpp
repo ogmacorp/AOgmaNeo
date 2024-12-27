@@ -113,10 +113,9 @@ void Actor::forward(
 
         act *= activation_scale;
 
-        if (act > max_act) {
-            max_act = act;
-            max_index = hc;
-        }
+        hidden_acts[hidden_cell_index] = act;
+
+        max_act = max(max_act, act);
     }
 
     // softmax
@@ -155,7 +154,7 @@ void Actor::forward(
         }
     }
     
-    hidden_cis[hidden_column_index] = max_index;
+    hidden_cis[hidden_column_index] = select_index;
 }
 
 void Actor::learn(
