@@ -17,14 +17,12 @@ public:
     struct Params {
         float lr; // weight learning rate
         float leak; // relu leak
-        float explore_chance; // column mutation chance
         int max_dist; // maximum hamming distance from margin CSDR
 
         Params()
         :
-        lr(0.001f),
+        lr(0.01f),
         leak(0.01f),
-        explore_chance(0.05f),
         max_dist(8)
         {}
     };

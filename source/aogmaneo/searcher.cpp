@@ -138,12 +138,6 @@ void Searcher::step(
         config_cis[max_index] = temp_cis[max_index];
         max_temps[max_index] = limit_min; // reset
     }
-
-    // explore
-    for (int i = 0; i < num_config_columns; i++) {
-        if (randf() < params.explore_chance)
-            config_cis[i] = rand() % config_size.z;    
-    }
 }
 
 void Searcher::clear_state() {
