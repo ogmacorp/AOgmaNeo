@@ -23,7 +23,7 @@ public:
         :
         lr(0.001f),
         leak(0.01f),
-        max_dist(8)
+        max_dist(4)
         {}
     };
 
