@@ -18,12 +18,14 @@ void Hierarchy::init_random(
     encoders.resize(layer_descs.size());
     decoders.resize(layer_descs.size());
     hidden_cis_prev.resize(layer_descs.size());
+    feedback_cis_prev.resize(layer_descs.size() - 1);
 
     // cache input sizes
     io_sizes.resize(io_descs.size());
     io_types.resize(io_descs.size());
 
     int num_predictions = 0;
+    int num_actions = 0;
 
     for (int i = 0; i < io_sizes.size(); i++) {
         io_sizes[i] = io_descs[i].size;
@@ -31,6 +33,8 @@ void Hierarchy::init_random(
 
         if (io_descs[i].type == prediction)
             num_predictions++;
+        else if (io_descs[i].type == action)
+            num_actions++;
     }
 
     // iterate through layers
@@ -46,10 +50,11 @@ void Hierarchy::init_random(
                 e_visible_layer_descs[i].size = io_sizes[i];
                 e_visible_layer_descs[i].radius = io_descs[i].up_radius;
             }
-            
-            decoders[l].resize(num_predictions);
 
-            i_indices.resize(io_sizes.size());
+            decoders[l].resize(num_predictions);
+            actors.resize(num_actions);
+
+            i_indices.resize(io_sizes.size() * 2);
             d_indices = Int_Buffer(io_sizes.size(), -1);
 
             // create decoders and actors
@@ -58,15 +63,38 @@ void Hierarchy::init_random(
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == prediction) {
                     // decoder visible layer descriptors
-                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(2);
+                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
 
                     d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
                     d_visible_layer_descs[0].radius = io_descs[i].down_radius;
-                    d_visible_layer_descs[1] = d_visible_layer_descs[0];
+
+                    if (l < encoders.size() - 1)
+                        d_visible_layer_descs[1] = d_visible_layer_descs[0];
 
                     decoders[l][d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, d_visible_layer_descs);
 
                     i_indices[d_index] = i;
+                    d_indices[i] = d_index;
+                    d_index++;
+                }
+            }
+
+            d_index = 0;
+
+            for (int i = 0; i < io_sizes.size(); i++) {
+                if (io_descs[i].type == action) {
+                    // decoder visible layer descriptors
+                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(1 + (l < encoders.size() - 1));
+
+                    a_visible_layer_descs[0].size = layer_descs[l].hidden_size;
+                    a_visible_layer_descs[0].radius = io_descs[i].down_radius;
+
+                    if (l < encoders.size() - 1)
+                        a_visible_layer_descs[1] = a_visible_layer_descs[0];
+
+                    actors[d_index].init_random(io_sizes[i], io_descs[i].value_num_dendrites_per_cell, io_descs[i].num_dendrites_per_cell, io_descs[i].history_capacity, a_visible_layer_descs);
+
+                    i_indices[io_sizes.size() + d_index] = i;
                     d_indices[i] = d_index;
                     d_index++;
                 }
@@ -81,28 +109,32 @@ void Hierarchy::init_random(
             decoders[l].resize(1);
 
             // decoder visible layer descriptors
-            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(2);
+            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
 
             d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
             d_visible_layer_descs[0].radius = layer_descs[l].down_radius;
-            d_visible_layer_descs[1] = d_visible_layer_descs[0];
+
+            if (l < encoders.size() - 1)
+                d_visible_layer_descs[1] = d_visible_layer_descs[0];
 
             // create decoders
-            for (int t = 0; t < decoders[l].size(); t++)
-                decoders[l][t].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
+            decoders[l][0].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
         }
-        
+
         if (layer_descs[l].recurrent_radius > -1) {
             int last_index = e_visible_layer_descs.size() - 1;
 
             e_visible_layer_descs[last_index].size = layer_descs[l].hidden_size;
             e_visible_layer_descs[last_index].radius = layer_descs[l].recurrent_radius;
         }
-
+        
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        if (l < encoders.size() - 1)
+            feedback_cis_prev[l] = encoders[l].get_hidden_cis();
     }
 
     // initialize params
@@ -112,20 +144,24 @@ void Hierarchy::init_random(
 
 void Hierarchy::step(
     const Array<Int_Buffer_View> &input_cis,
-    Int_Buffer_View top_feedback_cis,
     bool learn_enabled,
-    bool marginalize
+    float reward,
+    float mimic
 ) {
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
     // set importances from params
     for (int i = 0; i < io_sizes.size(); i++)
-        set_input_importance(i, params.ios[i].importance);
+        encoders[0].get_visible_layer(i).importance = params.ios[i].importance;
 
     // forward
     for (int l = 0; l < encoders.size(); l++) {
+        // copy to prev
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        if (l < encoders.size() - 1)
+            feedback_cis_prev[l] = decoders[l + 1][0].get_hidden_cis();
 
         Array<Int_Buffer_View> layer_input_cis(encoders[l].get_num_visible_layers());
 
@@ -149,30 +185,34 @@ void Hierarchy::step(
     }
 
     // backward
-    for (int l = encoders.size() - 1; l >= 0; l--) {
-        Array<Int_Buffer_View> layer_input_cis(2);
+    for (int l = decoders.size() - 1; l >= 0; l--) {
+        Array<Int_Buffer_View> layer_input_cis(1 + (l < encoders.size() - 1));
 
         if (learn_enabled) {
-            if (l == encoders.size() - 1 && marginalize) {
-                // on-policy component
-                layer_input_cis[0] = hidden_cis_prev[l];
-                layer_input_cis[1] = top_feedback_cis;
-                    
-                for (int d = 0; d < decoders[l].size(); d++) {
-                    decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+            layer_input_cis[0] = hidden_cis_prev[l];
+            
+            if (l < encoders.size() - 1) {
+                // learn on feedback
+                layer_input_cis[1] = feedback_cis_prev[l];
 
+                for (int d = 0; d < decoders[l].size(); d++)
                     decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+
+                if (params.anticipation) {
+                    // learn on actual
+                    layer_input_cis[1] = encoders[l].get_hidden_cis();
+
+                    for (int d = 0; d < decoders[l].size(); d++) {
+                        // need to re-activate for this
+                        decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+
+                        decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                    }
                 }
             }
-
-            // off-policy component
-            layer_input_cis[0] = hidden_cis_prev[l];
-            layer_input_cis[1] = encoders[l].get_hidden_cis();
-                
-            for (int d = 0; d < decoders[l].size(); d++) {
-                decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
-
-                decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+            else {
+                for (int d = 0; d < decoders[l].size(); d++)
+                    decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
             }
         }
 
@@ -180,11 +220,14 @@ void Hierarchy::step(
         
         if (l < encoders.size() - 1)
             layer_input_cis[1] = decoders[l + 1][0].get_hidden_cis();
-        else
-            layer_input_cis[1] = top_feedback_cis;
 
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+
+        if (l == 0) {
+            for (int d = 0; d < actors.size(); d++)
+                actors[d].step(layer_input_cis, input_cis[i_indices[d + io_sizes.size()]], learn_enabled, reward, mimic, params.ios[i_indices[d + io_sizes.size()]].actor);
+        }
     }
 }
 
@@ -196,10 +239,14 @@ void Hierarchy::clear_state() {
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].clear_state();
     }
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].clear_state();
 }
 
 long Hierarchy::size() const {
-    long size = 3 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
+    long size = 4 * sizeof(int) + io_sizes.size() * sizeof(Int3) + io_types.size() * sizeof(Byte) + i_indices.size() * sizeof(int) + d_indices.size() * sizeof(int);
 
     for (int l = 0; l < encoders.size(); l++) {
         size += encoders[l].size();
@@ -208,10 +255,13 @@ long Hierarchy::size() const {
             size += decoders[l][d].size();
     }
 
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        size += actors[d].size();
+
     // params
     size += encoders.size() * sizeof(Layer_Params);
     size += io_sizes.size() * sizeof(IO_Params);
-    size += sizeof(Byte);
 
     return size;
 }
@@ -227,6 +277,10 @@ long Hierarchy::state_size() const {
             size += decoders[l][d].state_size();
     }
 
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        size += actors[d].state_size();
+
     return size;
 }
 
@@ -239,6 +293,10 @@ long Hierarchy::weights_size() const {
         for (int d = 0; d < decoders[l].size(); d++)
             size += decoders[l][d].weights_size();
     }
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        size += actors[d].weights_size();
 
     return size;
 }
@@ -255,8 +313,10 @@ void Hierarchy::write(
     writer.write(&num_io, sizeof(int));
 
     int num_predictions = decoders[0].size();
+    int num_actions = actors.size();
 
     writer.write(&num_predictions, sizeof(int));
+    writer.write(&num_actions, sizeof(int));
 
     writer.write(&io_sizes[0], num_io * sizeof(Int3));
     writer.write(&io_types[0], num_io * sizeof(Byte));
@@ -272,12 +332,18 @@ void Hierarchy::write(
             decoders[l][d].write(writer);
     }
     
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].write(writer);
+
     // params
     for (int l = 0; l < encoders.size(); l++)
         writer.write(&params.layers[l], sizeof(Layer_Params));
 
     for (int i = 0; i < io_sizes.size(); i++)
         writer.write(&params.ios[i], sizeof(IO_Params));
+
+    writer.write(&params.anticipation, sizeof(Byte));
 }
 
 void Hierarchy::read(
@@ -292,8 +358,10 @@ void Hierarchy::read(
     reader.read(&num_io, sizeof(int));
 
     int num_predictions;
+    int num_actions;
 
     reader.read(&num_predictions, sizeof(int));
+    reader.read(&num_actions, sizeof(int));
 
     io_sizes.resize(num_io);
     io_types.resize(num_io);
@@ -304,8 +372,9 @@ void Hierarchy::read(
     encoders.resize(num_layers);
     decoders.resize(num_layers);
     hidden_cis_prev.resize(num_layers);
+    feedback_cis_prev.resize(num_layers - 1);
 
-    i_indices.resize(num_io);
+    i_indices.resize(num_io * 2);
     d_indices.resize(num_io);
 
     reader.read(&i_indices[0], i_indices.size() * sizeof(int));
@@ -321,7 +390,16 @@ void Hierarchy::read(
             decoders[l][d].read(reader);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+
+        if (l < encoders.size() - 1)
+            feedback_cis_prev[l] = encoders[l].get_hidden_cis();
     }
+
+    actors.resize(num_actions);
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].read(reader);
 
     params.layers.resize(num_layers);
     params.ios.resize(num_io);
@@ -331,6 +409,8 @@ void Hierarchy::read(
 
     for (int i = 0; i < num_io; i++)
         reader.read(&params.ios[i], sizeof(IO_Params));
+
+    reader.read(&params.anticipation, sizeof(Byte));
 }
 
 void Hierarchy::write_state(
@@ -343,6 +423,9 @@ void Hierarchy::write_state(
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].write_state(writer);
     }
+
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].write_state(writer);
 }
 
 void Hierarchy::read_state(
@@ -355,6 +438,10 @@ void Hierarchy::read_state(
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].read_state(reader);
     }
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].read_state(reader);
 }
 
 void Hierarchy::write_weights(
@@ -367,6 +454,9 @@ void Hierarchy::write_weights(
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].write_weights(writer);
     }
+
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].write_weights(writer);
 }
 
 void Hierarchy::read_weights(
@@ -379,6 +469,10 @@ void Hierarchy::read_weights(
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].read_weights(reader);
     }
+
+    // actors
+    for (int d = 0; d < actors.size(); d++)
+        actors[d].read_weights(reader);
 }
 
 void Hierarchy::merge(
@@ -401,5 +495,15 @@ void Hierarchy::merge(
 
             decoders[l][d].merge(merge_decoders, mode);
         }
+    }
+    
+    // actors
+    Array<Actor*> merge_actors(hierarchies.size());
+
+    for (int d = 0; d < actors.size(); d++) {
+        for (int h = 0; h < hierarchies.size(); h++)
+            merge_actors[h] = &hierarchies[h]->actors[d];
+
+        actors[d].merge(merge_actors, mode);
     }
 }
