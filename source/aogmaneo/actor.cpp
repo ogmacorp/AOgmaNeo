@@ -89,7 +89,6 @@ void Actor::forward(
     const float dendrite_scale = sqrtf(1.0f / count);
     const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
-    int max_index = 0;
     float max_act = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -111,13 +110,48 @@ void Actor::forward(
 
         act *= activation_scale;
 
-        if (act > max_act) {
-            max_act = act;
-            max_index = hc;
-        }
+        hidden_acts[hidden_cell_index] = act;
+
+        max_act = max(max_act, act);
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    // softmax
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_act);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
+    }
+
+    float cusp = randf(state);
+
+    int select_index = 0;
+    float sum_so_far = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        sum_so_far += hidden_acts[hidden_cell_index];
+
+        if (sum_so_far >= cusp) {
+            select_index = hc;
+
+            break;
+        }
+    }
+    
+    hidden_cis[hidden_column_index] = select_index;
 }
 
 void Actor::learn(
@@ -374,7 +408,7 @@ void Actor::learn(
 
         float adv_error = params.qlr * ((hc == target_ci) - hidden_size_z_inv) * scaled_td_error;
 
-        float policy_error = params.plr * ((hc == target_ci) * (hidden_advs[hidden_cell_index] - min_adv_prev) - hidden_acts[hidden_cell_index]);
+        float policy_error = params.plr * ((hc == target_ci) * expf(min(params.max_reweight_adv,hidden_advs[hidden_cell_index] * params.reweight)) - hidden_acts[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
