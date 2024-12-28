@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -402,7 +403,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    float value_delta = params.qlr * scaled_td_error;
+    float value_delta = params.qlr * td_error;
 
     // softmax
     float total_adv = 0.0f;
@@ -433,11 +434,11 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float adv_error = params.qlr * ((hc == target_ci) - hidden_size_z_inv) * scaled_td_error;
+        float adv_error = params.qlr * ((hc == target_ci) - hidden_size_z_inv) * td_error;
 
         float reweight = hidden_advs[hidden_cell_index];
 
-        float policy_error = params.plr * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * reweight;
+        float policy_error = params.plr * scaled_td_error * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
