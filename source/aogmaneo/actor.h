@@ -48,8 +48,7 @@ public:
         float plr; // policy learning rate
         float leak; // ReLU leak
         float discount; // discount fActor
-        float reweight_temp; // AWAC reweight temperature (lambda)
-        float max_reweight; // max reweight weight
+        float reweight; // AWAC reweight strength (1 / lambda)
         float td_scale_decay; // scaling factor slight decay
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
@@ -57,11 +56,10 @@ public:
         Params()
         :
         qlr(0.01f),
-        plr(0.1f),
+        plr(0.01f),
         leak(0.01f),
         discount(0.99f),
-        reweight_temp(1.0f),
-        max_reweight(128.0f),
+        reweight(16.0f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
