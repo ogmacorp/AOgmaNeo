@@ -438,7 +438,7 @@ void Actor::learn(
 
         float reweight = hidden_advs[hidden_cell_index];
 
-        float policy_error = params.plr * scaled_td_error * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        float policy_error = params.plr * scaled_td_error * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * reweight;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
