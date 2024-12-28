@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -99,7 +98,6 @@ void Actor::forward(
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
         float act = 0.0f;
-        float adv = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -381,10 +379,10 @@ void Actor::learn(
         hidden_advs[hidden_cell_index] = adv;
         hidden_acts[hidden_cell_index] = act;
 
-        average_adv_prev += adv;
-
         max_adv_prev = max(max_adv_prev, adv);
         max_act_prev = max(max_act_prev, act);
+
+        average_adv_prev += adv;
     }
 
     average_adv_prev *= hidden_size_z_inv;
@@ -407,21 +405,26 @@ void Actor::learn(
     float value_delta = params.qlr * scaled_td_error;
 
     // softmax
+    float total_adv = 0.0f;
     float total_act = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
+        hidden_advs[hidden_cell_index] = expf((hidden_advs[hidden_cell_index] - max_adv_prev) * params.reweight);
         hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_act_prev);
 
+        total_adv += hidden_advs[hidden_cell_index];
         total_act += hidden_acts[hidden_cell_index];
     }
 
+    float total_adv_inv = 1.0f / max(limit_small, total_adv);
     float total_act_inv = 1.0f / max(limit_small, total_act);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
+        hidden_advs[hidden_cell_index] *= total_adv_inv;
         hidden_acts[hidden_cell_index] *= total_act_inv;
     }
 
@@ -432,9 +435,9 @@ void Actor::learn(
 
         float adv_error = params.qlr * ((hc == target_ci) - hidden_size_z_inv) * scaled_td_error;
 
-        float reweight = min(128.0f, expf(hidden_advs[hidden_cell_index] * params.reweight));
+        float reweight = hidden_advs[hidden_cell_index];
 
-        float policy_error = params.plr * ((hc == target_ci) * reweight - hidden_acts[hidden_cell_index]);
+        float policy_error = params.plr * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * reweight;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
