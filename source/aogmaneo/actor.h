@@ -59,7 +59,7 @@ public:
         plr(0.01f),
         leak(0.01f),
         discount(0.99f),
-        reweight(1.0f),
+        reweight(8.0f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
