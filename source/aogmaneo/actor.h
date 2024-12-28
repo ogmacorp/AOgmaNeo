@@ -55,8 +55,8 @@ public:
 
         Params()
         :
-        qlr(0.001f),
-        plr(0.001f),
+        qlr(0.01f),
+        plr(0.01f),
         leak(0.01f),
         discount(0.99f),
         reweight(1.0f),

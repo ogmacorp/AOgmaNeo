@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -267,8 +266,6 @@ void Actor::learn(
 
         adv *= activation_scale;
 
-        hidden_advs[hidden_cell_index] = adv;
-
         max_adv_next = max(max_adv_next, adv);
 
         average_adv_next += adv;
@@ -438,7 +435,7 @@ void Actor::learn(
 
         float reweight = hidden_advs[hidden_cell_index];
 
-        float policy_error = params.plr * scaled_td_error * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * reweight;
+        float policy_error = params.plr * ((hc == target_ci) - hidden_acts[hidden_cell_index]) * reweight;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
