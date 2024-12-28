@@ -49,7 +49,6 @@ public:
         float leak; // ReLU leak
         float discount; // discount fActor
         float reweight; // reweight from AWAC
-        float max_reweight_adv; // max advantage for stability
         float td_scale_decay; // scaling factor slight decay
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
@@ -60,8 +59,7 @@ public:
         plr(0.01f),
         leak(0.01f),
         discount(0.99f),
-        reweight(4.0f),
-        max_reweight_adv(8.0f),
+        reweight(1.0f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
