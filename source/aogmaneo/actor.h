@@ -46,21 +46,19 @@ public:
         float delay_rate; // rate of delayed value and policy weights
         float policy_clip; // PPO policy clipping coefficient
         float discount; // discount factor
-        float td_scale_decay; // slight decay on max abs td
         float trace_decay; // eligibility trace decay
         float trace_squash; // squash traces to be in a smaller range
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.01f),
+        vlr(0.001f),
+        plr(0.001f),
         leak(0.01f),
         delay_rate(0.002f),
-        policy_clip(0.3f),
+        policy_clip(0.5f),
         discount(0.99f),
-        td_scale_decay(0.999f),
         trace_decay(0.97f),
-        trace_squash(0.1f)
+        trace_squash(1.0f)
         {}
     };
 
@@ -83,8 +81,6 @@ private:
     Float_Buffer policy_dendrite_acts_delayed;
 
     Float_Buffer hidden_values; // hidden value function output buffer
-
-    Float_Buffer hidden_td_scales;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
