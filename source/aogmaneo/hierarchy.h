@@ -28,6 +28,7 @@ public:
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
+        int value_num_dendrites_per_cell; // just value
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -36,6 +37,7 @@ public:
             const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
+            int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
             int down_radius = 2
         )
@@ -43,6 +45,7 @@ public:
         size(size),
         type(type),
         num_dendrites_per_cell(num_dendrites_per_cell),
+        value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius)
         {}
@@ -151,7 +154,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f // reward
+        float reward = 0.0f, // reward
+        float mimic = 0.0f // mimicry mode
     );
 
     void clear_state();
@@ -216,7 +220,8 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        assert(io_types[i] == prediction);
+        if (io_types[i] == action)
+            return actors[d_indices[i]].get_hidden_acts();
 
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
