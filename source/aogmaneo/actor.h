@@ -52,11 +52,11 @@ public:
 
         Params()
         :
-        vlr(0.02f),
-        plr(0.02f),
+        vlr(0.01f),
+        plr(0.01f),
         leak(0.01f),
         delay_rate(0.002f),
-        policy_clip(0.2f),
+        policy_clip(0.3f),
         discount(0.99f),
         td_scale_decay(0.999f),
         trace_decay(0.97f),
