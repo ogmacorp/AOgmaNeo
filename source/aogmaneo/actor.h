@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -31,54 +31,50 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer value_weights;
-        Float_Buffer value_traces;
-        Float_Buffer policy_weights;
-        Float_Buffer policy_weights_delayed;
-        Float_Buffer policy_traces;
+        Float_Buffer adv_weights;
+    };
 
-        Int_Buffer input_cis_prev;
+    // history sample for delayed updates
+    struct History_Sample {
+        Array<Int_Buffer> input_cis;
+        Int_Buffer hidden_target_cis_prev;
+
+        float reward;
     };
 
     struct Params {
-        float vlr; // value learning rate
+        float qlr; // V/A/Q learning rate
         float plr; // policy learning rate
-        float leak; // dendrite ReLU leak
-        float delay_rate; // rate of delayed value and policy weights
-        float policy_clip; // PPO policy clipping coefficient
-        float discount; // discount factor
-        float trace_decay; // eligibility trace decay
+        float leak; // ReLU leak
+        float discount; // discount fActor
+        int n_steps; // q steps
+        int history_iters; // number of iterations over samples
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.002f),
+        qlr(0.001f),
+        plr(0.001f),
         leak(0.01f),
-        delay_rate(0.002f),
-        policy_clip(0.2f),
         discount(0.99f),
-        trace_decay(0.97f)
+        n_steps(8),
+        history_iters(16)
         {}
     };
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int value_num_dendrites_per_cell;
-    int policy_num_dendrites_per_cell;
+    int num_dendrites_per_cell;
+
+    // current history size - fixed after initialization. determines length of wait before updating
+    int history_size;
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_prev;
-    Float_Buffer hidden_acts_delayed;
-    Float_Buffer hidden_acts_delayed_prev;
+    Float_Buffer hidden_advs;
 
-    Float_Buffer value_dendrite_acts;
-    Float_Buffer value_dendrite_acts_prev;
-    Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_prev;
-    Float_Buffer policy_dendrite_acts_delayed;
+    Float_Buffer dendrite_advs;
 
-    Float_Buffer hidden_values; // hidden value function output buffer
+    Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
@@ -89,11 +85,13 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        Int_Buffer_View hidden_target_cis_prev,
-        float reward,
-        float mimic,
-        bool learn_enabled,
         unsigned long* state,
+        const Params &params
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        int t,
         const Params &params
     );
 
@@ -101,8 +99,8 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int value_num_dendrites_per_cell,
-        int policy_num_dendrites_per_cell,
+        int num_dendrites_per_cell,
+        int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
@@ -112,7 +110,6 @@ public:
         Int_Buffer_View hidden_target_cis_prev,
         bool learn_enabled,
         float reward,
-        float mimic,
         const Params &params
     );
 
@@ -171,14 +168,22 @@ public:
         return hidden_cis;
     }
 
-    // get hidden activations (probabilities) for actions
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
+    // get hidden advs
+    const Float_Buffer &get_hidden_advs() const {
+        return hidden_advs;
     }
 
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    int get_history_capacity() const {
+        return history_samples.size();
+    }
+
+    int get_history_size() const {
+        return history_size;
     }
 
     // merge list of decoders and write to this one
