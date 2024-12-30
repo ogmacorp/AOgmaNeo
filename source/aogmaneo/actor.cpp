@@ -215,10 +215,6 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
 
-        hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
-        
-        float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
-
         int target_ci = hidden_target_cis_prev[hidden_column_index];
 
         // probability ratio
@@ -229,7 +225,7 @@ void Actor::forward(
 
         float value_delta = params.vlr * td_error;
 
-        float policy_delta_partial = params.plr * ((1.0f - mimic) * tanhf(td_error) + mimic);
+        float policy_delta_partial = params.plr * ((1.0f - mimic) * tanhf(td_error) * (!clip) + mimic);
 
         for (int di = 0; di < value_num_dendrites_per_cell; di++) {
             int dendrite_index = di + value_dendrites_start;
@@ -376,7 +372,6 @@ void Actor::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
-    hidden_td_scales = Float_Buffer(num_hidden_columns, 0.0f);
 
     value_dendrite_acts.resize(value_num_dendrites);
     value_dendrite_acts_prev = Float_Buffer(value_num_dendrites, 0.0f);
@@ -450,7 +445,7 @@ void Actor::clear_state() {
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + 2 * sizeof(int) + hidden_cis.size() * sizeof(int) + 2 * hidden_values.size() * sizeof(float) + 2 * hidden_acts_prev.size() * sizeof(float) + value_dendrite_acts_prev.size() * sizeof(float) + policy_dendrite_acts_prev.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + 2 * sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + 2 * hidden_acts_prev.size() * sizeof(float) + value_dendrite_acts_prev.size() * sizeof(float) + policy_dendrite_acts_prev.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -495,7 +490,6 @@ void Actor::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     writer.write(&hidden_values[0], hidden_values.size() * sizeof(float));
-    writer.write(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
     writer.write(&hidden_acts_prev[0], hidden_acts_prev.size() * sizeof(float));
     writer.write(&hidden_acts_delayed_prev[0], hidden_acts_delayed_prev.size() * sizeof(float));
     writer.write(&value_dendrite_acts_prev[0], value_dendrite_acts_prev.size() * sizeof(float));
@@ -534,7 +528,6 @@ void Actor::read(
     
     hidden_cis.resize(num_hidden_columns);
     hidden_values.resize(num_hidden_columns);
-    hidden_td_scales.resize(num_hidden_columns);
     hidden_acts_prev.resize(num_hidden_cells);
     hidden_acts_delayed_prev.resize(num_hidden_cells);
     value_dendrite_acts_prev.resize(value_num_dendrites);
@@ -542,7 +535,6 @@ void Actor::read(
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_values[0], hidden_values.size() * sizeof(float));
-    reader.read(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
     reader.read(&hidden_acts_prev[0], hidden_acts_prev.size() * sizeof(float));
     reader.read(&hidden_acts_delayed_prev[0], hidden_acts_delayed_prev.size() * sizeof(float));
     reader.read(&value_dendrite_acts_prev[0], value_dendrite_acts_prev.size() * sizeof(float));
