@@ -388,14 +388,14 @@ void Actor::learn(
 
     float td_error = target_q - q_prev;
 
-    float value_delta = params.qlr * td_error;
+    float value_delta = params.lr * td_error;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float adv_error = params.qlr * ((hc == target_ci) - hidden_size_z_inv) * td_error;
+        float adv_error = params.lr * ((hc == target_ci) - hidden_size_z_inv) * td_error;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;

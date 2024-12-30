@@ -43,8 +43,7 @@ public:
     };
 
     struct Params {
-        float qlr; // V/A/Q learning rate
-        float plr; // policy learning rate
+        float lr; // V/A/Q learning rate
         float leak; // ReLU leak
         float discount; // discount fActor
         int n_steps; // q steps
@@ -52,8 +51,7 @@ public:
 
         Params()
         :
-        qlr(0.001f),
-        plr(0.001f),
+        lr(0.001f),
         leak(0.01f),
         discount(0.99f),
         n_steps(8),
