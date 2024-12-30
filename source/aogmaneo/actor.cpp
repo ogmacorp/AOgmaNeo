@@ -227,9 +227,9 @@ void Actor::forward(
         // https://huggingface.co/blog/deep-rl-ppo
         bool clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
-        float value_delta = params.vlr * scaled_td_error;
+        float value_delta = params.vlr * td_error;
 
-        float policy_delta_partial = params.plr * ((1.0f - mimic) * scaled_td_error * (!clip) + mimic);
+        float policy_delta_partial = params.plr * ((1.0f - mimic) * tanhf(td_error) + mimic);
 
         for (int di = 0; di < value_num_dendrites_per_cell; di++) {
             int dendrite_index = di + value_dendrites_start;
@@ -293,7 +293,7 @@ void Actor::forward(
                             int wi = di + wi_value_start;
 
                             if (vc == in_ci_prev)
-                                vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index];
+                                vl.value_traces[wi] = value_dendrite_acts_prev[dendrite_index]; // replacing trace
 
                             vl.value_weights[wi] += value_delta * vl.value_traces[wi];
                             vl.value_traces[wi] *= params.trace_decay;
@@ -312,7 +312,7 @@ void Actor::forward(
                                 int wi = di + wi_start;
 
                                 if (vc == in_ci_prev)
-                                    vl.policy_traces[wi] += policy_dendrite_acts_prev[dendrite_index];
+                                    vl.policy_traces[wi] += policy_dendrite_acts_prev[dendrite_index]; // accumulating trace
 
                                 vl.policy_weights[wi] += policy_delta_partial * vl.policy_traces[wi];
                                 vl.policy_traces[wi] *= params.trace_decay;
