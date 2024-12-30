@@ -65,14 +65,14 @@ void Actor::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_start_partial = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
                     int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-                    int wi_start = num_dendrites_per_cell * (hc + hidden_size.z * wi_start_partial);
+                    int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
 
                     for (int di = 0; di < num_dendrites_per_cell; di++) {
                         int dendrite_index = di + dendrites_start;
