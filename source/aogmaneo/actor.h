@@ -48,7 +48,6 @@ public:
         float discount; // discount factor
         float td_scale_decay; // slight decay on max abs td error scale
         float trace_decay; // eligibility trace decay
-        float trace_squash; // squash traces to be in a smaller range
 
         Params()
         :
@@ -56,11 +55,10 @@ public:
         plr(0.01f),
         leak(0.01f),
         delay_rate(0.002f),
-        policy_clip(0.1f),
+        policy_clip(0.2f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        trace_decay(0.97f),
-        trace_squash(1.0f)
+        trace_decay(0.97f)
         {}
     };
 
