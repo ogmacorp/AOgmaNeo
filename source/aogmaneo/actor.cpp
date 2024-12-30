@@ -89,7 +89,6 @@ void Actor::forward(
     const float dendrite_scale = sqrtf(1.0f / count);
     const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
-    int max_index = 0;
     float max_adv = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -275,7 +274,7 @@ void Actor::learn(
 
     average_adv_next *= hidden_size_z_inv;
 
-    float q_max_next = value_next + max_adv_next - average_adv_next;
+    float max_q_next = value_next + max_adv_next - average_adv_next;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -379,7 +378,7 @@ void Actor::learn(
 
     float adv_prev = hidden_advs[target_ci + hidden_cells_start];
 
-    float target_q = q_max_next;
+    float target_q = max_q_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         target_q = history_samples[t - n].reward + params.discount * target_q;
