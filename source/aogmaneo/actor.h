@@ -51,7 +51,7 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.001f),
         leak(0.01f),
         discount(0.99f),
         n_steps(8),

@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -395,6 +396,7 @@ void Actor::learn(
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
         float adv_error = params.lr * ((hc == target_ci) - hidden_size_z_inv) * td_error;
+        std::cout << adv_error << std::endl;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -561,6 +563,7 @@ void Actor::step(
         s.reward = reward;
     }
 
+    std::cout << history_size << " " << params.n_steps << " " << learn_enabled << std::endl;
     // learn (if have sufficient samples)
     if (learn_enabled && history_size > params.n_steps) {
         for (int it = 0; it < params.history_iters; it++) {
