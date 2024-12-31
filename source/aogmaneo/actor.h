@@ -63,7 +63,7 @@ public:
         leak(0.01f),
         smoothing(0.01f),
         delay_rate(0.002f),
-        policy_clip(0.1f),
+        policy_clip(0.2f),
         discount(0.995f),
         td_scale_decay(0.999f),
         min_steps(8),
