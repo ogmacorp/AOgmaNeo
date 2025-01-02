@@ -59,7 +59,7 @@ public:
         vlr(0.002f),
         plr(0.002f),
         leak(0.01f),
-        smoothing(0.01f),
+        smoothing(0.05f),
         discount(0.995f),
         bias(0.5f),
         td_scale_decay(0.999f),
