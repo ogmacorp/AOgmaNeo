@@ -56,11 +56,11 @@ public:
 
         Params()
         :
-        vlr(0.005f),
-        plr(0.005f),
+        vlr(0.002f),
+        plr(0.002f),
         leak(0.01f),
-        smoothing(0.02f),
-        discount(0.99f),
+        smoothing(0.01f),
+        discount(0.995f),
         bias(0.5f),
         td_scale_decay(0.999f),
         min_steps(8),
