@@ -61,7 +61,7 @@ public:
         leak(0.01f),
         smoothing(0.02f),
         discount(0.99f),
-        bias(0.5f),
+        bias(0.2f),
         td_scale_decay(0.999f),
         min_steps(8),
         history_iters(8)
