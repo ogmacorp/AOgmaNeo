@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer value_weights;
+        Float_Buffer value_weights_base;
         Float_Buffer policy_weights;
         Float_Buffer policy_weights_delayed;
     };
@@ -58,12 +59,12 @@ public:
 
         Params()
         :
-        vlr(0.005f),
-        plr(0.005f),
+        vlr(0.002f),
+        plr(0.002f),
         leak(0.01f),
         smoothing(0.02f),
         delay_rate(0.001f),
-        policy_clip(0.1f),
+        policy_clip(0.2f),
         discount(0.99f),
         td_scale_decay(0.999f),
         min_steps(8),
@@ -73,7 +74,8 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int num_dendrites_per_cell;
+    int value_num_dendrites_per_cell;
+    int policy_num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
@@ -83,8 +85,9 @@ private:
     Float_Buffer hidden_acts;
     Float_Buffer hidden_acts_delayed;
 
-    Float_Buffer dendrite_acts;
-    Float_Buffer dendrite_acts_delayed;
+    Float_Buffer value_dendrite_acts;
+    Float_Buffer policy_dendrite_acts;
+    Float_Buffer policy_dendrite_acts_delayed;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
@@ -116,7 +119,8 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int num_dendrites_per_cell,
+        int value_num_dendrites_per_cell,
+        int policy_num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
