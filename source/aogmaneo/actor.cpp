@@ -117,7 +117,7 @@ void Actor::forward(
     value_base *= dendrite_scale;
 
     // value
-    float value = 0.0f;
+    float value_delta = 0.0f;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;
@@ -126,14 +126,12 @@ void Actor::forward(
 
         value_dendrite_acts[dendrite_index] = max(act * params.leak, act);
 
-        value += value_dendrite_acts[dendrite_index] * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        value_delta += value_dendrite_acts[dendrite_index] * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
     }
 
-    value *= value_activation_scale;
+    value_delta *= value_activation_scale;
 
-    value += value_base;
-
-    hidden_values[hidden_column_index] = value;
+    hidden_values[hidden_column_index] = value_base + value_delta;
 
     float max_activation = limit_min;
 
@@ -317,7 +315,7 @@ void Actor::learn(
 
     value_base *= dendrite_scale;
 
-    float value = 0.0f;
+    float value_delta = 0.0f;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;
@@ -326,12 +324,12 @@ void Actor::learn(
 
         value_dendrite_acts[dendrite_index] = max(act * params.leak, act);
 
-        value += value_dendrite_acts[dendrite_index] * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        value_delta += value_dendrite_acts[dendrite_index] * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
     }
 
-    value *= value_activation_scale;
+    value_delta *= value_activation_scale;
 
-    value += value_base;
+    float value = value_base + value_delta;
 
     float max_activation = limit_min;
     float max_activation_delayed = limit_min;
@@ -399,7 +397,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
     
-    float value_delta = params.vlr * td_error;
+    float value_delta_delta = params.vlr * (td_error - value_delta);
     float value_delta_base = params.vlr * (new_value - value_base);
 
     // probability ratio
@@ -414,7 +412,7 @@ void Actor::learn(
         int dendrite_index = di + value_dendrites_start;
 
         // re-use as deltas
-        value_dendrite_acts[dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+        value_dendrite_acts[dendrite_index] = value_delta_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
     }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -534,7 +532,7 @@ void Actor::init_random(
         
         vl.value_weights_base.resize(num_hidden_columns * area * vld.size.z);
 
-        for (int i = 0; i < vl.value_weights.size(); i++)
+        for (int i = 0; i < vl.value_weights_base.size(); i++)
             vl.value_weights_base[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
