@@ -397,8 +397,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
     
-    float value_delta_delta = params.vlr * (td_error - value_delta);
-    float value_delta_base = params.vlr * (new_value - value_base);
+    float value_update = params.vlr * td_error;
 
     // probability ratio
     float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
@@ -412,7 +411,7 @@ void Actor::learn(
         int dendrite_index = di + value_dendrites_start;
 
         // re-use as deltas
-        value_dendrite_acts[dendrite_index] = value_delta_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+        value_dendrite_acts[dendrite_index] = value_update * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
     }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -461,7 +460,7 @@ void Actor::learn(
 
                 int wi_value_base = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
 
-                vl.value_weights_base[wi_value_base] += value_delta_base;
+                vl.value_weights_base[wi_value_base] += value_update;
 
                 int wi_start_partial = hidden_size.z * wi_value_base;
 
