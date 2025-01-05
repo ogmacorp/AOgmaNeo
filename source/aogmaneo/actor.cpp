@@ -210,13 +210,6 @@ void Actor::learn(
 
     int target_ci = history_samples[t - 1].hidden_target_cis_prev[hidden_column_index];
 
-    float new_value = hidden_values[hidden_column_index];
-
-    // TD(lambda)-like return
-    for (int t2 = 1; t2 <= t; t2++)
-        new_value = params.smoothing * history_samples[t2].hidden_values[hidden_column_index] +
-            (1.0f - params.smoothing) * (history_samples[t2 - 1].reward + params.discount * new_value);
-
     int value_dendrites_start = hidden_column_index * value_num_dendrites_per_cell;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
@@ -389,9 +382,7 @@ void Actor::learn(
         hidden_acts_delayed[hidden_cell_index] *= total_inv_delayed;
     }
 
-    history_samples[t].hidden_values[hidden_column_index] = new_value; // update to latest estimate (delayed by 1 iteration but good enough)
-
-    float td_error = new_value - value;
+    float td_error = history_samples[t].hidden_values[hidden_column_index] - value;
 
     hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
 
@@ -619,6 +610,20 @@ void Actor::step(
 
     // learn (if have sufficient samples)
     if (learn_enabled && history_size > params.min_steps) {
+        // update all values
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++) {
+            float new_value = hidden_values[i];
+
+            // TD(lambda)-like return
+            for (int t = 1; t < history_size; t++) {
+                new_value = params.smoothing * history_samples[t].hidden_values[i] +
+                    (1.0f - params.smoothing) * (history_samples[t - 1].reward + params.discount * new_value);
+
+                history_samples[t].hidden_values[i] = new_value;
+            }
+        }
+
         for (int it = 0; it < params.history_iters; it++) {
             int t = rand() % (history_size - params.min_steps) + params.min_steps;
 
