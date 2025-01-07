@@ -33,7 +33,6 @@ public:
         Float_Buffer value_weights;
         Float_Buffer value_weights_base;
         Float_Buffer policy_weights;
-        Float_Buffer policy_weights_delayed;
     };
 
     // history sample for delayed updates
@@ -50,9 +49,8 @@ public:
         float plr; // policy learning rate
         float leak; // ReLU leak
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
-        float delay_rate; // rate of delayed value and policy weights
-        float policy_clip; // PPO policy clipping coefficient
         float discount; // discount factor
+        float bias; // bias toward positive updates
         float td_scale_decay; // slowly decay max td error scaling
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
@@ -63,9 +61,8 @@ public:
         plr(0.002f),
         leak(0.01f),
         smoothing(0.01f),
-        delay_rate(0.002f),
-        policy_clip(0.1f),
         discount(0.99f),
+        bias(0.5f),
         td_scale_decay(0.999f),
         min_steps(8),
         history_iters(8)
@@ -83,11 +80,9 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_delayed;
 
     Float_Buffer value_dendrite_acts;
     Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_delayed;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
