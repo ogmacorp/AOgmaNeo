@@ -53,7 +53,7 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.05f),
         ood_penalty(0.01f),
         leak(0.01f),
         discount(0.99f),
