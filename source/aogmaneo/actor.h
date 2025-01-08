@@ -54,7 +54,7 @@ public:
         Params()
         :
         lr(0.01f),
-        ood_penalty(0.01f),
+        ood_penalty(0.0f),
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
