@@ -44,6 +44,7 @@ public:
 
     struct Params {
         float lr; // V/A/Q learning rate
+        float ood_penalty; // penalty for out of distribution actions
         float leak; // ReLU leak
         float discount; // discount fActor
         float td_scale_decay; // decay on max abs td error scaler
@@ -52,7 +53,8 @@ public:
 
         Params()
         :
-        lr(0.1f),
+        lr(0.01f),
+        ood_penalty(0.01f),
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
