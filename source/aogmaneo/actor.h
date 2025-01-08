@@ -59,8 +59,8 @@ public:
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.01f),
+        vlr(0.004f),
+        plr(0.004f),
         leak(0.01f),
         smoothing(0.01f),
         delay_rate(0.002f),
