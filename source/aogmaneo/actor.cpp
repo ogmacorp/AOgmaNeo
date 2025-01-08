@@ -387,14 +387,18 @@ void Actor::learn(
 
     float td_error = target_q - q_prev;
 
-    float value_delta = params.lr * td_error;
+    hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
+
+    float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
+
+    float value_delta = params.lr * scaled_td_error;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float adv_error = params.lr * ((hc == target_ci) - hidden_size_z_inv) * td_error;
+        float adv_error = params.lr * ((hc == target_ci) - hidden_size_z_inv) * scaled_td_error;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -504,6 +508,8 @@ void Actor::init_random(
 
     dendrite_advs.resize(num_dendrites);
 
+    hidden_td_scales = Float_Buffer(num_hidden_columns, 0.0f);
+
     // create (pre-allocated) history samples
     history_size = 0;
     history_samples.resize(history_capacity);
@@ -580,7 +586,7 @@ void Actor::clear_state() {
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_td_scales.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -641,6 +647,7 @@ void Actor::write(
     writer.write(&num_dendrites_per_cell, sizeof(int));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -695,6 +702,10 @@ void Actor::read(
     hidden_advs.resize(num_hidden_cells);
 
     dendrite_advs.resize(num_dendrites);
+
+    hidden_td_scales.resize(num_hidden_columns);
+
+    reader.read(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     int num_visible_layers;
 
