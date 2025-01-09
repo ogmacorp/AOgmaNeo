@@ -43,6 +43,7 @@ public:
     };
 
     struct Params {
+        float scale; // softmax scale
         float lr; // V/A/Q learning rate
         float ood_penalty; // penalty for out of distribution actions
         float leak; // ReLU leak
@@ -53,7 +54,8 @@ public:
 
         Params()
         :
-        lr(0.05f),
+        scale(4.0f),
+        lr(0.01f),
         ood_penalty(0.01f),
         leak(0.01f),
         discount(0.99f),
