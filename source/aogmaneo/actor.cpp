@@ -279,7 +279,7 @@ void Actor::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
-        hidden_probs[hidden_cell_index] = expf(hidden_advs[hidden_cell_index] - max_adv_next);
+        hidden_probs[hidden_cell_index] = expf((hidden_advs[hidden_cell_index] - max_adv_next) * params.scale);
 
         total += hidden_probs[hidden_cell_index];
     }

@@ -60,7 +60,7 @@ public:
         ood_penalty(0.0f),
         leak(0.01f),
         discount(0.99f),
-        max_factor(1.0f),
+        max_factor(4.0f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
