@@ -58,7 +58,7 @@ public:
         lr(0.01f),
         ood_penalty(0.0f),
         leak(0.01f),
-        discount(0.99f),
+        discount(0.995f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
