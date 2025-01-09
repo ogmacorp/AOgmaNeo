@@ -48,6 +48,7 @@ public:
         float ood_penalty; // penalty for out of distribution actions
         float leak; // ReLU leak
         float discount; // discount fActor
+        float max_factor; // mellow max factor
         float td_scale_decay; // decay on max abs td error scaler
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
@@ -59,6 +60,7 @@ public:
         ood_penalty(0.0f),
         leak(0.01f),
         discount(0.99f),
+        max_factor(1.0f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
@@ -79,6 +81,8 @@ private:
     Float_Buffer dendrite_advs;
 
     Float_Buffer hidden_td_scales;
+
+    Float_Buffer hidden_probs;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
