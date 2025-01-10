@@ -391,7 +391,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    float value_delta = params.lr * scaled_td_error;
+    float value_delta = params.vlr * td_error;
 
     // softmax
     float total = 0.0f;
@@ -417,7 +417,7 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float adv_error = params.lr * (((hc == target_ci) - hidden_size_z_inv) * scaled_td_error - params.ood_penalty * (hc != target_ci) * hidden_advs[hidden_cell_index]);
+        float adv_error = params.alr * (((hc == target_ci) - hidden_size_z_inv) * scaled_td_error - params.ood_penalty * (hc != target_ci) * hidden_advs[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
