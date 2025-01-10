@@ -345,7 +345,6 @@ void Actor::learn(
 
     value_prev *= dendrite_scale;
 
-    float max_adv_prev = limit_min;
     float average_adv_prev = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -369,8 +368,6 @@ void Actor::learn(
 
         hidden_advs[hidden_cell_index] = adv;
 
-        max_adv_prev = max(max_adv_prev, adv);
-
         average_adv_prev += adv;
     }
 
@@ -393,31 +390,12 @@ void Actor::learn(
 
     float value_delta = params.vlr * td_error;
 
-    // softmax
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-    
-        hidden_advs[hidden_cell_index] = expf((hidden_advs[hidden_cell_index] - max_adv_prev) * params.scale);
-
-        total += hidden_advs[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(limit_small, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_advs[hidden_cell_index] *= total_inv;
-    }
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float adv_error = params.alr * (((hc == target_ci) - hidden_size_z_inv) * scaled_td_error - params.ood_penalty * (hc != target_ci) * hidden_advs[hidden_cell_index]);
+        float adv_error = params.alr * (((hc == target_ci) - hidden_size_z_inv) * scaled_td_error);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;

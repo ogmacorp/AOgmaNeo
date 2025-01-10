@@ -46,7 +46,6 @@ public:
         float scale; // softmax scale
         float vlr; // value learning rate
         float alr; // advantage learning rate
-        float ood_penalty; // penalty for out of distribution actions
         float leak; // ReLU leak
         float discount; // discount fActor
         float td_scale_decay; // decay on max abs td error scaler
@@ -58,7 +57,6 @@ public:
         scale(4.0f),
         vlr(0.001f),
         alr(0.01f),
-        ood_penalty(0.0f),
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
