@@ -44,7 +44,8 @@ public:
 
     struct Params {
         float scale; // softmax scale
-        float lr; // q learning rate
+        float vlr; // value learning rate
+        float alr; // advantage learning rate
         float leak; // ReLU leak
         float discount; // discount fActor
         float td_scale_decay; // decay on max abs td error scaler
@@ -54,11 +55,12 @@ public:
         Params()
         :
         scale(4.0f),
-        lr(0.01f),
+        vlr(0.001f),
+        alr(0.01f),
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        n_steps(3),
+        n_steps(8),
         history_iters(16)
         {}
     };
