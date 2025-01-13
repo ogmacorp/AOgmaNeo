@@ -64,7 +64,7 @@ public:
         smoothing(0.02f),
         delay_rate(0.002f),
         policy_clip(0.3f),
-        discount(0.99f),
+        discount(0.995f),
         td_scale_decay(0.999f),
         n_steps(8),
         history_iters(8)
