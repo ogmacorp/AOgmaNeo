@@ -40,7 +40,6 @@ public:
     struct History_Sample {
         Array<Int_Buffer> input_cis;
         Int_Buffer hidden_target_cis_prev;
-        Float_Buffer hidden_values;
 
         float reward;
     };
@@ -54,20 +53,20 @@ public:
         float policy_clip; // PPO policy clipping coefficient
         float discount; // discount factor
         float td_scale_decay; // slowly decay max td error scaling
-        int min_steps; // minimum steps before sample can be used
+        int n_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
         vlr(0.001f),
-        plr(0.001f),
+        plr(0.005f),
         leak(0.01f),
         smoothing(0.02f),
         delay_rate(0.002f),
         policy_clip(0.2f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        min_steps(8),
+        n_steps(8),
         history_iters(8)
         {}
     };
@@ -88,8 +87,6 @@ private:
     Float_Buffer value_dendrite_acts;
     Float_Buffer policy_dendrite_acts;
     Float_Buffer policy_dendrite_acts_delayed;
-
-    Float_Buffer hidden_values; // hidden value function output buffer
 
     Float_Buffer hidden_td_scales;
 
