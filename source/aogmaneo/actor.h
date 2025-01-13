@@ -58,7 +58,7 @@ public:
         Params()
         :
         vlr(0.001f),
-        plr(0.005f),
+        plr(0.01f),
         leak(0.01f),
         delay_rate(0.002f),
         policy_clip(0.2f),
