@@ -48,7 +48,6 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float leak; // ReLU leak
-        float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float delay_rate; // rate of delayed value and policy weights
         float policy_clip; // PPO policy clipping coefficient
         float discount; // discount factor
@@ -61,7 +60,6 @@ public:
         vlr(0.001f),
         plr(0.005f),
         leak(0.01f),
-        smoothing(0.02f),
         delay_rate(0.002f),
         policy_clip(0.2f),
         discount(0.99f),
