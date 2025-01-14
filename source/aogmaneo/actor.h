@@ -55,12 +55,12 @@ public:
         Params()
         :
         scale(4.0f),
-        vlr(0.01f),
+        vlr(0.001f),
         alr(0.01f),
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        n_steps(8),
+        n_steps(6),
         history_iters(16)
         {}
     };
