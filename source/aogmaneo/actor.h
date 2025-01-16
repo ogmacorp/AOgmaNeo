@@ -60,7 +60,7 @@ public:
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        n_steps(6),
+        n_steps(8),
         history_iters(16)
         {}
     };
