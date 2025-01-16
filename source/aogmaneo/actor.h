@@ -56,7 +56,7 @@ public:
         :
         scale(4.0f),
         vlr(0.001f),
-        alr(0.004f),
+        alr(0.01f),
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
