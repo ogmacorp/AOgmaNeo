@@ -229,13 +229,15 @@ void Actor::forward(
 
         float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
+        float value_reinforcement = params.vlr * scaled_td_error;
+
         // probability ratio
         float ratio = hidden_acts_prev[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed_prev[target_ci + hidden_cells_start]);
 
         // https://huggingface.co/blog/deep-rl-ppo
         bool policy_clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
-        float policy_delta_partial = (1.0f - mimic) * scaled_td_error * (!policy_clip) + mimic;
+        float policy_reinforcement = params.plr * ((1.0f - mimic) * scaled_td_error * (!policy_clip) + mimic);
 
         for (int di = 0; di < value_num_dendrites_per_cell; di++) {
             int dendrite_index = di + value_dendrites_start;
@@ -293,7 +295,7 @@ void Actor::forward(
                         if (vc == in_ci_prev)
                             vl.value_traces_base[wi_value_base] += 1.0f;
 
-                        vl.value_weights_base[wi_value_base] += params.vlr * scaled_td_error * vl.value_traces_base[wi_value_base];
+                        vl.value_weights_base[wi_value_base] += value_reinforcement * vl.value_traces_base[wi_value_base];
                         vl.value_traces_base[wi_value_base] *= params.trace_decay;
 
                         int wi_value_start = value_num_dendrites_per_cell * wi_value_base;
@@ -306,7 +308,7 @@ void Actor::forward(
                             if (vc == in_ci_prev)
                                 vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index];
 
-                            vl.value_weights[wi] += params.vlr * scaled_td_error * vl.value_traces[wi];
+                            vl.value_weights[wi] += value_reinforcement * vl.value_traces[wi];
                             vl.value_traces[wi] *= params.trace_decay;
                         }
 
@@ -327,7 +329,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev)
                                     vl.policy_traces[wi] += policy_dendrite_acts_prev[dendrite_index];
 
-                                vl.policy_weights[wi] += params.plr * policy_delta_partial * vl.policy_traces[wi];
+                                vl.policy_weights[wi] += policy_reinforcement * vl.policy_traces[wi];
                                 vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }
