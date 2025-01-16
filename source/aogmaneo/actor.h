@@ -45,7 +45,8 @@ public:
     };
 
     struct Params {
-        float vlr; // value learning rate
+        float vlrb; // base value learning rate
+        float vlrd; // diff value learning rate
         float plr; // policy learning rate
         float leak; // ReLU leak
         float delay_rate; // rate of delayed value and policy weights
@@ -57,15 +58,16 @@ public:
 
         Params()
         :
-        vlr(0.001f),
+        vlrb(0.001f),
+        vlrd(0.01f),
         plr(0.01f),
         leak(0.01f),
         delay_rate(0.002f),
         policy_clip(0.2f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        n_steps(6),
-        history_iters(8)
+        n_steps(8),
+        history_iters(16)
         {}
     };
 
