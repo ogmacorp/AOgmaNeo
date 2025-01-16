@@ -63,6 +63,8 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
+    Int_Buffer learn_cis;
+
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
