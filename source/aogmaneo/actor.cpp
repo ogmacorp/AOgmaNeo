@@ -229,7 +229,7 @@ void Actor::forward(
 
         float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-        float value_reinforcement = params.vlr * scaled_td_error;
+        float value_reinforcement = params.vlr * td_error;
 
         // probability ratio
         float ratio = hidden_acts_prev[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed_prev[target_ci + hidden_cells_start]);
