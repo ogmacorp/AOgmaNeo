@@ -24,6 +24,7 @@ void Actor::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int target_ci = hidden_target_cis_prev[hidden_column_index];
+    int hidden_ci_prev = hidden_cis[hidden_column_index];
 
     float value_prev = hidden_values[target_ci + hidden_cells_start];
 
@@ -172,7 +173,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error = reward + params.discount * hidden_values[select_index + hidden_cells_start] - value_prev;
+        float td_error = reward + params.discount * (value_base + max_activation) - value_prev;
 
         float reinforcement = params.lr * td_error;
 
@@ -238,8 +239,12 @@ void Actor::forward(
 
                                 int wi = di + wi_start;
 
-                                if (vc == in_ci_prev && hc == target_ci)
-                                    vl.traces[wi] += dendrite_acts_prev[dendrite_index];
+                                if (vc == in_ci_prev && hc == target_ci) { // Watkins Q lambda
+                                    if (target_ci == hidden_ci_prev)
+                                        vl.traces[wi] += dendrite_acts_prev[dendrite_index];
+                                    else
+                                        vl.traces[wi] = 0.0f;
+                                }
 
                                 vl.weights[wi] += reinforcement * vl.traces[wi];
                                 vl.traces[wi] *= params.trace_decay;
