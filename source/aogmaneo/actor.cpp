@@ -388,7 +388,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    float value_delta = params.vlr * scaled_td_error;
+    float value_delta = params.vlr * td_error;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
