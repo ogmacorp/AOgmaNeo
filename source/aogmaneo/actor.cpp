@@ -172,7 +172,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error = reward + params.discount * (value_base + max_activation) - value_prev;
+        float td_error = reward + params.discount * hidden_values[select_index + hidden_cells_start] - value_prev;
 
         hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
 
