@@ -42,15 +42,13 @@ public:
         float lr; // value learning rate
         float leak; // dendrite ReLU leak
         float discount; // discount factor
-        float td_scale_decay; // decay of max td error abs value
         float trace_decay; // eligibility trace decay
 
         Params()
         :
-        lr(0.1f),
+        lr(0.001f),
         leak(0.01f),
         discount(0.99f),
-        td_scale_decay(0.999f),
         trace_decay(0.98f)
         {}
     };
@@ -68,7 +66,6 @@ private:
     Float_Buffer dendrite_acts_prev;
 
     Float_Buffer hidden_values; // hidden value function output buffer
-    Float_Buffer hidden_td_scales;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
