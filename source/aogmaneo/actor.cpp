@@ -15,7 +15,6 @@ void Actor::forward(
     const Array<Int_Buffer_View> &input_cis,
     Int_Buffer_View hidden_target_cis_prev,
     float reward,
-    float mimic,
     bool learn_enabled,
     unsigned long* state,
     const Params &params
@@ -321,7 +320,6 @@ void Actor::step(
     Int_Buffer_View hidden_target_cis_prev,
     bool learn_enabled,
     float reward,
-    float mimic,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -333,7 +331,7 @@ void Actor::step(
     for (int i = 0; i < num_hidden_columns; i++) {
         unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, reward, mimic, learn_enabled, &state, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, reward, learn_enabled, &state, params);
     }
 
     // update prevs

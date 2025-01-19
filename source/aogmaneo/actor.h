@@ -81,7 +81,6 @@ private:
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis_prev,
         float reward,
-        float mimic,
         bool learn_enabled,
         unsigned long* state,
         const Params &params
@@ -101,7 +100,6 @@ public:
         Int_Buffer_View hidden_target_cis_prev,
         bool learn_enabled,
         float reward,
-        float mimic,
         const Params &params
     );
 
