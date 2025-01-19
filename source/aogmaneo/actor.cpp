@@ -23,7 +23,9 @@ void Actor::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    float value_prev = hidden_values[hidden_column_index];
+    int target_ci = hidden_target_cis_prev[hidden_column_index];
+
+    float value_prev = hidden_values[target_ci + hidden_cells_start];
 
     int value_dendrites_start = hidden_column_index * num_dendrites_per_cell;
 
@@ -126,10 +128,10 @@ void Actor::forward(
 
         hidden_acts[hidden_cell_index] = activation;
 
+        hidden_values[hidden_cell_index] = value_base + activation;
+
         max_activation = max(max_activation, activation);
     }
-
-    hidden_values[hidden_column_index] = value_base + max_activation;
 
     // softmax
     float total = 0.0f;
@@ -170,9 +172,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        int target_ci = hidden_target_cis_prev[hidden_column_index];
-
-        float td_error = reward + params.discount * hidden_values[hidden_column_index] - value_prev;
+        float td_error = reward + params.discount * (value_base + max_activation) - value_prev;
 
         hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
 
@@ -180,19 +180,15 @@ void Actor::forward(
 
         float reinforcement = params.lr * scaled_td_error;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+        int hidden_cell_index_target = target_ci + hidden_cells_start;
 
-            int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+        int dendrites_start_target = num_dendrites_per_cell * hidden_cell_index_target;
 
-            float error = (hc == target_ci) - hidden_acts_prev[hidden_cell_index];
+        for (int di = 0; di < num_dendrites_per_cell; di++) {
+            int dendrite_index = di + dendrites_start_target;
 
-            for (int di = 0; di < num_dendrites_per_cell; di++) {
-                int dendrite_index = di + dendrites_start;
-
-                // re-use as deltas
-                dendrite_acts_prev[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
-            }
+            // re-use as deltas
+            dendrite_acts_prev[dendrite_index] = ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
         }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -246,7 +242,7 @@ void Actor::forward(
 
                                 int wi = di + wi_start;
 
-                                if (vc == in_ci_prev)
+                                if (vc == in_ci_prev && hc == target_ci)
                                     vl.traces[wi] += dendrite_acts_prev[dendrite_index];
 
                                 vl.weights[wi] += reinforcement * vl.traces[wi];
@@ -305,7 +301,7 @@ void Actor::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
+    hidden_values = Float_Buffer(num_hidden_cells, 0.0f);
     hidden_td_scales = Float_Buffer(num_hidden_columns, 0.0f);
 
     dendrite_acts.resize(num_dendrites);
@@ -362,7 +358,7 @@ void Actor::clear_state() {
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + 2 * sizeof(int) + hidden_cis.size() * sizeof(int) + 2 * hidden_values.size() * sizeof(float) + 2 * hidden_acts_prev.size() * sizeof(float) + dendrite_acts_prev.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + 2 * sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + hidden_td_scales.size() * sizeof(float) + 2 * hidden_acts_prev.size() * sizeof(float) + dendrite_acts_prev.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -440,7 +436,7 @@ void Actor::read(
     int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
     
     hidden_cis.resize(num_hidden_columns);
-    hidden_values.resize(num_hidden_columns);
+    hidden_values.resize(num_hidden_cells);
     hidden_td_scales.resize(num_hidden_columns);
     hidden_acts_prev.resize(num_hidden_cells);
     dendrite_acts_prev.resize(num_dendrites);

@@ -47,7 +47,7 @@ public:
 
         Params()
         :
-        lr(0.01f),
+        lr(0.1f),
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
