@@ -30,19 +30,16 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer value_weights_base;
-        Float_Buffer value_traces_base;
-        Float_Buffer value_weights;
-        Float_Buffer value_traces;
-        Float_Buffer policy_weights;
-        Float_Buffer policy_traces;
+        Float_Buffer weights_base;
+        Float_Buffer traces_base;
+        Float_Buffer weights;
+        Float_Buffer traces;
 
         Int_Buffer input_cis_prev;
     };
 
     struct Params {
-        float vlr; // value learning rate
-        float plr; // policy learning rate
+        float lr; // value learning rate
         float leak; // dendrite ReLU leak
         float discount; // discount factor
         float td_scale_decay; // decay of max td error abs value
@@ -50,8 +47,7 @@ public:
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.01f),
+        lr(0.01f),
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
@@ -61,18 +57,15 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int value_num_dendrites_per_cell;
-    int policy_num_dendrites_per_cell;
+    int num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_acts;
     Float_Buffer hidden_acts_prev;
 
-    Float_Buffer value_dendrite_acts;
-    Float_Buffer value_dendrite_acts_prev;
-    Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_prev;
+    Float_Buffer dendrite_acts;
+    Float_Buffer dendrite_acts_prev;
 
     Float_Buffer hidden_values; // hidden value function output buffer
     Float_Buffer hidden_td_scales;
@@ -98,8 +91,7 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int value_num_dendrites_per_cell,
-        int policy_num_dendrites_per_cell,
+        int num_dendrites_per_cell,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
