@@ -395,7 +395,7 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float adv_error = params.alr * ((hc == target_ci) - hidden_size_z_inv) * scaled_td_error;
+        float adv_error = params.alr * (((hc == target_ci) - hidden_size_z_inv) * scaled_td_error - params.adv_reg * average_adv_prev);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;

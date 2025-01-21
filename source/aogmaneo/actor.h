@@ -49,6 +49,7 @@ public:
         float leak; // ReLU leak
         float discount; // discount fActor
         float td_scale_decay; // decay on max abs td error scaler
+        float adv_reg; // regularization of advantages
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
@@ -60,6 +61,7 @@ public:
         leak(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
+        adv_reg(0.1f),
         n_steps(8),
         history_iters(16)
         {}
