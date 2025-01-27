@@ -53,7 +53,7 @@ public:
 
         Params()
         :
-        choice(1.0f),
+        choice(0.0001f),
         mismatch(2.0f),
         lr(1.0f),
         active_ratio(0.1f),
