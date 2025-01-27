@@ -31,10 +31,8 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
-        
-        Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
-        Int_Buffer hidden_counts;
+
+        Int_Buffer recon_sums;
 
         float importance;
 
@@ -45,19 +43,15 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float scale; // recon curve
         float lr; // learning rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // second stage inhibition radius
+        int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.8f),
-        lr(1.0f),
-        active_ratio(0.1f),
-        l_radius(2)
+        scale(4.0f),
+        lr(0.05f),
+        early_stop_cells(2)
         {}
     };
 
@@ -66,16 +60,16 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Int_Buffer learn_cis;
-
-    Float_Buffer hidden_comparisons;
+    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    // --- kernels ---
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
+    // --- kernels ---
+
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
@@ -84,7 +78,9 @@ private:
 
     void learn(
         const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View input_cis,
+        int vli,
+        unsigned long* state,
         const Params &params
     );
 
@@ -104,9 +100,9 @@ public:
     void clear_state();
 
     // serialization
-    long size() const; // returns size in Bytes
-    long state_size() const; // returns size of state in Bytes
-    long weights_size() const; // returns size of weights in Bytes
+    long size() const; // returns size in bytes
+    long state_size() const; // returns size of state in bytes
+    long weights_size() const; // returns size of weights in bytes
 
     void write(
         Stream_Writer &writer
