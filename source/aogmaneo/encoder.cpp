@@ -416,6 +416,7 @@ void Encoder::write(
         writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
 
         writer.write(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
+        writer.write(&vl.hidden_totals1[0], vl.hidden_totals1.size() * sizeof(int));
         writer.write(&vl.hidden_counts[0], vl.hidden_counts.size() * sizeof(int));
 
         writer.write(&vl.importance, sizeof(float));
