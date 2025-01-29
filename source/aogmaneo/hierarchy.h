@@ -73,7 +73,7 @@ public:
             int up_radius = 2,
             int down_radius = 2,
             int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int temporal_horizon = 4
         )
         :
         hidden_size(hidden_size),
