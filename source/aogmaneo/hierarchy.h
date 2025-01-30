@@ -57,6 +57,8 @@ public:
 
         int num_dendrites_per_cell;
 
+        int spatial_activity;
+
         int up_radius; // encoder radius
         int recurrent_radius; // encoder onto self radius, -1 to disable
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -64,6 +66,7 @@ public:
         Layer_Desc(
             const Int3 &hidden_size = Int3(4, 4, 16),
             int num_dendrites_per_cell = 4,
+            int spatial_activity = 4,
             int up_radius = 2,
             int recurrent_radius = 0,
             int down_radius = 2
@@ -71,6 +74,7 @@ public:
         :
         hidden_size(hidden_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
+        spatial_activity(spatial_activity),
         up_radius(up_radius),
         recurrent_radius(recurrent_radius),
         down_radius(down_radius)
@@ -198,12 +202,6 @@ public:
         int i
     ) const {
         return d_indices[i] != -1;
-    }
-
-    bool is_layer_recurrent(
-        int l
-    ) const {
-        return (l == 0 ? encoders[l].get_num_visible_layers() > io_sizes.size() : encoders[l].get_num_visible_layers() > 1);
     }
 
     // retrieve predictions

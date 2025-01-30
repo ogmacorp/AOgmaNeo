@@ -44,7 +44,7 @@ void Hierarchy::init_random(
 
         // if first layer
         if (l == 0) {
-            e_visible_layer_descs.resize(io_sizes.size() + (layer_descs[l].recurrent_radius > -1));
+            e_visible_layer_descs.resize(io_sizes.size());
 
             for (int i = 0; i < io_sizes.size(); i++) {
                 e_visible_layer_descs[i].size = io_sizes[i];
@@ -101,7 +101,7 @@ void Hierarchy::init_random(
             }
         }
         else {
-            e_visible_layer_descs.resize(1 + (layer_descs[l].recurrent_radius > -1));
+            e_visible_layer_descs.resize(1);
 
             e_visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
             e_visible_layer_descs[0].radius = layer_descs[l].up_radius;
@@ -120,17 +120,9 @@ void Hierarchy::init_random(
             // create decoders
             decoders[l][0].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
         }
-
-        if (layer_descs[l].recurrent_radius > -1) {
-            int last_index = e_visible_layer_descs.size() - 1;
-
-            e_visible_layer_descs[last_index].size = layer_descs[l].hidden_size;
-            e_visible_layer_descs[last_index].radius = layer_descs[l].recurrent_radius;
-            e_visible_layer_descs[last_index].is_recurrent = true;
-        }
         
         // create the sparse coding layer
-        encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
+        encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].spatial_activity, layer_descs[l].recurrent_radius, e_visible_layer_descs);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
@@ -172,14 +164,6 @@ void Hierarchy::step(
         }
         else
             layer_input_cis[0] = encoders[l - 1].get_hidden_cis();
-
-        if (is_layer_recurrent(l)) {
-            int last_index = encoders[l].get_num_visible_layers() - 1;
-
-            layer_input_cis[last_index] = hidden_cis_prev[l];
-
-            encoders[l].get_visible_layer(last_index).importance = params.layers[l].recurrent_importance;
-        }
 
         // activate sparse coder
         encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
