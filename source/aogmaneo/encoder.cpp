@@ -297,8 +297,6 @@ void Encoder::learn_recurrent(
 
     int other_spatial_ci = spatial_cis_prev[other_hidden_column_index];
 
-    int other_temporal_cells_start = spatial_cis_prev[other_hidden_column_index] * temporal_activity + other_hidden_cells_start;
-
     int diam = recurrent_radius * 2 + 1;
 
     // lower corner
@@ -329,12 +327,12 @@ void Encoder::learn_recurrent(
 
             Int2 offset(column_pos.x - hidden_pos.x + recurrent_radius, column_pos.y - hidden_pos.y + recurrent_radius);
 
-            int wi_start = other_spatial_ci * temporal_activity + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+            int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-            for (int tc = 0; tc < temporal_activity; tc++) {
-                int other_hidden_cell_index = tc + other_temporal_cells_start;
+            for (int ohc = 0; ohc < hidden_size.z; ohc++) {
+                int other_hidden_cell_index = ohc + other_hidden_cells_start;
 
-                int wi = tc + wi_start;
+                int wi = ohc + wi_start;
 
                 recurrent_recon_sums[other_hidden_cell_index] += recurrent_weights[wi];
             }
@@ -348,18 +346,16 @@ void Encoder::learn_recurrent(
 
     int target_recon_sum = recurrent_recon_sums[target_ci + other_hidden_cells_start];
 
-    for (int tc = 0; tc < temporal_activity; tc++) {
-        int other_hidden_cell_index = tc + other_temporal_cells_start;
-
-        int ci = tc + other_spatial_ci * temporal_activity;
+    for (int ohc = 0; ohc < hidden_size.z; ohc++) {
+        int other_hidden_cell_index = ohc + other_hidden_cells_start;
 
         int recon_sum = recurrent_recon_sums[other_hidden_cell_index];
 
-        if (recon_sum >= target_recon_sum && ci != target_ci)
+        if (recon_sum >= target_recon_sum && ohc != target_ci)
             num_higher++;
 
         // re-use sums as deltas
-        recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ci == target_ci) - (1.0f - expf(-recon_sum * recon_scale))), state);
+        recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ohc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
     }
 
     if (num_higher < params.recurrent_recon_tolerance)
@@ -375,12 +371,12 @@ void Encoder::learn_recurrent(
 
             Int2 offset(column_pos.x - hidden_pos.x + recurrent_radius, column_pos.y - hidden_pos.y + recurrent_radius);
 
-            int wi_start = other_spatial_ci * temporal_activity + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+            int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-            for (int tc = 0; tc < temporal_activity; tc++) {
-                int other_hidden_cell_index = tc + other_temporal_cells_start;
+            for (int ohc = 0; ohc < hidden_size.z; ohc++) {
+                int other_hidden_cell_index = ohc + other_hidden_cells_start;
 
-                int wi = tc + wi_start;
+                int wi = ohc + wi_start;
 
                 recurrent_weights[wi] = min(255, max(0, recurrent_weights[wi] + recurrent_recon_sums[other_hidden_cell_index]));
             }
@@ -442,7 +438,7 @@ void Encoder::init_random(
     recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
 
     for (int i = 0; i < recurrent_weights.size(); i++)
-        recurrent_weights[i] = (rand() % init_weight_noisei);
+        recurrent_weights[i] = 255 - (rand() % init_weight_noisei);
 
     recurrent_recon_sums.resize(num_hidden_cells);
 
