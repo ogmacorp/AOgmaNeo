@@ -355,7 +355,7 @@ void Encoder::learn_recurrent(
             num_higher++;
 
         // re-use sums as deltas
-        recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ohc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
+        recurrent_recon_sums[other_hidden_cell_index] = rand_roundf(params.lr * 255.0f * ((ohc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale)), state);
     }
 
     if (num_higher < params.recurrent_recon_tolerance)
@@ -438,7 +438,7 @@ void Encoder::init_random(
     recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
 
     for (int i = 0; i < recurrent_weights.size(); i++)
-        recurrent_weights[i] = 255 - (rand() % init_weight_noisei);
+        recurrent_weights[i] = (rand() % 256);
 
     recurrent_recon_sums.resize(num_hidden_cells);
 
