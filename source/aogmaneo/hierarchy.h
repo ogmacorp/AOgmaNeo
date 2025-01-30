@@ -57,7 +57,7 @@ public:
 
         int num_dendrites_per_cell;
 
-        int spatial_activity;
+        int spatial_activity; // number of spatially-set routes. Should evenly divide hidden_size.z
 
         int up_radius; // encoder radius
         int recurrent_radius; // encoder onto self radius, -1 to disable
