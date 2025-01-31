@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -34,7 +34,7 @@ public:
         int down_radius; // decoder radius, also shared with actor if there is one
 
         IO_Desc(
-            const Int3 &size = Int3(4, 4, 16),
+            const Int3 &size = Int3(5, 5, 32),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
@@ -64,9 +64,9 @@ public:
         int down_radius; // decoder radius, also shared with actor if there is one
 
         Layer_Desc(
-            const Int3 &hidden_size = Int3(4, 4, 16),
+            const Int3 &hidden_size = Int3(5, 5, 32),
             int num_dendrites_per_cell = 4,
-            int spatial_activity = 4,
+            int spatial_activity = 8,
             int up_radius = 2,
             int recurrent_radius = 0,
             int down_radius = 2
