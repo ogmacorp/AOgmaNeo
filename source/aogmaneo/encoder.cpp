@@ -517,6 +517,9 @@ void Encoder::step(
         for (int i = 0; i < num_hidden_columns; i++)
             learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
     }
+
+    // update prev
+    hidden_cis_prev = hidden_cis;
 }
 
 void Encoder::clear_state() {
