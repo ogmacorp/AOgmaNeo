@@ -63,26 +63,42 @@ public:
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int spatial_activity; // spatial region size (this must evenly divide hidden_size.z)
+    int recurrent_radius; // radius of recurrent connections
 
+    Int_Buffer spatial_cis;
     Int_Buffer hidden_cis;
-
-    Int_Buffer learn_cis;
+    Int_Buffer hidden_cis_prev;
 
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
+
+    Byte_Buffer recurrent_weights;
+    Int_Buffer recurrent_totals;
     
     // --- kernels ---
     
-    void forward(
+    void forward_spatial(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
-    void learn(
+    void forward_recurrent(
+        const Int2 &column_pos,
+        const Params &params
+    );
+
+    void learn_spatial(
+        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void learn_recurrent(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
@@ -92,6 +108,8 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int spatial_activity,
+        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
