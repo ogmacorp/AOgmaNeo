@@ -638,7 +638,7 @@ void Encoder::read(
 
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
-        vl.hidden_sums.resize(num_hidden_columns);
+        vl.hidden_sums.resize(num_spatial_cells);
 
         vl.hidden_totals.resize(num_spatial_cells);
 
