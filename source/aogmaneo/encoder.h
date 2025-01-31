@@ -101,7 +101,7 @@ private:
         const Params &params
     );
 
-    void learn_recurrent(
+    void learn(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
