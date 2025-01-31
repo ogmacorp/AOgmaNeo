@@ -158,8 +158,8 @@ void Encoder::forward_recurrent(
 
     int temporal_cells_start = spatial_ci * temporal_activity + hidden_cells_start;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+    for (int tc = 0; tc < temporal_activity; tc++) {
+        int hidden_cell_index = tc + temporal_cells_start;
 
         recurrent_sums[hidden_cell_index] = 0;
     }
@@ -405,6 +405,8 @@ void Encoder::init_random(
 
     recurrent_totals.resize(num_hidden_cells);
 
+    recurrent_sums.resize(num_hidden_cells);
+
     // init totals and counts
     for (int i = 0; i < num_hidden_columns; i++) {
         Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
@@ -607,6 +609,8 @@ void Encoder::read(
     reader.read(&hidden_cis_prev[0], hidden_cis_prev.size() * sizeof(int));
 
     hidden_comparisons.resize(num_hidden_columns);
+
+    recurrent_sums.resize(num_hidden_cells);
 
     int num_visible_layers = visible_layers.size();
 
