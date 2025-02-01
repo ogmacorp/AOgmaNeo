@@ -98,11 +98,11 @@ void Encoder::forward_recurrent(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
+    int full_column_size = hidden_size.z * temporal_size;
+
     int hidden_cells_start = hidden_column_index * hidden_size.z;
     int temporal_cells_start = hidden_column_index * temporal_size;
-    int full_cells_start = hidden_column_index * hidden_size.z * temporal_size;
-
-    int full_column_size = hidden_size.z * temporal_size;
+    int full_cells_start = hidden_column_index * full_column_size;
 
     int hidden_ci = hidden_cis[hidden_column_index];
 
@@ -293,11 +293,11 @@ void Encoder::learn_recurrent(
     return;
     int other_hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
+    int full_column_size = hidden_size.z * temporal_size;
+
     int other_hidden_cells_start = other_hidden_column_index * hidden_size.z;
     int other_temporal_cells_start = other_hidden_column_index * temporal_size;
-    int other_full_cells_start = other_hidden_column_index * hidden_size.z * temporal_size;
-
-    int full_column_size = hidden_size.z * temporal_size;
+    int other_full_cells_start = other_hidden_column_index * full_column_size;
 
     int temporal_ci_prev = temporal_cis_prev[other_hidden_column_index];
 
@@ -385,22 +385,25 @@ void Encoder::learn_recurrent(
 
 void Encoder::init_random(
     const Int3 &hidden_size,
-    int spatial_activity,
+    int temporal_size,
     int recurrent_radius,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
 
     this->hidden_size = hidden_size;
-    this->spatial_activity = spatial_activity;
+    this->temporal_size = temporal_size;
     this->recurrent_radius = recurrent_radius;
 
     visible_layers.resize(visible_layer_descs.size());
 
+    int full_column_size = hidden_size.z * temporal_size;
+
     // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int num_hidden_cells = num_hidden_columns * spatial_activity;
+    int num_temporal_cells = num_hidden_columns * temporal_size;
+    int num_full_cells = num_hidden_columns * full_column_size;
 
     int total_num_visible_columns = 0;
 
@@ -425,17 +428,16 @@ void Encoder::init_random(
         vl.recon_sums.resize(num_visible_cells);
     }
 
-    spatial_cis = Int_Buffer(num_hidden_columns, 0);
-    spatial_cis_prev.resize(num_hidden_columns);
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-    hidden_cis_prev.resize(num_hidden_columns);
+    temporal_cis = Int_Buffer(num_hidden_columns, 0);
+    temporal_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
 
     int diam = recurrent_radius * 2 + 1;
     int area = diam * diam;
 
-    recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
+    recurrent_weights.resize(num_full_cells * area * full_column_size);
 
     for (int i = 0; i < recurrent_weights.size(); i++)
         recurrent_weights[i] = 255 - (rand() % init_weight_noisei);
@@ -467,8 +469,7 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    spatial_cis_prev = spatial_cis;
-    hidden_cis_prev = hidden_cis;
+    temporal_cis_prev = temporal_cis;
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
@@ -503,8 +504,8 @@ void Encoder::step(
 }
 
 void Encoder::clear_state() {
-    spatial_cis.fill(0);
     hidden_cis.fill(0);
+    temporal_cis.fill(0);
 }
 
 long Encoder::size() const {
@@ -541,11 +542,11 @@ void Encoder::write(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_size, sizeof(Int3));
-    writer.write(&spatial_activity, sizeof(int));
+    writer.write(&temporal_size, sizeof(int));
     writer.write(&recurrent_radius, sizeof(int));
 
-    writer.write(&spatial_cis[0], spatial_cis.size() * sizeof(int));
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 
     int num_visible_layers = visible_layers.size();
 
@@ -569,21 +570,24 @@ void Encoder::read(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_size, sizeof(Int3));
-    reader.read(&spatial_activity, sizeof(int));
+    reader.read(&temporal_size, sizeof(int));
     reader.read(&recurrent_radius, sizeof(int));
 
+    int full_column_size = hidden_size.z * temporal_size;
+
+    // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int num_hidden_cells = num_hidden_columns * spatial_activity;
+    int num_temporal_cells = num_hidden_columns * temporal_size;
+    int num_full_cells = num_hidden_columns * full_column_size;
 
-    spatial_cis.resize(num_hidden_columns);
     hidden_cis.resize(num_hidden_columns);
+    temporal_cis.resize(num_hidden_columns);
 
-    reader.read(&spatial_cis[0], spatial_cis.size() * sizeof(int));
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 
-    spatial_cis_prev.resize(num_hidden_columns);
-    hidden_cis_prev.resize(num_hidden_columns);
+    temporal_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
 
@@ -622,7 +626,7 @@ void Encoder::read(
     int diam = recurrent_radius * 2 + 1;
     int area = diam * diam;
 
-    recurrent_weights.resize(num_hidden_cells * area * hidden_size.z);
+    recurrent_weights.resize(num_full_cells * area * full_column_size);
 
     reader.read(&recurrent_weights[0], recurrent_weights.size() * sizeof(Byte));
 
@@ -649,15 +653,15 @@ void Encoder::read(
 void Encoder::write_state(
     Stream_Writer &writer
 ) const {
-    writer.write(&spatial_cis[0], spatial_cis.size() * sizeof(int));
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 }
 
 void Encoder::read_state(
     Stream_Reader &reader
 ) {
-    reader.read(&spatial_cis[0], spatial_cis.size() * sizeof(int));
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 }
 
 void Encoder::write_weights(
