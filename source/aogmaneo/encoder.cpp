@@ -433,6 +433,7 @@ void Encoder::init_random(
     temporal_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
+    temporal_acts.resize(num_temporal_cells);
 
     int diam = recurrent_radius * 2 + 1;
     int area = diam * diam;
@@ -442,7 +443,7 @@ void Encoder::init_random(
     for (int i = 0; i < recurrent_weights.size(); i++)
         recurrent_weights[i] = 255 - (rand() % init_weight_noisei);
 
-    recurrent_recon_sums.resize(num_hidden_cells);
+    recurrent_recon_sums.resize(num_full_cells);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -590,6 +591,7 @@ void Encoder::read(
     temporal_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
+    temporal_acts.resize(num_temporal_cells);
 
     int num_visible_layers = visible_layers.size();
 
@@ -630,7 +632,7 @@ void Encoder::read(
 
     reader.read(&recurrent_weights[0], recurrent_weights.size() * sizeof(Byte));
 
-    recurrent_recon_sums.resize(num_hidden_cells);
+    recurrent_recon_sums.resize(num_full_cells);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
