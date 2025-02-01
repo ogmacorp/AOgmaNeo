@@ -120,8 +120,6 @@ void Encoder::forward_recurrent(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
-    int count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
     int hidden_stride = full_column_size * diam * diam;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
