@@ -17,7 +17,7 @@ void Hierarchy::init_random(
     // create layers
     encoders.resize(layer_descs.size());
     decoders.resize(layer_descs.size());
-    hidden_cis_prev.resize(layer_descs.size());
+    temporal_cis_prev.resize(layer_descs.size());
     feedback_cis_prev.resize(layer_descs.size() - 1);
 
     // cache input sizes
@@ -65,11 +65,16 @@ void Hierarchy::init_random(
                     // decoder visible layer descriptors
                     Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
 
-                    d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
+                    Int3 full_size = layer_descs[l].hidden_size;
+                    full_size.z *= layer_descs[l].temporal_size;
+
+                    d_visible_layer_descs[0].size = full_size;
                     d_visible_layer_descs[0].radius = io_descs[i].down_radius;
 
-                    if (l < encoders.size() - 1)
-                        d_visible_layer_descs[1] = d_visible_layer_descs[0];
+                    if (l < encoders.size() - 1) {
+                        d_visible_layer_descs[1].size = layer_descs[l].hidden_size;
+                        d_visible_layer_descs[1].radius = io_descs[i].down_radius;
+                    }
 
                     decoders[l][d_index].init_random(io_sizes[i], io_descs[i].num_dendrites_per_cell, d_visible_layer_descs);
 
@@ -86,11 +91,16 @@ void Hierarchy::init_random(
                     // decoder visible layer descriptors
                     Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(1 + (l < encoders.size() - 1));
 
-                    a_visible_layer_descs[0].size = layer_descs[l].hidden_size;
+                    Int3 full_size = layer_descs[l].hidden_size;
+                    full_size.z *= layer_descs[l].temporal_size;
+
+                    a_visible_layer_descs[0].size = full_size;
                     a_visible_layer_descs[0].radius = io_descs[i].down_radius;
 
-                    if (l < encoders.size() - 1)
-                        a_visible_layer_descs[1] = a_visible_layer_descs[0];
+                    if (l < encoders.size() - 1) {
+                        a_visible_layer_descs[1].size = layer_descs[l].hidden_size;
+                        a_visible_layer_descs[1].radius = io_descs[i].down_radius;
+                    }
 
                     actors[d_index].init_random(io_sizes[i], io_descs[i].value_num_dendrites_per_cell, io_descs[i].num_dendrites_per_cell, io_descs[i].history_capacity, a_visible_layer_descs);
 
@@ -111,11 +121,16 @@ void Hierarchy::init_random(
             // decoder visible layer descriptors
             Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
 
-            d_visible_layer_descs[0].size = layer_descs[l].hidden_size;
+            Int3 full_size = layer_descs[l].hidden_size;
+            full_size.z *= layer_descs[l].temporal_size;
+
+            d_visible_layer_descs[0].size = full_size;
             d_visible_layer_descs[0].radius = layer_descs[l].down_radius;
 
-            if (l < encoders.size() - 1)
-                d_visible_layer_descs[1] = d_visible_layer_descs[0];
+            if (l < encoders.size() - 1) {
+                d_visible_layer_descs[1].size = layer_descs[l].hidden_size;
+                d_visible_layer_descs[1].radius = layer_descs[l].down_radius;
+            }
 
             // create decoders
             decoders[l][0].init_random(layer_descs[l - 1].hidden_size, layer_descs[l].num_dendrites_per_cell, d_visible_layer_descs);
@@ -124,7 +139,7 @@ void Hierarchy::init_random(
         // create the sparse coding layer
         encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].temporal_size, layer_descs[l].recurrent_radius, e_visible_layer_descs);
 
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+        temporal_cis_prev[l] = encoders[l].get_temporal_cis();
 
         if (l < encoders.size() - 1)
             feedback_cis_prev[l] = encoders[l].get_hidden_cis();
@@ -151,7 +166,7 @@ void Hierarchy::step(
     // forward
     for (int l = 0; l < encoders.size(); l++) {
         // copy to prev
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+        temporal_cis_prev[l] = encoders[l].get_temporal_cis();
 
         if (l < encoders.size() - 1)
             feedback_cis_prev[l] = decoders[l + 1][0].get_hidden_cis();
@@ -174,7 +189,7 @@ void Hierarchy::step(
         Array<Int_Buffer_View> layer_input_cis(1 + (l < encoders.size() - 1));
 
         if (learn_enabled) {
-            layer_input_cis[0] = hidden_cis_prev[l];
+            layer_input_cis[0] = temporal_cis_prev[l];
             
             if (l < encoders.size() - 1) {
                 // learn on feedback
@@ -356,7 +371,7 @@ void Hierarchy::read(
 
     encoders.resize(num_layers);
     decoders.resize(num_layers);
-    hidden_cis_prev.resize(num_layers);
+    temporal_cis_prev.resize(num_layers);
     feedback_cis_prev.resize(num_layers - 1);
 
     i_indices.resize(num_io * 2);
@@ -374,7 +389,7 @@ void Hierarchy::read(
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].read(reader);
 
-        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
+        temporal_cis_prev[l] = encoders[l].get_temporal_cis();
 
         if (l < encoders.size() - 1)
             feedback_cis_prev[l] = encoders[l].get_hidden_cis();
