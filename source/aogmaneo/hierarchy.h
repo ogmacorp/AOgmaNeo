@@ -36,7 +36,7 @@ public:
         int history_capacity; // max credit assignment length
 
         IO_Desc(
-            const Int3 &size = Int3(5, 5, 32),
+            const Int3 &size = Int3(5, 5, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
@@ -67,7 +67,7 @@ public:
         int down_radius; // decoder radius, also shared with actor if there is one
 
         Layer_Desc(
-            const Int3 &hidden_size = Int3(5, 5, 32),
+            const Int3 &hidden_size = Int3(5, 5, 16),
             int temporal_size = 4,
             int num_dendrites_per_cell = 4,
             int up_radius = 2,

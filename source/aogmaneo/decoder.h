@@ -23,7 +23,7 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(5, 5, 32),
+        size(5, 5, 16),
         radius(2)
         {}
     };
