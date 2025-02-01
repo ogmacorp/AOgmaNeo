@@ -113,7 +113,10 @@ void Hierarchy::init_random(
         else {
             e_visible_layer_descs.resize(1);
 
-            e_visible_layer_descs[0].size = layer_descs[l - 1].hidden_size;
+            Int3 full_size_prev = layer_descs[l - 1].hidden_size;
+            full_size_prev.z *= layer_descs[l - 1].temporal_size;
+
+            e_visible_layer_descs[0].size = full_size_prev;
             e_visible_layer_descs[0].radius = layer_descs[l].up_radius;
 
             decoders[l].resize(1);
@@ -178,7 +181,7 @@ void Hierarchy::step(
                 layer_input_cis[i] = input_cis[i];
         }
         else
-            layer_input_cis[0] = encoders[l - 1].get_hidden_cis();
+            layer_input_cis[0] = encoders[l - 1].get_temporal_cis();
 
         // activate sparse coder
         encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
