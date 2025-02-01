@@ -105,8 +105,8 @@ void Encoder::forward_recurrent(
 
     int temporal_cells_start = spatial_ci * temporal_activity + hidden_cells_start;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+    for (int tc = 0; tc < temporal_activity; tc++) {
+        int hidden_cell_index = tc + temporal_cells_start;
 
         hidden_acts[hidden_cell_index] = 0.0f;
     }
@@ -313,7 +313,7 @@ void Encoder::learn_recurrent(
         recurrent_recon_sums[other_hidden_cell_index] = 0;
     }
 
-    int count = 0;
+    int count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -334,8 +334,6 @@ void Encoder::learn_recurrent(
 
                 recurrent_recon_sums[other_hidden_cell_index] += recurrent_weights[wi];
             }
-
-            count++;
         }
 
     const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
