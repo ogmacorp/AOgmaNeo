@@ -142,17 +142,17 @@ void Encoder::forward_recurrent(
 
                 int wi = wi_offset + hidden_cell_index * hidden_stride;
 
-                hidden_acts[temporal_cell_index] += recurrent_weights[wi];
+                temporal_acts[temporal_cell_index] += recurrent_weights[wi];
             }
         }
 
     int max_index = 0;
-    float max_activation = 0.0f;
+    int max_activation = 0;
 
     for (int tc = 0; tc < temporal_size; tc++) {
         int temporal_cell_index = tc + temporal_cells_start;
 
-        float activation = hidden_acts[temporal_cell_index];
+        int activation = temporal_acts[temporal_cell_index];
 
         if (activation > max_activation) {
             max_activation = activation;
