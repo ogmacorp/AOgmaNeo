@@ -124,7 +124,7 @@ void Encoder::forward_recurrent(
 
     int hidden_stride = hidden_size.z * diam * diam;
 
-    float influence = sqrtf(1.0f / count) / 255.0f;
+    float influence = 1.0f / 255.0f;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
