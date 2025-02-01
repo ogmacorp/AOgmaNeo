@@ -33,16 +33,13 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int history_capacity; // credit assignment buffer max
-
         IO_Desc(
-            const Int3 &size = Int3(4, 4, 16),
+            const Int3 &size = Int3(5, 5, 32),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
-            int down_radius = 2,
-            int history_capacity = 512
+            int down_radius = 2
         )
         :
         size(size),
@@ -50,8 +47,7 @@ public:
         num_dendrites_per_cell(num_dendrites_per_cell),
         value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
-        down_radius(down_radius),
-        history_capacity(history_capacity)
+        down_radius(down_radius)
         {}
     };
 
@@ -68,9 +64,9 @@ public:
         int down_radius; // decoder radius, also shared with actor if there is one
 
         Layer_Desc(
-            const Int3 &hidden_size = Int3(4, 4, 16),
+            const Int3 &hidden_size = Int3(5, 5, 32),
             int num_dendrites_per_cell = 4,
-            int spatial_activity = 4,
+            int spatial_activity = 8,
             int up_radius = 2,
             int recurrent_radius = 0,
             int down_radius = 2
