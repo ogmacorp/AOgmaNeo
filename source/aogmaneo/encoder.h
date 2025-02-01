@@ -59,15 +59,15 @@ public:
 
 private:
     Int3 hidden_size; // size of hidden/output layer
-    int spatial_activity;
+    int temporal_size;
     int recurrent_radius;
 
-    Int_Buffer spatial_cis;
-    Int_Buffer spatial_cis_prev;
-    Int_Buffer hidden_cis;
-    Int_Buffer hidden_cis_prev;
+    Int_Buffer hidden_cis; // spatial
+    Int_Buffer temporal_cis;
+    Int_Buffer temporal_cis_prev;
 
     Float_Buffer hidden_acts;
+    Int_Buffer temporal_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -110,7 +110,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
-        int spatial_activity,
+        int tempral_size,
         int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
@@ -184,8 +184,8 @@ public:
     }
 
     // get the hidden states
-    const Int_Buffer &get_spatial_cis() const {
-        return spatial_cis;
+    const Int_Buffer &get_temporal_cis() const {
+        return temporal_cis;
     }
 
     // get the hidden size
@@ -193,8 +193,8 @@ public:
         return hidden_size;
     }
 
-    int get_spatial_activity() const {
-        return spatial_activity;
+    int get_temporal_size() const {
+        return temporal_size;
     }
 
     int get_recurrent_radius() const {

@@ -57,11 +57,10 @@ public:
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
-        Int3 hidden_size; // size of hidden layer
+        Int3 hidden_size; // size of hidden layer (spatial)
+        int temporal_size; // size of time sections (temporal)
 
         int num_dendrites_per_cell;
-
-        int spatial_activity; // number of spatially-set routes. Should evenly divide hidden_size.z
 
         int up_radius; // encoder radius
         int recurrent_radius; // encoder onto self radius, -1 to disable
@@ -69,16 +68,16 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(5, 5, 32),
+            int temporal_size = 8,
             int num_dendrites_per_cell = 4,
-            int spatial_activity = 8,
             int up_radius = 2,
             int recurrent_radius = 0,
             int down_radius = 2
         )
         :
         hidden_size(hidden_size),
+        temporal_size(temporal_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
-        spatial_activity(spatial_activity),
         up_radius(up_radius),
         recurrent_radius(recurrent_radius),
         down_radius(down_radius)
