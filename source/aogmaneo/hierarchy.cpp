@@ -216,7 +216,7 @@ void Hierarchy::step(
             }
         }
 
-        layer_input_cis[0] = encoders[l].get_hidden_cis();
+        layer_input_cis[0] = encoders[l].get_temporal_cis();
         
         if (l < encoders.size() - 1)
             layer_input_cis[1] = decoders[l + 1][0].get_hidden_cis();
