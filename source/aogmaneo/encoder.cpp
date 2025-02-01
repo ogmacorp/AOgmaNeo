@@ -289,11 +289,16 @@ void Encoder::learn_recurrent(
     unsigned long* state,
     const Params &params
 ) {
+    return;
     int other_hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int other_hidden_cells_start = other_hidden_column_index * hidden_size.z;
 
     int temporal_activity = hidden_size.z / spatial_activity;
+
+    int target_spatial_ci = spatial_cis_prev[other_hidden_column_index];
+
+    int temporal_cells_start = target_spatial_ci * temporal_activity + other_hidden_cells_start;
 
     int diam = recurrent_radius * 2 + 1;
 
@@ -307,8 +312,8 @@ void Encoder::learn_recurrent(
     int target_ci = hidden_cis_prev[other_hidden_column_index];
 
     // clear
-    for (int ohc = 0; ohc < hidden_size.z; ohc++) {
-        int other_hidden_cell_index = ohc + other_hidden_cells_start;
+    for (int tc = 0; tc < temporal_activity; tc++) {
+        int other_hidden_cell_index = tc + temporal_cells_start;
 
         recurrent_recon_sums[other_hidden_cell_index] = 0;
     }
@@ -327,8 +332,10 @@ void Encoder::learn_recurrent(
 
             int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-            for (int ohc = 0; ohc < hidden_size.z; ohc++) {
-                int other_hidden_cell_index = ohc + other_hidden_cells_start;
+            for (int tc = 0; tc < temporal_activity; tc++) {
+                int other_hidden_cell_index = tc + temporal_cells_start;
+
+                int ohc = tc + target_spatial_ci * temporal_activity;
 
                 int wi = ohc + wi_start;
 
@@ -342,8 +349,10 @@ void Encoder::learn_recurrent(
 
     int target_recon_sum = recurrent_recon_sums[target_ci + other_hidden_cells_start];
 
-    for (int ohc = 0; ohc < hidden_size.z; ohc++) {
-        int other_hidden_cell_index = ohc + other_hidden_cells_start;
+    for (int tc = 0; tc < temporal_activity; tc++) {
+        int other_hidden_cell_index = tc + temporal_cells_start;
+
+        int ohc = tc + target_spatial_ci * temporal_activity;
 
         int recon_sum = recurrent_recon_sums[other_hidden_cell_index];
 
@@ -369,8 +378,10 @@ void Encoder::learn_recurrent(
 
             int wi_start = hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
 
-            for (int ohc = 0; ohc < hidden_size.z; ohc++) {
-                int other_hidden_cell_index = ohc + other_hidden_cells_start;
+            for (int tc = 0; tc < temporal_activity; tc++) {
+                int other_hidden_cell_index = tc + temporal_cells_start;
+
+                int ohc = tc + target_spatial_ci * temporal_activity;
 
                 int wi = ohc + wi_start;
 
@@ -422,6 +433,7 @@ void Encoder::init_random(
     }
 
     spatial_cis = Int_Buffer(num_hidden_columns, 0);
+    spatial_cis_prev.resize(num_hidden_columns);
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
     hidden_cis_prev.resize(num_hidden_columns);
 
@@ -462,6 +474,7 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
+    spatial_cis_prev = spatial_cis;
     hidden_cis_prev = hidden_cis;
 
     PARALLEL_FOR
@@ -576,6 +589,7 @@ void Encoder::read(
     reader.read(&spatial_cis[0], spatial_cis.size() * sizeof(int));
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
+    spatial_cis_prev.resize(num_hidden_columns);
     hidden_cis_prev.resize(num_hidden_columns);
 
     hidden_acts.resize(num_hidden_cells);
