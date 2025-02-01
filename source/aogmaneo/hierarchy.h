@@ -68,7 +68,7 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(5, 5, 32),
-            int temporal_size = 8,
+            int temporal_size = 4,
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int recurrent_radius = 0,
