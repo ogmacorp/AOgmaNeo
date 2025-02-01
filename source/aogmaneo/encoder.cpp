@@ -294,7 +294,6 @@ void Encoder::learn_recurrent(
 
     int full_column_size = hidden_size.z * temporal_size;
 
-    int other_temporal_cells_start = other_hidden_column_index * temporal_size;
     int other_full_cells_start = other_hidden_column_index * full_column_size;
 
     int temporal_ci_prev = temporal_cis_prev[other_hidden_column_index];
