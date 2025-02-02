@@ -197,7 +197,7 @@ void Encoder::learn_spatial(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
-    int target_ci = input_cis[visible_column_index];
+    int in_ci = input_cis[visible_column_index];
 
     // clear
     for (int vc = 0; vc < vld.size.z; vc++) {
@@ -239,18 +239,18 @@ void Encoder::learn_spatial(
 
     int num_higher = 0;
 
-    int target_recon_sum = vl.recon_sums[target_ci + visible_cells_start];
+    int target_recon_sum = vl.recon_sums[in_ci + visible_cells_start];
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon_sum = vl.recon_sums[visible_cell_index];
 
-        if (recon_sum >= target_recon_sum && vc != target_ci)
+        if (recon_sum >= target_recon_sum && vc != in_ci)
             num_higher++;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == in_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
     }
 
     if (num_higher < params.spatial_recon_tolerance)
