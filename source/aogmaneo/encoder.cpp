@@ -305,8 +305,8 @@ void Encoder::learn_recurrent(
     Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
     // clear
-    for (int fc = 0; fc < full_column_size; fc++) {
-        int other_full_cell_index = fc + other_full_cells_start;
+    for (int ofc = 0; ofc < full_column_size; ofc++) {
+        int other_full_cell_index = ofc + other_full_cells_start;
 
         recurrent_recon_sums[other_full_cell_index] = 0;
     }
@@ -325,10 +325,10 @@ void Encoder::learn_recurrent(
 
             int wi_start = full_column_size * (offset.y + diam * (offset.x + diam * full_cell_index));
 
-            for (int fc = 0; fc < full_column_size; fc++) {
-                int other_full_cell_index = fc + other_full_cells_start;
+            for (int ofc = 0; ofc < full_column_size; ofc++) {
+                int other_full_cell_index = ofc + other_full_cells_start;
 
-                int wi = fc + wi_start;
+                int wi = ofc + wi_start;
 
                 recurrent_recon_sums[other_full_cell_index] += recurrent_weights[wi];
             }
@@ -340,16 +340,16 @@ void Encoder::learn_recurrent(
 
     int target_recon_sum = recurrent_recon_sums[temporal_ci_prev + other_full_cells_start];
 
-    for (int fc = 0; fc < full_column_size; fc++) {
-        int other_full_cell_index = fc + other_full_cells_start;
+    for (int ofc = 0; ofc < full_column_size; ofc++) {
+        int other_full_cell_index = ofc + other_full_cells_start;
 
         int recon_sum = recurrent_recon_sums[other_full_cell_index];
 
-        if (recon_sum >= target_recon_sum && fc != temporal_ci_prev)
+        if (recon_sum >= target_recon_sum && ofc != temporal_ci_prev)
             num_higher++;
 
         // re-use sums as deltas
-        recurrent_recon_sums[other_full_cell_index] = rand_roundf(params.lr * 255.0f * ((fc == temporal_ci_prev) - expf((recon_sum - count * 255) * recon_scale)), state);
+        recurrent_recon_sums[other_full_cell_index] = rand_roundf(params.lr * 255.0f * ((ofc == temporal_ci_prev) - expf((recon_sum - count * 255) * recon_scale)), state);
     }
 
     if (num_higher < params.recurrent_recon_tolerance)
@@ -367,10 +367,10 @@ void Encoder::learn_recurrent(
 
             int wi_start = full_column_size * (offset.y + diam * (offset.x + diam * full_cell_index));
 
-            for (int fc = 0; fc < full_column_size; fc++) {
-                int other_full_cell_index = fc + other_full_cells_start;
+            for (int ofc = 0; ofc < full_column_size; ofc++) {
+                int other_full_cell_index = ofc + other_full_cells_start;
 
-                int wi = fc + wi_start;
+                int wi = ofc + wi_start;
 
                 recurrent_weights[wi] = min(255, max(0, recurrent_weights[wi] + recurrent_recon_sums[other_full_cell_index]));
             }
