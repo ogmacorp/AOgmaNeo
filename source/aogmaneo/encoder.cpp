@@ -287,7 +287,6 @@ void Encoder::learn_recurrent(
     unsigned long* state,
     const Params &params
 ) {
-    return;
     int other_hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int full_column_size = hidden_size.z * temporal_size;
