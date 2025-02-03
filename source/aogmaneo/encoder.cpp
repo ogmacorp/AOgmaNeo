@@ -151,17 +151,17 @@ void Encoder::forward_recurrent(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-    int temporal_activity = hidden_size.z / temporal_size;
+    int full_column_size = hidden_size.z * temporal_size;
+
+    int temporal_cells_start = hidden_column_index * temporal_size;
+    int full_cells_start = hidden_column_index * full_column_size;
 
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    int temporal_cells_start = spatial_ci * temporal_activity + hidden_cells_start;
+    for (int tc = 0; tc < temporal_size; tc++) {
+        int temporal_cell_index = tc + temporal_cells_start;
 
-    for (int tc = 0; tc < temporal_activity; tc++) {
-        int hidden_cell_index = tc + temporal_cells_start;
-
-        recurrent_sums[hidden_cell_index] = 0;
+        recurrent_sums[temporal_cell_index] = 0;
     }
 
     int diam = recurrent_radius * 2 + 1;
@@ -177,22 +177,26 @@ void Encoder::forward_recurrent(
     int count_except = count * (hidden_size.z - 1);
     int count_all = count * hidden_size.z;
 
+    int hidden_stride = full_column_size * diam * diam;
+
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
 
-            int in_ci = hidden_cis_prev[other_hidden_column_index];
+            int in_ci = temporal_cis_prev[other_hidden_column_index];
 
             Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-            int wi_start = spatial_ci * temporal_activity + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + hidden_size.z * hidden_column_index)));
+            int wi_offset = in_ci + full_column_size * (offset.y + diam * offset.x);
 
-            for (int tc = 0; tc < temporal_activity; tc++) {
-                int hidden_cell_index = tc + temporal_cells_start;
+            for (int tc = 0; tc < temporal_size; tc++) {
+                int temporal_cell_index = tc + temporal_cells_start;
 
-                int wi = tc + wi_start;
+                int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
 
-                recurrent_sums[hidden_cell_index] += recurrent_weights[wi];
+                int wi = wi_offset + full_cell_index * hidden_stride;
+
+                recurrent_sums[temporal_cell_index] += recurrent_weights[wi];
             }
         }
 
@@ -204,16 +208,18 @@ void Encoder::forward_recurrent(
     
     const float byte_inv = 1.0f / 255.0f;
 
-    for (int tc = 0; tc < temporal_activity; tc++) {
-        int hidden_cell_index = tc + temporal_cells_start;
+    for (int tc = 0; tc < temporal_size; tc++) {
+        int temporal_cell_index = tc + temporal_cells_start;
 
-        float complemented = (count_all - recurrent_totals[hidden_cell_index] * byte_inv) - (count - recurrent_sums[hidden_cell_index] * byte_inv);
+        int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
+
+        float complemented = (count_all - recurrent_totals[full_cell_index] * byte_inv) - (count - recurrent_sums[temporal_cell_index] * byte_inv);
 
         float match = complemented / count_except;
 
         float vigilance = 1.0f - params.recurrent_mismatch / hidden_size.z;
 
-        float activation = complemented / (params.choice + count_all - recurrent_totals[hidden_cell_index] * byte_inv);
+        float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
 
         if (match >= vigilance && activation > max_activation) {
             max_activation = activation;
@@ -226,9 +232,7 @@ void Encoder::forward_recurrent(
         }
     }
 
-    int max_temporal_ci = (max_index == -1 ? max_complete_index : max_index);
-
-    hidden_cis[hidden_column_index] = max_temporal_ci + spatial_ci * temporal_activity;
+    temporal_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index) + hidden_ci * temporal_size;
 }
 
 void Encoder::learn(
