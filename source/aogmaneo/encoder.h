@@ -46,8 +46,7 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float spatial_mismatch; // used to determine vigilance
-        float recurrent_mismatch; // used to determine vigilance
+        float vigilance; // ART vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
@@ -55,8 +54,7 @@ public:
         Params()
         :
         choice(0.0001f),
-        spatial_mismatch(2.0f),
-        recurrent_mismatch(2.0f),
+        vigilance(0.8f),
         lr(1.0f),
         active_ratio(0.1f),
         l_radius(2)
