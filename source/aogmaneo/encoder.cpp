@@ -19,9 +19,12 @@ void Encoder::forward_spatial(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    float count = 0.0f;
-    float count_except = 0.0f;
-    float count_all = 0.0f;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] = 0.0f;
+    }
+
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -43,21 +46,9 @@ void Encoder::forward_spatial(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_count = vl.hidden_counts[hidden_column_index];
-
-        count += vl.importance * sub_count;
-        count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_all += vl.importance * sub_count * vld.size.z;
-
         total_importance += vl.importance;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            vl.hidden_sums[hidden_cell_index] = 0;
-        }
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -140,7 +131,7 @@ void Encoder::forward_spatial(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = max_complete_index;
 
