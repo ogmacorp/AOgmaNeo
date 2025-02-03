@@ -242,9 +242,13 @@ void Encoder::learn(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int spatial_cells_start = hidden_column_index * temporal_size;
+    int full_column_size = hidden_size.z * temporal_size;
 
-    int spatial_ci = spatial_cis[hidden_column_index];
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+    int temporal_cells_start = hidden_column_index * temporal_size;
+    int full_cells_start = hidden_column_index * full_column_size;
+
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     float hidden_max = hidden_comparisons[hidden_column_index];
 
@@ -274,7 +278,7 @@ void Encoder::learn(
         return;
 
     // spatial
-    int spatial_cell_index_max = spatial_ci + spatial_cells_start;
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -305,25 +309,20 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = spatial_ci + temporal_size * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 Byte w_old = vl.weights[wi];
 
                 vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
 
-                vl.hidden_totals[spatial_cell_index_max] += vl.weights[wi] - w_old;
+                vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
             }
     }
 
     // recurrent
-    int hidden_ci = hidden_cis[hidden_column_index];
+    int temporal_ci = temporal_cis[hidden_column_index];
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-    int temporal_activity = hidden_size.z / temporal_size;
-
-    int temporal_cells_start = spatial_ci * temporal_activity + hidden_cells_start;
-
-    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
+    int full_cell_index_max = temporal_ci + full_cells_start;
 
     int diam = recurrent_radius * 2 + 1;
 
@@ -338,17 +337,17 @@ void Encoder::learn(
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
 
-            int in_ci = hidden_cis_prev[other_hidden_column_index];
+            int in_ci = temporal_cis_prev[other_hidden_column_index];
 
             Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-            int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + hidden_size.z * hidden_column_index)));
+            int wi = temporal_ci + full_column_size * (offset.y + diam * (offset.x + diam * (in_ci + full_column_size * hidden_column_index)));
 
             Byte w_old = recurrent_weights[wi];
 
             recurrent_weights[wi] = min(255, recurrent_weights[wi] + ceilf(params.lr * (255.0f - recurrent_weights[wi])));
 
-            recurrent_totals[hidden_cell_index_max] += recurrent_weights[wi] - w_old;
+            recurrent_totals[full_cell_index_max] += recurrent_weights[wi] - w_old;
         }
 }
 
