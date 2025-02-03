@@ -363,8 +363,6 @@ void Encoder::init_random(
     this->temporal_size = temporal_size;
     this->recurrent_radius = recurrent_radius;
 
-    assert(hidden_size.z % temporal_size == 0); // must evenly divide
-
     visible_layers.resize(visible_layer_descs.size());
 
     int full_column_size = hidden_size.z * temporal_size;

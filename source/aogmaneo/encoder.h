@@ -55,8 +55,8 @@ public:
         Params()
         :
         choice(0.0001f),
-        spatial_mismatch(1.0f),
-        recurrent_mismatch(1.0f),
+        spatial_mismatch(2.0f),
+        recurrent_mismatch(2.0f),
         lr(1.0f),
         active_ratio(0.1f),
         l_radius(2)
