@@ -52,8 +52,8 @@ public:
         :
         scale(4.0f),
         lr(0.05f),
-        spatial_recon_tolerance(1),
-        recurrent_recon_tolerance(1)
+        spatial_recon_tolerance(2),
+        recurrent_recon_tolerance(2)
         {}
     };
 
@@ -110,7 +110,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
-        int tempral_size,
+        int temporal_size,
         int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
