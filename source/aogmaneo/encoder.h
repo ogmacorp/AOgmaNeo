@@ -68,9 +68,9 @@ private:
     int temporal_size; // spatial region size (this must evenly divide hidden_size.z)
     int recurrent_radius; // radius of recurrent connections
 
-    Int_Buffer spatial_cis;
     Int_Buffer hidden_cis;
-    Int_Buffer hidden_cis_prev;
+    Int_Buffer temporal_cis;
+    Int_Buffer temporal_cis_prev;
 
     Float_Buffer hidden_comparisons;
 
@@ -184,9 +184,22 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden states
+    const Int_Buffer &get_temporal_cis() const {
+        return temporal_cis;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    int get_temporal_size() const {
+        return temporal_size;
+    }
+
+    int get_recurrent_radius() const {
+        return recurrent_radius;
     }
 
     // merge list of encoders and write to this one
