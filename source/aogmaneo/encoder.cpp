@@ -174,10 +174,10 @@ void Encoder::forward_recurrent(
     Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
     int count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-    int count_except = count * (hidden_size.z - 1);
-    int count_all = count * hidden_size.z;
+    int count_except = count * (full_column_size - 1);
+    int count_all = count * full_column_size;
 
-    int hidden_stride = full_column_size * diam * diam;
+    int full_stride = full_column_size * diam * diam;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -194,7 +194,7 @@ void Encoder::forward_recurrent(
 
                 int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
 
-                int wi = wi_offset + full_cell_index * hidden_stride;
+                int wi = wi_offset + full_cell_index * full_stride;
 
                 recurrent_sums[temporal_cell_index] += recurrent_weights[wi];
             }
@@ -217,7 +217,7 @@ void Encoder::forward_recurrent(
 
         float match = complemented / count_except;
 
-        float vigilance = 1.0f - params.recurrent_mismatch / hidden_size.z;
+        float vigilance = 1.0f - params.recurrent_mismatch / full_column_size;
 
         float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
 
