@@ -179,8 +179,6 @@ void Encoder::forward_recurrent(
     int count_except = count * (full_column_size - 1);
     int count_all = count * full_column_size;
 
-    int full_stride = full_column_size * diam * diam;
-
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
@@ -194,9 +192,9 @@ void Encoder::forward_recurrent(
             for (int tc = 0; tc < temporal_size; tc++) {
                 int temporal_cell_index = tc + temporal_cells_start;
 
-                int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
+                int full_ci = tc + hidden_ci * temporal_size;
 
-                int wi = wi_offset + full_cell_index * full_stride;
+                int wi = full_ci + full_column_size * (offset.y + diam * (offset.x + diam * (in_ci + full_column_size * hidden_column_index)));
 
                 recurrent_sums[temporal_cell_index] += recurrent_weights[wi];
             }
