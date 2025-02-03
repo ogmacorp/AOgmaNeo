@@ -142,7 +142,9 @@ void Encoder::forward_spatial(
 
     hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;
+
+    hidden_learn_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
 
 void Encoder::forward_recurrent(
@@ -232,7 +234,9 @@ void Encoder::forward_recurrent(
         }
     }
 
-    temporal_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index) + hidden_ci * temporal_size;
+    temporal_cis[hidden_column_index] = max_complete_index + hidden_ci * temporal_size;
+
+    temporal_learn_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index) + hidden_ci * temporal_size;
 }
 
 void Encoder::learn(
@@ -248,7 +252,7 @@ void Encoder::learn(
     int temporal_cells_start = hidden_column_index * temporal_size;
     int full_cells_start = hidden_column_index * full_column_size;
 
-    int hidden_ci = hidden_cis[hidden_column_index];
+    int hidden_ci = hidden_learn_cis[hidden_column_index];
 
     float hidden_max = hidden_comparisons[hidden_column_index];
 
@@ -320,7 +324,7 @@ void Encoder::learn(
     }
 
     // recurrent
-    int temporal_ci = temporal_cis[hidden_column_index];
+    int temporal_ci = temporal_learn_cis[hidden_column_index];
 
     int full_cell_index_max = temporal_ci + full_cells_start;
 
@@ -396,6 +400,9 @@ void Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
     temporal_cis = Int_Buffer(num_hidden_columns, 0);
     temporal_cis_prev.resize(num_hidden_columns);
+
+    hidden_learn_cis.resize(num_hidden_columns);
+    temporal_learn_cis.resize(num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
 
@@ -613,6 +620,9 @@ void Encoder::read(
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&temporal_cis[0], temporal_cis.size() * sizeof(int));
+
+    hidden_learn_cis.resize(num_hidden_columns);
+    temporal_learn_cis.resize(num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
 
