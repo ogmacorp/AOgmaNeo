@@ -129,8 +129,6 @@ void Encoder::forward_recurrent(
     Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
     int count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-    int count_except = count * (full_column_size - 1);
-    int count_all = count * full_column_size;
 
     const float full_column_size_inv = 1.0f / full_column_size;
 
@@ -149,13 +147,13 @@ void Encoder::forward_recurrent(
             for (int tc = 0; tc < temporal_size; tc++) {
                 int temporal_cell_index = tc + temporal_cells_start;
 
-                int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
+                int full_ci = tc + hidden_ci * temporal_size;
 
-                int wi = wi_offset + full_cell_index * full_stride;
+                int wi = full_ci + full_column_size * (offset.y + diam * (offset.x + diam * (in_ci + full_column_size * hidden_column_index)));
 
                 float diff = in_value - recurrent_protos[wi];
 
-                recurrent_sums[temporal_cell_index] += recurrent_weights[wi];
+                recurrent_acts[temporal_cell_index] -= abs(diff);
             }
         }
 
@@ -172,28 +170,15 @@ void Encoder::forward_recurrent(
 
         int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
 
-        float complemented = (count_all - recurrent_totals[full_cell_index] * byte_inv) - (count - recurrent_sums[temporal_cell_index] * byte_inv);
+        recurrent_acts[temporal_cell_index] /= count;
 
-        float match = complemented / count_except;
-
-        float vigilance = 1.0f - params.recurrent_mismatch / full_column_size;
-
-        float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
-
-        if (match >= vigilance && activation > max_activation) {
-            max_activation = activation;
-            max_index = tc;
-        }
-
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
+        if (recurrent_acts[temporal_cell_index] > max_complete_activation) {
+            max_complete_activation = recurrent_acts[temporal_cell_index];
             max_complete_index = tc;
         }
     }
 
     temporal_cis[hidden_column_index] = max_complete_index + hidden_ci * temporal_size;
-
-    temporal_learn_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index) + hidden_ci * temporal_size;
 }
 
 void Encoder::learn(
