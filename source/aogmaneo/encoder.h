@@ -30,7 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
+        Float_Buffer protos;
         
         float importance;
 
@@ -68,6 +68,8 @@ private:
     Int_Buffer temporal_cis;
     Int_Buffer temporal_cis_prev;
 
+    Float_Buffer hidden_resources;
+
     Float_Buffer hidden_acts;
     Float_Buffer hidden_comparisons;
 
@@ -76,7 +78,9 @@ private:
     Array<Visible_Layer_Desc> visible_layer_descs;
 
     Float_Buffer recurrent_acts;
-    Byte_Buffer recurrent_weights;
+    Byte_Buffer recurrent_protos;
+
+    Float_Buffer temporal_resources;
     
     // --- kernels ---
     
