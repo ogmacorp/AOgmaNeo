@@ -392,9 +392,9 @@ void Encoder::init_random(
         vl.hidden_counts.resize(num_hidden_columns);
     }
 
-    spatial_cis = Int_Buffer(num_hidden_columns, 0);
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-    hidden_cis_prev = Int_Buffer(num_hidden_columns, 0);
+    temporal_cis = Int_Buffer(num_hidden_columns, 0);
+    temporal_cis_prev.resize(num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
 
