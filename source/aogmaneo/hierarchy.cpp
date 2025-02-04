@@ -64,7 +64,7 @@ void Hierarchy::init_random(
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == prediction) {
                     // decoder visible layer descriptors
-                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
+                    Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(2 + (l < encoders.size() - 1));
 
                     Int3 temporal_size = layer_descs[l].hidden_size;
                     temporal_size.z = layer_descs[l].temporal_size;
@@ -93,7 +93,7 @@ void Hierarchy::init_random(
             for (int i = 0; i < io_sizes.size(); i++) {
                 if (io_descs[i].type == action) {
                     // decoder visible layer descriptors
-                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(1 + (l < encoders.size() - 1));
+                    Array<Actor::Visible_Layer_Desc> a_visible_layer_descs(2 + (l < encoders.size() - 1));
 
                     Int3 temporal_size = layer_descs[l].hidden_size;
                     temporal_size.z = layer_descs[l].temporal_size;
@@ -132,7 +132,7 @@ void Hierarchy::init_random(
             decoders[l].resize(1);
 
             // decoder visible layer descriptors
-            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(1 + (l < encoders.size() - 1));
+            Array<Decoder::Visible_Layer_Desc> d_visible_layer_descs(2 + (l < encoders.size() - 1));
 
             Int3 temporal_size = layer_descs[l].hidden_size;
             temporal_size.z = layer_descs[l].temporal_size;
