@@ -113,7 +113,9 @@ void Encoder::forward_spatial(
 
             float match = complemented / sub_count_except;
 
-            if (match < params.vigilance)
+            float vigilance = 1.0f - params.mismatch / vld.size.z;
+
+            if (match < vigilance)
                 all_match = false;
 
             sum += vl.hidden_sums[hidden_cell_index] * influence;
@@ -215,7 +217,9 @@ void Encoder::forward_recurrent(
 
         float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
 
-        if (match >= params.vigilance && activation > max_activation) {
+        float vigilance = 1.0f - params.mismatch / full_column_size;
+
+        if (match >= vigilance && activation > max_activation) {
             max_activation = activation;
             max_index = tc;
         }
