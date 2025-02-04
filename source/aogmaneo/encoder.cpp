@@ -137,6 +137,7 @@ void Encoder::forward_recurrent(
             int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
 
             int in_ci = temporal_cis_prev[other_hidden_column_index];
+            int hidden_ci_prev = hidden_cis_prev[other_hidden_column_index];
 
             float in_value = (in_ci + 0.5f) * full_column_size_inv;
 
@@ -147,7 +148,7 @@ void Encoder::forward_recurrent(
 
                 int fc = tc + hidden_ci * temporal_size;
 
-                int wi = fc + full_column_size * (offset.y + diam * (offset.x + diam * hidden_column_index));
+                int wi = fc + full_column_size * (offset.y + diam * (offset.x + diam * (hidden_ci_prev + hidden_size.z * hidden_column_index)));
 
                 float diff = in_value - recurrent_protos[wi];
 
@@ -300,12 +301,13 @@ void Encoder::learn(
                 int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
 
                 int in_ci = temporal_cis_prev[other_hidden_column_index];
+                int hidden_ci_prev = hidden_cis_prev[other_hidden_column_index];
 
                 float in_value = (in_ci + 0.5f) * full_column_size_inv;
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = fc + full_column_size * (offset.y + diam * (offset.x + diam * hidden_column_index));
+                int wi = fc + full_column_size * (offset.y + diam * (offset.x + diam * (hidden_ci_prev + hidden_size.z * hidden_column_index)));
                 
                 float diff = in_value - recurrent_protos[wi];
 
@@ -355,6 +357,7 @@ void Encoder::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
+    hidden_cis_prev.resize(num_hidden_columns);
     temporal_cis = Int_Buffer(num_hidden_columns, 0);
     temporal_cis_prev.resize(num_hidden_columns);
 
@@ -369,7 +372,7 @@ void Encoder::init_random(
     int diam = recurrent_radius * 2 + 1;
     int area = diam * diam;
 
-    recurrent_protos.resize(num_full_cells * area);
+    recurrent_protos.resize(num_full_cells * area * hidden_size.z);
 
     for (int i = 0; i < recurrent_protos.size(); i++)
         recurrent_protos[i] = randf();
@@ -382,6 +385,7 @@ void Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
+    hidden_cis_prev = hidden_cis;
     temporal_cis_prev = temporal_cis;
 
     PARALLEL_FOR
@@ -488,6 +492,9 @@ void Encoder::read(
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 
+    hidden_cis_prev.resize(num_hidden_columns);
+    temporal_cis_prev.resize(num_hidden_columns);
+
     hidden_resources.resize(num_hidden_cells);
     temporal_resources.resize(num_full_cells);
 
@@ -528,7 +535,7 @@ void Encoder::read(
     int diam = recurrent_radius * 2 + 1;
     int area = diam * diam;
 
-    recurrent_protos.resize(num_full_cells * area);
+    recurrent_protos.resize(num_full_cells * area * hidden_size.z);
 
     reader.read(&recurrent_protos[0], recurrent_protos.size() * sizeof(float));
 }

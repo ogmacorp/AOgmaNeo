@@ -65,6 +65,7 @@ private:
     int recurrent_radius; // radius of recurrent connections
 
     Int_Buffer hidden_cis;
+    Int_Buffer hidden_cis_prev;
     Int_Buffer temporal_cis;
     Int_Buffer temporal_cis_prev;
 
