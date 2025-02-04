@@ -344,9 +344,9 @@ void Encoder::learn_recurrent(
 
     int num_higher = 0;
 
-    int target_recon_sum = recurrent_recon_sums[temporal_ci_prev + other_temporal_cells_start];
+    int full_ci_prev = temporal_ci_prev + hidden_ci_prev * temporal_size;
 
-    int full_ci_prev = (temporal_ci_prev + hidden_ci_prev * temporal_size);
+    int target_recon_sum = recurrent_recon_sums[full_ci_prev + other_temporal_cells_start];
 
     for (int ofc = 0; ofc < full_column_size; ofc++) {
         int other_full_cell_index = ofc + other_full_cells_start;
