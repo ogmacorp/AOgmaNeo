@@ -139,7 +139,7 @@ void Encoder::forward_recurrent(
             int in_ci = temporal_cis_prev[other_hidden_column_index];
             int hidden_ci_prev = hidden_cis_prev[other_hidden_column_index];
 
-            float in_value = (in_ci + 0.5f) * full_column_size_inv;
+            float in_value = ((in_ci % temporal_size) + 0.5f) * temporal_size;
 
             Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -303,7 +303,7 @@ void Encoder::learn(
                 int in_ci = temporal_cis_prev[other_hidden_column_index];
                 int hidden_ci_prev = hidden_cis_prev[other_hidden_column_index];
 
-                float in_value = (in_ci + 0.5f) * full_column_size_inv;
+                float in_value = ((in_ci % temporal_size) + 0.5f) * temporal_size;
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
