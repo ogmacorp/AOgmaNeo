@@ -155,12 +155,9 @@ void Encoder::forward_recurrent(
             }
         }
 
-    int max_index = -1;
-    float max_activation = 0.0f;
+    int max_index = 0;
+    float max_activation = limit_min;
 
-    int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
-    
     const float byte_inv = 1.0f / 255.0f;
 
     for (int tc = 0; tc < temporal_size; tc++) {
@@ -170,13 +167,13 @@ void Encoder::forward_recurrent(
 
         temporal_acts[temporal_cell_index] /= count;
 
-        if (temporal_acts[temporal_cell_index] > max_complete_activation) {
-            max_complete_activation = temporal_acts[temporal_cell_index];
-            max_complete_index = tc;
+        if (temporal_acts[temporal_cell_index] > max_activation) {
+            max_activation = temporal_acts[temporal_cell_index];
+            max_index = tc;
         }
     }
 
-    temporal_cis[hidden_column_index] = max_complete_index + hidden_ci * temporal_size;
+    temporal_cis[hidden_column_index] = max_index + hidden_ci * temporal_size;
 }
 
 void Encoder::learn(
