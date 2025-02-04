@@ -147,7 +147,7 @@ void Encoder::forward_recurrent(
 
                 int fc = tc + hidden_ci * temporal_size;
 
-                int wi = fc + full_column_size * (offset.y + diam * (offset.x + diam * (in_ci + full_column_size * hidden_column_index)));
+                int wi = fc + full_column_size * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
                 float diff = in_value - recurrent_protos[wi];
 
