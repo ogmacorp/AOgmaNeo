@@ -119,6 +119,7 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
+    Array<Int_Buffer> hidden_cis_prev;
     Array<Int_Buffer> temporal_cis_prev;
     Array<Int_Buffer> feedback_cis_prev;
 
