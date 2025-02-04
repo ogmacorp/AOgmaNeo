@@ -52,7 +52,7 @@ public:
         :
         falloff(0.9f),
         choice(0.5f),
-        lr(1.0f),
+        lr(0.1f),
         active_ratio(0.1f),
         l_radius(2),
         n_radius(1)
