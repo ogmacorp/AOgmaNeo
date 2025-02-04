@@ -130,7 +130,7 @@ void Encoder::forward_recurrent(
 
     int count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-    const float full_column_size_inv = 1.0f / full_column_size;
+    const float temporal_size_inv = 1.0f / temporal_size;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -139,7 +139,7 @@ void Encoder::forward_recurrent(
             int in_ci = temporal_cis_prev[other_hidden_column_index];
             int hidden_ci_prev = hidden_cis_prev[other_hidden_column_index];
 
-            float in_value = ((in_ci % temporal_size) + 0.5f) * temporal_size;
+            float in_value = ((in_ci % temporal_size) + 0.5f) * temporal_size_inv;
 
             Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -275,7 +275,7 @@ void Encoder::learn(
     // recurrent
     int temporal_ci = temporal_cis[hidden_column_index];
 
-    const float full_column_size_inv = 1.0f / full_column_size;
+    const float temporal_size_inv = 1.0f / temporal_size;
 
     for (int dfc = -params.n_radius; dfc <= params.n_radius; dfc++) {
         int fc = temporal_ci + dfc;
@@ -303,7 +303,7 @@ void Encoder::learn(
                 int in_ci = temporal_cis_prev[other_hidden_column_index];
                 int hidden_ci_prev = hidden_cis_prev[other_hidden_column_index];
 
-                float in_value = ((in_ci % temporal_size) + 0.5f) * temporal_size;
+                float in_value = ((in_ci % temporal_size) + 0.5f) * temporal_size_inv;
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
