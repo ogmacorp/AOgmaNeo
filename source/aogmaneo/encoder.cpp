@@ -611,7 +611,7 @@ void Encoder::read(
 
     hidden_comparisons.resize(num_hidden_columns);
 
-    recurrent_sums.resize(num_hidden_cells);
+    recurrent_sums.resize(num_temporal_cells);
 
     int num_visible_layers = visible_layers.size();
 
