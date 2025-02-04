@@ -116,7 +116,7 @@ void Encoder::forward_recurrent(
     for (int tc = 0; tc < temporal_size; tc++) {
         int temporal_cell_index = tc + temporal_cells_start;
 
-        recurrent_acts[temporal_cell_index] = 0.0f;
+        temporal_acts[temporal_cell_index] = 0.0f;
     }
 
     int diam = recurrent_radius * 2 + 1;
@@ -151,7 +151,7 @@ void Encoder::forward_recurrent(
 
                 float diff = in_value - recurrent_protos[wi];
 
-                recurrent_acts[temporal_cell_index] -= abs(diff);
+                temporal_acts[temporal_cell_index] -= abs(diff);
             }
         }
 
@@ -168,10 +168,10 @@ void Encoder::forward_recurrent(
 
         int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
 
-        recurrent_acts[temporal_cell_index] /= count;
+        temporal_acts[temporal_cell_index] /= count;
 
-        if (recurrent_acts[temporal_cell_index] > max_complete_activation) {
-            max_complete_activation = recurrent_acts[temporal_cell_index];
+        if (temporal_acts[temporal_cell_index] > max_complete_activation) {
+            max_complete_activation = temporal_acts[temporal_cell_index];
             max_complete_index = tc;
         }
     }
@@ -364,6 +364,9 @@ void Encoder::init_random(
     hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
     temporal_resources = Float_Buffer(num_full_cells, 0.5f);
 
+    hidden_acts.resize(num_hidden_cells);
+    temporal_acts.resize(num_full_cells);
+
     hidden_comparisons.resize(num_hidden_columns);
 
     int diam = recurrent_radius * 2 + 1;
@@ -493,6 +496,9 @@ void Encoder::read(
 
     reader.read(&hidden_resources[0], hidden_resources.size() * sizeof(float));
     reader.read(&temporal_resources[0], temporal_resources.size() * sizeof(float));
+
+    hidden_acts.resize(num_hidden_cells);
+    temporal_acts.resize(num_full_cells);
 
     hidden_comparisons.resize(num_hidden_columns);
 
