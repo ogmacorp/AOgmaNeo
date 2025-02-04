@@ -78,7 +78,7 @@ private:
     Array<Visible_Layer_Desc> visible_layer_descs;
 
     Float_Buffer recurrent_acts;
-    Byte_Buffer recurrent_protos;
+    Float_Buffer recurrent_protos;
 
     Float_Buffer temporal_resources;
     
