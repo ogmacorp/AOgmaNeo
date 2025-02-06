@@ -113,7 +113,7 @@ void Encoder::forward_spatial(
 
             float match = complemented / sub_count_except;
 
-            float vigilance = 1.0f - params.mismatch / vld.size.z;
+            float vigilance = 1.0f - params.spatial_mismatch / vld.size.z;
 
             if (match < vigilance)
                 all_match = false;
@@ -217,7 +217,7 @@ void Encoder::forward_recurrent(
 
         float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
 
-        float vigilance = 1.0f - params.mismatch / full_column_size;
+        float vigilance = 1.0f - params.temporal_mismatch / full_column_size;
 
         if (match >= vigilance && activation > max_activation) {
             max_activation = activation;
@@ -716,6 +716,12 @@ void Encoder::merge(
             }
         }
 
+        for (int i = 0; i < recurrent_weights.size(); i++) {
+            int e = rand() % encoders.size();                
+
+            recurrent_weights[i] = encoders[e]->recurrent_weights[i];
+        }
+
         break;
     case merge_average:
         for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -730,6 +736,15 @@ void Encoder::merge(
 
                 vl.weights[i] = roundf(total / encoders.size());
             }
+        }
+
+        for (int i = 0; i < recurrent_weights.size(); i++) {
+            float total = 0.0f;
+
+            for (int e = 0; e < encoders.size(); e++)
+                total += encoders[e]->recurrent_weights[i];
+
+            recurrent_weights[i] = roundf(total / encoders.size());
         }
 
         break;
