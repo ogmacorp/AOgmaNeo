@@ -683,6 +683,8 @@ void Encoder::write_weights(
 
         writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
     }
+
+    writer.write(&recurrent_weights[0], recurrent_weights.size() * sizeof(Byte));
 }
 
 void Encoder::read_weights(
@@ -693,6 +695,8 @@ void Encoder::read_weights(
 
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
     }
+
+    reader.read(&recurrent_weights[0], recurrent_weights.size() * sizeof(Byte));
 }
 
 void Encoder::merge(
