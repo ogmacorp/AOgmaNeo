@@ -50,8 +50,8 @@ public:
 
         Params()
         :
-        scale(8.0f),
-        lr(0.05f),
+        scale(4.0f),
+        lr(0.01f),
         spatial_recon_tolerance(1),
         recurrent_recon_tolerance(1)
         {}
