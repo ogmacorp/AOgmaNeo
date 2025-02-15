@@ -45,7 +45,6 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // ART vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
@@ -53,9 +52,8 @@ public:
 
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.9f),
-        lr(0.5f),
+        vigilance(0.8f),
+        lr(0.1f),
         active_ratio(0.1f),
         l_radius(2)
         {}
@@ -70,8 +68,8 @@ private:
     Int_Buffer temporal_cis;
     Int_Buffer temporal_cis_prev;
 
-    Byte_Buffer hidden_commits;
-    Byte_Buffer temporal_commits;
+    Int_Buffer hidden_learn_cis;
+    Int_Buffer temporal_learn_cis;
 
     Float_Buffer hidden_comparisons;
 
