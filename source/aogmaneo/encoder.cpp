@@ -142,7 +142,7 @@ void Encoder::forward_spatial(
 
     hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+    hidden_cis[hidden_column_index] = max_complete_index;
 
     hidden_learn_cis[hidden_column_index] = max_index;
 }
@@ -232,7 +232,7 @@ void Encoder::forward_recurrent(
         }
     }
 
-    temporal_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index) + hidden_ci * temporal_size;
+    temporal_cis[hidden_column_index] = max_complete_index + hidden_ci * temporal_size;
 
     temporal_learn_cis[hidden_column_index] = (max_index == -1 ? -1 : max_index + hidden_ci * temporal_size);
 }
