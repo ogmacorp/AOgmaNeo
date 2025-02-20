@@ -73,6 +73,8 @@ private:
 
     Float_Buffer hidden_comparisons;
 
+    Byte_Buffer hidden_commits;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
