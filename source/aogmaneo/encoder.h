@@ -35,7 +35,7 @@ public:
         
         Int_Buffer hidden_sums0;
         Int_Buffer hidden_sums1;
-        Int_Buffer hidden_totals; // bothw weights0 and weights1
+        Int_Buffer hidden_totals; // both weights0 and weights1
         Int_Buffer hidden_totals1; // just weights1
         Int_Buffer hidden_counts;
 
