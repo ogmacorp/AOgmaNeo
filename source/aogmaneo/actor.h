@@ -45,7 +45,9 @@ public:
         float plr; // policy learning rate
         float leak; // dendrite ReLU leak
         float discount; // discount factor
+        float td_scale_decay; // decay of max td error abs value
         float trace_decay; // eligibility trace decay
+        float trace_squash; // prevent traces from getting too large
 
         Params()
         :
@@ -53,7 +55,9 @@ public:
         plr(0.01f),
         leak(0.01f),
         discount(0.99f),
-        trace_decay(0.98f)
+        td_scale_decay(0.999f),
+        trace_decay(0.98f),
+        trace_squash(1.0f)
         {}
     };
 
@@ -73,6 +77,7 @@ private:
     Float_Buffer policy_dendrite_acts_prev;
 
     Float_Buffer hidden_values; // hidden value function output buffer
+    Float_Buffer hidden_td_scales;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
