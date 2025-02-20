@@ -147,7 +147,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f // reward
+        float reward = 0.0f, // reward
+        float mimic = 0.0f // how much to mimic instead of performing RL, in [0, 1] (for actors only)
     );
 
     void clear_state();

@@ -30,21 +30,27 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
-        Float_Buffer traces;
+        Float_Buffer value_weights_base;
+        Float_Buffer value_traces_base;
+        Float_Buffer value_weights;
+        Float_Buffer value_traces;
+        Float_Buffer policy_weights;
+        Float_Buffer policy_traces;
 
         Int_Buffer input_cis_prev;
     };
 
     struct Params {
-        float lr; // value learning rate
+        float vlr; // value learning rate
+        float plr; // policy learning rate
         float leak; // dendrite ReLU leak
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
 
         Params()
         :
-        lr(0.01f),
+        vlr(0.01f),
+        plr(0.01f),
         leak(0.01f),
         discount(0.99f),
         trace_decay(0.98f)
@@ -53,18 +59,20 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int num_dendrites_per_cell;
+    int value_num_dendrites_per_cell;
+    int policy_num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer dendrite_acts;
-    Float_Buffer dendrite_acts_prev;
+    Float_Buffer hidden_acts;
+    Float_Buffer hidden_acts_prev;
 
-    Float_Buffer hidden_qs; // hidden Q function output buffer
+    Float_Buffer value_dendrite_acts;
+    Float_Buffer value_dendrite_acts_prev;
+    Float_Buffer policy_dendrite_acts;
+    Float_Buffer policy_dendrite_acts_prev;
 
-    Float_Buffer hidden_td_scales;
-
-    Float_Buffer hidden_probs;
+    Float_Buffer hidden_values; // hidden value function output buffer
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
@@ -77,6 +85,7 @@ private:
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis_prev,
         float reward,
+        float mimic,
         bool learn_enabled,
         unsigned long* state,
         const Params &params
@@ -86,7 +95,8 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int num_dendrites_per_cell,
+        int value_num_dendrites_per_cell,
+        int policy_num_dendrites_per_cell,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
@@ -96,6 +106,7 @@ public:
         Int_Buffer_View hidden_target_cis_prev,
         bool learn_enabled,
         float reward,
+        float mimic,
         const Params &params
     );
 
@@ -152,6 +163,11 @@ public:
     // get hidden state/output/actions
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
+    }
+
+    // get hidden activations (probabilities) for actions
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
     }
 
     // get the hidden size
