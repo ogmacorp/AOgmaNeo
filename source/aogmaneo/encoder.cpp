@@ -318,7 +318,7 @@ void Encoder::learn(
 
                                 Byte w_old = vl.weights[wi];
 
-                                vl.weights[wi] = (vc == in_ci) * 255;
+                                vl.weights[wi] = max(vl.weights[wi], static_cast<Byte>((vc == in_ci) * 255));
 
                                 vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
                             }
@@ -370,7 +370,7 @@ void Encoder::learn(
 
                         Byte w_old = recurrent_weights[wi];
 
-                        recurrent_weights[wi] = (ofc == in_ci) * 255;
+                        recurrent_weights[wi] = max(recurrent_weights[wi], static_cast<Byte>((ofc == in_ci) * 255));
 
                         recurrent_totals[full_cell_index_max] += recurrent_weights[wi] - w_old;
                     }
