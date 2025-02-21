@@ -281,7 +281,7 @@ void Encoder::learn(
             // spatial
             int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
-            bool commit = !hidden_commits[hidden_cell_index_max];
+            float rate = (hidden_commits[hidden_cell_index_max] ? params.lr : 1.0f);
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -312,26 +312,13 @@ void Encoder::learn(
 
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                        if (commit) {
-                            for (int vc = 0; vc < vld.size.z; vc++) {
-                                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
+                        int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                                Byte w_old = vl.weights[wi];
+                        Byte w_old = vl.weights[wi];
 
-                                vl.weights[wi] = max(vl.weights[wi], static_cast<Byte>((vc == in_ci) * 255));
+                        vl.weights[wi] = min(255, vl.weights[wi] + ceilf(rate * (255.0f - vl.weights[wi])));
 
-                                vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
-                            }
-                        }
-                        else {
-                            int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
-
-                            Byte w_old = vl.weights[wi];
-
-                            vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
-
-                            vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
-                        }
+                        vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
                     }
             }
 
@@ -354,7 +341,7 @@ void Encoder::learn(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
-        bool commit = !temporal_commits[full_cell_index_max];
+        float rate = (temporal_commits[full_cell_index_max] ? params.lr : 1.0f);
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -364,26 +351,13 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                if (commit) {
-                    for (int ofc = 0; ofc < full_column_size; ofc++) {
-                        int wi = temporal_ci + full_column_size * (offset.y + diam * (offset.x + diam * (ofc + full_column_size * hidden_column_index)));
+                int wi = temporal_ci + full_column_size * (offset.y + diam * (offset.x + diam * (in_ci + full_column_size * hidden_column_index)));
 
-                        Byte w_old = recurrent_weights[wi];
+                Byte w_old = recurrent_weights[wi];
 
-                        recurrent_weights[wi] = max(recurrent_weights[wi], static_cast<Byte>((ofc == in_ci) * 255));
+                recurrent_weights[wi] = min(255, recurrent_weights[wi] + ceilf(rate * (255.0f - recurrent_weights[wi])));
 
-                        recurrent_totals[full_cell_index_max] += recurrent_weights[wi] - w_old;
-                    }
-                }
-                else {
-                    int wi = temporal_ci + full_column_size * (offset.y + diam * (offset.x + diam * (in_ci + full_column_size * hidden_column_index)));
-
-                    Byte w_old = recurrent_weights[wi];
-
-                    recurrent_weights[wi] = min(255, recurrent_weights[wi] + ceilf(params.lr * (255.0f - recurrent_weights[wi])));
-
-                    recurrent_totals[full_cell_index_max] += recurrent_weights[wi] - w_old;
-                }
+                recurrent_totals[full_cell_index_max] += recurrent_weights[wi] - w_old;
             }
 
         temporal_commits[full_cell_index_max] = true;
@@ -425,7 +399,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = (rand() % 256);
+            vl.weights[i] = (rand() % init_weight_noisei);
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
@@ -450,7 +424,7 @@ void Encoder::init_random(
     recurrent_weights.resize(num_full_cells * area * full_column_size);
 
     for (int i = 0; i < recurrent_weights.size(); i++)
-        recurrent_weights[i] = (rand() % 256);
+        recurrent_weights[i] = (rand() % init_weight_noisei);
 
     recurrent_totals.resize(num_full_cells);
 
