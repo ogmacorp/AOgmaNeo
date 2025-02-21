@@ -101,12 +101,6 @@ private:
         const Params &params
     );
 
-    void learn_spatial(
-        const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
