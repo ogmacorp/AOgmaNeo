@@ -90,8 +90,6 @@ void Encoder::forward_spatial(
     float max_complete_activation = 0.0f;
     
     const float byte_inv = 1.0f / 255.0f;
-    const float noise_range = init_weight_noisei * byte_inv;
-    const float noise_rescale = 1.0f / (1.0f - noise_range);
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -111,9 +109,9 @@ void Encoder::forward_spatial(
             int sub_count_except = sub_count * (vld.size.z - 1);
             int sub_count_all = sub_count * vld.size.z;
 
-            float complemented_denoised = (sub_count_all - vl.hidden_totals[hidden_cell_index] * byte_inv) - (sub_count - max(0.0f, vl.hidden_sums[hidden_cell_index] * byte_inv - noise_range * sub_count) * noise_rescale);
+            float complemented = (sub_count_all - vl.hidden_totals[hidden_cell_index] * byte_inv) - (sub_count - vl.hidden_sums[hidden_cell_index] * byte_inv);
 
-            float match = complemented_denoised / sub_count_except;
+            float match = complemented / sub_count_except;
 
             float vigilance = 1.0f - params.spatial_mismatch / vld.size.z;
 
@@ -209,19 +207,15 @@ void Encoder::forward_recurrent(
     float max_complete_activation = 0.0f;
     
     const float byte_inv = 1.0f / 255.0f;
-    const float noise_range = init_weight_noisei * byte_inv;
-    const float noise_rescale = 1.0f / (1.0f - noise_range);
 
     for (int tc = 0; tc < temporal_size; tc++) {
         int temporal_cell_index = tc + temporal_cells_start;
 
         int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
 
-        float complemented_denoised = (count_all - recurrent_totals[full_cell_index] * byte_inv) - (count - max(0.0f, recurrent_sums[temporal_cell_index] * byte_inv - noise_range * count) * noise_rescale);
-
-        float match = complemented_denoised / count_except;
-
         float complemented = (count_all - recurrent_totals[full_cell_index] * byte_inv) - (count - recurrent_sums[temporal_cell_index] * byte_inv);
+
+        float match = complemented / count_except;
 
         float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
 
