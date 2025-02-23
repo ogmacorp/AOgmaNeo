@@ -127,7 +127,7 @@ void Encoder::forward_spatial(
 
         float complemented = (count_all - total) - (count - sum);
 
-        float activation = complemented / (params.choice + count_all - total);
+        float activation = complemented / (params.choice + max(0.0f, count_all - total));
 
         if (all_match && activation > max_activation) {
             max_activation = activation;
@@ -217,7 +217,7 @@ void Encoder::forward_recurrent(
 
         float match = complemented / count_except;
 
-        float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
+        float activation = complemented / (params.choice + max(0.0f, count_all - recurrent_totals[full_cell_index] * byte_inv));
 
         float vigilance = 1.0f - params.temporal_mismatch / full_column_size;
 
