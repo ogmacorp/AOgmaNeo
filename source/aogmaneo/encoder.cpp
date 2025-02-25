@@ -115,7 +115,7 @@ void Encoder::forward_spatial(
 
             float vigilance = 1.0f - params.spatial_mismatch / vld.size.z;
 
-            if (match < vigilance)
+            if (vl.importance > 0.0f && match < vigilance)
                 all_match = false;
 
             sum += vl.hidden_sums[hidden_cell_index] * influence;
