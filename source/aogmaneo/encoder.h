@@ -57,7 +57,7 @@ public:
         choice(0.0001f),
         spatial_mismatch(2.0f),
         temporal_mismatch(2.0f),
-        lr(1.0f),
+        lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
         {}
@@ -74,9 +74,6 @@ private:
 
     Int_Buffer hidden_learn_cis;
     Int_Buffer temporal_learn_cis;
-
-    Byte_Buffer hidden_commits;
-    Byte_Buffer temporal_commits;
 
     Float_Buffer hidden_comparisons;
 
