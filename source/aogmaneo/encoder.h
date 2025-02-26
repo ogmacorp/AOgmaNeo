@@ -54,8 +54,8 @@ public:
         scale(8.0f),
         lr(0.05f),
         bias(0.9f),
-        spatial_recon_tolerance(3),
-        recurrent_recon_tolerance(3)
+        spatial_recon_tolerance(1),
+        recurrent_recon_tolerance(1)
         {}
     };
 
