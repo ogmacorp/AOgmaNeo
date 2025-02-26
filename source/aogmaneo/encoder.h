@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -33,6 +33,7 @@ public:
         Byte_Buffer weights;
         
         Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
         Int_Buffer hidden_counts;
 
         float importance;
@@ -44,17 +45,19 @@ public:
     };
 
     struct Params {
-        float min_activity; // minimum activity for forced learning
-        float active_ratio; // 2nd stage inhibition activity ratio
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float mismatch; // used to determine vigilance
         float lr; // learning rate
+        float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
 
         Params()
         :
-        min_activity(0.9f),
-        active_ratio(1.0f),
+        choice(0.0001f),
+        mismatch(2.0f),
         lr(0.5f),
-        l_radius(4)
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
@@ -62,6 +65,7 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
     Int_Buffer learn_cis;
 
     Float_Buffer hidden_comparisons;
@@ -75,7 +79,6 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        unsigned long* state,
         const Params &params
     );
 

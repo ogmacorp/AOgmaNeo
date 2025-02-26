@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -33,7 +33,7 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int history_capacity; // max credit assignment length
+        int history_capacity; // max credit assignment horizon
 
         IO_Desc(
             const Int3 &size = Int3(4, 4, 16),
@@ -89,7 +89,7 @@ public:
 
         Layer_Params()
         :
-        recurrent_importance(1.0f)
+        recurrent_importance(2.0f)
         {}
     };
 
