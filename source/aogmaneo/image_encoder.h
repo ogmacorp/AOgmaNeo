@@ -63,7 +63,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Int_Buffer learn_cis;
+    Int_Buffer hidden_learn_cis;
 
     Float_Buffer hidden_comparisons;
 
