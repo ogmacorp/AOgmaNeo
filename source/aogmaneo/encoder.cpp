@@ -115,7 +115,7 @@ void Encoder::forward(
 
             float vigilance = 1.0f - params.mismatch / vld.size.z;
 
-            if (match < vigilance)
+            if (vl.importance > 0.0f && match < vigilance)
                 all_match = false;
 
             sum += vl.hidden_sums[hidden_cell_index] * influence;
@@ -127,7 +127,7 @@ void Encoder::forward(
 
         float complemented = (count_all - total) - (count - sum);
 
-        float activation = complemented / (params.choice + count_all - total);
+        float activation = complemented / (params.choice + max(0.0f, count_all - total));
 
         if (all_match && activation > max_activation) {
             max_activation = activation;
