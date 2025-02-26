@@ -250,7 +250,7 @@ void Encoder::learn_spatial(
             num_higher++;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * (vc == in_ci ? 1.0f - params.bias : 1.0f) * ((vc == in_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * min(0.0f, (vc == in_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
     }
 
     if (num_higher < params.spatial_recon_tolerance)

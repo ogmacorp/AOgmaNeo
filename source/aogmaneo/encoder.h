@@ -45,7 +45,6 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        float bias; // bias toward negative updates
         int spatial_recon_tolerance;
         int recurrent_recon_tolerance;
 
@@ -53,9 +52,8 @@ public:
         :
         scale(8.0f),
         lr(0.05f),
-        bias(0.9f),
-        spatial_recon_tolerance(1),
-        recurrent_recon_tolerance(1)
+        spatial_recon_tolerance(2),
+        recurrent_recon_tolerance(2)
         {}
     };
 
