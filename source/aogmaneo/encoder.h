@@ -54,7 +54,7 @@ public:
 
         Params()
         :
-        choice(0.0001f),
+        choice(0.5f),
         spatial_mismatch(1.0f),
         temporal_mismatch(1.0f),
         lr(1.0f),
