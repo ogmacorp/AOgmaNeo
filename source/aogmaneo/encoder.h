@@ -72,6 +72,9 @@ private:
     Int_Buffer temporal_cis;
     Int_Buffer temporal_cis_prev;
 
+    Byte_Buffer hidden_learn_flags;
+    Byte_Buffer temporal_learn_flags;
+
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
