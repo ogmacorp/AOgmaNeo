@@ -23,7 +23,7 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(32, 32, 1),
         radius(2)
         {}
     };
@@ -63,7 +63,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Int_Buffer hidden_learn_cis;
+    Byte_Buffer hidden_learn_flags;
 
     Float_Buffer hidden_comparisons;
 
