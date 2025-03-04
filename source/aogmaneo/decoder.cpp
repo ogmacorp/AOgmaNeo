@@ -322,6 +322,33 @@ void Decoder::init_random(
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
             vl.dendrite_counts[hidden_column_index] = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+
+            for (int hc = 0; hc < hidden_size.z; hc++) {
+                int hidden_cell_index = hc + hidden_cells_start;
+
+                int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+
+                for (int di = 0; di < num_dendrites_per_cell; di++) {
+                    int dendrite_index = di + dendrites_start;
+
+                    int sub_total = 0;
+
+                    for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+                        for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                            int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                            Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+
+                            for (int vc = 0; vc < vld.size.z; vc++) {
+                                int wi = di + num_dendrites_per_cell * (hc + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
+
+                                sub_total += vl.weights[wi];
+                            }
+                        }
+
+                    vl.dendrite_totals[dendrite_index] = sub_total;
+                }
+            }
         }
     }
 }
