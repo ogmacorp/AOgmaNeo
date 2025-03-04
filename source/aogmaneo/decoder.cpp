@@ -149,7 +149,7 @@ void Decoder::forward(
 
             float complemented = (count_all - total) - (count - sum);
 
-            float activation = complemented / (params.choice + max(0.0f, count_all - total));
+            float activation = complemented / (params.choice + count_all - total);
 
             if (all_match && activation > max_activation) {
                 max_activation = activation;
@@ -286,7 +286,7 @@ void Decoder::init_random(
             vl.weights[i] = (rand() % init_weight_noisei);
 
         vl.dendrite_sums.resize(num_dendrites);
-        vl.dendrite_totals = Int_Buffer(num_dendrites, 0);
+        vl.dendrite_totals.resize(num_dendrites);
         vl.dendrite_counts.resize(num_hidden_columns);
     }
 

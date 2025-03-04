@@ -54,7 +54,7 @@ public:
         :
         choice(0.01f),
         mismatch(2.0f),
-        lr(1.0f),
+        lr(0.5f),
         fr(0.01f)
         {}
     };

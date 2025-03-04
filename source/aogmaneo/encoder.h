@@ -57,7 +57,7 @@ public:
         choice(0.01f),
         spatial_mismatch(2.0f),
         temporal_mismatch(2.0f),
-        lr(1.0f),
+        lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
         {}
