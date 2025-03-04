@@ -300,8 +300,6 @@ void Decoder::init_random(
 
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-        int hidden_cells_start = hidden_column_index * hidden_size.z;
-
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
