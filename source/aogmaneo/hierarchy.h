@@ -89,7 +89,7 @@ public:
 
         Layer_Params()
         :
-        recurrent_importance(1.0f)
+        recurrent_importance(0.9f)
         {}
     };
 
@@ -218,16 +218,6 @@ public:
             return actors[d_indices[i]].get_hidden_cis();
 
         return decoders[0][d_indices[i]].get_hidden_cis();
-    }
-
-    // retrieve prediction activations
-    const Float_Buffer &get_prediction_acts(
-        int i
-    ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
-
-        return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
     // number of io layers

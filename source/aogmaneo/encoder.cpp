@@ -270,7 +270,7 @@ void Encoder::init_random(
 
     hidden_comparisons.resize(num_hidden_columns);
 
-    // init totals and counts
+    // init counts
     for (int i = 0; i < num_hidden_columns; i++) {
         Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
 
@@ -278,6 +278,7 @@ void Encoder::init_random(
 
         int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+        // spatial
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -297,9 +298,7 @@ void Encoder::init_random(
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-            int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
-            vl.hidden_counts[hidden_column_index] = sub_count;
+            vl.hidden_counts[hidden_column_index] = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
         }
     }
 }
