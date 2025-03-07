@@ -38,7 +38,6 @@ public:
     struct History_Sample {
         Array<Int_Buffer> input_cis;
         Int_Buffer hidden_target_cis_prev;
-        Float_Buffer hidden_values;
 
         float reward;
     };
@@ -47,23 +46,21 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float leak; // ReLU leak
-        float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float bias; // bias toward positive policy updates
         float discount; // discount factor
         float td_scale_decay; // decay on td error scaler
-        int min_steps; // minimum steps before sample can be used
+        int n_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        vlr(0.002f),
-        plr(0.005f),
+        vlr(0.001f),
+        plr(0.01f),
         leak(0.01f),
-        smoothing(0.02f),
         bias(0.5f),
         discount(0.99f),
         td_scale_decay(0.9999f),
-        min_steps(16),
+        n_steps(8),
         history_iters(16)
         {}
     };
@@ -82,8 +79,6 @@ private:
 
     Float_Buffer value_dendrite_acts;
     Float_Buffer policy_dendrite_acts;
-
-    Float_Buffer hidden_values; // hidden value function output buffer
 
     Float_Buffer hidden_td_scales;
 
