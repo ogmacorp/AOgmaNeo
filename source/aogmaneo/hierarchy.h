@@ -28,7 +28,6 @@ public:
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
-        int value_num_dendrites_per_cell; // value dendrites
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -39,7 +38,6 @@ public:
             const Int3 &size = Int3(5, 5, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
-            int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
             int down_radius = 2,
             int history_capacity = 512
@@ -48,7 +46,6 @@ public:
         size(size),
         type(type),
         num_dendrites_per_cell(num_dendrites_per_cell),
-        value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius),
         history_capacity(history_capacity)
@@ -208,6 +205,15 @@ public:
             return actors[d_indices[i]].get_hidden_cis();
 
         return decoders[0][d_indices[i]].get_hidden_cis();
+    }
+
+    // retrieve prediction activations
+    const Float_Buffer &get_prediction_acts(
+        int i
+    ) const {
+        assert(io_types[i] == action);
+
+        return actors[d_indices[i]].get_hidden_acts();
     }
 
     // number of io layers

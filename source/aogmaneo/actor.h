@@ -46,7 +46,6 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float leak; // ReLU leak
-        float bias; // bias toward positive policy updates
         float discount; // discount factor
         float td_scale_decay; // decay on td error scaler
         int n_steps; // minimum steps before sample can be used
@@ -54,21 +53,19 @@ public:
 
         Params()
         :
-        vlr(0.001f),
-        plr(0.01f),
+        vlr(0.002f),
+        plr(0.005f),
         leak(0.01f),
-        bias(0.5f),
         discount(0.99f),
-        td_scale_decay(0.9999f),
-        n_steps(8),
+        td_scale_decay(0.999f),
+        n_steps(16),
         history_iters(16)
         {}
     };
 
 private:
     Int3 hidden_size; // hidden/output/action size
-    int value_num_dendrites_per_cell;
-    int policy_num_dendrites_per_cell;
+    int num_dendrites_per_cell;
 
     // current history size - fixed after initialization. determines length of wait before updating
     int history_size;
@@ -77,8 +74,7 @@ private:
 
     Float_Buffer hidden_acts;
 
-    Float_Buffer value_dendrite_acts;
-    Float_Buffer policy_dendrite_acts;
+    Float_Buffer dendrite_acts;
 
     Float_Buffer hidden_td_scales;
 
@@ -108,8 +104,7 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int value_num_dendrites_per_cell,
-        int policy_num_dendrites_per_cell,
+        int num_dendrites_per_cell,
         int history_capacity,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );

@@ -46,15 +46,17 @@ public:
 
     struct Params {
         float choice; // ART choice parameter
-        float mismatch; // used to compute ART vigilance
+        float mismatch; // used to compute ART vigilance for loal ARTs
+        float vigilance_lower; // lower vigilance parameter for global ARTs
         float lr; // learning rate
         float fr; // forget rate
 
         Params()
         :
         choice(0.01f),
-        mismatch(0.8f),
-        lr(0.5f),
+        mismatch(2.0f),
+        vigilance_lower(0.9f),
+        lr(1.0f),
         fr(0.01f)
         {}
     };
