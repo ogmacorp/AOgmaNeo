@@ -20,7 +20,6 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
-    float count_except = 0.0f;
     float count_all = 0.0f;
     float total_importance = 0.0f;
 
@@ -46,7 +45,6 @@ void Decoder::forward(
         int sub_count = vl.dendrite_counts[hidden_column_index];
 
         count += vl.importance * sub_count;
-        count_except += vl.importance * sub_count * (vld.size.z - 1);
         count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
@@ -94,14 +92,10 @@ void Decoder::forward(
     }
 
     count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
     count_all /= max(limit_small, total_importance);
 
     int max_compare_index = 0;
     float max_compare_activation = 0.0f;
-
-    int max_complete_compare_index = 0;
-    float max_complete_compare_activation = 0.0f;
 
     const float byte_inv = 1.0f / 255.0f;
 
@@ -115,7 +109,6 @@ void Decoder::forward(
 
         int max_complete_index = 0;
         float max_complete_activation = 0.0f;
-        float max_complete_match = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -153,8 +146,6 @@ void Decoder::forward(
 
             float complemented = (count_all - total) - (count - sum);
 
-            float match = complemented / count_except;
-
             float activation = complemented / (params.choice + count_all - total);
 
             if (all_match && activation > max_activation) {
@@ -166,24 +157,17 @@ void Decoder::forward(
                 max_complete_activation = activation;
                 max_complete_index = di;
             }
-
-            max_complete_match = max(max_complete_match, match);
         }
 
         hidden_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
 
-        if (max_complete_match >= params.vigilance_lower && max_complete_activation > max_compare_activation) {
+        if (max_complete_activation > max_compare_activation) {
             max_compare_activation = max_complete_activation;
             max_compare_index = hc;
         }
-
-        if (max_complete_activation > max_complete_compare_activation) {
-            max_complete_compare_activation = max_complete_activation;
-            max_complete_compare_index = hc;
-        }
     }
 
-    hidden_cis[hidden_column_index] = (max_compare_index == -1 ? max_complete_compare_index : max_compare_index);
+    hidden_cis[hidden_column_index] = max_compare_index;
 }
 
 void Decoder::learn(
