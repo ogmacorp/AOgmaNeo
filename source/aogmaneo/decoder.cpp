@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -146,7 +146,7 @@ void Decoder::forward(
 
             float complemented = (count_all - total) - (count - sum);
 
-            float activation = complemented / (params.choice + count_all - total);
+            float activation = complemented / (params.choice + max(0.0f, count_all - total));
 
             if (all_match && activation > max_activation) {
                 max_activation = activation;
