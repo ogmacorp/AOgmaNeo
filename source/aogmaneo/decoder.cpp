@@ -161,8 +161,10 @@ void Decoder::forward(
 
         hidden_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
 
-        if (max_complete_activation > max_compare_activation) {
-            max_compare_activation = max_complete_activation;
+        float compare_activation = (max_index == -1 ? max_complete_activation : max_activation);
+
+        if (compare_activation > max_compare_activation) {
+            max_compare_activation = compare_activation;
             max_compare_index = hc;
         }
     }
