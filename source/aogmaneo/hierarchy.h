@@ -28,30 +28,23 @@ public:
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
-        int value_num_dendrites_per_cell; // value dendrites
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
-
-        int history_capacity; // max credit assignment length
 
         IO_Desc(
             const Int3 &size = Int3(5, 5, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
-            int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
-            int down_radius = 2,
-            int history_capacity = 512
+            int down_radius = 2
         )
         :
         size(size),
         type(type),
         num_dendrites_per_cell(num_dendrites_per_cell),
-        value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
-        down_radius(down_radius),
-        history_capacity(history_capacity)
+        down_radius(down_radius)
         {}
     };
 
@@ -154,8 +147,7 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        float reward = 0.0f // reward
     );
 
     void clear_state();
@@ -214,8 +206,7 @@ public:
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
+        assert(io_types[i] != action);
 
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
