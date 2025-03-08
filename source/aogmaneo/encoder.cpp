@@ -127,7 +127,7 @@ void Encoder::forward_spatial(
 
         float complemented = (count_all - total) - (count - sum);
 
-        float activation = complemented / (params.choice + max(0.0f, count_all - total));
+        float activation = complemented / (params.choice + count_all - total);
 
         if (all_match && activation > max_activation) {
             max_activation = activation;
@@ -215,7 +215,7 @@ void Encoder::forward_recurrent(
 
         float match = complemented / count_except;
 
-        float activation = complemented / (params.choice + max(0.0f, count_all - recurrent_totals[full_cell_index] * byte_inv));
+        float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
 
         float vigilance = 1.0f - params.temporal_mismatch / full_column_size;
 
@@ -444,7 +444,7 @@ void Encoder::init_random(
             for (int hc = 0; hc < hidden_size.z; hc++) {
                 int hidden_cell_index = hc + hidden_cells_start;
 
-                int sub_total = 0;
+                int total = 0;
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -455,11 +455,11 @@ void Encoder::init_random(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                            sub_total += vl.weights[wi];
+                            total += vl.weights[wi];
                         }
                     }
 
-                vl.hidden_totals[hidden_cell_index] = sub_total;
+                vl.hidden_totals[hidden_cell_index] = total;
             }
         }
 
@@ -786,7 +786,7 @@ void Encoder::merge(
             for (int hc = 0; hc < hidden_size.z; hc++) {
                 int hidden_cell_index = hc + hidden_cells_start;
 
-                int sub_total = 0;
+                int total = 0;
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -797,11 +797,11 @@ void Encoder::merge(
                         for (int vc = 0; vc < vld.size.z; vc++) {
                             int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                            sub_total += vl.weights[wi];
+                            total += vl.weights[wi];
                         }
                     }
 
-                vl.hidden_totals[hidden_cell_index] = sub_total;
+                vl.hidden_totals[hidden_cell_index] = total;
             }
         }
 
