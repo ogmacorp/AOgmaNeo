@@ -23,17 +23,21 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(5, 5, 16),
+        size(4, 4, 16),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Byte_Buffer weights0; // positive
+        Byte_Buffer weights1; // negative
 
-        Int_Buffer dendrite_sums;
-        Int_Buffer dendrite_totals;
+        Int_Buffer dendrite_sums0;
+        Int_Buffer dendrite_sums1;
+        Int_Buffer dendrite_totals0;
+        Int_Buffer dendrite_totals1;
+        Int_Buffer dendrite_counts;
 
         float importance;
 
@@ -44,12 +48,14 @@ public:
     };
 
     struct Params {
-        float vigilance; // ART vigilance
+        float choice; // ART choice parameter
+        float mismatch; // used to compute ART vigilance for loal ARTs
         float lr; // learning rate
 
         Params()
         :
-        vigilance(0.9f),
+        choice(0.01f),
+        mismatch(2.0f),
         lr(0.1f)
         {}
     };
@@ -60,7 +66,8 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Int_Buffer hidden_dis;
+    Int_Buffer hidden_dis0;
+    Int_Buffer hidden_dis1;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
