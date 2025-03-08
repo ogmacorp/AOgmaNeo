@@ -48,14 +48,12 @@ public:
         float choice; // ART choice parameter
         float mismatch; // used to compute ART vigilance for loal ARTs
         float lr; // learning rate
-        float fr; // forget rate
 
         Params()
         :
         choice(0.01f),
         mismatch(2.0f),
-        lr(0.1f),
-        fr(0.01f)
+        lr(0.1f)
         {}
     };
 

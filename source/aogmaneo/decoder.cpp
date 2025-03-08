@@ -187,16 +187,13 @@ void Decoder::learn(
         return;
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
-    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
     int hidden_di_target = hidden_dis[hidden_cell_index_target];
-    int hidden_di_max = hidden_dis[hidden_cell_index_max];
 
     if (hidden_di_target == -1)
         return;
 
     int dendrite_index_target = hidden_di_target + num_dendrites_per_cell * hidden_cell_index_target;
-    int dendrite_index_max = hidden_di_max + num_dendrites_per_cell * hidden_cell_index_max;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -227,25 +224,13 @@ void Decoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                {
-                    int wi = hidden_di_target + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
+                int wi = hidden_di_target + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
 
-                    Byte w_old = vl.weights[wi];
+                Byte w_old = vl.weights[wi];
 
-                    vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
+                vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
 
-                    vl.dendrite_totals[dendrite_index_target] += vl.weights[wi] - w_old;
-                }
-
-                {
-                    int wi = hidden_di_max + num_dendrites_per_cell * (hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
-
-                    Byte w_old = vl.weights[wi];
-
-                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.fr * vl.weights[wi]));
-
-                    vl.dendrite_totals[dendrite_index_max] += vl.weights[wi] - w_old;
-                }
+                vl.dendrite_totals[dendrite_index_target] += vl.weights[wi] - w_old;
             }
     }
 }
