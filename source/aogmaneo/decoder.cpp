@@ -133,7 +133,7 @@ void Decoder::forward(
 
                 float complemented = (sub_count_all - vl.dendrite_totals[hidden_cell_index] * byte_inv) - (sub_count - vl.dendrite_sums[hidden_cell_index] * byte_inv);
 
-                float match = complemented / sub_count_except;
+                float match = complemented * (1.0f + init_weight_noisei * byte_inv) / sub_count_except;
 
                 float vigilance = 1.0f - params.mismatch / vld.size.z;
 

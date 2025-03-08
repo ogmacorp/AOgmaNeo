@@ -111,7 +111,7 @@ void Encoder::forward_spatial(
 
             float complemented = (sub_count_all - vl.hidden_totals[hidden_cell_index] * byte_inv) - (sub_count - vl.hidden_sums[hidden_cell_index] * byte_inv);
 
-            float match = complemented / sub_count_except;
+            float match = complemented * (1.0f + init_weight_noisei * byte_inv) / sub_count_except;
 
             float vigilance = 1.0f - params.spatial_mismatch / vld.size.z;
 
