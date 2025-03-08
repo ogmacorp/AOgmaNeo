@@ -36,13 +36,11 @@ public:
     struct Params {
         float scale; // scale of activations
         float lr; // weight learning rate
-        float leak; // relu leak
 
         Params()
         :
         scale(8.0f),
-        lr(0.05f),
-        leak(0.01f)
+        lr(0.05f)
         {}
     };
 
