@@ -147,17 +147,13 @@ void Decoder::forward(
             sum /= max(limit_small, total_importance);
             total /= max(limit_small, total_importance);
 
-            float complemented = (count_all - total) - (count - sum);
-
-            float activation = complemented / (params.choice + count_all - total);
-
-            if (all_match && activation > max_activation) {
-                max_activation = activation;
+            if (all_match && sum > max_activation) {
+                max_activation = sum;
                 max_index = di;
             }
 
-            if (activation > max_complete_activation) {
-                max_complete_activation = activation;
+            if (sum > max_complete_activation) {
+                max_complete_activation = sum;
                 max_complete_index = di;
             }
         }
