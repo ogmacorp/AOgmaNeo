@@ -286,7 +286,7 @@ void Decoder::init_random(
             vl.weights[i] = (rand() % init_weight_noisei);
 
         vl.dendrite_sums.resize(num_dendrites);
-        vl.dendrite_totals = Int_Buffer(num_dendrites, 0);
+        vl.dendrite_totals.resize(num_dendrites);
         vl.dendrite_counts.resize(num_hidden_columns);
     }
 
