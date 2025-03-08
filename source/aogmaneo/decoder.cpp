@@ -20,6 +20,7 @@ void Decoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
+    float count_except = 0.0f;
     float count_all = 0.0f;
     float total_importance = 0.0f;
 
@@ -45,6 +46,7 @@ void Decoder::forward(
         int sub_count = vl.dendrite_counts[hidden_column_index];
 
         count += vl.importance * sub_count;
+        count_except += vl.importance * sub_count * (vld.size.z - 1);
         count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
@@ -59,8 +61,7 @@ void Decoder::forward(
             for (int di = 0; di < num_dendrites_per_cell; di++) {
                 int dendrite_index = di + dendrites_start;
 
-                vl.dendrite_sums0[dendrite_index] = 0;
-                vl.dendrite_sums1[dendrite_index] = 0;
+                vl.dendrite_sums[dendrite_index] = 0;
             }
         }
 
@@ -86,18 +87,18 @@ void Decoder::forward(
 
                         int wi = di + wi_start;
 
-                        vl.dendrite_sums0[dendrite_index] += vl.weights0[wi];
-                        vl.dendrite_sums1[dendrite_index] += vl.weights1[wi];
+                        vl.dendrite_sums[dendrite_index] += vl.weights[wi];
                     }
                 }
             }
     }
 
     count /= max(limit_small, total_importance);
+    count_except /= max(limit_small, total_importance);
     count_all /= max(limit_small, total_importance);
 
     int max_compare_index = 0;
-    float max_compare_activation = limit_min;
+    float max_compare_activation = 0.0f;
 
     const float byte_inv = 1.0f / 255.0f;
 
@@ -106,26 +107,19 @@ void Decoder::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        int max_index0 = -1;
-        int max_index1 = -1;
-        float max_activation0 = 0.0f;
-        float max_activation1 = 0.0f;
+        int max_index = -1;
+        float max_activation = 0.0f;
 
-        int max_complete_index0 = 0;
-        int max_complete_index1 = 0;
-        float max_complete_activation0 = 0.0f;
-        float max_complete_activation1 = 0.0f;
+        int max_complete_index = 0;
+        float max_complete_activation = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            float sum0 = 0.0f;
-            float sum1 = 0.0f;
-            float total0 = 0.0f;
-            float total1 = 0.0f;
+            float sum = 0.0f;
+            float total = 0.0f;
 
-            bool all_match0 = true;
-            bool all_match1 = true;
+            bool all_match = true;
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -137,69 +131,41 @@ void Decoder::forward(
                 int sub_count_except = sub_count * (vld.size.z - 1);
                 int sub_count_all = sub_count * vld.size.z;
 
-                float complemented0 = (sub_count_all - vl.dendrite_totals0[hidden_cell_index] * byte_inv) - (sub_count - vl.dendrite_sums0[hidden_cell_index] * byte_inv);
-                float complemented1 = (sub_count_all - vl.dendrite_totals1[hidden_cell_index] * byte_inv) - (sub_count - vl.dendrite_sums1[hidden_cell_index] * byte_inv);
+                float complemented = (sub_count_all - vl.dendrite_totals[hidden_cell_index] * byte_inv) - (sub_count - vl.dendrite_sums[hidden_cell_index] * byte_inv);
 
-                float match0 = complemented0 / sub_count_except;
-                float match1 = complemented1 / sub_count_except;
+                float match = complemented / sub_count_except;
 
                 float vigilance = 1.0f - params.mismatch / vld.size.z;
 
-                if (vl.importance > 0.0f) {
-                    if (match0 < vigilance)
-                        all_match0 = false;
+                if (vl.importance > 0.0f && match < vigilance)
+                    all_match = false;
 
-                    if (match1 < vigilance)
-                        all_match1 = false;
-                }
-
-                sum0 += vl.dendrite_sums0[dendrite_index] * influence;
-                total0 += vl.dendrite_totals0[dendrite_index] * influence;
-
-                sum1 += vl.dendrite_sums1[dendrite_index] * influence;
-                total1 += vl.dendrite_totals1[dendrite_index] * influence;
+                sum += vl.dendrite_sums[dendrite_index] * influence;
+                total += vl.dendrite_totals[dendrite_index] * influence;
             }
 
-            sum0 /= max(limit_small, total_importance);
-            total0 /= max(limit_small, total_importance);
+            sum /= max(limit_small, total_importance);
+            total /= max(limit_small, total_importance);
 
-            sum1 /= max(limit_small, total_importance);
-            total1 /= max(limit_small, total_importance);
+            float complemented = (count_all - total) - (count - sum);
 
-            float complemented0 = (count_all - total0) - (count - sum0);
-            float complemented1 = (count_all - total1) - (count - sum1);
+            float activation = complemented / (params.choice + count_all - total);
 
-            float activation0 = complemented0 / (params.choice + count_all - total0);
-            float activation1 = complemented1 / (params.choice + count_all - total1);
-
-            if (all_match0 && activation0 > max_activation0) {
-                max_activation0 = activation0;
-                max_index0 = di;
+            if (all_match && activation > max_activation) {
+                max_activation = activation;
+                max_index = di;
             }
 
-            if (all_match1 && activation1 > max_activation1) {
-                max_activation1 = activation1;
-                max_index1 = di;
-            }
-
-            if (activation0 > max_complete_activation0) {
-                max_complete_activation0 = activation0;
-                max_complete_index0 = di;
-            }
-
-            if (activation1 > max_complete_activation1) {
-                max_complete_activation1 = activation1;
-                max_complete_index1 = di;
+            if (activation > max_complete_activation) {
+                max_complete_activation = activation;
+                max_complete_index = di;
             }
         }
 
-        hidden_dis0[hidden_cell_index] = (max_index0 == -1 ? max_complete_index0 : max_index0);
-        hidden_dis1[hidden_cell_index] = (max_index1 == -1 ? max_complete_index1 : max_index1);
+        hidden_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
 
-        float compare_activation = max_complete_activation0 - max_complete_activation1;
-
-        if (compare_activation > max_compare_activation) {
-            max_compare_activation = compare_activation;
+        if (max_complete_activation > max_compare_activation) {
+            max_compare_activation = max_complete_activation;
             max_compare_index = hc;
         }
     }
@@ -226,17 +192,14 @@ void Decoder::learn(
     int hidden_cell_index_target = target_ci + hidden_cells_start;
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
-    int hidden_di_target0 = hidden_dis0[hidden_cell_index_target];
-    int hidden_di_max1 = hidden_dis1[hidden_cell_index_max];
+    int hidden_di_target = hidden_dis[hidden_cell_index_target];
+    int hidden_di_max = hidden_dis[hidden_cell_index_max];
 
-    if (hidden_di_target0 == -1 || hidden_di_max1 == -1)
+    if (hidden_di_target == -1)
         return;
 
-    int dendrites_start_target = num_dendrites_per_cell * hidden_cell_index_target;
-    int dendrites_start_max = num_dendrites_per_cell * hidden_cell_index_max;
-
-    int dendrite_index_target0 = hidden_di_target0 + dendrites_start_target;
-    int dendrite_index_max1 = hidden_di_max1 + dendrites_start_max;
+    int dendrite_index_target = hidden_di_target + num_dendrites_per_cell * hidden_cell_index_target;
+    int dendrite_index_max = hidden_di_max + num_dendrites_per_cell * hidden_cell_index_max;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -268,23 +231,23 @@ void Decoder::learn(
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 {
-                    int wi = hidden_di_target0 + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
+                    int wi = hidden_di_target + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
 
-                    Byte w_old = vl.weights0[wi];
+                    Byte w_old = vl.weights[wi];
 
-                    vl.weights0[wi] = min(255, vl.weights0[wi] + ceilf(params.lr * (255.0f - vl.weights0[wi])));
+                    vl.weights[wi] = min(255, vl.weights[wi] + ceilf(params.lr * (255.0f - vl.weights[wi])));
 
-                    vl.dendrite_totals0[dendrite_index_target0] += vl.weights0[wi] - w_old;
+                    vl.dendrite_totals[dendrite_index_target] += vl.weights[wi] - w_old;
                 }
 
                 {
-                    int wi = hidden_di_max1 + num_dendrites_per_cell * (hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
+                    int wi = hidden_di_max + num_dendrites_per_cell * (hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index))));
 
-                    Byte w_old = vl.weights1[wi];
+                    Byte w_old = vl.weights[wi];
 
-                    vl.weights1[wi] = min(255, vl.weights1[wi] + ceilf(params.lr * (255.0f - vl.weights1[wi])));
+                    vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.fr * vl.weights[wi]));
 
-                    vl.dendrite_totals1[dendrite_index_max1] += vl.weights1[wi] - w_old;
+                    vl.dendrite_totals[dendrite_index_max] += vl.weights[wi] - w_old;
                 }
             }
     }
@@ -317,25 +280,19 @@ void Decoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights0.resize(num_dendrites * area * vld.size.z);
-        vl.weights1.resize(vl.weights0.size());
+        vl.weights.resize(num_dendrites * area * vld.size.z);
 
-        for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = (rand() % init_weight_noisei);
-            vl.weights1[i] = (rand() % init_weight_noisei);
-        }
+        for (int i = 0; i < vl.weights.size(); i++)
+            vl.weights[i] = (rand() % init_weight_noisei);
 
-        vl.dendrite_sums0.resize(num_dendrites);
-        vl.dendrite_sums1.resize(num_dendrites);
-        vl.dendrite_totals0.resize(num_dendrites);
-        vl.dendrite_totals1.resize(num_dendrites);
+        vl.dendrite_sums.resize(num_dendrites);
+        vl.dendrite_totals = Int_Buffer(num_dendrites, 0);
         vl.dendrite_counts.resize(num_hidden_columns);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_dis0 = Int_Buffer(num_hidden_cells, -1);
-    hidden_dis1 = Int_Buffer(num_hidden_cells, -1);
+    hidden_dis = Int_Buffer(num_hidden_cells, -1);
 
     // init totals and counts
     for (int i = 0; i < num_hidden_columns; i++) {
@@ -374,8 +331,7 @@ void Decoder::init_random(
                 for (int di = 0; di < num_dendrites_per_cell; di++) {
                     int dendrite_index = di + dendrites_start;
 
-                    int total0 = 0;
-                    int total1 = 0;
+                    int total = 0;
 
                     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -384,13 +340,11 @@ void Decoder::init_random(
                             for (int vc = 0; vc < vld.size.z; vc++) {
                                 int wi = di + num_dendrites_per_cell * (hc + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
 
-                                total0 += vl.weights0[wi];
-                                total1 += vl.weights1[wi];
+                                total += vl.weights[wi];
                             }
                         }
 
-                    vl.dendrite_totals0[dendrite_index] = total0;
-                    vl.dendrite_totals1[dendrite_index] = total1;
+                    vl.dendrite_totals[dendrite_index] = total;
                 }
             }
         }
@@ -422,25 +376,24 @@ void Decoder::learn(
 
 void Decoder::clear_state() {
     hidden_cis.fill(0);
-    hidden_dis0.fill(-1);
-    hidden_dis1.fill(-1);
+    hidden_dis.fill(-1);
 }
 
 long Decoder::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + 2 * hidden_dis0.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_dis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights0.size() * sizeof(Byte) + 2 * vl.dendrite_totals0.size() * sizeof(int) + vl.dendrite_counts.size() * sizeof(int) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.dendrite_totals.size() * sizeof(int) + vl.dendrite_counts.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
 }
 
 long Decoder::state_size() const {
-    return hidden_cis.size() * sizeof(int) + 2 * hidden_dis0.size() * sizeof(int);
+    return hidden_cis.size() * sizeof(int) + hidden_dis.size() * sizeof(int);
 }
 
 long Decoder::weights_size() const {
@@ -449,7 +402,7 @@ long Decoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += 2 * vl.weights0.size() * sizeof(Byte);
+        size += vl.weights.size() * sizeof(Byte);
     }
 
     return size;
@@ -462,8 +415,7 @@ void Decoder::write(
     writer.write(&num_dendrites_per_cell, sizeof(int));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    writer.write(&hidden_dis0[0], hidden_dis0.size() * sizeof(int));
-    writer.write(&hidden_dis1[0], hidden_dis1.size() * sizeof(int));
+    writer.write(&hidden_dis[0], hidden_dis.size() * sizeof(int));
     
     int num_visible_layers = visible_layers.size();
 
@@ -475,11 +427,9 @@ void Decoder::write(
 
         writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-        writer.write(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
-        writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
-        writer.write(&vl.dendrite_totals0[0], vl.dendrite_totals0.size() * sizeof(int));
-        writer.write(&vl.dendrite_totals1[0], vl.dendrite_totals1.size() * sizeof(int));
+        writer.write(&vl.dendrite_totals[0], vl.dendrite_totals.size() * sizeof(int));
         writer.write(&vl.dendrite_counts[0], vl.dendrite_counts.size() * sizeof(int));
 
         writer.write(&vl.importance, sizeof(float));
@@ -497,12 +447,10 @@ void Decoder::read(
     int num_dendrites = num_hidden_cells * num_dendrites_per_cell;
 
     hidden_cis.resize(num_hidden_columns);
-    hidden_dis0.resize(num_hidden_cells);
-    hidden_dis1.resize(num_hidden_cells);
+    hidden_dis.resize(num_hidden_cells);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    reader.read(&hidden_dis0[0], hidden_dis0.size() * sizeof(int));
-    reader.read(&hidden_dis1[0], hidden_dis1.size() * sizeof(int));
+    reader.read(&hidden_dis[0], hidden_dis.size() * sizeof(int));
 
     int num_visible_layers;
 
@@ -523,20 +471,15 @@ void Decoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights0.resize(num_dendrites * area * vld.size.z);
-        vl.weights1.resize(vl.weights0.size());
+        vl.weights.resize(num_dendrites * area * vld.size.z);
 
-        reader.read(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
-        reader.read(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
-        vl.dendrite_sums0.resize(num_dendrites);
-        vl.dendrite_sums1.resize(num_dendrites);
+        vl.dendrite_sums.resize(num_dendrites);
 
-        vl.dendrite_totals0.resize(num_dendrites);
-        vl.dendrite_totals1.resize(num_dendrites);
+        vl.dendrite_totals.resize(num_dendrites);
 
-        reader.read(&vl.dendrite_totals0[0], vl.dendrite_totals0.size() * sizeof(int));
-        reader.read(&vl.dendrite_totals1[0], vl.dendrite_totals1.size() * sizeof(int));
+        reader.read(&vl.dendrite_totals[0], vl.dendrite_totals.size() * sizeof(int));
 
         vl.dendrite_counts.resize(num_hidden_columns);
 
@@ -550,16 +493,14 @@ void Decoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    writer.write(&hidden_dis0[0], hidden_dis0.size() * sizeof(int));
-    writer.write(&hidden_dis1[0], hidden_dis1.size() * sizeof(int));
+    writer.write(&hidden_dis[0], hidden_dis.size() * sizeof(int));
 }
 
 void Decoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    reader.read(&hidden_dis0[0], hidden_dis0.size() * sizeof(int));
-    reader.read(&hidden_dis1[0], hidden_dis1.size() * sizeof(int));
+    reader.read(&hidden_dis[0], hidden_dis.size() * sizeof(int));
 }
 
 void Decoder::write_weights(
@@ -568,8 +509,7 @@ void Decoder::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
-        writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
     }
 }
 
@@ -579,8 +519,7 @@ void Decoder::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(&vl.weights0[0], vl.weights0.size() * sizeof(Byte));
-        reader.read(&vl.weights1[0], vl.weights1.size() * sizeof(Byte));
+        reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
     }
 }
 
@@ -594,11 +533,10 @@ void Decoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights0.size(); i++) {
+            for (int i = 0; i < vl.weights.size(); i++) {
                 int d = rand() % decoders.size();                
 
-                vl.weights0[i] = decoders[d]->visible_layers[vli].weights0[i];
-                vl.weights1[i] = decoders[d]->visible_layers[vli].weights1[i];
+                vl.weights[i] = decoders[d]->visible_layers[vli].weights[i];
             }
         }
 
@@ -608,17 +546,13 @@ void Decoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights0.size(); i++) {
-                float total0 = 0.0f;
-                float total1 = 0.0f;
+            for (int i = 0; i < vl.weights.size(); i++) {
+                float total = 0.0f;
 
-                for (int d = 0; d < decoders.size(); d++) {
-                    total0 += decoders[d]->visible_layers[vli].weights0[i];
-                    total1 += decoders[d]->visible_layers[vli].weights1[i];
-                }
+                for (int d = 0; d < decoders.size(); d++)
+                    total += decoders[d]->visible_layers[vli].weights[i];
 
-                vl.weights0[i] = roundf(total0 / decoders.size());
-                vl.weights1[i] = roundf(total1 / decoders.size());
+                vl.weights[i] = roundf(total / decoders.size());
             }
         }
 
@@ -654,6 +588,8 @@ void Decoder::merge(
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+            vl.dendrite_counts[hidden_column_index] = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
+
             for (int hc = 0; hc < hidden_size.z; hc++) {
                 int hidden_cell_index = hc + hidden_cells_start;
 
@@ -662,8 +598,7 @@ void Decoder::merge(
                 for (int di = 0; di < num_dendrites_per_cell; di++) {
                     int dendrite_index = di + dendrites_start;
 
-                    int total0 = 0;
-                    int total1 = 0;
+                    int total = 0;
 
                     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -672,13 +607,11 @@ void Decoder::merge(
                             for (int vc = 0; vc < vld.size.z; vc++) {
                                 int wi = di + num_dendrites_per_cell * (hc + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index))));
 
-                                total0 += vl.weights0[wi];
-                                total1 += vl.weights1[wi];
+                                total += vl.weights[wi];
                             }
                         }
 
-                    vl.dendrite_totals0[dendrite_index] = total0;
-                    vl.dendrite_totals1[dendrite_index] = total1;
+                    vl.dendrite_totals[dendrite_index] = total;
                 }
             }
         }
