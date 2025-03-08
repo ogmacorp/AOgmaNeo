@@ -143,8 +143,6 @@ void Encoder::forward_spatial(
     hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
-
-    hidden_learn_flags[hidden_column_index] = (max_index != -1);
 }
 
 void Encoder::forward_recurrent(
@@ -233,8 +231,6 @@ void Encoder::forward_recurrent(
     }
 
     temporal_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index) + hidden_ci * temporal_size;
-
-    temporal_learn_flags[hidden_column_index] = (max_index != -1);
 }
 
 void Encoder::learn(
@@ -274,7 +270,7 @@ void Encoder::learn(
 
     float ratio = static_cast<float>(num_higher) / static_cast<float>(count);
 
-    if (ratio <= params.active_ratio && hidden_learn_flags[hidden_column_index]) {
+    if (ratio <= params.active_ratio) {
         int hidden_ci = hidden_cis[hidden_column_index];
 
         // spatial
@@ -320,38 +316,36 @@ void Encoder::learn(
         }
     }
 
-    if (temporal_learn_flags[hidden_column_index]) {
-        int temporal_ci = temporal_cis[hidden_column_index];
+    int temporal_ci = temporal_cis[hidden_column_index];
 
-        // recurrent
-        int full_cell_index_max = temporal_ci + full_cells_start;
+    // recurrent
+    int full_cell_index_max = temporal_ci + full_cells_start;
 
-        int diam = recurrent_radius * 2 + 1;
+    int diam = recurrent_radius * 2 + 1;
 
-        // lower corner
-        Int2 field_lower_bound(column_pos.x - recurrent_radius, column_pos.y - recurrent_radius);
+    // lower corner
+    Int2 field_lower_bound(column_pos.x - recurrent_radius, column_pos.y - recurrent_radius);
 
-        // bounds of receptive field, clamped to input size
-        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-        Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
+    // bounds of receptive field, clamped to input size
+    Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+    Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
-        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
+    for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+        for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+            int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
 
-                int in_ci = temporal_cis_prev[other_hidden_column_index];
+            int in_ci = temporal_cis_prev[other_hidden_column_index];
 
-                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+            Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = temporal_ci + full_column_size * (offset.y + diam * (offset.x + diam * (in_ci + full_column_size * hidden_column_index)));
+            int wi = temporal_ci + full_column_size * (offset.y + diam * (offset.x + diam * (in_ci + full_column_size * hidden_column_index)));
 
-                Byte w_old = recurrent_weights[wi];
+            Byte w_old = recurrent_weights[wi];
 
-                recurrent_weights[wi] = min(255, recurrent_weights[wi] + ceilf(params.lr * (255.0f - recurrent_weights[wi])));
+            recurrent_weights[wi] = min(255, recurrent_weights[wi] + ceilf(params.lr * (255.0f - recurrent_weights[wi])));
 
-                recurrent_totals[full_cell_index_max] += recurrent_weights[wi] - w_old;
-            }
-    }
+            recurrent_totals[full_cell_index_max] += recurrent_weights[wi] - w_old;
+        }
 }
 
 void Encoder::init_random(
@@ -399,9 +393,6 @@ void Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
     temporal_cis = Int_Buffer(num_hidden_columns, 0);
     temporal_cis_prev.resize(num_hidden_columns);
-
-    hidden_learn_flags.resize(num_hidden_columns);
-    temporal_learn_flags.resize(num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
 
@@ -562,9 +553,6 @@ void Encoder::read(
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&temporal_cis[0], temporal_cis.size() * sizeof(int));
-
-    hidden_learn_flags.resize(num_hidden_columns);
-    temporal_learn_flags.resize(num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
 
