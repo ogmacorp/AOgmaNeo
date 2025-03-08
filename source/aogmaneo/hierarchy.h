@@ -202,15 +202,6 @@ public:
         return decoders[0][d_indices[i]].get_hidden_cis();
     }
 
-    // retrieve prediction activations
-    const Float_Buffer &get_prediction_acts(
-        int i
-    ) const {
-        assert(io_types[i] != action);
-
-        return decoders[0][d_indices[i]].get_hidden_acts();
-    }
-
     // number of io layers
     int get_num_io() const {
         return io_sizes.size();
