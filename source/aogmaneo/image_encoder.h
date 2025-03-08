@@ -24,7 +24,7 @@ public:
         Visible_Layer_Desc()
         :
         size(32, 32, 1),
-        radius(4)
+        radius(2)
         {}
     };
 
@@ -37,19 +37,19 @@ public:
     };
 
     struct Params {
-        float falloff; // SOM neighborhood falloff
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
-        int n_radius; // SOM neighborhood radius
+        int radius; // SOM neighborhood radius
         
         Params()
         :
-        falloff(0.99f),
+        falloff(0.9f),
         lr(0.1f),
         scale(2.0f),
         rr(0.01f),
-        n_radius(1)
+        radius(1)
         {}
     };
 

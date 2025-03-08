@@ -23,15 +23,19 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(5, 5, 32),
+        size(5, 5, 16),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer protos;
+        Byte_Buffer weights;
         
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
+        Int_Buffer hidden_counts;
+
         float importance;
 
         Visible_Layer()
@@ -41,21 +45,21 @@ public:
     };
 
     struct Params {
-        float falloff; // SOM neighborhood falloff
-        float choice; // increase to reduce bias toward new column selection
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float spatial_mismatch; // used to determine ART vigilance
+        float temporal_mismatch; // used to determine ART vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
-        int n_radius; // SOM neighborhood radius
 
         Params()
         :
-        falloff(0.99f),
-        choice(0.5f),
-        lr(0.1f),
+        choice(0.01f),
+        spatial_mismatch(0.9f),
+        temporal_mismatch(0.9f),
+        lr(1.0f),
         active_ratio(0.1f),
-        l_radius(2),
-        n_radius(1)
+        l_radius(2)
         {}
     };
 
@@ -65,23 +69,18 @@ private:
     int recurrent_radius; // radius of recurrent connections
 
     Int_Buffer hidden_cis;
-    Int_Buffer hidden_cis_prev;
     Int_Buffer temporal_cis;
     Int_Buffer temporal_cis_prev;
 
-    Float_Buffer hidden_resources;
-
-    Float_Buffer hidden_acts;
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Float_Buffer temporal_acts;
-    Float_Buffer recurrent_protos;
-
-    Float_Buffer temporal_resources;
+    Int_Buffer recurrent_sums;
+    Byte_Buffer recurrent_weights;
+    Int_Buffer recurrent_totals;
     
     // --- kernels ---
     
