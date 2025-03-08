@@ -19,8 +19,6 @@ void Decoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    float count = 0.0f;
-    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -41,11 +39,6 @@ void Decoder::forward(
         // bounds of receptive field, clamped to input size
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-        int sub_count = vl.dendrite_counts[hidden_column_index];
-
-        count += vl.importance * sub_count;
-        count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
 
@@ -91,9 +84,6 @@ void Decoder::forward(
             }
     }
 
-    count /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
-
     int max_compare_index = 0;
     float max_compare_activation = 0.0f;
 
@@ -116,26 +106,12 @@ void Decoder::forward(
             float sum = 0.0f;
             float total = 0.0f;
 
-            bool all_match = true;
-
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
                 const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
                 float influence = vl.importance * byte_inv;
 
-                int sub_count = vl.dendrite_counts[hidden_column_index];
-                int sub_count_except = sub_count * (vld.size.z - 1);
-                int sub_count_all = sub_count * vld.size.z;
-
-                float complemented = (sub_count_all - vl.dendrite_totals[hidden_cell_index] * byte_inv) - (sub_count - vl.dendrite_sums[hidden_cell_index] * byte_inv);
-
-                float match = complemented / sub_count_except;
-
-                float vigilance = 1.0f - params.mismatch / vld.size.z;
-
-                if (vl.importance > 0.0f && match < vigilance)
-                    all_match = false;
 
                 sum += vl.dendrite_sums[dendrite_index] * influence;
                 total += vl.dendrite_totals[dendrite_index] * influence;
@@ -144,17 +120,15 @@ void Decoder::forward(
             sum /= max(limit_small, total_importance);
             total /= max(limit_small, total_importance);
 
-            float complemented = (count_all - total) - (count - sum);
+            float match = sum / max(limit_small, max(sum, total));
 
-            float activation = complemented / (params.choice + max(0.0f, count_all - total));
-
-            if (all_match && activation > max_activation) {
-                max_activation = activation;
+            if (match >= params.vigilance && sum > max_activation) {
+                max_activation = sum;
                 max_index = di;
             }
 
-            if (activation > max_complete_activation) {
-                max_complete_activation = activation;
+            if (sum > max_complete_activation) {
+                max_complete_activation = sum;
                 max_complete_index = di;
             }
         }
@@ -269,41 +243,11 @@ void Decoder::init_random(
 
         vl.dendrite_sums.resize(num_dendrites);
         vl.dendrite_totals = Int_Buffer(num_dendrites, 0);
-        vl.dendrite_counts.resize(num_hidden_columns);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_dis = Int_Buffer(num_hidden_cells, -1);
-
-    // init totals
-    for (int i = 0; i < num_hidden_columns; i++) {
-        Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
-
-        int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
-
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-            int diam = vld.radius * 2 + 1;
-
-            // projection
-            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
-
-            Int2 visible_center = project(column_pos, h_to_v);
-
-            // lower corner
-            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
-
-            // bounds of receptive field, clamped to input size
-            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-            vl.dendrite_counts[hidden_column_index] = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-        }
-    }
 }
 
 void Decoder::activate(
@@ -341,7 +285,7 @@ long Decoder::size() const {
         const Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.dendrite_totals.size() * sizeof(int) + vl.dendrite_counts.size() * sizeof(int) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.dendrite_totals.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
@@ -385,7 +329,6 @@ void Decoder::write(
         writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         writer.write(&vl.dendrite_totals[0], vl.dendrite_totals.size() * sizeof(int));
-        writer.write(&vl.dendrite_counts[0], vl.dendrite_counts.size() * sizeof(int));
 
         writer.write(&vl.importance, sizeof(float));
     }
@@ -435,10 +378,6 @@ void Decoder::read(
         vl.dendrite_totals.resize(num_dendrites);
 
         reader.read(&vl.dendrite_totals[0], vl.dendrite_totals.size() * sizeof(int));
-
-        vl.dendrite_counts.resize(num_hidden_columns);
-
-        reader.read(&vl.dendrite_counts[0], vl.dendrite_counts.size() * sizeof(int));
 
         reader.read(&vl.importance, sizeof(float));
     }

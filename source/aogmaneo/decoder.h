@@ -34,7 +34,6 @@ public:
 
         Int_Buffer dendrite_sums;
         Int_Buffer dendrite_totals;
-        Int_Buffer dendrite_counts;
 
         float importance;
 
@@ -45,14 +44,12 @@ public:
     };
 
     struct Params {
-        float choice; // ART choice parameter
-        float mismatch; // used to compute ART vigilance for loal ARTs
+        float vigilance; // ART vigilance
         float lr; // learning rate
 
         Params()
         :
-        choice(0.01f),
-        mismatch(2.0f),
+        vigilance(0.9f),
         lr(0.1f)
         {}
     };
