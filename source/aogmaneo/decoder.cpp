@@ -162,6 +162,7 @@ void Decoder::forward(
 
             sum0 /= max(limit_small, total_importance);
             total0 /= max(limit_small, total_importance);
+
             sum1 /= max(limit_small, total_importance);
             total1 /= max(limit_small, total_importance);
 
@@ -326,8 +327,8 @@ void Decoder::init_random(
 
         vl.dendrite_sums0.resize(num_dendrites);
         vl.dendrite_sums1.resize(num_dendrites);
-        vl.dendrite_totals0 = Int_Buffer(num_dendrites, 0);
-        vl.dendrite_totals1 = Int_Buffer(num_dendrites, 0);
+        vl.dendrite_totals0.resize(num_dendrites);
+        vl.dendrite_totals1.resize(num_dendrites);
         vl.dendrite_counts.resize(num_hidden_columns);
     }
 
