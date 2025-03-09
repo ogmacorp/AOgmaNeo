@@ -110,9 +110,9 @@ void Actor::forward(
 
             float act = dendrite_acts[dendrite_index] * dendrite_scale;
 
-            dendrite_acts[dendrite_index] = max(act * params.leak, act); // relu
+            dendrite_acts[dendrite_index] = sigmoidf(act); // store gradient
 
-            activation += dendrite_acts[dendrite_index] * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+            activation += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         activation *= activation_scale;
@@ -177,7 +177,7 @@ void Actor::forward(
             int dendrite_index = di + dendrites_start_target;
 
             // re-use as deltas
-            dendrite_acts_prev[dendrite_index] = ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * ((dendrite_acts_prev[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+            dendrite_acts_prev[dendrite_index] = ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts_prev[dendrite_index];
         }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {

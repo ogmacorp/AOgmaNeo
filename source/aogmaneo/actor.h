@@ -38,7 +38,6 @@ public:
 
     struct Params {
         float lr; // value learning rate
-        float leak; // dendrite ReLU leak
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
         float trace_squash; // prevent traces from becoming too large
@@ -46,7 +45,6 @@ public:
         Params()
         :
         lr(0.01f),
-        leak(0.01f),
         discount(0.99f),
         trace_decay(0.98f),
         trace_squash(1.0f)
