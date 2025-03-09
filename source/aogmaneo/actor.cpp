@@ -173,13 +173,6 @@ void Actor::forward(
 
         int dendrites_start_target = num_dendrites_per_cell * hidden_cell_index_target;
 
-        for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start_target;
-
-            // re-use as deltas
-            dendrite_acts_prev[dendrite_index] = ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts_prev[dendrite_index];
-        }
-
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -224,9 +217,9 @@ void Actor::forward(
                                 int wi = di + wi_start;
 
                                 if (vc == in_ci_prev && hc == target_ci)
-                                    vl.traces[wi] += dendrite_acts_prev[dendrite_index] * expf(-params.trace_squash * abs(vl.traces[wi]));
+                                    vl.traces[wi] = max(vl.traces[wi], dendrite_acts_prev[dendrite_index]);
 
-                                vl.weights[wi] += reinforcement * vl.traces[wi];
+                                vl.weights[wi] += reinforcement * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * vl.traces[wi]; // deferred application of dendrite sign so max traces can work
                                 vl.traces[wi] *= params.trace_decay;
                             }
                         }
