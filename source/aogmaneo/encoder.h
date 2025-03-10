@@ -31,8 +31,10 @@ public:
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
-
-        Int_Buffer recon_sums;
+        
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
+        Int_Buffer hidden_counts;
 
         float importance;
 
@@ -43,44 +45,45 @@ public:
     };
 
     struct Params {
-        float scale; // recon curve
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float spatial_mismatch; // used to determine ART vigilance
+        float temporal_mismatch; // used to determine ART vigilance
         float lr; // learning rate
-        int spatial_recon_tolerance;
-        int recurrent_recon_tolerance;
+        float active_ratio; // 2nd stage inhibition activity ratio
+        int l_radius; // second stage inhibition radius
 
         Params()
         :
-        scale(4.0f),
-        lr(0.01f),
-        spatial_recon_tolerance(1),
-        recurrent_recon_tolerance(1)
+        choice(0.01f),
+        spatial_mismatch(2.0f),
+        temporal_mismatch(2.0f),
+        lr(0.5f),
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
-    int temporal_size;
-    int recurrent_radius;
+    int temporal_size; // spatial region size (this must evenly divide hidden_size.z)
+    int recurrent_radius; // radius of recurrent connections
 
-    Int_Buffer hidden_cis; // spatial
+    Int_Buffer hidden_cis;
     Int_Buffer temporal_cis;
     Int_Buffer temporal_cis_prev;
 
-    Float_Buffer hidden_acts;
-    Int_Buffer temporal_acts;
+    Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-    
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
+
+    Int_Buffer recurrent_sums;
     Byte_Buffer recurrent_weights;
-
-    Int_Buffer recurrent_recon_sums;
-
+    Int_Buffer recurrent_totals;
+    
     // --- kernels ---
-
+    
     void forward_spatial(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
@@ -92,17 +95,9 @@ private:
         const Params &params
     );
 
-    void learn_spatial(
+    void learn(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
-        unsigned long* state,
-        const Params &params
-    );
-
-    void learn_recurrent(
-        const Int2 &column_pos,
-        unsigned long* state,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
@@ -124,9 +119,9 @@ public:
     void clear_state();
 
     // serialization
-    long size() const; // returns size in bytes
-    long state_size() const; // returns size of state in bytes
-    long weights_size() const; // returns size of weights in bytes
+    long size() const; // returns size in Bytes
+    long state_size() const; // returns size of state in Bytes
+    long weights_size() const; // returns size of weights in Bytes
 
     void write(
         Stream_Writer &writer
