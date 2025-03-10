@@ -43,7 +43,7 @@ public:
 
         Params()
         :
-        lr(0.1f),
+        lr(0.01f),
         discount(0.99f),
         trace_decay(0.98f)
         {}
