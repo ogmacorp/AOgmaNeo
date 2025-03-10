@@ -25,7 +25,7 @@ void Actor::forward(
 
     int target_ci = hidden_target_cis_prev[hidden_column_index];
 
-    float q_prev = hidden_qs[target_ci + hidden_cells_start];
+    float value_prev = hidden_qs[target_ci + hidden_cells_start];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -135,14 +135,14 @@ void Actor::forward(
 
     float total_inv = 1.0f / max(limit_small, total);
 
-    float q_next = 0.0f;
+    float value_next = 0.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
         hidden_probs[hidden_cell_index] *= total_inv;
 
-        q_next += hidden_probs[hidden_cell_index] * hidden_qs[hidden_cell_index];
+        value_next += hidden_probs[hidden_cell_index] * hidden_qs[hidden_cell_index];
     }
 
     float cusp = randf(state);
@@ -165,7 +165,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error = reward + params.discount * q_next - q_prev;
+        float td_error = reward + params.discount * value_next - value_prev;
 
         float reinforcement = params.lr * td_error;
 
