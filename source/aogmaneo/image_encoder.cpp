@@ -98,6 +98,8 @@ void Image_Encoder::forward(
     hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+
+    hidden_learn_flags[hidden_column_index] = (max_index != -1);
 }
 
 void Image_Encoder::learn(
@@ -376,6 +378,8 @@ void Image_Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
+    hidden_learn_flags.resize(num_hidden_columns);
+
     hidden_comparisons.resize(num_hidden_cells);
 }
 
@@ -495,6 +499,8 @@ void Image_Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+
+    hidden_learn_flags.resize(num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_cells);
 

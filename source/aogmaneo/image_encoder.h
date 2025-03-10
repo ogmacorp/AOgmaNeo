@@ -50,7 +50,7 @@ public:
         :
         choice(0.0001f),
         vigilance(0.9f),
-        lr(0.5f),
+        lr(1.0f),
         scale(2.0f),
         rr(0.05f),
         active_ratio(0.5f),
@@ -62,6 +62,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
+
+    Byte_Buffer hidden_learn_flags;
 
     Float_Buffer hidden_comparisons;
 
