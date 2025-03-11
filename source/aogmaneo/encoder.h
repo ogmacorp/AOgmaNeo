@@ -57,8 +57,8 @@ public:
         Params()
         :
         choice(0.0001f),
-        spatial_mismatch(0.1f),
-        temporal_mismatch(0.1f),
+        spatial_mismatch(2.0f),
+        temporal_mismatch(2.0f),
         lr(1.0f),
         active_ratio(0.1f),
         l_radius(2),
