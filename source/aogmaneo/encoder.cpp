@@ -236,6 +236,7 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
     int temporal_cells_start = hidden_column_index * temporal_size;
+    int full_cells_start = hidden_column_index * full_column_size;
 
     float hidden_max = hidden_comparisons[hidden_column_index];
 
@@ -276,6 +277,8 @@ void Encoder::learn(
             if (!hidden_learn_flags[hidden_cell_index])
                 continue;
 
+            float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
+
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
                 const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -311,10 +314,12 @@ void Encoder::learn(
 
                         int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                        vl.weights0[wi] += params.lr * min(0.0f, in_value - vl.weights0[wi]);
-                        vl.weights1[wi] += params.lr * min(0.0f, 1.0f - in_value - vl.weights1[wi]);
+                        vl.weights0[wi] += rate * min(0.0f, in_value - vl.weights0[wi]);
+                        vl.weights1[wi] += rate * min(0.0f, 1.0f - in_value - vl.weights1[wi]);
                     }
             }
+
+            hidden_commits[hidden_cell_index] = true;
         }
     }
 
@@ -347,6 +352,10 @@ void Encoder::learn(
 
         int full_ci = tc + hidden_ci * temporal_size;
 
+        int full_cell_index = full_ci + full_cells_start;
+
+        float rate = (temporal_commits[full_cell_index] ? params.lr : 1.0f);
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
@@ -359,9 +368,11 @@ void Encoder::learn(
 
                 int wi = full_ci + full_column_size * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                recurrent_weights0[wi] += params.lr * min(0.0f, in_value - recurrent_weights0[wi]);
-                recurrent_weights1[wi] += params.lr * min(0.0f, 1.0f - in_value - recurrent_weights1[wi]);
+                recurrent_weights0[wi] += rate * min(0.0f, in_value - recurrent_weights0[wi]);
+                recurrent_weights1[wi] += rate * min(0.0f, 1.0f - in_value - recurrent_weights1[wi]);
             }
+
+        temporal_commits[full_cell_index] = true;
     }
 }
 
@@ -416,6 +427,9 @@ void Encoder::init_random(
 
     hidden_learn_flags.resize(num_hidden_cells);
     temporal_learn_flags.resize(num_temporal_cells);
+
+    hidden_commits = Byte_Buffer(num_hidden_cells, false);
+    temporal_commits = Byte_Buffer(num_full_cells, false);
 
     hidden_comparisons.resize(num_hidden_columns);
 
@@ -499,7 +513,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + 2 * sizeof(int) + 2 * hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + 2 * sizeof(int) + 2 * hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + temporal_commits.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -539,6 +553,9 @@ void Encoder::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     writer.write(&temporal_cis[0], temporal_cis.size() * sizeof(int));
+
+    writer.write(&hidden_commits[0], hidden_commits.size() * sizeof(Byte));
+    writer.write(&temporal_commits[0], temporal_commits.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -585,6 +602,12 @@ void Encoder::read(
 
     hidden_learn_flags.resize(num_hidden_cells);
     temporal_learn_flags.resize(num_temporal_cells);
+
+    hidden_commits.resize(num_hidden_cells);
+    temporal_commits.resize(num_full_cells);
+
+    reader.read(&hidden_commits[0], hidden_commits.size() * sizeof(Byte));
+    reader.read(&temporal_commits[0], temporal_commits.size() * sizeof(Byte));
 
     hidden_comparisons.resize(num_hidden_columns);
 

@@ -78,6 +78,9 @@ private:
     Byte_Buffer hidden_learn_flags;
     Byte_Buffer temporal_learn_flags;
 
+    Byte_Buffer hidden_commits;
+    Byte_Buffer temporal_commits;
+
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
