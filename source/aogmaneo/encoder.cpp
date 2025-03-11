@@ -84,8 +84,6 @@ void Encoder::forward_spatial(
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
     
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -98,12 +96,10 @@ void Encoder::forward_spatial(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            float influence = vl.importance * byte_inv;
-
             int sub_count = vl.hidden_counts[hidden_column_index];
 
-            float sub_sum = vl.hidden_sums[hidden_cell_index] * byte_inv;
-            float sub_total = vl.hidden_totals[hidden_cell_index] * byte_inv;
+            float sub_sum = vl.hidden_sums[hidden_cell_index];
+            float sub_total = vl.hidden_totals[hidden_cell_index];
 
             float match = sub_sum / sub_count;
 
@@ -202,15 +198,13 @@ void Encoder::forward_recurrent(
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
     
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int tc = 0; tc < temporal_size; tc++) {
         int temporal_cell_index = tc + temporal_cells_start;
 
         int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
 
-        float sum = recurrent_sums[temporal_cell_index] * byte_inv;
-        float total = recurrent_totals[full_cell_index] * byte_inv;
+        float sum = recurrent_sums[temporal_cell_index];
+        float total = recurrent_totals[full_cell_index];
 
         float match = sum / count;
 
@@ -328,50 +322,52 @@ void Encoder::learn(
         }
     }
 
-    if (temporal_learn_flags[hidden_column_index]) {
-        const float full_column_size_inv = 1.0f / full_column_size;
+    const float full_column_size_inv = 1.0f / full_column_size;
 
-        int temporal_ci = temporal_cis[hidden_column_index];
+    int temporal_ci = temporal_cis[hidden_column_index];
 
-        // recurrent
-        int full_cell_index_max = temporal_ci + full_cells_start;
+    // recurrent
+    int full_cell_index_max = temporal_ci + full_cells_start;
 
-        int diam = recurrent_radius * 2 + 1;
+    int diam = recurrent_radius * 2 + 1;
 
-        // lower corner
-        Int2 field_lower_bound(column_pos.x - recurrent_radius, column_pos.y - recurrent_radius);
+    // lower corner
+    Int2 field_lower_bound(column_pos.x - recurrent_radius, column_pos.y - recurrent_radius);
 
-        // bounds of receptive field, clamped to input size
-        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-        Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
+    // bounds of receptive field, clamped to input size
+    Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+    Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
-        for (int dtc = -params.n_radius; dtc <= params.n_radius; dtc++) {
-            int tc = temporal_ci % hidden_size.z + dtc;
+    int temporal_sub_ci = temporal_ci % hidden_size.z;
 
-            if (tc < 0 || tc >= temporal_size)
-                continue;
+    for (int dtc = -params.n_radius; dtc <= params.n_radius; dtc++) {
+        int tc = temporal_sub_ci + dtc;
 
-            int temporal_cell_index = tc + temporal_cells_start;
+        if (tc < 0 || tc >= temporal_size)
+            continue;
 
-            if (!temporal_learn_flags[temporal_cell_index])
-                continue;
+        int temporal_cell_index = tc + temporal_cells_start;
 
-            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                    int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
+        if (!temporal_learn_flags[temporal_cell_index])
+            continue;
 
-                    int in_ci = temporal_cis_prev[other_hidden_column_index];
+        int full_ci = tc + hidden_ci * temporal_size;
 
-                    float in_value = (in_ci + 0.5f) * full_column_size_inv;
+        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                int other_hidden_column_index = address2(Int2(ix, iy), Int2(hidden_size.x, hidden_size.y));
 
-                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+                int in_ci = temporal_cis_prev[other_hidden_column_index];
 
-                    int wi = temporal_ci + full_column_size * (offset.y + diam * (offset.x + diam * hidden_column_index));
+                float in_value = (in_ci + 0.5f) * full_column_size_inv;
 
-                    recurrent_weights0[wi] += params.lr * min(0.0f, in_value - recurrent_weights0[wi]);
-                    recurrent_weights1[wi] += params.lr * min(0.0f, 1.0f - in_value - recurrent_weights1[wi]);
-                }
-        }
+                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+
+                int wi = full_ci + full_column_size * (offset.y + diam * (offset.x + diam * hidden_column_index));
+
+                recurrent_weights0[wi] += params.lr * min(0.0f, in_value - recurrent_weights0[wi]);
+                recurrent_weights1[wi] += params.lr * min(0.0f, 1.0f - in_value - recurrent_weights1[wi]);
+            }
     }
 }
 
