@@ -144,7 +144,6 @@ void Encoder::forward_recurrent(
     int full_column_size = hidden_size.z * temporal_size;
 
     int temporal_cells_start = hidden_column_index * temporal_size;
-    int full_cells_start = hidden_column_index * full_column_size;
 
     int hidden_ci = hidden_cis[hidden_column_index];
 
@@ -237,7 +236,6 @@ void Encoder::learn(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
     int temporal_cells_start = hidden_column_index * temporal_size;
-    int full_cells_start = hidden_column_index * full_column_size;
 
     float hidden_max = hidden_comparisons[hidden_column_index];
 
@@ -334,7 +332,7 @@ void Encoder::learn(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, column_pos.x + recurrent_radius), min(hidden_size.y - 1, column_pos.y + recurrent_radius));
 
-    int temporal_sub_ci = temporal_ci % hidden_size.z;
+    int temporal_sub_ci = temporal_ci % temporal_size;
 
     for (int dtc = -params.n_radius; dtc <= params.n_radius; dtc++) {
         int tc = temporal_sub_ci + dtc;
