@@ -322,6 +322,7 @@ void Encoder::learn(
         }
     }
 
+    return;
     const float full_column_size_inv = 1.0f / full_column_size;
 
     int temporal_ci = temporal_cis[hidden_column_index];
