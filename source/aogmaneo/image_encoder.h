@@ -45,6 +45,7 @@ public:
         float rr; // reconstruction rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // lateral 2nd stage inhibition radius
+        int n_radius; // neighborhood radius
         
         Params()
         :
@@ -54,7 +55,8 @@ public:
         scale(2.0f),
         rr(0.05f),
         active_ratio(0.5f),
-        l_radius(1)
+        l_radius(1),
+        n_radius(1)
         {}
     };
 
@@ -64,6 +66,8 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Byte_Buffer hidden_learn_flags;
+
+    Byte_Buffer hidden_commits;
 
     Float_Buffer hidden_comparisons;
 
