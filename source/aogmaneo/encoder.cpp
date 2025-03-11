@@ -201,10 +201,8 @@ void Encoder::forward_recurrent(
     for (int tc = 0; tc < temporal_size; tc++) {
         int temporal_cell_index = tc + temporal_cells_start;
 
-        int full_cell_index = tc + hidden_ci * temporal_size + full_cells_start;
-
         float sum = recurrent_sums[temporal_cell_index];
-        float total = recurrent_totals[full_cell_index];
+        float total = recurrent_totals[temporal_cell_index];
 
         float match = sum / count;
 
@@ -322,14 +320,11 @@ void Encoder::learn(
         }
     }
 
-    return;
     const float full_column_size_inv = 1.0f / full_column_size;
 
     int temporal_ci = temporal_cis[hidden_column_index];
 
     // recurrent
-    int full_cell_index_max = temporal_ci + full_cells_start;
-
     int diam = recurrent_radius * 2 + 1;
 
     // lower corner
