@@ -23,24 +23,38 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(5, 5, 16),
+        size(4, 4, 16),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        S_Byte_Buffer weights;
+        Float_Buffer weights0;
+        Float_Buffer weights1;
+
+        Float_Buffer dendrite_sums;
+        Float_Buffer dendrite_totals;
+        Int_Buffer dendrite_counts;
+
+        float importance;
+
+        Visible_Layer()
+        :
+        importance(1.0f)
+        {}
     };
 
     struct Params {
-        float scale; // scale of activations
-        float lr; // weight learning rate
+        float choice; // ART choice parameter
+        float mismatch; // used to compute ART vigilance
+        float lr; // learning rate
 
         Params()
         :
-        scale(8.0f),
-        lr(0.05f)
+        choice(0.01f),
+        mismatch(2.0f),
+        lr(0.5f)
         {}
     };
 
@@ -50,11 +64,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden state
 
-    Float_Buffer hidden_acts;
-
-    Float_Buffer dendrite_acts;
-
-    Int_Buffer dendrite_deltas;
+    Int_Buffer hidden_dis;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -72,7 +82,6 @@ private:
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
@@ -156,11 +165,6 @@ public:
     // get the hidden states (predictions)
     const Int_Buffer &get_hidden_cis() const {
         return hidden_cis;
-    }
-
-    // get the hidden activations
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
     }
 
     // get the hidden size
