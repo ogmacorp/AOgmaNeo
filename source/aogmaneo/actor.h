@@ -83,8 +83,6 @@ private:
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
-    Float_Buffer hidden_td_scales;
-
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors
