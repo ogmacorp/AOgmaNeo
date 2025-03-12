@@ -129,7 +129,7 @@ void Encoder::forward_spatial(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation * randf(state));
+    hidden_comparisons[hidden_column_index] = max_activation * powf(randf(state), params.temperature);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }

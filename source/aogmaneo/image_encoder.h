@@ -45,6 +45,7 @@ public:
         float scale;
         float rr; // reconstruction rate
         float active_ratio; // 2nd stage inhibition activity ratio
+        float temperature; // 2nd stage temperature
         int l_radius; // lateral 2nd stage inhibition radius
         int n_radius; // neighborhood radius
         
@@ -57,6 +58,7 @@ public:
         scale(2.0f),
         rr(0.05f),
         active_ratio(0.5f),
+        temperature(0.25f),
         l_radius(1),
         n_radius(1)
         {}
