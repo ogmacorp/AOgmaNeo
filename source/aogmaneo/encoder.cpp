@@ -40,8 +40,6 @@ void Encoder::forward_spatial(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_count = vl.hidden_counts[hidden_column_index];
-
         total_importance += vl.importance;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
@@ -755,8 +753,8 @@ void Encoder::merge(
                 total1 += encoders[e]->recurrent_weights1[i];
             }
 
-            recurrent_weights0[i] = roundf(total0 / encoders.size());
-            recurrent_weights1[i] = roundf(total1 / encoders.size());
+            recurrent_weights0[i] = total0 / encoders.size();
+            recurrent_weights1[i] = total1 / encoders.size();
         }
 
         break;
