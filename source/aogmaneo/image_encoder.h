@@ -38,8 +38,9 @@ public:
     };
 
     struct Params {
-        float choice;
-        float vigilance;
+        float falloff; // neighborhood falloff
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float vigilance; // ART vigilance
         float lr; // learning rate
         float scale;
         float rr; // reconstruction rate
@@ -49,6 +50,7 @@ public:
         
         Params()
         :
+        falloff(0.99f),
         choice(0.0001f),
         vigilance(0.9f),
         lr(1.0f),
@@ -79,7 +81,8 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
+        const Array<Byte_Buffer_View> &inputs,
+        unsigned long* state
     );
 
     void learn(
