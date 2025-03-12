@@ -57,11 +57,11 @@ public:
         Params()
         :
         choice(0.0001f),
-        spatial_mismatch(1.0f),
-        temporal_mismatch(1.0f),
+        spatial_mismatch(0.5f),
+        temporal_mismatch(0.5f),
         lr(0.5f),
-        active_ratio(0.05f),
-        l_radius(3),
+        active_ratio(0.1f),
+        l_radius(2),
         n_radius(1)
         {}
     };
