@@ -148,10 +148,10 @@ void Decoder::forward(
             }
         }
 
-        hidden_dis[hidden_cell_index] = (max_index == -1 ? max_complete_index : max_index);
+        hidden_dis[hidden_cell_index] = max_index;
 
-        if (max_complete_activation > max_compare_activation) {
-            max_compare_activation = max_complete_activation;
+        if (max_activation > max_compare_activation) {
+            max_compare_activation = max_activation;
             max_compare_index = hc;
         }
     }
@@ -171,9 +171,6 @@ void Decoder::learn(
 
     int target_ci = hidden_target_cis[hidden_column_index];
     int hidden_ci = hidden_cis[hidden_column_index];
-
-    if (hidden_ci == target_ci)
-        return;
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
@@ -221,8 +218,8 @@ void Decoder::learn(
 
                 int wi = hidden_di_target + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index)));
 
-                vl.weights0[wi] += rate * min(0.0f, in_value - vl.weights0[wi]);
-                vl.weights1[wi] += rate * min(0.0f, 1.0f - in_value - vl.weights1[wi]);
+                vl.weights0[wi] += rate * min(params.fr, in_value - vl.weights0[wi]);
+                vl.weights1[wi] += rate * min(params.fr, 1.0f - in_value - vl.weights1[wi]);
             }
     }
 
