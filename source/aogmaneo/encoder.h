@@ -30,11 +30,10 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights0;
-        Float_Buffer weights1;
+        Byte_Buffer weights;
         
-        Float_Buffer hidden_sums;
-        Float_Buffer hidden_totals;
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
         Int_Buffer hidden_counts;
 
         float importance;
@@ -46,25 +45,21 @@ public:
     };
 
     struct Params {
-        float falloff; // neighborhood falloff
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float spatial_mismatch; // used to determine ART vigilance
         float temporal_mismatch; // used to determine ART vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
-        int n_radius; // neighborhood radius
 
         Params()
         :
-        falloff(0.99f),
-        choice(0.0001f),
+        choice(0.01f),
         spatial_mismatch(1.0f),
         temporal_mismatch(2.0f),
         lr(0.5f),
         active_ratio(0.1f),
-        l_radius(2),
-        n_radius(1)
+        l_radius(2)
         {}
     };
 
@@ -80,26 +75,21 @@ private:
     Byte_Buffer hidden_learn_flags;
     Byte_Buffer temporal_learn_flags;
 
-    Byte_Buffer hidden_commits;
-    Byte_Buffer temporal_commits;
-
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Float_Buffer recurrent_sums;
-    Float_Buffer recurrent_totals;
-    Float_Buffer recurrent_weights0;
-    Float_Buffer recurrent_weights1;
+    Int_Buffer recurrent_sums;
+    Byte_Buffer recurrent_weights;
+    Int_Buffer recurrent_totals;
     
     // --- kernels ---
     
     void forward_spatial(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        unsigned long* state,
         const Params &params
     );
 
