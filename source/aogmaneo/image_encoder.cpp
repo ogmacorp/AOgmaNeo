@@ -21,6 +21,7 @@ void Image_Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
+    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -89,6 +90,7 @@ void Image_Encoder::forward(
 
         if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
+            max_match = match;
             max_index = hc;
         }
 
@@ -98,7 +100,7 @@ void Image_Encoder::forward(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation * randf(state));
+    hidden_comparisons[hidden_column_index] = max_match + randf(state) * rand_noise_small;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }

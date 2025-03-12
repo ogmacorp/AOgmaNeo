@@ -184,6 +184,8 @@ void Decoder::learn(
 
     int dendrite_index_target = hidden_di_target + num_dendrites_per_cell * hidden_cell_index_target;
 
+    float rate = (dendrite_commits[dendrite_index_target] ? params.lr : 1.0f);
+
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -219,10 +221,12 @@ void Decoder::learn(
 
                 int wi = hidden_di_target + num_dendrites_per_cell * (target_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index)));
 
-                vl.weights0[wi] += params.lr * min(0.0f, in_value - vl.weights0[wi]);
-                vl.weights1[wi] += params.lr * min(0.0f, 1.0f - in_value - vl.weights1[wi]);
+                vl.weights0[wi] += rate * min(0.0f, in_value - vl.weights0[wi]);
+                vl.weights1[wi] += rate * min(0.0f, 1.0f - in_value - vl.weights1[wi]);
             }
     }
+
+    dendrite_commits[dendrite_index_target] = true;
 }
 
 void Decoder::init_random(
@@ -268,6 +272,8 @@ void Decoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_dis = Int_Buffer(num_hidden_cells, -1);
+
+    dendrite_commits = Byte_Buffer(num_dendrites, false);
 
     // init totals
     for (int i = 0; i < num_hidden_columns; i++) {
@@ -328,7 +334,7 @@ void Decoder::clear_state() {
 }
 
 long Decoder::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_dis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_dis.size() * sizeof(int) + dendrite_commits.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -364,6 +370,7 @@ void Decoder::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     writer.write(&hidden_dis[0], hidden_dis.size() * sizeof(int));
+    writer.write(&dendrite_commits[0], dendrite_commits.size() * sizeof(Byte));
     
     int num_visible_layers = visible_layers.size();
 
@@ -396,9 +403,11 @@ void Decoder::read(
 
     hidden_cis.resize(num_hidden_columns);
     hidden_dis.resize(num_hidden_cells);
+    dendrite_commits.resize(num_dendrites);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_dis[0], hidden_dis.size() * sizeof(int));
+    reader.read(&dendrite_commits[0], dendrite_commits.size() * sizeof(Byte));
 
     int num_visible_layers;
 

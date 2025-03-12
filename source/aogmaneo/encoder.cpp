@@ -20,6 +20,7 @@ void Encoder::forward_spatial(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
+    float count = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -41,6 +42,7 @@ void Encoder::forward_spatial(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
+        count += vl.hidden_counts[hidden_column_index] * vl.importance;
         total_importance += vl.importance;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
@@ -77,8 +79,11 @@ void Encoder::forward_spatial(
             }
     }
 
+    count /= max(limit_small, total_importance);
+
     int max_index = -1;
     float max_activation = 0.0f;
+    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -120,6 +125,7 @@ void Encoder::forward_spatial(
 
         if (all_match && activation > max_activation) {
             max_activation = activation;
+            max_match = sum / count;
             max_index = hc;
         }
 
@@ -129,7 +135,7 @@ void Encoder::forward_spatial(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation * randf(state));
+    hidden_comparisons[hidden_column_index] = max_match + randf(state) * rand_noise_small;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
@@ -353,7 +359,7 @@ void Encoder::learn(
 
         int full_cell_index = full_ci + full_cells_start;
 
-        float rate = (temporal_commits[full_cell_index] ? params.lr : 1.0f);
+        float rate = (temporal_commits[full_cell_index] ? params.lr : 1.0f) * powf(params.falloff, abs(dtc));
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {

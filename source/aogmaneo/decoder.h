@@ -53,8 +53,8 @@ public:
         Params()
         :
         choice(0.0001f),
-        mismatch(1.0f),
-        lr(0.5f)
+        mismatch(2.0f),
+        lr(1.0f)
         {}
     };
 
@@ -65,6 +65,8 @@ private:
     Int_Buffer hidden_cis; // hidden state
 
     Int_Buffer hidden_dis;
+
+    Byte_Buffer dendrite_commits;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
