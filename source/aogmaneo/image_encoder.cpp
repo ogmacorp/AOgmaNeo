@@ -151,7 +151,7 @@ void Image_Encoder::learn(
         if (!hidden_learn_flags[hidden_cell_index])
             continue;
 
-        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
+        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * powf(params.falloff, abs(dhc));
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];

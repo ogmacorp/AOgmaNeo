@@ -38,8 +38,9 @@ public:
     };
 
     struct Params {
-        float choice;
-        float vigilance;
+        float falloff; // neighborhood falloff
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float vigilance; // ART vigilance
         float lr; // learning rate
         float scale;
         float rr; // reconstruction rate
@@ -49,6 +50,7 @@ public:
         
         Params()
         :
+        falloff(0.99f),
         choice(0.0001f),
         vigilance(0.9f),
         lr(1.0f),

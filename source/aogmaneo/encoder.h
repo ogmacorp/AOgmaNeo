@@ -57,7 +57,7 @@ public:
 
         Params()
         :
-        falloff(0.9f),
+        falloff(0.99f),
         choice(0.0001f),
         spatial_mismatch(2.0f),
         temporal_mismatch(2.0f),
