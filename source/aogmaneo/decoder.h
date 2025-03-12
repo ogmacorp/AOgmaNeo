@@ -52,8 +52,8 @@ public:
 
         Params()
         :
-        choice(0.01f),
-        mismatch(2.0f),
+        choice(0.0001f),
+        mismatch(1.0f),
         lr(0.5f)
         {}
     };
