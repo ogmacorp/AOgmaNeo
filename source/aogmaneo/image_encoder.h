@@ -54,11 +54,11 @@ public:
         falloff(0.99f),
         choice(0.0001f),
         vigilance(0.9f),
-        lr(1.0f),
+        lr(0.5f),
         scale(2.0f),
         rr(0.05f),
         active_ratio(0.5f),
-        temperature(0.25f),
+        temperature(0.5f),
         l_radius(1),
         n_radius(1)
         {}

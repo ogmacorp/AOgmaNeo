@@ -52,7 +52,6 @@ public:
         float temporal_mismatch; // used to determine ART vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
-        float temperature; // 2nd stage temperature
         int l_radius; // second stage inhibition radius
         int n_radius; // neighborhood radius
 
@@ -60,11 +59,10 @@ public:
         :
         falloff(0.99f),
         choice(0.0001f),
-        spatial_mismatch(1.0f),
-        temporal_mismatch(2.0f),
+        spatial_mismatch(0.5f),
+        temporal_mismatch(1.0f),
         lr(0.5f),
         active_ratio(0.1f),
-        temperature(0.25f),
         l_radius(2),
         n_radius(1)
         {}
