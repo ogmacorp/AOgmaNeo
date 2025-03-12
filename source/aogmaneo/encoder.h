@@ -46,6 +46,7 @@ public:
     };
 
     struct Params {
+        float falloff; // neighborhood falloff
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float spatial_mismatch; // used to determine ART vigilance
         float temporal_mismatch; // used to determine ART vigilance
@@ -56,9 +57,10 @@ public:
 
         Params()
         :
+        falloff(0.9f),
         choice(0.0001f),
-        spatial_mismatch(0.4f),
-        temporal_mismatch(0.4f),
+        spatial_mismatch(2.0f),
+        temporal_mismatch(2.0f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2),
@@ -97,6 +99,7 @@ private:
     void forward_spatial(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        unsigned long* state,
         const Params &params
     );
 

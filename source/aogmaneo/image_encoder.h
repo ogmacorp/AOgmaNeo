@@ -79,7 +79,8 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
+        const Array<Byte_Buffer_View> &inputs,
+        unsigned long* state
     );
 
     void learn(

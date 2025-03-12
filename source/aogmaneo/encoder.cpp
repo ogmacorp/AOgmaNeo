@@ -13,6 +13,7 @@ using namespace aon;
 void Encoder::forward_spatial(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -128,7 +129,7 @@ void Encoder::forward_spatial(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation * randf(state));
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
@@ -275,7 +276,7 @@ void Encoder::learn(
             if (!hidden_learn_flags[hidden_cell_index])
                 continue;
 
-            float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
+            float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f) * powf(params.falloff, abs(dhc));
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -490,9 +491,14 @@ void Encoder::step(
     
     temporal_cis_prev = temporal_cis;
 
+    unsigned int base_state = rand();
+
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward_spatial(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+        forward_spatial(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, &state, params);
+    }
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)

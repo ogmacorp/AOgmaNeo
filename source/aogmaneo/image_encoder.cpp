@@ -12,7 +12,8 @@ using namespace aon;
 
 void Image_Encoder::forward(
     const Int2 &column_pos,
-    const Array<Byte_Buffer_View> &inputs
+    const Array<Byte_Buffer_View> &inputs,
+    unsigned long* state
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
@@ -97,7 +98,7 @@ void Image_Encoder::forward(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation * randf(state));
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
@@ -406,9 +407,16 @@ void Image_Encoder::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     
-    PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs);
+    {
+        unsigned int base_state = rand();
+
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++) {
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+            forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs, &state);
+        }
+    }
 
     if (learn_enabled) {
         PARALLEL_FOR
