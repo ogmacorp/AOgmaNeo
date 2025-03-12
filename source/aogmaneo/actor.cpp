@@ -118,9 +118,9 @@ void Actor::forward(
 
         float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
 
-        value_dendrite_acts[dendrite_index] = max(act * params.leak, act);
+        //value_dendrite_acts[dendrite_index] = sigmoidf(act);
 
-        value += value_dendrite_acts[dendrite_index] * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        value += softplusf(act) * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
     }
 
     value *= value_activation_scale;
@@ -141,9 +141,9 @@ void Actor::forward(
 
             float act = policy_dendrite_acts[dendrite_index] * dendrite_scale;
 
-            policy_dendrite_acts[dendrite_index] = max(act * params.leak, act);
+            //policy_dendrite_acts[dendrite_index] = sigmoidf(act);
 
-            activation += policy_dendrite_acts[dendrite_index] * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
+            activation += softplusf(act) * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         activation *= policy_activation_scale;
@@ -308,9 +308,9 @@ void Actor::learn(
 
         float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
 
-        value_dendrite_acts[dendrite_index] = max(act * params.leak, act);
+        value_dendrite_acts[dendrite_index] = sigmoidf(act);
 
-        value += value_dendrite_acts[dendrite_index] * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        value += softplusf(act) * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
     }
 
     value *= value_activation_scale;
@@ -329,9 +329,9 @@ void Actor::learn(
 
             float act = policy_dendrite_acts[dendrite_index] * dendrite_scale;
 
-            policy_dendrite_acts[dendrite_index] = max(act * params.leak, act);
+            policy_dendrite_acts[dendrite_index] = sigmoidf(act);
 
-            activation += policy_dendrite_acts[dendrite_index] * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
+            activation += softplusf(act) * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         activation *= policy_activation_scale;
@@ -376,7 +376,7 @@ void Actor::learn(
         int dendrite_index = di + value_dendrites_start;
 
         // re-use as deltas
-        value_dendrite_acts[dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * ((value_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+        value_dendrite_acts[dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * value_dendrite_acts[dendrite_index];
     }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -390,7 +390,7 @@ void Actor::learn(
             int dendrite_index = di + dendrites_start;
 
             // re-use as deltas
-            policy_dendrite_acts[dendrite_index] = error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * ((policy_dendrite_acts[dendrite_index] > 0.0f) * (1.0f - params.leak) + params.leak);
+            policy_dendrite_acts[dendrite_index] = error * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * policy_dendrite_acts[dendrite_index];
         }
     }
 

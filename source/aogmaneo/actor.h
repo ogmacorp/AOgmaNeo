@@ -46,7 +46,6 @@ public:
     struct Params {
         float vlr; // value learning rate
         float plr; // policy learning rate
-        float leak; // ReLU leak
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float bias; // bias toward positive policy updates
         float discount; // discount factor
@@ -56,9 +55,8 @@ public:
 
         Params()
         :
-        vlr(0.001f),
-        plr(0.004f),
-        leak(0.01f),
+        vlr(0.01f),
+        plr(0.01f),
         smoothing(0.02f),
         bias(0.5f),
         discount(0.99f),
