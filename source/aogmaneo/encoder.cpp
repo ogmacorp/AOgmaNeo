@@ -20,7 +20,6 @@ void Encoder::forward_spatial(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
-    float count_except = 0.0f;
     float count_all = 0.0f;
     float total_importance = 0.0f;
 
@@ -46,7 +45,6 @@ void Encoder::forward_spatial(
         int sub_count = vl.hidden_counts[hidden_column_index];
 
         count += vl.importance * sub_count;
-        count_except += vl.importance * sub_count * (vld.size.z - 1);
         count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
@@ -80,7 +78,6 @@ void Encoder::forward_spatial(
     }
 
     count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
     count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
