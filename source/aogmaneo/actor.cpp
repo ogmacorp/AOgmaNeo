@@ -360,7 +360,7 @@ void Actor::learn(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    history_samples[t].hidden_values[hidden_column_index] = new_value; // update to latest estimate
+    //history_samples[t].hidden_values[hidden_column_index] = new_value; // update to latest estimate
 
     float td_error = new_value - value;
 
