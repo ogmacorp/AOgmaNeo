@@ -283,7 +283,7 @@ void Actor::forward(
                             if (vc == in_ci_prev)
                                 vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index]; // accumulating trace
 
-                            vl.value_weights[wi] += value_reinforcement * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * vl.value_traces[wi]; // apply deferred sign for dendrites
+                            vl.value_weights[wi] += value_reinforcement * vl.value_traces[wi]; // apply deferred sign for dendrites
                             vl.value_traces[wi] *= params.trace_decay;
                         }
 
