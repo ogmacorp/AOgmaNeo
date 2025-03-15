@@ -207,7 +207,7 @@ void Actor::forward(
 
         float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-        float value_reinforcement = params.vlr * td_error;
+        float value_reinforcement = params.vlr * scaled_td_error;
 
         float policy_reinforcement = params.plr * ((1.0f - mimic) * scaled_td_error + mimic);
 
@@ -215,7 +215,7 @@ void Actor::forward(
             int dendrite_index = di + value_dendrites_start;
 
             // re-use as deltas
-            value_dendrite_acts_prev[dendrite_index] = value_dendrite_acts_prev[dendrite_index];
+            value_dendrite_acts_prev[dendrite_index] = ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * value_dendrite_acts_prev[dendrite_index];
         }
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -272,9 +272,9 @@ void Actor::forward(
                             int wi = di + wi_value_start;
 
                             if (vc == in_ci_prev)
-                                vl.value_traces[wi] = max(vl.value_traces[wi], value_dendrite_acts_prev[dendrite_index]); // replacing trace
+                                vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index]; // accumulating trace
 
-                            vl.value_weights[wi] += value_reinforcement * ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * vl.value_traces[wi]; // deferred application of sign for replacing traces
+                            vl.value_weights[wi] += value_reinforcement * vl.value_traces[wi];
                             vl.value_traces[wi] *= params.trace_decay;
                         }
 
