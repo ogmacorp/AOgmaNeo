@@ -30,8 +30,6 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer value_weights_base;
-        Float_Buffer value_traces_base;
         Float_Buffer value_weights;
         Float_Buffer value_traces;
         Float_Buffer policy_weights;
@@ -49,10 +47,10 @@ public:
 
         Params()
         :
-        vlr(0.001f),
+        vlr(0.1f),
         plr(0.1f),
         discount(0.99f),
-        td_scale_decay(0.999f),
+        td_scale_decay(0.9999f),
         trace_decay(0.97f)
         {}
     };
