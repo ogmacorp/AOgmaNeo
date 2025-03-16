@@ -215,7 +215,7 @@ void Actor::forward(
             int dendrite_index = di + value_dendrites_start;
 
             // re-use as deltas
-            value_dendrite_acts_prev[dendrite_index] = ((di >= half_policy_num_dendrites_per_cell) * 2.0f - 1.0f) * value_dendrite_acts_prev[dendrite_index];
+            value_dendrite_acts_prev[dendrite_index] = ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * value_dendrite_acts_prev[dendrite_index];
         }
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
