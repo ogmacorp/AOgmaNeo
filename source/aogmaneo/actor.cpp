@@ -207,7 +207,7 @@ void Actor::forward(
 
         float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-        float value_reinforcement = params.vlr * scaled_td_error;
+        float value_reinforcement = params.vlr * td_error;
 
         float policy_reinforcement = params.plr * ((1.0f - mimic) * scaled_td_error + mimic);
 
