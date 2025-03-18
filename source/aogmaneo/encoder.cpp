@@ -112,7 +112,7 @@ void Encoder::forward(
 
             float vigilance = 1.0f - params.mismatch / vld.size.z;
 
-            if (match < vigilance)
+            if (vl.importance > 0.0f && match < vigilance)
                 all_match = false;
 
             sum += vl.hidden_sums[hidden_cell_index] * influence;
