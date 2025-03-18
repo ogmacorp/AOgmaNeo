@@ -124,7 +124,7 @@ void Encoder::forward(
 
         float complemented = (count_all - total) - (count - sum);
 
-        float activation = complemented * (params.choice + count_all - total);
+        float activation = complemented / (params.choice + count_all - total);
 
         if (all_match && activation > max_activation) {
             max_activation = activation;
