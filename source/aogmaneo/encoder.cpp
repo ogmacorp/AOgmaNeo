@@ -292,7 +292,6 @@ void Encoder::learn_recurrent(
     int full_column_size = hidden_size.z * temporal_size;
 
     int other_temporal_cells_start = other_hidden_column_index * temporal_size;
-    int other_full_cells_start = other_hidden_column_index * full_column_size;
 
     int hidden_ci_prev = hidden_cis_prev[other_hidden_column_index];
     int temporal_ci_prev = temporal_cis_prev[other_hidden_column_index];
@@ -340,7 +339,7 @@ void Encoder::learn_recurrent(
 
     int num_higher = 0;
 
-    int target_recon_sum = recurrent_recon_sums[temporal_ci_prev + other_full_cells_start];
+    int target_recon_sum = recurrent_recon_sums[temporal_ci_prev + other_temporal_cells_start];
 
     for (int otc = 0; otc < temporal_size; otc++) {
         int other_temporal_cell_index = otc + other_temporal_cells_start;
