@@ -221,7 +221,7 @@ void Hierarchy::step(
 
                 if (params.anticipation) {
                     // learn on actual
-                    layer_input_cis[1] = encoders[l].get_hidden_cis();
+                    layer_input_cis[2] = encoders[l].get_hidden_cis();
 
                     for (int d = 0; d < decoders[l].size(); d++) {
                         // need to re-activate for this
@@ -237,10 +237,11 @@ void Hierarchy::step(
             }
         }
 
-        layer_input_cis[0] = encoders[l].get_temporal_cis();
+        layer_input_cis[0] = encoders[l].get_hidden_cis();
+        layer_input_cis[1] = encoders[l].get_temporal_cis();
         
         if (l < encoders.size() - 1)
-            layer_input_cis[1] = decoders[l + 1][0].get_hidden_cis();
+            layer_input_cis[2] = decoders[l + 1][0].get_hidden_cis();
 
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
