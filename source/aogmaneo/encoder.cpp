@@ -151,12 +151,14 @@ void Encoder::learn(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    if (!hidden_learn_flags[hidden_column_index])
-        return;
-
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int hidden_ci = hidden_cis[hidden_column_index];
+
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
+
+    if (!hidden_learn_flags[hidden_cell_index_max])
+        return;
 
     float hidden_max = hidden_comparisons[hidden_column_index];
 
@@ -184,8 +186,6 @@ void Encoder::learn(
 
     if (ratio > params.active_ratio)
         return;
-
-    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
     float rate = (hidden_commit_flags[hidden_cell_index_max] ? params.lr : 1.0f);
 
