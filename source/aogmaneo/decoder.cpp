@@ -250,7 +250,7 @@ void Decoder::init_random(
         vl.weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
+            vl.weights[i] = (rand() % (init_weight_noise_smalli + 1)) - init_weight_noise_smalli / 2;
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
