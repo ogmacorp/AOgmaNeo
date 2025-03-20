@@ -278,6 +278,8 @@ void Encoder::init_random(
 
     hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
 
+    hidden_comparisons.resize(num_hidden_columns);
+
     // init totals and counts
     for (int i = 0; i < num_hidden_columns; i++) {
         Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
