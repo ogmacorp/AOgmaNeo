@@ -30,12 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer protos;
         
-        Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
-        Int_Buffer hidden_counts;
-
         float importance;
 
         Visible_Layer()
@@ -45,19 +41,21 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float mismatch; // used to determine vigilance
+        float falloff; // SOM neighborhood falloff
+        float choice; // increase to reduce bias toward new column selection
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
+        int n_radius; // SOM neighborhood radius
 
         Params()
         :
-        choice(0.0001f),
-        mismatch(2.0f),
-        lr(1.0f),
+        falloff(0.99f),
+        choice(0.5f),
+        lr(0.1f),
         active_ratio(0.1f),
-        l_radius(2)
+        l_radius(2),
+        n_radius(1)
         {}
     };
 
@@ -66,15 +64,15 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Byte_Buffer hidden_learn_flags;
-    Byte_Buffer hidden_commit_flags;
+    Float_Buffer hidden_resources;
 
+    Float_Buffer hidden_acts;
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-    
+
     // --- kernels ---
     
     void forward(
