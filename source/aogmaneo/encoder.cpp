@@ -183,7 +183,7 @@ void Encoder::learn(
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale)), state);
     }
 
-    if (num_higher < params.early_stop_cells)
+    if (num_higher < params.recon_tolerance)
         return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)

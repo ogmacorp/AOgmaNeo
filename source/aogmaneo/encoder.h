@@ -45,13 +45,13 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
+        int recon_tolerance; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
         scale(4.0f),
         lr(0.1f),
-        early_stop_cells(2)
+        recon_tolerance(2)
         {}
     };
 
