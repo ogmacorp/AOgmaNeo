@@ -20,22 +20,21 @@ public:
 
         int radius; // radius onto input
 
-        Byte is_recurrent;
-
         // defaults
         Visible_Layer_Desc()
         :
         size(5, 5, 16),
-        radius(2),
-        is_recurrent(false)
+        radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
         Byte_Buffer weights;
-
-        Int_Buffer recon_sums;
+        
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
+        Int_Buffer hidden_counts;
 
         float importance;
 
@@ -46,15 +45,19 @@ public:
     };
 
     struct Params {
-        float scale; // recon curve
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float mismatch; // used to determine vigilance
         float lr; // learning rate
-        int recon_tolerance; // if target of reconstruction is in top <this number> cells, stop early
+        float active_ratio; // 2nd stage inhibition activity ratio
+        int l_radius; // second stage inhibition radius
 
         Params()
         :
-        scale(2.0f),
-        lr(0.5f),
-        recon_tolerance(2)
+        choice(0.0001f),
+        mismatch(2.0f),
+        lr(1.0f),
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
@@ -63,16 +66,17 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_acts;
+    Byte_Buffer hidden_learn_flags;
+    Byte_Buffer hidden_commit_flags;
+
+    Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
     // --- kernels ---
-
+    
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
@@ -81,9 +85,7 @@ private:
 
     void learn(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
-        unsigned long* state,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
@@ -103,9 +105,9 @@ public:
     void clear_state();
 
     // serialization
-    long size() const; // returns size in bytes
-    long state_size() const; // returns size of state in bytes
-    long weights_size() const; // returns size of weights in bytes
+    long size() const; // returns size in Bytes
+    long state_size() const; // returns size of state in Bytes
+    long weights_size() const; // returns size of weights in Bytes
 
     void write(
         Stream_Writer &writer
