@@ -272,7 +272,7 @@ void Actor::forward(
                             int wi = di + wi_value_start;
 
                             if (vc == in_ci_prev)
-                                vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index] * expf(-params.trace_squash * abs(vl.policy_traces[wi])); // squashed accumulating trace
+                                vl.value_traces[wi] += value_dendrite_acts_prev[dendrite_index] * expf(-params.trace_squash * abs(vl.value_traces[wi])); // squashed accumulating trace
 
                             vl.value_weights[wi] += value_reinforcement * vl.value_traces[wi];
                             vl.value_traces[wi] *= params.trace_decay;
