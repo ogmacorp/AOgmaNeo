@@ -203,7 +203,7 @@ void Encoder::reconstruct(
             }
         }
 
-    vl.recons[visible_column_index] = sum / count;
+    vl.recons[visible_column_index] = sum / max(1, count);
 }
 
 void Encoder::learn(
