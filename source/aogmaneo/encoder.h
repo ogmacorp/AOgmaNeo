@@ -36,8 +36,6 @@ public:
         Int_Buffer hidden_totals;
         Int_Buffer hidden_counts;
 
-        Byte_Buffer recons;
-
         float importance;
 
         Visible_Layer()
@@ -50,12 +48,16 @@ public:
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float mismatch; // used to determine vigilance
         float lr; // learning rate
+        float active_ratio; // 2nd stage inhibition activity ratio
+        int l_radius; // second stage inhibition radius
 
         Params()
         :
         choice(0.0001f),
         mismatch(2.0f),
-        lr(0.5f)
+        lr(1.0f),
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
@@ -67,24 +69,17 @@ private:
     Byte_Buffer hidden_learn_flags;
     Byte_Buffer hidden_commit_flags;
 
+    Float_Buffer hidden_comparisons;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-
     // --- kernels ---
     
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void reconstruct(
-        const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
         const Params &params
     );
 
