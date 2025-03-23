@@ -137,7 +137,7 @@ void Encoder::forward(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = max_complete_activation;
+    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
