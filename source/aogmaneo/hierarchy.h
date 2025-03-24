@@ -61,19 +61,23 @@ public:
         int recurrent_radius; // encoder onto self radius, -1 to disable
         int down_radius; // decoder radius, also shared with actor if there is one
 
+        float base_vigilance; // baseline vigilance
+
         Layer_Desc(
             const Int3 &hidden_size = Int3(5, 5, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int recurrent_radius = 0,
-            int down_radius = 2
+            int down_radius = 2,
+            float base_vigilance = 0.9f
         )
         :
         hidden_size(hidden_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         recurrent_radius(recurrent_radius),
-        down_radius(down_radius)
+        down_radius(down_radius),
+        base_vigilance(base_vigilance)
         {}
     };
 
