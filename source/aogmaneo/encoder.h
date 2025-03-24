@@ -54,10 +54,10 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance_delta(0.001f),
+        vigilance_delta(0.0001f),
         lr(0.5f),
         active_ratio(0.5f),
-        l_radius(2)
+        l_radius(1)
         {}
     };
 

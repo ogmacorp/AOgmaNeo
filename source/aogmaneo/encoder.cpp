@@ -97,8 +97,6 @@ void Encoder::forward(
         float sum = 0.0f;
         float total = 0.0f;
 
-        bool all_match = true;
-
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
