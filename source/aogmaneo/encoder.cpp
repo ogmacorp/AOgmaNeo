@@ -474,7 +474,7 @@ void Encoder::read(
 
         vl.hidden_sums.resize(num_hidden_cells);
 
-        vl.hidden_deviations.resize(num_visible_cells);
+        vl.hidden_deviations.resize(num_hidden_cells);
 
         reader.read(&vl.hidden_deviations[0], vl.hidden_deviations.size() * sizeof(int));
 
