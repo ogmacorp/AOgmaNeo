@@ -275,7 +275,7 @@ void Encoder::init_random(
             vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
         vl.hidden_sums.resize(num_hidden_cells);
-        vl.hidden_deviations = Int_Buffer(num_hidden_cells, 0);
+        vl.hidden_deviations.resize(num_hidden_cells);
 
         vl.recon_sums.resize(num_visible_cells);
     }
