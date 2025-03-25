@@ -147,7 +147,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
-    if (hidden_matches[hidden_cell_index_max] >= hidden_vigilances[hidden_cell_index_max])
+    if (hidden_matches[hidden_cell_index_max] < hidden_vigilances[hidden_cell_index_max])
         return;
 
     float hidden_max = hidden_comparisons[hidden_column_index];

@@ -69,7 +69,7 @@ public:
             int up_radius = 2,
             int recurrent_radius = 0,
             int down_radius = 2,
-            float base_vigilance = 0.9f
+            float base_vigilance = 0.95f
         )
         :
         hidden_size(hidden_size),
@@ -89,7 +89,7 @@ public:
 
         Layer_Params()
         :
-        recurrent_importance(2.0f)
+        recurrent_importance(1.0f)
         {}
     };
 
