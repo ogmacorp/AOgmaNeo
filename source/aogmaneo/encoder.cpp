@@ -103,7 +103,7 @@ void Encoder::forward(
         sum /= max(limit_small, count);
         deviations /= max(limit_small, count_all);
 
-        float activation = sum * expf(1.0f + deviations * params.boost);
+        float activation = sum * (1.0f + deviations * params.boost);
 
         if (activation > max_activation) {
             max_activation = activation;
@@ -189,7 +189,7 @@ void Encoder::learn(
             }
         }
 
-    const float recon_scale = sqrtf(1.0f / max(1, count)) / 255.0f * params.scale;
+    const float recon_scale = 1.0f / max(1, count * 255);
 
     int target_sum = vl.recon_sums[target_ci + visible_cells_start];
 
@@ -204,7 +204,7 @@ void Encoder::learn(
             num_higher++;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - recon_sum * recon_scale), state);
     }
 
     if (num_higher < params.early_stop_cells)
