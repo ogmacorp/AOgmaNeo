@@ -53,7 +53,7 @@ public:
         Params()
         :
         lr(0.05f),
-        boost(0.5f),
+        boost(1.0f),
         early_stop_cells(2)
         {}
     };

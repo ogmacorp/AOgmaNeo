@@ -103,7 +103,7 @@ void Encoder::forward(
         sum /= max(limit_small, count);
         deviations /= max(limit_small, count_all);
 
-        float activation = sum * (1.0f + deviations * params.boost);
+        float activation = sum / max(limit_small, deviations);
 
         if (activation > max_activation) {
             max_activation = activation;
