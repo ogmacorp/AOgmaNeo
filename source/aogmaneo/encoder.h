@@ -33,7 +33,7 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer hidden_sums;
-        Int_Buffer hidden_deviations;
+        Int_Buffer hidden_totals;
 
         Int_Buffer recon_sums;
 
@@ -47,13 +47,11 @@ public:
 
     struct Params {
         float lr; // learning rate
-        float boost; // boost based on weight deviations
         int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
         lr(0.05f),
-        boost(1.0f),
         early_stop_cells(2)
         {}
     };
