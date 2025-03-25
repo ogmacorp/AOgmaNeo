@@ -32,6 +32,9 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_deviations;
+
         Int_Buffer recon_sums;
 
         float importance;
@@ -45,13 +48,15 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
+        float boost; // boost based on weight deviations
         int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
         scale(4.0f),
         lr(0.05f),
-        early_stop_cells(3)
+        boost(0.1f),
+        early_stop_cells(2)
         {}
     };
 
@@ -59,8 +64,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
