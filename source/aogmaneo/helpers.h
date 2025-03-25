@@ -16,6 +16,7 @@
 #endif
 
 #define PARALLEL_FOR _Pragma("omp parallel for")
+#define ATOMIC _Pragma("omp atomic")
 
 namespace aon {
 const int exp_iters = 6;

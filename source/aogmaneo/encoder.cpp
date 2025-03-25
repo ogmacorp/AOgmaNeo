@@ -234,6 +234,7 @@ void Encoder::learn(
 
                     vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
 
+                    ATOMIC
                     vl.hidden_deviations[hidden_cell_index_max] += w_old - vl.weights[wi];
                 }
             }
