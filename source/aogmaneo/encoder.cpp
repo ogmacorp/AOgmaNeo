@@ -116,9 +116,7 @@ void Encoder::forward(
 
         float activation = complemented / (params.choice + count_all - total);
 
-        hidden_matches[hidden_cell_index] = match;
-
-        if (match >= hidden_vigilances[hidden_cell_index] && activation > max_activation) {
+        if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -132,6 +130,8 @@ void Encoder::forward(
     hidden_comparisons[hidden_column_index] = max_complete_activation;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
+
+    hidden_learn_flags[hidden_column_index] = (max_index != -1);
 }
 
 void Encoder::learn(
@@ -147,7 +147,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
-    if (hidden_matches[hidden_cell_index_max] < hidden_vigilances[hidden_cell_index_max])
+    if (!hidden_learn_flags[hidden_column_index])
         return;
 
     float hidden_max = hidden_comparisons[hidden_column_index];
@@ -219,22 +219,10 @@ void Encoder::learn(
     }
 
     hidden_commit_flags[hidden_cell_index_max] = true;
-
-    // modify vigilances
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        if (hc == hidden_ci)
-            continue;
-
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        if (hidden_matches[hidden_cell_index] >= hidden_vigilances[hidden_cell_index])
-            hidden_vigilances[hidden_cell_index] = hidden_matches[hidden_cell_index] + params.vigilance_delta;
-    }
 }
 
 void Encoder::init_random(
     const Int3 &hidden_size,
-    float base_vigilance,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
@@ -269,9 +257,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_vigilances = Float_Buffer(num_hidden_cells, base_vigilance);
-
-    hidden_matches.resize(num_hidden_cells);
+    hidden_learn_flags.resize(num_hidden_columns);
     hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
 
     hidden_comparisons.resize(num_hidden_columns);
@@ -355,7 +341,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_vigilances.size() * sizeof(float) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -388,8 +374,6 @@ void Encoder::write(
     writer.write(&hidden_size, sizeof(Int3));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-
-    writer.write(&hidden_vigilances[0], hidden_vigilances.size() * sizeof(float));
 
     writer.write(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
@@ -424,11 +408,7 @@ void Encoder::read(
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-    hidden_vigilances.resize(num_hidden_cells);
-
-    reader.read(&hidden_vigilances[0], hidden_vigilances.size() * sizeof(float));
-
-    hidden_matches.resize(num_hidden_cells);
+    hidden_learn_flags.resize(num_hidden_columns);
 
     hidden_commit_flags.resize(num_hidden_cells);
 
