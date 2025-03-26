@@ -10,7 +10,7 @@
 
 using namespace aon;
 
-void Encoder::forward_spatial(
+void Encoder::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     const Params &params
@@ -249,7 +249,7 @@ void Encoder::learn_spatial(
             num_higher++;
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == in_ci) - expf((recon_sum - count * 255) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == in_ci) - sigmoidf((recon_sum - count * 127) * recon_scale)), state);
     }
 
     if (num_higher < params.spatial_recon_tolerance)
@@ -348,7 +348,7 @@ void Encoder::learn_recurrent(
             num_higher++;
 
         // re-use sums as deltas
-        recurrent_recon_sums[other_full_cell_index] = rand_roundf(params.lr * 255.0f * ((ofc == temporal_ci_prev) - expf((recon_sum - count * 255) * recon_scale)), state);
+        recurrent_recon_sums[other_full_cell_index] = rand_roundf(params.lr * 255.0f * ((ofc == temporal_ci_prev) - sigmoidf((recon_sum - count * 127) * recon_scale)), state);
     }
 
     if (num_higher < params.recurrent_recon_tolerance)
@@ -467,11 +467,7 @@ void Encoder::step(
 
     PARALLEL_FOR
     for (int i = 0; i < num_hidden_columns; i++)
-        forward_spatial(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
-
-    PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward_recurrent(Int2(i / hidden_size.y, i % hidden_size.y), params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
         unsigned int base_state = rand();
