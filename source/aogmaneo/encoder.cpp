@@ -93,36 +93,24 @@ void Encoder::forward(
         float sum = 0.0f;
         float total = 0.0f;
 
-        bool all_match = true;
-
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            int sub_count = vl.hidden_counts[hidden_column_index];
-
-            float sub_sum = vl.hidden_sums[hidden_cell_index];
-            float sub_total = vl.hidden_totals[hidden_cell_index];
-
-            float match = sub_sum / sub_count;
-
-            float vigilance = 1.0f - params.mismatch / vld.size.z;
-
-            if (vl.importance > 0.0f && match < vigilance)
-                all_match = false;
-
-            sum += sub_sum * vl.importance;
-            total += sub_total * vl.importance;
+            sum += vl.hidden_sums[hidden_cell_index] * vl.importance;
+            total += vl.hidden_totals[hidden_cell_index] * vl.importance;
         }
 
         sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
 
+        float match = sum / count;
+
         float activation = sum / (params.choice + total);
 
-        hidden_learn_flags[hidden_cell_index] = all_match;
+        hidden_learn_flags[hidden_cell_index] = (match >= params.vigilance);
 
-        if (all_match && activation > max_activation) {
+        if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
             max_match = sum / count;
             max_index = hc;
@@ -134,7 +122,7 @@ void Encoder::forward(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = max_complete_activation;
+    hidden_comparisons[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
