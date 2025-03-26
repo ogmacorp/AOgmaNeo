@@ -150,7 +150,7 @@ void Image_Encoder::learn(
         if (!hidden_learn_flags[hidden_cell_index])
             continue;
 
-        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
+        float rate = (hidden_commit_flags[hidden_cell_index] ? params.lr : 1.0f);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -194,7 +194,7 @@ void Image_Encoder::learn(
                 }
         }
 
-        hidden_commits[hidden_cell_index] = true;
+        hidden_commit_flags[hidden_cell_index] = true;
     }
 }
 
@@ -394,7 +394,7 @@ void Image_Encoder::init_random(
 
     hidden_learn_flags.resize(num_hidden_cells);
 
-    hidden_commits = Byte_Buffer(num_hidden_cells, false);
+    hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
 
     hidden_comparisons.resize(num_hidden_cells);
 }
@@ -449,7 +449,7 @@ void Image_Encoder::reconstruct(
 }
 
 long Image_Encoder::size() const {
-    long size = sizeof(Int3) + sizeof(Params) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(Params) + hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -486,7 +486,7 @@ void Image_Encoder::write(
     
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-    writer.write(&hidden_commits[0], hidden_commits.size() * sizeof(Byte));
+    writer.write(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -520,9 +520,9 @@ void Image_Encoder::read(
 
     hidden_learn_flags.resize(num_hidden_cells);
 
-    hidden_commits.resize(num_hidden_cells);
+    hidden_commit_flags.resize(num_hidden_cells);
 
-    reader.read(&hidden_commits[0], hidden_commits.size() * sizeof(Byte));
+    reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     hidden_comparisons.resize(num_hidden_cells);
 
