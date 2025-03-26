@@ -54,10 +54,10 @@ public:
         Params()
         :
         choice(0.0001f),
-        mismatch(1.0f),
-        lr(0.5f),
-        active_ratio(0.5f),
-        l_radius(1)
+        mismatch(2.0f),
+        lr(1.0f),
+        active_ratio(0.1f),
+        l_radius(2)
         {}
     };
 
