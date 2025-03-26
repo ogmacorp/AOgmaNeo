@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -23,7 +23,7 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(5, 5, 16),
         radius(2)
         {}
     };
@@ -45,22 +45,29 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
+        int spatial_recon_tolerance;
+        int recurrent_recon_tolerance;
 
         Params()
         :
         scale(4.0f),
         lr(0.05f),
-        early_stop_cells(2)
+        spatial_recon_tolerance(2),
+        recurrent_recon_tolerance(2)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int temporal_size;
+    int recurrent_radius;
 
-    Int_Buffer hidden_cis;
+    Int_Buffer hidden_cis; // spatial
+    Int_Buffer temporal_cis;
+    Int_Buffer temporal_cis_prev;
 
     Float_Buffer hidden_acts;
+    Int_Buffer temporal_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -68,6 +75,10 @@ private:
     
     Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
+    Byte_Buffer recurrent_weights;
+
+    Int_Buffer recurrent_recon_sums;
+
     // --- kernels ---
 
     void forward(
@@ -76,10 +87,16 @@ private:
         const Params &params
     );
 
-    void learn(
+    void learn_spatial(
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
+        unsigned long* state,
+        const Params &params
+    );
+
+    void learn_recurrent(
+        const Int2 &column_pos,
         unsigned long* state,
         const Params &params
     );
@@ -88,6 +105,8 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int temporal_size,
+        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -159,9 +178,22 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden states
+    const Int_Buffer &get_temporal_cis() const {
+        return temporal_cis;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    int get_temporal_size() const {
+        return temporal_size;
+    }
+
+    int get_recurrent_radius() const {
+        return recurrent_radius;
     }
 
     // merge list of encoders and write to this one

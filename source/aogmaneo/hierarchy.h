@@ -28,32 +28,34 @@ public:
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
-        int value_num_dendrites_per_cell; // value dendrites
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
+
+        int history_capacity; // max credit assignment length
 
         IO_Desc(
             const Int3 &size = Int3(5, 5, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
-            int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
-            int down_radius = 2
+            int down_radius = 2,
+            int history_capacity = 512
         )
         :
         size(size),
         type(type),
         num_dendrites_per_cell(num_dendrites_per_cell),
-        value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
-        down_radius(down_radius)
+        down_radius(down_radius),
+        history_capacity(history_capacity)
         {}
     };
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
-        Int3 hidden_size; // size of hidden layer
+        Int3 hidden_size; // size of hidden layer (spatial)
+        int temporal_size; // size of time sections (temporal)
 
         int num_dendrites_per_cell;
 
@@ -63,6 +65,7 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(5, 5, 16),
+            int temporal_size = 4,
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int recurrent_radius = 0,
@@ -70,6 +73,7 @@ public:
         )
         :
         hidden_size(hidden_size),
+        temporal_size(temporal_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         recurrent_radius(recurrent_radius),
@@ -80,13 +84,6 @@ public:
     struct Layer_Params {
         Decoder::Params decoder;
         Encoder::Params encoder;
-
-        float recurrent_importance;
-
-        Layer_Params()
-        :
-        recurrent_importance(0.5f)
-        {}
     };
 
     struct IO_Params {
@@ -119,7 +116,7 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
-    Array<Int_Buffer> hidden_cis_prev;
+    Array<Int_Buffer> temporal_cis_prev;
     Array<Int_Buffer> feedback_cis_prev;
 
     // for mapping first layer Decoders
@@ -154,8 +151,7 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        float reward = 0.0f // reward
     );
 
     void clear_state();
@@ -200,12 +196,6 @@ public:
         return d_indices[i] != -1;
     }
 
-    bool is_layer_recurrent(
-        int l
-    ) const {
-        return (l == 0 ? encoders[l].get_num_visible_layers() > io_sizes.size() : encoders[l].get_num_visible_layers() > 1);
-    }
-
     // retrieve predictions
     const Int_Buffer &get_prediction_cis(
         int i
@@ -216,12 +206,11 @@ public:
         return decoders[0][d_indices[i]].get_hidden_cis();
     }
 
-    // retrieve predictions activations
+    // retrieve prediction activations
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
-        if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_acts();
+        assert(io_types[i] == prediction);
 
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
