@@ -30,9 +30,12 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights0;
+        Float_Buffer weights1;
         
-        Int_Buffer hidden_sums;
+        Float_Buffer hidden_sums;
+        Float_Buffer hidden_totals;
+        Int_Buffer hidden_counts;
 
         float importance;
 
@@ -43,13 +46,19 @@ public:
     };
 
     struct Params {
-        float min_activity; // minimum cell activity when chosen
+        float falloff; // neighborhood falloff
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float mismatch; // used to determine ART vigilance
         float lr; // learning rate
+        int n_radius; // neighborhood radius
 
         Params()
         :
-        min_activity(0.97f),
-        lr(0.5f)
+        falloff(0.99f),
+        choice(0.0001f),
+        mismatch(1.0f),
+        lr(0.5f),
+        n_radius(1)
         {}
     };
 
@@ -58,7 +67,8 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Byte_Buffer hidden_commits;
+    Byte_Buffer hidden_learn_flags;
+    Byte_Buffer hidden_commit_flags;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -70,7 +80,6 @@ private:
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         bool learn_enabled,
-        unsigned long* state,
         const Params &params
     );
 
