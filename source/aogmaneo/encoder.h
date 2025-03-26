@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2023 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -23,15 +23,21 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(5, 5, 16),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights;
+        Byte_Buffer weights;
         
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
+        Int_Buffer hidden_counts;
+
+        Byte_Buffer recons;
+
         float importance;
 
         Visible_Layer()
@@ -41,12 +47,14 @@ public:
     };
 
     struct Params {
-        float falloff; // amount less when not maximal (multiplier)
+        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float vigilance; // ART vigilance
         float lr; // learning rate
 
         Params()
         :
-        falloff(0.1f),
+        choice(0.0001f),
+        vigilance(0.95f),
         lr(0.1f)
         {}
     };
@@ -56,9 +64,8 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_resources;
-
-    Float_Buffer hidden_acts;
+    Byte_Buffer hidden_learn_flags;
+    Byte_Buffer hidden_commit_flags;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -74,15 +81,16 @@ private:
         const Params &params
     );
 
-    void learn(
+    void reconstruct(
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
         const Params &params
     );
 
-    void shrink(
+    void learn(
         const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
@@ -99,14 +107,12 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state() {
-        hidden_cis.fill(0);
-    }
+    void clear_state();
 
     // serialization
-    long size() const; // returns size in bytes
-    long state_size() const; // returns size of state in bytes
-    long weights_size() const; // returns size of weights in bytes
+    long size() const; // returns size in Bytes
+    long state_size() const; // returns size of state in Bytes
+    long weights_size() const; // returns size of weights in Bytes
 
     void write(
         Stream_Writer &writer
