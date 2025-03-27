@@ -66,7 +66,8 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Byte_Buffer hidden_learn_flags;
+    Int_Buffer hidden_learn_cis;
+
     Byte_Buffer hidden_commit_flags;
 
     Float_Buffer hidden_comparisons;
