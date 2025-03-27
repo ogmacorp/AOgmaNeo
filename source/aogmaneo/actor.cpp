@@ -207,7 +207,7 @@ void Actor::forward(
 
         float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-        float value_reinforcement = params.vlr * scaled_td_error;
+        float value_reinforcement = params.vlr * td_error;
 
         float policy_reinforcement = params.plr * ((1.0f - mimic) * scaled_td_error + mimic);
 
@@ -364,7 +364,7 @@ void Actor::init_random(
     policy_dendrite_acts_prev = Float_Buffer(policy_num_dendrites, 0.0f);
 
     hidden_acts.resize(num_hidden_cells);
-    hidden_acts_prev = Float_Buffer(num_hidden_cells, 0.0f);
+    hidden_acts_prev = Float_Buffer(num_hidden_cells, 1.0f / hidden_size.z);
 }
 
 void Actor::step(
