@@ -53,7 +53,7 @@ public:
         discount(0.99f),
         td_scale_decay(0.9999f),
         trace_decay(0.97f),
-        trace_squash(1.0f)
+        trace_squash(0.5f)
         {}
     };
 
