@@ -419,7 +419,6 @@ void Encoder::read(
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
     hidden_learn_flags.resize(num_hidden_columns);
-
     hidden_commit_flags.resize(num_hidden_cells);
 
     reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
