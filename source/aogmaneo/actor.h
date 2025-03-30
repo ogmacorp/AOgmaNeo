@@ -44,16 +44,16 @@ public:
         float discount; // discount factor
         float td_scale_decay; // decay in max TD scale
         float trace_decay; // eligibility trace decay
-        float trace_squash; // squash traces to prevent divergence
+        float trace_rate; // increase rate of traces
 
         Params()
         :
-        vlr(0.002f),
-        plr(0.1f),
+        vlr(0.1f),
+        plr(0.5f),
         discount(0.99f),
-        td_scale_decay(0.9999f),
+        td_scale_decay(0.999f),
         trace_decay(0.97f),
-        trace_squash(1.0f)
+        trace_rate(0.1f)
         {}
     };
 
