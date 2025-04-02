@@ -41,7 +41,8 @@ public:
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
-            int down_radius = 2
+            int down_radius = 2,
+            int history_capacity = 512
         )
         :
         size(size),
@@ -49,7 +50,8 @@ public:
         num_dendrites_per_cell(num_dendrites_per_cell),
         value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
-        down_radius(down_radius)
+        down_radius(down_radius),
+        history_capacity(history_capacity)
         {}
     };
 
