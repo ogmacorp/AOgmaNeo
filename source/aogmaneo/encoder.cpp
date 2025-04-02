@@ -106,17 +106,20 @@ void Encoder::forward(
             int sub_count_except = sub_count * (vld.size.z - 1);
             int sub_count_all = sub_count * vld.size.z;
 
-            float complemented = (sub_count_all - vl.hidden_totals[hidden_cell_index] * byte_inv) - (sub_count - vl.hidden_sums[hidden_cell_index] * byte_inv);
+            float sub_sum = vl.hidden_sums[hidden_cell_index] * byte_inv;
+            float sub_total = vl.hidden_totals[hidden_cell_index] * byte_inv;
 
-            float match = complemented / sub_count_except;
+            float sub_complemented = (sub_count_all - sub_total) - (sub_count - sub_sum);
+
+            float match = sub_complemented / sub_count_except;
 
             float vigilance = 1.0f - params.mismatch / vld.size.z;
 
             if (vl.importance > 0.0f && match < vigilance)
                 all_match = false;
 
-            sum += vl.hidden_sums[hidden_cell_index] * influence;
-            total += vl.hidden_totals[hidden_cell_index] * influence;
+            sum += sub_sum * vl.importance;
+            total += sub_total * vl.importance;
         }
 
         sum /= max(limit_small, total_importance);
