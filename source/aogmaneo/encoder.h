@@ -90,14 +90,9 @@ private:
     
     // --- kernels ---
     
-    void forward_spatial(
+    void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void forward_recurrent(
-        const Int2 &column_pos,
         const Params &params
     );
 
