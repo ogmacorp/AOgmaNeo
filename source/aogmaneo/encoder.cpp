@@ -115,7 +115,7 @@ void Encoder::forward(
 
             float vigilance = 1.0f - params.mismatch / vld.size.z;
 
-            if (vl.importance > 0.0f && match < vigilance)
+            if (vl.importance > 0.0f && match < vigilance && hidden_commit_flags[hidden_cell_index])
                 all_match = false;
 
             sum += sub_sum * vl.importance;
