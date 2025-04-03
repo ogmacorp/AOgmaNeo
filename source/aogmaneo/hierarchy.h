@@ -33,13 +33,16 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
+        int history_capacity; // max actor credit assignment horizon
+
         IO_Desc(
-            const Int3 &size = Int3(4, 4, 16),
+            const Int3 &size = Int3(5, 5, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
-            int down_radius = 2
+            int down_radius = 2,
+            int history_capacity = 512
         )
         :
         size(size),
@@ -47,7 +50,8 @@ public:
         num_dendrites_per_cell(num_dendrites_per_cell),
         value_num_dendrites_per_cell(value_num_dendrites_per_cell),
         up_radius(up_radius),
-        down_radius(down_radius)
+        down_radius(down_radius),
+        history_capacity(history_capacity)
         {}
     };
 
@@ -62,7 +66,7 @@ public:
         int down_radius; // decoder radius, also shared with actor if there is one
 
         Layer_Desc(
-            const Int3 &hidden_size = Int3(4, 4, 16),
+            const Int3 &hidden_size = Int3(5, 5, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int recurrent_radius = 0,
@@ -214,6 +218,16 @@ public:
             return actors[d_indices[i]].get_hidden_cis();
 
         return decoders[0][d_indices[i]].get_hidden_cis();
+    }
+
+    // retrieve predictions activations
+    const Float_Buffer &get_prediction_acts(
+        int i
+    ) const {
+        if (io_types[i] == action)
+            return actors[d_indices[i]].get_hidden_acts();
+
+        return decoders[0][d_indices[i]].get_hidden_acts();
     }
 
     // number of io layers
