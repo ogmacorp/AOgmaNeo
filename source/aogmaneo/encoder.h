@@ -46,8 +46,7 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float spatial_mismatch; // used to determine ART vigilance
-        float temporal_mismatch; // used to determine ART vigilance
+        float mismatch; // used to determine vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
@@ -55,8 +54,7 @@ public:
         Params()
         :
         choice(0.0001f),
-        spatial_mismatch(2.0f),
-        temporal_mismatch(2.0f),
+        mismatch(2.0f),
         lr(1.0f),
         active_ratio(0.1f),
         l_radius(2)
@@ -65,28 +63,17 @@ public:
 
 private:
     Int3 hidden_size; // size of hidden/output layer
-    int temporal_size; // spatial region size (this must evenly divide hidden_size.z)
-    int recurrent_radius; // radius of recurrent connections
 
     Int_Buffer hidden_cis;
-    Int_Buffer temporal_cis;
-    Int_Buffer temporal_cis_prev;
 
     Byte_Buffer hidden_learn_flags;
-    Byte_Buffer temporal_learn_flags;
-
     Byte_Buffer hidden_commit_flags;
-    Byte_Buffer temporal_commit_flags;
 
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
-    Int_Buffer recurrent_sums;
-    Byte_Buffer recurrent_weights;
-    Int_Buffer recurrent_totals;
     
     // --- kernels ---
     
@@ -106,8 +93,6 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
-        int temporal_size,
-        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -179,22 +164,9 @@ public:
         return hidden_cis;
     }
 
-    // get the hidden states
-    const Int_Buffer &get_temporal_cis() const {
-        return temporal_cis;
-    }
-
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
-    }
-
-    int get_temporal_size() const {
-        return temporal_size;
-    }
-
-    int get_recurrent_radius() const {
-        return recurrent_radius;
     }
 
     // merge list of encoders and write to this one
