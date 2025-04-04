@@ -74,8 +74,8 @@ void Image_Encoder::forward(
                         float w0 = vl.weights0[wi] * byte_inv;
                         float w1 = vl.weights1[wi] * byte_inv;
 
-                        sum += input * w0 + (1.0f - input) * w1;
-                        total += w0 * w0 + w1 * w1;
+                        sum += min(input, w0) + min(1.0f - input, w1);
+                        total += w0 + w1;
                     }
                 }
         }
