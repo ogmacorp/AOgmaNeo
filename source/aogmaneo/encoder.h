@@ -55,7 +55,7 @@ public:
         :
         choice(0.0001f),
         mismatch(2.0f),
-        lr(1.0f),
+        lr(0.5f),
         active_ratio(0.5f),
         l_radius(2)
         {}
@@ -67,7 +67,6 @@ private:
     Int_Buffer hidden_cis;
 
     Byte_Buffer hidden_learn_flags;
-    Byte_Buffer hidden_commit_flags;
 
     Float_Buffer hidden_comparisons;
 
