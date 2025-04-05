@@ -99,7 +99,7 @@ void Image_Encoder::forward(
         max_match = max(max_match, match);
     }
 
-    hidden_comparisons[hidden_column_index] = (max_match >= params.compare_vigilance ? max_activation : 0.0f);
+    hidden_comparisons[hidden_column_index] = (max_match >= params.compare_vigilance ? max_complete_activation : 0.0f);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
