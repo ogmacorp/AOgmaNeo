@@ -20,6 +20,7 @@ void Encoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
+    float count_except = 0.0f;
     float count_all = 0.0f;
     float total_importance = 0.0f;
 
@@ -45,6 +46,7 @@ void Encoder::forward(
         int sub_count = vl.hidden_counts[hidden_column_index];
 
         count += vl.importance * sub_count;
+        count_except += vl.importance * sub_count * (vld.size.z - 1);
         count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
@@ -78,6 +80,7 @@ void Encoder::forward(
     }
 
     count /= max(limit_small, total_importance);
+    count_except /= max(limit_small, total_importance);
     count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
@@ -86,6 +89,8 @@ void Encoder::forward(
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
     
+    float max_match = 0.0f;
+
     const float byte_inv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -94,29 +99,12 @@ void Encoder::forward(
         float sum = 0.0f;
         float total = 0.0f;
 
-        bool all_match = true;
-
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            float influence = vl.importance * byte_inv;
-
-            int sub_count = vl.hidden_counts[hidden_column_index];
-            int sub_count_except = sub_count * (vld.size.z - 1);
-            int sub_count_all = sub_count * vld.size.z;
-
             float sub_sum = vl.hidden_sums[hidden_cell_index] * byte_inv;
             float sub_total = vl.hidden_totals[hidden_cell_index] * byte_inv;
-
-            float sub_complemented = (sub_count_all - sub_total) - (sub_count - sub_sum);
-
-            float match = sub_complemented / sub_count_except;
-
-            float vigilance = 1.0f - params.mismatch / vld.size.z;
-
-            if (vl.importance > 0.0f && match < vigilance)
-                all_match = false;
 
             sum += sub_sum * vl.importance;
             total += sub_total * vl.importance;
@@ -127,9 +115,11 @@ void Encoder::forward(
 
         float complemented = (count_all - total) - (count - sum);
 
+        float match = complemented / count_except;
+
         float activation = complemented / (params.choice + count_all - total);
 
-        if (all_match && activation > max_activation) {
+        if (match >= params.category_vigilance && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -138,9 +128,11 @@ void Encoder::forward(
             max_complete_activation = activation;
             max_complete_index = hc;
         }
+
+        max_match = max(max_match, match);
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = (max_match >= params.compare_vigilance ? max_activation : 0.0f);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
