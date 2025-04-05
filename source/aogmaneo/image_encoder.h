@@ -39,7 +39,8 @@ public:
 
     struct Params {
         float choice;
-        float vigilance;
+        float category_vigilance; // standard ART vigilance
+        float compare_vigilance; // vigilance value used cross-column comparison (2nd stage inhibition)
         float lr; // learning rate
         float scale;
         float rr; // reconstruction rate
@@ -49,7 +50,8 @@ public:
         Params()
         :
         choice(0.0001f),
-        vigilance(0.9f),
+        category_vigilance(0.95f),
+        compare_vigilance(0.9f),
         lr(0.5f),
         scale(2.0f),
         rr(0.05f),
