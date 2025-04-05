@@ -87,11 +87,11 @@ void Encoder::forward(
 
         int max_index = -1;
         float max_activation = 0.0f;
-        float max_match = 0.0f;
 
         int max_complete_index = 0;
         float max_complete_activation = 0.0f;
-        float max_complete_match = 0.0f;
+
+        float max_match = 0.0f;
         
         const float byte_inv = 1.0f / 255.0f;
 
@@ -101,26 +101,11 @@ void Encoder::forward(
             float sum = 0.0f;
             float total = 0.0f;
 
-            bool all_match = true;
-
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
                 const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
                 float influence = vl.importance * byte_inv;
-
-                int sub_count = vl.hidden_counts[hidden_column_index];
-                int sub_count_except = sub_count * (vld.size.z - 1);
-                int sub_count_all = sub_count * vld.size.z;
-
-                float complemented = (sub_count_all - vl.hidden_totals[hidden_cell_index] * byte_inv) - (sub_count - vl.hidden_sums[hidden_cell_index] * byte_inv);
-
-                float match = complemented / sub_count_except;
-
-                float vigilance = 1.0f - params.spatial_mismatch / vld.size.z;
-
-                if (vl.importance > 0.0f && match < vigilance)
-                    all_match = false;
 
                 sum += vl.hidden_sums[hidden_cell_index] * influence;
                 total += vl.hidden_totals[hidden_cell_index] * influence;
@@ -135,20 +120,20 @@ void Encoder::forward(
 
             float activation = complemented / (params.choice + count_all - total);
 
-            if (all_match && activation > max_activation) {
+            if (match >= params.category_vigilance && activation > max_activation) {
                 max_activation = activation;
-                max_match = match;
                 max_index = hc;
             }
 
             if (activation > max_complete_activation) {
                 max_complete_activation = activation;
-                max_complete_match = match;
                 max_complete_index = hc;
             }
+
+            max_match = max(max_match, match);
         }
 
-        hidden_comparisons[hidden_column_index] = (max_index == -1 ? max_complete_match : max_match);
+        hidden_comparisons[hidden_column_index] = (max_match >= params.compare_vigilance ? max_activation : 0.0f);
 
         hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
@@ -223,9 +208,7 @@ void Encoder::forward(
 
             float activation = complemented / (params.choice + count_all - recurrent_totals[full_cell_index] * byte_inv);
 
-            float vigilance = 1.0f - params.temporal_mismatch / full_column_size;
-
-            if (match >= vigilance && activation > max_activation) {
+            if (match >= params.category_vigilance && activation > max_activation) {
                 max_activation = activation;
                 max_index = tc;
             }
