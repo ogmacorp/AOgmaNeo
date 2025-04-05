@@ -144,7 +144,7 @@ void Encoder::forward(
     {
         int hidden_ci = hidden_cis[hidden_column_index];
 
-        temporal_cis[hidden_column_index] = recurrent_indices[hidden_ci + hidden_size.z * temporal_cis_prev[hidden_column_index]] + hidden_ci * temporal_size;
+        temporal_cis[hidden_column_index] = recurrent_indices[hidden_ci + hidden_size.z * temporal_cis_prev[hidden_column_index]] % temporal_size + hidden_ci * temporal_size;
     }
 }
 
@@ -283,7 +283,7 @@ void Encoder::init_random(
     recurrent_indices.resize(num_full_cells * hidden_size.z);
 
     for (int i = 0; i < recurrent_indices.size(); i++)
-        recurrent_indices[i] = (rand() % hidden_size.z);
+        recurrent_indices[i] = (rand() % full_column_size);
 
     // init totals and counts
     for (int i = 0; i < num_hidden_columns; i++) {
