@@ -485,7 +485,7 @@ void Encoder::read(
 
     recurrent_indices.resize(num_full_cells * hidden_size.z);
 
-    reader.read(&recurrent_indices[0], recurrent_indices.size() * sizeof(Byte));
+    reader.read(&recurrent_indices[0], recurrent_indices.size() * sizeof(int));
 }
 
 void Encoder::write_state(
