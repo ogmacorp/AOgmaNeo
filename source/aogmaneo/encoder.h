@@ -46,21 +46,18 @@ public:
         float scale; // recon curve
         float lr; // learning rate
         int spatial_recon_tolerance;
-        int recurrent_recon_tolerance;
 
         Params()
         :
         scale(2.0f),
         lr(0.1f),
-        spatial_recon_tolerance(2),
-        recurrent_recon_tolerance(2)
+        spatial_recon_tolerance(2)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
     int temporal_size;
-    int recurrent_radius;
 
     Int_Buffer hidden_cis; // spatial
     Int_Buffer temporal_cis;
@@ -75,9 +72,7 @@ private:
     
     Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
-    Byte_Buffer recurrent_weights;
-
-    Int_Buffer recurrent_recon_sums;
+    Int_Buffer recurrent_indices;
 
     // --- kernels ---
 
@@ -95,18 +90,11 @@ private:
         const Params &params
     );
 
-    void learn_recurrent(
-        const Int2 &column_pos,
-        unsigned long* state,
-        const Params &params
-    );
-
 public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
         int temporal_size,
-        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -190,10 +178,6 @@ public:
 
     int get_temporal_size() const {
         return temporal_size;
-    }
-
-    int get_recurrent_radius() const {
-        return recurrent_radius;
     }
 
     // merge list of encoders and write to this one
