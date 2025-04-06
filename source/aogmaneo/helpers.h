@@ -16,6 +16,7 @@
 #endif
 
 #define PARALLEL_FOR _Pragma("omp parallel for")
+#define ATOMIC _Pragma("omp atomic")
 
 namespace aon {
 const int exp_iters = 6;
@@ -31,7 +32,7 @@ const float limit_max = 999999.0f;
 const float limit_small = 0.000001f;
 
 const int rand_subseed_offset = 12345;
-const int init_weight_noisei = 6;
+const int init_weight_noisei = 8;
 const float init_weight_noisef = 0.01f;
 
 inline float modf(
