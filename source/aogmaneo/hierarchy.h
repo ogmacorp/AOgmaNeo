@@ -63,6 +63,7 @@ public:
         int num_dendrites_per_cell;
 
         int up_radius; // encoder radius
+        int recurrent_radius; // encoder onto self radius, -1 to disable
         int down_radius; // decoder radius, also shared with actor if there is one
 
         Layer_Desc(
@@ -70,6 +71,7 @@ public:
             int temporal_size = 8,
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
+            int recurrent_radius = 0,
             int down_radius = 2
         )
         :
@@ -77,6 +79,7 @@ public:
         temporal_size(temporal_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
+        recurrent_radius(recurrent_radius),
         down_radius(down_radius)
         {}
     };

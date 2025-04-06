@@ -66,12 +66,14 @@ public:
 private:
     Int3 hidden_size; // size of hidden/output layer
     int temporal_size; // spatial region size (this must evenly divide hidden_size.z)
+    int recurrent_radius; // radius of recurrent connections
 
     Int_Buffer hidden_cis;
     Int_Buffer temporal_cis;
     Int_Buffer temporal_cis_prev;
 
     Byte_Buffer hidden_learn_flags;
+    Byte_Buffer temporal_learn_flags;
 
     Float_Buffer hidden_comparisons;
 
@@ -79,7 +81,9 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
 
-    Int_Buffer recurrent_indices; // indices of 1 weights
+    Int_Buffer recurrent_sums;
+    Byte_Buffer recurrent_weights;
+    Int_Buffer recurrent_totals;
     
     // --- kernels ---
     
@@ -100,6 +104,7 @@ public:
     void init_random(
         const Int3 &hidden_size, // hidden/output size
         int temporal_size,
+        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -183,6 +188,10 @@ public:
 
     int get_temporal_size() const {
         return temporal_size;
+    }
+
+    int get_recurrent_radius() const {
+        return recurrent_radius;
     }
 
     // merge list of encoders and write to this one
