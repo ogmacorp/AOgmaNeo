@@ -39,7 +39,8 @@ public:
 
     struct Params {
         float choice;
-        float vigilance;
+        float category_vigilance; // standard ART vigilance
+        float compare_vigilance; // 2nd stage ART vigilance
         float lr; // learning rate
         float scale;
         float rr; // reconstruction rate
@@ -50,8 +51,9 @@ public:
         Params()
         :
         choice(0.0001f),
-        vigilance(0.9f),
-        lr(1.0f),
+        category_vigilance(0.9f),
+        compare_vigilance(0.8f),
+        lr(0.5f),
         scale(2.0f),
         rr(0.05f),
         active_ratio(0.5f),
@@ -67,7 +69,7 @@ private:
 
     Byte_Buffer hidden_learn_flags;
 
-    Byte_Buffer hidden_commits;
+    Byte_Buffer hidden_commit_flags;
 
     Float_Buffer hidden_comparisons;
 

@@ -24,6 +24,8 @@ void Image_Encoder::forward(
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
 
+    float max_match = 0.0f;
+
     const float byte_inv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -84,9 +86,9 @@ void Image_Encoder::forward(
 
         float activation = sum / (params.choice + total);
 
-        hidden_learn_flags[hidden_cell_index] = (match >= params.vigilance);
+        hidden_learn_flags[hidden_cell_index] = (match >= params.category_vigilance);
 
-        if (match >= params.vigilance && activation > max_activation) {
+        if (hidden_learn_flags[hidden_cell_index] && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -95,9 +97,11 @@ void Image_Encoder::forward(
             max_complete_activation = activation;
             max_complete_index = hc;
         }
+
+        max_match = max(max_match, match);
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = (max_match >= params.compare_vigilance ? max_complete_activation : 0.0f);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
@@ -150,7 +154,7 @@ void Image_Encoder::learn(
         if (!hidden_learn_flags[hidden_cell_index])
             continue;
 
-        float rate = (hidden_commits[hidden_cell_index] ? params.lr : 1.0f);
+        float rate = (hidden_commit_flags[hidden_cell_index] ? params.lr : 1.0f);
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -194,7 +198,7 @@ void Image_Encoder::learn(
                 }
         }
 
-        hidden_commits[hidden_cell_index] = true;
+        hidden_commit_flags[hidden_cell_index] = true;
     }
 }
 
@@ -394,7 +398,7 @@ void Image_Encoder::init_random(
 
     hidden_learn_flags.resize(num_hidden_cells);
 
-    hidden_commits = Byte_Buffer(num_hidden_cells, false);
+    hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
 
     hidden_comparisons.resize(num_hidden_cells);
 }
@@ -449,7 +453,7 @@ void Image_Encoder::reconstruct(
 }
 
 long Image_Encoder::size() const {
-    long size = sizeof(Int3) + sizeof(Params) + hidden_cis.size() * sizeof(int) + hidden_commits.size() * sizeof(Byte) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(Params) + hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -486,7 +490,7 @@ void Image_Encoder::write(
     
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-    writer.write(&hidden_commits[0], hidden_commits.size() * sizeof(Byte));
+    writer.write(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -520,9 +524,9 @@ void Image_Encoder::read(
 
     hidden_learn_flags.resize(num_hidden_cells);
 
-    hidden_commits.resize(num_hidden_cells);
+    hidden_commit_flags.resize(num_hidden_cells);
 
-    reader.read(&hidden_commits[0], hidden_commits.size() * sizeof(Byte));
+    reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     hidden_comparisons.resize(num_hidden_cells);
 
