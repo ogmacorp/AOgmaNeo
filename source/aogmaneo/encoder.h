@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -23,15 +23,17 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(5, 5, 16),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer protos;
-        
+        Byte_Buffer weights;
+
+        Int_Buffer recon_sums;
+
         float importance;
 
         Visible_Layer()
@@ -41,50 +43,50 @@ public:
     };
 
     struct Params {
-        float falloff; // SOM neighborhood falloff
-        float choice; // choose used columns more
+        float scale; // recon curve
         float lr; // learning rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // second stage inhibition radius
-        int n_radius; // SOM neighborhood radius
+        int spatial_recon_tolerance;
 
         Params()
         :
-        falloff(0.9f),
-        choice(0.5f),
+        scale(4.0f),
         lr(0.1f),
-        active_ratio(0.1f),
-        l_radius(2),
-        n_radius(1)
+        spatial_recon_tolerance(1)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int temporal_size;
 
-    Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_resources;
+    Int_Buffer hidden_cis; // spatial
+    Int_Buffer temporal_cis;
+    Int_Buffer temporal_cis_prev;
 
     Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_comparisons;
+    Int_Buffer temporal_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    // --- kernels ---
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
+    Int_Buffer recurrent_indices;
+
+    // --- kernels ---
+
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
-    void learn(
+    void learn_spatial(
         const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View input_cis,
+        int vli,
+        unsigned long* state,
         const Params &params
     );
 
@@ -92,6 +94,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int temporal_size,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -101,9 +104,7 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state() {
-        hidden_cis.fill(0);
-    }
+    void clear_state();
 
     // serialization
     long size() const; // returns size in bytes
@@ -165,9 +166,18 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden states
+    const Int_Buffer &get_temporal_cis() const {
+        return temporal_cis;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    int get_temporal_size() const {
+        return temporal_size;
     }
 
     // merge list of encoders and write to this one

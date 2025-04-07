@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -23,7 +23,7 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(32, 32, 1),
         radius(2)
         {}
     };
@@ -37,19 +37,19 @@ public:
     };
 
     struct Params {
-        float falloff; // local neighborhood falloff
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
-        int n_radius; // SOM neighborhood radius
+        int radius; // SOM neighborhood radius
         
         Params()
         :
-        falloff(0.9f),
+        falloff(0.99f),
         lr(0.1f),
         scale(2.0f),
         rr(0.01f),
-        n_radius(1)
+        radius(1)
         {}
     };
 
