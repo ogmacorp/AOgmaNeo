@@ -57,7 +57,8 @@ public:
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
-        Int3 hidden_size; // size of hidden layer
+        Int3 hidden_size; // size of hidden layer (spatial)
+        int temporal_size; // size of time sections (temporal)
 
         int num_dendrites_per_cell;
 
@@ -66,12 +67,14 @@ public:
 
         Layer_Desc(
             const Int3 &hidden_size = Int3(5, 5, 16),
+            int temporal_size = 8,
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2
         )
         :
         hidden_size(hidden_size),
+        temporal_size(temporal_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius)
@@ -81,13 +84,6 @@ public:
     struct Layer_Params {
         Decoder::Params decoder;
         Encoder::Params encoder;
-
-        float recurrent_importance;
-
-        Layer_Params()
-        :
-        recurrent_importance(1.0f)
-        {}
     };
 
     struct IO_Params {
@@ -120,7 +116,7 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
-    Array<Int_Buffer> hidden_cis_prev;
+    Array<Int_Buffer> temporal_cis_prev;
     Array<Int_Buffer> feedback_cis_prev;
 
     // for mapping first layer Decoders
@@ -201,12 +197,6 @@ public:
         return d_indices[i] != -1;
     }
 
-    bool is_layer_recurrent(
-        int l
-    ) const {
-        return (l == 0 ? encoders[l].get_num_visible_layers() > io_sizes.size() : encoders[l].get_num_visible_layers() > 1);
-    }
-
     // retrieve predictions
     const Int_Buffer &get_prediction_cis(
         int i
@@ -217,7 +207,7 @@ public:
         return decoders[0][d_indices[i]].get_hidden_cis();
     }
 
-    // retrieve predictions activations
+    // retrieve prediction activations
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
