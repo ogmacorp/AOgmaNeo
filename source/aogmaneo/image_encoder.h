@@ -45,8 +45,6 @@ public:
         float lr; // learning rate
         float scale; // reconstruction scale
         float rr; // reconstruction rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // lateral 2nd stage inhibition radius
         int n_radius; // neighborhood radius
         
         Params()
@@ -58,8 +56,6 @@ public:
         lr(0.5f),
         scale(2.0f),
         rr(0.05f),
-        active_ratio(0.5f),
-        l_radius(1),
         n_radius(1)
         {}
     };
@@ -83,11 +79,7 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
-    );
-
-    void learn(
-        const Int2 &column_pos,
+        bool learn_enabled,
         const Array<Byte_Buffer_View> &inputs
     );
 
