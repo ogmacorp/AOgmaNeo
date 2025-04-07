@@ -49,8 +49,8 @@ public:
 
         Params()
         :
-        scale(2.0f),
-        lr(0.1f),
+        scale(4.0f),
+        lr(0.5f),
         early_stop_cells(1)
         {}
     };
