@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -23,20 +23,15 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(5, 5, 16),
+        size(4, 4, 16),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights0;
-        Float_Buffer weights1;
+        Float_Buffer protos;
         
-        Float_Buffer hidden_min_sums;
-        Float_Buffer hidden_max_sums;
-        Float_Buffer hidden_totals;
-
         float importance;
 
         Visible_Layer()
@@ -46,22 +41,18 @@ public:
     };
 
     struct Params {
-        float falloff; // neighborhood falloff
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float category_vigilance; // standard ART vigilance
-        float compare_vigilance; // 2nd stage ART vigilance
+        float falloff; // SOM neighborhood falloff
+        float choice; // choose used columns more
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
-        int n_radius; // neighborhood radius
+        int n_radius; // SOM neighborhood radius
 
         Params()
         :
-        falloff(0.99f),
-        choice(0.0001f),
-        category_vigilance(0.9f),
-        compare_vigilance(0.8f),
-        lr(0.5f),
+        falloff(0.9f),
+        choice(0.5f),
+        lr(0.1f),
         active_ratio(0.1f),
         l_radius(2),
         n_radius(1)
@@ -73,16 +64,16 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Byte_Buffer hidden_learn_flags;
+    Float_Buffer hidden_resources;
 
-    Byte_Buffer hidden_commit_flags;
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-
+    
     // --- kernels ---
     
     void forward(
@@ -110,12 +101,14 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state();
+    void clear_state() {
+        hidden_cis.fill(0);
+    }
 
     // serialization
-    long size() const; // returns size in Bytes
-    long state_size() const; // returns size of state in Bytes
-    long weights_size() const; // returns size of weights in Bytes
+    long size() const; // returns size in bytes
+    long state_size() const; // returns size of state in bytes
+    long weights_size() const; // returns size of weights in bytes
 
     void write(
         Stream_Writer &writer
