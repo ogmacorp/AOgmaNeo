@@ -30,13 +30,12 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights0;
+        Float_Buffer weights1;
         
-        Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
+        Float_Buffer hidden_sums;
+        Float_Buffer hidden_totals;
         Int_Buffer hidden_counts;
-
-        Byte_Buffer recons;
 
         float importance;
 
@@ -48,40 +47,61 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float category_vigilance; // standard ART vigilance
+        float compare_vigilance; // 2nd stage ART vigilance
         float lr; // learning rate
+        float active_ratio; // 2nd stage inhibition activity ratio
+        int l_radius; // second stage inhibition radius
+        int n_radius; // neighborhood radius
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.7f),
-        lr(0.5f)
+        choice(0.0001f),
+        category_vigilance(0.9f),
+        compare_vigilance(0.8f),
+        lr(0.5f),
+        active_ratio(0.1f),
+        l_radius(2),
+        n_radius(1)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int temporal_size; // spatial region size (this must evenly divide hidden_size.z)
+    int recurrent_radius; // radius of recurrent connections
 
     Int_Buffer hidden_cis;
+    Int_Buffer temporal_cis;
+    Int_Buffer temporal_cis_prev;
+
+    Byte_Buffer hidden_learn_flags;
+    Byte_Buffer temporal_learn_flags;
+
+    Byte_Buffer hidden_commits;
+    Byte_Buffer temporal_commits;
+
+    Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-    
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
 
+    Float_Buffer recurrent_sums;
+    Float_Buffer recurrent_totals;
+    Float_Buffer recurrent_weights0;
+    Float_Buffer recurrent_weights1;
+    
     // --- kernels ---
     
-    void forward(
+    void forward_spatial(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
-    void reconstruct(
+    void forward_recurrent(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
         const Params &params
     );
 
@@ -95,6 +115,8 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int temporal_size,
+        int recurrent_radius,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -166,9 +188,22 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden states
+    const Int_Buffer &get_temporal_cis() const {
+        return temporal_cis;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    int get_temporal_size() const {
+        return temporal_size;
+    }
+
+    int get_recurrent_radius() const {
+        return recurrent_radius;
     }
 
     // merge list of encoders and write to this one
