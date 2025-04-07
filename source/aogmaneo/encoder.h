@@ -53,9 +53,9 @@ public:
 
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.95f),
-        lr(0.1f)
+        choice(0.01f),
+        vigilance(0.9f),
+        lr(0.5f)
         {}
     };
 
@@ -63,9 +63,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Byte_Buffer hidden_learn_flags;
-    Byte_Buffer hidden_commit_flags;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
