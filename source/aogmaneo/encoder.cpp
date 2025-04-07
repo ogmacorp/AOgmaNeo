@@ -110,7 +110,9 @@ void Encoder::forward(
 
         float activation = sum / (params.choice + total);
 
-        if (match >= params.category_vigilance && activation > max_activation) {
+        hidden_learn_flags[hidden_cell_index] = (match >= params.category_vigilance);
+
+        if (hidden_learn_flags[hidden_cell_index] && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
