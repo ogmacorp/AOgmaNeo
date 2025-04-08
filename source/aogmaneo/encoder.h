@@ -62,8 +62,10 @@ public:
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int temporal_size;
 
     Int_Buffer hidden_cis;
+    Int_Buffer temporal_cis;
 
     Byte_Buffer hidden_learn_flags;
 
@@ -165,9 +167,18 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden states
+    const Int_Buffer &get_temporal_cis() const {
+        return temporal_cis;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    int get_temporal_size() const {
+        return temporal_size;
     }
 
     // merge list of encoders and write to this one

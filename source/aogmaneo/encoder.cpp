@@ -140,7 +140,7 @@ void Encoder::forward(
     // temporal (reservoir)
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    temporal_cis[hidden_column_index] = recurrent_indices[hidden_ci + hidden_size.z * temporal_cis_prev[hidden_column_index]] + hidden_ci * temporal_size;
+    temporal_cis[hidden_column_index] = recurrent_indices[hidden_ci + hidden_size.z * temporal_cis[hidden_column_index]] + hidden_ci * temporal_size;
 }
 
 void Encoder::learn(
@@ -259,10 +259,15 @@ void Encoder::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
+    temporal_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_learn_flags.resize(num_hidden_columns);
 
     hidden_comparisons.resize(num_hidden_columns);
+
+    recurrent_indices.resize(num_hidden_columns);
+
+    for (int wi = 0
 }
 
 void Encoder::step(
