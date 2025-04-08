@@ -53,7 +53,7 @@ public:
         Params()
         :
         choice(0.01f),
-        category_vigilance(0.97f),
+        category_vigilance(0.99f),
         compare_vigilance(0.95f),
         active_ratio(0.1f),
         l_radius(2)
@@ -68,6 +68,7 @@ private:
     Int_Buffer temporal_cis;
 
     Byte_Buffer hidden_learn_flags;
+    Byte_Buffer hidden_commit_flags;
 
     Float_Buffer hidden_comparisons;
 

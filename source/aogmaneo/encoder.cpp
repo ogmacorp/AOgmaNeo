@@ -157,34 +157,36 @@ void Encoder::learn(
 
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    float hidden_max = hidden_comparisons[hidden_column_index];
-
-    int num_higher = 0;
-    int count = 1; // start at 1 since self is skipped
-
-    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
-        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
-            if (dcx == 0 && dcy == 0)
-                continue;
-
-            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
-
-            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
-                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
-
-                if (hidden_comparisons[other_hidden_column_index] >= hidden_max)
-                    num_higher++;
-
-                count++;
-            }
-        }
-
-    float ratio = static_cast<float>(num_higher) / static_cast<float>(count);
-
-    if (ratio > params.active_ratio)
-        return;
-
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
+
+    if (hidden_commit_flags[hidden_cell_index_max]) {
+        float hidden_max = hidden_comparisons[hidden_column_index];
+
+        int num_higher = 0;
+        int count = 1; // start at 1 since self is skipped
+
+        for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+            for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+                if (dcx == 0 && dcy == 0)
+                    continue;
+
+                Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
+
+                if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                    int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                    if (hidden_comparisons[other_hidden_column_index] >= hidden_max)
+                        num_higher++;
+
+                    count++;
+                }
+            }
+
+        float ratio = static_cast<float>(num_higher) / static_cast<float>(count);
+
+        if (ratio > params.active_ratio)
+            return;
+    }
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -226,6 +228,8 @@ void Encoder::learn(
                 vl.weights[byi] |= (1 << bi);
             }
     }
+
+    hidden_commit_flags[hidden_cell_index_max] = true;
 }
 
 void Encoder::init_random(
@@ -268,6 +272,8 @@ void Encoder::init_random(
 
     hidden_learn_flags.resize(num_hidden_columns);
 
+    hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
+
     hidden_comparisons.resize(num_hidden_columns);
 
     recurrent_indices.resize(num_full_cells * hidden_size.z);
@@ -304,7 +310,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + sizeof(int) + 2 * hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + 2 * hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -341,6 +347,8 @@ void Encoder::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     writer.write(&temporal_cis[0], temporal_cis.size() * sizeof(int));
+
+    writer.write(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -381,6 +389,10 @@ void Encoder::read(
     reader.read(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 
     hidden_learn_flags.resize(num_hidden_columns);
+
+    hidden_commit_flags.resize(num_hidden_cells);
+
+    reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     hidden_comparisons.resize(num_hidden_columns);
 
