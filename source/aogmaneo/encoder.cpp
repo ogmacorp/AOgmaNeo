@@ -230,17 +230,22 @@ void Encoder::learn(
 
 void Encoder::init_random(
     const Int3 &hidden_size,
+    int temporal_size,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
 
     this->hidden_size = hidden_size;
+    this->temporal_size = temporal_size;
 
     visible_layers.resize(visible_layer_descs.size());
 
     // pre-compute dimensions
+    int full_column_size = hidden_size.z * temporal_size;
+
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
+    int num_full_cells = num_hidden_columns * full_column_size;
 
     // create layers
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -265,9 +270,10 @@ void Encoder::init_random(
 
     hidden_comparisons.resize(num_hidden_columns);
 
-    recurrent_indices.resize(num_hidden_columns);
+    recurrent_indices.resize(num_full_cells * hidden_size.z);
 
-    for (int wi = 0
+    for (int i = 0; i < recurrent_indices.size(); i++)
+        recurrent_indices[i] = (rand() % temporal_size);
 }
 
 void Encoder::step(
@@ -298,7 +304,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + 2 * hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -306,11 +312,13 @@ long Encoder::size() const {
         size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.hidden_totals.size() * sizeof(int) + sizeof(float);
     }
 
+    size += recurrent_indices.size() * sizeof(int);
+
     return size;
 }
 
 long Encoder::state_size() const {
-    return hidden_cis.size() * sizeof(int);
+    return 2 * hidden_cis.size() * sizeof(int);
 }
 
 long Encoder::weights_size() const {
@@ -329,8 +337,10 @@ void Encoder::write(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_size, sizeof(Int3));
+    writer.write(&temporal_size, sizeof(int));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 
     int num_visible_layers = visible_layers.size();
 
@@ -348,19 +358,27 @@ void Encoder::write(
 
         writer.write(&vl.importance, sizeof(float));
     }
+
+    writer.write(&recurrent_indices[0], recurrent_indices.size() * sizeof(int));
 }
 
 void Encoder::read(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_size, sizeof(Int3));
+    reader.read(&temporal_size, sizeof(int));
+
+    int full_column_size = hidden_size.z * temporal_size;
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
+    int num_full_cells = num_hidden_columns * full_column_size;
 
     hidden_cis.resize(num_hidden_columns);
+    temporal_cis.resize(num_hidden_columns);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 
     hidden_learn_flags.resize(num_hidden_columns);
 
@@ -397,18 +415,24 @@ void Encoder::read(
 
         reader.read(&vl.importance, sizeof(float));
     }
+
+    recurrent_indices.resize(num_full_cells * hidden_size.z);
+
+    reader.read(&recurrent_indices[0], recurrent_indices.size() * sizeof(int));
 }
 
 void Encoder::write_state(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    writer.write(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 }
 
 void Encoder::read_state(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
+    reader.read(&temporal_cis[0], temporal_cis.size() * sizeof(int));
 }
 
 void Encoder::write_weights(

@@ -96,6 +96,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int temporal_size,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
