@@ -43,7 +43,7 @@ void Encoder::forward(
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        int sub_count = vl.hidden_counts[hidden_column_index];
+        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         count += vl.importance * sub_count;
         count_except += vl.importance * sub_count * (vld.size.z - 1);
@@ -113,7 +113,7 @@ void Encoder::forward(
         sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
 
-        float complemented = (count_all - total) - (count - sum);
+        float complemented = sum - total + count_except;
 
         float match = complemented / count_except;
 
@@ -253,7 +253,6 @@ void Encoder::init_random(
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
-        vl.hidden_counts.resize(num_hidden_columns);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -289,8 +288,6 @@ void Encoder::init_random(
             // bounds of receptive field, clamped to input size
             Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
             Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-            vl.hidden_counts[hidden_column_index] = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
             for (int hc = 0; hc < hidden_size.z; hc++) {
                 int hidden_cell_index = hc + hidden_cells_start;
@@ -344,7 +341,7 @@ long Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.hidden_totals.size() * sizeof(int) + vl.hidden_counts.size() * sizeof(int) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + vl.weights.size() * sizeof(Byte) + vl.hidden_totals.size() * sizeof(int) + sizeof(float);
     }
 
     return size;
@@ -386,7 +383,6 @@ void Encoder::write(
         writer.write(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         writer.write(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
-        writer.write(&vl.hidden_counts[0], vl.hidden_counts.size() * sizeof(int));
 
         writer.write(&vl.importance, sizeof(float));
     }
@@ -436,10 +432,6 @@ void Encoder::read(
         vl.hidden_totals.resize(num_hidden_cells);
 
         reader.read(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
-
-        vl.hidden_counts.resize(num_hidden_columns);
-
-        reader.read(&vl.hidden_counts[0], vl.hidden_counts.size() * sizeof(int));
 
         reader.read(&vl.importance, sizeof(float));
     }
