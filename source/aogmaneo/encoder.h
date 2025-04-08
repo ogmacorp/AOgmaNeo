@@ -53,8 +53,8 @@ public:
         Params()
         :
         choice(0.01f),
-        category_vigilance(0.99f),
-        compare_vigilance(0.95f),
+        category_vigilance(0.9f),
+        compare_vigilance(0.8f),
         active_ratio(0.1f),
         l_radius(2)
         {}
