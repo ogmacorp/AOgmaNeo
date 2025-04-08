@@ -38,29 +38,25 @@ public:
     };
 
     struct Params {
-        float falloff; // neighborhood falloff
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
+        float choice;
         float category_vigilance; // standard ART vigilance
-        float compare_vigilance; // 2nd stage ART vigilance
+        float compare_vigilance; // vigilance value used cross-column comparison (2nd stage inhibition)
         float lr; // learning rate
-        float scale; // reconstruction scale
+        float scale;
         float rr; // reconstruction rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // lateral 2nd stage inhibition radius
-        int n_radius; // neighborhood radius
         
         Params()
         :
-        falloff(0.99f),
-        choice(0.0001f),
+        choice(0.01f),
         category_vigilance(0.9f),
         compare_vigilance(0.8f),
         lr(0.5f),
         scale(2.0f),
         rr(0.05f),
         active_ratio(0.5f),
-        l_radius(1),
-        n_radius(1)
+        l_radius(1)
         {}
     };
 
@@ -70,8 +66,6 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Byte_Buffer hidden_learn_flags;
-
-    Byte_Buffer hidden_commit_flags;
 
     Float_Buffer hidden_comparisons;
 
