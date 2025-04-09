@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -139,7 +139,7 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        for (int dhc = -params.n_radius; dhc <= params.n_radius; dhc++) {
+        for (int dhc = -params.radius; dhc <= params.radius; dhc++) {
             int hc = max_index + dhc;
 
             if (hc < 0 || hc >= hidden_size.z)
