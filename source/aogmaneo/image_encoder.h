@@ -53,8 +53,8 @@ public:
         :
         falloff(0.99f),
         choice(0.0001f),
-        category_vigilance(0.9f),
-        compare_vigilance(0.8f),
+        category_vigilance(0.95f),
+        compare_vigilance(0.9f),
         lr(0.5f),
         scale(2.0f),
         rr(0.05f),
