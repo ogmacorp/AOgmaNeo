@@ -71,11 +71,11 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Float_Buffer hidden_norms;
+
     Float_Buffer hidden_radii;
 
     Byte_Buffer hidden_learn_flags;
-
-    Byte_Buffer hidden_commit_flags;
 
     Float_Buffer hidden_comparisons;
 
