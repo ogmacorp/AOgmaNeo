@@ -358,6 +358,8 @@ void Encoder::read(
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
+    hidden_norms.resize(num_hidden_cells);
+
     hidden_learn_flags.resize(num_hidden_cells);
 
     hidden_radii.resize(num_hidden_cells);
