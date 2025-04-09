@@ -57,9 +57,9 @@ public:
         Params()
         :
         falloff(0.99f),
-        choice(0.0001f),
-        category_vigilance(0.95f),
-        compare_vigilance(0.9f),
+        choice(0.01f),
+        category_vigilance(0.9f),
+        compare_vigilance(0.8f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2),
