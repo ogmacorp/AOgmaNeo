@@ -30,8 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer weights0;
-        Float_Buffer weights1;
+        Float_Buffer centroids;
         
         Float_Buffer hidden_sums;
         Float_Buffer hidden_totals;
@@ -71,6 +70,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    Float_Buffer hidden_radii;
 
     Byte_Buffer hidden_learn_flags;
 

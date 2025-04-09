@@ -73,8 +73,8 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    vl.hidden_sums[hidden_cell_index] += min(vl.weights0[wi], in_value) + min(vl.weights1[wi], 1.0f - in_value);
-                    vl.hidden_totals[hidden_cell_index] += vl.weights0[wi] + vl.weights1[wi];
+                    vl.hidden_sums[hidden_cell_index] += ;
+                    vl.hidden_totals[hidden_cell_index] += vl.centroids[wi] + vl.weights1[wi];
                 }
             }
     }
@@ -109,6 +109,10 @@ void Encoder::forward(
         float match = sum / count;
 
         float activation = sum / (params.choice + total);
+
+        float match = 1.0f - max(hiddenRadii[hiddenCellIndex], sum);
+
+        float activation = (1.0f - max(hiddenRadii[hiddenCellIndex], sum)) / (1.0f - hiddenRadii[hiddenCellIndex] + choice);
 
         hidden_learn_flags[hidden_cell_index] = (match >= params.category_vigilance);
 
@@ -217,7 +221,7 @@ void Encoder::learn(
 
                     int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                    vl.weights0[wi] += rate * min(0.0f, in_value - vl.weights0[wi]);
+                    vl.centroids[wi] += rate * min(0.0f, in_value - vl.centroids[wi]);
                     vl.weights1[wi] += rate * min(0.0f, 1.0f - in_value - vl.weights1[wi]);
                 }
         }
@@ -250,11 +254,11 @@ void Encoder::init_random(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights0.resize(num_hidden_cells * area);
-        vl.weights1.resize(vl.weights0.size());
+        vl.centroids.resize(num_hidden_cells * area);
+        vl.weights1.resize(vl.centroids.size());
 
-        for (int i = 0; i < vl.weights0.size(); i++) {
-            vl.weights0[i] = 1.0f - randf() * init_weight_noisef;
+        for (int i = 0; i < vl.centroids.size(); i++) {
+            vl.centroids[i] = 1.0f - randf() * init_weight_noisef;
             vl.weights1[i] = 1.0f - randf() * init_weight_noisef;
         }
 
@@ -299,7 +303,7 @@ long Encoder::size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += sizeof(Visible_Layer_Desc) + 2 * vl.weights0.size() * sizeof(float) + sizeof(float);
+        size += sizeof(Visible_Layer_Desc) + 2 * vl.centroids.size() * sizeof(float) + sizeof(float);
     }
 
     return size;
@@ -315,7 +319,7 @@ long Encoder::weights_size() const {
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        size += 2 * vl.weights0.size() * sizeof(float);
+        size += 2 * vl.centroids.size() * sizeof(float);
     }
 
     return size;
@@ -340,7 +344,7 @@ void Encoder::write(
 
         writer.write(&vld, sizeof(Visible_Layer_Desc));
 
-        writer.write(&vl.weights0[0], vl.weights0.size() * sizeof(float));
+        writer.write(&vl.centroids[0], vl.centroids.size() * sizeof(float));
         writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(float));
 
         writer.write(&vl.importance, sizeof(float));
@@ -387,11 +391,9 @@ void Encoder::read(
         int diam = vld.radius * 2 + 1;
         int area = diam * diam;
 
-        vl.weights0.resize(num_hidden_cells * area);
-        vl.weights1.resize(vl.weights0.size());
+        vl.centroids.resize(num_hidden_cells * area);
 
-        reader.read(&vl.weights0[0], vl.weights0.size() * sizeof(float));
-        reader.read(&vl.weights1[0], vl.weights1.size() * sizeof(float));
+        reader.read(&vl.centroids[0], vl.centroids.size() * sizeof(float));
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
@@ -418,8 +420,7 @@ void Encoder::write_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
 
-        writer.write(&vl.weights0[0], vl.weights0.size() * sizeof(float));
-        writer.write(&vl.weights1[0], vl.weights1.size() * sizeof(float));
+        writer.write(&vl.centroids[0], vl.centroids.size() * sizeof(float));
     }
 }
 
@@ -429,8 +430,7 @@ void Encoder::read_weights(
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
 
-        reader.read(&vl.weights0[0], vl.weights0.size() * sizeof(float));
-        reader.read(&vl.weights1[0], vl.weights1.size() * sizeof(float));
+        reader.read(&vl.centroids[0], vl.centroids.size() * sizeof(float));
     }
 }
 
@@ -444,11 +444,10 @@ void Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights0.size(); i++) {
+            for (int i = 0; i < vl.centroids.size(); i++) {
                 int e = rand() % encoders.size();                
 
-                vl.weights0[i] = encoders[e]->visible_layers[vli].weights0[i];
-                vl.weights1[i] = encoders[e]->visible_layers[vli].weights1[i];
+                vl.centroids[i] = encoders[e]->visible_layers[vli].centroids[i];
             }
         }
 
@@ -458,17 +457,13 @@ void Encoder::merge(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
-            for (int i = 0; i < vl.weights0.size(); i++) {
-                float total0 = 0.0f;
-                float total1 = 0.0f;
+            for (int i = 0; i < vl.centroids.size(); i++) {
+                float total = 0.0f;
 
-                for (int e = 0; e < encoders.size(); e++) {
-                    total0 += encoders[e]->visible_layers[vli].weights0[i];
-                    total1 += encoders[e]->visible_layers[vli].weights1[i];
-                }
+                for (int e = 0; e < encoders.size(); e++)
+                    total += encoders[e]->visible_layers[vli].centroids[i];
 
-                vl.weights0[i] = roundf(total0 / encoders.size());
-                vl.weights1[i] = roundf(total1 / encoders.size());
+                vl.centroids[i] = total / encoders.size();
             }
         }
 
