@@ -181,7 +181,7 @@ void Encoder::learn(
         float s = sigmoidf((recon_sum - count * 127) * recon_scale);
 
         // re-use sums as deltas
-        vl.deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - s) * s * (1.0f - s);
+        vl.deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - s);
     }
 
     if (num_higher < params.early_stop)
