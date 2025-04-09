@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -23,40 +23,33 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(32, 32, 1),
+        size(4, 4, 16),
         radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0; // regular
-        Byte_Buffer weights1; // complement
-        Byte_Buffer weights_recon; // for reconstruction
+        Byte_Buffer weights;
+        Byte_Buffer recon_weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float choice;
-        float category_vigilance; // standard ART vigilance
-        float compare_vigilance; // vigilance value used cross-column comparison (2nd stage inhibition)
+        float falloff; // SOM neighborhood falloff
         float lr; // learning rate
-        float scale;
+        float scale; // scale of reconstruction
         float rr; // reconstruction rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // lateral 2nd stage inhibition radius
+        int n_radius; // SOM neighborhood radius
         
         Params()
         :
-        choice(0.01f),
-        category_vigilance(0.9f),
-        compare_vigilance(0.8f),
-        lr(0.5f),
+        falloff(0.9f),
+        lr(0.1f),
         scale(2.0f),
-        rr(0.05f),
-        active_ratio(0.5f),
-        l_radius(1)
+        rr(0.01f),
+        n_radius(1)
         {}
     };
 
@@ -65,9 +58,10 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Byte_Buffer hidden_learn_flags;
+    Float_Buffer hidden_acts;
+    Float_Buffer hidden_totals;
 
-    Float_Buffer hidden_comparisons;
+    Float_Buffer hidden_resources;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -77,12 +71,8 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
+        const Array<Byte_Buffer_View> &inputs,
+        bool learn_enabled
     );
 
     void learn_reconstruction(
@@ -110,7 +100,7 @@ public:
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled, // whether to learn
-        bool learn_recon = true // whether to learn reconstruction weights
+        bool learn_recon = true // whether to learn a reconstruction as well (conditional on learn_enabled)
     );
 
     void reconstruct(
