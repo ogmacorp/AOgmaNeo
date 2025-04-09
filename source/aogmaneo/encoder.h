@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -23,7 +23,7 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(4, 4, 16),
+        size(5, 5, 16),
         radius(2)
         {}
     };
@@ -33,6 +33,8 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer recon_sums;
+
+        Float_Buffer deltas;
 
         float importance;
 
@@ -45,13 +47,13 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        int early_stop_cells; // if target of reconstruction is in top <this number> cells, stop early
+        int early_stop; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
         scale(4.0f),
         lr(0.5f),
-        early_stop_cells(1)
+        early_stop(1)
         {}
     };
 
@@ -80,7 +82,6 @@ private:
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
-        unsigned long* state,
         const Params &params
     );
 

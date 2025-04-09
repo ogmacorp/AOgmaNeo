@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -94,7 +94,6 @@ void Encoder::learn(
     const Int2 &column_pos,
     Int_Buffer_View input_cis,
     int vli,
-    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -182,11 +181,13 @@ void Encoder::learn(
         float s = sigmoidf((recon_sum - count * 127) * recon_scale);
 
         // re-use sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - s) * s * (1.0f - s), state);
+        vl.deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - s) * s * (1.0f - s);
     }
 
-    if (num_higher < params.early_stop_cells)
+    if (num_higher < params.early_stop)
         return;
+
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -208,7 +209,9 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
+                    float w = vl.weights[wi] * byte_inv;
+
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.deltas[visible_cell_index] * w * (1.0f - w))));
                 }
             }
         }
@@ -249,6 +252,8 @@ void Encoder::init_random(
             vl.weights[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
 
         vl.recon_sums.resize(num_visible_cells);
+
+        vl.deltas.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -285,16 +290,12 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        unsigned int base_state = rand();
-
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-            learn(pos, input_cis[vli], vli, &state, params);
+            learn(pos, input_cis[vli], vli, params);
         }
     }
 }
@@ -396,6 +397,8 @@ void Encoder::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
+
+        vl.deltas.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
