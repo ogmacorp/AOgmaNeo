@@ -166,9 +166,11 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = rand_roundf(error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts[dendrite_index], state);
+            dendrite_deltas[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts[dendrite_index];
         }
     }
+
+    const float half_byte_inv = 1.0f / 127.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -213,7 +215,9 @@ void Decoder::learn(
 
                         int wi = di + wi_start;
 
-                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + dendrite_deltas[dendrite_index]));
+                        float w = vl.weights[wi] * half_byte_inv;
+
+                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(dendrite_deltas[dendrite_index] * (1.0f - abs(w)))));
                     }
                 }
             }
