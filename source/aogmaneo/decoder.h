@@ -39,7 +39,7 @@ public:
 
         Params()
         :
-        scale(4.0f),
+        scale(8.0f),
         lr(0.1f)
         {}
     };
@@ -72,7 +72,6 @@ private:
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
