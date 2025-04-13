@@ -119,7 +119,7 @@ void Encoder::forward(
 
         float activation = complemented / (params.choice + count_all - total);
 
-        if (match >= params.category_vigilance && activation > max_activation) {
+        if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -132,7 +132,7 @@ void Encoder::forward(
         max_match = max(max_match, match);
     }
 
-    hidden_comparisons[hidden_column_index] = (max_match >= params.compare_vigilance ? max_complete_activation : 0.0f);
+    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
