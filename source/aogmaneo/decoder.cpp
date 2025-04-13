@@ -110,12 +110,31 @@ void Decoder::forward(
 
         activation *= activation_scale;
 
-        hidden_acts[hidden_cell_index] = sigmoidf(activation);
+        hidden_acts[hidden_cell_index] = activation;
 
         if (activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
+    }
+
+    // softmax
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -146,11 +165,9 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts[dendrite_index];
+            dendrite_deltas[dendrite_index] = roundf(error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts[dendrite_index]);
         }
     }
-
-    const float half_byte_inv = 1.0f / 127.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -195,9 +212,7 @@ void Decoder::learn(
 
                         int wi = di + wi_start;
 
-                        float w = vl.weights[wi] * half_byte_inv;
-
-                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(dendrite_deltas[dendrite_index] * (1.0f - abs(w)))));
+                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + dendrite_deltas[dendrite_index]));
                     }
                 }
             }

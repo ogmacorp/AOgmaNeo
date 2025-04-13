@@ -54,7 +54,7 @@ private:
 
     Float_Buffer dendrite_acts;
 
-    Float_Buffer dendrite_deltas;
+    Int_Buffer dendrite_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
