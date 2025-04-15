@@ -57,7 +57,7 @@ public:
         category_vigilance(0.9f),
         compare_vigilance(0.8f),
         lr(0.5f),
-        active_ratio(0.1f),
+        active_ratio(0.25f),
         l_radius(2)
         {}
     };
@@ -68,6 +68,7 @@ private:
     Int_Buffer hidden_cis;
 
     Byte_Buffer hidden_learn_flags;
+    Byte_Buffer hidden_commit_flags;
 
     Float_Buffer hidden_comparisons;
 
