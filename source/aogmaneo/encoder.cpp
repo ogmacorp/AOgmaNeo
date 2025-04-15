@@ -82,11 +82,12 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
     
+    float max_match = 0.0f;
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -119,6 +120,8 @@ void Encoder::forward(
             max_complete_activation = activation;
             max_complete_index = hc;
         }
+
+        max_match = max(max_match, match);
     }
 
     hidden_comparisons[hidden_column_index] = (max_match >= params.compare_vigilance ? max_complete_activation : 0.0f);
