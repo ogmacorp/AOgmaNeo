@@ -58,8 +58,8 @@ public:
         :
         falloff(0.99f),
         choice(0.01f),
-        category_vigilance(0.7f),
-        compare_vigilance(0.5f),
+        category_vigilance(0.9f),
+        compare_vigilance(0.8f),
         lr(0.5f),
         active_ratio(1.0f),
         l_radius(2),
