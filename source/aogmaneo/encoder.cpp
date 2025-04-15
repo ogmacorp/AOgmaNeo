@@ -117,7 +117,7 @@ void Encoder::forward(
 
         float match = complemented / count_except;
 
-        float activation = sum / (params.choice + count_all - total);
+        float activation = complemented / (params.choice + count_all - total);
 
         if (match >= params.category_vigilance && activation > max_activation) {
             max_activation = activation;
