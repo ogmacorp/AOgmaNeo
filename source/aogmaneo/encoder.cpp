@@ -454,7 +454,7 @@ void Encoder::read(
 
     hidden_commit_flags.resize(num_hidden_cells);
 
-    reader.read(&hidden_commit_flags[0], hidden_learn_flags.size() * sizeof(Byte));
+    reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     hidden_comparisons.resize(num_hidden_columns);
 
