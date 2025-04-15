@@ -110,31 +110,12 @@ void Decoder::forward(
 
         activation *= activation_scale;
 
-        hidden_acts[hidden_cell_index] = activation;
+        hidden_acts[hidden_cell_index] = sigmoidf(activation);
 
         if (activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
-    }
-
-    // softmax
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-    
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-
-        total += hidden_acts[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(limit_small, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -144,7 +125,6 @@ void Decoder::learn(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     const Int_Buffer_View hidden_target_cis,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -166,9 +146,11 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = rand_roundf(error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts[dendrite_index], state);
+            dendrite_deltas[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts[dendrite_index];
         }
     }
+
+    const float half_byte_inv = 1.0f / 127.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -213,7 +195,9 @@ void Decoder::learn(
 
                         int wi = di + wi_start;
 
-                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + dendrite_deltas[dendrite_index]));
+                        float w = vl.weights[wi] * half_byte_inv;
+
+                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(dendrite_deltas[dendrite_index] * (1.0f - abs(w)))));
                     }
                 }
             }
@@ -280,14 +264,9 @@ void Decoder::learn(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    unsigned int base_state = rand();
-
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, params);
 }
 
 void Decoder::clear_state() {
