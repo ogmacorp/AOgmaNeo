@@ -189,8 +189,8 @@ void Image_Encoder::learn(
 
                             int input = vl_inputs[vc + i_start];
 
-                            vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(params.lr * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
-                            vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(params.lr * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
+                            vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(rate * (min(input, static_cast<int>(vl.weights0[wi])) - vl.weights0[wi])));
+                            vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(rate * (min(255 - input, static_cast<int>(vl.weights1[wi])) - vl.weights1[wi])));
                         }
                     }
             }
@@ -234,8 +234,8 @@ void Image_Encoder::learn(
 
                             int input = vl_inputs[vc + i_start];
 
-                            vl.weights0[wi] = min(255, max(0, vl.weights0[wi] + roundf(params.lr * (input - vl.weights0[wi]))));
-                            vl.weights1[wi] = min(255, max(0, vl.weights1[wi] + roundf(params.lr * (255 - input - vl.weights1[wi]))));
+                            vl.weights0[wi] = min(255, max(0, vl.weights0[wi] + roundf(rate * (input - vl.weights0[wi]))));
+                            vl.weights1[wi] = min(255, max(0, vl.weights1[wi] + roundf(rate * (255 - input - vl.weights1[wi]))));
                         }
                     }
             }

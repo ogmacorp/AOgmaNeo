@@ -57,7 +57,7 @@ public:
         :
         falloff(0.99f),
         choice(0.01f),
-        vigilance(0.8f),
+        vigilance(0.9f),
         lr(0.5f),
         active_ratio(0.25f),
         l_radius(2),
