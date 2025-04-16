@@ -109,7 +109,7 @@ void Encoder::forward(
 
         float activation = sum / (params.choice + total);
 
-        hidden_learn_flags[hidden_cell_index] = (match >= params.category_vigilance || !hidden_commit_flags[hidden_cell_index]);
+        hidden_learn_flags[hidden_cell_index] = (match >= params.vigilance || !hidden_commit_flags[hidden_cell_index]);
 
         if (hidden_learn_flags[hidden_cell_index] && activation > max_activation) {
             max_activation = activation;
@@ -124,7 +124,7 @@ void Encoder::forward(
         max_match = max(max_match, match);
     }
 
-    hidden_comparisons[hidden_column_index] = (max_match >= params.compare_vigilance ? max_complete_activation : 0.0f);
+    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 }
