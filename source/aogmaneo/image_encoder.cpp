@@ -240,7 +240,8 @@ void Image_Encoder::learn(
                     }
             }
 
-            hidden_commit_flags[hidden_cell_index] = true;
+            if (dhc == 0)
+                hidden_commit_flags[hidden_cell_index] = true;
         }
     }
 }
