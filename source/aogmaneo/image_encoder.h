@@ -56,8 +56,8 @@ public:
         lr(0.5f),
         scale(2.0f),
         rr(0.05f),
-        active_ratio(0.5f),
-        l_radius(2),
+        active_ratio(1.0f),
+        l_radius(0),
         n_radius(1)
         {}
     };
