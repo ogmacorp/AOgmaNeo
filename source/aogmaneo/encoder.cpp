@@ -181,7 +181,7 @@ void Encoder::learn(
         float s = sigmoidf((recon_sum - count * 127) * recon_scale);
 
         // re-use sums as deltas
-        vl.deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - s);
+        vl.recon_sums[visible_cell_index] = roundf(params.lr * 255.0f * ((vc == target_ci) - s));
     }
 
     if (num_higher < params.early_stop)
@@ -211,7 +211,7 @@ void Encoder::learn(
 
                     float w = vl.weights[wi] * byte_inv;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.deltas[visible_cell_index] * min(w, 1.0f - w))));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
                 }
             }
         }
@@ -252,8 +252,6 @@ void Encoder::init_random(
             vl.weights[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
 
         vl.recon_sums.resize(num_visible_cells);
-
-        vl.deltas.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -397,8 +395,6 @@ void Encoder::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
-
-        vl.deltas.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
