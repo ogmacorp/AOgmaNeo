@@ -28,7 +28,7 @@ public:
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
-        int value_num_dendrites_per_cell; // value function dendrites
+        int value_num_dendrites_per_cell; // value dendrites
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
@@ -39,7 +39,7 @@ public:
             const Int3 &size = Int3(5, 5, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
-            int value_num_dendrites_per_cell = 4,
+            int value_num_dendrites_per_cell = 8,
             int up_radius = 2,
             int down_radius = 2,
             int history_capacity = 512
@@ -57,31 +57,27 @@ public:
 
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
-        Int3 hidden_size; // size of hidden layer
+        Int3 hidden_size; // size of hidden layer (spatial)
+        int temporal_size; // size of time sections (temporal)
 
         int num_dendrites_per_cell;
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int ticks_per_update; // number of ticks a layer takes to update (relative to previous layer)
-        int temporal_horizon; // temporal distance into the past addressed by the layer. should be greater than or equal to ticks_per_update
-
         Layer_Desc(
             const Int3 &hidden_size = Int3(5, 5, 16),
+            int temporal_size = 8,
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
-            int down_radius = 2,
-            int ticks_per_update = 2,
-            int temporal_horizon = 2
+            int down_radius = 2
         )
         :
         hidden_size(hidden_size),
+        temporal_size(temporal_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
-        down_radius(down_radius),
-        ticks_per_update(ticks_per_update),
-        temporal_horizon(temporal_horizon)
+        down_radius(down_radius)
         {}
     };
 
@@ -120,34 +116,16 @@ private:
     Array<Encoder> encoders;
     Array<Array<Decoder>> decoders;
     Array<Actor> actors;
-    Array<Int_Buffer> hidden_cis_prev;
+    Array<Int_Buffer> temporal_cis_prev;
     Array<Int_Buffer> feedback_cis_prev;
 
     // for mapping first layer Decoders
     Int_Buffer i_indices;
     Int_Buffer d_indices;
 
-    // histories
-    Array<Array<Circle_Buffer<Int_Buffer>>> histories;
-
-    // per-layer values
-    Byte_Buffer updates;
-
-    Int_Buffer ticks;
-    Int_Buffer ticks_per_update;
-
     // input dimensions
     Array<Int3> io_sizes;
     Array<Byte> io_types;
-
-    // importance control
-    void set_input_importance(
-        int i,
-        float importance
-    ) {
-        for (int t = 0; t < histories[0][i].size(); t++)
-            encoders[0].get_visible_layer(i * histories[0][i].size() + t).importance = importance;
-    }
 
 public:
     // parameters
@@ -174,7 +152,7 @@ public:
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
         float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry for actor
+        float mimic = 0.0f // mimicry mode
     );
 
     void clear_state();
@@ -229,7 +207,7 @@ public:
         return decoders[0][d_indices[i]].get_hidden_cis();
     }
 
-    // retrieve predictions activations
+    // retrieve prediction activations
     const Float_Buffer &get_prediction_acts(
         int i
     ) const {
@@ -237,27 +215,6 @@ public:
             return actors[d_indices[i]].get_hidden_acts();
 
         return decoders[0][d_indices[i]].get_hidden_acts();
-    }
-
-    // whether this layer received on update this timestep
-    bool get_update(
-        int l
-    ) const {
-        return updates[l];
-    }
-
-    // get current layer ticks, relative to previous layer
-    int get_ticks(
-        int l
-    ) const {
-        return ticks[l];
-    }
-
-    // get layer ticks per update, relative to previous layer
-    int get_ticks_per_update(
-        int l
-    ) const {
-        return ticks_per_update[l];
     }
 
     // number of io layers
@@ -344,12 +301,6 @@ public:
 
     const Int_Buffer &get_d_indices() const {
         return d_indices;
-    }
-
-    const Array<Circle_Buffer<Int_Buffer>> &get_histories(
-        int l
-    ) const {
-        return histories[l];
     }
 
     // merge list of hierarchies and write to this one

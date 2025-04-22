@@ -62,8 +62,10 @@ public:
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    int temporal_size;
 
     Int_Buffer hidden_cis;
+    Int_Buffer temporal_cis;
 
     Byte_Buffer hidden_learn_flags;
     Byte_Buffer hidden_commit_flags;
@@ -74,6 +76,8 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
+    Int_Buffer recurrent_indices;
+
     // --- kernels ---
     
     void forward(
@@ -92,6 +96,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        int temporal_size,
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -163,9 +168,18 @@ public:
         return hidden_cis;
     }
 
+    // get the hidden states
+    const Int_Buffer &get_temporal_cis() const {
+        return temporal_cis;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    int get_temporal_size() const {
+        return temporal_size;
     }
 
     // merge list of encoders and write to this one
