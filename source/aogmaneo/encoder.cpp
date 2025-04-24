@@ -149,6 +149,7 @@ void Encoder::learn(
 
     if (!hidden_learn_flags[hidden_column_index])
         return;
+    return;
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
