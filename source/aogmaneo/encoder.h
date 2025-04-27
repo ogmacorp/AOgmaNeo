@@ -47,7 +47,8 @@ public:
     struct Params {
         float falloff; // neighborhood falloff
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // standard ART vigilance
+        float vigilance_high; // standard ART vigilance
+        float vigilance_low; // 2nd stage ART vigilance
         float low_activation; // multipler to lower activation when uncommitted
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
@@ -58,10 +59,11 @@ public:
         :
         falloff(0.99f),
         choice(0.01f),
-        vigilance(0.8f),
+        vigilance_high(0.9f),
+        vigilance_low(0.8f),
         low_activation(0.01f),
         lr(0.5f),
-        active_ratio(0.5f),
+        active_ratio(0.1f),
         l_radius(2),
         n_radius(1)
         {}
