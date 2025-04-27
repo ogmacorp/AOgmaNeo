@@ -56,7 +56,7 @@ public:
         choice(0.01f),
         vigilance(0.98f),
         low_activation(0.01f),
-        lr(0.5f)
+        lr(0.1f)
         {}
     };
 

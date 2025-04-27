@@ -173,8 +173,7 @@ void Encoder::reconstruct(
 
     int in_ci = input_cis[visible_column_index];
 
-    int sum = 0;
-    int count = 0;
+    Byte m = 0;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -191,12 +190,11 @@ void Encoder::reconstruct(
 
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                sum += vl.weights[wi];
-                count++;
+                m = max(m, vl.weights[wi]);
             }
         }
 
-    vl.recons[visible_column_index] = sum / max(1, count);
+    vl.recons[visible_column_index] = m;
 }
 
 void Encoder::learn(
