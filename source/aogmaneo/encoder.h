@@ -53,7 +53,7 @@ public:
         :
         scale(2.0f),
         lr(0.1f),
-        early_stop(1)
+        early_stop(2)
         {}
     };
 
