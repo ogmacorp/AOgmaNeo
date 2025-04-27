@@ -105,16 +105,21 @@ void Encoder::forward(
         sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
 
-        float match = sum / count;
-
         float activation = sum / (params.choice + total);
+
+        float match;
 
         if (!hidden_commit_flags[hidden_cell_index]) {
             match = 1.0f;
             activation *= params.low_activation;
-        }
 
-        hidden_learn_flags[hidden_cell_index] = (match >= params.vigilance_high);
+            hidden_learn_flags[hidden_cell_index] = true;
+        }
+        else {
+            match = sum / count;
+
+            hidden_learn_flags[hidden_cell_index] = (match >= params.vigilance_high);
+        }
 
         if (hidden_learn_flags[hidden_cell_index] && activation > max_activation) {
             max_activation = activation;
