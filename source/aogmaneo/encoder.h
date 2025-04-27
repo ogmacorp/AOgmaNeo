@@ -59,7 +59,7 @@ public:
         vigilance_low(0.8f),
         low_activation(0.01f),
         lr(0.5f),
-        active_ratio(0.1f),
+        active_ratio(1.0f),
         l_radius(2)
         {}
     };
