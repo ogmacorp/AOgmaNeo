@@ -55,7 +55,7 @@ public:
         falloff(0.99f),
         choice(0.01f),
         vigilance_high(0.97f),
-        vigilance_low(0.9f),
+        vigilance_low(0.93f),
         low_activation(0.01f),
         lr(0.5f),
         scale(2.0f),
