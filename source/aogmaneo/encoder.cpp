@@ -111,7 +111,6 @@ void Encoder::forward(
 
         if (!hidden_commit_flags[hidden_cell_index]) {
             match = 1.0f;
-            activation *= params.low_activation;
 
             hidden_learn_flags[hidden_cell_index] = true;
         }

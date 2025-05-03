@@ -42,7 +42,6 @@ public:
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance_high; // standard ART vigilance
         float vigilance_low; // 2nd stage ART vigilance
-        float low_activation; // multipler to lower activation when uncommitted
         float lr; // learning rate
         float scale; // reconstruction scale
         float rr; // reconstruction rate
@@ -56,7 +55,6 @@ public:
         choice(0.01f),
         vigilance_high(0.97f),
         vigilance_low(0.93f),
-        low_activation(0.01f),
         lr(0.5f),
         scale(2.0f),
         rr(0.05f),
