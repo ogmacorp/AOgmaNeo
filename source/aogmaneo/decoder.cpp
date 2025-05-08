@@ -154,8 +154,6 @@ void Decoder::learn(
         }
     }
 
-    const float half_byte_inv = 1.0f / 127.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -198,8 +196,6 @@ void Decoder::learn(
                         int dendrite_index = di + dendrites_start;
 
                         int wi = di + wi_start;
-
-                        float w = vl.weights[wi] * half_byte_inv;
 
                         vl.weights[wi] = min(127, max(-127, vl.weights[wi] + dendrite_deltas[dendrite_index]));
                     }
