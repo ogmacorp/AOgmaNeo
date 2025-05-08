@@ -119,9 +119,7 @@ void Hierarchy::init_random(
 
 void Hierarchy::step(
     const Array<Int_Buffer_View> &input_cis,
-    bool learn_enabled,
-    float reward,
-    float mimic
+    bool learn_enabled
 ) {
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());

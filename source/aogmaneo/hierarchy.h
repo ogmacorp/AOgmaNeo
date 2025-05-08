@@ -147,9 +147,7 @@ public:
     // simulation step/tick
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
-        bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f, // reward
-        float mimic = 0.0f // mimicry mode
+        bool learn_enabled = true // whether learning is enabled
     );
 
     void clear_state();
