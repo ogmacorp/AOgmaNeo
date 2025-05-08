@@ -125,6 +125,7 @@ void Decoder::learn(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     const Int_Buffer_View hidden_target_cis,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -149,7 +150,7 @@ void Decoder::learn(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            dendrite_deltas[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts[dendrite_index];
+            dendrite_deltas[dendrite_index] = rand_roundf(error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts[dendrite_index], state);
         }
     }
 
@@ -200,7 +201,7 @@ void Decoder::learn(
 
                         float w = vl.weights[wi] * half_byte_inv;
 
-                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + roundf(dendrite_deltas[dendrite_index] * (1.0f - abs(w)))));
+                        vl.weights[wi] = min(127, max(-127, vl.weights[wi] + dendrite_deltas[dendrite_index]));
                     }
                 }
             }
@@ -267,9 +268,14 @@ void Decoder::learn(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
+    unsigned int base_state = rand();
+
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+        learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis, &state, params);
+    }
 }
 
 void Decoder::clear_state() {
