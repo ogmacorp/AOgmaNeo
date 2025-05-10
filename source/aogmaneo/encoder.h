@@ -34,6 +34,8 @@ public:
 
         Int_Buffer recon_sums;
 
+        Float_Buffer deltas;
+
         float importance;
 
         Visible_Layer()
@@ -45,13 +47,13 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        int spatial_recon_tolerance;
+        int early_stop;
 
         Params()
         :
         scale(2.0f),
         lr(0.1f),
-        spatial_recon_tolerance(2)
+        early_stop(1)
         {}
     };
 
@@ -86,7 +88,6 @@ private:
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
-        unsigned long* state,
         const Params &params
     );
 
