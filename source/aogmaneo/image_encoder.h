@@ -46,7 +46,7 @@ public:
         Params()
         :
         falloff(0.95f),
-        lr(0.05f),
+        lr(0.2f),
         scale(2.0f),
         rr(0.01f),
         radius(1)
