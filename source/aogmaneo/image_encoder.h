@@ -100,7 +100,7 @@ public:
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled, // whether to learn
-        bool learn_recon = true // whether to learn a reconstruction as well (conditional on learn_enabled)
+        bool learn_recon = false // whether to learn a reconstruction as well (conditional on learn_enabled)
     );
 
     void reconstruct(
