@@ -99,7 +99,7 @@ inline int roundf2i(
 inline Byte roundf2b(
     float x
 ) {
-    return static_cast<Byte>(x + (x > 0.0f) - 0.5f);
+    return static_cast<Byte>(x + 0.5f);
 }
 
 template <typename T>

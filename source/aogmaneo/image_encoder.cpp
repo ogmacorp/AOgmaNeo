@@ -187,7 +187,7 @@ void Image_Encoder::forward(
 
                             float w = vl.weights[wi] * byte_inv * 2.0f - 1.0f;
 
-                            vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2b(rate * 255.0f * (input_centered - w))));
+                            vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2i(rate * 255.0f * (input_centered - w))));
                         }
                     }
             }
