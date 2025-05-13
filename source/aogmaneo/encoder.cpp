@@ -178,7 +178,7 @@ void Encoder::learn(
         if (vc != target_ci && recon_sum >= target_sum)
             num_higher++;
 
-        vl.deltas[visible_cell_index] = params.lr * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale));
+        vl.deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale));
     }
 
     if (num_higher < params.early_stop)
@@ -208,7 +208,7 @@ void Encoder::learn(
 
                     float w = vl.weights[wi] * byte_inv;
 
-                    vl.weights[wi] = roundf2b(255.0f * min(1.0f, max(0.0f, w + vl.deltas[visible_cell_index] * min(w, 1.0f - w))));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2i(vl.deltas[visible_cell_index] * min(w, 1.0f - w))));
                 }
             }
         }
