@@ -208,7 +208,7 @@ void Encoder::learn(
 
                     float w = vl.weights[wi] * byte_inv;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf(vl.deltas[visible_cell_index] * min(w, 1.0f - w))));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2b(vl.deltas[visible_cell_index] * min(w, 1.0f - w))));
                 }
             }
         }
@@ -479,7 +479,7 @@ void Encoder::merge(
                 for (int e = 0; e < encoders.size(); e++)
                     total += encoders[e]->visible_layers[vli].weights[i];
 
-                vl.weights[i] = roundf(total / encoders.size());
+                vl.weights[i] = roundf2b(total / encoders.size());
             }
         }
 

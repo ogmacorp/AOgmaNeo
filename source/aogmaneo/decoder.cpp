@@ -458,7 +458,7 @@ void Decoder::merge(
                 for (int d = 0; d < decoders.size(); d++)
                     total += decoders[d]->visible_layers[vli].weights[i];
 
-                vl.weights[i] = roundf(total / decoders.size());
+                vl.weights[i] = roundf2b(total / decoders.size());
             }
         }
 

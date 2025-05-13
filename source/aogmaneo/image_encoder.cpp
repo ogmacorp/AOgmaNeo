@@ -187,7 +187,7 @@ void Image_Encoder::forward(
 
                             float w = vl.weights[wi] * byte_inv * 2.0f - 1.0f;
 
-                            vl.weights[wi] = min(255, max(0, roundf(vl.weights[wi] + rate * 255.0f * (input_centered - w))));
+                            vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2b(rate * 255.0f * (input_centered - w))));
                         }
                     }
             }
@@ -346,7 +346,7 @@ void Image_Encoder::reconstruct(
 
         sum /= max(1, count * 255);
 
-        vl.reconstruction[visible_cell_index] = roundf(min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f)) * 255.0f);
+        vl.reconstruction[visible_cell_index] = roundf2b(min(1.0f, max(0.0f, (sum - 0.5f) * 2.0f * params.scale + 0.5f)) * 255.0f);
     }
 }
 
@@ -610,8 +610,8 @@ void Image_Encoder::merge(
                     recon_total += image_encoders[e]->visible_layers[vli].recon_weights[i];
                 }
 
-                vl.weights[i] = roundf(total / image_encoders.size());
-                vl.recon_weights[i] = roundf(recon_total / image_encoders.size());
+                vl.weights[i] = roundf2b(total / image_encoders.size());
+                vl.recon_weights[i] = roundf2b(recon_total / image_encoders.size());
             }
         }
 
