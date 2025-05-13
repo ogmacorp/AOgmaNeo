@@ -90,7 +90,7 @@ inline int ceilf(
 inline int roundf(
     float x
 ) {
-    return static_cast<int>(x + 0.5f - (x < 0.0f));
+    return static_cast<int>(x + (x > 0.0f) - 0.5f);
 }
 
 template <typename T>
