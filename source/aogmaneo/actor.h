@@ -49,7 +49,6 @@ public:
         float plr; // policy learning rate
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float delay_rate; // rate of delayed value and policy weights
-        float value_clip; // value function clipping
         float policy_clip; // PPO policy clipping coefficient
         float discount; // discount factor
         float td_scale_decay; // slowly decay max td error scaling
@@ -58,12 +57,11 @@ public:
 
         Params()
         :
-        vlr(0.001f),
-        plr(0.01f),
+        vlr(0.01f),
+        plr(0.05f),
         smoothing(0.02f),
         delay_rate(0.001f),
-        value_clip(16.0f),
-        policy_clip(0.05f),
+        policy_clip(0.1f),
         discount(0.99f),
         td_scale_decay(0.999f),
         min_steps(16),
