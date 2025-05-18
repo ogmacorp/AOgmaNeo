@@ -102,6 +102,12 @@ inline Byte roundf2b(
     return static_cast<Byte>(x + 0.5f);
 }
 
+inline S_Byte roundf2sb(
+    float x
+) {
+    return static_cast<S_Byte>(x + (x > 0.0f) - 0.5f);
+}
+
 template <typename T>
 T min(
     T left,
