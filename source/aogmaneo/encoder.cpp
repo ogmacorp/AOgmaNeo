@@ -94,6 +94,7 @@ void Encoder::learn(
     const Int2 &column_pos,
     Int_Buffer_View input_cis,
     int vli,
+    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -178,7 +179,7 @@ void Encoder::learn(
         if (vc != target_ci && recon_sum >= target_sum)
             num_higher++;
 
-        vl.deltas[visible_cell_index] = params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale));
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale)), state);
     }
 
     if (num_higher < params.early_stop)
@@ -208,7 +209,7 @@ void Encoder::learn(
 
                     float w = vl.weights[wi] * byte_inv;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2i(vl.deltas[visible_cell_index] * min(w, 1.0f - w))));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
                 }
             }
         }
@@ -249,8 +250,6 @@ void Encoder::init_random(
             vl.weights[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
 
         vl.recon_sums.resize(num_visible_cells);
-
-        vl.deltas.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -287,12 +286,16 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
+        unsigned int base_state = rand();
+
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            learn(pos, input_cis[vli], vli, params);
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+            learn(pos, input_cis[vli], vli, &state, params);
         }
     }
 }
@@ -394,8 +397,6 @@ void Encoder::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
-
-        vl.deltas.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
