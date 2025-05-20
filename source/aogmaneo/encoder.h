@@ -34,6 +34,8 @@ public:
 
         Int_Buffer recon_sums;
 
+        Float_Buffer deltas;
+
         float importance;
 
         Visible_Layer()
@@ -80,7 +82,6 @@ private:
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
-        unsigned long* state,
         const Params &params
     );
 
