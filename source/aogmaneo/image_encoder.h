@@ -46,7 +46,7 @@ public:
         
         Params()
         :
-        tolerance(0.05f),
+        tolerance(0.03f),
         falloff(0.99f),
         lr(0.1f),
         scale(2.0f),
