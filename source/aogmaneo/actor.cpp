@@ -388,7 +388,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    // softmax q (weights)
+    // softmax q (to get AWAC weights)
     {
         float total = 0.0f;
 
@@ -448,8 +448,6 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float log_p = logf(hidden_ps[hidden_cell_index]);
-
         float p_error = params.plr * hidden_weights[hidden_cell_index] * ((hc == target_ci) - hidden_ps[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
@@ -491,6 +489,16 @@ void Actor::learn(
 
                 int wi_start_partial = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
+                int wi_start_target = num_dendrites_per_cell * (target_ci + wi_start_partial);
+
+                for (int di = 0; di < num_dendrites_per_cell; di++) {
+                    int dendrite_index = di + dendrites_start_target;
+
+                    int wi = di + wi_start_target;
+
+                    vl.q_weights[wi] += dendrite_qs[dendrite_index];
+                }
+
                 for (int hc = 0; hc < hidden_size.z; hc++) {
                     int hidden_cell_index = hc + hidden_cells_start;
 
@@ -503,7 +511,6 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        vl.q_weights[wi] += dendrite_qs[dendrite_index];
                         vl.p_weights[wi] += dendrite_ps[dendrite_index];
                     }
                 }
