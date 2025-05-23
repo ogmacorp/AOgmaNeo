@@ -35,6 +35,9 @@ const int rand_subseed_offset = 12345;
 const int init_weight_noisei = 8;
 const float init_weight_noisef = 0.01f;
 
+typedef unsigned char Byte;
+typedef signed char S_Byte;
+
 inline float modf(
     float x,
     float y
@@ -87,13 +90,22 @@ inline int ceilf(
     return (x - static_cast<int>(x)) < 0.0f ? static_cast<int>(x - 1) : static_cast<int>(x);
 }
 
-inline int roundf(
+inline int roundf2i(
     float x
 ) {
-    if (x > 0.0f)
-        return static_cast<int>(x + 0.5f);
+    return static_cast<int>(x + (x > 0.0f) - 0.5f);
+}
 
-    return -static_cast<int>(-x + 0.5f);
+inline Byte roundf2b(
+    float x
+) {
+    return static_cast<Byte>(x + 0.5f);
+}
+
+inline S_Byte roundf2sb(
+    float x
+) {
+    return static_cast<S_Byte>(x + (x > 0.0f) - 0.5f);
 }
 
 template <typename T>
@@ -199,8 +211,6 @@ typedef Vec4<int> Int4;
 typedef Vec2<float> Float2;
 typedef Vec3<float> Float3;
 typedef Vec4<float> Float4;
-typedef unsigned char Byte;
-typedef signed char S_Byte;
 
 typedef Array<Byte> Byte_Buffer;
 typedef Array<S_Byte> S_Byte_Buffer;
