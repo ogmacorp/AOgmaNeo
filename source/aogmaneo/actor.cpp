@@ -405,7 +405,7 @@ void Actor::learn(
         }
     }
 
-    float weight = hidden_weights[hidden_cell_index_target] * hidden_size.z;
+    float weight = hidden_weights[hidden_cell_index_target] * hidden_size.z; // multiplying by hidden_size.z makes this weight value ~1 upon initialization
 
     // softmax p
     {
