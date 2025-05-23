@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -385,12 +384,10 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
+    int hidden_cell_index_target = target_ci + hidden_cells_start;
+
     // partial softmax q (to get AWAC weights)
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-    
-        hidden_weights[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q_prev);
-    }
+    float weight = expf(hidden_qs[hidden_cell_index_target] - max_q_prev);
 
     // softmax p
     float total = 0.0f;
@@ -413,8 +410,6 @@ void Actor::learn(
 
     float q_error = params.qlr * scaled_td_error;
 
-    int hidden_cell_index_target = target_ci + hidden_cells_start;
-
     int dendrites_start_target = num_dendrites_per_cell * hidden_cell_index_target;
 
     for (int di = 0; di < num_dendrites_per_cell; di++) {
@@ -429,7 +424,7 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float p_error = params.plr * ((hc == target_ci) * hidden_weights[hidden_cell_index] - hidden_ps[hidden_cell_index]);
+        float p_error = params.plr * weight * ((hc == target_ci) - hidden_ps[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -541,8 +536,6 @@ void Actor::init_random(
 
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
-
-    hidden_weights.resize(num_hidden_cells);
 
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
@@ -743,8 +736,6 @@ void Actor::read(
 
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
-
-    hidden_weights.resize(num_hidden_cells);
 
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);

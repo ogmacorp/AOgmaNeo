@@ -56,7 +56,7 @@ public:
         plr(0.1f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        n_steps(5),
+        n_steps(8),
         history_iters(16)
         {}
     };
@@ -72,8 +72,6 @@ private:
 
     Float_Buffer hidden_qs;
     Float_Buffer hidden_ps;
-
-    Float_Buffer hidden_weights;
 
     Float_Buffer dendrite_qs;
     Float_Buffer dendrite_ps;
