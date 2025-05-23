@@ -174,9 +174,9 @@ public:
         return hidden_cis;
     }
 
-    // get hidden advs
-    const Float_Buffer &get_hidden_advs() const {
-        return hidden_advs;
+    // get policy
+    const Float_Buffer &get_hidden_ps() const {
+        return hidden_ps;
     }
 
     // get the hidden size
