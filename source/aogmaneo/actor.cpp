@@ -385,46 +385,30 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    // softmax q (to get AWAC weights)
-    {
-        float total = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-        
-            hidden_weights[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q_prev);
-
-            total += hidden_weights[hidden_cell_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            hidden_weights[hidden_cell_index] *= total_inv;
-        }
+    // partial softmax q (to get AWAC weights)
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_weights[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q_prev);
     }
 
     // softmax p
-    {
-        float total = 0.0f;
+    float total = 0.0f;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-        
-            hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p_prev);
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p_prev);
 
-            total += hidden_ps[hidden_cell_index];
-        }
+        total += hidden_ps[hidden_cell_index];
+    }
 
-        float total_inv = 1.0f / max(limit_small, total);
+    float total_inv = 1.0f / max(limit_small, total);
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
 
-            hidden_ps[hidden_cell_index] *= total_inv;
-        }
+        hidden_ps[hidden_cell_index] *= total_inv;
     }
 
     float q_error = params.qlr * scaled_td_error;
