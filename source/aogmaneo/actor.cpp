@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -278,8 +279,6 @@ void Actor::learn(
         }
     }
 
-    float value_prev = 0.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -329,8 +328,6 @@ void Actor::learn(
                 }
             }
     }
-
-    value_prev *= dendrite_scale;
 
     float max_q_prev = limit_min;
     float max_p_prev = limit_min;
