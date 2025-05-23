@@ -101,9 +101,9 @@ void Actor::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            float act = dendrite_qs[dendrite_index] * dendrite_scale;
+            float act = dendrite_ps[dendrite_index] * dendrite_scale;
 
-            dendrite_qs[dendrite_index] = sigmoidf(act); // store derivative
+            dendrite_ps[dendrite_index] = sigmoidf(act); // store derivative
 
             p += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
