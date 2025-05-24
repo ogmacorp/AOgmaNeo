@@ -141,7 +141,7 @@ void Image_Encoder::forward(
 
     hidden_cis[hidden_column_index] = max_index;
 
-    if (learn_enabled && max_activation < params.max_activation) {
+    if (learn_enabled) {
         for (int dhc = -params.radius; dhc <= params.radius; dhc++) {
             int hc = max_index + dhc;
 
