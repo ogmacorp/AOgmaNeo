@@ -247,13 +247,11 @@ void Actor::learn(
             int dendrite_index = di + dendrites_start;
 
             // q
-            {
-                float act = dendrite_qs[dendrite_index] * dendrite_scale;
+            float act = dendrite_qs[dendrite_index] * dendrite_scale;
 
-                dendrite_qs[dendrite_index] = sigmoidf(act); // store derivative
+            dendrite_qs[dendrite_index] = sigmoidf(act); // store derivative
 
-                q += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
-            }
+            q += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         q *= activation_scale;
@@ -391,7 +389,7 @@ void Actor::learn(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
         
-            hidden_weights[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_p_prev);
+            hidden_weights[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q_prev);
 
             total += hidden_weights[hidden_cell_index];
         }
