@@ -120,7 +120,7 @@ void Encoder::forward(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
@@ -156,7 +156,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_comparisons[other_hidden_column_index] > hidden_max)
+                if (hidden_comparisons[other_hidden_column_index] >= hidden_max)
                     num_higher++;
 
                 count++;
