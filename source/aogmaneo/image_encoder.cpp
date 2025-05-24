@@ -24,8 +24,6 @@ void Image_Encoder::forward(
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
 
-    float max_match = 0.0f;
-
     const float byte_inv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
