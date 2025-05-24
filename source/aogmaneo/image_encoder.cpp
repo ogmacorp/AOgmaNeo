@@ -182,8 +182,8 @@ void Image_Encoder::learn(
 
                     int input = vl_inputs[vc + visible_cells_start];
 
-                    vl.weights0[wi] = min(255, max(0, vl.weights0[wi] + roundf2i(rate * (input - vl.weights0[wi]))));
-                    vl.weights1[wi] = min(255, max(0, vl.weights1[wi] + roundf2i(rate * (255 - input - vl.weights1[wi]))));
+                    vl.weights0[wi] = min(255, max(0, vl.weights0[wi] + roundf2i(rate * min(0, input - vl.weights0[wi]))));
+                    vl.weights1[wi] = min(255, max(0, vl.weights1[wi] + roundf2i(rate * min(0, 255 - input - vl.weights1[wi]))));
                 }
             }
     }
