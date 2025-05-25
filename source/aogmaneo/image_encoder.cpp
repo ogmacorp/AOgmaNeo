@@ -395,9 +395,11 @@ void Image_Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs);
 
     if (learn_enabled) {
+        int num_groups = group_count.x * group_count.y;
+
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            learn(Int2(i / hidden_size.y, i % hidden_size.y), inputs);
+        for (int i = 0; i < num_groups; i++)
+            learn(Int2(i / group_count.y, i % group_count.y), inputs);
 
         if (learn_recon) {
             for (int vli = 0; vli < visible_layers.size(); vli++) {
