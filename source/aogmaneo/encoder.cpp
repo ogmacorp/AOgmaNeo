@@ -17,8 +17,6 @@ void Encoder::forward(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    Int2 group_pos(column_pos.x / group_size.x, column_pos.y / group_size.y);
-
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
@@ -33,10 +31,10 @@ void Encoder::forward(
         int diam = vld.radius * 2 + 1;
 
         // projection
-        Float2 g_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(group_count.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(group_count.y));
+        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-        Int2 visible_center = project(group_pos, g_to_v);
+        Int2 visible_center = project(column_pos, h_to_v);
 
         // lower corner
         Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
@@ -129,7 +127,7 @@ void Encoder::forward(
         }
     }
 
-    hidden_column_activations[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
@@ -137,33 +135,47 @@ void Encoder::forward(
 }
 
 void Encoder::learn(
-    const Int2 &group_pos,
+    const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     const Params &params
 ) {
-    int max_column_index = 0;
-    float max_column_activation = limit_min;
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    for (int gx = 0; gx < group_size.x; gx++)
-        for (int gy = 0; gy < group_size.y; gy++) {
-            Int2 column_pos(gx + group_pos.x * group_size.x, gy + group_pos.y * group_size.y);
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-            int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+    if (!hidden_learn_flags[hidden_column_index])
+        return;
 
-            float column_activation = hidden_column_activations[hidden_column_index];
+    int hidden_ci = hidden_cis[hidden_column_index];
 
-            if (column_activation > max_column_activation) {
-                max_column_activation = column_activation;
-                max_column_index = hidden_column_index;
+    float hidden_max = hidden_comparisons[hidden_column_index];
+
+    int num_higher = 0;
+    int count = 1; // start at 1 since self is skipped
+
+    for (int dcx = -params.l_radius; dcx <= params.l_radius; dcx++)
+        for (int dcy = -params.l_radius; dcy <= params.l_radius; dcy++) {
+            if (dcx == 0 && dcy == 0)
+                continue;
+
+            Int2 other_column_pos(column_pos.x + dcx, column_pos.y + dcy);
+
+            if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
+                int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
+
+                if (hidden_comparisons[other_hidden_column_index] >= hidden_max)
+                    num_higher++;
+
+                count++;
             }
         }
 
-    if (!hidden_learn_flags[max_column_index])
+    float ratio = static_cast<float>(num_higher) / static_cast<float>(count);
+
+    if (ratio > params.active_ratio)
         return;
 
-    int hidden_ci = hidden_cis[max_column_index];
-
-    int hidden_cell_index_max = hidden_ci + max_column_index * hidden_size.z;
+    int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
     float rate = (hidden_commit_flags[hidden_cell_index_max] ? params.lr : 1.0f);
 
@@ -174,10 +186,10 @@ void Encoder::learn(
         int diam = vld.radius * 2 + 1;
 
         // projection
-        Float2 g_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(group_count.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(group_count.y));
+        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-        Int2 visible_center = project(group_pos, g_to_v);
+        Int2 visible_center = project(column_pos, h_to_v);
 
         // lower corner
         Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
@@ -196,7 +208,7 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * max_column_index)));
+                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 Byte w_old = vl.weights[wi];
 
@@ -211,14 +223,11 @@ void Encoder::learn(
 
 void Encoder::init_random(
     const Int3 &hidden_size,
-    const Int2 &group_size,
     const Array<Visible_Layer_Desc> &visible_layer_descs
 ) {
     this->visible_layer_descs = visible_layer_descs;
 
     this->hidden_size = hidden_size;
-    this->group_size = group_size;
-    this->group_count = Int2(hidden_size.x / group_size.x, hidden_size.y / group_size.y);
 
     visible_layers.resize(visible_layer_descs.size());
 
@@ -251,13 +260,11 @@ void Encoder::init_random(
 
     hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
 
-    hidden_column_activations.resize(num_hidden_columns);
+    hidden_comparisons.resize(num_hidden_columns);
 
     // init totals
     for (int i = 0; i < num_hidden_columns; i++) {
         Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
-
-        Int2 group_pos(column_pos.x / group_size.x, column_pos.y / group_size.y);
 
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
@@ -273,10 +280,10 @@ void Encoder::init_random(
                 int diam = vld.radius * 2 + 1;
 
                 // projection
-                Float2 g_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(group_count.x),
-                    static_cast<float>(vld.size.y) / static_cast<float>(group_count.y));
+                Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-                Int2 visible_center = project(group_pos, g_to_v);
+                Int2 visible_center = project(column_pos, h_to_v);
 
                 // lower corner
                 Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
@@ -318,11 +325,9 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
-        int num_groups = group_count.x * group_count.y;
-
         PARALLEL_FOR
-        for (int i = 0; i < num_groups; i++)
-            learn(Int2(i / group_count.y, i % group_count.y), input_cis, params);
+        for (int i = 0; i < num_hidden_columns; i++)
+            learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
     }
 }
 
@@ -331,7 +336,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + sizeof(Int2) + hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -362,7 +367,6 @@ void Encoder::write(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_size, sizeof(Int3));
-    writer.write(&group_size, sizeof(Int2));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
@@ -390,9 +394,6 @@ void Encoder::read(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_size, sizeof(Int3));
-    reader.read(&group_size, sizeof(Int2));
-
-    group_count = Int2(hidden_size.x / group_size.x, hidden_size.y / group_size.y);
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
@@ -407,7 +408,7 @@ void Encoder::read(
 
     reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
-    hidden_column_activations.resize(num_hidden_columns);
+    hidden_comparisons.resize(num_hidden_columns);
 
     int num_visible_layers = visible_layers.size();
 
@@ -516,8 +517,6 @@ void Encoder::merge(
     for (int i = 0; i < num_hidden_columns; i++) {
         Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
 
-        Int2 group_pos(column_pos.x / group_size.x, column_pos.y / group_size.y);
-
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         int hidden_cells_start = hidden_column_index * hidden_size.z;
@@ -532,10 +531,10 @@ void Encoder::merge(
                 int diam = vld.radius * 2 + 1;
 
                 // projection
-                Float2 g_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(group_count.x),
-                    static_cast<float>(vld.size.y) / static_cast<float>(group_count.y));
+                Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-                Int2 visible_center = project(group_pos, g_to_v);
+                Int2 visible_center = project(column_pos, h_to_v);
 
                 // lower corner
                 Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);

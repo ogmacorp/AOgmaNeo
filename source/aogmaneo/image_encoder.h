@@ -43,6 +43,8 @@ public:
         float lr; // learning rate
         float scale; // reconstruction scale
         float rr; // reconstruction rate
+        float active_ratio; // 2nd stage inhibition activity ratio
+        int l_radius; // lateral 2nd stage inhibition radius
         
         Params()
         :
@@ -50,14 +52,14 @@ public:
         vigilance(0.95f),
         lr(0.5f),
         scale(2.0f),
-        rr(0.05f)
+        rr(0.05f),
+        active_ratio(1.0f),
+        l_radius(0)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
-    Int2 group_size;
-    Int2 group_count;
 
     Int_Buffer hidden_cis; // hidden states
 
@@ -65,7 +67,7 @@ private:
 
     Byte_Buffer hidden_commit_flags;
 
-    Float_Buffer hidden_column_activations;
+    Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -79,7 +81,7 @@ private:
     );
 
     void learn(
-        const Int2 &group_pos,
+        const Int2 &column_pos,
         const Array<Byte_Buffer_View> &inputs
     );
 
@@ -101,7 +103,6 @@ public:
 
     void init_random(
         const Int3 &hidden_size, // hidden/output size
-        const Int2 &group_size, // size of local group (macro/hypercolumn)
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -178,16 +179,6 @@ public:
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
-    }
-
-    // get the group size
-    const Int2 &get_group_size() const {
-        return group_size;
-    }
-
-    // get the group count
-    const Int2 &get_group_count() const {
-        return group_count;
     }
 
     // merge list of image encoders and write to this one
