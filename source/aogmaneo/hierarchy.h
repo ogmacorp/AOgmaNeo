@@ -73,6 +73,7 @@ public:
         )
         :
         hidden_size(hidden_size),
+        group_size(group_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         recurrent_radius(recurrent_radius),

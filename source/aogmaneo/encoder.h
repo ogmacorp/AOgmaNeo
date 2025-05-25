@@ -168,6 +168,16 @@ public:
         return hidden_size;
     }
 
+    // get the group size
+    const Int2 &get_group_size() const {
+        return group_size;
+    }
+
+    // get the group count
+    const Int2 &get_group_count() const {
+        return group_count;
+    }
+
     // merge list of encoders and write to this one
     void merge(
         const Array<Encoder*> &encoders,
