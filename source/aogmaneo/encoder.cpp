@@ -86,10 +86,10 @@ void Encoder::forward(
     count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
-    float max_activation = 0.0f;
+    float max_activation = limit_min;
 
     int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
+    float max_complete_activation = limit_min;
 
     const float byte_inv = 1.0f / 255.0f;
 
@@ -257,6 +257,8 @@ void Encoder::init_random(
     for (int i = 0; i < num_hidden_columns; i++) {
         Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
 
+        Int2 group_pos(column_pos.x / group_size.x, column_pos.y / group_size.y);
+
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         int hidden_cells_start = hidden_column_index * hidden_size.z;
@@ -271,10 +273,10 @@ void Encoder::init_random(
                 int diam = vld.radius * 2 + 1;
 
                 // projection
-                Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-                    static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+                Float2 g_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(group_count.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(group_count.y));
 
-                Int2 visible_center = project(column_pos, h_to_v);
+                Int2 visible_center = project(group_pos, g_to_v);
 
                 // lower corner
                 Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
@@ -514,6 +516,8 @@ void Encoder::merge(
     for (int i = 0; i < num_hidden_columns; i++) {
         Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
 
+        Int2 group_pos(column_pos.x / group_size.x, column_pos.y / group_size.y);
+
         int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
         int hidden_cells_start = hidden_column_index * hidden_size.z;
@@ -528,10 +532,10 @@ void Encoder::merge(
                 int diam = vld.radius * 2 + 1;
 
                 // projection
-                Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-                    static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+                Float2 g_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(group_count.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(group_count.y));
 
-                Int2 visible_center = project(column_pos, h_to_v);
+                Int2 visible_center = project(group_pos, g_to_v);
 
                 // lower corner
                 Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
