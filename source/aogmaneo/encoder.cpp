@@ -316,9 +316,11 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
+        int num_groups = group_count.x * group_count.y;
+
         PARALLEL_FOR
-        for (int i = 0; i < num_hidden_columns; i++)
-            learn(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
+        for (int i = 0; i < num_groups; i++)
+            learn(Int2(i / group_count.y, i % group_count.y), input_cis, params);
     }
 }
 

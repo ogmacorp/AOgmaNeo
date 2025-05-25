@@ -82,7 +82,7 @@ private:
     );
 
     void learn(
-        const Int2 &column_pos,
+        const Int2 &group_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
