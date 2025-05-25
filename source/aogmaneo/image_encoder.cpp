@@ -380,7 +380,7 @@ void Image_Encoder::init_random(
 
     hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
 
-    hidden_column_activations.resize(num_hidden_cells);
+    hidden_column_activations.resize(num_hidden_columns);
 }
 
 void Image_Encoder::step(
@@ -514,7 +514,7 @@ void Image_Encoder::read(
 
     reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
-    hidden_column_activations.resize(num_hidden_cells);
+    hidden_column_activations.resize(num_hidden_columns);
 
     int num_visible_layers;
 
