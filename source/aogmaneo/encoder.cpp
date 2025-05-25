@@ -86,10 +86,10 @@ void Encoder::forward(
     count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
-    float max_activation = limit_min;
+    float max_activation = 0.0f;
 
     int max_complete_index = 0;
-    float max_complete_activation = limit_min;
+    float max_complete_activation = 0.0f;
 
     const float byte_inv = 1.0f / 255.0f;
 
