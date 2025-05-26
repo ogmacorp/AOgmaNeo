@@ -112,7 +112,7 @@ void Encoder::forward(
 
         float complemented = sum - total + count_except;
 
-        float match = complemented / count_except;
+        float match = (hidden_commit_flags[hidden_cell_index] ? complemented / count_except : 1.0f);
 
         float activation = complemented / (params.choice + count_all - total);
 

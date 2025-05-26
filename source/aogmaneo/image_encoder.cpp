@@ -80,7 +80,7 @@ void Image_Encoder::forward(
                 }
         }
 
-        float match = sum / count;
+        float match = (hidden_commit_flags[hidden_cell_index] ? sum / count : 1.0f);
 
         float activation = sum / (params.choice + total);
 
