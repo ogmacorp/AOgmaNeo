@@ -85,6 +85,7 @@ void Encoder::forward(
 
     int max_index = -1;
     float max_activation = 0.0f;
+    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -112,12 +113,13 @@ void Encoder::forward(
 
         float complemented = sum - total + count_except;
 
-        float match = (hidden_commit_flags[hidden_cell_index] ? complemented / count_except : 1.0f);
+        float match = complemented / count_except;
 
         float activation = complemented / (params.choice + count_all - total);
 
-        if (match >= params.vigilance && activation > max_activation) {
+        if ((!hidden_commit_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
+	    max_match = match;
             max_index = hc;
         }
 
@@ -127,7 +129,7 @@ void Encoder::forward(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = max_match;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
