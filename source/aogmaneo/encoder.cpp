@@ -21,7 +21,7 @@ void Encoder::forward(
 
     float count = 0.0f;
     float count_except = 0.0f;
-    float count_all = 0.0f;
+    float count_complete = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -47,7 +47,7 @@ void Encoder::forward(
 
         count += vl.importance * sub_count;
         count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_all += vl.importance * sub_count * vld.size.z;
+        count_complete += vl.importance * diam * diam * vld.size.z;
 
         total_importance += vl.importance;
 
@@ -81,11 +81,10 @@ void Encoder::forward(
 
     count /= max(limit_small, total_importance);
     count_except /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
+    count_complete /= max(limit_small, total_importance);
 
     int max_index = -1;
     float max_activation = 0.0f;
-    float max_match = 0.0f;
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
@@ -115,11 +114,10 @@ void Encoder::forward(
 
         float match = complemented / count_except;
 
-        float activation = complemented / (params.choice + count_all - total);
+        float activation = complemented / (params.choice + count_complete - total);
 
         if ((!hidden_commit_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
-	    max_match = match;
             max_index = hc;
         }
 
@@ -129,7 +127,7 @@ void Encoder::forward(
         }
     }
 
-    hidden_comparisons[hidden_column_index] = max_match;
+    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
