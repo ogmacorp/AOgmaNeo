@@ -376,10 +376,6 @@ void Actor::learn(
 
     float td_error = target_q - q_prev;
 
-    hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
-
-    float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
-
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
     // softmax q for AWAC weights
@@ -426,7 +422,7 @@ void Actor::learn(
         }
     }
 
-    float q_error = params.qlr * scaled_td_error;
+    float q_error = params.qlr * td_error;
 
     int dendrites_start_target = num_dendrites_per_cell * hidden_cell_index_target;
 
@@ -560,8 +556,6 @@ void Actor::init_random(
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
 
-    hidden_td_scales = Float_Buffer(num_hidden_columns, 0.0f);
-
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
 
@@ -641,7 +635,7 @@ void Actor::clear_state() {
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_td_scales.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + sizeof(int) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -702,7 +696,6 @@ void Actor::write(
     writer.write(&num_dendrites_per_cell, sizeof(int));
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-    writer.write(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -761,10 +754,6 @@ void Actor::read(
 
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
-
-    hidden_td_scales.resize(num_hidden_columns);
-
-    reader.read(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     int num_visible_layers;
 
