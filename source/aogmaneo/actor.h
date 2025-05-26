@@ -52,8 +52,8 @@ public:
 
         Params()
         :
-        qlr(0.01f),
-        plr(0.1f),
+        qlr(0.001f),
+        plr(0.01f),
         discount(0.99f),
         td_scale_decay(0.999f),
         n_steps(8),
