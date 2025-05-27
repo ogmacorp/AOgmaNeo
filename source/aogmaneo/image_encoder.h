@@ -43,18 +43,14 @@ public:
         float lr; // learning rate
         float scale; // reconstruction scale
         float rr; // reconstruction rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // lateral 2nd stage inhibition radius
         
         Params()
         :
-        choice(0.0001f),
+        choice(0.01f),
         vigilance(0.9f),
         lr(0.5f),
         scale(2.0f),
-        rr(0.05f),
-        active_ratio(0.25f),
-        l_radius(2)
+        rr(0.05f)
         {}
     };
 
@@ -63,11 +59,7 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Byte_Buffer hidden_learn_flags;
-
     Byte_Buffer hidden_commit_flags;
-
-    Float_Buffer hidden_comparisons;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -77,12 +69,8 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
+        const Array<Byte_Buffer_View> &inputs,
+        bool learn_enabled
     );
 
     void learn_reconstruction(
