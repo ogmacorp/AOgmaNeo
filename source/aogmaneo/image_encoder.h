@@ -30,27 +30,28 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0; // regular
-        Byte_Buffer weights1; // complement
-        Byte_Buffer weights_recon; // for reconstruction
+        Byte_Buffer weights;
+        Byte_Buffer recon_weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // standard ART vigilance
+        float tolerance; // ignore inputs close to 0
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
-        float scale; // reconstruction scale
+        float scale; // scale of reconstruction
         float rr; // reconstruction rate
+        int radius; // SOM neighborhood radius
         
         Params()
         :
-        choice(0.01f),
-        vigilance(0.9f),
-        lr(0.5f),
+        tolerance(0.03f),
+        falloff(0.99f),
+        lr(0.1f),
         scale(2.0f),
-        rr(0.05f)
+        rr(0.01f),
+        radius(1)
         {}
     };
 
@@ -59,7 +60,10 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Byte_Buffer hidden_commit_flags;
+    Float_Buffer hidden_acts;
+    Float_Buffer hidden_totals;
+
+    Float_Buffer hidden_resources;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -98,7 +102,7 @@ public:
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled, // whether to learn
-        bool learn_recon = true // whether to learn reconstruction weights
+        bool learn_recon = false // whether to learn a reconstruction as well (conditional on learn_enabled)
     );
 
     void reconstruct(
