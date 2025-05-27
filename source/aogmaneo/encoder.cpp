@@ -184,7 +184,7 @@ void Encoder::learn(
             num_higher++;
 
         // re-use as deltas
-        vl.recons[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon - count * 127) * recon_scale)), state);
+        vl.recons[visible_cell_index] = rand_roundf(params.lr * 255.0f * min(0.0f, (vc == target_ci) - expf((recon - count * 255) * recon_scale)), state);
     }
 
     if (num_higher < params.early_stop)
