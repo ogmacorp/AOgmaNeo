@@ -180,7 +180,7 @@ void Encoder::learn(
 
         int recon = vl.recons[visible_cell_index];
 
-        if (vc != target_ci && recon > target_sum)
+        if (vc != target_ci && recon >= target_sum)
             num_higher++;
 
         // re-use as deltas
