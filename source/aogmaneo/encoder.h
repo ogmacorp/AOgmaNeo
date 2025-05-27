@@ -23,7 +23,7 @@ public:
         // defaults
         Visible_Layer_Desc()
         :
-        size(5, 5, 16),
+        size(4, 4, 16),
         radius(2)
         {}
     };
@@ -47,21 +47,19 @@ public:
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // ART vigilance
         float lr; // learning rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // second stage inhibition radius
 
         Params()
         :
         choice(0.01f),
         vigilance(0.9f),
-        lr(0.5f),
-        active_ratio(0.1f),
-        l_radius(2)
+        lr(0.5f)
         {}
     };
 
 private:
     Int3 hidden_size; // size of hidden/output layer
+    Int2 group_size;
+    Int2 group_count;
 
     Int_Buffer hidden_cis;
 
@@ -69,7 +67,7 @@ private:
 
     Byte_Buffer hidden_commit_flags;
 
-    Float_Buffer hidden_comparisons;
+    Float_Buffer hidden_column_activations;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -84,7 +82,7 @@ private:
     );
 
     void learn(
-        const Int2 &column_pos,
+        const Int2 &group_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
@@ -93,6 +91,7 @@ public:
     // create a sparse coding layer with random initialization
     void init_random(
         const Int3 &hidden_size, // hidden/output size
+        const Int2 &group_size, // size of local group (macro/hypercolumn)
         const Array<Visible_Layer_Desc> &visible_layer_descs // descriptors for visible layers
     );
 
@@ -167,6 +166,16 @@ public:
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
+    }
+
+    // get the group size
+    const Int2 &get_group_size() const {
+        return group_size;
+    }
+
+    // get the group count
+    const Int2 &get_group_count() const {
+        return group_count;
     }
 
     // merge list of encoders and write to this one

@@ -35,7 +35,7 @@ public:
         int history_capacity; // max actor credit assignment horizon
 
         IO_Desc(
-            const Int3 &size = Int3(5, 5, 16),
+            const Int3 &size = Int3(4, 4, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
@@ -55,6 +55,7 @@ public:
     // describes a layer for construction. for the first layer, the IO_Desc overrides the parameters that are the same name
     struct Layer_Desc {
         Int3 hidden_size; // size of hidden layer
+        Int2 group_size; // size of group (macro/hypercolumn)
 
         int num_dendrites_per_cell;
 
@@ -63,7 +64,8 @@ public:
         int down_radius; // decoder radius, also shared with actor if there is one
 
         Layer_Desc(
-            const Int3 &hidden_size = Int3(5, 5, 16),
+            const Int3 &hidden_size = Int3(4, 4, 16),
+            const Int2 &group_size = Int2(2, 2),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int recurrent_radius = 0,
@@ -71,6 +73,7 @@ public:
         )
         :
         hidden_size(hidden_size),
+        group_size(group_size),
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         recurrent_radius(recurrent_radius),
