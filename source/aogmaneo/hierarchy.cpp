@@ -129,7 +129,7 @@ void Hierarchy::init_random(
         }
         
         // create the sparse coding layer
-        encoders[l].init_random(layer_descs[l].hidden_size, layer_descs[l].group_size, e_visible_layer_descs);
+        encoders[l].init_random(layer_descs[l].hidden_size, e_visible_layer_descs);
 
         hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
