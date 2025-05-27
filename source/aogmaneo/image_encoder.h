@@ -42,16 +42,16 @@ public:
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
-        int radius; // SOM neighborhood radius
+        int n_radius; // SOM neighborhood radius
         
         Params()
         :
         tolerance(0.02f),
-        falloff(0.99f),
+        falloff(0.9f),
         lr(0.1f),
         scale(2.0f),
         rr(0.01f),
-        radius(1)
+        n_radius(1)
         {}
     };
 

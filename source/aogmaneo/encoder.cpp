@@ -169,23 +169,24 @@ void Encoder::learn(
 
     const float recon_scale = params.scale * sqrtf(1.0f / max(1, count)) / 255.0f;
 
-    int target_sum = vl.recons[target_ci + visible_cells_start];
-
-    int num_higher = 0;
+    int max_index = 0;
+    int max_recon = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon = vl.recons[visible_cell_index];
 
-        if (vc != target_ci && recon >= target_sum)
-            num_higher++;
+        if (recon > max_recon) {
+            max_recon = recon;
+            max_index = vc;
+        }
 
         // re-use as deltas
-        vl.recons[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf((recon - count * 255) * recon_scale)), state);
+        vl.recons[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon - count * 127) * recon_scale)), state);
     }
 
-    if (num_higher < params.early_stop)
+    if (max_index == target_ci)
         return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)

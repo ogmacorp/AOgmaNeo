@@ -45,13 +45,11 @@ public:
     struct Params {
         float scale; // squash scale
         float lr; // learning rate
-        int early_stop; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
-        scale(2.0f),
-        lr(0.1f),
-        early_stop(1)
+        scale(4.0f),
+        lr(0.02f)
         {}
     };
 
@@ -67,7 +65,7 @@ private:
     Array<Visible_Layer_Desc> visible_layer_descs;
     
     Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
+
     // --- kernels ---
 
     void forward(

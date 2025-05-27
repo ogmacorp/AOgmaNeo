@@ -469,7 +469,7 @@ inline int rand_roundf(
     int i = static_cast<int>(x);
     float abs_rem = abs(x - i);
 
-    int s = (x >= 0.0f) * 2 - 1;
+    int s = (x > 0.0f) * 2 - 1;
 
     return i + (randf(state) < abs_rem) * s;
 }
