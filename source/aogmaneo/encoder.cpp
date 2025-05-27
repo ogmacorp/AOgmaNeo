@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -169,25 +170,25 @@ void Encoder::learn(
 
     const float recon_scale = params.scale * sqrtf(1.0f / max(1, count)) / 255.0f;
 
-    int max_index = 0;
-    int max_recon = 0;
+    int second_recon = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon = vl.recons[visible_cell_index];
 
-        if (recon > max_recon) {
-            max_recon = recon;
-            max_index = vc;
-        }
+        if (vc != target_ci)
+            second_recon = max(second_recon, recon);
 
-        // re-use as deltas
-        vl.recons[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon - count * 127) * recon_scale)), state);
+        float s = sigmoidf((recon - count * 127) * recon_scale);
+
+        float delta = (vc == target_ci) - s;
+
+        if (abs(delta) < params.gap)
+            vl.recons[visible_cell_index] = 0; // re-use as deltas
+        else
+            vl.recons[visible_cell_index] = rand_roundf(params.lr * 255.0f * delta, state); // re-use as deltas
     }
-
-    if (max_index == target_ci)
-        return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {

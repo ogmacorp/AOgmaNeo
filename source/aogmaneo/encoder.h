@@ -45,11 +45,13 @@ public:
     struct Params {
         float scale; // squash scale
         float lr; // learning rate
+        float gap; // if gap is large enough don't need to learn
 
         Params()
         :
         scale(4.0f),
-        lr(0.02f)
+        lr(0.02f),
+        gap(0.1f)
         {}
     };
 
