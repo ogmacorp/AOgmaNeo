@@ -86,7 +86,7 @@ void Image_Encoder::forward(
 
         float activation = sum / (params.choice + total);
 
-        if (match >= params.vigilance && activation > max_activation) {
+        if ((!hidden_commit_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
