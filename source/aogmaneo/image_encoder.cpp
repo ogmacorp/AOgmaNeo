@@ -97,7 +97,7 @@ void Image_Encoder::forward(
         }
     }
 
-    hidden_column_activations[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_column_activations[hidden_column_index] = max_activation;
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
