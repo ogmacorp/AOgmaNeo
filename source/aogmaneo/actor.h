@@ -46,16 +46,14 @@ public:
         float qlr; // Q learning rate
         float plr; // policy learning rate
         float discount; // discount fActor
-        float td_scale_decay; // decay on max abs td error scaler
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        qlr(0.01f),
-        plr(0.1f),
+        qlr(0.001f),
+        plr(0.01f),
         discount(0.99f),
-        td_scale_decay(0.999f),
         n_steps(8),
         history_iters(16)
         {}
@@ -77,8 +75,6 @@ private:
 
     Float_Buffer dendrite_qs;
     Float_Buffer dendrite_ps;
-
-    Float_Buffer hidden_td_scales;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 

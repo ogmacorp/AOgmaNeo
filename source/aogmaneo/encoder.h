@@ -32,9 +32,7 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Int_Buffer recon_sums;
-
-        Float_Buffer deltas;
+        Int_Buffer recons;
 
         float importance;
 
@@ -45,13 +43,13 @@ public:
     };
 
     struct Params {
-        float scale; // recon curve
+        float scale; // squash scale
         float lr; // learning rate
         int early_stop; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
-        scale(2.0f),
+        scale(4.0f),
         lr(0.1f),
         early_stop(1)
         {}
@@ -82,6 +80,7 @@ private:
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
+        unsigned long* state,
         const Params &params
     );
 
