@@ -210,7 +210,7 @@ void Encoder::learn(
 
                     int wi = vc + wi_start;
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recons[visible_cell_index]));
+                    vl.weights[wi] = max(0, vl.weights[wi] + vl.recons[visible_cell_index]);
                 }
             }
         }
