@@ -21,7 +21,7 @@ void Encoder::forward(
 
     float count = 0.0f;
     float count_except = 0.0f;
-    float count_complete = 0.0f;
+    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -47,7 +47,7 @@ void Encoder::forward(
 
         count += vl.importance * sub_count;
         count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_complete += vl.importance * diam * diam * vld.size.z;
+        count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
 
@@ -81,7 +81,7 @@ void Encoder::forward(
 
     count /= max(limit_small, total_importance);
     count_except /= max(limit_small, total_importance);
-    count_complete /= max(limit_small, total_importance);
+    count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
     float max_activation = 0.0f;
@@ -114,7 +114,7 @@ void Encoder::forward(
 
         float match = complemented / count_except;
 
-        float activation = complemented / (params.choice + count_complete - total);
+        float activation = complemented / (params.choice + count_all - total);
 
         if ((!hidden_commit_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
@@ -292,9 +292,7 @@ void Encoder::init_random(
                 Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
                 Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-                int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
-                int sub_total = (diam * diam - sub_count) * vld.size.z * init_weight_noisei / 2; // assume remaining weights are all average
+                int sub_total = 0;
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -545,9 +543,7 @@ void Encoder::merge(
                 Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
                 Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-                int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
-                int sub_total = (diam * diam - sub_count) * vld.size.z * init_weight_noisei / 2; // assume remaining weights are all average
+                int sub_total = 0;
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
