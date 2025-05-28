@@ -57,7 +57,7 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.8f),
+        vigilance(0.9f),
         scale(8.0f),
         ulr(1.0f),
         dlr(0.1f)
