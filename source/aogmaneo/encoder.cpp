@@ -181,6 +181,9 @@ void Encoder::learn(
         }
     }
 
+    if (max_index == target_ci)
+        return;
+
     float total = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
