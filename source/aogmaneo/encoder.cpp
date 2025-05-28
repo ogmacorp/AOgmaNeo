@@ -170,24 +170,14 @@ void Encoder::learn(
 
     const float recon_scale = params.scale * sqrtf(1.0f / max(1, count)) / 255.0f;
 
-    int second_recon = 0;
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
         int recon = vl.recons[visible_cell_index];
 
-        if (vc != target_ci)
-            second_recon = max(second_recon, recon);
+        float s = sigmoidf((recon - count * 127) * recon_scale) * (1.0f + 2.0f * params.gap) - params.gap;
 
-        float s = sigmoidf((recon - count * 127) * recon_scale);
-
-        float delta = (vc == target_ci) - s;
-
-        if (abs(delta) < params.gap)
-            vl.recons[visible_cell_index] = 0; // re-use as deltas
-        else
-            vl.recons[visible_cell_index] = rand_roundf(params.lr * 255.0f * delta, state); // re-use as deltas
+        vl.recons[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - min(1.0f, max(0.0f, s))), state); // re-use as deltas
     }
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -248,7 +238,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights[i] = 127 + (rand() % init_weight_noisei);
 
         vl.recons.resize(num_visible_cells);
     }
