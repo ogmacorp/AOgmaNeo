@@ -38,6 +38,7 @@ public:
 
         Int_Buffer recon_sums;
         Float_Buffer recon_acts;
+        Byte_Buffer recon_gates;
 
         float importance;
 
