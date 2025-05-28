@@ -202,12 +202,6 @@ void Encoder::learn(
         int visible_cell_index = vc + visible_cells_start;
 
         vl.recon_acts[visible_cell_index] *= total_inv;
-    }
-
-    float modulation = 1.0f - vl.recon_acts[max_index + visible_cells_start]; // scale learning by confidence per-column
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
 
         // re-use recon_sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.dlr * 255.0f * ((vc == target_ci) - vl.recon_acts[visible_cell_index]), state); // re-use as deltas
@@ -234,7 +228,7 @@ void Encoder::learn(
                     int wi = vc + wi_start;
 
                     vl.weights_down[wi] = min(255, max(0, vl.weights_down[wi] + vl.recon_sums[visible_cell_index]));
-                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * modulation * ((vc == target_ci) * 255 - vl.weights_up[wi]))));
+                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * ((vc == target_ci) * 255 - vl.weights_up[wi]))));
                 }
             }
         }
