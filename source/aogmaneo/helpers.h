@@ -402,7 +402,7 @@ inline float softplusf(
 ) {
     float limited = (x > softplus_limit);
 
-    return logf(1.0f + expf(x * limited)) * limited + (1.0f - limited) * x;
+    return logf(1.0f + expf(x * (1.0f - limited))) * limited + x;
 }
 
 // --- rng ---
