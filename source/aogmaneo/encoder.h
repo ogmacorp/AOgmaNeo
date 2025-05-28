@@ -57,9 +57,9 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
+        vigilance(0.8f),
         scale(8.0f),
-        ulr(0.1f),
+        ulr(1.0f),
         dlr(0.1f)
         {}
     };
@@ -68,8 +68,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_acts;
 
     Byte_Buffer hidden_learn_flags;
 

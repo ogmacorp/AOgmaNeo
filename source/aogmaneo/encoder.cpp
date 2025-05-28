@@ -243,7 +243,7 @@ void Encoder::learn(
         vl.recon_acts[visible_cell_index] *= total_inv;
     }
 
-    float modulation = 1.0f - vl.recon_acts[max_index + visible_cells_start]; // scale learning by confidence per-column
+    float modulation = 1.0f;//1.0f - vl.recon_acts[max_index + visible_cells_start]; // scale learning by confidence per-column
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
@@ -280,7 +280,11 @@ void Encoder::learn(
                 if (hidden_learn_flags[hidden_column_index]) {
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
+                    Byte w_old = vl.weights_up[wi];
+
                     vl.weights_up[wi] = min(255, vl.weights_up[wi] + roundf2i(params.ulr * modulation * (255.0f - vl.weights_up[wi])));
+
+                    vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
                 }
             }
         }
@@ -331,8 +335,6 @@ void Encoder::init_random(
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-
-    hidden_acts.resize(num_hidden_cells);
 
     hidden_learn_flags.resize(num_hidden_columns);
 
@@ -499,8 +501,6 @@ void Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-
-    hidden_acts.resize(num_hidden_cells);
 
     hidden_learn_flags.resize(num_hidden_columns);
 
