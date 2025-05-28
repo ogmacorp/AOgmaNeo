@@ -198,8 +198,6 @@ void Encoder::learn_down(
         }
     }
 
-    vl.recon_gates[visible_column_index] = (max_index != in_ci);
-
     float total = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
@@ -222,6 +220,8 @@ void Encoder::learn_down(
         // re-use recon_sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.dlr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]), state); // re-use as deltas
     }
+
+    vl.recon_gates[visible_column_index] = (max_index == in_ci) * (1.0f - vl.recon_acts[max_index + visible_cells_start]);
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -289,7 +289,9 @@ void Encoder::learn_up(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                if (vl.recon_gates[visible_column_index])
+                float gate = vl.recon_gates[visible_column_index];
+
+                if (gate == 0.0f)
                     continue;
 
                 int in_ci = vl_input_cis[visible_column_index];
@@ -299,7 +301,7 @@ void Encoder::learn_up(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * ((vc == in_ci) * 255.0f - vl.weights_up[wi]))));
+                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * gate * ((vc == in_ci) * 255.0f - vl.weights_up[wi]))));
                 }
             }
     }
