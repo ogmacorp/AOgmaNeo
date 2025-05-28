@@ -234,7 +234,7 @@ void Encoder::learn(
                     int wi = vc + wi_start;
 
                     vl.weights_down[wi] = min(255, max(0, vl.weights_down[wi] + vl.recon_sums[visible_cell_index]));
-                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * modulation * min(0, (vc == target_ci) * 255 - vl.weights_up[wi]))));
+                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * modulation * ((vc == target_ci) * 255 - vl.weights_up[wi]))));
                 }
             }
         }
