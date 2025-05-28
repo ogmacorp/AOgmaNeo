@@ -200,9 +200,6 @@ void Encoder::learn_down(
 
     vl.recon_gates[visible_column_index] = (max_index != in_ci);
 
-    if (!vl.recon_gates[visible_column_index])
-        return;
-
     float total = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
@@ -292,7 +289,7 @@ void Encoder::learn_up(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                if (!vl.recon_gates[visible_column_index])
+                if (vl.recon_gates[visible_column_index])
                     continue;
 
                 int in_ci = vl_input_cis[visible_column_index];
