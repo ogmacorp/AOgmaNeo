@@ -33,6 +33,9 @@ public:
         Byte_Buffer weights_up;
         Byte_Buffer weights_down;
 
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
+
         Int_Buffer recon_sums;
         Float_Buffer recon_acts;
 
@@ -45,12 +48,16 @@ public:
     };
 
     struct Params {
+        float choice;
+        float vigilance;
         float scale; // down squash scale
         float ulr; // up learning rate
         float dlr; // down learning rate
 
         Params()
         :
+        choice(0.01f),
+        vigilance(0.9f),
         scale(8.0f),
         ulr(0.1f),
         dlr(0.1f)
@@ -63,6 +70,8 @@ private:
     Int_Buffer hidden_cis;
 
     Float_Buffer hidden_acts;
+
+    Byte_Buffer hidden_learn_flags;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
