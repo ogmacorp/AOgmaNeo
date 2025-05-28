@@ -294,8 +294,6 @@ void Encoder::learn_up(
 
     float commit_flag = hidden_commit_flags[hidden_cell_index_max];
 
-    float rate = (commit_flag ? params.ulr : 1.0f);
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
