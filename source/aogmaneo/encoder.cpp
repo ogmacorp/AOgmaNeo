@@ -201,7 +201,7 @@ void Encoder::learn(
         vl.recon_acts[visible_cell_index] *= total_inv;
     }
 
-    float modulation = 1.0f - vl.recon_acts[target_ci + visible_cells_start]; // scale learning by confidence per-column
+    float modulation = 1.0f - vl.recon_acts[max_index + visible_cells_start]; // scale learning by confidence per-column
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
