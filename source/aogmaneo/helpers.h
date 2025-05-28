@@ -395,7 +395,7 @@ inline float tanhf(
 #endif
 }
 
-const float softplus_limit = 100.0f;
+const float softplus_limit = 20.0f;
 
 inline float softplusf(
     float x
