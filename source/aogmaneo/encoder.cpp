@@ -221,7 +221,7 @@ void Encoder::learn_down(
         vl.recon_sums[visible_cell_index] = rand_roundf(params.dlr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]), state); // re-use as deltas
     }
 
-    vl.recon_gates[visible_column_index] = (max_index == in_ci) * (1.0f - vl.recon_acts[max_index + visible_cells_start]);
+    vl.recon_gates[visible_column_index] = 1.0f - vl.recon_acts[max_index + visible_cells_start];
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -258,11 +258,9 @@ void Encoder::learn_up(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    int hidden_cells_start = hidden_column_index * hidden_size.z;
-
     int hidden_ci = hidden_cis[hidden_column_index];
 
-    int hidden_cell_index_max = hidden_ci + hidden_column_index * hidden_size.z;
+    const float byte_inv = 1.0f / 255.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
