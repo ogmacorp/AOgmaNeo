@@ -124,7 +124,7 @@ void Encoder::forward(
     hidden_learn_flags[hidden_column_index] = (max_index != -1);
 }
 
-void Encoder::learn(
+void Encoder::learn_down(
     const Int2 &column_pos,
     Int_Buffer_View input_cis,
     int vli,
@@ -282,6 +282,66 @@ void Encoder::learn(
         }
 }
 
+void Encoder::learn_up(
+    const Int2 &column_pos,
+    const Array<Int_Buffer_View> &input_cis,
+    const Params &params
+) {
+    int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
+
+    if (!hidden_learn_flags[hidden_column_index])
+        return;
+
+    int hidden_cells_start = hidden_column_index * hidden_size.z;
+
+    int hidden_ci = hidden_cis[hidden_column_index];
+
+    int hidden_cell_index_max = hidden_ci + hidden_column_index * hidden_size.z;
+
+    float rate = (hidden_commit_flags[hidden_cell_index_max] ? params.ulr : 1.0f);
+
+    for (int vli = 0; vli < visible_layers.size(); vli++) {
+        Visible_Layer &vl = visible_layers[vli];
+        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+        int diam = vld.radius * 2 + 1;
+
+        // projection
+        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+
+        Int2 visible_center = project(column_pos, h_to_v);
+
+        // lower corner
+        Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+
+        // bounds of receptive field, clamped to input size
+        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+        Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+
+        Int_Buffer_View vl_input_cis = input_cis[vli];
+
+        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                int in_ci = vl_input_cis[visible_column_index];
+
+                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+
+                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+
+                Byte w_old = vl.weights_up[wi];
+
+                vl.weights_up[wi] = min(255, vl.weights_up[wi] + ceilf(rate * (255.0f - vl.weights_up[wi])));
+
+                vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
+            }
+    }
+
+    hidden_commit_flags[hidden_cell_index_max] = true;
+}
+
 void Encoder::init_random(
     const Int3 &hidden_size,
     const Array<Visible_Layer_Desc> &visible_layer_descs
@@ -329,6 +389,8 @@ void Encoder::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_learn_flags.resize(num_hidden_columns);
+
+    hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -417,8 +479,12 @@ void Encoder::step(
 
             unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-            learn(pos, input_cis[vli], vli, &state, params);
+            learn_down(pos, input_cis[vli], vli, &state, params);
         }
+
+        PARALLEL_FOR
+        for (int i = 0; i < num_hidden_columns; i++)
+            learn_up(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
     }
 }
 
@@ -427,7 +493,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -461,6 +527,8 @@ void Encoder::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
+    writer.write(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
+
     int num_visible_layers = visible_layers.size();
 
     writer.write(&num_visible_layers, sizeof(int));
@@ -493,6 +561,10 @@ void Encoder::read(
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
     hidden_learn_flags.resize(num_hidden_columns);
+
+    hidden_commit_flags.resize(num_hidden_cells);
+
+    reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 

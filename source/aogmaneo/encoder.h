@@ -72,6 +72,8 @@ private:
 
     Byte_Buffer hidden_learn_flags;
 
+    Byte_Buffer hidden_commit_flags;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -86,11 +88,17 @@ private:
         const Params &params
     );
 
-    void learn(
+    void learn_down(
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
         unsigned long* state,
+        const Params &params
+    );
+
+    void learn_up(
+        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
