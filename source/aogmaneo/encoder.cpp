@@ -20,8 +20,6 @@ void Encoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
-    float count_except = 0.0f;
-    float count_all = 0.0f;
     float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -46,8 +44,6 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         count += vl.importance * sub_count;
-        count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_all += vl.importance * sub_count * vld.size.z;
 
         total_importance += vl.importance;
 
@@ -80,8 +76,6 @@ void Encoder::forward(
     }
 
     count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
     float max_activation = 0.0f;
@@ -110,11 +104,9 @@ void Encoder::forward(
         sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
 
-        float complemented = sum - total + count_except;
+        float match = sum / count;
 
-        float match = complemented / count_except;
-
-        float activation = complemented / (params.choice + count_all - total);
+        float activation = sum / (params.choice + total);
 
         if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
@@ -241,10 +233,6 @@ void Encoder::learn(
         int visible_cell_index = vc + visible_cells_start;
 
         vl.recon_acts[visible_cell_index] *= total_inv;
-    }
-
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
 
         // re-use recon_sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.dlr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]), state); // re-use as deltas
@@ -270,19 +258,23 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
-                    int wi = vc + wi_start;
+                    // recon
+                    {
+                        int wi = vc + wi_start;
 
-                    vl.weights_down[wi] = min(255, max(0, vl.weights_down[wi] + vl.recon_sums[visible_cell_index]));
-                }
+                        vl.weights_down[wi] = min(255, max(0, vl.weights_down[wi] + vl.recon_sums[visible_cell_index]));
+                    }
 
-                if (max_index != in_ci && hidden_learn_flags[hidden_column_index]) {
-                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
+                    // art
+                    if (hidden_learn_flags[hidden_column_index] && vc != in_ci) {
+                        int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    Byte w_old = vl.weights_up[wi];
+                        Byte w_old = vl.weights_up[wi];
 
-                    vl.weights_up[wi] = min(255, vl.weights_up[wi] + roundf2i(params.ulr * (255.0f - vl.weights_up[wi])));
+                        vl.weights_up[wi] = max(0, vl.weights_up[wi] - roundf2i(params.ulr * vl.weights_up[wi]));
 
-                    vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
+                        vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
+                    }
                 }
             }
         }
@@ -321,7 +313,7 @@ void Encoder::init_random(
         vl.weights_down.resize(vl.weights_up.size());
 
         for (int i = 0; i < vl.weights_up.size(); i++) {
-            vl.weights_up[i] = (rand() % init_weight_noisei);
+            vl.weights_up[i] = 255 - (rand() % init_weight_noisei);
             vl.weights_down[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
         }
 
@@ -387,8 +379,6 @@ void Encoder::init_random(
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                        int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
-
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                         for (int vc = 0; vc < vld.size.z; vc++) {
@@ -672,8 +662,6 @@ void Encoder::merge(
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                        int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
-
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                         for (int vc = 0; vc < vld.size.z; vc++) {

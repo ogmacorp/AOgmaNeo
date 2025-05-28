@@ -424,8 +424,6 @@ inline unsigned long rand_get_state(
 ) {
     unsigned long state = seed + pcg_increment;
 
-    unsigned int count = static_cast<unsigned int>(state >> 59);
-
     state = state * pcg_multiplier + pcg_increment;
 
     return state;
