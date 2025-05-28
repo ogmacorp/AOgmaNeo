@@ -223,10 +223,7 @@ void Encoder::learn_down(
         }
     }
 
-    vl.recon_gates[visible_column_index] = (max_index != in_ci);
-
-    if (!vl.recon_gates[visible_column_index])
-        return;
+    vl.recon_gates[visible_column_index] = (max_index == in_ci);
 
     float total = 0.0f;
 
