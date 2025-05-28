@@ -223,8 +223,6 @@ void Encoder::learn_down(
         }
     }
 
-    vl.recon_gates[visible_column_index] = (max_index == in_ci);
-
     float total = 0.0f;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
@@ -247,6 +245,8 @@ void Encoder::learn_down(
         // re-use recon_sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.dlr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]), state); // re-use as deltas
     }
+
+    vl.recon_gates[visible_column_index] = 1.0f - vl.recon_acts[max_index + visible_cells_start];
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
