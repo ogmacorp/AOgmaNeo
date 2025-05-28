@@ -260,23 +260,9 @@ void Encoder::learn_down(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
-                    // recon
-                    {
-                        int wi = vc + wi_start;
+                    int wi = vc + wi_start;
 
-                        vl.weights_down[wi] = min(255, max(0, vl.weights_down[wi] + vl.recon_sums[visible_cell_index]));
-                    }
-
-                    // art
-                    if (hidden_learn_flags[hidden_column_index] && vc != in_ci) {
-                        int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
-
-                        Byte w_old = vl.weights_up[wi];
-
-                        vl.weights_up[wi] = max(0, vl.weights_up[wi] - roundf2i(params.ulr * vl.weights_up[wi]));
-
-                        vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
-                    }
+                    vl.weights_down[wi] = min(255, max(0, vl.weights_down[wi] + vl.recon_sums[visible_cell_index]));
                 }
             }
         }
@@ -381,6 +367,7 @@ void Encoder::init_random(
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_acts.resize(num_visible_cells);
+        vl.recon_gates.resize(num_visible_cells);
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
@@ -603,6 +590,7 @@ void Encoder::read(
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_acts.resize(num_visible_cells);
+        vl.recon_gates.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
