@@ -116,7 +116,7 @@ void Encoder::forward(
 
         float activation = complemented / (params.choice + count_all - total);
 
-        if (match >= params.vigilance && activation > max_activation) {
+        if ((!hidden_commit_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -292,7 +292,9 @@ void Encoder::learn_up(
 
     int hidden_cell_index_max = hidden_ci + hidden_column_index * hidden_size.z;
 
-    float rate = (hidden_commit_flags[hidden_cell_index_max] ? params.ulr : 1.0f);
+    float commit_flag = hidden_commit_flags[hidden_cell_index_max];
+
+    float rate = (commit_flag ? params.ulr : 1.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -327,7 +329,7 @@ void Encoder::learn_up(
 
                 Byte w_old = vl.weights_up[wi];
 
-                vl.weights_up[wi] = min(255, vl.weights_up[wi] + ceilf(rate * vl.recon_gates[visible_column_index] * (255.0f - vl.weights_up[wi])));
+                vl.weights_up[wi] = min(255, vl.weights_up[wi] + ceilf(max(commit_flag, params.ulr * vl.recon_gates[visible_column_index]) * (255.0f - vl.weights_up[wi])));
 
                 vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
             }
