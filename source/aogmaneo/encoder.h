@@ -33,8 +33,11 @@ public:
         Byte_Buffer weights_up;
         Byte_Buffer weights_down;
 
+        Int_Buffer hidden_sums;
+
         Int_Buffer recon_sums;
         Float_Buffer recon_acts;
+        Byte_Buffer recon_gates;
 
         float importance;
 
@@ -51,8 +54,8 @@ public:
 
         Params()
         :
-        scale(4.0f),
-        ulr(0.1f),
+        scale(8.0f),
+        ulr(0.5f),
         dlr(0.1f)
         {}
     };
@@ -61,8 +64,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
-
-    Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -78,11 +79,17 @@ private:
         const Params &params
     );
 
-    void learn(
+    void learn_down(
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
         unsigned long* state,
+        const Params &params
+    );
+
+    void learn_up(
+        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
