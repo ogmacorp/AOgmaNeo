@@ -369,7 +369,7 @@ void Encoder::init_random(
         vl.weights_down.resize(vl.weights_up.size());
 
         for (int i = 0; i < vl.weights_up.size(); i++) {
-            vl.weights_up[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights_up[i] = (rand() % init_weight_noisei);
             vl.weights_down[i] = 127 + (rand() % (init_weight_noisei + 1)) - init_weight_noisei / 2;
         }
 
