@@ -329,7 +329,7 @@ void Encoder::learn_up(
 
                 Byte w_old = vl.weights_up[wi];
 
-                vl.weights_up[wi] = min(255, vl.weights_up[wi] + ceilf(max(commit_flag, params.ulr * vl.recon_gates[visible_column_index]) * (255.0f - vl.weights_up[wi])));
+                vl.weights_up[wi] = min(255, vl.weights_up[wi] + ceilf(max(1.0f - commit_flag, params.ulr * vl.recon_gates[visible_column_index]) * (255.0f - vl.weights_up[wi])));
 
                 vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
             }
