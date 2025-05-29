@@ -38,7 +38,6 @@ public:
 
         Int_Buffer recon_sums;
         Float_Buffer recon_acts;
-        Float_Buffer recon_gates;
 
         float importance;
 
@@ -57,8 +56,8 @@ public:
 
         Params()
         :
-        choice(0.0001f),
-        vigilance(0.9f),
+        choice(0.01f),
+        vigilance(0.95f),
         scale(8.0f),
         ulr(0.5f),
         dlr(0.1f)
