@@ -247,7 +247,7 @@ void Encoder::learn_down(
         vl.recon_sums[visible_cell_index] = rand_roundf(params.dlr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]), state); // re-use as deltas
     }
 
-    vl.recon_gates[visible_column_index] = vl.recon_acts[max_index + visible_cells_start];
+    vl.recon_gates[visible_column_index] = 1.0f - vl.recon_acts[in_ci + visible_cells_start];
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -328,7 +328,7 @@ void Encoder::learn_up(
 
                 Byte w_old = vl.weights_up[wi];
 
-                vl.weights_up[wi] = min(255, vl.weights_up[wi] + roundf2i(rate * vl.recon_gates[visible_column_index] * (255.0f - vl.weights_up[wi])));
+                vl.weights_up[wi] = min(255, vl.weights_up[wi] + roundf2i(rate * max(0.0f, vl.recon_gates[visible_column_index] * 255.0f - vl.weights_up[wi])));
 
                 vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
             }
