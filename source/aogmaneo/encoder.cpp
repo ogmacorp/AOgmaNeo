@@ -212,8 +212,6 @@ void Encoder::learn(
 
     float rate = max(1.0f - hidden_commit_flags[hidden_cell_index_max], params.lr);
 
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
