@@ -221,8 +221,6 @@ void Encoder::learn_down(
         vl.recon_sums[visible_cell_index] = rand_roundf(params.dlr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]), state); // re-use as deltas
     }
 
-    vl.recon_gates[visible_column_index] = 1.0f - vl.recon_acts[max_index + visible_cells_start];
-
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
             Int2 hidden_pos = Int2(ix, iy);
@@ -287,19 +285,18 @@ void Encoder::learn_up(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                float gate = vl.recon_gates[visible_column_index];
-
-                if (gate == 0.0f)
-                    continue;
+                int visible_cells_start = visible_column_index * vld.size.z;
 
                 int in_ci = vl_input_cis[visible_column_index];
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
+                    int visible_cell_index = vc + visible_cells_start;
+
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * gate * ((vc == in_ci) * 255.0f - vl.weights_up[wi]))));
+                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]))));
                 }
             }
     }
@@ -344,7 +341,6 @@ void Encoder::init_random(
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_acts.resize(num_visible_cells);
-        vl.recon_gates.resize(num_visible_cells);
 
         vl.hidden_sums.resize(num_hidden_cells);
     }
@@ -500,7 +496,6 @@ void Encoder::read(
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_acts.resize(num_visible_cells);
-        vl.recon_gates.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
