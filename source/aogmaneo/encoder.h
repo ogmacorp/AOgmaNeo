@@ -53,7 +53,7 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.95f),
+        vigilance(0.9f),
         lr(0.5f)
         {}
     };
