@@ -170,12 +170,7 @@ void Encoder::backward(
 
     int in_ci = input_cis[visible_column_index];
 
-    // clear
-    for (int vc = 0; vc < vld.size.z; vc++) {
-        int visible_cell_index = vc + visible_cells_start;
-
-        vl.recons[visible_cell_index] = 0;
-    }
+    Byte recon = 0;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -190,16 +185,13 @@ void Encoder::backward(
 
                 Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int visible_cell_index = vc + visible_cells_start;
+                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
-
-                    vl.recons[visible_cell_index] = max(vl.recons[visible_cell_index], vl.weights[wi]);
-                }
+                recon = max(recon, vl.weights[wi]);
             }
         }
 
+    vl.recons[visible_column_index] = recon;
 }
 
 void Encoder::learn(
@@ -255,7 +247,7 @@ void Encoder::learn(
 
                 Byte w_old = vl.weights[wi];
 
-                Byte recon = vl.recons[in_ci + visible_column_index * vld.size.z];
+                Byte recon = vl.recons[visible_column_index];
 
                 vl.weights[wi] = min(255, vl.weights[wi] + roundf2i(rate * (255 - recon)));
 
@@ -300,7 +292,7 @@ void Encoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = (rand() % init_weight_noisei);
 
-        vl.recons.resize(num_visible_cells);
+        vl.recons.resize(num_visible_columns);
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
@@ -514,7 +506,7 @@ void Encoder::read(
 
         reader.read(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
 
-        vl.recons.resize(num_visible_cells);
+        vl.recons.resize(num_visible_columns);
 
         reader.read(&vl.importance, sizeof(float));
     }
