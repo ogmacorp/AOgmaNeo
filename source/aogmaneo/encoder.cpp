@@ -247,7 +247,7 @@ void Encoder::learn(
 
                 Byte recon = vl.recons[visible_column_index];
 
-                vl.weights[wi] = min(255, vl.weights[wi] + roundf2i(rate * (255 - vl.weights[wi])));
+                vl.weights[wi] = min(255, vl.weights[wi] + roundf2i(rate * (255 - recon)));
 
                 vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
             }
