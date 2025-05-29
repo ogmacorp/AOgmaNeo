@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -246,7 +247,7 @@ void Encoder::learn_down(
         vl.recon_sums[visible_cell_index] = rand_roundf(params.dlr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]), state); // re-use as deltas
     }
 
-    vl.recon_gates[visible_column_index] = 1.0f - vl.recon_acts[max_index + visible_cells_start];
+    vl.recon_gates[visible_column_index] = vl.recon_acts[max_index + visible_cells_start];
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -292,7 +293,7 @@ void Encoder::learn_up(
 
     int hidden_cell_index_max = hidden_ci + hidden_column_index * hidden_size.z;
 
-    float commit_flag = hidden_commit_flags[hidden_cell_index_max];
+    float rate = max(1.0f - hidden_commit_flags[hidden_cell_index_max], params.ulr);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -327,7 +328,7 @@ void Encoder::learn_up(
 
                 Byte w_old = vl.weights_up[wi];
 
-                vl.weights_up[wi] = min(255, vl.weights_up[wi] + ceilf(max(1.0f - commit_flag, params.ulr * vl.recon_gates[visible_column_index]) * (255.0f - vl.weights_up[wi])));
+                vl.weights_up[wi] = min(255, vl.weights_up[wi] + roundf2i(rate * vl.recon_gates[visible_column_index] * (255.0f - vl.weights_up[wi])));
 
                 vl.hidden_totals[hidden_cell_index_max] += vl.weights_up[wi] - w_old;
             }
@@ -375,7 +376,7 @@ void Encoder::init_random(
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_acts.resize(num_visible_cells);
-        vl.recon_gates.resize(num_visible_cells);
+        vl.recon_gates.resize(num_visible_columns);
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
@@ -598,7 +599,7 @@ void Encoder::read(
 
         vl.recon_sums.resize(num_visible_cells);
         vl.recon_acts.resize(num_visible_cells);
-        vl.recon_gates.resize(num_visible_cells);
+        vl.recon_gates.resize(num_visible_columns);
 
         reader.read(&vl.importance, sizeof(float));
     }
