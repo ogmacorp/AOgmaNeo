@@ -170,7 +170,7 @@ void Encoder::backward(
 
     int in_ci = input_cis[visible_column_index];
 
-    Byte recon = 0;
+    Byte recon = 255;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -187,7 +187,7 @@ void Encoder::backward(
 
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                recon = max(recon, vl.weights[wi]);
+                recon = min(recon, vl.weights[wi]);
             }
         }
 
