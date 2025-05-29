@@ -286,10 +286,7 @@ void Encoder::learn_up(
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
                 float gate = vl.recon_gates[visible_column_index];
-
-                if (gate == 0.0f)
-                    continue;
-
+                
                 int in_ci = vl_input_cis[visible_column_index];
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
