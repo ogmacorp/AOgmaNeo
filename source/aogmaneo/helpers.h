@@ -395,14 +395,14 @@ inline float tanhf(
 #endif
 }
 
-const float softplus_limit = 100.0f;
+const float softplus_limit = 10.0f;
 
 inline float softplusf(
     float x
 ) {
-    float limited = (x > softplus_limit);
+    float in_range = (x < softplus_limit);
 
-    return logf(1.0f + expf(x * limited)) * limited + (1.0f - limited) * x;
+    return logf(1.0f + expf(x * in_range)) * in_range + x * (1.0f - in_range);
 }
 
 // --- rng ---
