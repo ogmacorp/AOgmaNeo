@@ -126,6 +126,7 @@ void Encoder::forward(
 
 void Encoder::backward(
     const Int2 &column_pos,
+    Int_Buffer_View input_cis,
     int vli,
     const Params &params
 ) {
@@ -159,10 +160,13 @@ void Encoder::backward(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
+    int max_index = 0;
+    int max_recon = 0;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        Byte recon = 0;
+        int recon = 0;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -179,12 +183,19 @@ void Encoder::backward(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    recon = max(recon, vl.weights[wi]);
+                    recon += vl.weights[wi];
                 }
             }
 
-        vl.recons[visible_cell_index] = recon;
+        if (recon > max_recon) {
+            max_recon = recon;
+            max_index = vc;
+        }
     }
+
+    int in_ci = input_cis[visible_column_index];
+
+    vl.gates[visible_column_index] = (max_index == in_ci);
 }
 
 void Encoder::learn(
@@ -230,6 +241,9 @@ void Encoder::learn(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                if (vl.gates[visible_column_index])
+                    continue;
+
                 int visible_cells_start = visible_column_index * vld.size.z;
 
                 int in_ci = vl_input_cis[visible_column_index];
@@ -246,7 +260,7 @@ void Encoder::learn(
 
                     Byte w_old = vl.weights[wi];
 
-                    vl.weights[wi] = max(0, vl.weights[wi] + roundf2i(rate * -vl.recons[visible_cell_index]));
+                    vl.weights[wi] = max(0, vl.weights[wi] + roundf2i(rate * -vl.weights[wi]));
 
                     vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
                 }
@@ -290,7 +304,7 @@ void Encoder::init_random(
         for (int i = 0; i < vl.weights.size(); i++)
             vl.weights[i] = 255 - (rand() % init_weight_noisei);
 
-        vl.recons.resize(num_visible_cells);
+        vl.gates.resize(num_visible_columns);
 
         vl.hidden_sums.resize(num_hidden_cells);
         vl.hidden_totals.resize(num_hidden_cells);
@@ -385,7 +399,7 @@ void Encoder::step(
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            backward(pos, vli, params);
+            backward(pos, input_cis[vli], vli, params);
         }
 
         PARALLEL_FOR
@@ -504,7 +518,7 @@ void Encoder::read(
 
         reader.read(&vl.hidden_totals[0], vl.hidden_totals.size() * sizeof(int));
 
-        vl.recons.resize(num_visible_cells);
+        vl.gates.resize(num_visible_columns);
 
         reader.read(&vl.importance, sizeof(float));
     }
