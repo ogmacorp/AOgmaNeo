@@ -291,12 +291,14 @@ void Encoder::learn_up(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
+                float gate = 1.0f - vl.recon_acts[in_ci + visible_column_index * vld.size.z];
+
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * 255.0f * ((vc == in_ci) - vl.recon_acts[visible_cell_index]))));
+                    vl.weights_up[wi] = min(255, max(0, vl.weights_up[wi] + roundf2i(params.ulr * gate * ((vc == in_ci) * 255 - vl.weights_up[wi]))));
                 }
             }
     }
