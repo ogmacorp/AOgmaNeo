@@ -70,7 +70,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    vl.hidden_sums[hidden_cell_index] += vl.weights_match[wi] + vl.weights_act[wi];
+                    vl.hidden_sums[hidden_cell_index] += vl.weights_match[wi];
                 }
             }
     }
@@ -231,8 +231,8 @@ void Encoder::learn(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(params.mlr * min(0, max(recon_act, input) - vl.weights_match[wi])));
-                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(params.alr * max(0, min(recon_match, input) - vl.weights_act[wi])));
+                    vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(params.mlr * (min(vl.weights_match[wi], max(recon_act, input)) - vl.weights_match[wi])));
+                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(params.alr * (max(vl.weights_act[wi], min(recon_match, input)) - vl.weights_act[wi])));
                 }
             }
     }
