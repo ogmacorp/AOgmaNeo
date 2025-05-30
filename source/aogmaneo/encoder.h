@@ -30,14 +30,13 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights_up;
-        Byte_Buffer weights_down;
+        Byte_Buffer weights_match;
+        Byte_Buffer weights_act;
 
         Int_Buffer hidden_sums;
 
-        Int_Buffer recon_sums;
-        Float_Buffer recon_acts;
-        Float_Buffer recon_gates;
+        Byte_Buffer recons_match;
+        Byte_Buffer recons_act;
 
         float importance;
 
@@ -48,15 +47,13 @@ public:
     };
 
     struct Params {
-        float scale; // down squash scale
-        float ulr; // up learning rate
-        float dlr; // down learning rate
+        float mlr; // match learning rate
+        float alr; // act learning rate
 
         Params()
         :
-        scale(8.0f),
-        ulr(0.05f),
-        dlr(0.1f)
+        mlr(0.1f),
+        alr(0.1f)
         {}
     };
 
@@ -79,15 +76,13 @@ private:
         const Params &params
     );
 
-    void learn_down(
+    void backward(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
         int vli,
-        unsigned long* state,
         const Params &params
     );
 
-    void learn_up(
+    void learn(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         const Params &params
