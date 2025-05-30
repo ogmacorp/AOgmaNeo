@@ -52,8 +52,7 @@ void Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            vl.hidden_sums_match[hidden_cell_index] = 0;
-            vl.hidden_sums_act[hidden_cell_index] = 0;
+            vl.hidden_sums[hidden_cell_index] = 0;
         }
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -71,27 +70,22 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    vl.hidden_sums_match[hidden_cell_index] += vl.weights_match[wi];
-                    vl.hidden_sums_act[hidden_cell_index] += vl.weights_act[wi];
+                    vl.hidden_sums[hidden_cell_index] += vl.weights_match[wi];
                 }
             }
     }
 
     count /= max(limit_small, total_importance);
 
-    int max_index = -1;
+    int max_index = 0;
     float max_activation = 0.0f;
-
-    int max_complete_index = 0;
-    float max_complete_activation = 0.0f;
 
     const float byte_inv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float sum_match = 0.0f;
-        float sum_act = 0.0f;
+        float sum = 0.0f;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -99,31 +93,18 @@ void Encoder::forward(
 
             float influence = vl.importance * byte_inv;
 
-            sum_match += vl.hidden_sums_match[hidden_cell_index] * influence;
-            sum_act += vl.hidden_sums_act[hidden_cell_index] * influence;
+            sum += vl.hidden_sums[hidden_cell_index] * influence;
         }
 
-        sum_match /= max(limit_small, total_importance);
-        sum_act /= max(limit_small, total_importance);
+        sum /= max(limit_small, total_importance);
 
-        float match = sum_match / count;
-
-        float activation = sum_act / count;
-
-        if ((!hidden_commit_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
-            max_activation = activation;
+        if (sum > max_activation) {
+            max_activation = sum;
             max_index = hc;
-        }
-
-        if (activation > max_complete_activation) {
-            max_complete_activation = activation;
-            max_complete_index = hc;
         }
     }
 
-    hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
-
-    hidden_learn_flags[hidden_column_index] = (max_index != -1);
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Encoder::backward(
@@ -164,7 +145,8 @@ void Encoder::backward(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        int recon = 0;
+        int recon_match = 0;
+        int recon_act = 0;
         int count = 0;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -182,12 +164,14 @@ void Encoder::backward(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    recon += vl.weights_act[wi];
+                    recon_match += vl.weights_match[wi];
+                    recon_act += vl.weights_act[wi];
                     count++;
                 }
             }
 
-        vl.recons[visible_cell_index] = recon / max(1, count);
+        vl.recons_match[visible_cell_index] = recon_match / max(1, count);
+        vl.recons_act[visible_cell_index] = recon_act / max(1, count);
     }
 }
 
@@ -198,17 +182,11 @@ void Encoder::learn(
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
-    if (!hidden_learn_flags[hidden_column_index])
-        return;
-
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     int hidden_ci = hidden_cis[hidden_column_index];
 
     int hidden_cell_index_max = hidden_ci + hidden_column_index * hidden_size.z;
-
-    float rate_match = max(1.0f - hidden_commit_flags[hidden_cell_index_max], params.mlr);
-    float rate_act = max(1.0f - hidden_commit_flags[hidden_cell_index_max], params.alr);
 
     const float byte_inv = 1.0f / 255.0f;
 
@@ -246,17 +224,18 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
 
-                    Byte recon = vl.recons[visible_cell_index];
+                    Byte recon_match = vl.recons_match[visible_cell_index];
+                    Byte recon_act = vl.recons_act[visible_cell_index];
+
+                    Byte input = (vc == in_ci) * 255;
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(rate_match * min(0, (vc == in_ci) * 255 - recon)));
-                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(rate_act * max(0, (vc == in_ci) * 255 - vl.weights_act[wi])));
+                    vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(params.mlr * min(0, max(recon_act, input) - vl.weights_match[wi])));
+                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(params.alr * max(0, min(recon_match, input) - vl.weights_act[wi])));
                 }
             }
     }
-
-    hidden_commit_flags[hidden_cell_index_max] = true;
 }
 
 void Encoder::init_random(
@@ -296,17 +275,13 @@ void Encoder::init_random(
             vl.weights_act[i] = (rand() % init_weight_noisei);
         }
 
-        vl.hidden_sums_match.resize(num_hidden_cells);
-        vl.hidden_sums_act.resize(num_hidden_cells);
+        vl.hidden_sums.resize(num_hidden_cells);
 
-        vl.recons.resize(num_visible_cells);
+        vl.recons_match.resize(num_visible_cells);
+        vl.recons_act.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
-
-    hidden_learn_flags.resize(num_hidden_columns);
-
-    hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
 
     // generate helper buffers for parallelization
     visible_pos_vlis.resize(total_num_visible_columns);
@@ -357,7 +332,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -391,8 +366,6 @@ void Encoder::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-    writer.write(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
-
     int num_visible_layers = visible_layers.size();
 
     writer.write(&num_visible_layers, sizeof(int));
@@ -421,12 +394,6 @@ void Encoder::read(
     hidden_cis.resize(num_hidden_columns);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
-
-    hidden_learn_flags.resize(num_hidden_columns);
-
-    hidden_commit_flags.resize(num_hidden_cells);
-
-    reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -457,10 +424,10 @@ void Encoder::read(
         reader.read(&vl.weights_match[0], vl.weights_match.size() * sizeof(Byte));
         reader.read(&vl.weights_act[0], vl.weights_act.size() * sizeof(Byte));
 
-        vl.hidden_sums_match.resize(num_hidden_cells);
-        vl.hidden_sums_act.resize(num_hidden_cells);
+        vl.hidden_sums.resize(num_hidden_cells);
 
-        vl.recons.resize(num_visible_cells);
+        vl.recons_match.resize(num_visible_cells);
+        vl.recons_act.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
