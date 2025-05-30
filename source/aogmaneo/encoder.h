@@ -30,10 +30,11 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Byte_Buffer weights_match;
+        Byte_Buffer weights_act;
 
-        Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
+        Int_Buffer hidden_sums_match;
+        Int_Buffer hidden_sums_act;
 
         Byte_Buffer recons;
 
