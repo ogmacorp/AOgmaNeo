@@ -70,7 +70,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    vl.hidden_sums[hidden_cell_index] += vl.weights_match[wi];
+                    vl.hidden_sums[hidden_cell_index] += vl.weights_match[wi] + vl.weights_act[wi];
                 }
             }
     }
