@@ -47,13 +47,11 @@ public:
     };
 
     struct Params {
-        float mlr; // match learning rate
-        float alr; // act learning rate
+        float lr; // act learning rate
 
         Params()
         :
-        mlr(0.5f),
-        alr(0.05f)
+        lr(0.02f)
         {}
     };
 
