@@ -231,8 +231,8 @@ void Encoder::learn(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights_match[wi] = min(255, vl.weights_match[wi] + roundf2i(params.mlr * (max(vl.weights_match[wi], input) - vl.weights_match[wi])));
-                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.alr * (min(recon_act, vl.weights_match[wi]) - recon_act)));
+                    vl.weights_match[wi] = min(255, vl.weights_match[wi] + roundf2i(params.mlr * (max(recon_match, input) - recon_match)));
+                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.alr * (min(recon_act, recon_match) - recon_act)));
                 }
             }
     }
