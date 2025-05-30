@@ -70,7 +70,7 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    vl.hidden_sums[hidden_cell_index] += vl.weights_match[wi];
+                    vl.hidden_sums[hidden_cell_index] += vl.weights_act[wi];
                 }
             }
     }
@@ -231,8 +231,8 @@ void Encoder::learn(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(params.mlr * (min(recon_match, max(vl.weights_act[wi], input)) - recon_match)));
-                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(params.alr * (max(recon_act, min(vl.weights_match[wi], input)) - recon_act)));
+                    vl.weights_match[wi] = min(255, vl.weights_match[wi] + roundf2i(params.mlr * (max(vl.weights_match[wi], input) - vl.weights_match[wi])));
+                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.alr * (min(recon_act, vl.weights_match[wi]) - recon_act)));
                 }
             }
     }
@@ -271,8 +271,8 @@ void Encoder::init_random(
         vl.weights_act.resize(vl.weights_match.size());
 
         for (int i = 0; i < vl.weights_match.size(); i++) {
-            vl.weights_match[i] = 255 - (rand() % init_weight_noisei);
-            vl.weights_act[i] = (rand() % init_weight_noisei);
+            vl.weights_match[i] = (rand() % init_weight_noisei);
+            vl.weights_act[i] = 255 - (rand() % init_weight_noisei);
         }
 
         vl.hidden_sums.resize(num_hidden_cells);

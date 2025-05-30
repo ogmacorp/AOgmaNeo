@@ -52,8 +52,8 @@ public:
 
         Params()
         :
-        mlr(0.5f),
-        alr(0.5f)
+        mlr(0.1f),
+        alr(0.1f)
         {}
     };
 
