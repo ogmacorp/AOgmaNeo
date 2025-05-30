@@ -47,13 +47,11 @@ public:
     };
 
     struct Params {
-        float choice;
         float vigilance;
         float lr; // down learning rate
 
         Params()
         :
-        choice(0.01f),
         vigilance(0.9f),
         lr(0.5f)
         {}
