@@ -48,12 +48,14 @@ public:
 
     struct Params {
         float vigilance;
-        float lr; // down learning rate
+        float mlr; // match learning rate
+        float alr; // act learning rate
 
         Params()
         :
         vigilance(0.9f),
-        lr(0.5f)
+        mlr(0.5f),
+        alr(0.5f)
         {}
     };
 

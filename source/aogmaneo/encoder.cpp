@@ -183,9 +183,8 @@ void Encoder::backward(
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 recon += vl.weights_act[wi];
+                count++;
             }
-
-            count++;
         }
 
     vl.recons[visible_column_index] = recon / max(1, count);
@@ -207,7 +206,8 @@ void Encoder::learn(
 
     int hidden_cell_index_max = hidden_ci + hidden_column_index * hidden_size.z;
 
-    float rate = max(1.0f - hidden_commit_flags[hidden_cell_index_max], params.lr);
+    float rate_match = max(1.0f - hidden_commit_flags[hidden_cell_index_max], params.mlr);
+    float rate_act = max(1.0f - hidden_commit_flags[hidden_cell_index_max], params.alr);
 
     const float byte_inv = 1.0f / 255.0f;
 
@@ -236,6 +236,8 @@ void Encoder::learn(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
+                Byte recon = vl.recons[visible_column_index];
+
                 int in_ci = vl_input_cis[visible_column_index];
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
@@ -243,10 +245,8 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    Byte recon = vl.recons[visible_column_index];
-
-                    vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(rate * min(0, (vc == in_ci) * 255 - vl.weights_match[wi])));
-                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(rate * max(0, (vc == in_ci) * (255 - recon) - vl.weights_act[wi])));
+                    vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(rate_match * min(0, (vc == in_ci) * 255 - vl.weights_match[wi])));
+                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(rate_act * max(0, (vc == in_ci) * (recon - 255) - vl.weights_act[wi])));
                 }
             }
     }
