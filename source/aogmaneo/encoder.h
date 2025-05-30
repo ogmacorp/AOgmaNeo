@@ -35,7 +35,7 @@ public:
         Int_Buffer hidden_sums;
         Int_Buffer hidden_totals;
 
-        Byte_Buffer gates;
+        Byte_Buffer recons;
 
         float importance;
 
@@ -83,7 +83,6 @@ private:
 
     void backward(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
         int vli,
         const Params &params
     );
