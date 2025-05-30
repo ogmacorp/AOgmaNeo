@@ -182,7 +182,7 @@ void Encoder::backward(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    recon += vl.weights_match[wi];
+                    recon += vl.weights_act[wi];
                     count++;
                 }
             }
@@ -237,13 +237,17 @@ void Encoder::learn(
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                Byte recon = vl.recons[visible_column_index];
+                int visible_cells_start = visible_column_index * vld.size.z;
 
                 int in_ci = vl_input_cis[visible_column_index];
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
+                    int visible_cell_index = vc + visible_cells_start;
+
+                    Byte recon = vl.recons[visible_cell_index];
+
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(rate_match * min(0, (vc == in_ci) * 255 - recon)));
