@@ -182,7 +182,7 @@ void Encoder::backward(
 
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                recon += vl.weights_act[wi];
+                recon += vl.weights_match[wi];
                 count++;
             }
         }
@@ -246,7 +246,7 @@ void Encoder::learn(
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
                     vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(rate_match * min(0, (vc == in_ci) * 255 - vl.weights_match[wi])));
-                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(rate_act * max(0, (vc == in_ci) * (recon - 255) - vl.weights_act[wi])));
+                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(rate_act * max(0, (vc == in_ci) * recon - vl.weights_act[wi])));
                 }
             }
     }
