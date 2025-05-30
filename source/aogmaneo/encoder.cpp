@@ -251,7 +251,7 @@ void Encoder::learn(
                     Byte recon = vl.recons[visible_cell_index];
 
                     vl.weights_match[wi] = max(0, vl.weights_match[wi] + roundf2i(rate * min(0, (vc == in_ci) * 255 - vl.weights_match[wi])));
-                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(rate * min(0, (vc == in_ci) * 255 - recon)));
+                    vl.weights_act[wi] = min(255, vl.weights_act[wi] + roundf2i(rate * max(0, (vc == in_ci) * 255 - recon)));
                 }
             }
     }
@@ -293,7 +293,7 @@ void Encoder::init_random(
 
         for (int i = 0; i < vl.weights_match.size(); i++) {
             vl.weights_match[i] = 255 - (rand() % init_weight_noisei);
-            vl.weights_act[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights_act[i] = (rand() % init_weight_noisei);
         }
 
         vl.hidden_sums_match.resize(num_hidden_cells);
