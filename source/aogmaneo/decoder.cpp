@@ -103,9 +103,9 @@ void Decoder::forward(
 
             float act = dendrite_acts[dendrite_index] * dendrite_scale;
 
-            dendrite_acts[dendrite_index] = sigmoidf(act); // store derivative
+            dendrite_acts[dendrite_index] = (act > 0.0f); // store derivative
 
-            activation += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+            activation += max(0.0f, act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         activation *= activation_scale;
