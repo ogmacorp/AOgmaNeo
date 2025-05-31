@@ -65,9 +65,7 @@ void Image_Encoder::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi = vc + wi_start;
 
-                        float input = vl_inputs[vc + visible_cells_start] * byte_inv;
-
-                        sum += vl.weights_act[wi] * input;
+                        sum += min(vl.weights_act[wi], vl_inputs[vc + visible_cells_start]);
                     }
                 }
         }
