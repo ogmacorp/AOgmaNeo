@@ -30,28 +30,26 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
-        Byte_Buffer recon_weights; // for reconstruction
+        Byte_Buffer weights_match;
+        Byte_Buffer weights_act;
+        Byte_Buffer weights_recon; // for reconstruction
+
+        Byte_Buffer recons_match;
+        Byte_Buffer recons_act;
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float tolerance; // feature strength needed to activate
-        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
-        float scale; // scale of reconstruction
+        float scale; // reconstruction scale
         float rr; // reconstruction rate
-        int n_radius; // SOM neighborhood radius
         
         Params()
         :
-        tolerance(0.02f),
-        falloff(0.9f),
-        lr(0.1f),
+        lr(0.02f),
         scale(2.0f),
-        rr(0.01f),
-        n_radius(1)
+        rr(0.05f)
         {}
     };
 
@@ -59,11 +57,6 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis; // hidden states
-
-    Float_Buffer hidden_acts;
-    Float_Buffer hidden_totals;
-
-    Float_Buffer hidden_resources;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -73,8 +66,17 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs,
-        bool learn_enabled
+        const Array<Byte_Buffer_View> &inputs
+    );
+
+    void backward(
+        const Int2 &column_pos,
+        int vli
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        const Array<Byte_Buffer_View> &inputs
     );
 
     void learn_reconstruction(
@@ -102,7 +104,7 @@ public:
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled, // whether to learn
-        bool learn_recon = false // whether to learn a reconstruction as well (conditional on learn_enabled)
+        bool learn_recon = true // whether to learn reconstruction weights
     );
 
     void reconstruct(
