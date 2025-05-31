@@ -340,9 +340,9 @@ void Image_Encoder::reconstruct(
 
                     Int2 offset(column_pos.x - visible_center.x + vld.radius, column_pos.y - visible_center.y + vld.radius);
 
-                    int wi = vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_cell_index));
+                    int wi = recon_cis[hidden_column_index] + hidden_size.z * (vc + vld.size.z * (offset.y + diam * (offset.x + diam * hidden_column_index)));
 
-                    sum += vl.recon_weights[wi];
+                    sum += vl.weights[wi];
                     count++;
                 }
             }
