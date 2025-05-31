@@ -47,8 +47,8 @@ public:
         Params()
         :
         tolerance(0.02f),
-        falloff(0.99f),
-        lr(0.2f),
+        falloff(0.9f),
+        lr(0.1f),
         scale(2.0f),
         rr(0.01f),
         n_radius(1)

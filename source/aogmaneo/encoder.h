@@ -30,14 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights_match;
-        Byte_Buffer weights_act;
-
-        Int_Buffer hidden_sums;
-
-        Byte_Buffer recons_match;
-        Byte_Buffer recons_act;
-
+        Float_Buffer protos;
+        
         float importance;
 
         Visible_Layer()
@@ -47,11 +41,15 @@ public:
     };
 
     struct Params {
-        float lr; // act learning rate
+        float falloff; // SOM falloff
+        float lr; // learning rate
+        int n_radius; // SOM neighborhood radius
 
         Params()
         :
-        lr(0.1f)
+        falloff(0.9f),
+        lr(0.1f),
+        n_radius(1)
         {}
     };
 
@@ -60,29 +58,20 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Float_Buffer hidden_resources;
+
+    Float_Buffer hidden_acts;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-
     // --- kernels ---
-
+    
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void backward(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -99,7 +88,9 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state();
+    void clear_state() {
+        hidden_cis.fill(0);
+    }
 
     // serialization
     long size() const; // returns size in bytes
