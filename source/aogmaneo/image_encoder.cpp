@@ -108,9 +108,6 @@ void Image_Encoder::forward(
 
                     float input_centered = (vl_inputs[vc + visible_cells_start] * byte_inv - center) * 2.0f;
 
-                    if (abs(input_centered) < params.tolerance)
-                        continue;
-
                     for (int hc = 0; hc < hidden_size.z; hc++) {
                         int hidden_cell_index = hc + hidden_cells_start;
 

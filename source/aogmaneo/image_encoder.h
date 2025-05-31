@@ -37,7 +37,6 @@ public:
     };
 
     struct Params {
-        float tolerance; // feature strength needed to activate
         float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
         float scale; // scale of reconstruction
@@ -46,7 +45,6 @@ public:
         
         Params()
         :
-        tolerance(0.02f),
         falloff(0.9f),
         lr(0.1f),
         scale(2.0f),
