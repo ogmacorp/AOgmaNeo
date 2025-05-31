@@ -145,9 +145,8 @@ void Encoder::backward(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        int recon_match = 0;
-        int recon_act = 0;
-        int count = 0;
+        Byte recon_match = 0;
+        Byte recon_act = 255;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -164,14 +163,13 @@ void Encoder::backward(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    recon_match += vl.weights_match[wi];
-                    recon_act += vl.weights_act[wi];
-                    count++;
+                    recon_match = max(recon_match, vl.weights_match[wi]);
+                    recon_act = min(recon_act, vl.weights_act[wi]);
                 }
             }
 
-        vl.recons_match[visible_cell_index] = recon_match / max(1, count);
-        vl.recons_act[visible_cell_index] = recon_act / max(1, count);
+        vl.recons_match[visible_cell_index] = recon_match;
+        vl.recons_act[visible_cell_index] = recon_act;
     }
 }
 
@@ -231,8 +229,9 @@ void Encoder::learn(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.lr * (min(recon_act, max(recon_match, vl.weights_match[wi])) - recon_act)));
-                    vl.weights_match[wi] = max(vl.weights_match[wi], input);
+                    vl.weights_match[wi] = min(255, vl.weights_match[wi] + max(recon_match, input) - recon_match);
+
+                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.lr * (min(recon_act, recon_match) - recon_act)));
                 }
             }
     }
