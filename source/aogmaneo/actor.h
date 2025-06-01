@@ -54,7 +54,7 @@ public:
         qlr(0.001f),
         plr(0.01f),
         discount(0.99f),
-        n_steps(8),
+        n_steps(5),
         history_iters(16)
         {}
     };
