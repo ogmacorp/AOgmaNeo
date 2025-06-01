@@ -88,56 +88,58 @@ void Encoder::forward(
 
     hidden_cis[hidden_column_index] = max_index;
 
-    for (int dhc = -params.n_radius; dhc <= params.n_radius; dhc++) {
-        int hc = hidden_cis[hidden_column_index] + dhc;
+    if (learn_enabled) {
+        for (int dhc = -params.n_radius; dhc <= params.n_radius; dhc++) {
+            int hc = hidden_cis[hidden_column_index] + dhc;
 
-        if (hc < 0 || hc >= hidden_size.z)
-            continue;
+            if (hc < 0 || hc >= hidden_size.z)
+                continue;
 
-        int hidden_cell_index = hc + hidden_cells_start;
+            int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = hidden_resources[hidden_cell_index] * powf(params.falloff, abs(dhc));
+            float rate = hidden_resources[hidden_cell_index] * powf(params.falloff, abs(dhc));
 
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+            for (int vli = 0; vli < visible_layers.size(); vli++) {
+                Visible_Layer &vl = visible_layers[vli];
+                const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            int diam = vld.radius * 2 + 1;
+                int diam = vld.radius * 2 + 1;
 
-            // projection
-            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+                // projection
+                Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                    static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-            Int2 visible_center = project(column_pos, h_to_v);
+                Int2 visible_center = project(column_pos, h_to_v);
 
-            // lower corner
-            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+                // lower corner
+                Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
 
-            // bounds of receptive field, clamped to input size
-            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+                // bounds of receptive field, clamped to input size
+                Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+                Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-            const float vld_size_z_inv = 1.0f / vld.size.z;
+                const float vld_size_z_inv = 1.0f / vld.size.z;
 
-            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                    int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+                for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+                    for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                        int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                    int in_ci = input_cis[vli][visible_column_index];
+                        int in_ci = input_cis[vli][visible_column_index];
 
-                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+                        Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                    int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
+                        int wi = hc + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                    float in_value = (in_ci + 0.5f) * vld_size_z_inv;
+                        float in_value = (in_ci + 0.5f) * vld_size_z_inv;
 
-                    float diff = in_value - vl.protos[wi];
+                        float diff = in_value - vl.protos[wi];
 
-                    vl.protos[wi] += rate * diff;
-                }
+                        vl.protos[wi] += rate * diff;
+                    }
+            }
+
+            hidden_resources[hidden_cell_index] -= params.lr * rate;
         }
-
-        hidden_resources[hidden_cell_index] -= params.lr * rate;
     }
 }
 
