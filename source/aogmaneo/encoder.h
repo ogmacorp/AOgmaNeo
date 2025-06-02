@@ -45,10 +45,12 @@ public:
     };
 
     struct Params {
+        float vigilance; // ART vigilance
         float lr; // learning rate
 
         Params()
         :
+        vigilance(0.8f),
         lr(0.1f)
         {}
     };
@@ -57,6 +59,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    Byte_Buffer hidden_learn_flags;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
