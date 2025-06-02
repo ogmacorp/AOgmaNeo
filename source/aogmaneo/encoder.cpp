@@ -178,13 +178,12 @@ void Encoder::learn(
         if (vc != target_ci && recon_sum >= target_sum)
             num_higher++;
 
+        // re-use recon_sums as deltas
         vl.recon_sums[visible_cell_index] = roundf2i(params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale)));
     }
 
     if (num_higher < params.early_stop)
         return;
-
-    const float byte_inv = 1.0f / 255.0f;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -205,8 +204,6 @@ void Encoder::learn(
                     int visible_cell_index = vc + visible_cells_start;
 
                     int wi = vc + wi_start;
-
-                    float w = vl.weights[wi] * byte_inv;
 
                     vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
                 }
