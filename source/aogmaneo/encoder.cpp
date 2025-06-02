@@ -208,7 +208,7 @@ void Encoder::learn(
 
                     float w = vl.weights[wi] * byte_inv;
 
-                    vl.weights[wi] = max(0, vl.weights[wi] + roundf2i(vl.deltas[visible_cell_index] * w));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2i(vl.deltas[visible_cell_index] * w)));
                 }
             }
         }
