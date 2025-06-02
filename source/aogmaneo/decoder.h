@@ -40,7 +40,7 @@ public:
         Params()
         :
         scale(8.0f),
-        lr(0.05f)
+        lr(0.1f)
         {}
     };
 
@@ -53,6 +53,8 @@ private:
     Float_Buffer hidden_acts;
 
     Float_Buffer dendrite_acts;
+
+    Int_Buffer dendrite_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
