@@ -184,8 +184,6 @@ void Encoder::learn(
 
     int hidden_cell_index_max = hidden_ci + hidden_column_index * hidden_size.z;
 
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -219,8 +217,6 @@ void Encoder::learn(
 
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int visible_cell_index = vc + visible_cells_start;
-
-                    Byte input = (vc == in_ci) * 255;
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
