@@ -49,7 +49,7 @@ public:
         :
         falloff(0.9f),
         lr(0.1f),
-        n_radius(2)
+        n_radius(3)
         {}
     };
 
