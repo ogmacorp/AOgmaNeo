@@ -501,7 +501,7 @@ void Encoder::merge(
                 float total = 0.0f;
 
                 for (int e = 0; e < encoders.size(); e++)
-                    total += encoders[e]->visible_layers[vli].weights_act[i];
+                    total += encoders[e]->visible_layers[vli].weights[i];
 
                 vl.weights[i] = roundf2b(total / encoders.size());
             }
