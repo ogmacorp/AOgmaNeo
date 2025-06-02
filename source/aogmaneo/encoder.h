@@ -30,8 +30,12 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer protos;
-        
+        Byte_Buffer weights;
+
+        Int_Buffer recon_sums;
+
+        Float_Buffer deltas;
+
         float importance;
 
         Visible_Layer()
@@ -41,15 +45,15 @@ public:
     };
 
     struct Params {
-        float falloff; // SOM falloff
+        float scale; // recon curve
         float lr; // learning rate
-        int n_radius; // SOM neighborhood radius
+        int early_stop; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
-        falloff(1.0f),
+        scale(2.0f),
         lr(0.1f),
-        n_radius(2)
+        early_stop(1)
         {}
     };
 
@@ -58,20 +62,26 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_resources;
-
     Float_Buffer hidden_acts;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
-    // --- kernels ---
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
     
+    // --- kernels ---
+
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        bool learn_enabled,
+        const Params &params
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        Int_Buffer_View input_cis,
+        int vli,
         const Params &params
     );
 
@@ -88,9 +98,7 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state() {
-        hidden_cis.fill(0);
-    }
+    void clear_state();
 
     // serialization
     long size() const; // returns size in bytes
