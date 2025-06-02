@@ -231,7 +231,7 @@ void Encoder::learn(
 
                     vl.weights_match[wi] = min(255, vl.weights_match[wi] + max(recon_match, input) - recon_match);
 
-                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.lr * (min(vl.weights_act[wi], vl.weights_match[wi]) - vl.weights_act[wi])));
+                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.lr * (min(recon_act, recon_match) - recon_act)));
                 }
             }
     }
