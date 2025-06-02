@@ -30,11 +30,13 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Byte_Buffer weights_match;
+        Byte_Buffer weights_act;
 
-        Int_Buffer recon_sums;
+        Int_Buffer hidden_sums_match;
+        Int_Buffer hidden_sums_act;
 
-        Float_Buffer deltas;
+        Byte_Buffer recons_act;
 
         float importance;
 
@@ -45,15 +47,15 @@ public:
     };
 
     struct Params {
-        float scale; // recon curve
-        float lr; // learning rate
-        int early_stop; // if target of reconstruction is in top <this number> cells, stop early
+        float vigilance; // ART vigilance
+        float mlr; // match learning rate
+        float alr; // act learning rate
 
         Params()
         :
-        scale(8.0f),
-        lr(0.05f),
-        early_stop(1)
+        vigilance(0.9f),
+        mlr(0.5f),
+        alr(0.1f)
         {}
     };
 
@@ -62,14 +64,12 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_acts;
-
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
     Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-    
+
     // --- kernels ---
 
     void forward(
@@ -78,10 +78,15 @@ private:
         const Params &params
     );
 
+    void backward(
+        const Int2 &column_pos,
+        int vli,
+        const Params &params
+    );
+
     void learn(
         const Int2 &column_pos,
-        Int_Buffer_View input_cis,
-        int vli,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
