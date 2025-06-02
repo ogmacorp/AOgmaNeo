@@ -30,13 +30,11 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights_match;
-        Byte_Buffer weights_act;
+        Byte_Buffer weights;
 
-        Int_Buffer hidden_sums_match;
-        Int_Buffer hidden_sums_act;
+        Int_Buffer hidden_sums;
 
-        Byte_Buffer recons_act;
+        Byte_Buffer recons;
 
         float importance;
 
@@ -48,14 +46,12 @@ public:
 
     struct Params {
         float vigilance; // ART vigilance
-        float mlr; // match learning rate
-        float alr; // act learning rate
+        float lr; // learning rate
 
         Params()
         :
-        vigilance(0.9f),
-        mlr(0.5f),
-        alr(0.1f)
+        vigilance(0.95f),
+        lr(0.1f)
         {}
     };
 
@@ -63,6 +59,8 @@ private:
     Int3 hidden_size; // size of hidden/output layer
 
     Int_Buffer hidden_cis;
+
+    Byte_Buffer hidden_learn_flags;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
