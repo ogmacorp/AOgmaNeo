@@ -36,11 +36,13 @@ public:
     struct Params {
         float scale; // scale of activations
         float lr; // weight learning rate
+        float stability; // stability of weights
 
         Params()
         :
-        scale(8.0f),
-        lr(0.1f)
+        scale(4.0f),
+        lr(0.1f),
+        stability(2.0f)
         {}
     };
 
