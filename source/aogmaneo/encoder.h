@@ -34,6 +34,8 @@ public:
 
         Int_Buffer recon_sums;
 
+        Float_Buffer deltas;
+
         float importance;
 
         Visible_Layer()
