@@ -344,13 +344,13 @@ void Encoder::merge(
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
             for (int i = 0; i < vl.protos.size(); i++) {
-                float total_mean = 0.0f;
+                float total = 0.0f;
 
                 for (int e = 0; e < encoders.size(); e++) {
-                    total_mean += encoders[e]->visible_layers[vli].protos[i];
+                    total += encoders[e]->visible_layers[vli].protos[i];
                 }
 
-                vl.protos[i] = total_mean / encoders.size();
+                vl.protos[i] = total / encoders.size();
             }
         }
 
