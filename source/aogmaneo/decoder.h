@@ -36,13 +36,11 @@ public:
     struct Params {
         float scale; // scale of activations
         float lr; // weight learning rate
-        float stability; // stability of weights
 
         Params()
         :
-        scale(4.0f),
-        lr(0.1f),
-        stability(2.0f)
+        scale(8.0f),
+        lr(0.1f)
         {}
     };
 
@@ -55,8 +53,6 @@ private:
     Float_Buffer hidden_acts;
 
     Float_Buffer dendrite_acts;
-
-    Int_Buffer dendrite_deltas;
 
     // visible layers and descs
     Array<Visible_Layer> visible_layers;
@@ -74,7 +70,6 @@ private:
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
         Int_Buffer_View hidden_target_cis,
-        unsigned long* state,
         const Params &params
     );
 
