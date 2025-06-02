@@ -145,8 +145,8 @@ void Encoder::backward(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        Byte recon_match = 0;
-        Byte recon_act = 255;
+        int recon_match = 0;
+        int count = 0;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -163,13 +163,12 @@ void Encoder::backward(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    recon_match = max(recon_match, vl.weights_match[wi]);
-                    recon_act = min(recon_act, vl.weights_act[wi]);
+                    recon_match += vl.weights_match[wi];
+                    count++;
                 }
             }
 
-        vl.recons_match[visible_cell_index] = recon_match;
-        vl.recons_act[visible_cell_index] = recon_act;
+        vl.recons_match[visible_cell_index] = recon_match / max(1, count);
     }
 }
 
@@ -223,7 +222,6 @@ void Encoder::learn(
                     int visible_cell_index = vc + visible_cells_start;
 
                     Byte recon_match = vl.recons_match[visible_cell_index];
-                    Byte recon_act = vl.recons_act[visible_cell_index];
 
                     Byte input = (vc == in_ci) * 255;
 
@@ -231,7 +229,7 @@ void Encoder::learn(
 
                     vl.weights_match[wi] = min(255, vl.weights_match[wi] + max(recon_match, input) - recon_match);
 
-                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.lr * (min(recon_act, recon_match) - recon_act)));
+                    vl.weights_act[wi] = max(0, vl.weights_act[wi] + roundf2i(params.lr * (min(vl.weights_act[wi], vl.weights_match[wi]) - vl.weights_act[wi])));
                 }
             }
     }
@@ -277,7 +275,6 @@ void Encoder::init_random(
         vl.hidden_sums.resize(num_hidden_cells);
 
         vl.recons_match.resize(num_visible_cells);
-        vl.recons_act.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -426,7 +423,6 @@ void Encoder::read(
         vl.hidden_sums.resize(num_hidden_cells);
 
         vl.recons_match.resize(num_visible_cells);
-        vl.recons_act.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
