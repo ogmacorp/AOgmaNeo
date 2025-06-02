@@ -75,6 +75,7 @@ private:
 
     void backward(
         const Int2 &column_pos,
+        Int_Buffer_View input_cis,
         int vli,
         const Params &params
     );
