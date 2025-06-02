@@ -149,7 +149,8 @@ void Encoder::backward(
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        Byte recon = 255;
+        int recon = 0;
+        int count = 0;
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -166,11 +167,12 @@ void Encoder::backward(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    recon = min(recon, vl.weights[wi]);
+                    recon += vl.weights[wi];
+                    count++;
                 }
             }
 
-        vl.recons[visible_cell_index] = recon;
+        vl.recons[visible_cell_index] = recon / max(1, count);
     }
 }
 
