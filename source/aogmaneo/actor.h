@@ -71,8 +71,6 @@ private:
     Float_Buffer hidden_qs;
     Float_Buffer hidden_ps;
 
-    Float_Buffer hidden_weights;
-
     Float_Buffer dendrite_qs;
     Float_Buffer dendrite_ps;
 

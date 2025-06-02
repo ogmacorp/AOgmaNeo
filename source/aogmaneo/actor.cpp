@@ -531,8 +531,6 @@ void Actor::init_random(
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
 
-    hidden_weights.resize(num_hidden_cells);
-
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
 
@@ -729,8 +727,6 @@ void Actor::read(
 
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
-
-    hidden_weights.resize(num_hidden_cells);
 
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
