@@ -73,7 +73,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.protos[wi];
 
-                    hidden_acts[hidden_cell_index] -= diff * diff * influence;
+                    hidden_acts[hidden_cell_index] -= diff * diff * vl.weights[wi] * influence;
                 }
             }
     }
@@ -139,6 +139,7 @@ void Encoder::forward(
                         float diff = in_value - vl.protos[wi];
 
                         vl.protos[wi] += rate * diff;
+                        vl.weights[wi] += rate * 
                     }
             }
 

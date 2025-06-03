@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer protos;
+        Float_Buffer weights;
         
         float importance;
 
