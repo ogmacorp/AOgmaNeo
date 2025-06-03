@@ -32,6 +32,8 @@ public:
     struct Visible_Layer {
         Float_Buffer protos;
         Float_Buffer weights;
+
+        Float_Buffer recons;
         
         float importance;
 
@@ -67,12 +69,25 @@ private:
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
+
     // --- kernels ---
     
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        bool learn_enabled,
+        const Params &params
+    );
+
+    void backward(
+        const Int2 &column_pos,
+        int vli,
+        const Params &params
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
