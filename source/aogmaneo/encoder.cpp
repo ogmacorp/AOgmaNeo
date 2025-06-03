@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -68,7 +69,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.protos[wi];
 
-                    hidden_acts[hidden_cell_index] -= diff * diff * (1.0f - vl.weights[wi]) * vl.importance;
+                    hidden_acts[hidden_cell_index] -= diff * diff * vl.importance;
                 }
             }
     }
@@ -201,11 +202,13 @@ void Encoder::learn(
 
                     float in_value = (in_ci + 0.5f) * vld_size_z_inv;
 
-                    float diff = in_value - vl.protos[wi];
-                    float error = in_value - vl.recons[visible_column_index];
+                    float diff_proto = in_value - vl.protos[wi];
+                    float diff_weight = in_value - vl.weights[wi];
 
-                    vl.protos[wi] = min(1.0f, max(0.0f, vl.protos[wi] + rate * diff));
-                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + rate * error));
+                    float recon_error = in_value - vl.recons[visible_column_index];
+
+                    vl.protos[wi] = min(1.0f, max(0.0f, vl.protos[wi] + rate * recon_error));
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + rate * diff_weight));
                 }
         }
 
@@ -243,12 +246,11 @@ void Encoder::init_random(
         int area = diam * diam;
 
         vl.protos.resize(num_hidden_cells * area);
-        vl.weights.resize(vl.protos.size());
 
-        for (int i = 0; i < vl.protos.size(); i++) {
+        for (int i = 0; i < vl.protos.size(); i++)
             vl.protos[i] = randf();
-            vl.weights[i] = randf();
-        }
+
+        vl.weights = Float_Buffer(vl.protos.size(), 0.0f);
 
         vl.recons.resize(num_visible_columns);
     }
