@@ -68,7 +68,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.protos[wi];
 
-                    hidden_acts[hidden_cell_index] -= abs(diff) * vl.weights[wi] * vl.importance;
+                    hidden_acts[hidden_cell_index] -= diff * diff * (1.0f - vl.weights[wi]) * vl.importance;
                 }
             }
     }
@@ -124,7 +124,7 @@ void Encoder::backward(
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
     float recon = 0.0f;
-    float div = 0.0f;
+    int count = 0;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -141,12 +141,12 @@ void Encoder::backward(
 
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * hidden_column_index));
 
-                recon += vl.protos[wi] * vl.weights[wi];
-                div += vl.weights[wi];
+                recon += vl.weights[wi];
+                count++;
             }
         }
 
-    vl.recons[visible_column_index] = recon / max(limit_small, div);
+    vl.recons[visible_column_index] = recon / max(1, count);
 }
 
 void Encoder::learn(
@@ -202,12 +202,10 @@ void Encoder::learn(
                     float in_value = (in_ci + 0.5f) * vld_size_z_inv;
 
                     float diff = in_value - vl.protos[wi];
+                    float error = in_value - vl.recons[visible_column_index];
 
-                    vl.protos[wi] += rate * diff;
-
-                    float recon_error = in_value - vl.recons[visible_column_index];
-
-                    vl.weights[wi] = max(0.0f, vl.weights[wi] + rate * recon_error);
+                    vl.protos[wi] = min(1.0f, max(0.0f, vl.protos[wi] + rate * diff));
+                    vl.weights[wi] = min(1.0f, max(0.0f, vl.weights[wi] + rate * error));
                 }
         }
 
@@ -245,11 +243,12 @@ void Encoder::init_random(
         int area = diam * diam;
 
         vl.protos.resize(num_hidden_cells * area);
+        vl.weights.resize(vl.protos.size());
 
-        for (int i = 0; i < vl.protos.size(); i++)
+        for (int i = 0; i < vl.protos.size(); i++) {
             vl.protos[i] = randf();
-
-        vl.weights = Float_Buffer(vl.protos.size(), 1.0f);
+            vl.weights[i] = randf();
+        }
 
         vl.recons.resize(num_visible_columns);
     }
