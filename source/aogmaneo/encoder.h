@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,8 +30,14 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer protos;
-        
+        Byte_Buffer weights_match;
+        Byte_Buffer weights_act;
+
+        Int_Buffer hidden_sums;
+
+        Byte_Buffer recons_match;
+        Byte_Buffer recons_act;
+
         float importance;
 
         Visible_Layer()
@@ -41,21 +47,11 @@ public:
     };
 
     struct Params {
-        float falloff; // SOM neighborhood falloff
-        float choice; // choose used columns more
-        float lr; // learning rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // second stage inhibition radius
-        int n_radius; // SOM neighborhood radius
+        float lr; // act learning rate
 
         Params()
         :
-        falloff(0.99f),
-        choice(0.1f),
-        lr(0.1f),
-        active_ratio(0.1f),
-        l_radius(2),
-        n_radius(1)
+        lr(0.02f)
         {}
     };
 
@@ -64,21 +60,23 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Float_Buffer hidden_resources;
-
-    Float_Buffer hidden_acts;
-
-    Float_Buffer hidden_comparisons;
-
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
+    Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
+
     // --- kernels ---
-    
+
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
+        const Params &params
+    );
+
+    void backward(
+        const Int2 &column_pos,
+        int vli,
         const Params &params
     );
 
@@ -101,9 +99,7 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state() {
-        hidden_cis.fill(0);
-    }
+    void clear_state();
 
     // serialization
     long size() const; // returns size in bytes
