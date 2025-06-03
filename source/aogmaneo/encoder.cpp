@@ -25,8 +25,6 @@ void Encoder::forward(
         hidden_acts[hidden_cell_index] = 0.0f;
     }
 
-    float count = 0.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -51,7 +49,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        count += vl.importance * sub_count;
+        float influence = vl.importance * sqrtf(1.0f / sub_count);
 
         const float vld_size_z_inv = 1.0f / vld.size.z;
 
@@ -73,7 +71,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.protos[wi];
 
-                    hidden_acts[hidden_cell_index] -= diff * diff * vl.importance;
+                    hidden_acts[hidden_cell_index] -= diff * diff * influence;
                 }
             }
     }
@@ -83,8 +81,6 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] /= max(limit_small, count);
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -401,13 +397,12 @@ void Encoder::merge(
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
         
             for (int i = 0; i < vl.protos.size(); i++) {
-                float total_mean = 0.0f;
+                float total = 0.0f;
 
-                for (int e = 0; e < encoders.size(); e++) {
-                    total_mean += encoders[e]->visible_layers[vli].protos[i];
-                }
+                for (int e = 0; e < encoders.size(); e++)
+                    total += encoders[e]->visible_layers[vli].protos[i];
 
-                vl.protos[i] = total_mean / encoders.size();
+                vl.protos[i] = total / encoders.size();
             }
         }
 
