@@ -30,8 +30,6 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer q_weights_base;
-        Float_Buffer traces_base;
         Float_Buffer q_weights;
         Float_Buffer traces;
 
@@ -72,8 +70,6 @@ private:
 
     Float_Buffer dendrite_ps;
     Float_Buffer dendrite_ps_prev;
-
-    Float_Buffer hidden_values; // hidden value function output buffer
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
