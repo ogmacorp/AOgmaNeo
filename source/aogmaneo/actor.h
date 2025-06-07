@@ -51,7 +51,7 @@ public:
 
         Params()
         :
-        qlr(0.001f),
+        qlr(0.0f),
         plr(0.1f),
         discount(0.99f),
         n_steps(8),
