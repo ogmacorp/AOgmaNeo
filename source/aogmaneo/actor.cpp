@@ -81,7 +81,8 @@ void Actor::forward(
 
                         int wi = di + wi_start;
 
-                        dendrite_ps[dendrite_index] += vl.q_weights[wi];
+                        dendrite_qs[dendrite_index] += vl.q_weights[wi];
+                        dendrite_ps[dendrite_index] += vl.p_weights[wi];
                     }
                 }
             }
