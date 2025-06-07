@@ -87,7 +87,6 @@ private:
         Int_Buffer_View hidden_target_cis_prev,
         float reward,
         bool learn_enabled,
-        unsigned long* state,
         const Params &params
     );
 

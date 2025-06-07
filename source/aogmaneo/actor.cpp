@@ -16,7 +16,6 @@ void Actor::forward(
     Int_Buffer_View hidden_target_cis_prev,
     float reward,
     bool learn_enabled,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -275,7 +274,7 @@ void Actor::forward(
 
                                 if (vc == in_ci_prev && hc == target_ci) { // Watkins Q lambda
                                     if (target_ci == max_q_ci_prev)
-                                        vl.traces[wi] = dendrite_qs_prev[dendrite_index]; // replacing trace
+                                        vl.traces[wi] = max(vl.traces[wi], dendrite_qs_prev[dendrite_index]); // replacing trace
                                     else
                                         vl.traces[wi] = 0.0f;
                                 }
@@ -368,14 +367,9 @@ void Actor::step(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
     // forward kernel
-    unsigned int base_state = rand();
-
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, reward, learn_enabled, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, reward, learn_enabled, params);
 
     // update prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
