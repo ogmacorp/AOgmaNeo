@@ -166,6 +166,25 @@ void Actor::forward(
         max_p = max(max_p, p);
     }
 
+    // softmax p
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p);
+
+        total += hidden_ps[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_ps[hidden_cell_index] *= total_inv;
+    }
+
     // choose policy
     int max_index = 0;
     float max_activation = limit_min;
