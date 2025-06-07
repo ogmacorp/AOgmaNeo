@@ -134,7 +134,7 @@ void Actor::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
-        float activation = hidden_ps[hidden_cell_index] + hidden_qs[hidden_cell_index] * params.reweight;
+        float activation = hidden_ps[hidden_cell_index] + hidden_qs[hidden_cell_index];
 
         if (activation > max_activation) {
             max_activation = activation;
