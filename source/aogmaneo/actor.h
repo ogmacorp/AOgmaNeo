@@ -45,6 +45,7 @@ public:
     struct Params {
         float qlr; // Q learning rate
         float plr; // policy learning rate
+        float reweight; // how much to reweight policy by q
         float discount; // discount fActor
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
@@ -53,6 +54,7 @@ public:
         :
         qlr(0.001f),
         plr(0.01f),
+        reweight(2.0f),
         discount(0.99f),
         n_steps(8),
         history_iters(16)
@@ -73,8 +75,6 @@ private:
 
     Float_Buffer dendrite_qs;
     Float_Buffer dendrite_ps;
-
-    Float_Buffer hidden_weights;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 

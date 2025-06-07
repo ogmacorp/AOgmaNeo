@@ -79,7 +79,7 @@ void Actor::forward(
 
                         int wi = di + wi_start;
 
-                        dendrite_ps[dendrite_index] += vl.p_weights[wi];
+                        dendrite_ps[dendrite_index] += vl.q_weights[wi];
                     }
                 }
             }
@@ -89,7 +89,7 @@ void Actor::forward(
     const float dendrite_scale = sqrtf(1.0f / count);
     const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
-    int max_index = 0;
+    float max_q = limit_min;
     float max_p = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -97,29 +97,78 @@ void Actor::forward(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
+        float q = 0.0f;
         float p = 0.0f;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
-            float act = dendrite_ps[dendrite_index] * dendrite_scale;
+            // q
+            {
+                float act = dendrite_qs[dendrite_index] * dendrite_scale;
 
-            //dendrite_ps[dendrite_index] = sigmoidf(act); // store derivative
+                dendrite_qs[dendrite_index] = sigmoidf(act); // store derivative
 
-            p += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+                q += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+            }
+
+            // p
+            {
+                float act = dendrite_ps[dendrite_index] * dendrite_scale;
+
+                dendrite_ps[dendrite_index] = sigmoidf(act); // store derivative
+
+                p += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+            }
         }
 
+        q *= activation_scale;
         p *= activation_scale;
 
-        //hidden_ps[hidden_cell_index] = p;
+        hidden_qs[hidden_cell_index] = q;
+        hidden_ps[hidden_cell_index] = p;
 
-        if (p > max_p) {
-            max_p = p;
-            max_index = hc;
+        max_q = max(max_q, q);
+        max_p = max(max_p, p);
+    }
+
+    // softmax
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p) * expf(hidden_qs[hidden_cell_index] - max_q);
+
+        total += hidden_ps[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_ps[hidden_cell_index] *= total_inv;
+    }
+
+    float cusp = randf(state);
+
+    int select_index = 0;
+    float sum_so_far = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        sum_so_far += hidden_ps[hidden_cell_index];
+
+        if (sum_so_far >= cusp) {
+            select_index = hc;
+
+            break;
         }
     }
     
-    hidden_cis[hidden_column_index] = max_index;
+    hidden_cis[hidden_column_index] = select_index;
 }
 
 void Actor::learn(
@@ -229,31 +278,6 @@ void Actor::learn(
         max_q_next = max(max_q_next, q);
     }
 
-    // find next q
-    float q_next = 0.0f;
-
-    {
-        float total = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-        
-            hidden_weights[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q_next);
-
-            total += hidden_weights[hidden_cell_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            hidden_weights[hidden_cell_index] *= total_inv;
-
-            q_next += hidden_weights[hidden_cell_index] * hidden_qs[hidden_cell_index];
-        }
-    }
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -360,7 +384,7 @@ void Actor::learn(
         max_p_prev = max(max_p_prev, p);
     }
 
-    float target_q = q_next;
+    float target_q = max_q_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         target_q = history_samples[t - n].reward + params.discount * target_q;
@@ -370,30 +394,6 @@ void Actor::learn(
     float td_error = target_q - q_prev;
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
-
-    // find weights
-    {
-        float total = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-        
-            hidden_weights[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q_prev);
-
-            total += hidden_weights[hidden_cell_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            hidden_weights[hidden_cell_index] *= total_inv;
-        }
-    }
-
-    // AWAC weight
-    float weight = hidden_weights[hidden_cell_index_target] * hidden_size.z; // multiply by hidden size to even out scaling a bit
 
     // softmax p
     {
@@ -432,7 +432,7 @@ void Actor::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float p_error = params.plr * weight * ((hc == target_ci) - hidden_ps[hidden_cell_index]);
+        float p_error = params.plr * ((hc == target_ci) - hidden_ps[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -550,8 +550,6 @@ void Actor::init_random(
 
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
-
-    hidden_weights.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -746,8 +744,6 @@ void Actor::read(
 
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
-
-    hidden_weights.resize(num_hidden_cells);
 
     int num_visible_layers;
 
