@@ -393,7 +393,7 @@ void Actor::learn(
     }
 
     // AWAC weight
-    float weight = hidden_weights[hidden_cell_index_target];
+    float weight = hidden_weights[hidden_cell_index_target] * hidden_size.z; // multiply by hidden size to even out scaling a bit
 
     // softmax p
     {
