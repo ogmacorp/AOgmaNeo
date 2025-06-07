@@ -171,7 +171,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        float td_error = reward + params.discount * (value_base + max_activation) - value_prev;
+        float td_error = reward + params.discount * (value_base + max_q) - value_prev;
 
         float reinforcement = params.qlr * td_error;
 
