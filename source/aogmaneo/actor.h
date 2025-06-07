@@ -163,9 +163,14 @@ public:
         return hidden_cis;
     }
 
-    // get hidden activations (probabilities) for actions
-    const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
+    // get hidden activations (q values) for actions
+    const Float_Buffer &get_hidden_qs() const {
+        return hidden_qs;
+    }
+
+    // get hidden activations (partial probabilities) for actions
+    const Float_Buffer &get_hidden_ps() const {
+        return hidden_ps;
     }
 
     // get the hidden size
