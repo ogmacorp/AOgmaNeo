@@ -29,6 +29,7 @@ void Actor::forward(
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
 
+            dendrite_qs[dendrite_index] = 0.0f;
             dendrite_ps[dendrite_index] = 0.0f;
         }
     }
