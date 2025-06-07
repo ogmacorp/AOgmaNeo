@@ -379,7 +379,7 @@ void Actor::learn(
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
     // AWAC weight
-    float weight = expf(hidden_qs[hidden_cell_index_target] - max_q_prev); // multiplying by hidden_size.z makes this weight value ~1 upon initialization
+    float weight = expf(hidden_qs[hidden_cell_index_target] - max_q_prev);
 
     // softmax p
     {
