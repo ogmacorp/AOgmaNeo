@@ -51,8 +51,8 @@ public:
 
         Params()
         :
-        qlr(0.002f),
-        plr(0.2f),
+        qlr(0.001f),
+        plr(0.1f),
         discount(0.99f),
         n_steps(8),
         history_iters(16)

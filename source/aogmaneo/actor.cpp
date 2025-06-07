@@ -79,7 +79,7 @@ void Actor::forward(
 
                         int wi = di + wi_start;
 
-                        dendrite_ps[dendrite_index] += vl.p_weights[wi];
+                        dendrite_ps[dendrite_index] += vl.q_weights[wi];
                     }
                 }
             }
@@ -104,14 +104,14 @@ void Actor::forward(
 
             float act = dendrite_ps[dendrite_index] * dendrite_scale;
 
-            dendrite_ps[dendrite_index] = sigmoidf(act); // store derivative
+            //dendrite_ps[dendrite_index] = sigmoidf(act); // store derivative
 
             p += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
         }
 
         p *= activation_scale;
 
-        hidden_ps[hidden_cell_index] = p;
+        //hidden_ps[hidden_cell_index] = p;
 
         if (p > max_p) {
             max_p = p;
@@ -229,6 +229,31 @@ void Actor::learn(
         max_q_next = max(max_q_next, q);
     }
 
+    // find next q
+    float q_next = 0.0f;
+
+    {
+        float total = 0.0f;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+        
+            hidden_weights[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q_next);
+
+            total += hidden_weights[hidden_cell_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_weights[hidden_cell_index] *= total_inv;
+
+            q_next += hidden_weights[hidden_cell_index] * hidden_qs[hidden_cell_index];
+        }
+    }
+
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -335,7 +360,7 @@ void Actor::learn(
         max_p_prev = max(max_p_prev, p);
     }
 
-    float target_q = max_q_next;
+    float target_q = q_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         target_q = history_samples[t - n].reward + params.discount * target_q;
