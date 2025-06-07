@@ -49,6 +49,8 @@ public:
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // standard ART vigilance
         float lr; // learning rate
+        float active_ratio; // 2nd stage inhibition activity ratio
+        int l_radius; // second stage inhibition radius
         int n_radius; // neighborhood radius
 
         Params()
@@ -57,6 +59,8 @@ public:
         choice(0.01f),
         vigilance(0.7f),
         lr(0.1f),
+        active_ratio(0.1f),
+        l_radius(2),
         n_radius(1)
         {}
     };
@@ -70,6 +74,8 @@ private:
 
     Byte_Buffer hidden_committed_flags;
 
+    Float_Buffer hidden_comparisons;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
@@ -79,7 +85,12 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        bool learn_enabled,
+        const Params &params
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
