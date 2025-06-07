@@ -144,7 +144,7 @@ void Actor::forward(
         
             hidden_qs[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q);
 
-            total += hidden_ps[hidden_cell_index];
+            total += hidden_qs[hidden_cell_index];
         }
 
         float total_inv = 1.0f / max(limit_small, total);
