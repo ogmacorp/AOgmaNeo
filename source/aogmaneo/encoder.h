@@ -55,9 +55,9 @@ public:
         :
         falloff(0.99f),
         choice(0.01f),
-        vigilance(0.8f),
+        vigilance(0.7f),
         lr(0.1f),
-        n_radius(2)
+        n_radius(1)
         {}
     };
 
