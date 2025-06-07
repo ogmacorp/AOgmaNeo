@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -195,8 +194,6 @@ void Actor::forward(
 
     if (learn_enabled) {
         float td_error = reward + params.discount * max_q - q_prev;
-
-        std::cout << max_q << " " << q_prev << std::endl;
 
         float reinforcement = params.qlr * min(params.clip, max(-params.clip, td_error));
 
