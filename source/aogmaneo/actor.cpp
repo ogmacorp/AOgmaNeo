@@ -138,7 +138,7 @@ void Actor::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
-        hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p) * expf(hidden_qs[hidden_cell_index] - max_q);
+        hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p + hidden_qs[hidden_cell_index] - max_q);
 
         total += hidden_ps[hidden_cell_index];
     }
