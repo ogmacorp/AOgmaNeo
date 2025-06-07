@@ -54,7 +54,7 @@ void Encoder::forward(
             vl.hidden_totals[hidden_cell_index] = 0.0f;
         }
 
-        const float vld_size_z_inv = 1.0f / vld.size.z;
+        const float vld_size_z_inv = 1.0f / (vld.size.z - 1);
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -62,7 +62,7 @@ void Encoder::forward(
 
                 int in_ci = vl_input_cis[visible_column_index];
 
-                float in_value = (in_ci + 0.5f) * vld_size_z_inv;
+                float in_value = in_ci * vld_size_z_inv;
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -104,13 +104,13 @@ void Encoder::forward(
         sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
 
-        float activation = sum / (params.choice + total);
-
         float match = sum / count;
 
-        hidden_learn_flags[hidden_cell_index] = (match >= params.vigilance);
+        hidden_learn_flags[hidden_cell_index] = (match >= params.vigilance || !hidden_committed_flags[hidden_cell_index]);
 
-        if ((!hidden_commit_flags[hidden_cell_index] || hidden_learn_flags[hidden_cell_index]) && activation > max_activation) {
+        float activation = sum / (params.choice + total);
+
+        if (hidden_learn_flags[hidden_cell_index] && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -136,7 +136,9 @@ void Encoder::forward(
             if (!hidden_learn_flags[hidden_cell_index])
                 continue;
 
-            float rate = (hidden_commit_flags[hidden_cell_index] ? params.lr : 1.0f) * powf(params.falloff, abs(dhc));
+            bool committed_flag = hidden_committed_flags[hidden_cell_index];
+
+            float rate = (!committed_flag && dhc == 0 ? 1.0f : params.lr) * powf(params.falloff, abs(dhc));
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];
@@ -159,7 +161,7 @@ void Encoder::forward(
 
                 Int_Buffer_View vl_input_cis = input_cis[vli];
 
-                const float vld_size_z_inv = 1.0f / vld.size.z;
+                const float vld_size_z_inv = 1.0f / (vld.size.z - 1);
 
                 for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
                     for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -167,7 +169,7 @@ void Encoder::forward(
 
                         int in_ci = vl_input_cis[visible_column_index];
 
-                        float in_value = (in_ci + 0.5f) * vld_size_z_inv;
+                        float in_value = in_ci * vld_size_z_inv;
 
                         Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
@@ -178,7 +180,8 @@ void Encoder::forward(
                     }
             }
 
-            hidden_commit_flags[hidden_cell_index] = true;
+            if (dhc == 0)
+                hidden_committed_flags[hidden_cell_index] = true;
         }
     }
 }
@@ -223,7 +226,7 @@ void Encoder::init_random(
 
     hidden_learn_flags.resize(num_hidden_cells);
 
-    hidden_commit_flags = Byte_Buffer(num_hidden_cells, false);
+    hidden_committed_flags = Byte_Buffer(num_hidden_cells, false);
 }
 
 void Encoder::step(
@@ -243,7 +246,7 @@ void Encoder::clear_state() {
 }
 
 long Encoder::size() const {
-    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_commit_flags.size() * sizeof(Byte) + sizeof(int);
+    long size = sizeof(Int3) + hidden_cis.size() * sizeof(int) + hidden_committed_flags.size() * sizeof(Byte) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -277,7 +280,7 @@ void Encoder::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
 
-    writer.write(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
+    writer.write(&hidden_committed_flags[0], hidden_committed_flags.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 
@@ -311,9 +314,9 @@ void Encoder::read(
 
     hidden_learn_flags.resize(num_hidden_cells);
 
-    hidden_commit_flags.resize(num_hidden_cells);
+    hidden_committed_flags.resize(num_hidden_cells);
 
-    reader.read(&hidden_commit_flags[0], hidden_commit_flags.size() * sizeof(Byte));
+    reader.read(&hidden_committed_flags[0], hidden_committed_flags.size() * sizeof(Byte));
 
     int num_visible_layers = visible_layers.size();
 

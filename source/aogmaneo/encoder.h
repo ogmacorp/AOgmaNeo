@@ -55,9 +55,9 @@ public:
         :
         falloff(0.99f),
         choice(0.01f),
-        vigilance(0.95f),
-        lr(0.5f),
-        n_radius(1)
+        vigilance(0.8f),
+        lr(0.1f),
+        n_radius(2)
         {}
     };
 
@@ -68,7 +68,7 @@ private:
 
     Byte_Buffer hidden_learn_flags;
 
-    Byte_Buffer hidden_commit_flags;
+    Byte_Buffer hidden_committed_flags;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
