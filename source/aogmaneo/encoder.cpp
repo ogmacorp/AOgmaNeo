@@ -175,7 +175,7 @@ void Encoder::learn(
         if (!hidden_learn_flags[hidden_cell_index])
             continue;
 
-        float rate = (!hidden_committed_flags[hidden_cell_index] && dhc == 0 ? 1.0f : params.lr) * powf(params.falloff, abs(dhc));
+        float rate = (!hidden_committed_flags[hidden_cell_index] ? 1.0f : params.lr) * powf(params.falloff, abs(dhc));
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -217,8 +217,7 @@ void Encoder::learn(
                 }
         }
 
-        if (dhc == 0)
-            hidden_committed_flags[hidden_cell_index] = true;
+        hidden_committed_flags[hidden_cell_index] = true;
     }
 }
 
