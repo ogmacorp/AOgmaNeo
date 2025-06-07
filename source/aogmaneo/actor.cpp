@@ -131,18 +131,18 @@ void Actor::forward(
             {
                 float act = dendrite_qs[dendrite_index] * dendrite_scale;
 
-                dendrite_qs[dendrite_index] = sigmoidf(act); // store derivative
+                dendrite_qs[dendrite_index] = (act > 0.0f); // store derivative
 
-                q += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+                q += max(0.0f, act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
             }
 
             // p
             {
                 float act = dendrite_ps[dendrite_index] * dendrite_scale;
 
-                dendrite_ps[dendrite_index] = sigmoidf(act); // store derivative
+                dendrite_ps[dendrite_index] = (act > 0.0f); // store derivative
 
-                p += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+                p += max(0.0f, act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
             }
         }
 
@@ -195,7 +195,7 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * max_q - q_prev;
 
-        float reinforcement = params.qlr * min(params.clip, max(-params.clip, td_error));
+        float reinforcement = params.qlr * td_error;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
@@ -260,8 +260,6 @@ void Actor::forward(
                                 if (vc == in_ci_prev && hc == target_ci) { // Watkins Q lambda
                                     if (target_ci == max_q_ci_prev)
                                         vl.traces[wi] = max(vl.traces[wi], dendrite_qs_prev[dendrite_index]); // replacing trace
-                                    else
-                                        vl.traces[wi] = 0.0f;
                                 }
 
                                 vl.q_weights[wi] += reinforcement * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * vl.traces[wi]; // apply sign deferred here so have positive traces always

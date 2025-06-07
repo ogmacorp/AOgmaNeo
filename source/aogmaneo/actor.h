@@ -43,15 +43,13 @@ public:
         float plr; // bc policy learning rate
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
-        float clip; // td error clip
 
         Params()
         :
-        qlr(0.01f),
-        plr(0.1f),
+        qlr(0.001f),
+        plr(0.01f),
         discount(0.99f),
-        trace_decay(0.97f),
-        clip(4.0f)
+        trace_decay(0.97f)
         {}
     };
 
