@@ -51,7 +51,7 @@ void Encoder::forward(
 
         int hidden_stride = vld.size.z * diam * diam;
 
-        const float influence = vl.importance * sqrtf(1.0f / sub_count) / 255.0f;
+        const float influence = vl.importance * sqrtf(1.0f / sub_count) / 127.0f;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -180,13 +180,11 @@ void Encoder::learn(
             num_higher++;
 
         // re-use recon_sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf(min(0, recon_sum - count * 127) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 127.0f * ((vc == target_ci) - expf(min(0, recon_sum - count * 127) * recon_scale)), state);
     }
 
     if (num_higher == 0)
         return;
-
-    const float byte_inv = 1.0f / 255.0f;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
         for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
@@ -207,8 +205,6 @@ void Encoder::learn(
                     int visible_cell_index = vc + visible_cells_start;
 
                     int wi = vc + wi_start;
-
-                    float w = vl.weights[wi] * byte_inv;
 
                     vl.weights[wi] = min(255, max(0, vl.weights[wi] + vl.recon_sums[visible_cell_index]));
                 }
@@ -251,8 +247,6 @@ void Encoder::init_random(
             vl.weights[i] = 127 + (rand() % init_weight_noisei);
 
         vl.recon_sums.resize(num_visible_cells);
-
-        vl.deltas.resize(num_visible_cells);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -400,8 +394,6 @@ void Encoder::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.recon_sums.resize(num_visible_cells);
-
-        vl.deltas.resize(num_visible_cells);
 
         reader.read(&vl.importance, sizeof(float));
     }
