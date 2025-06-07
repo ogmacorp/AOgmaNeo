@@ -52,9 +52,9 @@ public:
         Params()
         :
         qlr(0.002f),
-        plr(0.1f),
+        plr(0.2f),
         discount(0.99f),
-        n_steps(5),
+        n_steps(8),
         history_iters(16)
         {}
     };
