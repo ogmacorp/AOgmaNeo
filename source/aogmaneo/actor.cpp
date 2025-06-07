@@ -38,9 +38,7 @@ void Actor::forward(
         }
     }
 
-    float value_prev = hidden_qs_prev[target_ci + hidden_cells_start];
-
-    int value_dendrites_start = hidden_column_index * num_dendrites_per_cell;
+    float q_prev = hidden_qs_prev[target_ci + hidden_cells_start];
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -195,7 +193,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        float td_error = reward + params.discount * max_q - value_prev;
+        float td_error = reward + params.discount * max_q - q_prev;
 
         float reinforcement = params.qlr * td_error;
 
