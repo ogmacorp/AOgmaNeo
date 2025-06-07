@@ -74,6 +74,8 @@ private:
     Float_Buffer dendrite_qs;
     Float_Buffer dendrite_ps;
 
+    Float_Buffer hidden_weights;
+
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
     // visible layers and descriptors
