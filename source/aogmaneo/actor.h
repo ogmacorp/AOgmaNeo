@@ -52,7 +52,7 @@ public:
         Params()
         :
         qlr(0.002f),
-        plr(0.2f),
+        plr(0.05f),
         discount(0.99f),
         n_steps(8),
         history_iters(16)
@@ -73,6 +73,8 @@ private:
 
     Float_Buffer dendrite_qs;
     Float_Buffer dendrite_ps;
+
+    Float_Buffer hidden_weights;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
