@@ -44,14 +44,16 @@ public:
         float reweight; // weight to q policy
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
+        float td_clip; // td error clip
 
         Params()
         :
         qlr(0.1f),
         plr(0.1f),
-        reweight(0.5f),
+        reweight(0.0f),
         discount(0.99f),
-        trace_decay(0.97f)
+        trace_decay(0.97f),
+        td_clip(8.0f)
         {}
     };
 

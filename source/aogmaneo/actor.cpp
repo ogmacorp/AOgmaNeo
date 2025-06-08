@@ -218,7 +218,7 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * max_q - q_prev;
 
-        float reinforcement = params.qlr * td_error;
+        float reinforcement = params.qlr * min(params.td_clip, max(-params.td_clip, td_error));
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
