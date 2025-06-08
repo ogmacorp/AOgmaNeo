@@ -34,8 +34,6 @@ public:
 
         Int_Buffer recon_sums;
 
-        Float_Buffer deltas;
-
         float importance;
 
         Visible_Layer()
@@ -47,13 +45,11 @@ public:
     struct Params {
         float scale; // recon curve
         float lr; // learning rate
-        int early_stop; // if target of reconstruction is in top <this number> cells, stop early
 
         Params()
         :
-        scale(8.0f),
-        lr(0.05f),
-        early_stop(1)
+        scale(1.0f),
+        lr(0.05f)
         {}
     };
 
@@ -82,6 +78,7 @@ private:
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
         int vli,
+        unsigned long* state,
         const Params &params
     );
 
