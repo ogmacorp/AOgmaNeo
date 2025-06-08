@@ -156,6 +156,48 @@ void Actor::forward(
         max_p = max(max_p, p);
     }
 
+    // softmax q
+    {
+        float total = 0.0f;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+        
+            hidden_probs[hidden_cell_index] = expf(hidden_qs[hidden_cell_index] - max_q);
+
+            total += hidden_probs[hidden_cell_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_probs[hidden_cell_index] *= total_inv;
+        }
+    }
+
+    // softmax p
+    {
+        float total = 0.0f;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+        
+            hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p);
+
+            total += hidden_ps[hidden_cell_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_ps[hidden_cell_index] *= total_inv;
+        }
+    }
+
     // choose policy
     int max_index = 0;
     float max_activation = limit_min;
@@ -163,31 +205,12 @@ void Actor::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float activation = hidden_ps[hidden_cell_index] + hidden_qs[hidden_cell_index];
+        float activation = (1.0f - params.reweight) * hidden_ps[hidden_cell_index] + params.reweight * hidden_probs[hidden_cell_index];
 
         if (activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
-    }
-
-    // softmax p
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-    
-        hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p);
-
-        total += hidden_ps[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(limit_small, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_ps[hidden_cell_index] *= total_inv;
     }
 
     hidden_cis[hidden_column_index] = max_index;
@@ -329,6 +352,8 @@ void Actor::init_random(
     hidden_ps.resize(num_hidden_cells);
     hidden_qs_prev = Float_Buffer(num_hidden_cells, 0.0f);
     hidden_ps_prev = Float_Buffer(num_hidden_cells, 0.0f);
+
+    hidden_probs.resize(num_hidden_cells);
 }
 
 void Actor::step(
@@ -467,6 +492,8 @@ void Actor::read(
     hidden_ps.resize(num_hidden_cells);
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
+
+    hidden_probs.resize(num_hidden_cells);
 
     int num_visible_layers;
 

@@ -41,13 +41,15 @@ public:
     struct Params {
         float qlr; // value learning rate
         float plr; // bc policy learning rate
+        float reweight; // weight to q policy
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
 
         Params()
         :
         qlr(0.001f),
-        plr(0.01f),
+        plr(0.1f),
+        reweight(0.5f),
         discount(0.99f),
         trace_decay(0.97f)
         {}
@@ -70,6 +72,8 @@ private:
 
     Float_Buffer dendrite_ps;
     Float_Buffer dendrite_ps_prev;
+
+    Float_Buffer hidden_probs;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
