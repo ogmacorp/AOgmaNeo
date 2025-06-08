@@ -51,7 +51,7 @@ public:
         plr(0.001f),
         discount(0.99f),
         trace_decay(0.97f),
-        td_clip(16.0f)
+        td_clip(128.0f)
         {}
     };
 
@@ -81,6 +81,7 @@ private:
         Int_Buffer_View hidden_target_cis_prev,
         float reward,
         bool learn_enabled,
+        unsigned long* state,
         const Params &params
     );
 

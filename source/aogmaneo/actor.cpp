@@ -16,6 +16,7 @@ void Actor::forward(
     Int_Buffer_View hidden_target_cis_prev,
     float reward,
     bool learn_enabled,
+    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -153,7 +154,24 @@ void Actor::forward(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    float cusp = randf(state);
+
+    int select_index = 0;
+    float sum_so_far = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        sum_so_far += hidden_acts[hidden_cell_index];
+
+        if (sum_so_far >= cusp) {
+            select_index = hc;
+
+            break;
+        }
+    }
+    
+    hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
@@ -206,7 +224,7 @@ void Actor::forward(
                         int wi_base = offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index));
 
                         if (vc == in_ci_prev)
-                            vl.value_traces[wi_base] = 1.0f;
+                            vl.value_traces[wi_base] += 1.0f;
 
                         vl.value_weights[wi_base] += params.vlr * reinforcement * vl.value_traces[wi_base];
 
@@ -226,8 +244,8 @@ void Actor::forward(
 
                                 int wi = di + wi_start;
 
-                                if (vc == in_ci_prev && hc == target_ci)
-                                    vl.policy_traces[wi] = max(vl.policy_weights[wi], dendrite_acts_prev[dendrite_index]); // replacing trace
+                                if (vc == in_ci_prev)
+                                    vl.policy_traces[wi] += dendrite_acts_prev[dendrite_index]; // replacing trace
 
                                 vl.policy_weights[wi] += params.plr * reinforcement * vl.policy_traces[wi]; // apply sign deferred here so have positive traces always
                                 vl.policy_traces[wi] *= params.trace_decay;
@@ -303,10 +321,15 @@ void Actor::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
+    unsigned int base_state = rand();
+
     // forward kernel
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, reward, learn_enabled, params);
+    for (int i = 0; i < num_hidden_columns; i++) {
+        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, reward, learn_enabled, &state, params);
+    }
 
     // update prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
