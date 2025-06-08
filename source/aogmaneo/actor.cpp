@@ -89,6 +89,7 @@ void Actor::forward(
     const float dendrite_scale = sqrtf(1.0f / count);
     const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
+    int max_index = 0;
     float max_p = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -112,46 +113,13 @@ void Actor::forward(
 
         hidden_ps[hidden_cell_index] = p;
 
-        max_p = max(max_p, p);
-    }
-
-    // softmax
-    float total = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-    
-        hidden_ps[hidden_cell_index] = expf(hidden_ps[hidden_cell_index] - max_p);
-
-        total += hidden_ps[hidden_cell_index];
-    }
-
-    float total_inv = 1.0f / max(limit_small, total);
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_ps[hidden_cell_index] *= total_inv;
-    }
-
-    float cusp = randf(state);
-
-    int select_index = 0;
-    float sum_so_far = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        sum_so_far += hidden_ps[hidden_cell_index];
-
-        if (sum_so_far >= cusp) {
-            select_index = hc;
-
-            break;
+        if (p > max_p) {
+            max_p = p;
+            max_index = hc;
         }
     }
-    
-    hidden_cis[hidden_column_index] = select_index;
+
+    hidden_cis[hidden_column_index] = max_index;
 }
 
 void Actor::learn(
