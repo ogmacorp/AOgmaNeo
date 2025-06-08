@@ -47,7 +47,7 @@ public:
 
         Params()
         :
-        qlr(0.001f),
+        qlr(0.1f),
         plr(0.1f),
         reweight(0.5f),
         discount(0.99f),

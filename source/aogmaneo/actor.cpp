@@ -131,18 +131,18 @@ void Actor::forward(
             {
                 float act = dendrite_qs[dendrite_index] * dendrite_scale;
 
-                dendrite_qs[dendrite_index] = (act > 0.0f); // store derivative
+                dendrite_qs[dendrite_index] = sigmoidf(act); // store derivative
 
-                q += max(0.0f, act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+                q += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
             }
 
             // p
             {
                 float act = dendrite_ps[dendrite_index] * dendrite_scale;
 
-                dendrite_ps[dendrite_index] = (act > 0.0f); // store derivative
+                dendrite_ps[dendrite_index] = sigmoidf(act); // store derivative
 
-                p += max(0.0f, act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
+                p += softplusf(act) * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f);
             }
         }
 
