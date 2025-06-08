@@ -257,6 +257,8 @@ void Actor::init_random(
 
     hidden_acts.resize(num_hidden_cells);
     hidden_acts_prev = Float_Buffer(num_hidden_cells, 0.0f);
+
+    hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 }
 
 void Actor::step(
@@ -289,6 +291,8 @@ void Actor::clear_state() {
     hidden_acts_prev.fill(0.0f);
 
     dendrite_acts_prev.fill(0.0f);
+
+    hidden_values.fill(0.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
