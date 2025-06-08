@@ -33,15 +33,11 @@ public:
         Float_Buffer q_weights;
         Float_Buffer traces;
 
-        Float_Buffer p_weights;
-
         Int_Buffer input_cis_prev;
     };
 
     struct Params {
         float qlr; // value learning rate
-        float plr; // bc policy learning rate
-        float reweight; // weight to q policy
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
         float td_clip; // td error clip
@@ -49,11 +45,9 @@ public:
         Params()
         :
         qlr(0.1f),
-        plr(0.1f),
-        reweight(0.5f),
         discount(0.99f),
         trace_decay(0.97f),
-        td_clip(8.0f)
+        td_clip(16.0f)
         {}
     };
 
@@ -68,14 +62,6 @@ private:
 
     Float_Buffer dendrite_qs;
     Float_Buffer dendrite_qs_prev;
-
-    Float_Buffer hidden_ps;
-    Float_Buffer hidden_ps_prev;
-
-    Float_Buffer dendrite_ps;
-    Float_Buffer dendrite_ps_prev;
-
-    Float_Buffer hidden_probs;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
@@ -167,11 +153,6 @@ public:
     // get hidden activations (q values) for actions
     const Float_Buffer &get_hidden_qs() const {
         return hidden_qs;
-    }
-
-    // get hidden activations (partial probabilities) for actions
-    const Float_Buffer &get_hidden_ps() const {
-        return hidden_ps;
     }
 
     // get the hidden size
