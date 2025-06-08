@@ -30,21 +30,25 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer q_weights;
-        Float_Buffer traces;
+        Float_Buffer value_weights;
+        Float_Buffer value_traces;
+        Float_Buffer policy_weights;
+        Float_Buffer policy_traces;
 
         Int_Buffer input_cis_prev;
     };
 
     struct Params {
-        float qlr; // value learning rate
+        float vlr; // value learning rate
+        float plr; // policy learning rate
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
         float td_clip; // td error clip
 
         Params()
         :
-        qlr(0.1f),
+        vlr(0.1f),
+        plr(0.1f),
         discount(0.99f),
         trace_decay(0.97f),
         td_clip(16.0f)
@@ -57,11 +61,13 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_qs;
-    Float_Buffer hidden_qs_prev;
+    Float_Buffer hidden_acts;
+    Float_Buffer hidden_acts_prev;
 
-    Float_Buffer dendrite_qs;
-    Float_Buffer dendrite_qs_prev;
+    Float_Buffer dendrite_acts;
+    Float_Buffer dendrite_acts_prev;
+
+    Float_Buffer hidden_values;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
@@ -151,8 +157,8 @@ public:
     }
 
     // get hidden activations (q values) for actions
-    const Float_Buffer &get_hidden_qs() const {
-        return hidden_qs;
+    const Float_Buffer &get_hidden_acts() const {
+        return hidden_acts;
     }
 
     // get the hidden size
