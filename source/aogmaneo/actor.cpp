@@ -134,12 +134,45 @@ void Actor::forward(
         }
     }
 
+    // softmax
+    float total = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+
+        total += hidden_acts[hidden_cell_index];
+    }
+
+    float total_inv = 1.0f / max(limit_small, total);
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] *= total_inv;
+    }
+
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
 
         float reinforcement = min(params.td_clip, max(-params.td_clip, td_error));
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+
+            float error = (hc == target_ci) - hidden_acts_prev[hidden_cell_index];
+
+            for (int di = 0; di < num_dendrites_per_cell; di++) {
+                int dendrite_index = di + dendrites_start;
+
+                dendrite_acts_prev[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts_prev[dendrite_index];
+            }
+        }
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -196,7 +229,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev && hc == target_ci)
                                     vl.policy_traces[wi] = max(vl.policy_weights[wi], dendrite_acts_prev[dendrite_index]); // replacing trace
 
-                                vl.policy_weights[wi] += params.plr * reinforcement * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * vl.policy_traces[wi]; // apply sign deferred here so have positive traces always
+                                vl.policy_weights[wi] += params.plr * reinforcement * vl.policy_traces[wi]; // apply sign deferred here so have positive traces always
                                 vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }
