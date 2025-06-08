@@ -14,8 +14,9 @@ void Actor::forward(
     const Int2 &column_pos,
     const Array<Int_Buffer_View> &input_cis,
     Int_Buffer_View hidden_target_cis_prev,
-    float reward,
     bool learn_enabled,
+    float reward,
+    float mimic,
     unsigned long* state,
     const Params &params
 ) {
@@ -178,6 +179,9 @@ void Actor::forward(
 
         float reinforcement = min(params.td_clip, max(-params.td_clip, td_error));
 
+        float value_rate = params.vlr * reinforcement;
+        float policy_rate = params.plr * ((1.0f - mimic) * reinforcement + mimic);
+
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
@@ -226,7 +230,7 @@ void Actor::forward(
                         if (vc == in_ci_prev)
                             vl.value_traces[wi_base] += 1.0f;
 
-                        vl.value_weights[wi_base] += params.vlr * reinforcement * vl.value_traces[wi_base];
+                        vl.value_weights[wi_base] += value_rate * vl.value_traces[wi_base];
 
                         vl.value_traces[wi_base] *= params.trace_decay;
 
@@ -247,7 +251,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev)
                                     vl.policy_traces[wi] += dendrite_acts_prev[dendrite_index]; // replacing trace
 
-                                vl.policy_weights[wi] += params.plr * reinforcement * vl.policy_traces[wi]; // apply sign deferred here so have positive traces always
+                                vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi]; // apply sign deferred here so have positive traces always
                                 vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }
@@ -317,6 +321,7 @@ void Actor::step(
     Int_Buffer_View hidden_target_cis_prev,
     bool learn_enabled,
     float reward,
+    float mimic,
     const Params &params
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
@@ -328,7 +333,7 @@ void Actor::step(
     for (int i = 0; i < num_hidden_columns; i++) {
         unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, reward, learn_enabled, &state, params);
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, learn_enabled, reward, mimic, &state, params);
     }
 
     // update prevs

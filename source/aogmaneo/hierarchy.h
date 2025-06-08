@@ -151,7 +151,8 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        float reward = 0.0f // reward
+        float reward = 0.0f, // reward
+        float mimic = 0.0f // how much actors behave like regular decoders in [0, 1]
     );
 
     void clear_state();
