@@ -495,7 +495,7 @@ public:
 class Buffer_Reader : public aon::Stream_Reader {
 public:
     int start;
-    aon::Byte_Buffer_View buffer;
+    Byte_Buffer_View buffer;
 
     Buffer_Reader()
     :
@@ -511,7 +511,7 @@ public:
 class Buffer_Writer : public aon::Stream_Writer {
 public:
     long start;
-    aon::Byte_Buffer_View buffer;
+    Byte_Buffer_View buffer;
 
     Buffer_Writer()
     :
