@@ -165,11 +165,13 @@ void Hierarchy::step(
 
     bool needs_reset = false;
 
+    int old_t = t + 1; // since we just added a same, the t to train on is offset by 1
+
     // if updating a past state
-    if (t >= 0 && t < max_delay) {
+    if (old_t >= 0 && old_t < max_delay) {
         // set old state
         Buffer_Reader state_reader;
-        state_reader.buffer = states[t].data;
+        state_reader.buffer = states[old_t].data;
 
         read_state(state_reader);
 
