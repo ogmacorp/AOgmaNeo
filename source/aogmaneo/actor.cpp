@@ -17,7 +17,6 @@ void Actor::forward(
     bool learn_enabled,
     float reward,
     float mimic,
-    unsigned long* state,
     const Params &params
 ) {
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
@@ -310,15 +309,10 @@ void Actor::step(
 ) {
     int num_hidden_columns = hidden_size.x * hidden_size.y;
 
-    unsigned int base_state = rand();
-
     // forward kernel
     PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++) {
-        unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, learn_enabled, reward, mimic, &state, params);
-    }
+    for (int i = 0; i < num_hidden_columns; i++)
+        forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, hidden_target_cis_prev, learn_enabled, reward, mimic, params);
 
     // update prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
