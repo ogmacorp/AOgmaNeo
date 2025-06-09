@@ -125,8 +125,14 @@ void Hierarchy::init_random(
 
     int size_of_state = state_size();
 
-    for (int t = 0; t < states.size(); t++)
-        states[t].resize(size_of_state);
+    for (int t = 0; t < states.size(); t++) {
+        states[t].data.resize(size_of_state);
+
+        states[t].input_cis.resize(io_descs.size());
+
+        for (int i = 0; i < io_descs.size(); i++)
+            states[t].input_cis[i].resize(io_sizes[i].x * io_sizes[i].y);
+    }
 }
 
 void Hierarchy::step(
@@ -145,7 +151,7 @@ void Hierarchy::step(
     if (delay > 0 && delay < states_size) {
         // set old state
         Buffer_Reader state_reader;
-        state_reader.buffer = states[delay];
+        state_reader.buffer = states[delay].data;
 
         read_state(state_reader);
 
@@ -229,7 +235,7 @@ void Hierarchy::step(
     if (needs_reset) {
         // set latest state back
         Buffer_Reader state_reader;
-        state_reader.buffer = states[0];
+        state_reader.buffer = states[0].data;
 
         read_state(state_reader);
     }
@@ -242,9 +248,13 @@ void Hierarchy::step(
         // save state
         if (delay == 0) {
             Buffer_Writer state_writer;
-            state_writer.buffer = states[0];
+            state_writer.buffer = states[0].data;
 
             write_state(state_writer);
+
+            // store inputs as well
+            for (int i = 0; i < io_sizes.size(); i++)
+                states[0].input_cis[i] = input_cis[i];
         }
     }
 }
@@ -276,7 +286,14 @@ long Hierarchy::size() const {
     size += io_sizes.size() * sizeof(IO_Params);
 
     // state buffer
-    size += 2 * sizeof(int) + states.size() * state_size();
+    int size_of_state = state_size();
+
+    int num_input_cis = 0;
+
+    for (int i = 0; io_sizes.size(); i++)
+        num_input_cis += io_sizes[i].x * io_sizes[i].y;
+
+    size += 2 * sizeof(int) + states.size() * (size_of_state + num_input_cis * sizeof(int));
 
     return size;
 }
@@ -351,8 +368,12 @@ void Hierarchy::write(
     writer.write(&delay_capacity, sizeof(int));
     writer.write(&states_size, sizeof(int));
 
-    for (int t = 0; t < states.size(); t++)
-        writer.write(&states[t][0], states[t].size() * sizeof(Byte));
+    for (int t = 0; t < states.size(); t++) {
+        writer.write(&states[t].data[0], states[t].data.size() * sizeof(Byte));
+
+        for (int i = 0; i < io_sizes.size(); i++)
+            writer.write(&states[t].input_cis[i][0], states[t].input_cis[i].size() * sizeof(int));
+    }
 }
 
 void Hierarchy::read(
@@ -423,9 +444,17 @@ void Hierarchy::read(
     int size_of_state = state_size();
 
     for (int t = 0; t < states.size(); t++) {
-        states[t].resize(size_of_state);
+        states[t].data.resize(size_of_state);
 
-        reader.read(&states[t][0], states[t].size() * sizeof(Byte));
+        reader.read(&states[t].data[0], states[t].data.size() * sizeof(Byte));
+
+        states[t].input_cis.resize(io_sizes.size());
+
+        for (int i = 0; i < io_sizes.size(); i++) {
+            states[t].input_cis[i].resize(io_sizes[i].x * io_sizes[i].y);
+
+            reader.read(&states[t].input_cis[i][0], states[t].input_cis[i].size() * sizeof(int));
+        }
     }
 }
 

@@ -109,6 +109,12 @@ public:
         {}
     };
 
+    struct State {
+        Byte_Buffer data;
+
+        Array<Int_Buffer> input_cis;
+    };
+
 private:
     // layers
     Array<Encoder> encoders;
@@ -125,7 +131,7 @@ private:
     Array<Byte> io_types;
 
     int states_size;
-    Circle_Buffer<Byte_Buffer> states; // delayed states
+    Circle_Buffer<State> states; // delayed states
 
 public:
     // parameters
