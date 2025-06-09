@@ -242,6 +242,10 @@ public:
         return max_delay;
     }
 
+    int get_delay_capacity() const {
+        return states.size();
+    }
+
     // number of io layers
     int get_num_io() const {
         return io_sizes.size();
