@@ -235,22 +235,20 @@ public:
 
     // get old input
     const Int_Buffer &get_input_cis(
-        int i,
-        int t
+        int i
     ) const {
-        assert(t >= 0 && t < num_input_states);
+        int t = states.size() - 1;
 
         return states[t].input_cis[i];
     }
 
     // get old input
     const Int_Buffer &get_next_input_cis(
-        int i,
-        int t
+        int i
     ) const {
-        assert(t > 0 && t < num_input_states);
+        int t = states.size() - 2;
 
-        return states[t - 1].input_cis[i];
+        return states[t].input_cis[i];
     }
 
     int get_num_input_states() const {
