@@ -128,7 +128,7 @@ private:
     Array<Int3> io_sizes;
     Array<Byte> io_types;
 
-    int num_states;
+    int num_input_states;
     Circle_Buffer<Input_State> states; // delayed states
 
     Byte_Buffer delayed_state;
@@ -143,16 +143,16 @@ public:
     Hierarchy(
         const Array<IO_Desc> &io_descs, // input-output descriptors
         const Array<Layer_Desc> &layer_descs, // descriptors for layers
-        int delay_capacity = 0
+        int input_state_capacity = 0
     ) {
-        init_random(io_descs, layer_descs, delay_capacity);
+        init_random(io_descs, layer_descs, input_state_capacity);
     }
     
     // create a randomly initialized hierarchy
     void init_random(
         const Array<IO_Desc> &io_descs, // input-output descriptors
         const Array<Layer_Desc> &layer_descs, // descriptors for layers
-        int delay_capacity = 0
+        int input_state_capacity = 0
     );
 
     // simulation step/tick
@@ -170,7 +170,7 @@ public:
     void clear_state();
 
     void clear_states_buffer() {
-        num_states = 0;
+        num_input_states = 0;
     }
 
     // serialization
@@ -238,7 +238,7 @@ public:
         int i,
         int t
     ) const {
-        assert(t >= 0 && t < num_states);
+        assert(t >= 0 && t < num_input_states);
 
         return states[t].input_cis[i];
     }
@@ -248,16 +248,16 @@ public:
         int i,
         int t
     ) const {
-        assert(t > 0 && t < num_states);
+        assert(t > 0 && t < num_input_states);
 
         return states[t - 1].input_cis[i];
     }
 
-    int get_num_states() const {
-        return num_states;
+    int get_num_input_states() const {
+        return num_input_states;
     }
 
-    int get_state_capacity() const {
+    int get_input_state_capacity() const {
         return states.size();
     }
 

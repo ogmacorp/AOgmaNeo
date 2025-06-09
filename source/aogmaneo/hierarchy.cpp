@@ -13,9 +13,9 @@ using namespace aon;
 void Hierarchy::init_random(
     const Array<IO_Desc> &io_descs,
     const Array<Layer_Desc> &layer_descs,
-    int delay_capacity
+    int input_state_capacity
 ) {
-    assert(delay_capacity >= 0);
+    assert(input_state_capacity >= 0);
 
     // create layers
     encoders.resize(layer_descs.size());
@@ -120,8 +120,8 @@ void Hierarchy::init_random(
     params.ios = Array<IO_Params>(io_descs.size());
 
     // delay buffer
-    num_states = 0;
-    states.resize(delay_capacity);
+    num_input_states = 0;
+    states.resize(input_state_capacity);
 
     int size_of_state = state_size();
 
@@ -218,8 +218,8 @@ void Hierarchy::step(
     if (states.size() > 0) {
         states.push_front();
         
-        if (num_states < states.size())
-            num_states++;
+        if (num_input_states < states.size())
+            num_input_states++;
 
         // store inputs as well
         for (int i = 0; i < io_sizes.size(); i++)
@@ -231,7 +231,7 @@ void Hierarchy::step_delayed(
     const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled
 ) {
-    if (num_states != states.size())
+    if (num_input_states != states.size())
         return;
 
     assert(params.layers.size() == encoders.size());
@@ -338,7 +338,7 @@ void Hierarchy::clear_state() {
             decoders[l][d].clear_state();
     }
 
-    num_states = 0;
+    num_input_states = 0;
 }
 
 long Hierarchy::size() const {
@@ -433,10 +433,10 @@ void Hierarchy::write(
 
     writer.write(&params.anticipation, sizeof(Byte));
 
-    int delay_capacity = states.size();
+    int input_state_capacity = states.size();
 
-    writer.write(&delay_capacity, sizeof(int));
-    writer.write(&num_states, sizeof(int));
+    writer.write(&input_state_capacity, sizeof(int));
+    writer.write(&num_input_states, sizeof(int));
 
     for (int t = 0; t < states.size(); t++) {
         for (int i = 0; i < io_sizes.size(); i++)
@@ -502,12 +502,12 @@ void Hierarchy::read(
 
     reader.read(&params.anticipation, sizeof(Byte));
 
-    int delay_capacity;
+    int input_state_capacity;
 
-    reader.read(&delay_capacity, sizeof(int));
-    reader.read(&num_states, sizeof(int));
+    reader.read(&input_state_capacity, sizeof(int));
+    reader.read(&num_input_states, sizeof(int));
 
-    states.resize(delay_capacity);
+    states.resize(input_state_capacity);
 
     int size_of_state = state_size();
 
