@@ -180,7 +180,8 @@ void Actor::forward(
         float reinforcement = min(params.td_clip, max(-params.td_clip, td_error));
 
         float value_rate = params.vlr * reinforcement;
-        float policy_rate = params.plr * ((1.0f - mimic) * reinforcement + mimic);
+        float policy_rate = params.plr * reinforcement;
+        float mimic_rate = params.plr * mimic;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
@@ -251,7 +252,7 @@ void Actor::forward(
                                 if (vc == in_ci_prev)
                                     vl.policy_traces[wi] += dendrite_acts_prev[dendrite_index]; // replacing trace
 
-                                vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi]; // apply sign deferred here so have positive traces always
+                                vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi] + mimic_rate * dendrite_acts_prev[dendrite_index] * (vc == in_ci_prev);
                                 vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }
