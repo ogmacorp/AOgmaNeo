@@ -159,7 +159,7 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        int t = -1 // delay to apply at, -1 is no delay (current, default)
+        int t = 0 // delay to apply at, 0 is no delay (current, default)
     );
 
     void clear_state();
@@ -236,6 +236,16 @@ public:
         assert(t >= 0 && t < max_delay);
 
         return states[t].input_cis[i];
+    }
+
+    // get old input
+    const Int_Buffer &get_next_input_cis(
+        int i,
+        int t
+    ) const {
+        assert(t > 0 && t < max_delay);
+
+        return states[t - 1].input_cis[i];
     }
 
     int get_max_delay() const {

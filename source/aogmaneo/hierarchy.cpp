@@ -143,12 +143,12 @@ void Hierarchy::step(
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
-    assert(t >= -1 && t < max_delay);
+    assert(t >= 0 && t < max_delay);
 
     bool needs_reset = false;
 
     // if updating a past state (not 0 since thats present now)
-    if (t >= 0 && t < max_delay) {
+    if (t > 0 && t < max_delay) {
         // set old state
         Buffer_Reader state_reader;
         state_reader.buffer = states[t].data;
@@ -241,7 +241,7 @@ void Hierarchy::step(
     }
 
     // add backup
-    if (states.size() > 0 && t == -1) { // not doing a delayed update if t == -1, so back up fresh "real" states if we have a state buffer len > 0
+    if (states.size() > 0 && t == 0) { // not doing a delayed update if t == 0, so back up fresh "real" states if we have a state buffer len > 0
         states.push_front();
         
         if (max_delay < states.size())
