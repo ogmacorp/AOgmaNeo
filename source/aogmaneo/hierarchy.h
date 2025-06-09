@@ -159,7 +159,7 @@ public:
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
         bool learn_enabled = true, // whether learning is enabled
-        int t = 0 // delay to apply at
+        int t = -1 // delay to apply at, -1 is no delay (current, default)
     );
 
     void clear_state();

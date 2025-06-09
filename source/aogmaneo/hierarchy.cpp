@@ -143,12 +143,12 @@ void Hierarchy::step(
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
-    assert(t >= 0);
+    assert(t >= -1);
 
     bool needs_reset = false;
 
     // if updating a past state
-    if (t > 0 && t < max_delay) {
+    if (t >= 0 && t < max_delay) {
         // set old state
         Buffer_Reader state_reader;
         state_reader.buffer = states[t].data;
