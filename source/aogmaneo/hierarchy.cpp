@@ -15,6 +15,8 @@ void Hierarchy::init_random(
     const Array<Layer_Desc> &layer_descs,
     int delay_capacity
 ) {
+    assert(delay_capacity >= 0);
+
     // create layers
     encoders.resize(layer_descs.size());
     decoders.resize(layer_descs.size());
