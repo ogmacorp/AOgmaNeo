@@ -143,7 +143,7 @@ public:
     Hierarchy(
         const Array<IO_Desc> &io_descs, // input-output descriptors
         const Array<Layer_Desc> &layer_descs, // descriptors for layers
-        int delay_capacity = 1
+        int delay_capacity = 0
     ) {
         init_random(io_descs, layer_descs, delay_capacity);
     }
@@ -152,7 +152,7 @@ public:
     void init_random(
         const Array<IO_Desc> &io_descs, // input-output descriptors
         const Array<Layer_Desc> &layer_descs, // descriptors for layers
-        int delay_capacity = 1
+        int delay_capacity = 0
     );
 
     // simulation step/tick
