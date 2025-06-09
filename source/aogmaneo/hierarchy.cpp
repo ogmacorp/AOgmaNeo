@@ -138,20 +138,20 @@ void Hierarchy::init_random(
 void Hierarchy::step(
     const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled,
-    int delay
+    int t
 ) {
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
-    assert(delay >= 0);
+    assert(t >= 0);
 
     bool needs_reset = false;
 
     // if updating a past state
-    if (delay > 0 && delay < max_delay) {
+    if (t > 0 && t < max_delay) {
         // set old state
         Buffer_Reader state_reader;
-        state_reader.buffer = states[delay].data;
+        state_reader.buffer = states[t].data;
 
         read_state(state_reader);
 
@@ -246,7 +246,7 @@ void Hierarchy::step(
             max_delay++;
 
         // save state
-        if (delay == 0) {
+        if (t == 0) {
             Buffer_Writer state_writer;
             state_writer.buffer = states[0].data;
 
