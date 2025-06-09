@@ -123,8 +123,6 @@ void Hierarchy::init_random(
     num_input_states = 0;
     states.resize(input_state_capacity);
 
-    int size_of_state = state_size();
-
     for (int t = 0; t < states.size(); t++) {
         states[t].input_cis.resize(io_descs.size());
 
@@ -356,8 +354,6 @@ long Hierarchy::size() const {
     size += io_sizes.size() * sizeof(IO_Params);
 
     // state buffer
-    int size_of_state = state_size();
-
     int num_input_cis = 0;
 
     for (int i = 0; io_sizes.size(); i++)
@@ -508,8 +504,6 @@ void Hierarchy::read(
     reader.read(&num_input_states, sizeof(int));
 
     states.resize(input_state_capacity);
-
-    int size_of_state = state_size();
 
     for (int t = 0; t < states.size(); t++) {
         states[t].input_cis.resize(io_sizes.size());
