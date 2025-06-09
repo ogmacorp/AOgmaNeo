@@ -109,9 +109,7 @@ public:
         {}
     };
 
-    struct State {
-        Byte_Buffer data;
-
+    struct Input_State {
         Array<Int_Buffer> input_cis;
     };
 
@@ -131,7 +129,9 @@ private:
     Array<Byte> io_types;
 
     int max_delay;
-    Circle_Buffer<State> states; // delayed states
+    Circle_Buffer<Input_State> states; // delayed states
+
+    Byte_Buffer delayed_state;
 
 public:
     // parameters
@@ -158,8 +158,13 @@ public:
     // simulation step/tick
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
-        bool learn_enabled = true, // whether learning is enabled
-        int t = 0 // delay to apply at, 0 is no delay (current, default)
+        bool learn_enabled = true // whether learning is enabled
+    );
+
+    // delayed version
+    void step_delayed(
+        const Array<Int_Buffer_View> &input_cis, // inputs to remember
+        bool learn_enabled = true // whether learning is enabled
     );
 
     void clear_state();

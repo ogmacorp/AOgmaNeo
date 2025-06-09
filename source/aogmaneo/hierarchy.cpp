@@ -126,8 +126,6 @@ void Hierarchy::init_random(
     int size_of_state = state_size();
 
     for (int t = 0; t < states.size(); t++) {
-        states[t].data.resize(size_of_state);
-
         states[t].input_cis.resize(io_descs.size());
 
         for (int i = 0; i < io_descs.size(); i++)
@@ -137,21 +135,110 @@ void Hierarchy::init_random(
 
 void Hierarchy::step(
     const Array<Int_Buffer_View> &input_cis,
-    bool learn_enabled,
-    int t
+    bool learn_enabled
 ) {
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
-    assert(t >= 0);
+    // set importances from params
+    for (int i = 0; i < io_sizes.size(); i++)
+        encoders[0].get_visible_layer(i).importance = params.ios[i].importance;
 
-    // if updating a past state (not 0 since thats present now)
-    if (t > 0) {
-        assert(t < max_delay);
+    // forward
+    for (int l = 0; l < encoders.size(); l++) {
+        // copy to prev
+        hidden_cis_prev[l] = encoders[l].get_hidden_cis();
 
+        if (l < encoders.size() - 1)
+            feedback_cis_prev[l] = decoders[l + 1][0].get_hidden_cis();
+
+        Array<Int_Buffer_View> layer_input_cis(encoders[l].get_num_visible_layers());
+
+        if (l == 0) {
+            for (int i = 0; i < io_sizes.size(); i++)
+                layer_input_cis[i] = input_cis[i];
+        }
+        else
+            layer_input_cis[0] = encoders[l - 1].get_hidden_cis();
+
+        if (is_layer_recurrent(l)) {
+            int last_index = encoders[l].get_num_visible_layers() - 1;
+
+            layer_input_cis[last_index] = hidden_cis_prev[l];
+
+            encoders[l].get_visible_layer(last_index).importance = params.layers[l].recurrent_importance;
+        }
+
+        // activate sparse coder
+        encoders[l].step(layer_input_cis, learn_enabled, params.layers[l].encoder);
+    }
+
+    // backward
+    for (int l = decoders.size() - 1; l >= 0; l--) {
+        Array<Int_Buffer_View> layer_input_cis(1 + (l < encoders.size() - 1));
+
+        if (learn_enabled) {
+            layer_input_cis[0] = hidden_cis_prev[l];
+            
+            if (l < encoders.size() - 1) {
+                // learn on feedback
+                layer_input_cis[1] = feedback_cis_prev[l];
+
+                for (int d = 0; d < decoders[l].size(); d++)
+                    decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+
+                if (params.anticipation) {
+                    // learn on actual
+                    layer_input_cis[1] = encoders[l].get_hidden_cis();
+
+                    for (int d = 0; d < decoders[l].size(); d++) {
+                        // need to re-activate for this
+                        decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+
+                        decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+                    }
+                }
+            }
+            else {
+                for (int d = 0; d < decoders[l].size(); d++)
+                    decoders[l][d].learn(layer_input_cis, (l == 0 ? input_cis[i_indices[d]] : encoders[l - 1].get_hidden_cis()), (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+            }
+        }
+
+        layer_input_cis[0] = encoders[l].get_hidden_cis();
+        
+        if (l < encoders.size() - 1)
+            layer_input_cis[1] = decoders[l + 1][0].get_hidden_cis();
+
+        for (int d = 0; d < decoders[l].size(); d++)
+            decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
+    }
+
+    // add input backup
+    if (states.size() > 0) {
+        states.push_front();
+        
+        if (max_delay < states.size())
+            max_delay++;
+
+        // store inputs as well
+        for (int i = 0; i < io_sizes.size(); i++)
+            states[0].input_cis[i] = input_cis[i];
+    }
+}
+
+void Hierarchy::step_delayed(
+    const Array<Int_Buffer_View> &input_cis,
+    bool learn_enabled
+) {
+    assert(params.layers.size() == encoders.size());
+    assert(params.ios.size() == io_sizes.size());
+
+    // update to the past state
+    {
         // set old state
         Buffer_Reader state_reader;
-        state_reader.buffer = states[t].data;
+        state_reader.buffer = delayed_state;
 
         read_state(state_reader);
     }
@@ -230,30 +317,12 @@ void Hierarchy::step(
             decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
     }
 
-    if (t > 0) { // reset
-        // set latest state back as if nothing happened
+    // reset state to current
+    {
         Buffer_Reader state_reader;
-        state_reader.buffer = states[0].data;
+        state_reader.buffer = delayed_state;
 
         read_state(state_reader);
-    }
-
-    // add backup
-    if (states.size() > 0 && t == 0) { // not doing a delayed update if t == 0, so back up fresh "real" states if we have a state buffer len > 0
-        states.push_front();
-        
-        if (max_delay < states.size())
-            max_delay++;
-
-        // save state
-        Buffer_Writer state_writer;
-        state_writer.buffer = states[0].data;
-
-        write_state(state_writer);
-
-        // store inputs as well
-        for (int i = 0; i < io_sizes.size(); i++)
-            states[0].input_cis[i] = input_cis[i];
     }
 }
 
@@ -291,7 +360,7 @@ long Hierarchy::size() const {
     for (int i = 0; io_sizes.size(); i++)
         num_input_cis += io_sizes[i].x * io_sizes[i].y;
 
-    size += 2 * sizeof(int) + states.size() * (size_of_state + num_input_cis * sizeof(int));
+    size += 2 * sizeof(int) + states.size() * num_input_cis * sizeof(int);
 
     return size;
 }
@@ -367,8 +436,6 @@ void Hierarchy::write(
     writer.write(&max_delay, sizeof(int));
 
     for (int t = 0; t < states.size(); t++) {
-        writer.write(&states[t].data[0], states[t].data.size() * sizeof(Byte));
-
         for (int i = 0; i < io_sizes.size(); i++)
             writer.write(&states[t].input_cis[i][0], states[t].input_cis[i].size() * sizeof(int));
     }
@@ -442,10 +509,6 @@ void Hierarchy::read(
     int size_of_state = state_size();
 
     for (int t = 0; t < states.size(); t++) {
-        states[t].data.resize(size_of_state);
-
-        reader.read(&states[t].data[0], states[t].data.size() * sizeof(Byte));
-
         states[t].input_cis.resize(io_sizes.size());
 
         for (int i = 0; i < io_sizes.size(); i++) {
