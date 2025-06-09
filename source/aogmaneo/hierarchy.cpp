@@ -145,33 +145,13 @@ void Hierarchy::step(
 
     assert(t >= -1 && t < max_delay);
 
-    // add backup
-    if (states.size() > 0 && t == -1) { // not doing a delayed update if t == -1, so back up fresh "real" states if we have a state buffer len > 0
-        states.push_front();
-        
-        if (max_delay < states.size())
-            max_delay++;
-
-        // save state
-        Buffer_Writer state_writer;
-        state_writer.buffer = states[0].data;
-
-        write_state(state_writer);
-
-        // store inputs as well
-        for (int i = 0; i < io_sizes.size(); i++)
-            states[0].input_cis[i] = input_cis[i];
-    }
-
     bool needs_reset = false;
 
-    int old_t = t + 1; // since we just added a same, the t to train on is offset by 1
-
     // if updating a past state (not 0 since thats present now)
-    if (old_t > 0 && old_t < max_delay) {
+    if (t >= 0 && t < max_delay) {
         // set old state
         Buffer_Reader state_reader;
-        state_reader.buffer = states[old_t].data;
+        state_reader.buffer = states[t].data;
 
         read_state(state_reader);
 
@@ -258,6 +238,24 @@ void Hierarchy::step(
         state_reader.buffer = states[0].data;
 
         read_state(state_reader);
+    }
+
+    // add backup
+    if (states.size() > 0 && t == -1) { // not doing a delayed update if t == -1, so back up fresh "real" states if we have a state buffer len > 0
+        states.push_front();
+        
+        if (max_delay < states.size())
+            max_delay++;
+
+        // save state
+        Buffer_Writer state_writer;
+        state_writer.buffer = states[0].data;
+
+        write_state(state_writer);
+
+        // store inputs as well
+        for (int i = 0; i < io_sizes.size(); i++)
+            states[0].input_cis[i] = input_cis[i];
     }
 }
 
