@@ -120,7 +120,7 @@ void Hierarchy::init_random(
     params.ios = Array<IO_Params>(io_descs.size());
 
     // delay buffer
-    max_delay = 0;
+    num_states = 0;
     states.resize(delay_capacity);
 
     int size_of_state = state_size();
@@ -218,8 +218,8 @@ void Hierarchy::step(
     if (states.size() > 0) {
         states.push_front();
         
-        if (max_delay < states.size())
-            max_delay++;
+        if (num_states < states.size())
+            num_states++;
 
         // store inputs as well
         for (int i = 0; i < io_sizes.size(); i++)
@@ -231,6 +231,9 @@ void Hierarchy::step_delayed(
     const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled
 ) {
+    if (num_states != states.size())
+        return;
+
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
@@ -335,7 +338,7 @@ void Hierarchy::clear_state() {
             decoders[l][d].clear_state();
     }
 
-    max_delay = 0;
+    num_states = 0;
 }
 
 long Hierarchy::size() const {
@@ -433,7 +436,7 @@ void Hierarchy::write(
     int delay_capacity = states.size();
 
     writer.write(&delay_capacity, sizeof(int));
-    writer.write(&max_delay, sizeof(int));
+    writer.write(&num_states, sizeof(int));
 
     for (int t = 0; t < states.size(); t++) {
         for (int i = 0; i < io_sizes.size(); i++)
@@ -502,7 +505,7 @@ void Hierarchy::read(
     int delay_capacity;
 
     reader.read(&delay_capacity, sizeof(int));
-    reader.read(&max_delay, sizeof(int));
+    reader.read(&num_states, sizeof(int));
 
     states.resize(delay_capacity);
 

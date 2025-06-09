@@ -128,7 +128,7 @@ private:
     Array<Int3> io_sizes;
     Array<Byte> io_types;
 
-    int max_delay;
+    int num_states;
     Circle_Buffer<Input_State> states; // delayed states
 
     Byte_Buffer delayed_state;
@@ -170,7 +170,7 @@ public:
     void clear_state();
 
     void clear_states_buffer() {
-        max_delay = 0;
+        num_states = 0;
     }
 
     // serialization
@@ -238,7 +238,7 @@ public:
         int i,
         int t
     ) const {
-        assert(t >= 0 && t < max_delay);
+        assert(t >= 0 && t < num_states);
 
         return states[t].input_cis[i];
     }
@@ -248,16 +248,16 @@ public:
         int i,
         int t
     ) const {
-        assert(t > 0 && t < max_delay);
+        assert(t > 0 && t < num_states);
 
         return states[t - 1].input_cis[i];
     }
 
-    int get_max_delay() const {
-        return max_delay;
+    int get_num_states() const {
+        return num_states;
     }
 
-    int get_delay_capacity() const {
+    int get_state_capacity() const {
         return states.size();
     }
 
