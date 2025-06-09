@@ -239,23 +239,21 @@ void Hierarchy::step(
 
         read_state(state_reader);
     }
-    else if (states.size() > 0) { // not doing a delayed update, so back up fresh "real" states
+    else if (states.size() > 0 && t == -1) { // not doing a delayed update, so back up fresh "real" states
         states.push_front();
         
         if (max_delay < states.size())
             max_delay++;
 
         // save state
-        if (t == 0) {
-            Buffer_Writer state_writer;
-            state_writer.buffer = states[0].data;
+        Buffer_Writer state_writer;
+        state_writer.buffer = states[0].data;
 
-            write_state(state_writer);
+        write_state(state_writer);
 
-            // store inputs as well
-            for (int i = 0; i < io_sizes.size(); i++)
-                states[0].input_cis[i] = input_cis[i];
-        }
+        // store inputs as well
+        for (int i = 0; i < io_sizes.size(); i++)
+            states[0].input_cis[i] = input_cis[i];
     }
 }
 
