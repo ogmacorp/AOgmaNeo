@@ -492,6 +492,38 @@ public:
     ) = 0;
 };
 
+class Buffer_Reader : public aon::Stream_Reader {
+public:
+    int start;
+    aon::Byte_Buffer_View buffer;
+
+    Buffer_Reader()
+    :
+    start(0)
+    {}
+
+    void read(
+        void* data,
+        long len
+    ) override;
+};
+
+class Buffer_Writer : public aon::Stream_Writer {
+public:
+    long start;
+    aon::Byte_Buffer_View buffer;
+
+    Buffer_Writer()
+    :
+    start(0)
+    {}
+
+    void write(
+        const void* data,
+        long len
+    ) override;
+};
+
 // --- merging ---
 
 enum Merge_Mode {

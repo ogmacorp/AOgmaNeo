@@ -12,7 +12,8 @@ using namespace aon;
 
 void Hierarchy::init_random(
     const Array<IO_Desc> &io_descs,
-    const Array<Layer_Desc> &layer_descs
+    const Array<Layer_Desc> &layer_descs,
+    int delay_capacity
 ) {
     // create layers
     encoders.resize(layer_descs.size());
@@ -115,14 +116,39 @@ void Hierarchy::init_random(
     // initialize params
     params.layers = Array<Layer_Params>(layer_descs.size());
     params.ios = Array<IO_Params>(io_descs.size());
+
+    // delay buffer
+    states_size = 0;
+    states.resize(delay_capacity);
+
+    int size_of_state = state_size();
+
+    for (int t = 0; t < states.size(); t++)
+        states[t].resize(size_of_state);
 }
 
 void Hierarchy::step(
     const Array<Int_Buffer_View> &input_cis,
-    bool learn_enabled
+    bool learn_enabled,
+    int delay
 ) {
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
+
+    assert(delay >= 0 && delay < states_size);
+
+    bool needs_reset = false;
+
+    // if updating a past state
+    if (delay > 0) {
+        // set old state
+        Buffer_Reader state_reader;
+        state_reader.buffer = states[delay];
+
+        read_state(state_reader);
+
+        needs_reset = true;
+    }
 
     // set importances from params
     for (int i = 0; i < io_sizes.size(); i++)
@@ -197,6 +223,28 @@ void Hierarchy::step(
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
     }
+
+    if (needs_reset) {
+        // set latest state back
+        Buffer_Reader state_reader;
+        state_reader.buffer = states[0];
+
+        read_state(state_reader);
+    }
+    else if (states.size() > 0) { // not doing a delayed update, so back up fresh "real" states
+        states.push_front();
+        
+        if (states_size < states.size())
+            states_size++;
+
+        // save state
+        if (delay == 0) {
+            Buffer_Writer state_writer;
+            state_writer.buffer = states[0];
+
+            write_state(state_writer);
+        }
+    }
 }
 
 void Hierarchy::clear_state() {
@@ -207,6 +255,8 @@ void Hierarchy::clear_state() {
         for (int d = 0; d < decoders[l].size(); d++)
             decoders[l][d].clear_state();
     }
+
+    states_size = 0;
 }
 
 long Hierarchy::size() const {
@@ -223,6 +273,9 @@ long Hierarchy::size() const {
     size += encoders.size() * sizeof(Layer_Params);
     size += io_sizes.size() * sizeof(IO_Params);
 
+    // state buffer
+    size += 2 * sizeof(int) + states.size() * state_size();
+
     return size;
 }
 
@@ -236,6 +289,9 @@ long Hierarchy::state_size() const {
         for (int d = 0; d < decoders[l].size(); d++)
             size += decoders[l][d].state_size();
     }
+
+    // state buffer
+    size += sizeof(int) + states.size() * state_size();
 
     return size;
 }
@@ -290,6 +346,14 @@ void Hierarchy::write(
         writer.write(&params.ios[i], sizeof(IO_Params));
 
     writer.write(&params.anticipation, sizeof(Byte));
+
+    int delay_capacity = states.size();
+
+    writer.write(&delay_capacity, sizeof(int));
+    writer.write(&states_size, sizeof(int));
+
+    for (int t = 0; t < states.size(); t++)
+        writer.write(&states[t][0], states[t].size() * sizeof(Byte));
 }
 
 void Hierarchy::read(
@@ -349,6 +413,21 @@ void Hierarchy::read(
         reader.read(&params.ios[i], sizeof(IO_Params));
 
     reader.read(&params.anticipation, sizeof(Byte));
+
+    int delay_capacity;
+
+    reader.read(&delay_capacity, sizeof(int));
+    reader.read(&states_size, sizeof(int));
+
+    states.resize(delay_capacity);
+
+    int size_of_state = state_size();
+
+    for (int t = 0; t < states.size(); t++) {
+        states[t].resize(size_of_state);
+
+        reader.read(&states[t][0], states[t].size() * sizeof(Byte));
+    }
 }
 
 void Hierarchy::write_state(

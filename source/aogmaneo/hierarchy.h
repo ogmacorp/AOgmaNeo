@@ -124,6 +124,9 @@ private:
     Array<Int3> io_sizes;
     Array<Byte> io_types;
 
+    int states_size;
+    Circle_Buffer<Byte_Buffer> states; // delayed states
+
 public:
     // parameters
     Params params;
@@ -133,21 +136,24 @@ public:
 
     Hierarchy(
         const Array<IO_Desc> &io_descs, // input-output descriptors
-        const Array<Layer_Desc> &layer_descs // descriptors for layers
+        const Array<Layer_Desc> &layer_descs, // descriptors for layers
+        int delay_capacity = 1
     ) {
-        init_random(io_descs, layer_descs);
+        init_random(io_descs, layer_descs, delay_capacity);
     }
     
     // create a randomly initialized hierarchy
     void init_random(
         const Array<IO_Desc> &io_descs, // input-output descriptors
-        const Array<Layer_Desc> &layer_descs // descriptors for layers
+        const Array<Layer_Desc> &layer_descs, // descriptors for layers
+        int delay_capacity = 1
     );
 
     // simulation step/tick
     void step(
         const Array<Int_Buffer_View> &input_cis, // inputs to remember
-        bool learn_enabled = true // whether learning is enabled
+        bool learn_enabled = true, // whether learning is enabled
+        int delay = 0
     );
 
     void clear_state();

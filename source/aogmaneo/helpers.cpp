@@ -244,3 +244,19 @@ float aon::rand_normalf(
 
     return sqrtf(-2.0f * logf(u1)) * cosf(pi2 * u2);
 }
+
+void Buffer_Reader::read(void* data, long len) {
+    for (long i = 0; i < len; i++)
+        static_cast<unsigned char*>(data)[i] = buffer[start + i];
+
+    start += len;
+}
+
+void Buffer_Writer::write(const void* data, long len) {
+    assert(buffer.size() >= start + len);
+
+    for (long i = 0; i < len; i++)
+        buffer[start + i] = static_cast<const unsigned char*>(data)[i];
+
+    start += len;
+}
