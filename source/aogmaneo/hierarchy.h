@@ -259,6 +259,10 @@ public:
         return states.size();
     }
 
+    bool delay_ready() const {
+        return num_input_states == states.size();
+    }
+
     // number of io layers
     int get_num_io() const {
         return io_sizes.size();
