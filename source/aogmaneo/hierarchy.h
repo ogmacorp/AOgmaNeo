@@ -232,7 +232,7 @@ public:
     const Int_Buffer &get_input_cis(
         int i,
         int t
-    ) {
+    ) const {
         assert(t >= 0 && t < max_delay);
 
         return states[t].input_cis[i];
