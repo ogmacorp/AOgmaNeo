@@ -167,8 +167,8 @@ void Hierarchy::step(
 
     int old_t = t + 1; // since we just added a same, the t to train on is offset by 1
 
-    // if updating a past state
-    if (old_t >= 0 && old_t < max_delay) {
+    // if updating a past state (not 0 since thats present now)
+    if (old_t > 0 && old_t < max_delay) {
         // set old state
         Buffer_Reader state_reader;
         state_reader.buffer = states[old_t].data;
