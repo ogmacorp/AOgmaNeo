@@ -42,7 +42,7 @@ public:
         :
         scale(8.0f),
         lr(0.1f),
-        entropy(0.001f)
+        entropy(0.005f)
         {}
     };
 
