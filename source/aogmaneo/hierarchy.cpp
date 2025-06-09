@@ -145,8 +145,6 @@ void Hierarchy::step(
 
     assert(t >= 0);
 
-    bool needs_reset = false;
-
     // if updating a past state (not 0 since thats present now)
     if (t > 0) {
         assert(t < max_delay);
@@ -156,8 +154,6 @@ void Hierarchy::step(
         state_reader.buffer = states[t].data;
 
         read_state(state_reader);
-
-        needs_reset = true;
     }
 
     // set importances from params
@@ -234,7 +230,7 @@ void Hierarchy::step(
             decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
     }
 
-    if (needs_reset) {
+    if (t > 0) { // reset
         // set latest state back as if nothing happened
         Buffer_Reader state_reader;
         state_reader.buffer = states[0].data;
