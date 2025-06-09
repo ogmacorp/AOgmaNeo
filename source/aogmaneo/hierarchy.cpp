@@ -143,7 +143,7 @@ void Hierarchy::step(
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
-    assert(t >= -1);
+    assert(t >= -1 && t < max_delay);
 
     // add backup
     if (states.size() > 0 && t == -1) { // not doing a delayed update if t == -1, so back up fresh "real" states if we have a state buffer len > 0
