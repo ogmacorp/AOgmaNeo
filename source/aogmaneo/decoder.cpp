@@ -153,13 +153,8 @@ void Decoder::learn(
 
     int target_ci = hidden_target_cis[hidden_column_index];
 
-    float entropy = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        entropy -= hidden_acts[hidden_cell_index] * logf(max(limit_small, hidden_acts[hidden_cell_index]));
-    }
+    if (hidden_cis[hidden_column_index] == target_ci)
+        return;
 
     const int half_num_dendrites_per_cell = num_dendrites_per_cell / 2;
 
@@ -169,9 +164,7 @@ void Decoder::learn(
 
         int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-        float entropy_reg = params.entropy * -(entropy + logf(max(limit_small, hidden_acts[hidden_cell_index]))) / max(limit_small, 1.0f - hidden_acts[hidden_cell_index]);
-
-        float error = params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index] + entropy_reg);
+        float error = params.lr * 127.0f * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;

@@ -36,13 +36,11 @@ public:
     struct Params {
         float scale; // scale of activations
         float lr; // weight learning rate
-        float entropy; // entropy regularization
 
         Params()
         :
         scale(8.0f),
-        lr(0.1f),
-        entropy(0.001f)
+        lr(0.1f)
         {}
     };
 
