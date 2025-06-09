@@ -145,6 +145,24 @@ void Hierarchy::step(
 
     assert(t >= -1);
 
+    // add backup
+    if (states.size() > 0 && t == -1) { // not doing a delayed update if t == -1, so back up fresh "real" states if we have a state buffer len > 0
+        states.push_front();
+        
+        if (max_delay < states.size())
+            max_delay++;
+
+        // save state
+        Buffer_Writer state_writer;
+        state_writer.buffer = states[0].data;
+
+        write_state(state_writer);
+
+        // store inputs as well
+        for (int i = 0; i < io_sizes.size(); i++)
+            states[0].input_cis[i] = input_cis[i];
+    }
+
     bool needs_reset = false;
 
     // if updating a past state
@@ -233,27 +251,11 @@ void Hierarchy::step(
     }
 
     if (needs_reset) {
-        // set latest state back
+        // set latest state back as if nothing happened
         Buffer_Reader state_reader;
         state_reader.buffer = states[0].data;
 
         read_state(state_reader);
-    }
-    else if (states.size() > 0 && t == -1) { // not doing a delayed update, so back up fresh "real" states
-        states.push_front();
-        
-        if (max_delay < states.size())
-            max_delay++;
-
-        // save state
-        Buffer_Writer state_writer;
-        state_writer.buffer = states[0].data;
-
-        write_state(state_writer);
-
-        // store inputs as well
-        for (int i = 0; i < io_sizes.size(); i++)
-            states[0].input_cis[i] = input_cis[i];
     }
 }
 
