@@ -130,7 +130,7 @@ private:
     Array<Int3> io_sizes;
     Array<Byte> io_types;
 
-    int states_size;
+    int max_delay;
     Circle_Buffer<State> states; // delayed states
 
 public:
@@ -165,7 +165,7 @@ public:
     void clear_state();
 
     void clear_states_buffer() {
-        states_size = 0;
+        max_delay = 0;
     }
 
     // serialization
@@ -226,6 +226,20 @@ public:
         int i
     ) const {
         return decoders[0][d_indices[i]].get_hidden_acts();
+    }
+
+    // get old input
+    const Int_Buffer &get_input_cis(
+        int i,
+        int delay
+    ) {
+        assert(delay >= 0 && delay < max_delay);
+
+        return states[delay].input_cis[i];
+    }
+
+    int get_max_delay() const {
+        return max_delay;
     }
 
     // number of io layers

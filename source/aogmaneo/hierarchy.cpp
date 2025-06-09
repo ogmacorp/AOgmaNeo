@@ -120,7 +120,7 @@ void Hierarchy::init_random(
     params.ios = Array<IO_Params>(io_descs.size());
 
     // delay buffer
-    states_size = 0;
+    max_delay = 0;
     states.resize(delay_capacity);
 
     int size_of_state = state_size();
@@ -148,7 +148,7 @@ void Hierarchy::step(
     bool needs_reset = false;
 
     // if updating a past state
-    if (delay > 0 && delay < states_size) {
+    if (delay > 0 && delay < max_delay) {
         // set old state
         Buffer_Reader state_reader;
         state_reader.buffer = states[delay].data;
@@ -242,8 +242,8 @@ void Hierarchy::step(
     else if (states.size() > 0) { // not doing a delayed update, so back up fresh "real" states
         states.push_front();
         
-        if (states_size < states.size())
-            states_size++;
+        if (max_delay < states.size())
+            max_delay++;
 
         // save state
         if (delay == 0) {
@@ -268,7 +268,7 @@ void Hierarchy::clear_state() {
             decoders[l][d].clear_state();
     }
 
-    states_size = 0;
+    max_delay = 0;
 }
 
 long Hierarchy::size() const {
@@ -366,7 +366,7 @@ void Hierarchy::write(
     int delay_capacity = states.size();
 
     writer.write(&delay_capacity, sizeof(int));
-    writer.write(&states_size, sizeof(int));
+    writer.write(&max_delay, sizeof(int));
 
     for (int t = 0; t < states.size(); t++) {
         writer.write(&states[t].data[0], states[t].data.size() * sizeof(Byte));
@@ -437,7 +437,7 @@ void Hierarchy::read(
     int delay_capacity;
 
     reader.read(&delay_capacity, sizeof(int));
-    reader.read(&states_size, sizeof(int));
+    reader.read(&max_delay, sizeof(int));
 
     states.resize(delay_capacity);
 
