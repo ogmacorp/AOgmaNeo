@@ -177,10 +177,8 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
 
-        float reinforcement = min(params.td_clip, max(-params.td_clip, td_error));
-
-        float value_rate = params.vlr * reinforcement;
-        float policy_rate = params.plr * reinforcement;
+        float value_rate = params.vlr * td_error;
+        float policy_rate = params.plr * td_error;
         float mimic_rate = params.plr * mimic;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -229,7 +227,7 @@ void Actor::forward(
                         int wi_base = offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index));
 
                         if (vc == in_ci_prev)
-                            vl.value_traces[wi_base] += 1.0f;
+                            vl.value_traces[wi_base] += expf(-params.trace_squash * abs(vl.value_traces[wi_base]));
 
                         vl.value_weights[wi_base] += value_rate * vl.value_traces[wi_base];
 
@@ -250,7 +248,7 @@ void Actor::forward(
                                 int wi = di + wi_start;
 
                                 if (vc == in_ci_prev)
-                                    vl.policy_traces[wi] += dendrite_acts_prev[dendrite_index]; // replacing trace
+                                    vl.policy_traces[wi] += dendrite_acts_prev[dendrite_index] * expf(-params.trace_squash * abs(vl.policy_traces[wi]));
 
                                 vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi] + mimic_rate * dendrite_acts_prev[dendrite_index] * (vc == in_ci_prev);
                                 vl.policy_traces[wi] *= params.trace_decay;

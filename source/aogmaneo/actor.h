@@ -43,15 +43,15 @@ public:
         float plr; // policy learning rate
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
-        float td_clip; // td error clip
+        float trace_squash; // trace squashing to prevent divergence
 
         Params()
         :
-        vlr(0.001f),
-        plr(0.001f),
+        vlr(0.01f),
+        plr(0.01f),
         discount(0.99f),
         trace_decay(0.97f),
-        td_clip(128.0f)
+        trace_squash(1.0f)
         {}
     };
 
