@@ -137,12 +137,12 @@ void Hierarchy::step(
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
-    assert(delay >= 0 && delay < states_size);
+    assert(delay >= 0);
 
     bool needs_reset = false;
 
     // if updating a past state
-    if (delay > 0) {
+    if (delay > 0 && delay < states_size) {
         // set old state
         Buffer_Reader state_reader;
         state_reader.buffer = states[delay];
@@ -291,9 +291,6 @@ long Hierarchy::state_size() const {
         for (int d = 0; d < decoders[l].size(); d++)
             size += decoders[l][d].state_size();
     }
-
-    // state buffer
-    size += sizeof(int) + states.size() * state_size();
 
     return size;
 }

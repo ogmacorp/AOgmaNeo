@@ -158,6 +158,10 @@ public:
 
     void clear_state();
 
+    void clear_states_buffer() {
+        states_size = 0;
+    }
+
     // serialization
     long size() const; // returns size in bytes
     long state_size() const; // returns size of state in bytes
