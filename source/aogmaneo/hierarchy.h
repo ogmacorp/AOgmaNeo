@@ -131,6 +131,7 @@ private:
     int num_input_states;
     Circle_Buffer<Input_State> states; // delayed states
 
+    Byte_Buffer current_state;
     Byte_Buffer delayed_state;
 
 public:

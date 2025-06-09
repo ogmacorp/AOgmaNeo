@@ -129,6 +129,19 @@ void Hierarchy::init_random(
         for (int i = 0; i < io_descs.size(); i++)
             states[t].input_cis[i].resize(io_sizes[i].x * io_sizes[i].y);
     }
+
+    // save current (starting) state
+    current_state.resize(state_size());
+
+    {
+        Buffer_Writer state_writer;
+        state_writer.buffer = current_state;
+
+        write_state(state_writer);
+    }
+
+    // set delayed state initially to current until gap widens
+    delayed_state = current_state;
 }
 
 void Hierarchy::step(
@@ -235,6 +248,15 @@ void Hierarchy::step_delayed(
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
 
+    // save current state
+    {
+        // set old state
+        Buffer_Writer state_writer;
+        state_writer.buffer = current_state;
+
+        write_state(state_writer);
+    }
+
     // update to the past state
     {
         // set old state
@@ -318,10 +340,19 @@ void Hierarchy::step_delayed(
             decoders[l][d].activate(layer_input_cis, (l == 0 ? params.ios[i_indices[d]].decoder : params.layers[l].decoder));
     }
 
+    // save delayed state
+    {
+        // set old state
+        Buffer_Writer state_writer;
+        state_writer.buffer = delayed_state;
+
+        write_state(state_writer);
+    }
+
     // reset state to current
     {
         Buffer_Reader state_reader;
-        state_reader.buffer = delayed_state;
+        state_reader.buffer = current_state;
 
         read_state(state_reader);
     }
