@@ -30,8 +30,7 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer q_weights; // q weights
-        Float_Buffer p_weights; // policy weights
+        Float_Buffer weights;
     };
 
     // history sample for delayed updates
@@ -43,19 +42,17 @@ public:
     };
 
     struct Params {
-        float qlr; // Q learning rate
-        float plr; // policy learning rate
+        float lr; // Q learning rate
+        float bc; // behavior cloning rate
         float discount; // discount fActor
-        float reweight; // reweight amount
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        qlr(0.001f),
-        plr(0.01f),
+        lr(0.001f),
+        bc(0.01f),
         discount(0.99f),
-        reweight(1.0f),
         n_steps(8),
         history_iters(16)
         {}
@@ -71,12 +68,10 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_qs;
-    Float_Buffer hidden_ps;
 
     Float_Buffer dendrite_qs;
-    Float_Buffer dendrite_ps;
 
-    Float_Buffer hidden_weights;
+    Float_Buffer hidden_probs;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
@@ -173,8 +168,8 @@ public:
     }
 
     // get policy
-    const Float_Buffer &get_hidden_ps() const {
-        return hidden_ps;
+    const Float_Buffer &get_hidden_qs() const {
+        return hidden_qs;
     }
 
     // get the hidden size
