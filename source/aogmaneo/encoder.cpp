@@ -167,8 +167,6 @@ void Encoder::learn(
 
     const float recon_scale = sqrtf(1.0f / max(1, count)) / 127.0f * params.scale;
 
-    int target_sum = vl.recon_sums[target_ci + visible_cells_start];
-
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
