@@ -52,7 +52,7 @@ public:
         :
         vigilance(0.96f),
         lr(0.05f),
-        active_ratio(0.1f),
+        active_ratio(1.0f),
         l_radius(2)
         {}
     };
