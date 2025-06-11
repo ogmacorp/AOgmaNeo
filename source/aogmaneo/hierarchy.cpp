@@ -242,8 +242,7 @@ void Hierarchy::step_delayed(
     const Array<Int_Buffer_View> &input_cis,
     bool learn_enabled
 ) {
-    if (num_input_states != states.size())
-        return;
+    assert(num_input_states == states.size() && num_input_states > 0);
 
     assert(params.layers.size() == encoders.size());
     assert(params.ios.size() == io_sizes.size());
