@@ -19,8 +19,6 @@ void Encoder::forward(
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
-    float count = 0.0f;
-
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
         const Visible_Layer_Desc &vld = visible_layer_descs[vli];
@@ -39,10 +37,6 @@ void Encoder::forward(
         // bounds of receptive field, clamped to input size
         Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
         Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
-
-        int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
-
-        count += vl.importance * sub_count;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -91,10 +85,8 @@ void Encoder::forward(
             sum += vl.hidden_sums[hidden_cell_index] * influence;
         }
 
-        float activation = sum / count;
-
-        if (activation > max_activation) {
-            max_activation = activation;
+        if (sum > max_activation) {
+            max_activation = sum;
             max_index = hc;
         }
     }
