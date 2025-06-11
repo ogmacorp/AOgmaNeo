@@ -32,11 +32,7 @@ public:
     struct Visible_Layer {
         Byte_Buffer weights;
 
-        Int_Buffer hidden_sums;
-
-        Byte_Buffer recons;
-
-        Int_Buffer recon_cis;
+        Int_Buffer recon_sums;
 
         float importance;
 
@@ -47,12 +43,12 @@ public:
     };
 
     struct Params {
-        float vigilance; // match before learning halts
+        float scale; // recon curve
         float lr; // learning rate
 
         Params()
         :
-        vigilance(0.96f),
+        scale(1.0f),
         lr(0.05f)
         {}
     };
@@ -62,12 +58,14 @@ private:
 
     Int_Buffer hidden_cis;
 
+    Float_Buffer hidden_acts;
+
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
     
     Array<Int3> visible_pos_vlis; // for parallelization, cartesian product of column coordinates and visible layers
-
+    
     // --- kernels ---
 
     void forward(
@@ -76,15 +74,11 @@ private:
         const Params &params
     );
 
-    void backward(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        Int_Buffer_View input_cis,
+        int vli,
+        unsigned long* state,
         const Params &params
     );
 
