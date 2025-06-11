@@ -36,6 +36,8 @@ public:
 
         Byte_Buffer recons;
 
+        Int_Buffer recon_cis;
+
         float importance;
 
         Visible_Layer()
@@ -45,10 +47,12 @@ public:
     };
 
     struct Params {
+        float vigilance; // match before learning halts
         float lr; // learning rate
 
         Params()
         :
+        vigilance(0.8f),
         lr(0.05f)
         {}
     };
