@@ -242,7 +242,7 @@ void Encoder::learn(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2i(params.lr * ((vc == in_ci) * 255.0f - vl.weights[wi]))));
+                    vl.weights[wi] = min(255, max(0, vl.weights[wi] + roundf2i(params.lr * ((vc == in_ci) * 255.0f - hidden_max * vl.weights[wi]))));
                 }
             }
     }
