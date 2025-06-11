@@ -213,12 +213,16 @@ void Encoder::learn(
 
                 int visible_cells_start = visible_column_index * vld.size.z;
 
+                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+
                 int in_ci = vl_input_cis[visible_column_index];
 
-                if (vl.recon_cis[visible_column_index] == in_ci)
-                    sum++;
+                int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                count++;
+                if (vl.recon_cis[visible_column_index] == in_ci)
+                    sum += vl.weights[wi];
+
+                count += vl.weights[wi];
             }
     }
 
