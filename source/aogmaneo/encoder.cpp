@@ -205,7 +205,7 @@ void Encoder::learn(
         total += vl.importance * sub_total;
     }
 
-    float match = sum / total;
+    float match = sum / max(limit_small, total);
 
     if (match >= params.vigilance)
         return;
