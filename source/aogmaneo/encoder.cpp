@@ -205,7 +205,7 @@ void Encoder::learn(
         total += vl.importance * sub_total;
     }
 
-    float match = static_cast<float>(sum) / static_cast<float>(total);
+    float match = sum / total;
 
     if (match >= params.vigilance)
         return;
