@@ -35,7 +35,6 @@ public:
         Int_Buffer hidden_sums;
 
         Byte_Buffer recons;
-        Int_Buffer recon_cis;
 
         float importance;
 
