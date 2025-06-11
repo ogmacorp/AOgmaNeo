@@ -183,8 +183,8 @@ void Encoder::learn(
     int hidden_cell_index_max = hidden_ci + hidden_column_index * hidden_size.z;
 
     // find match
-    int sum = 0;
-    int count = 0;
+    float sum = 0.0f;
+    float total = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -207,6 +207,9 @@ void Encoder::learn(
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
+        int sub_sum = 0;
+        int sub_total = 0;
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -220,13 +223,16 @@ void Encoder::learn(
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
                 if (vl.recon_cis[visible_column_index] == in_ci)
-                    sum += vl.weights[wi];
+                    sub_sum += vl.weights[wi];
 
-                count += vl.weights[wi];
+                sub_total += vl.weights[wi];
             }
+
+        sum += vl.importance * sub_sum;
+        total += vl.importance * sub_total;
     }
 
-    float match = static_cast<float>(sum) / static_cast<float>(count);
+    float match = static_cast<float>(sum) / static_cast<float>(total);
 
     if (match >= params.vigilance)
         return;
