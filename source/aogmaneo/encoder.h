@@ -36,6 +36,8 @@ public:
 
         Byte_Buffer recons;
 
+        Byte_Buffer recon_cis;
+
         float importance;
 
         Visible_Layer()

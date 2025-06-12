@@ -129,6 +129,9 @@ void Encoder::backward(
     Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
     Int2 iter_upper_bound(min(hidden_size.x - 1, hidden_center.x + reverse_radii.x), min(hidden_size.y - 1, hidden_center.y + reverse_radii.y));
 
+    int max_index = 0;
+    int max_recon = 0;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -156,7 +159,14 @@ void Encoder::backward(
             }
 
         vl.recons[visible_cell_index] = recon / max(1, count);
+
+        if (recon > max_recon) {
+            max_recon = recon;
+            max_index = vc;
+        }
     }
+
+    vl.recon_cis[visible_column_index] = max_index;
 }
 
 void Encoder::learn(
@@ -208,24 +218,11 @@ void Encoder::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                // find max weight cell index
-                int max_index = 0;
-                Byte max_w = 0;
-
-                for (int vc = 0; vc < vld.size.z; vc++) {
-                    int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
-
-                    if (vl.weights[wi] > max_w) {
-                        max_w = vl.weights[wi];
-                        max_index = vc;
-                    }
-                }
-
                 int in_ci = vl_input_cis[visible_column_index];
 
                 int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index)));
 
-                if (max_index == in_ci)
+                if (vl.recon_cis[visible_column_index] == in_ci)
                     sub_sum += vl.weights[wi];
 
                 sub_total += vl.weights[wi];
@@ -323,6 +320,8 @@ void Encoder::init_random(
         vl.hidden_sums.resize(num_hidden_cells);
 
         vl.recons.resize(num_visible_cells);
+
+        vl.recon_cis.resize(num_visible_columns);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
@@ -468,6 +467,8 @@ void Encoder::read(
         vl.hidden_sums.resize(num_hidden_cells);
 
         vl.recons.resize(num_visible_cells);
+
+        vl.recon_cis.resize(num_visible_columns);
 
         reader.read(&vl.importance, sizeof(float));
     }
