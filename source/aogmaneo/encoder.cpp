@@ -177,7 +177,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        float recon = static_cast<float>(vl.recon_sums[visible_cell_index]) / static_cast<float>(max(1, count));
+        float recon = min(127.0f, static_cast<float>(vl.recon_sums[visible_cell_index]) / static_cast<float>(max(1, count)));
 
         // re-use as deltas
         vl.recon_sums[visible_cell_index] = roundf2i(params.lr * ((vc == in_ci) * 127.0f - recon));
