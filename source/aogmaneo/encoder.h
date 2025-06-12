@@ -34,6 +34,8 @@ public:
 
         Int_Buffer hidden_sums;
 
+        Int_Buffer recon_sums;
+
         float importance;
 
         Visible_Layer()
