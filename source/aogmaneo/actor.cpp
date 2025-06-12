@@ -346,29 +346,8 @@ void Actor::learn(
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
-    // softmax q for weights
-    {
-        float total = 0.0f;
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-        
-            hidden_weights[hidden_cell_index] = expf(params.reweight * (hidden_qs[hidden_cell_index] - max_q_prev));
-
-            total += hidden_weights[hidden_cell_index];
-        }
-
-        float total_inv = 1.0f / max(limit_small, total);
-
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
-
-            hidden_weights[hidden_cell_index] *= total_inv;
-        }
-    }
-
     // AWAC weight
-    float weight = hidden_weights[hidden_cell_index_target];
+    float weight = expf(params.reweight * (hidden_qs[hidden_cell_index_target] - max_q_prev));
 
     // softmax p
     {
@@ -525,8 +504,6 @@ void Actor::init_random(
 
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
-
-    hidden_weights.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -721,8 +698,6 @@ void Actor::read(
 
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
-
-    hidden_weights.resize(num_hidden_cells);
 
     int num_visible_layers;
 
