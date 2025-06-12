@@ -34,10 +34,6 @@ public:
 
         Int_Buffer hidden_sums;
 
-        Byte_Buffer recons;
-
-        Byte_Buffer recon_cis;
-
         float importance;
 
         Visible_Layer()
@@ -47,12 +43,10 @@ public:
     };
 
     struct Params {
-        float vigilance; // match before learning halts
         float lr; // learning rate
 
         Params()
         :
-        vigilance(0.96f),
         lr(0.05f)
         {}
     };
@@ -76,15 +70,10 @@ private:
         const Params &params
     );
 
-    void backward(
-        const Int2 &column_pos,
-        int vli,
-        const Params &params
-    );
-
     void learn(
         const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        int vli,
+        Int_Buffer_View input_cis,
         const Params &params
     );
 
