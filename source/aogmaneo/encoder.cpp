@@ -180,7 +180,7 @@ void Encoder::learn(
         float recon = static_cast<float>(vl.recon_sums[visible_cell_index]) / static_cast<float>(max(1, count));
 
         // re-use as deltas
-        vl.recon_sums[visible_cell_index] = roundf2i(params.lr * ((vc == in_ci) * 255.0f - recon));
+        vl.recon_sums[visible_cell_index] = roundf2i(params.lr * ((vc == in_ci) * 127.0f - recon));
     }
 
     if (max_index == in_ci)
