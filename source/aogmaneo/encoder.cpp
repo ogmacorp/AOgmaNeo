@@ -276,7 +276,7 @@ void Encoder::learn(
 
                     int wi = hidden_ci + hidden_size.z * (offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index)));
 
-                    Byte input = (vc == in_ci) * 255;
+                    Byte input = (vc == in_ci) * 127;
 
                     Byte recon = vl.recons[visible_cell_index];
 
@@ -318,7 +318,7 @@ void Encoder::init_random(
         vl.weights.resize(num_hidden_cells * area * vld.size.z);
 
         for (int i = 0; i < vl.weights.size(); i++)
-            vl.weights[i] = 255 - (rand() % init_weight_noisei);
+            vl.weights[i] = 127 + (rand() % init_weight_noisei);
 
         vl.hidden_sums.resize(num_hidden_cells);
 
