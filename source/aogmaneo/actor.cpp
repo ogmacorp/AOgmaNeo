@@ -24,19 +24,21 @@ void Actor::forward(
 
     int target_ci = hidden_target_cis_prev[hidden_column_index];
 
-    int max_q_ci_prev = 0;
-    float max_q_prev = limit_min;
+    //int max_q_ci_prev = 0;
+    //float max_q_prev = limit_min;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+    //for (int hc = 0; hc < hidden_size.z; hc++) {
+    //    int hidden_cell_index = hc + hidden_cells_start;
 
-        float q_prev = hidden_qs_prev[hidden_cell_index];
+    //    float q_prev = hidden_qs_prev[hidden_cell_index];
 
-        if (q_prev > max_q_prev) {
-            max_q_prev = q_prev;
-            max_q_ci_prev = hc;
-        }
-    }
+    //    if (q_prev > max_q_prev) {
+    //        max_q_prev = q_prev;
+    //        max_q_ci_prev = hc;
+    //    }
+    //}
+
+    int hidden_ci_prev = hidden_cis[hidden_column_index];
 
     float q_prev = hidden_qs_prev[target_ci + hidden_cells_start];
 
@@ -141,7 +143,7 @@ void Actor::forward(
         }
     }
 
-    // softmax q
+    // softmax ps from qs
     {
         float total = 0.0f;
 
@@ -230,14 +232,14 @@ void Actor::forward(
                                 int wi = di + wi_start;
 
                                 if (vc == in_ci_prev && hc == target_ci) { // Watkins Q lambda
-                                    if (target_ci == max_q_ci_prev)
+                                    if (target_ci == hidden_ci_prev)
                                         vl.traces[wi] = max(vl.traces[wi], dendrite_qs_prev[dendrite_index]); // replacing trace
                                 }
 
                                 // q update
                                 vl.weights[wi] += reinforcement * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * vl.traces[wi]; // apply sign deferred here so have positive traces always
                                 // policy update (BC)
-                                vl.weights[wi] += params.plr * dendrite_ps_prev[dendrite_index] * (vc == in_ci_prev);
+                                vl.weights[wi] += dendrite_ps_prev[dendrite_index] * (vc == in_ci_prev);
 
                                 vl.traces[wi] *= params.trace_decay;
                             }

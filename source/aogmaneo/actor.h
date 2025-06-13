@@ -44,7 +44,7 @@ public:
 
         Params()
         :
-        qlr(0.01f),
+        qlr(0.001f),
         plr(0.01f),
         discount(0.99f),
         trace_decay(0.97f)
