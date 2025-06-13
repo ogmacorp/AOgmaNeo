@@ -39,7 +39,6 @@ public:
     struct Params {
         float qlr; // value learning rate
         float plr; // bc policy learning rate
-        float reweight; // weight to q policy
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
 
