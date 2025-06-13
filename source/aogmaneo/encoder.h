@@ -48,8 +48,7 @@ public:
 
         Params()
         :
-        scale(1.0f),
-        lr(0.02f)
+        lr(0.1f)
         {}
     };
 
@@ -77,7 +76,10 @@ private:
     void learn(
         const Int2 &column_pos,
         Int_Buffer_View input_cis,
+<<<<<<< HEAD
         int vli,
+=======
+>>>>>>> enc
         unsigned long* state,
         const Params &params
     );

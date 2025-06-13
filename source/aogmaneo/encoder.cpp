@@ -93,7 +93,10 @@ void Encoder::forward(
 void Encoder::learn(
     const Int2 &column_pos,
     Int_Buffer_View input_cis,
+<<<<<<< HEAD
     int vli,
+=======
+>>>>>>> enc
     unsigned long* state,
     const Params &params
 ) {
@@ -179,8 +182,13 @@ void Encoder::learn(
         if (vc != target_ci && recon_sum >= target_sum)
             num_higher++;
 
+<<<<<<< HEAD
         // re-use recon_sums as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - expf(min(0, recon_sum - count * 127) * recon_scale)), state);
+=======
+        // re-use as deltas
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * ((vc == in_ci) * 127.0f - recon), state);
+>>>>>>> enc
     }
 
     if (num_higher == 0)
@@ -296,7 +304,11 @@ void Encoder::step(
 
             unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
 
+<<<<<<< HEAD
             learn(pos, input_cis[vli], vli, &state, params);
+=======
+            learn(pos, vli, input_cis[vli], &state, params);
+>>>>>>> enc
         }
     }
 }
