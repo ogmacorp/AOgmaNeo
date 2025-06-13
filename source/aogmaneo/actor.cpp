@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -168,6 +169,7 @@ void Actor::forward(
 
     if (learn_enabled) {
         float td_error = reward + params.discount * max_q - q_prev;
+        std::cout << max_q << std::endl;
 
         float reinforcement = params.qlr * td_error;
 
@@ -176,7 +178,7 @@ void Actor::forward(
 
             int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
-            float error = params.plr * ((hc == target_ci) - hidden_ps[hidden_cell_index]);
+            float error = params.plr * ((hc == target_ci) - hidden_ps_prev[hidden_cell_index]);
 
             for (int di = 0; di < num_dendrites_per_cell; di++) {
                 int dendrite_index = di + dendrites_start;
@@ -234,6 +236,8 @@ void Actor::forward(
                                 if (vc == in_ci_prev && hc == target_ci) { // Watkins Q lambda
                                     if (target_ci == hidden_ci_prev)
                                         vl.traces[wi] = max(vl.traces[wi], dendrite_qs_prev[dendrite_index]); // replacing trace
+                                    else
+                                        vl.traces[wi] = 0.0f;
                                 }
 
                                 // q update
