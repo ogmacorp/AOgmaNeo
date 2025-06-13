@@ -30,10 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Float_Buffer q_weights;
+        Float_Buffer weights;
         Float_Buffer traces;
-
-        Float_Buffer p_weights;
 
         Int_Buffer input_cis_prev;
     };
@@ -47,9 +45,8 @@ public:
 
         Params()
         :
-        qlr(0.1f),
-        plr(0.1f),
-        reweight(0.5f),
+        qlr(0.01f),
+        plr(0.01f),
         discount(0.99f),
         trace_decay(0.97f)
         {}
@@ -72,8 +69,6 @@ private:
 
     Float_Buffer dendrite_ps;
     Float_Buffer dendrite_ps_prev;
-
-    Float_Buffer hidden_probs;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
