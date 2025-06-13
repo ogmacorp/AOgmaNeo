@@ -335,7 +335,7 @@ void Actor::learn(
         max_p_prev = max(max_p_prev, p);
     }
 
-    float target_q = max_p_prev;
+    float target_q = max_q_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         target_q = history_samples[t - n].reward + params.discount * target_q;
