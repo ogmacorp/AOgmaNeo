@@ -296,12 +296,12 @@ void Actor::init_random(
     dendrite_qs.resize(num_dendrites);
     dendrite_qs_prev = Float_Buffer(num_dendrites, 0.0f);
 
+    dendrite_ps_deltas.resize(num_dendrites);
+
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
     hidden_qs_prev = Float_Buffer(num_hidden_cells, 0.0f);
     hidden_ps_prev = Float_Buffer(num_hidden_cells, 0.0f);
-
-    hidden_ps.resize(num_hidden_cells);
 }
 
 void Actor::step(
@@ -434,6 +434,7 @@ void Actor::read(
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
     dendrite_qs.resize(num_dendrites);
+    dendrite_ps_deltas.resize(num_dendrites);
 
     int num_visible_layers;
 
