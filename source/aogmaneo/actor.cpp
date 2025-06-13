@@ -184,7 +184,7 @@ void Actor::forward(
                 int dendrite_index = di + dendrites_start;
 
                 // re-use as deltas
-                dendrite_ps_prev[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_ps_prev[dendrite_index];
+                dendrite_ps_deltas[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_qs_prev[dendrite_index];
             }
         }
 
@@ -243,7 +243,7 @@ void Actor::forward(
                                 // q update
                                 vl.weights[wi] += reinforcement * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * vl.traces[wi]; // apply sign deferred here so have positive traces always
                                 // policy update (BC)
-                                vl.weights[wi] += dendrite_ps_prev[dendrite_index] * (vc == in_ci_prev);
+                                vl.weights[wi] += dendrite_ps_deltas[dendrite_index] * (vc == in_ci_prev);
 
                                 vl.traces[wi] *= params.trace_decay;
                             }
@@ -294,9 +294,7 @@ void Actor::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     dendrite_qs.resize(num_dendrites);
-    dendrite_ps.resize(num_dendrites);
     dendrite_qs_prev = Float_Buffer(num_dendrites, 0.0f);
-    dendrite_ps_prev = Float_Buffer(num_dendrites, 0.0f);
 
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
@@ -330,7 +328,6 @@ void Actor::step(
     hidden_qs_prev = hidden_qs;
     hidden_ps_prev = hidden_ps;
     dendrite_qs_prev = dendrite_qs;
-    dendrite_ps_prev = dendrite_ps;
 }
 
 void Actor::clear_state() {
@@ -396,7 +393,6 @@ void Actor::write(
     writer.write(&hidden_qs_prev[0], hidden_qs_prev.size() * sizeof(float));
     writer.write(&hidden_ps_prev[0], hidden_ps_prev.size() * sizeof(float));
     writer.write(&dendrite_qs_prev[0], dendrite_qs_prev.size() * sizeof(float));
-    writer.write(&dendrite_ps_prev[0], dendrite_ps_prev.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -429,18 +425,15 @@ void Actor::read(
     hidden_qs_prev.resize(num_hidden_cells);
     hidden_ps_prev.resize(num_hidden_cells);
     dendrite_qs_prev.resize(num_dendrites);
-    dendrite_ps_prev.resize(num_dendrites);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_qs_prev[0], hidden_qs_prev.size() * sizeof(float));
     reader.read(&hidden_ps_prev[0], hidden_ps_prev.size() * sizeof(float));
     reader.read(&dendrite_qs_prev[0], dendrite_qs_prev.size() * sizeof(float));
-    reader.read(&dendrite_ps_prev[0], dendrite_ps_prev.size() * sizeof(float));
 
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
     dendrite_qs.resize(num_dendrites);
-    dendrite_ps.resize(num_dendrites);
 
     int num_visible_layers;
 
@@ -480,7 +473,6 @@ void Actor::write_state(
     writer.write(&hidden_qs_prev[0], hidden_qs_prev.size() * sizeof(float));
     writer.write(&hidden_ps_prev[0], hidden_ps_prev.size() * sizeof(float));
     writer.write(&dendrite_qs_prev[0], dendrite_qs_prev.size() * sizeof(float));
-    writer.write(&dendrite_ps_prev[0], dendrite_ps_prev.size() * sizeof(float));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -498,7 +490,6 @@ void Actor::read_state(
     reader.read(&hidden_qs_prev[0], hidden_qs_prev.size() * sizeof(float));
     reader.read(&hidden_ps_prev[0], hidden_ps_prev.size() * sizeof(float));
     reader.read(&dendrite_qs_prev[0], dendrite_qs_prev.size() * sizeof(float));
-    reader.read(&dendrite_ps_prev[0], dendrite_ps_prev.size() * sizeof(float));
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];

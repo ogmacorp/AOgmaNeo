@@ -45,7 +45,7 @@ public:
         Params()
         :
         qlr(0.001f),
-        plr(0.01f),
+        plr(0.001f),
         discount(0.99f),
         trace_decay(0.97f)
         {}
@@ -66,8 +66,7 @@ private:
     Float_Buffer hidden_ps;
     Float_Buffer hidden_ps_prev;
 
-    Float_Buffer dendrite_ps;
-    Float_Buffer dendrite_ps_prev;
+    Float_Buffer dendrite_ps_deltas;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
