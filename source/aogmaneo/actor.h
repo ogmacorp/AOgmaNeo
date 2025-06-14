@@ -52,10 +52,10 @@ public:
 
         Params()
         :
-        qlr(0.001f),
+        qlr(0.01f),
         plr(0.1f),
         discount(0.99f),
-        reweight(0.1f),
+        reweight(1.0f),
         n_steps(8),
         history_iters(16)
         {}
