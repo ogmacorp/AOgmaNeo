@@ -44,7 +44,7 @@ public:
     struct Params {
         float lr; // Q learning rate
         float bc; // behavior cloning rate
-        float discount; // discount fActor
+        float discount; // discount factor
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
