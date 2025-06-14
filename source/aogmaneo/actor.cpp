@@ -347,7 +347,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
     
-    float value_delta = params.vlr * min(params.value_clip, max(-params.value_clip, td_error));
+    float value_delta = params.vlr * td_error;
 
     // probability ratio
     float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
@@ -355,7 +355,7 @@ void Actor::learn(
     // https://huggingface.co/blog/deep-rl-ppo
     bool policy_clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
-    float policy_error_partial = params.plr * (mimic + (1.0f - mimic) * scaled_td_error * (!policy_clip));
+    float policy_error_partial = params.plr * scaled_td_error * (!policy_clip) + mimic;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;
