@@ -60,7 +60,7 @@ public:
         discount(0.99f),
         bias(0.5f),
         min_steps(16),
-        history_iters(8)
+        history_iters(16)
         {}
     };
 
