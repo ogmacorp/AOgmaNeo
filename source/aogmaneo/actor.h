@@ -56,7 +56,7 @@ public:
         plr(0.1f),
         discount(0.99f),
         reweight(0.9f),
-        n_steps(8),
+        n_steps(5),
         history_iters(16)
         {}
     };
