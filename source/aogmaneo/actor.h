@@ -50,8 +50,8 @@ public:
 
         Params()
         :
-        lr(0.001f),
-        bc(0.01f),
+        lr(0.01f),
+        bc(0.1f),
         discount(0.99f),
         n_steps(8),
         history_iters(16)
