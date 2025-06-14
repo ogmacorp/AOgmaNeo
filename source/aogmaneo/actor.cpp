@@ -292,6 +292,7 @@ void Actor::learn(
             }
     }
 
+    int max_index = 0;
     float max_q_prev = limit_min;
     float max_p_prev = limit_min;
 
@@ -331,7 +332,11 @@ void Actor::learn(
         hidden_qs[hidden_cell_index] = q;
         hidden_ps[hidden_cell_index] = p;
 
-        max_q_prev = max(max_q_prev, q);
+        if (q > max_q_prev) {
+            max_q_prev = q;
+            max_index = hc;
+        }
+
         max_p_prev = max(max_p_prev, p);
     }
 
@@ -347,7 +352,7 @@ void Actor::learn(
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
     // AWAC weight
-    float weight = expf(params.reweight * (hidden_qs[hidden_cell_index_target] - max_q_prev));
+    float weight = (1.0f - params.reweight) + params.reweight * (max_index == target_ci);
 
     // softmax p
     {
