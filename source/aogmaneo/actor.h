@@ -46,7 +46,7 @@ public:
         float qlr; // Q learning rate
         float plr; // policy learning rate
         float discount; // discount fActor
-        float reweight; // reweight amount
+        float reweight; // reweight amount in [0, 1] (reweight to high q actions)
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
