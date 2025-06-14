@@ -383,7 +383,7 @@ void Actor::learn(
     // https://huggingface.co/blog/deep-rl-ppo
     bool policy_clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
-    float policy_error_partial = params.plr * (td_error > 0.0f ? 1.0f : -(1.0f - params.bias)) * (!policy_clip) + mimic;
+    float policy_error_partial = params.plr * ((td_error > 0.0f) * 2.0f - 1.0f) * (!policy_clip) + mimic;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;
