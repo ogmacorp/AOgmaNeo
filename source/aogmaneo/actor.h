@@ -48,6 +48,7 @@ public:
         float plr; // policy learning rate
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float discount; // discount factor
+        float bias; // bias toward positive updates
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
@@ -57,6 +58,7 @@ public:
         plr(0.01f),
         smoothing(0.02f),
         discount(0.99f),
+        bias(0.5f),
         min_steps(16),
         history_iters(8)
         {}
