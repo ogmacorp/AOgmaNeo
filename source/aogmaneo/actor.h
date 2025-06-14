@@ -52,8 +52,8 @@ public:
 
         Params()
         :
-        qlr(0.002f),
-        plr(0.02f),
+        qlr(0.01f),
+        plr(0.1f),
         discount(0.99f),
         reweight(0.9f),
         n_steps(8),
