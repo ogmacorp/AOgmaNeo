@@ -49,7 +49,7 @@ public:
 
         Params()
         :
-        lr(0.05f)
+        lr(0.1f)
         {}
     };
 
@@ -76,6 +76,7 @@ private:
         const Int2 &column_pos,
         int vli,
         Int_Buffer_View input_cis,
+        unsigned long* state,
         const Params &params
     );
 

@@ -98,6 +98,7 @@ void Encoder::learn(
     const Int2 &column_pos,
     int vli,
     Int_Buffer_View input_cis,
+    unsigned long* state,
     const Params &params
 ) {
     Visible_Layer &vl = visible_layers[vli];
@@ -180,7 +181,7 @@ void Encoder::learn(
         float recon = min(127.0f, static_cast<float>(vl.recon_sums[visible_cell_index]) / static_cast<float>(max(1, count)));
 
         // re-use as deltas
-        vl.recon_sums[visible_cell_index] = roundf2i(params.lr * ((vc == in_ci) * 127.0f - recon));
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * ((vc == in_ci) * 127.0f - recon), state);
     }
 
     if (max_index == in_ci)
@@ -281,12 +282,16 @@ void Encoder::step(
         forward(Int2(i / hidden_size.y, i % hidden_size.y), input_cis, params);
 
     if (learn_enabled) {
+        unsigned int base_state = rand();
+
         PARALLEL_FOR
         for (int i = 0; i < visible_pos_vlis.size(); i++) {
             Int2 pos = Int2(visible_pos_vlis[i].x, visible_pos_vlis[i].y);
             int vli = visible_pos_vlis[i].z;
 
-            learn(pos, vli, input_cis[vli], params);
+            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
+
+            learn(pos, vli, input_cis[vli], &state, params);
         }
     }
 }
