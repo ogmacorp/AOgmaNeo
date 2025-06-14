@@ -368,7 +368,7 @@ void Actor::learn(
     }
 
     // AWAC weight
-    float weight = hidden_weights[hidden_cell_index_target];
+    float weight = hidden_weights[hidden_cell_index_target] * hidden_size.z; // * hidden_size.z to make 1 on average
 
     // softmax p
     {
