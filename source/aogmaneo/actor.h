@@ -45,14 +45,16 @@ public:
         float lr; // Q learning rate
         float bc; // behavior cloning rate
         float discount; // discount factor
+        float td_clip; // td error clipping
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
         Params()
         :
-        lr(0.001f),
+        lr(0.01f),
         bc(0.01f),
         discount(0.99f),
+        td_clip(1.0f),
         n_steps(8),
         history_iters(16)
         {}
