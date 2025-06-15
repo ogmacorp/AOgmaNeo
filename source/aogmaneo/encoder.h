@@ -33,6 +33,7 @@ public:
         Byte_Buffer weights;
 
         Int_Buffer hidden_sums;
+        Int_Buffer hidden_counts;
 
         Int_Buffer recon_sums;
 

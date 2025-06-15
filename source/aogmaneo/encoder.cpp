@@ -69,8 +69,6 @@ void Encoder::forward(
     int max_index = 0;
     float max_activation = 0.0f;
 
-    const float byte_inv = 1.0f / 255.0f;
-
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
@@ -80,7 +78,7 @@ void Encoder::forward(
             Visible_Layer &vl = visible_layers[vli];
             const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-            float influence = vl.importance * byte_inv;
+            float influence = vl.importance * sqrtf(1.0f / vl.hidden_counts[hidden_column_index]);
 
             sum += vl.hidden_sums[hidden_cell_index] * influence;
         }
@@ -246,6 +244,7 @@ void Encoder::init_random(
             vl.weights[i] = 127 + (rand() % init_weight_noisei);
 
         vl.hidden_sums.resize(num_hidden_cells);
+        vl.hidden_counts.resize(num_hidden_columns);
 
         vl.recon_sums.resize(num_visible_cells);
     }
@@ -266,6 +265,33 @@ void Encoder::init_random(
         for (int i = 0; i < num_visible_columns; i++) {
             visible_pos_vlis[index] = Int3(i / vld.size.y, i % vld.size.y, vli);
             index++;
+        }
+    }
+
+    // init counts
+    for (int i = 0; i < num_hidden_columns; i++) {
+        Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            int diam = vld.radius * 2 + 1;
+
+            // projection
+            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+
+            Int2 visible_center = project(column_pos, h_to_v);
+
+            // lower corner
+            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+
+            // bounds of receptive field, clamped to input size
+            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+
+            vl.hidden_counts[i] = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
         }
     }
 }
@@ -391,6 +417,7 @@ void Encoder::read(
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
 
         vl.hidden_sums.resize(num_hidden_cells);
+        vl.hidden_counts.resize(num_hidden_columns);
 
         vl.recon_sums.resize(num_visible_cells);
 
@@ -411,6 +438,33 @@ void Encoder::read(
         for (int i = 0; i < num_visible_columns; i++) {
             visible_pos_vlis[index] = Int3(i / vld.size.y, i % vld.size.y, vli);
             index++;
+        }
+    }
+
+    // init counts
+    for (int i = 0; i < num_hidden_columns; i++) {
+        Int2 column_pos(i / hidden_size.y, i % hidden_size.y);
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            int diam = vld.radius * 2 + 1;
+
+            // projection
+            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+
+            Int2 visible_center = project(column_pos, h_to_v);
+
+            // lower corner
+            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+
+            // bounds of receptive field, clamped to input size
+            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+
+            vl.hidden_counts[i] = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
         }
     }
 }
