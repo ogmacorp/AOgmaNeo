@@ -167,8 +167,8 @@ void Encoder::learn(
             }
         }
 
-    int max_index = 0;
-    int max_recon_sum = 0;
+    int max_index = -1;
+    int max_recon_sum = vl.recon_sums[visible_cells_start];
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
