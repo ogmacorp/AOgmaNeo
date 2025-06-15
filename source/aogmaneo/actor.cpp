@@ -305,7 +305,6 @@ void Actor::learn(
             }
     }
 
-    int max_index = 0;
     float max_q_prev = limit_min;
     float max_p_prev = limit_min;
 
@@ -345,11 +344,7 @@ void Actor::learn(
         hidden_qs[hidden_cell_index] = q;
         hidden_ps[hidden_cell_index] = p;
 
-        if (q > max_q_prev) {
-            max_q_prev = q;
-            max_index = hc;
-        }
-
+        max_q_prev = max(max_q_prev, q);
         max_p_prev = max(max_p_prev, p);
     }
 
