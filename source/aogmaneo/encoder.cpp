@@ -168,6 +168,8 @@ void Encoder::learn(
     int max_index = 0;
     int max_recon_sum = 0;
 
+    const float half_byte_inv = 1.0f / 127.0f;
+
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
@@ -176,10 +178,10 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        float recon = min(127.0f, static_cast<float>(vl.recon_sums[visible_cell_index]) / static_cast<float>(max(1, count)));
+        float recon = expf(params.scale * min(0.0f, static_cast<float>(vl.recon_sums[visible_cell_index]) / static_cast<float>(max(1, count * 127)) - 1.0f));
 
         // re-use as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * ((vc == in_ci) * 127.0f - recon), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 127.0f * ((vc == in_ci) - recon), state);
     }
 
     if (max_index == in_ci)
