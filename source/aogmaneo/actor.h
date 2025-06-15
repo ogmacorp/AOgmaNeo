@@ -43,15 +43,13 @@ public:
         float plr; // policy learning rate
         float discount; // discount factor
         float trace_decay; // eligibility trace decay
-        float td_scale_decay; // slow decay
 
         Params()
         :
-        vlr(0.001f),
+        vlr(0.01f),
         plr(0.1f),
         discount(0.99f),
-        trace_decay(0.97f),
-        td_scale_decay(0.999f)
+        trace_decay(0.97f)
         {}
     };
 
@@ -68,8 +66,6 @@ private:
     Float_Buffer dendrite_acts_prev;
 
     Float_Buffer hidden_values;
-
-    Float_Buffer hidden_td_scales;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
