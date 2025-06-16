@@ -168,7 +168,7 @@ void Encoder::learn(
     int max_index = 0;
     int max_recon_sum = 0;
 
-    const float recon_scale = params.scale * sqrtf(1.0f / max(1, count)) / 127.0f;
+    const float recon_scale = 1.0f / max(1, count * 127);
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
@@ -178,7 +178,7 @@ void Encoder::learn(
             max_index = vc;
         }
 
-        float recon = expf(min(0, vl.recon_sums[visible_cell_index] - count * 127) * recon_scale);
+        float recon = vl.recon_sums[visible_cell_index] * recon_scale;
 
         // re-use as deltas
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 127.0f * ((vc == in_ci) - recon), state);
