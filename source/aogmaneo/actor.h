@@ -48,12 +48,12 @@ public:
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.05f),
+        vlr(0.001f),
+        plr(0.01f),
         discount(0.99f),
         td_clip(16.0f),
         trace_decay(0.97f),
-        trace_rate(0.1f)
+        trace_rate(0.02f)
         {}
     };
 
