@@ -335,7 +335,6 @@ void Actor::step(
 void Actor::clear_state() {
     hidden_cis.fill(0);
     hidden_acts_prev.fill(0.0f);
-
     dendrite_acts_prev.fill(0.0f);
 
     hidden_values.fill(0.0f);
