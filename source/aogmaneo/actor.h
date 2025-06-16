@@ -42,16 +42,18 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float discount; // discount factor
+        float td_clip; // prevent instability
         float trace_decay; // eligibility trace decay
         float trace_rate; // squashed trace rate
 
         Params()
         :
-        vlr(0.01f),
-        plr(0.1f),
+        vlr(0.1f),
+        plr(0.5f),
         discount(0.99f),
+        td_clip(8.0f),
         trace_decay(0.97f),
-        trace_rate(0.1f)
+        trace_rate(0.02f)
         {}
     };
 

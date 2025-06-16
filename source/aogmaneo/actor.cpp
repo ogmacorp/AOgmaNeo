@@ -177,8 +177,10 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
 
-        float value_rate = params.vlr * td_error;
-        float policy_rate = params.plr * td_error;
+        float clipped_td = min(params.td_clip, max(-params.td_clip, td_error));
+
+        float value_rate = params.vlr * clipped_td;
+        float policy_rate = params.plr * clipped_td;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
