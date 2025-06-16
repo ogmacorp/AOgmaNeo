@@ -60,7 +60,7 @@ public:
         plr(0.002f),
         smoothing(0.02f),
         delay_rate(0.001f),
-        policy_clip(0.1f),
+        policy_clip(0.2f),
         discount(0.99f),
         min_steps(16),
         history_iters(8)
