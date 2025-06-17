@@ -51,17 +51,19 @@ public:
         float delay_rate; // rate of delayed value and policy weights
         float policy_clip; // PPO policy clipping coefficient
         float discount; // discount factor
+        float td_scale_decay; // slowly decay max td error scaling
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
         Params()
         :
         vlr(0.002f),
-        plr(0.002f),
+        plr(0.02f),
         smoothing(0.02f),
         delay_rate(0.001f),
         policy_clip(0.2f),
         discount(0.99f),
+        td_scale_decay(0.999f),
         min_steps(16),
         history_iters(8)
         {}
@@ -85,6 +87,8 @@ private:
     Float_Buffer policy_dendrite_acts_delayed;
 
     Float_Buffer hidden_values; // hidden value function output buffer
+
+    Float_Buffer hidden_td_scales;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
