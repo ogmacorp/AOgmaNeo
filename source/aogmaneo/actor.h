@@ -51,10 +51,10 @@ public:
 
         Params()
         :
-        lr(0.01f),
-        bc(0.01f),
+        lr(0.001f),
+        bc(0.0f),
         discount(0.99f),
-        td_clip(16.0f),
+        td_clip(8.0f),
         n_steps(8),
         history_iters(16)
         {}
