@@ -54,8 +54,8 @@ public:
 
         Params()
         :
-        vlr(0.002f),
-        plr(0.002f),
+        vlr(0.001f),
+        plr(0.01f),
         smoothing(0.02f),
         discount(0.99f),
         td_scale_decay(0.999f),
