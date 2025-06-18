@@ -364,7 +364,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    float value_delta = params.vlr * td_error;
+    float value_delta = params.vlr * scaled_td_error;
 
     float skew = ((td_error > 0.0f) * (1.0f - params.bias) + params.bias);
 
