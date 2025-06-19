@@ -71,7 +71,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.protos[wi];
 
-                    hidden_acts[hidden_cell_index] -= diff * diff * influence;
+                    hidden_acts[hidden_cell_index] += diff * diff * influence;
                 }
             }
     }
@@ -81,6 +81,8 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_acts[hidden_cell_index] = -sqrtf(hidden_acts[hidden_cell_index]); // sqrt so is scaled well for 2nd stage
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
