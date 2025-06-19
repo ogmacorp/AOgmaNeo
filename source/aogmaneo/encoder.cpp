@@ -182,7 +182,8 @@ void Encoder::learn(
                 }
         }
 
-        hidden_resources[hidden_cell_index] -= params.lr * rate;
+        if (dhc == 0)
+            hidden_resources[hidden_cell_index] -= params.lr * rate;
     }
 }
 
