@@ -49,7 +49,7 @@ void Encoder::forward(
 
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
-        float influence = vl.importance / sub_count;
+        float influence = vl.importance * sqrtf(1.0f / sub_count);
 
         const float vld_size_z_inv = 1.0f / vld.size.z;
 
