@@ -192,8 +192,7 @@ void Image_Encoder::forward(
                     }
             }
 
-            if (dhc == 0)
-                hidden_resources[hidden_cell_index] -= params.lr * rate;
+            hidden_resources[hidden_cell_index] -= params.lr * rate;
         }
     }
 }
