@@ -35,7 +35,9 @@ public:
         Int_Buffer hidden_sums;
         Int_Buffer hidden_counts;
 
-        Int_Buffer recon_sums;
+        Byte_Buffer recons;
+
+        Byte_Buffer recon_cis;
 
         float importance;
 
@@ -46,13 +48,13 @@ public:
     };
 
     struct Params {
-        float scale; // squash on recon
+        float vigilance; // match before learning halts
         float lr; // learning rate
 
         Params()
         :
-        scale(1.0f),
-        lr(0.02f)
+        vigilance(0.96f),
+        lr(0.05f)
         {}
     };
 
@@ -75,11 +77,15 @@ private:
         const Params &params
     );
 
-    void learn(
+    void backward(
         const Int2 &column_pos,
         int vli,
-        Int_Buffer_View input_cis,
-        unsigned long* state,
+        const Params &params
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
