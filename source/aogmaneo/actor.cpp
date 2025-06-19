@@ -177,8 +177,8 @@ void Actor::forward(
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
 
-        float value_rate = min(1.0f, max(-1.0f, params.vlr * td_error));
-        float policy_rate = min(1.0f, max(-1.0f, params.plr * td_error));
+        float value_rate = params.vlr * td_error;
+        float policy_rate = params.plr * td_error;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
