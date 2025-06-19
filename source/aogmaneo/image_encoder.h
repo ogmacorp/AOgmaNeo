@@ -49,7 +49,7 @@ public:
         lr(0.1f),
         scale(2.0f),
         rr(0.02f),
-        n_radius(2)
+        n_radius(1)
         {}
     };
 
