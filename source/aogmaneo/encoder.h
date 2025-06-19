@@ -50,8 +50,8 @@ public:
 
         Params()
         :
-        falloff(0.9f),
-        choice(0.1f),
+        falloff(0.99f),
+        choice(0.05f),
         lr(0.1f),
         active_ratio(0.1f),
         l_radius(2),
