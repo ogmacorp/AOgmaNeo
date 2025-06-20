@@ -38,6 +38,7 @@ public:
 
     struct Params {
         float falloff; // amount less when not maximal (multiplier)
+        float min_rate; // minimum rate to learn at all
         float lr; // learning rate
         float scale; // scale of reconstruction
         float rr; // reconstruction rate
@@ -45,7 +46,8 @@ public:
         
         Params()
         :
-        falloff(0.9f),
+        falloff(0.1f),
+        min_rate(0.001f),
         lr(0.1f),
         scale(2.0f),
         rr(0.02f),

@@ -71,7 +71,7 @@ void Encoder::forward(
 
                     float diff = in_value - vl.protos[wi];
 
-                    hidden_acts[hidden_cell_index] += diff * diff * influence;
+                    hidden_acts[hidden_cell_index] -= abs(diff) * influence;
                 }
             }
     }
@@ -81,8 +81,6 @@ void Encoder::forward(
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
-
-        hidden_acts[hidden_cell_index] = -sqrtf(hidden_acts[hidden_cell_index]); // sqrt so is scaled well for 2nd stage
 
         if (hidden_acts[hidden_cell_index] > max_activation) {
             max_activation = hidden_acts[hidden_cell_index];
@@ -135,15 +133,15 @@ void Encoder::learn(
     if (ratio > params.active_ratio)
         return;
 
-    for (int dhc = -params.n_radius; dhc <= params.n_radius; dhc++) {
-        int hc = hidden_cis[hidden_column_index] + dhc;
-
-        if (hc < 0 || hc >= hidden_size.z)
-            continue;
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int dhc = hc - hidden_cis[hidden_column_index];
 
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float rate = hidden_resources[hidden_cell_index] * powf(params.falloff, abs(dhc));
+        float rate = hidden_resources[hidden_cell_index] * expf(-params.falloff * dhc * dhc / max(limit_small, hidden_resources[hidden_cell_index]));
+
+        if (rate < params.min_rate)
+            continue;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
