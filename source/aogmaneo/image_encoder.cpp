@@ -144,7 +144,7 @@ void Image_Encoder::forward(
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = hidden_resources[hidden_cell_index] * expf(-params.falloff * dhc * dhc / max(limit_small, hidden_resources[hidden_cell_index]));
+            float rate = hidden_resources[hidden_cell_index] * expf(-params.falloff / hidden_size.z * dhc * dhc / max(limit_small, hidden_resources[hidden_cell_index]));
 
             if (rate < params.min_rate)
                 continue;
