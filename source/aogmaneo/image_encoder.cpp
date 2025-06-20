@@ -139,15 +139,15 @@ void Image_Encoder::forward(
     hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int dhc = hc - hidden_cis[hidden_column_index];
+        for (int dhc = -params.n_radius; dhc <= params.n_radius; dhc++) {
+            int hc = max_index + dhc;
+
+            if (hc < 0 || hc >= hidden_size.z)
+                continue;
 
             int hidden_cell_index = hc + hidden_cells_start;
 
-            float rate = hidden_resources[hidden_cell_index] * expf(-params.falloff / hidden_size.z * dhc * dhc / max(limit_small, hidden_resources[hidden_cell_index]));
-
-            if (rate < params.min_rate)
-                continue;
+            float rate = hidden_resources[hidden_cell_index] * powf(params.falloff, abs(dhc));
 
             for (int vli = 0; vli < visible_layers.size(); vli++) {
                 Visible_Layer &vl = visible_layers[vli];

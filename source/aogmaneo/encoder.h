@@ -42,20 +42,20 @@ public:
 
     struct Params {
         float falloff; // SOM neighborhood falloff
-        float min_rate; // minimum rate to learn at all
         float choice; // choose used columns more
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
+        int n_radius; // SOM neighborhood radius
 
         Params()
         :
-        falloff(8.0f),
-        min_rate(0.001f),
+        falloff(0.99f),
         choice(0.1f),
         lr(0.1f),
         active_ratio(0.1f),
-        l_radius(2)
+        l_radius(2),
+        n_radius(1)
         {}
     };
 
