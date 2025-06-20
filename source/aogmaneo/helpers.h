@@ -395,10 +395,14 @@ inline float tanhf(
 #endif
 }
 
+const float softplus_limit = 4.0f;
+
 inline float softplusf(
     float x
 ) {
-    return logf(1.0f + expf(-abs(x))) + max(0.0f, x);
+    float in_range = (x < softplus_limit);
+
+    return logf(1.0f + expf(x * in_range)) * in_range + x * (1.0f - in_range);
 }
 
 // --- rng ---
@@ -419,8 +423,6 @@ inline unsigned long rand_get_state(
     unsigned long seed
 ) {
     unsigned long state = seed + pcg_increment;
-
-    unsigned int count = static_cast<unsigned int>(state >> 59);
 
     state = state * pcg_multiplier + pcg_increment;
 
