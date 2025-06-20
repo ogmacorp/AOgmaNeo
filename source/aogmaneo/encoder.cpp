@@ -92,7 +92,7 @@ void Encoder::forward(
 
     int hidden_cell_index_max = max_index + hidden_cells_start;
 
-    hidden_comparisons[hidden_column_index] = (0.5f + params.choice - hidden_resources[hidden_cell_index_max]) * hidden_acts[hidden_cell_index_max];
+    hidden_comparisons[hidden_column_index] = (1.0f + params.choice - hidden_resources[hidden_cell_index_max]) * hidden_acts[hidden_cell_index_max];
 }
 
 void Encoder::learn(
@@ -219,7 +219,7 @@ void Encoder::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
+    hidden_resources = Float_Buffer(num_hidden_cells, 1.0f);
 
     hidden_acts.resize(num_hidden_cells);
 
