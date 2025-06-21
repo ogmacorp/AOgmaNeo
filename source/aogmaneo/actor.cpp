@@ -362,7 +362,7 @@ void Actor::learn(
 
     float value_delta = params.vlr * td_error;
 
-    float policy_error_partial = params.plr * sigmoidf(td_error) + mimic;
+    float policy_error_partial = params.plr * tanhf(max(0.0f, td_error)) + mimic;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;
