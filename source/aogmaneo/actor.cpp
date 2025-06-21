@@ -573,13 +573,9 @@ void Actor::step(
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
 
-            if (mimic != 0.0f) // if mimicking
-                vl.policy_weights_delayed = vl.policy_weights;
-            else {
-                PARALLEL_FOR
-                for (int i = 0; i < vl.policy_weights.size(); i++)
-                    vl.policy_weights_delayed[i] += params.delay_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
-            }
+            PARALLEL_FOR
+            for (int i = 0; i < vl.policy_weights.size(); i++)
+                vl.policy_weights_delayed[i] += params.delay_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
         }
     }
 }
