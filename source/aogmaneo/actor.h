@@ -52,7 +52,7 @@ public:
         Params()
         :
         lr(0.001f),
-        bc(0.0f),
+        bc(0.01f),
         discount(0.99f),
         td_clip(8.0f),
         n_steps(8),
