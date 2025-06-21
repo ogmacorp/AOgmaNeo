@@ -54,7 +54,7 @@ public:
         Params()
         :
         vlr(0.001f),
-        plr(0.01f),
+        plr(0.1f),
         smoothing(0.02f),
         discount(0.99f),
         min_steps(16),
