@@ -230,17 +230,17 @@ void Actor::learn(
     }
 
     // log sum exp
-    //float q_next = 0.0f;
+    float q_next = 0.0f;
 
-    //{
-    //    for (int hc = 0; hc < hidden_size.z; hc++) {
-    //        int hidden_cell_index = hc + hidden_cells_start;
-    //    
-    //        q_next += expf(hidden_qs[hidden_cell_index] - max_q_next);
-    //    }
+    {
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+        
+            q_next += expf(hidden_qs[hidden_cell_index] - max_q_next);
+        }
 
-    //    q_next = logf(max(limit_small, q_next)) + max_q_next;
-    //}
+        q_next = logf(max(limit_small, q_next)) + max_q_next;
+    }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -355,7 +355,7 @@ void Actor::learn(
 
     int hidden_cell_index_target = target_ci + hidden_cells_start;
 
-    float target_q = max_q_next;
+    float target_q = q_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         target_q = history_samples[t - n].reward + params.discount * target_q;
@@ -364,8 +364,29 @@ void Actor::learn(
 
     float td_error = target_q - q_prev;
 
+    // softmax q for hidden weights
+    {
+        float total = 0.0f;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+        
+            hidden_weights[hidden_cell_index] = expf(params.reweight * (hidden_qs[hidden_cell_index] - max_q_prev));
+
+            total += hidden_weights[hidden_cell_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_weights[hidden_cell_index] *= total_inv;
+        }
+    }
+
     // AWAC weight
-    float weight = (max_index == target_ci) * params.reweight + (1.0f - params.reweight);
+    float weight = hidden_weights[hidden_cell_index_target];
 
     // softmax p
     {
@@ -522,6 +543,8 @@ void Actor::init_random(
 
     hidden_qs.resize(num_hidden_cells);
     hidden_ps.resize(num_hidden_cells);
+
+    hidden_weights.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -716,6 +739,8 @@ void Actor::read(
 
     dendrite_qs.resize(num_dendrites);
     dendrite_ps.resize(num_dendrites);
+
+    hidden_weights.resize(num_hidden_cells);
 
     int num_visible_layers;
 

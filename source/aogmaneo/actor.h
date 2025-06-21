@@ -46,7 +46,7 @@ public:
         float qlr; // Q learning rate
         float plr; // policy learning rate
         float discount; // discount factor
-        float reweight; // reweight amount in [0, 1]
+        float reweight; // reweight amount
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
@@ -55,7 +55,7 @@ public:
         qlr(0.001f),
         plr(0.01f),
         discount(0.99f),
-        reweight(0.99f),
+        reweight(1.0f),
         n_steps(8),
         history_iters(16)
         {}
@@ -75,6 +75,8 @@ private:
 
     Float_Buffer dendrite_qs;
     Float_Buffer dendrite_ps;
+
+    Float_Buffer hidden_weights;
 
     Circle_Buffer<History_Sample> history_samples; // history buffer, fixed length
 
