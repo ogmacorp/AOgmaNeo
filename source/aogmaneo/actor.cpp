@@ -154,25 +154,8 @@ void Actor::forward(
 
         hidden_acts[hidden_cell_index] *= total_inv;
     }
-
-    float cusp = randf(state);
-
-    int select_index = 0;
-    float sum_so_far = 0.0f;
-
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-
-        sum_so_far += hidden_acts[hidden_cell_index];
-
-        if (sum_so_far >= cusp) {
-            select_index = hc;
-
-            break;
-        }
-    }
     
-    hidden_cis[hidden_column_index] = select_index;
+    hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
