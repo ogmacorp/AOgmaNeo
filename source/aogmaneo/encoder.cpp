@@ -165,18 +165,17 @@ void Encoder::learn(
             }
         }
 
-    int max_index = 0;
-    int max_recon_sum = 0;
-
     const float recon_scale = params.scale * sqrtf(1.0f / max(1, count)) / 127.0f;
+
+    int in_recon_sum = vl.recon_sums[in_ci + visible_cells_start];
+
+    int num_higher = 0;
 
     for (int vc = 0; vc < vld.size.z; vc++) {
         int visible_cell_index = vc + visible_cells_start;
 
-        if (vl.recon_sums[visible_cell_index] > max_recon_sum) {
-            max_recon_sum = vl.recon_sums[visible_cell_index];
-            max_index = vc;
-        }
+        if (vc != in_ci && vl.recon_sums[visible_cell_index] >= in_recon_sum)
+            num_higher++;
 
         float recon = expf(min(0, vl.recon_sums[visible_cell_index] - count * 127) * recon_scale);
 
@@ -184,7 +183,7 @@ void Encoder::learn(
         vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 127.0f * ((vc == in_ci) - recon), state);
     }
 
-    if (max_index == in_ci)
+    if (num_higher == 0)
         return;
 
     for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
