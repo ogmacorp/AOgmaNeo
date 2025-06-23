@@ -86,7 +86,7 @@ public:
 
         Layer_Params()
         :
-        recurrent_importance(0.5f)
+        recurrent_importance(1.0f)
         {}
     };
 
@@ -221,7 +221,7 @@ public:
         int i
     ) const {
         if (io_types[i] == action)
-            return actors[d_indices[i]].get_hidden_ps();
+            return actors[d_indices[i]].get_hidden_qs();
 
         return decoders[0][d_indices[i]].get_hidden_acts();
     }
