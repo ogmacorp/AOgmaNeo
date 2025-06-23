@@ -121,7 +121,7 @@ void Encoder::forward(
         float sum = sum0 + total1 - sum1;
 
         float match0 = sum0 / count;
-        float match1 = sum1 / count;
+        float match1 = (total1 - sum1) / count_except;
 
         float activation = sum / (params.choice + total);
 
