@@ -81,6 +81,8 @@ void Encoder::forward(
             }
     }
 
+    count /= max(limit_small, total_importance);
+    count_except /= max(limit_small, total_importance);
     count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
@@ -118,11 +120,12 @@ void Encoder::forward(
 
         float sum = sum0 + total1 - sum1;
 
-        float match = sum / count_all;
+        float match0 = sum0 / count;
+        float match1 = sum1 / count;
 
         float activation = sum / (params.choice + total);
 
-        if (match >= params.vigilance && activation > max_activation) {
+        if (match0 >= params.vigilance0 && match1 >= params.vigilance1 && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
