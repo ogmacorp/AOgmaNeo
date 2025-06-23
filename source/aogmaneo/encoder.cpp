@@ -56,7 +56,8 @@ void Encoder::forward(
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
 
-            vl.hidden_sums[hidden_cell_index] = 0;
+            vl.hidden_sums0[hidden_cell_index] = 0;
+            vl.hidden_sums1[hidden_cell_index] = 0;
         }
 
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
@@ -74,13 +75,12 @@ void Encoder::forward(
 
                     int wi = hc + wi_start;
 
-                    vl.hidden_sums[hidden_cell_index] += vl.weights[wi];
+                    vl.hidden_sums0[hidden_cell_index] += vl.weights0[wi];
+                    vl.hidden_sums1[hidden_cell_index] += vl.weights1[wi];
                 }
             }
     }
 
-    count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
     count_all /= max(limit_small, total_importance);
 
     int max_index = -1;
@@ -94,8 +94,10 @@ void Encoder::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        float sum = 0.0f;
+        float sum0 = 0.0f;
+        float sum1 = 0.0f;
         float total = 0.0f;
+        float total1 = 0.0f;
 
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
@@ -103,18 +105,22 @@ void Encoder::forward(
 
             float influence = vl.importance * byte_inv;
 
-            sum += vl.hidden_sums[hidden_cell_index] * influence;
+            sum0 += vl.hidden_sums0[hidden_cell_index] * influence;
+            sum1 += vl.hidden_sums1[hidden_cell_index] * influence;
             total += vl.hidden_totals[hidden_cell_index] * influence;
+            total1 += vl.hidden_totals1[hidden_cell_index] * influence;
         }
 
-        sum /= max(limit_small, total_importance);
+        sum0 /= max(limit_small, total_importance);
+        sum1 /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
+        total1 /= max(limit_small, total_importance);
 
-        float complemented = sum - total + count_except;
+        float sum = sum0 + total1 - sum1;
 
-        float match = complemented / count_except;
+        float match = sum / count_all;
 
-        float activation = complemented / (params.choice + count_all - total);
+        float activation = sum / (params.choice + total);
 
         if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
