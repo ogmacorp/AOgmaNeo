@@ -120,12 +120,12 @@ void Encoder::forward(
 
         float sum = sum0 + total1 - sum1;
 
-        float match0 = sum0 / count;
-        float match1 = (total1 - sum1) / count_except;
+        float match = sum0 / count;
+        //float match1 = (total1 - sum1) / count_except;
 
         float activation = sum / (params.choice + total);
 
-        if (match0 >= params.vigilance0 && match1 >= params.vigilance1 && activation > max_activation) {
+        if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
