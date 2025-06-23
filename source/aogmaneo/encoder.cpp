@@ -169,7 +169,7 @@ void Encoder::learn(
             if (in_bounds0(other_column_pos, Int2(hidden_size.x, hidden_size.y))) {
                 int other_hidden_column_index = address2(other_column_pos, Int2(hidden_size.x, hidden_size.y));
 
-                if (hidden_comparisons[other_hidden_column_index] > hidden_max)
+                if (hidden_comparisons[other_hidden_column_index] >= hidden_max)
                     num_higher++;
 
                 count++;
