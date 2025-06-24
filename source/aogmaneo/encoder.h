@@ -67,7 +67,7 @@ private:
 
     Byte_Buffer hidden_learn_flags;
 
-    Byte_Buffer hidden_commit_flags;
+    Byte_Buffer hidden_committed_flags;
 
     Float_Buffer hidden_comparisons;
 
