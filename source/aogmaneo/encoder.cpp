@@ -22,7 +22,6 @@ void Encoder::forward(
     float count = 0.0f;
     float count_except = 0.0f;
     float count_all = 0.0f;
-    float total_importance = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -48,8 +47,6 @@ void Encoder::forward(
         count += vl.importance * sub_count;
         count_except += vl.importance * sub_count * (vld.size.z - 1);
         count_all += vl.importance * sub_count * vld.size.z;
-
-        total_importance += vl.importance;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -81,10 +78,6 @@ void Encoder::forward(
             }
     }
 
-    count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
-
     int max_index = -1;
     float max_activation = 0.0f;
 
@@ -113,14 +106,9 @@ void Encoder::forward(
             total1 += vl.hidden_totals1[hidden_cell_index] * influence;
         }
 
-        sum0 /= max(limit_small, total_importance);
-        sum1 /= max(limit_small, total_importance);
-        total /= max(limit_small, total_importance);
-        total1 /= max(limit_small, total_importance);
-
         float sum = sum0 + total1 - sum1;
 
-        float match = sum / count_all;
+        float match = sum0 / count;
 
         float activation = sum / (params.choice + total);
 
