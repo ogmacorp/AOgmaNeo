@@ -35,7 +35,7 @@ public:
         
         Int_Buffer hidden_sums0;
         Int_Buffer hidden_sums1;
-        Int_Buffer hidden_totals;
+        Int_Buffer hidden_totals0;
         Int_Buffer hidden_totals1;
 
         float importance;
