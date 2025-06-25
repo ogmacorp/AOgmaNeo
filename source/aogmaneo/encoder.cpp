@@ -104,7 +104,7 @@ void Encoder::forward(
 
         float match = sum0 / count;
 
-        float activation = sum1 / (params.choice + total1);
+        float activation = (sum0 + total1 - sum1) / (params.choice + total0 + total1);
 
         if (match >= params.vigilance && activation > max_activation) {
             max_activation = activation;
