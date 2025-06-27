@@ -60,7 +60,7 @@ public:
             const Int3 &hidden_size = Int3(5, 5, 16),
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
-            int recurrent_radius = 2,
+            int recurrent_radius = 0,
             int down_radius = 2
         )
         :
@@ -80,7 +80,7 @@ public:
 
         Layer_Params()
         :
-        recurrent_importance(0.1f)
+        recurrent_importance(0.5f)
         {}
     };
 
