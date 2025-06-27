@@ -26,7 +26,6 @@ public:
         IO_Type type;
 
         int num_dendrites_per_cell; // also for policy
-        int value_num_dendrites_per_cell; // value dendrites
 
         int up_radius; // encoder radius
         int down_radius; // decoder radius
