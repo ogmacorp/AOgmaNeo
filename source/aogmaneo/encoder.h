@@ -58,7 +58,7 @@ public:
         choice(0.01f),
         vigilance(0.97f),
         lr(0.5f),
-        active_ratio(0.1f),
+        active_ratio(0.25f),
         l_radius(2)
         {}
     };
@@ -70,7 +70,7 @@ private:
 
     Byte_Buffer hidden_learn_flags;
 
-    Byte_Buffer hidden_commit_flags;
+    Byte_Buffer hidden_committed_flags;
 
     Float_Buffer hidden_comparisons;
 
