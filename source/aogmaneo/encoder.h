@@ -30,10 +30,13 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
-       
-        Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
+        Byte_Buffer weights0;
+        Byte_Buffer weights1;
+        
+        Int_Buffer hidden_sums0;
+        Int_Buffer hidden_sums1;
+        Int_Buffer hidden_totals0;
+        Int_Buffer hidden_totals1;
 
         float importance;
 
@@ -45,7 +48,7 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float vigilance; // ART vigilance for 0 weights (only check these for vigilance)
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
@@ -53,7 +56,7 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
+        vigilance(0.95f),
         lr(0.5f),
         active_ratio(0.25f),
         l_radius(2)
