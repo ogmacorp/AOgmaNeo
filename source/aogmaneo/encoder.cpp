@@ -100,7 +100,7 @@ void Encoder::forward(
             total += vl.hidden_totals[hidden_cell_index] * influence;
         }
 
-        float match = max(sum / count, 1.0f - total / count);
+        float match = sum / max(limit_small, total);
 
         float activation = sum / count;
 
