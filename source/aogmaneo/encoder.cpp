@@ -79,10 +79,6 @@ void Encoder::forward(
             }
     }
 
-    count /= max(limit_small, total_importance);
-    count_except /= max(limit_small, total_importance);
-    count_all /= max(limit_small, total_importance);
-
     int max_index = -1;
     float max_activation = 0.0f;
 
@@ -106,9 +102,6 @@ void Encoder::forward(
             sum += vl.hidden_sums[hidden_cell_index] * influence;
             total += vl.hidden_totals[hidden_cell_index] * influence;
         }
-
-        sum /= max(limit_small, total_importance);
-        total /= max(limit_small, total_importance);
 
         float match = sum / max(limit_small, total);
 
