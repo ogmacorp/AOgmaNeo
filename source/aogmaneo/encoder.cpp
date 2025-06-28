@@ -20,6 +20,7 @@ void Encoder::forward(
     int hidden_cells_start = hidden_column_index * hidden_size.z;
 
     float count = 0.0f;
+    float count_except = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -43,6 +44,7 @@ void Encoder::forward(
         int sub_count = (iter_upper_bound.x - iter_lower_bound.x + 1) * (iter_upper_bound.y - iter_lower_bound.y + 1);
 
         count += vl.importance * sub_count;
+        count_except += vl.importance * sub_count * vld.size.z;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -102,9 +104,11 @@ void Encoder::forward(
             total1 += vl.hidden_totals1[hidden_cell_index] * influence;
         }
 
-        float match = sum0 / count;
+        float sum = sum0 + total1 - sum1;
 
-        float activation = (sum0 + total1 - sum1) / (params.choice + total0 + total1);
+        float match = sum / count_except;
+
+        float activation = sum / (params.choice + total0 + total1);
 
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
