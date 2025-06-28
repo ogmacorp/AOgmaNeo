@@ -110,9 +110,7 @@ void Encoder::forward(
         sum /= max(limit_small, total_importance);
         total /= max(limit_small, total_importance);
 
-        float complemented = sum - total + count_except;
-
-        float match = complemented / count_except;
+        float match = sum / max(limit_small, total);
 
         float activation = sum / (params.choice + count_all - total);
 
