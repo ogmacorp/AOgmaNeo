@@ -119,7 +119,7 @@ void Encoder::forward(
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
-    hidden_learn_flags[hidden_column_index] = (max_index == -1);
+    hidden_learn_flags[hidden_column_index] = (max_index != -1);
 }
 
 void Encoder::learn(
