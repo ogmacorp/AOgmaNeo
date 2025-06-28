@@ -114,7 +114,7 @@ void Encoder::forward(
 
         float match = complemented / count_except;
 
-        float activation = complemented / (params.choice + count_all - total);
+        float activation = sum / (params.choice + count_all - total);
 
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
