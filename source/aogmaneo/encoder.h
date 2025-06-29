@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //  AOgmaNeo
-//  Copyright(c) 2020-2025 Ogma Intelligent Systems Corp. All rights reserved.
+//  Copyright(c) 2020-2024 Ogma Intelligent Systems Corp. All rights reserved.
 //
 //  This copy of AOgmaNeo is licensed to you under the terms described
 //  in the AOGMANEO_LICENSE.md file included in this distribution.
@@ -30,14 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0;
-        Byte_Buffer weights1;
+        Float_Buffer protos;
         
-        Int_Buffer hidden_sums0;
-        Int_Buffer hidden_sums1;
-        Int_Buffer hidden_totals0;
-        Int_Buffer hidden_totals1;
-
         float importance;
 
         Visible_Layer()
@@ -47,19 +41,21 @@ public:
     };
 
     struct Params {
-        float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float falloff; // SOM neighborhood falloff
+        float choice; // choose used columns more
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
+        int n_radius; // SOM neighborhood radius
 
         Params()
         :
-        choice(0.01f),
-        vigilance(0.9f),
-        lr(0.5f),
+        falloff(0.99f),
+        choice(0.1f),
+        lr(0.1f),
         active_ratio(0.1f),
-        l_radius(2)
+        l_radius(2),
+        n_radius(1)
         {}
     };
 
@@ -68,9 +64,9 @@ private:
 
     Int_Buffer hidden_cis;
 
-    Byte_Buffer hidden_learn_flags;
+    Float_Buffer hidden_resources;
 
-    Byte_Buffer hidden_committed_flags;
+    Float_Buffer hidden_acts;
 
     Float_Buffer hidden_comparisons;
 
@@ -105,12 +101,14 @@ public:
         const Params &params // parameters
     );
 
-    void clear_state();
+    void clear_state() {
+        hidden_cis.fill(0);
+    }
 
     // serialization
-    long size() const; // returns size in Bytes
-    long state_size() const; // returns size of state in Bytes
-    long weights_size() const; // returns size of weights in Bytes
+    long size() const; // returns size in bytes
+    long state_size() const; // returns size of state in bytes
+    long weights_size() const; // returns size of weights in bytes
 
     void write(
         Stream_Writer &writer
