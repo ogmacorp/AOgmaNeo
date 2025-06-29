@@ -107,8 +107,8 @@ void Encoder::forward(
         float match0 = sum0 / count;
         float match1 = (total1 - sum1) / count_except;
 
-        float activation0 = sum0 / (params.choice + total0);
-        float activation1 = (total1 - sum1) / (params.choice + total1);
+        float activation0 = match0 / (params.choice + total0);
+        float activation1 = match1 / (params.choice + total1);
 
         // select
         float match;
