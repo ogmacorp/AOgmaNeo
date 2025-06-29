@@ -111,17 +111,8 @@ void Encoder::forward(
         float activation1 = match1 / (params.choice + total1);
 
         // select
-        float match;
-        float activation;
-        
-        if (match0 > match1) {
-            match = match0;
-            activation = activation0;
-        }
-        else {
-            match = match1;
-            activation = activation1;
-        }
+        float match = max(match0, match1);
+        float activation = min(activation0, activation1);
 
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
