@@ -104,14 +104,26 @@ void Encoder::forward(
             total1 += vl.hidden_totals1[hidden_cell_index] * influence;
         }
 
-        float sum = sum0 + total1 - sum1;
-
         float match0 = sum0 / count;
         float match1 = (total1 - sum1) / count_except;
 
-        float activation = sum / (params.choice + total0 + total1);
+        float activation0 = sum0 / (params.choice + total0);
+        float activation1 = (total1 - sum1) / (params.choice + total1);
 
-        if ((!hidden_committed_flags[hidden_cell_index] || (match0 >= params.vigilance0 && match1 >= params.vigilance1)) && activation > max_activation) {
+        // select
+        float match;
+        float activation;
+        
+        if (match0 > match1) {
+            match = match0;
+            activation = activation0;
+        }
+        else {
+            match = match1;
+            activation = activation1;
+        }
+
+        if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
