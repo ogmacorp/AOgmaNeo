@@ -48,7 +48,8 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float vigilance0; // ART vigilance for 0 weights
+        float vigilance1; // ART vigilance for 1 weights
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
@@ -56,7 +57,8 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
+        vigilance0(0.4f),
+        vigilance1(0.9f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
