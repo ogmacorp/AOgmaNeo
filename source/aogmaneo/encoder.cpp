@@ -143,8 +143,6 @@ void Encoder::learn(
     if (!hidden_learn_flags[hidden_column_index])
         return;
 
-    int hidden_ci = hidden_cis[hidden_column_index];
-
     float hidden_max = hidden_comparisons[hidden_column_index];
 
     int num_higher = 0;
@@ -171,6 +169,8 @@ void Encoder::learn(
 
     if (ratio > params.active_ratio)
         return;
+
+    int hidden_ci = hidden_cis[hidden_column_index];
 
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
