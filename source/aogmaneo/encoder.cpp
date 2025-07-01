@@ -21,7 +21,6 @@ void Encoder::forward(
 
     float count = 0.0f;
     float count_except = 0.0f;
-    float count_all = 0.0f;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -46,7 +45,6 @@ void Encoder::forward(
 
         count += vl.importance * sub_count;
         count_except += vl.importance * sub_count * (vld.size.z - 1);
-        count_all += vl.importance * sub_count * vld.size.z;
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
@@ -83,8 +81,6 @@ void Encoder::forward(
 
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
-
-    bool pass_low = false;
 
     const float byte_inv = 1.0f / 255.0f;
 
