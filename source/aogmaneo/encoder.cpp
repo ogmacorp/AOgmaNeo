@@ -114,7 +114,7 @@ void Encoder::forward(
 
         bool matched = (match0 >= params.vigilance0 && match1 >= params.vigilance1);
 
-        float activation = max(activation0, activation1);
+        float activation = min(activation0, activation1);
 
         if ((!hidden_committed_flags[hidden_cell_index] || matched) && activation > max_activation) {
             max_activation = activation;
