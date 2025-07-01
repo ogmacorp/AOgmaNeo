@@ -58,7 +58,7 @@ public:
         :
         choice(0.01f),
         vigilance_high(0.9f),
-        vigilance_low(0.7f),
+        vigilance_low(0.6f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
