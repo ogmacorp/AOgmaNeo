@@ -180,7 +180,7 @@ void Encoder::learn(
             num_higher++;
 
         // re-use recon_sums as deltas
-        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 127.0f * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale)), state);
+        vl.recon_sums[visible_cell_index] = rand_roundf(params.lr * 255.0f * ((vc == target_ci) - sigmoidf((recon_sum - count * 127) * recon_scale)), state);
     }
 
     if (num_higher == 0)
