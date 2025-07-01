@@ -84,6 +84,8 @@ void Encoder::forward(
     int max_complete_index = 0;
     float max_complete_activation = 0.0f;
 
+    bool pass_low = false;
+
     const float byte_inv = 1.0f / 255.0f;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -106,17 +108,11 @@ void Encoder::forward(
             total1 += vl.hidden_totals1[hidden_cell_index] * influence;
         }
 
-        float match0 = sum0 / count;
-        float match1 = (total1 - sum1) / count_except;
+        float match = sum0 / count;
 
-        float activation0 = match0 / (params.choice + total0);
-        float activation1 = match1 / (params.choice + total1);
+        float activation = (total1 - sum1) / count_except / (params.choice + total1);
 
-        bool matched = (match0 >= params.vigilance0 && match1 >= params.vigilance1);
-
-        float activation = min(activation0, activation1);
-
-        if ((!hidden_committed_flags[hidden_cell_index] || matched) && activation > max_activation) {
+        if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance_high) && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -125,9 +121,12 @@ void Encoder::forward(
             max_complete_activation = activation;
             max_complete_index = hc;
         }
+
+        if (!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance_low)
+            pass_low = true;
     }
 
-    hidden_comparisons[hidden_column_index] = (max_index == -1 ? 0.0f : max_complete_activation);
+    hidden_comparisons[hidden_column_index] = (pass_low ? max_complete_activation : 0.0f);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
