@@ -179,8 +179,8 @@ void Image_Encoder::learn(
 
                     Byte input = vl_inputs[vc + i_start];
 
-                    vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(params.lr * min(0, input - vl.weights0[wi])));
-                    vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(params.lr * min(0, 255 - input - vl.weights1[wi])));
+                    vl.weights0[wi] = max(0, vl.weights0[wi] + ceilf(rate * min(0, input - vl.weights0[wi])));
+                    vl.weights1[wi] = max(0, vl.weights1[wi] + ceilf(rate * min(0, 255 - input - vl.weights1[wi])));
                 }
             }
     }
