@@ -104,9 +104,12 @@ void Encoder::forward(
             total1 += vl.hidden_totals1[hidden_cell_index] * influence;
         }
 
-        float match = sum0 / count;
+        float match0 = sum0 / count;
+        float match1 = (total1 - sum1) / count_except;
 
-        float activation = (total1 - sum1) / count_except / (params.choice + total1);
+        float activation = match1 / (params.choice + total1);
+
+        float match = match1;//max(match0, match1);
 
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
@@ -169,8 +172,7 @@ void Encoder::learn(
 
     int hidden_cell_index_max = hidden_ci + hidden_cells_start;
 
-    float rate0 = (hidden_committed_flags[hidden_cell_index_max] ? params.lr0 : 1.0f);
-    float rate1 = (hidden_committed_flags[hidden_cell_index_max] ? params.lr1 : 1.0f);
+    float rate = (hidden_committed_flags[hidden_cell_index_max] ? params.lr : 1.0f);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
@@ -207,15 +209,14 @@ void Encoder::learn(
                     if (vc == in_ci) {
                         Byte w_old = vl.weights1[wi];
 
-                        vl.weights1[wi] = max(0, vl.weights1[wi] - ceilf(rate1 * vl.weights1[wi]));
+                        vl.weights1[wi] = max(0, vl.weights1[wi] - ceilf(rate * vl.weights1[wi]));
 
                         vl.hidden_totals1[hidden_cell_index_max] += vl.weights1[wi] - w_old;
                     }
-
-                    {
+                    else {
                         Byte w_old = vl.weights0[wi];
 
-                        vl.weights0[wi] = min(255, max(0, vl.weights0[wi] + roundf2i(rate0 * ((vc == in_ci) * 255.0f - vl.weights0[wi]))));
+                        vl.weights0[wi] = max(0, vl.weights0[wi] - ceilf(rate * vl.weights0[wi]));
 
                         vl.hidden_totals0[hidden_cell_index_max] += vl.weights0[wi] - w_old;
                     }
