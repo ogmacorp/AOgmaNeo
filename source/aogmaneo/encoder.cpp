@@ -107,18 +107,17 @@ void Encoder::forward(
         float match0 = sum0 / count;
         float match1 = (total1 - sum1) / count_except;
 
-        float activation0 = match0 / (params.choice + total0);
-        float activation1 = match1 / (params.choice + total1);
+        float activation = match0 / (params.choice + total0);
 
         float match = min(match0, match1);
 
-        if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation1 > max_activation) {
-            max_activation = activation1;
+        if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
+            max_activation = activation;
             max_index = hc;
         }
 
-        if (activation1 > max_complete_activation) {
-            max_complete_activation = activation1;
+        if (activation > max_complete_activation) {
+            max_complete_activation = activation;
             max_complete_index = hc;
         }
     }
