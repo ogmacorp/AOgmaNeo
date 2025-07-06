@@ -106,7 +106,7 @@ void Encoder::forward(
 
         float activation = match / (params.choice + count_all - total);
 
-        if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance_high) && activation > max_activation) {
+        if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance_local) && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
         }
@@ -119,7 +119,7 @@ void Encoder::forward(
         max_match = max(max_match, match);
     }
 
-    hidden_comparisons[hidden_column_index] = (max_match >= params.vigilance_low ? max_complete_activation : 0.0f);
+    hidden_comparisons[hidden_column_index] = (max_match >= params.vigilance_global ? max_complete_activation : 0.0f);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
