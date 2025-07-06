@@ -119,7 +119,7 @@ void Encoder::forward(
         max_match = max(max_match, match);
     }
 
-    hidden_comparisons[hidden_column_index] = (params.vigilance_low >= max_match ? max_complete_activation : 0.0f);
+    hidden_comparisons[hidden_column_index] = (max_match >= params.vigilance_low ? max_complete_activation : 0.0f);
 
     hidden_cis[hidden_column_index] = (max_index == -1 ? max_complete_index : max_index);
 
