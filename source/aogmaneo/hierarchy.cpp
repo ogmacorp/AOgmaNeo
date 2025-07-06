@@ -474,36 +474,3 @@ void Hierarchy::read_weights(
     for (int d = 0; d < actors.size(); d++)
         actors[d].read_weights(reader);
 }
-
-void Hierarchy::merge(
-    const Array<Hierarchy*> &hierarchies,
-    Merge_Mode mode
-) {
-    Array<Encoder*> merge_encoders(hierarchies.size());
-    Array<Decoder*> merge_decoders(hierarchies.size());
-
-    for (int l = 0; l < encoders.size(); l++) {
-        for (int h = 0; h < hierarchies.size(); h++)
-            merge_encoders[h] = &hierarchies[h]->encoders[l];
-
-        encoders[l].merge(merge_encoders, mode);
-
-        // decoders
-        for (int d = 0; d < decoders[l].size(); d++) {
-            for (int h = 0; h < hierarchies.size(); h++)
-                merge_decoders[h] = &hierarchies[h]->decoders[l][d];
-
-            decoders[l][d].merge(merge_decoders, mode);
-        }
-    }
-    
-    // actors
-    Array<Actor*> merge_actors(hierarchies.size());
-
-    for (int d = 0; d < actors.size(); d++) {
-        for (int h = 0; h < hierarchies.size(); h++)
-            merge_actors[h] = &hierarchies[h]->actors[d];
-
-        actors[d].merge(merge_actors, mode);
-    }
-}

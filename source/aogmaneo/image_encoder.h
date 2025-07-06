@@ -170,11 +170,5 @@ public:
     const Int3 &get_hidden_size() const {
         return hidden_size;
     }
-
-    // merge list of image encoders and write to this one
-    void merge(
-        const Array<Image_Encoder*> &image_encoders,
-        Merge_Mode mode
-    );
 };
 }

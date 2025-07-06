@@ -204,11 +204,5 @@ public:
     int get_history_size() const {
         return history_size;
     }
-
-    // merge list of decoders and write to this one
-    void merge(
-        const Array<Actor*> &actors,
-        Merge_Mode mode
-    );
 };
 }

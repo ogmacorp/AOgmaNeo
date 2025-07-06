@@ -30,13 +30,10 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0;
-        Byte_Buffer weights1;
+        Byte_Buffer weights;
         
-        Int_Buffer hidden_sums0;
-        Int_Buffer hidden_sums1;
-        Int_Buffer hidden_totals0;
-        Int_Buffer hidden_totals1;
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
 
         float importance;
 
@@ -171,11 +168,5 @@ public:
     const Int3 &get_hidden_size() const {
         return hidden_size;
     }
-
-    // merge list of encoders and write to this one
-    void merge(
-        const Array<Encoder*> &encoders,
-        Merge_Mode mode
-    );
 };
 }
