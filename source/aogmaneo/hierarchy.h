@@ -311,11 +311,5 @@ public:
     const Int_Buffer &get_d_indices() const {
         return d_indices;
     }
-
-    // merge list of hierarchies and write to this one
-    void merge(
-        const Array<Hierarchy*> &hierarchies,
-        Merge_Mode mode
-    );
 };
 }
