@@ -30,13 +30,10 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights0;
-        Byte_Buffer weights1;
+        Byte_Buffer weights;
         
-        Int_Buffer hidden_sums0;
-        Int_Buffer hidden_sums1;
-        Int_Buffer hidden_totals0;
-        Int_Buffer hidden_totals1;
+        Int_Buffer hidden_sums;
+        Int_Buffer hidden_totals;
 
         float importance;
 
@@ -48,7 +45,8 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float vigilance_local; // ART vigilance, equivalent to local vigilance in DDVFA
+        float vigilance_global; // ART vigilance, equivalent to global vigilance in DDVFA
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
@@ -56,7 +54,8 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.9f),
+        vigilance_local(0.9f),
+        vigilance_global(0.9f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
@@ -171,11 +170,5 @@ public:
     const Int3 &get_hidden_size() const {
         return hidden_size;
     }
-
-    // merge list of encoders and write to this one
-    void merge(
-        const Array<Encoder*> &encoders,
-        Merge_Mode mode
-    );
 };
 }
