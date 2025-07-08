@@ -172,7 +172,7 @@ void Actor::forward(
         }
     }
     
-    hidden_cis[hidden_column_index] = select_index;
+    hidden_cis[hidden_column_index] = max_index;
 
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
