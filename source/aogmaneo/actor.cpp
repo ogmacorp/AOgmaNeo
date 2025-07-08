@@ -193,7 +193,7 @@ void Actor::forward(
                         int wi_base = offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index));
 
                         if (vc == in_ci_prev)
-                            vl.value_traces[wi_base] += 1.0f;
+                            vl.value_traces[wi_base] = 1.0f;
 
                         vl.value_weights[wi_base] += value_rate * vl.value_traces[wi_base];
 
@@ -213,7 +213,7 @@ void Actor::forward(
 
                                 int wi = di + wi_start;
 
-                                if (vc == in_ci_prev && hc == target_ci)
+                                if (vc == in_ci_prev)
                                     vl.policy_traces[wi] += dendrite_acts_prev[dendrite_index];
 
                                 vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi] + mimic * dendrite_acts_prev[dendrite_index] * (vc == in_ci_prev);
