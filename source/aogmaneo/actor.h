@@ -84,7 +84,6 @@ private:
         bool learn_enabled,
         float reward,
         float mimic,
-        unsigned long* state,
         const Params &params
     );
 
