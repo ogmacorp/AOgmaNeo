@@ -168,11 +168,5 @@ public:
     const Int3 &get_hidden_size() const {
         return hidden_size;
     }
-
-    // merge list of decoders and write to this one
-    void merge(
-        const Array<Actor*> &actors,
-        Merge_Mode mode
-    );
 };
 }

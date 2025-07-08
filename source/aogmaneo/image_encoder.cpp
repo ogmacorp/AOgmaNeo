@@ -392,7 +392,7 @@ void Image_Encoder::init_random(
     hidden_acts.resize(num_hidden_cells);
     hidden_totals.resize(num_hidden_cells);
 
-    hidden_resources = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_resources = Float_Buffer(num_hidden_cells, 0.5f);
 }
 
 void Image_Encoder::step(
@@ -574,47 +574,5 @@ void Image_Encoder::read_weights(
 
         reader.read(&vl.weights[0], vl.weights.size() * sizeof(Byte));
         reader.read(&vl.recon_weights[0], vl.recon_weights.size() * sizeof(Byte));
-    }
-}
-
-void Image_Encoder::merge(
-    const Array<Image_Encoder*> &image_encoders,
-    Merge_Mode mode
-) {
-    switch (mode) {
-    case merge_random:
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-        
-            for (int i = 0; i < vl.weights.size(); i++) {
-                int e = rand() % image_encoders.size();                
-
-                vl.weights[i] = image_encoders[e]->visible_layers[vli].weights[i];
-                vl.recon_weights[i] = image_encoders[e]->visible_layers[vli].recon_weights[i];
-            }
-        }
-
-        break;
-    case merge_average:
-        for (int vli = 0; vli < visible_layers.size(); vli++) {
-            Visible_Layer &vl = visible_layers[vli];
-            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-        
-            for (int i = 0; i < vl.weights.size(); i++) {
-                float total = 0.0f;
-                float recon_total = 0.0f;
-
-                for (int e = 0; e < image_encoders.size(); e++) {
-                    total += image_encoders[e]->visible_layers[vli].weights[i];
-                    recon_total += image_encoders[e]->visible_layers[vli].recon_weights[i];
-                }
-
-                vl.weights[i] = roundf2b(total / image_encoders.size());
-                vl.recon_weights[i] = roundf2b(recon_total / image_encoders.size());
-            }
-        }
-
-        break;
     }
 }
