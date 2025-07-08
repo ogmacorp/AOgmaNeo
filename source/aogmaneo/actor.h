@@ -69,6 +69,8 @@ private:
 
     Float_Buffer hidden_values;
 
+    Float_Buffer hidden_td_scales;
+
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
