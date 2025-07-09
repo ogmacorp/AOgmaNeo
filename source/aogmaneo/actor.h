@@ -48,7 +48,7 @@ public:
         Params()
         :
         vlr(0.1f),
-        plr(0.001f),
+        plr(0.1f),
         discount(0.99f),
         trace_decay(0.97f),
         td_scale_decay(0.999f)

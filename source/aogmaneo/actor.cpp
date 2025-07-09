@@ -106,7 +106,6 @@ void Actor::forward(
 
     hidden_values[hidden_column_index] = value;
 
-    int max_index = 0;
     float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -130,10 +129,7 @@ void Actor::forward(
 
         hidden_acts[hidden_cell_index] = sum;
 
-        if (sum > max_activation) {
-            max_activation = sum;
-            max_index = hc;
-        }
+        max_activation = max(max_activation, sum);
     }
 
     // softmax
