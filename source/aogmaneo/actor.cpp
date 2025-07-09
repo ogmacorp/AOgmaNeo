@@ -144,7 +144,7 @@ void Actor::forward(
 
         float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-        float value_rate = params.vlr * td_error;
+        float value_rate = params.vlr * scaled_td_error;
         float policy_rate = params.plr * scaled_td_error;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
