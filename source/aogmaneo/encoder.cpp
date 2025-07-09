@@ -107,7 +107,7 @@ void Encoder::forward(
         float match0 = sum0 / count;
         float match1 = (total1 - sum1) / count_except;
 
-        float match = min(match0, match1);
+        float match = max(match0, match1);
         float activation1 = match / (params.choice + total0 + total1);
 
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation1 > max_activation) {
