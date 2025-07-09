@@ -375,10 +375,6 @@ void Actor::learn(
 
     float td_error = new_value - value;
 
-    hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
-
-    float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
-    
     float value_delta = params.vlr * td_error;
 
     // probability ratio
@@ -387,7 +383,7 @@ void Actor::learn(
     // https://huggingface.co/blog/deep-rl-ppo
     bool policy_clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
-    float policy_error_partial = params.plr * scaled_td_error * (!policy_clip) + mimic;
+    float policy_error_partial = params.plr * td_error * (!policy_clip) + mimic;
 
     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
         int dendrite_index = di + value_dendrites_start;
@@ -519,8 +515,6 @@ void Actor::init_random(
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
-
-    hidden_td_scales = Float_Buffer(num_hidden_columns, 0.0f);
 
     value_dendrite_acts.resize(value_num_dendrites);
     policy_dendrite_acts.resize(policy_num_dendrites);
@@ -687,7 +681,6 @@ void Actor::write(
 
     writer.write(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     writer.write(&hidden_values[0], hidden_values.size() * sizeof(float));
-    writer.write(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     int num_visible_layers = visible_layers.size();
 
@@ -741,11 +734,9 @@ void Actor::read(
     
     hidden_cis.resize(num_hidden_columns);
     hidden_values.resize(num_hidden_columns);
-    hidden_td_scales.resize(num_hidden_columns);
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_values[0], hidden_values.size() * sizeof(float));
-    reader.read(&hidden_td_scales[0], hidden_td_scales.size() * sizeof(float));
 
     value_dendrite_acts.resize(value_num_dendrites);
     policy_dendrite_acts.resize(policy_num_dendrites);
