@@ -106,7 +106,6 @@ void Actor::forward(
 
     hidden_values[hidden_column_index] = value;
 
-    int max_index = 0;
     float max_activation = limit_min;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -130,10 +129,7 @@ void Actor::forward(
 
         hidden_acts[hidden_cell_index] = sum;
 
-        if (sum > max_activation) {
-            max_activation = sum;
-            max_index = hc;
-        }
+        max_activation = max(max_activation, sum);
     }
 
     // softmax
@@ -155,7 +151,24 @@ void Actor::forward(
         hidden_acts[hidden_cell_index] *= total_inv;
     }
 
-    hidden_cis[hidden_column_index] = max_index;
+    float cusp = randf(state);
+
+    int select_index = 0;
+    float sum_so_far = 0.0f;
+
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        sum_so_far += hidden_acts[hidden_cell_index];
+
+        if (sum_so_far >= cusp) {
+            select_index = hc;
+
+            break;
+        }
+    }
+    
+    hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
         float td_error = reward + params.discount * value - value_prev;
