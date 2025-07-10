@@ -50,7 +50,7 @@ public:
         vlr(0.1f),
         plr(1.0f),
         discount(0.99f),
-        trace_rate(0.02f),
+        trace_rate(0.03f),
         td_scale_decay(0.999f)
         {}
     };
