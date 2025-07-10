@@ -226,12 +226,9 @@ void Actor::forward(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi_base = offset.y + diam * (offset.x + diam * (vc + vld.size.z * hidden_column_index));
 
-                        if (vc == in_ci_prev)
-                            vl.value_traces[wi_base] += 1.0f;
+                        vl.value_traces[wi_base] += params.trace_rate * ((vc == in_ci_prev) - vl.value_traces[wi_base]);
 
                         vl.value_weights[wi_base] += value_rate * vl.value_traces[wi_base];
-
-                        vl.value_traces[wi_base] *= params.trace_decay;
 
                         int wi_start_partial = hidden_size.z * wi_base;
 
@@ -247,11 +244,9 @@ void Actor::forward(
 
                                 int wi = di + wi_start;
 
-                                if (vc == in_ci_prev)
-                                    vl.policy_traces[wi] += dendrite_acts_prev[dendrite_index];
+                                vl.policy_traces[wi] += params.trace_rate * ((vc == in_ci_prev) * dendrite_acts_prev[dendrite_index] - vl.policy_traces[wi]);
 
                                 vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi] + mimic * dendrite_acts_prev[dendrite_index] * (vc == in_ci_prev);
-                                vl.policy_traces[wi] *= params.trace_decay;
                             }
                         }
                     }

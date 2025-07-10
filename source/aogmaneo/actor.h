@@ -42,7 +42,7 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float discount; // discount factor
-        float trace_decay; // eligibility trace decay
+        float trace_rate; // eligibility trace decay
         float td_scale_decay; // slow decay of max td error abs value
 
         Params()
@@ -50,7 +50,7 @@ public:
         vlr(0.1f),
         plr(0.1f),
         discount(0.99f),
-        trace_decay(0.97f),
+        trace_rate(0.01f),
         td_scale_decay(0.999f)
         {}
     };
