@@ -49,6 +49,8 @@ public:
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
         float vigilance; // standard ART vigilance
         float lr; // learning rate
+        float active_ratio; // activity ratio in 2nd stage
+        int l_radius; // lateral (2nd stage) radius
         int n_radius; // neighborhood radius
 
         Params()
@@ -57,6 +59,8 @@ public:
         choice(0.01f),
         vigilance(0.9f),
         lr(0.1f),
+        active_ratio(0.1f),
+        l_radius(2),
         n_radius(1)
         {}
     };
@@ -81,7 +85,12 @@ private:
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        bool learn_enabled,
+        const Params &params
+    );
+
+    void learn(
+        const Int2 &column_pos,
+        const Array<Int_Buffer_View> &input_cis,
         const Params &params
     );
 
