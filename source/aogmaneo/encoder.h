@@ -30,10 +30,11 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer weights;
+        Float_Buffer weights0;
+        Float_Buffer weights1;
         
-        Int_Buffer hidden_sums;
-        Int_Buffer hidden_totals;
+        Float_Buffer hidden_sums;
+        Float_Buffer hidden_totals;
 
         float importance;
 
@@ -44,19 +45,19 @@ public:
     };
 
     struct Params {
+        float falloff; // neighborhood falloff
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance; // ART vigilance
+        float vigilance; // standard ART vigilance
         float lr; // learning rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // second stage inhibition radius
+        int n_radius; // neighborhood radius
 
         Params()
         :
+        falloff(0.99f),
         choice(0.01f),
         vigilance(0.9f),
-        lr(0.5f),
-        active_ratio(0.1f),
-        l_radius(2)
+        lr(0.1f),
+        n_radius(1)
         {}
     };
 
@@ -74,18 +75,13 @@ private:
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
     Array<Visible_Layer_Desc> visible_layer_descs;
-    
+
     // --- kernels ---
     
     void forward(
         const Int2 &column_pos,
         const Array<Int_Buffer_View> &input_cis,
-        const Params &params
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Array<Int_Buffer_View> &input_cis,
+        bool learn_enabled,
         const Params &params
     );
 
@@ -168,5 +164,11 @@ public:
     const Int3 &get_hidden_size() const {
         return hidden_size;
     }
+
+    // merge list of encoders and write to this one
+    void merge(
+        const Array<Encoder*> &encoders,
+        Merge_Mode mode
+    );
 };
 }
