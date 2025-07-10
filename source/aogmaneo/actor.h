@@ -47,7 +47,7 @@ public:
 
         Params()
         :
-        vlr(1.0f),
+        vlr(0.1f),
         plr(1.0f),
         discount(0.99f),
         trace_rate(0.02f),
