@@ -41,6 +41,7 @@ void Actor::forward(
     }
 
     float value = 0.0f;
+    float value_delayed = 0.0f;
     int count = 0;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -77,6 +78,7 @@ void Actor::forward(
                 int wi_base = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
 
                 value += vl.value_weights[wi_base];
+                value_delayed += vl.value_weights_delayed[wi_base];
 
                 int wi_start_partial = hidden_size.z * wi_base;
 
@@ -103,6 +105,7 @@ void Actor::forward(
     const float activation_scale = sqrtf(1.0f / num_dendrites_per_cell);
 
     value *= dendrite_scale;
+    value_delayed *= dendrite_scale;
 
     hidden_values[hidden_column_index] = value;
 
@@ -171,7 +174,7 @@ void Actor::forward(
     hidden_cis[hidden_column_index] = select_index;
 
     if (learn_enabled) {
-        float td_error = reward + params.discount * value - value_prev;
+        float td_error = reward + params.discount * value_delayed - value_prev;
 
         float value_rate = params.vlr * td_error;
         float policy_rate = params.plr * tanhf(td_error);
@@ -283,6 +286,8 @@ void Actor::init_random(
 
         vl.value_traces = Float_Buffer(vl.value_weights.size(), 0.0f);
 
+        vl.value_weights_delayed = vl.value_weights;
+
         vl.policy_weights.resize(num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.policy_weights.size(); i++)
@@ -327,6 +332,10 @@ void Actor::step(
     // update prevs
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         Visible_Layer &vl = visible_layers[vli];
+
+        PARALLEL_FOR
+        for (int i = 0; i < vl.value_weights.size(); i++)
+            vl.value_weights_delayed[i] += params.delay_rate * (vl.value_weights[i] - vl.value_weights_delayed[i]);
 
         vl.input_cis_prev = input_cis[vli];
     }
@@ -472,6 +481,8 @@ void Actor::read(
         reader.read(&vl.value_traces[0], vl.value_traces.size() * sizeof(float));
         reader.read(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
         reader.read(&vl.policy_traces[0], vl.policy_traces.size() * sizeof(float));
+
+        vl.value_weights_delayed = vl.value_weights;
 
         vl.input_cis_prev.resize(num_visible_columns);
 
