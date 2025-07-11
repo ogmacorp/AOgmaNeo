@@ -265,15 +265,15 @@ void Actor::learn(
     }
 
     // log sum exp
-    //float q_next = 0.0f;
+    float q_next = 0.0f;
 
-    //for (int hc = 0; hc < hidden_size.z; hc++) {
-    //    int hidden_cell_index = hc + hidden_cells_start;
-    //
-    //    q_next += expf(hidden_qs[hidden_cell_index] - max_q_next);
-    //}
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+    
+        q_next += expf(hidden_qs[hidden_cell_index] - max_q_next);
+    }
 
-    //q_next = logf(max(limit_small, q_next)) + max_q_next;
+    q_next = logf(max(limit_small, q_next)) + max_q_next;
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
@@ -362,7 +362,7 @@ void Actor::learn(
         max_q_prev = max(max_q_prev, q);
     }
 
-    float target_q = max_q_next;
+    float target_q = q_next;
 
     for (int n = params.n_steps; n >= 1; n--)
         target_q = history_samples[t - n].reward + params.discount * target_q;
