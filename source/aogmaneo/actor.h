@@ -53,7 +53,7 @@ public:
         Params()
         :
         lr(0.01f),
-        bc(0.05f),
+        bc(0.01f),
         discount(0.99f),
         delay_rate(0.01f),
         n_steps(5),
