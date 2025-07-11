@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer weights;
+        Float_Buffer weights_delayed;
     };
 
     // history sample for delayed updates
@@ -45,6 +46,7 @@ public:
         float lr; // Q learning rate
         float bc; // behavior cloning rate
         float discount; // discount factor
+        float delay_rate; // delayed weight rate for double Q
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
@@ -53,6 +55,7 @@ public:
         lr(0.001f),
         bc(0.0f),
         discount(0.99f),
+        delay_rate(0.001f),
         n_steps(3),
         history_iters(16)
         {}
