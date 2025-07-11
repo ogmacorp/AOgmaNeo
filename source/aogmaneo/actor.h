@@ -56,7 +56,7 @@ public:
         bc(0.0f),
         discount(0.99f),
         delay_rate(0.01f),
-        n_steps(5),
+        n_steps(4),
         history_iters(16)
         {}
     };
