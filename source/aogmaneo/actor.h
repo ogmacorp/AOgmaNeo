@@ -31,7 +31,6 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer value_weights;
-        Float_Buffer value_weights_delayed;
         Float_Buffer value_traces;
         Float_Buffer policy_weights;
         Float_Buffer policy_traces;
@@ -44,15 +43,13 @@ public:
         float plr; // policy learning rate
         float discount; // discount factor
         float trace_rate; // eligibility trace decay
-        float delay_rate; // delayed weight rate for value
 
         Params()
         :
-        vlr(0.2f),
-        plr(0.2f),
+        vlr(0.1f),
+        plr(0.1f),
         discount(0.99f),
-        trace_rate(0.03f),
-        delay_rate(0.2f)
+        trace_rate(0.03f)
         {}
     };
 
