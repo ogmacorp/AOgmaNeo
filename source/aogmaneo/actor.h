@@ -52,7 +52,7 @@ public:
         plr(0.1f),
         discount(0.99f),
         trace_rate(0.03f),
-        delay_rate(0.01f)
+        delay_rate(0.1f)
         {}
     };
 
