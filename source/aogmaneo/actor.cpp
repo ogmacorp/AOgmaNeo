@@ -83,7 +83,7 @@ void Actor::forward(
 
                     int wi = di + wi_value_start;
 
-                    value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
+                    value_dendrite_acts[dendrite_index] += vl.value_weights_delayed[wi];
                 }
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -504,6 +504,8 @@ void Actor::init_random(
         for (int i = 0; i < vl.value_weights.size(); i++)
             vl.value_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
+        vl.value_weights_delayed = vl.value_weights;
+
         vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.policy_weights.size(); i++)
@@ -599,12 +601,16 @@ void Actor::step(
         for (int vli = 0; vli < visible_layers.size(); vli++) {
             Visible_Layer &vl = visible_layers[vli];
 
+            PARALLEL_FOR
+            for (int i = 0; i < vl.value_weights.size(); i++)
+                vl.value_weights_delayed[i] += params.value_delay * (vl.value_weights[i] - vl.value_weights_delayed[i]);
+
             if (mimic != 0.0f) // if mimicking
                 vl.policy_weights_delayed = vl.policy_weights;
             else {
                 PARALLEL_FOR
                 for (int i = 0; i < vl.policy_weights.size(); i++)
-                    vl.policy_weights_delayed[i] += params.delay_rate * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
+                    vl.policy_weights_delayed[i] += params.policy_delay * (vl.policy_weights[i] - vl.policy_weights_delayed[i]);
             }
         }
     }
@@ -767,6 +773,8 @@ void Actor::read(
         vl.value_weights.resize(value_num_dendrites * area * vld.size.z);
 
         reader.read(&vl.value_weights[0], vl.value_weights.size() * sizeof(float));
+
+        vl.value_weights_delayed = vl.value_weights;
 
         vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
 
