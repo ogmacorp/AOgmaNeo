@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "image_encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -142,6 +143,7 @@ void Image_Encoder::forward(
 
         float activation = (0.5f - max(radius, dist)) / (0.5f - radius + params.choice);
 
+        std::cout << dist << " " << radius << " " << match << " " << activation << std::endl;
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
@@ -307,11 +309,7 @@ void Image_Encoder::learn(
 
                             int wi = hc + wi_start;
 
-                            float c = vl.centers[wi] * byte_inv * 2.0f - 1.0f;
-
-                            float diff = input_centered - c;
-
-                            vl.centers[wi] = roundf2i((input_centered + 1.0f) * 127.0f);
+                            vl.centers[wi] = roundf2i((input_centered + 0.5f) * 255.0f);
                         }
                     }
                 }
