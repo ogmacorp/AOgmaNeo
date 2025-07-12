@@ -513,9 +513,12 @@ void Image_Encoder::init_random(
 
     hidden_committed_flags = Byte_Buffer(num_hidden_cells, false);
 
-    hidden_comparisons.resize(num_hidden_cells);
-
     hidden_radii = Float_Buffer(num_hidden_cells, 0.0f);
+
+    hidden_dists.resize(num_hidden_cells);
+    hidden_centers.resize(num_hidden_cells);
+
+    hidden_comparisons.resize(num_hidden_cells);
 }
 
 void Image_Encoder::step(
@@ -647,6 +650,9 @@ void Image_Encoder::read(
     hidden_radii.resize(num_hidden_cells);
 
     reader.read(&hidden_radii[0], hidden_radii.size() * sizeof(float));
+
+    hidden_dists.resize(num_hidden_cells);
+    hidden_centers.resize(num_hidden_cells);
 
     hidden_comparisons.resize(num_hidden_cells);
 
