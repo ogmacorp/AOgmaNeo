@@ -114,7 +114,7 @@ void Image_Encoder::forward(
 
                         int wi = hc + wi_start;
 
-                        float c = vl.centers[wi] * byte_inv - 0.5f;
+                        float c = vl.centers[wi] * byte_inv * 2.0f - 1.0f;
 
                         float diff = input_centered - c;
 
@@ -139,9 +139,9 @@ void Image_Encoder::forward(
 
         float radius = hidden_radii[hidden_cell_index];
 
-        float match = 1.0f - 2.0f * max(radius, dist);
+        float match = 1.0f - max(radius, dist);
 
-        float activation = (0.5f - max(radius, dist)) / (0.5f - radius + params.choice);
+        float activation = (1.0f - max(radius, dist)) / (1.0f - radius + params.choice);
 
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
@@ -254,7 +254,7 @@ void Image_Encoder::learn(
 
                             int wi = hc + wi_start;
 
-                            float c = vl.centers[wi] * byte_inv - 0.5f;
+                            float c = vl.centers[wi] * byte_inv * 2.0f - 1.0f;
 
                             float diff = input_centered - c;
 
@@ -308,7 +308,7 @@ void Image_Encoder::learn(
 
                             int wi = hc + wi_start;
 
-                            vl.centers[wi] = roundf2i((input_centered + 0.5f) * 255.0f);
+                            vl.centers[wi] = roundf2i((input_centered * 0.5f + 0.5f) * 255.0f);
                         }
                     }
                 }
@@ -516,7 +516,7 @@ void Image_Encoder::init_random(
 
     hidden_committed_flags = Byte_Buffer(num_hidden_cells, false);
 
-    hidden_radii = Float_Buffer(num_hidden_cells, 0.0f);
+    hidden_radii = Float_Buffer(num_hidden_cells, 1.0f);
 
     hidden_dists.resize(num_hidden_cells);
     hidden_centers.resize(num_hidden_cells);
