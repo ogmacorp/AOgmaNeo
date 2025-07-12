@@ -249,17 +249,13 @@ void Image_Encoder::learn(
 
                         float input_centered = vl_inputs[vc + visible_cells_start] * byte_inv - center;
 
-                        for (int hc = 0; hc < hidden_size.z; hc++) {
-                            int hidden_cell_index = hc + hidden_cells_start;
+                        int wi = hidden_ci + wi_start;
 
-                            int wi = hc + wi_start;
+                        float c = vl.centers[wi] * byte_inv * 2.0f - 1.0f;
 
-                            float c = vl.centers[wi] * byte_inv * 2.0f - 1.0f;
+                        float diff = input_centered - c;
 
-                            float diff = input_centered - c;
-
-                            vl.centers[wi] = min(255, max(0, vl.centers[wi] + roundf2i(rate * diff)));
-                        }
+                        vl.centers[wi] = min(255, max(0, vl.centers[wi] + roundf2i(rate * diff)));
                     }
                 }
         }
@@ -303,13 +299,9 @@ void Image_Encoder::learn(
 
                         float input_centered = vl_inputs[vc + visible_cells_start] * byte_inv - center;
 
-                        for (int hc = 0; hc < hidden_size.z; hc++) {
-                            int hidden_cell_index = hc + hidden_cells_start;
+                        int wi = hidden_ci + wi_start;
 
-                            int wi = hc + wi_start;
-
-                            vl.centers[wi] = roundf2i((input_centered * 0.5f + 0.5f) * 255.0f);
-                        }
+                        vl.centers[wi] = roundf2i((input_centered * 0.5f + 0.5f) * 255.0f);
                     }
                 }
         }
