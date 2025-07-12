@@ -143,7 +143,6 @@ void Image_Encoder::forward(
 
         float activation = (0.5f - max(radius, dist)) / (0.5f - radius + params.choice);
 
-        std::cout << dist << " " << radius << " " << match << " " << activation << std::endl;
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
