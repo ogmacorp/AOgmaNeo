@@ -516,7 +516,7 @@ void Image_Encoder::init_random(
 
     hidden_committed_flags = Byte_Buffer(num_hidden_cells, false);
 
-    hidden_radii = Float_Buffer(num_hidden_cells, 1.0f);
+    hidden_radii = Float_Buffer(num_hidden_cells, 0.0f);
 
     hidden_dists.resize(num_hidden_cells);
     hidden_centers.resize(num_hidden_cells);
