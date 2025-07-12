@@ -63,6 +63,8 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
+    Float_Buffer hidden_dists;
+
     Byte_Buffer hidden_learn_flags;
 
     Byte_Buffer hidden_committed_flags;
@@ -70,6 +72,8 @@ private:
     Float_Buffer hidden_comparisons;
 
     Float_Buffer hidden_radii;
+
+    Float_Buffer hidden_centers;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
