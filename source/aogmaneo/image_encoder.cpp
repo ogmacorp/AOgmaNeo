@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "image_encoder.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -106,14 +107,14 @@ void Image_Encoder::forward(
                 for (int vc = 0; vc < vld.size.z; vc++) {
                     int wi_start = hidden_size.z * (vc + wi_start_partial);
 
-                    float input_centered = (vl_inputs[vc + visible_cells_start] * byte_inv - center) * 2.0f;
+                    float input_centered = vl_inputs[vc + visible_cells_start] * byte_inv - center;
 
                     for (int hc = 0; hc < hidden_size.z; hc++) {
                         int hidden_cell_index = hc + hidden_cells_start;
 
                         int wi = hc + wi_start;
 
-                        float c = vl.centers[wi] * byte_inv * 2.0f - 1.0f;
+                        float c = vl.centers[wi] * byte_inv - 0.5f;
 
                         float diff = input_centered - c;
 
@@ -142,6 +143,7 @@ void Image_Encoder::forward(
 
         float activation = (0.5f - max(radius, dist)) / (0.5f - radius + params.choice);
 
+        std::cout << dist << " " << radius << " " << match << " " << activation << std::endl;
         if ((!hidden_committed_flags[hidden_cell_index] || match >= params.vigilance) && activation > max_activation) {
             max_activation = activation;
             max_index = hc;
@@ -246,14 +248,14 @@ void Image_Encoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi_start = hidden_size.z * (vc + wi_start_partial);
 
-                        float input_centered = (vl_inputs[vc + visible_cells_start] * byte_inv - center) * 2.0f;
+                        float input_centered = vl_inputs[vc + visible_cells_start] * byte_inv - center;
 
                         for (int hc = 0; hc < hidden_size.z; hc++) {
                             int hidden_cell_index = hc + hidden_cells_start;
 
                             int wi = hc + wi_start;
 
-                            float c = vl.centers[wi] * byte_inv * 2.0f - 1.0f;
+                            float c = vl.centers[wi] * byte_inv - 0.5f;
 
                             float diff = input_centered - c;
 
@@ -300,7 +302,7 @@ void Image_Encoder::learn(
                     for (int vc = 0; vc < vld.size.z; vc++) {
                         int wi_start = hidden_size.z * (vc + wi_start_partial);
 
-                        float input_centered = (vl_inputs[vc + visible_cells_start] * byte_inv - center) * 2.0f;
+                        float input_centered = vl_inputs[vc + visible_cells_start] * byte_inv - center;
 
                         for (int hc = 0; hc < hidden_size.z; hc++) {
                             int hidden_cell_index = hc + hidden_cells_start;
