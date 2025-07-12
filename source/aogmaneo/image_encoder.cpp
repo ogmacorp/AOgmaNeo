@@ -20,6 +20,12 @@ void Image_Encoder::forward(
 
     const float byte_inv = 1.0f / 255.0f;
 
+    for (int hc = 0; hc < hidden_size.z; hc++) {
+        int hidden_cell_index = hc + hidden_cells_start;
+
+        hidden_dists[hidden_cell_index] = 0.0f;
+    }
+
     float center = 0.0f;
     int count = 0;
 
