@@ -36,13 +36,11 @@ public:
     struct Params {
         float scale; // scale of activations
         float lr; // weight learning rate
-        float bias; // bias toward positive updates
 
         Params()
         :
         scale(8.0f),
-        lr(0.1f),
-        bias(0.9f)
+        lr(0.1f)
         {}
     };
 
