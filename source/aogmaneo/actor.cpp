@@ -181,11 +181,13 @@ void Actor::forward(
 
             int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
 
+            float error = ((hc == target_ci) - hidden_acts_prev[hidden_cell_index]);
+
             for (int di = 0; di < num_dendrites_per_cell; di++) {
                 int dendrite_index = di + dendrites_start;
 
                 // re-use acts as partial derivatives
-                dendrite_acts_prev[dendrite_index] = ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts_prev[dendrite_index];
+                dendrite_acts_prev[dendrite_index] = error * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_acts_prev[dendrite_index];
             }
         }
 
@@ -238,9 +240,9 @@ void Actor::forward(
 
                                 int wi = di + wi_start;
 
-                                vl.policy_traces[wi] += params.trace_rate * ((vc == in_ci_prev && hc == target_ci) * dendrite_acts_prev[dendrite_index] - vl.policy_traces[wi]);
+                                vl.policy_traces[wi] += params.trace_rate * ((vc == in_ci_prev) * dendrite_acts_prev[dendrite_index] - vl.policy_traces[wi]);
 
-                                vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi] + mimic * ((hc == target_ci) - hidden_acts_prev[hidden_cell_index]) * dendrite_acts_prev[dendrite_index] * (vc == in_ci_prev);
+                                vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi] + mimic * dendrite_acts_prev[dendrite_index] * (vc == in_ci_prev);
                             }
                         }
                     }
