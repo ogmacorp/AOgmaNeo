@@ -61,7 +61,7 @@ public:
         vlr(0.1f),
         plr(0.01f),
         smoothing(0.02f),
-        value_delay(0.01f),
+        value_delay(0.1f),
         policy_delay(0.001f),
         policy_clip(0.25f),
         discount(0.99f),
