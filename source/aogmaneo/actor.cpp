@@ -515,7 +515,6 @@ void Actor::learn(
 
     //history_samples[t].hidden_values[hidden_column_index] = new_value; // update to latest estimate (delayed by 1 iteration but good enough)
 
-    new_value = -1.234f;
     float td_error = new_value - value;
 
     // probability ratio
