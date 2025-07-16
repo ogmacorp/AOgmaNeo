@@ -31,6 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer q_weights; // q weights
+        Float_Buffer q_weights_delayed; // q weights delayed bootstrap target
         Float_Buffer p_weights; // policy weights
     };
 
@@ -47,6 +48,7 @@ public:
         float plr; // policy learning rate
         float discount; // discount factor
         float reweight; // reweight amount
+        float delay_rate; // delay for q weights
         int n_steps; // q steps
         int history_iters; // number of iterations over samples
 
@@ -56,6 +58,7 @@ public:
         plr(0.1f),
         discount(0.99f),
         reweight(1.0f),
+        delay_rate(0.01f),
         n_steps(8),
         history_iters(16)
         {}

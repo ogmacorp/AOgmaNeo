@@ -192,7 +192,7 @@ void Actor::learn(
 
                         int wi = di + wi_start;
 
-                        dendrite_qs[dendrite_index] += vl.q_weights[wi];
+                        dendrite_qs[dendrite_index] += vl.q_weights_delayed[wi];
                     }
                 }
             }
@@ -525,6 +525,8 @@ void Actor::init_random(
             vl.q_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
             vl.p_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
         }
+
+        vl.q_weights_delayed = vl.q_weights;
     }
 
     // hidden cis
@@ -606,6 +608,15 @@ void Actor::step(
             PARALLEL_FOR
             for (int i = 0; i < num_hidden_columns; i++)
                 learn(Int2(i / hidden_size.y, i % hidden_size.y), t, params);
+        }
+
+        // update delayed
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+
+            PARALLEL_FOR
+            for (int i = 0; i < vl.q_weights.size(); i++)
+                vl.q_weights_delayed[i] += params.delay_rate * (vl.q_weights[i] - vl.q_weights_delayed[i]);
         }
     }
 }
@@ -761,6 +772,8 @@ void Actor::read(
 
         reader.read(&vl.q_weights[0], vl.q_weights.size() * sizeof(float));
         reader.read(&vl.p_weights[0], vl.p_weights.size() * sizeof(float));
+
+        vl.q_weights_delayed = vl.q_weights;
     }
 
     reader.read(&history_size, sizeof(int));

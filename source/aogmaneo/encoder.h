@@ -45,8 +45,7 @@ public:
 
     struct Params {
         float choice; // choice parameter, higher makes it select matchier columns over ones with less overall weights (total)
-        float vigilance_local; // ART vigilance, equivalent to local vigilance in DDVFA
-        float vigilance_global; // ART vigilance, equivalent to global vigilance in DDVFA
+        float vigilance; // ART vigilance
         float lr; // learning rate
         float active_ratio; // 2nd stage inhibition activity ratio
         int l_radius; // second stage inhibition radius
@@ -54,8 +53,7 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance_local(0.9f),
-        vigilance_global(0.9f),
+        vigilance(0.9f),
         lr(0.5f),
         active_ratio(0.1f),
         l_radius(2)
