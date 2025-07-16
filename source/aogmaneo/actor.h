@@ -59,7 +59,7 @@ public:
         discount(0.99f),
         reweight(1.0f),
         delay_rate(0.01f),
-        n_steps(8),
+        n_steps(5),
         history_iters(16)
         {}
     };
