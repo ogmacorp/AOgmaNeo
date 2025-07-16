@@ -682,6 +682,7 @@ void Actor::init_random(
     policy_dendrite_acts.resize(policy_num_dendrites);
     policy_dendrite_acts_delayed.resize(policy_num_dendrites);
 
+    hidden_value_acts.resize(num_value_cells);
     hidden_policy_acts.resize(num_hidden_cells);
     hidden_policy_acts_delayed.resize(num_hidden_cells);
 
@@ -911,6 +912,7 @@ void Actor::read(
     policy_dendrite_acts.resize(policy_num_dendrites);
     policy_dendrite_acts_delayed.resize(policy_num_dendrites);
 
+    hidden_value_acts.resize(num_value_cells);
     hidden_policy_acts.resize(num_hidden_cells);
     hidden_policy_acts_delayed.resize(num_hidden_cells);
 
