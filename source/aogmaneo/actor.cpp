@@ -95,7 +95,7 @@ void Actor::forward(
 
                         int wi = di + wi_start;
 
-                        value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
+                        value_dendrite_acts[dendrite_index] += vl.value_weights_delayed[wi];
                     }
                 }
 
