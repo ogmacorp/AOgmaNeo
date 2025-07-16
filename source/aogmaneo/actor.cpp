@@ -8,7 +8,6 @@
 
 #include "actor.h"
 #include "helpers.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -192,7 +191,6 @@ void Actor::forward(
     }
 
     float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
-    std::cout << value << std::endl;
 
     hidden_values[hidden_column_index] = value;
 
