@@ -89,7 +89,7 @@ void Actor::forward(
 
                     int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
-                    int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
+                    int wi_start = value_num_dendrites_per_cell * (vac + wi_value_partial);
 
                     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
                         int dendrite_index = di + value_dendrites_start;
@@ -278,7 +278,7 @@ void Actor::learn(
     // TD(lambda)-like return
     for (int t2 = 1; t2 <= t; t2++)
         new_value = params.smoothing * history_samples[t2].hidden_values[hidden_column_index] +
-            (1.0f - params.smoothing) * (history_samples[t2 - 1].reward + params.discount * new_value);
+            (1.0f - params.smoothing) * ((1.0f - params.discount) * history_samples[t2 - 1].reward + params.discount * new_value);
 
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
@@ -347,7 +347,7 @@ void Actor::learn(
 
                     int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
-                    int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
+                    int wi_start = value_num_dendrites_per_cell * (vac + wi_value_partial);
 
                     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
                         int dendrite_index = di + value_dendrites_start;
@@ -596,7 +596,7 @@ void Actor::learn(
 
                     int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
-                    int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
+                    int wi_start = value_num_dendrites_per_cell * (vac + wi_value_partial);
 
                     for (int di = 0; di < value_num_dendrites_per_cell; di++) {
                         int dendrite_index = di + value_dendrites_start;
