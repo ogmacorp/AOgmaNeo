@@ -192,6 +192,7 @@ void Actor::forward(
     }
 
     float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
+    std::cout << value << std::endl;
 
     hidden_values[hidden_column_index] = value;
 
@@ -514,6 +515,7 @@ void Actor::learn(
 
     //history_samples[t].hidden_values[hidden_column_index] = new_value; // update to latest estimate (delayed by 1 iteration but good enough)
 
+    new_value = -1.234f;
     float td_error = new_value - value;
 
     // probability ratio
@@ -591,7 +593,7 @@ void Actor::learn(
                 int wi_value_partial = value_size * wi_start_partial;
                 int wi_policy_partial = hidden_size.z * wi_start_partial;
 
-                for (int vac = 0; vac < hidden_size.z; vac++) {
+                for (int vac = 0; vac < value_size; vac++) {
                     int value_cell_index = vac + value_cells_start;
 
                     int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
