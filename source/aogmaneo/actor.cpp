@@ -8,6 +8,7 @@
 
 #include "actor.h"
 #include "helpers.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -25,7 +26,7 @@ void Actor::forward(
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
 
-        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
         for (int di = 0; di < value_num_dendrites_per_cell; di++) {
             int dendrite_index = di + value_dendrites_start;
@@ -86,7 +87,7 @@ void Actor::forward(
                 for (int vac = 0; vac < value_size; vac++) {
                     int value_cell_index = vac + value_cells_start;
 
-                    int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+                    int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
                     int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
 
@@ -130,7 +131,7 @@ void Actor::forward(
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
 
-        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
         float activation = 0.0f;
 
@@ -185,12 +186,12 @@ void Actor::forward(
             weight_upper = hidden_value_acts[max_value_index + 1];
 
         if (weight_lower > weight_upper)
-            smooth_max_value_index = weight_lower * (max_value_index - 0.5f) + (1.0f - weight_lower) * (max_value_index + 0.5f);
+            smooth_max_value_index = weight_lower * (max_value_index - 1.0f) + (1.0f - weight_lower) * max_value_index;
         else
-            smooth_max_value_index = weight_upper * (max_value_index + 1.5f) + (1.0f - weight_upper) * (max_value_index + 0.5f);
+            smooth_max_value_index = weight_upper * (max_value_index + 1.0f) + (1.0f - weight_upper) * max_value_index;
     }
 
-    float value = logitf(smooth_max_value_index / static_cast<float>(value_size));
+    float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
 
     hidden_values[hidden_column_index] = value;
 
@@ -282,7 +283,7 @@ void Actor::learn(
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
 
-        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
         for (int di = 0; di < value_num_dendrites_per_cell; di++) {
             int dendrite_index = di + value_dendrites_start;
@@ -344,7 +345,7 @@ void Actor::learn(
                 for (int vac = 0; vac < value_size; vac++) {
                     int value_cell_index = vac + value_cells_start;
 
-                    int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+                    int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
                     int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
 
@@ -389,7 +390,7 @@ void Actor::learn(
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
 
-        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
         float activation = 0.0f;
 
@@ -446,12 +447,12 @@ void Actor::learn(
             weight_upper = hidden_value_acts[max_value_index + 1];
 
         if (weight_lower > weight_upper)
-            smooth_max_value_index = weight_lower * (max_value_index - 0.5f) + (1.0f - weight_lower) * (max_value_index + 0.5f);
+            smooth_max_value_index = weight_lower * (max_value_index - 1.0f) + (1.0f - weight_lower) * max_value_index;
         else
-            smooth_max_value_index = weight_upper * (max_value_index + 1.5f) + (1.0f - weight_upper) * (max_value_index + 0.5f);
+            smooth_max_value_index = weight_upper * (max_value_index + 1.0f) + (1.0f - weight_upper) * max_value_index;
     }
 
-    float value = logitf(smooth_max_value_index / static_cast<float>(value_size));
+    float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
 
     float max_activation = limit_min;
     float max_activation_delayed = limit_min;
@@ -523,14 +524,14 @@ void Actor::learn(
 
     float policy_error_partial = params.plr * td_error * (!policy_clip) + mimic;
 
-    float smooth_new_value_index = sigmoidf(new_value) * value_size;
+    float smooth_new_value_index = sigmoidf(new_value) * (value_size - 1);
 
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
 
-        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
-        float target = (vac - smooth_max_value_index - 0.5f) * (vac >= smooth_max_value_index - 0.5f && vac < smooth_new_value_index + 0.5f);
+        float target = max(0.0f, 1.0f - abs(vac - smooth_new_value_index));
 
         float error = params.vlr * (target - hidden_value_acts[value_cell_index]);
 
@@ -593,7 +594,7 @@ void Actor::learn(
                 for (int vac = 0; vac < hidden_size.z; vac++) {
                     int value_cell_index = vac + value_cells_start;
 
-                    int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+                    int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
                     int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
 
