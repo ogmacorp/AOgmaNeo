@@ -72,6 +72,7 @@ public:
 
 private:
     Int3 hidden_size; // hidden/output/action size
+    int value_size; // number of value bins
     int value_num_dendrites_per_cell;
     int policy_num_dendrites_per_cell;
 
@@ -80,8 +81,9 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_delayed;
+    Float_Buffer hidden_value_acts;
+    Float_Buffer hidden_policy_acts;
+    Float_Buffer hidden_policy_acts_delayed;
 
     Float_Buffer value_dendrite_acts;
     Float_Buffer policy_dendrite_acts;
@@ -115,6 +117,7 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
+        int value_size,
         int value_num_dendrites_per_cell,
         int policy_num_dendrites_per_cell,
         int history_capacity,
@@ -188,7 +191,7 @@ public:
 
     // get hidden activations (probabilities) for actions
     const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
+        return hidden_policy_acts;
     }
 
     // get the hidden size

@@ -377,6 +377,16 @@ inline float sigmoidf(
 #endif
 }
 
+inline float logitf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::log(x / (1.0f - x));
+#else
+    return logf(x / (1.0f - x));
+#endif
+}
+
 inline float tanhf(
     float x
 ) {

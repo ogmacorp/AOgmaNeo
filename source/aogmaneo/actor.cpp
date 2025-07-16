@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
+#include "helpers.h"
 
 using namespace aon;
 
@@ -19,13 +20,18 @@ void Actor::forward(
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
+    int value_cells_start = hidden_column_index * value_size;
 
-    int value_dendrites_start = hidden_column_index * value_num_dendrites_per_cell;
+    for (int vac = 0; vac < hidden_size.z; vac++) {
+        int value_cell_index = vac + value_cells_start;
 
-    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-        int dendrite_index = di + value_dendrites_start;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
 
-        value_dendrite_acts[dendrite_index] = 0.0f;
+        for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            value_dendrite_acts[dendrite_index] = 0.0f;
+        }
     }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -73,17 +79,24 @@ void Actor::forward(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_value_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
-                int wi_start_partial = hidden_size.z * wi_value_partial;
+                int wi_start_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_value_partial = value_size * wi_start_partial;
+                int wi_policy_partial = hidden_size.z * wi_start_partial;
 
-                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
+                for (int vac = 0; vac < hidden_size.z; vac++) {
+                    int value_cell_index = vac + value_cells_start;
 
-                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-                    int dendrite_index = di + value_dendrites_start;
+                    int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
 
-                    int wi = di + wi_value_start;
+                    int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
 
-                    value_dendrite_acts[dendrite_index] += vl.value_weights_delayed[wi];
+                    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+                        int dendrite_index = di + value_dendrites_start;
+
+                        int wi = di + wi_start;
+
+                        value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
+                    }
                 }
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -91,7 +104,7 @@ void Actor::forward(
 
                     int policy_dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
-                    int wi_start = policy_num_dendrites_per_cell * (hc + wi_start_partial);
+                    int wi_start = policy_num_dendrites_per_cell * (hc + wi_policy_partial);
 
                     for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
                         int dendrite_index = di + policy_dendrites_start;
@@ -110,18 +123,74 @@ void Actor::forward(
     const float value_activation_scale = sqrtf(1.0f / value_num_dendrites_per_cell);
     const float policy_activation_scale = sqrtf(1.0f / policy_num_dendrites_per_cell);
 
+    int max_value_index = 0;
+    float max_value_activation = limit_min;
+
     // value
-    float value = 0.0f;
+    for (int vac = 0; vac < hidden_size.z; vac++) {
+        int value_cell_index = vac + value_cells_start;
 
-    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-        int dendrite_index = di + value_dendrites_start;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
 
-        float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
+        float activation = 0.0f;
 
-        value += softplusf(act) * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
+
+            activation += softplusf(act) * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        }
+
+        activation *= value_activation_scale;
+
+        hidden_value_acts[value_cell_index] = activation;
+
+        if (activation > max_value_activation) {
+            max_value_activation = activation;
+            max_value_index = vac;
+        }
     }
 
-    value *= value_activation_scale;
+    float smooth_max_value_index;
+
+    // softmax
+    {
+        float total = 0.0f;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+        
+            hidden_value_acts[hidden_cell_index] = expf(hidden_value_acts[hidden_cell_index] - max_value_activation);
+
+            total += hidden_value_acts[hidden_cell_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_value_acts[hidden_cell_index] *= total_inv;
+        }
+
+        float weight_center = hidden_value_acts[max_value_index];
+        float weight_lower = 0.0f;
+        float weight_upper = 0.0f;
+
+        if (max_value_index > 0)
+            weight_lower = hidden_value_acts[max_value_index - 1];
+
+        if (max_value_index < value_size - 1)
+            weight_upper = hidden_value_acts[max_value_index + 1];
+
+        if (weight_lower > weight_upper)
+            smooth_max_value_index = weight_lower * (max_value_index - 1) + (1.0f - weight_lower) * max_value_index;
+        else
+            smooth_max_value_index = weight_upper * (max_value_index + 1) + (1.0f - weight_upper) * max_value_index;
+    }
+
+    float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
 
     hidden_values[hidden_column_index] = value;
 
@@ -144,28 +213,30 @@ void Actor::forward(
 
         activation *= policy_activation_scale;
 
-        hidden_acts[hidden_cell_index] = activation;
+        hidden_policy_acts[hidden_cell_index] = activation;
 
         max_activation = max(max_activation, activation);
     }
 
     // softmax
-    float total = 0.0f;
+    {
+        float total = 0.0f;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
-    
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+        
+            hidden_policy_acts[hidden_cell_index] = expf(hidden_policy_acts[hidden_cell_index] - max_activation);
 
-        total += hidden_acts[hidden_cell_index];
-    }
+            total += hidden_policy_acts[hidden_cell_index];
+        }
 
-    float total_inv = 1.0f / max(limit_small, total);
+        float total_inv = 1.0f / max(limit_small, total);
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] *= total_inv;
+            hidden_policy_acts[hidden_cell_index] *= total_inv;
+        }
     }
 
     float cusp = randf(state);
@@ -176,7 +247,7 @@ void Actor::forward(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        sum_so_far += hidden_acts[hidden_cell_index];
+        sum_so_far += hidden_policy_acts[hidden_cell_index];
 
         if (sum_so_far >= cusp) {
             select_index = hc;
@@ -197,6 +268,7 @@ void Actor::learn(
     int hidden_column_index = address2(column_pos, Int2(hidden_size.x, hidden_size.y));
 
     int hidden_cells_start = hidden_column_index * hidden_size.z;
+    int value_cells_start = hidden_column_index * value_size;
 
     int target_ci = history_samples[t - 1].hidden_target_cis_prev[hidden_column_index];
 
@@ -207,12 +279,16 @@ void Actor::learn(
         new_value = params.smoothing * history_samples[t2].hidden_values[hidden_column_index] +
             (1.0f - params.smoothing) * (history_samples[t2 - 1].reward + params.discount * new_value);
 
-    int value_dendrites_start = hidden_column_index * value_num_dendrites_per_cell;
+    for (int vac = 0; vac < hidden_size.z; vac++) {
+        int value_cell_index = vac + value_cells_start;
 
-    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-        int dendrite_index = di + value_dendrites_start;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
 
-        value_dendrite_acts[dendrite_index] = 0.0f;
+        for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            value_dendrite_acts[dendrite_index] = 0.0f;
+        }
     }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -261,17 +337,24 @@ void Actor::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_value_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
-                int wi_start_partial = hidden_size.z * wi_value_partial;
+                int wi_start_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_value_partial = value_size * wi_start_partial;
+                int wi_policy_partial = hidden_size.z * wi_start_partial;
 
-                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
+                for (int vac = 0; vac < hidden_size.z; vac++) {
+                    int value_cell_index = vac + value_cells_start;
 
-                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-                    int dendrite_index = di + value_dendrites_start;
+                    int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
 
-                    int wi = di + wi_value_start;
+                    int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
 
-                    value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
+                    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+                        int dendrite_index = di + value_dendrites_start;
+
+                        int wi = di + wi_start;
+
+                        value_dendrite_acts[dendrite_index] += vl.value_weights[wi];
+                    }
                 }
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -279,7 +362,7 @@ void Actor::learn(
 
                     int policy_dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
-                    int wi_start = policy_num_dendrites_per_cell * (hc + wi_start_partial);
+                    int wi_start = policy_num_dendrites_per_cell * (hc + wi_policy_partial);
 
                     for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
                         int dendrite_index = di + policy_dendrites_start;
@@ -299,19 +382,76 @@ void Actor::learn(
     const float value_activation_scale = sqrtf(1.0f / value_num_dendrites_per_cell);
     const float policy_activation_scale = sqrtf(1.0f / policy_num_dendrites_per_cell);
 
-    float value = 0.0f;
+    int max_value_index = 0;
+    float max_value_activation = limit_min;
 
-    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-        int dendrite_index = di + value_dendrites_start;
+    // value
+    for (int vac = 0; vac < hidden_size.z; vac++) {
+        int value_cell_index = vac + value_cells_start;
 
-        float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
 
-        value_dendrite_acts[dendrite_index] = sigmoidf(act); // store derivative
+        float activation = 0.0f;
 
-        value += softplusf(act) * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            float act = value_dendrite_acts[dendrite_index] * dendrite_scale;
+
+            value_dendrite_acts[dendrite_index] = sigmoidf(act); // store derivative
+
+            activation += softplusf(act) * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f);
+        }
+
+        activation *= value_activation_scale;
+
+        hidden_value_acts[value_cell_index] = activation;
+
+        if (activation > max_value_activation) {
+            max_value_activation = activation;
+            max_value_index = vac;
+        }
     }
 
-    value *= value_activation_scale;
+    float smooth_max_value_index;
+
+    // softmax
+    {
+        float total = 0.0f;
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+        
+            hidden_value_acts[hidden_cell_index] = expf(hidden_value_acts[hidden_cell_index] - max_value_activation);
+
+            total += hidden_value_acts[hidden_cell_index];
+        }
+
+        float total_inv = 1.0f / max(limit_small, total);
+
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            hidden_value_acts[hidden_cell_index] *= total_inv;
+        }
+
+        float weight_center = hidden_value_acts[max_value_index];
+        float weight_lower = 0.0f;
+        float weight_upper = 0.0f;
+
+        if (max_value_index > 0)
+            weight_lower = hidden_value_acts[max_value_index - 1];
+
+        if (max_value_index < value_size - 1)
+            weight_upper = hidden_value_acts[max_value_index + 1];
+
+        if (weight_lower > weight_upper)
+            smooth_max_value_index = weight_lower * (max_value_index - 1) + (1.0f - weight_lower) * max_value_index;
+        else
+            smooth_max_value_index = weight_upper * (max_value_index + 1) + (1.0f - weight_upper) * max_value_index;
+    }
+
+    float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
 
     float max_activation = limit_min;
     float max_activation_delayed = limit_min;
@@ -340,8 +480,8 @@ void Actor::learn(
         activation *= policy_activation_scale;
         activation_delayed *= policy_activation_scale;
 
-        hidden_acts[hidden_cell_index] = activation;
-        hidden_acts_delayed[hidden_cell_index] = activation_delayed;
+        hidden_policy_acts[hidden_cell_index] = activation;
+        hidden_policy_acts_delayed[hidden_cell_index] = activation_delayed;
 
         max_activation = max(max_activation, activation);
         max_activation_delayed = max(max_activation_delayed, activation_delayed);
@@ -354,11 +494,11 @@ void Actor::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
     
-        hidden_acts[hidden_cell_index] = expf(hidden_acts[hidden_cell_index] - max_activation);
-        hidden_acts_delayed[hidden_cell_index] = expf(hidden_acts_delayed[hidden_cell_index] - max_activation_delayed);
+        hidden_policy_acts[hidden_cell_index] = expf(hidden_policy_acts[hidden_cell_index] - max_activation);
+        hidden_policy_acts_delayed[hidden_cell_index] = expf(hidden_policy_acts_delayed[hidden_cell_index] - max_activation_delayed);
 
-        total += hidden_acts[hidden_cell_index];
-        total_delayed += hidden_acts_delayed[hidden_cell_index];
+        total += hidden_policy_acts[hidden_cell_index];
+        total_delayed += hidden_policy_acts_delayed[hidden_cell_index];
     }
 
     float total_inv = 1.0f / max(limit_small, total);
@@ -367,8 +507,8 @@ void Actor::learn(
     for (int hc = 0; hc < hidden_size.z; hc++) {
         int hidden_cell_index = hc + hidden_cells_start;
 
-        hidden_acts[hidden_cell_index] *= total_inv;
-        hidden_acts_delayed[hidden_cell_index] *= total_inv_delayed;
+        hidden_policy_acts[hidden_cell_index] *= total_inv;
+        hidden_policy_acts_delayed[hidden_cell_index] *= total_inv_delayed;
     }
 
     //history_samples[t].hidden_values[hidden_column_index] = new_value; // update to latest estimate (delayed by 1 iteration but good enough)
@@ -378,18 +518,24 @@ void Actor::learn(
     float value_delta = params.vlr * td_error;
 
     // probability ratio
-    float ratio = hidden_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_acts_delayed[target_ci + hidden_cells_start]);
+    float ratio = hidden_policy_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_policy_acts_delayed[target_ci + hidden_cells_start]);
 
     // https://huggingface.co/blog/deep-rl-ppo
     bool policy_clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
     float policy_error_partial = params.plr * td_error * (!policy_clip) + mimic;
 
-    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-        int dendrite_index = di + value_dendrites_start;
+    for (int vac = 0; vac < hidden_size.z; vac++) {
+        int value_cell_index = vac + value_cells_start;
 
-        // re-use as deltas
-        value_dendrite_acts[dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * value_dendrite_acts[dendrite_index];
+        int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
+
+        for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+            int dendrite_index = di + value_dendrites_start;
+
+            // re-use as deltas
+            value_dendrite_acts[dendrite_index] = value_delta * ((di >= half_value_num_dendrites_per_cell) * 2.0f - 1.0f) * value_dendrite_acts[dendrite_index];
+        }
     }
 
     for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -397,7 +543,7 @@ void Actor::learn(
 
         int dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
-        float error = policy_error_partial * ((hc == target_ci) - hidden_acts[hidden_cell_index]);
+        float error = policy_error_partial * ((hc == target_ci) - hidden_policy_acts[hidden_cell_index]);
 
         for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
             int dendrite_index = di + dendrites_start;
@@ -436,17 +582,24 @@ void Actor::learn(
 
                 Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_value_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
-                int wi_start_partial = hidden_size.z * wi_value_partial;
+                int wi_start_partial = offset.y + diam * (offset.x + diam * (in_ci + vld.size.z * hidden_column_index));
+                int wi_value_partial = value_size * wi_start_partial;
+                int wi_policy_partial = hidden_size.z * wi_start_partial;
 
-                int wi_value_start = value_num_dendrites_per_cell * wi_value_partial;
+                for (int vac = 0; vac < hidden_size.z; vac++) {
+                    int value_cell_index = vac + value_cells_start;
 
-                for (int di = 0; di < value_num_dendrites_per_cell; di++) {
-                    int dendrite_index = di + value_dendrites_start;
+                    int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
 
-                    int wi = di + wi_value_start;
+                    int wi_start = policy_num_dendrites_per_cell * (vac + wi_value_partial);
 
-                    vl.value_weights[wi] += value_dendrite_acts[dendrite_index];
+                    for (int di = 0; di < value_num_dendrites_per_cell; di++) {
+                        int dendrite_index = di + value_dendrites_start;
+
+                        int wi = di + wi_start;
+
+                        vl.value_weights[wi] += value_dendrite_acts[dendrite_index];
+                    }
                 }
 
                 for (int hc = 0; hc < hidden_size.z; hc++) {
@@ -454,7 +607,7 @@ void Actor::learn(
 
                     int dendrites_start = policy_num_dendrites_per_cell * hidden_cell_index;
 
-                    int wi_start = policy_num_dendrites_per_cell * (hc + wi_start_partial);
+                    int wi_start = policy_num_dendrites_per_cell * (hc + wi_policy_partial);
 
                     for (int di = 0; di < policy_num_dendrites_per_cell; di++) {
                         int dendrite_index = di + dendrites_start;
@@ -470,6 +623,7 @@ void Actor::learn(
 
 void Actor::init_random(
     const Int3 &hidden_size,
+    int value_size,
     int value_num_dendrites_per_cell,
     int policy_num_dendrites_per_cell,
     int history_capacity,
@@ -478,6 +632,7 @@ void Actor::init_random(
     this->visible_layer_descs = visible_layer_descs;
 
     this->hidden_size = hidden_size;
+    this->value_size = value_size;
     this->value_num_dendrites_per_cell = value_num_dendrites_per_cell;
     this->policy_num_dendrites_per_cell = policy_num_dendrites_per_cell;
 
@@ -486,7 +641,8 @@ void Actor::init_random(
     // pre-compute dimensions
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
-    int value_num_dendrites = num_hidden_columns * value_num_dendrites_per_cell;
+    int num_value_cells = num_hidden_columns * value_size;
+    int value_num_dendrites = num_value_cells * value_num_dendrites_per_cell;
     int policy_num_dendrites = num_hidden_cells * policy_num_dendrites_per_cell;
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
@@ -516,14 +672,14 @@ void Actor::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
+    hidden_values = Float_Buffer(num_value_cells, 0.0f);
 
     value_dendrite_acts.resize(value_num_dendrites);
     policy_dendrite_acts.resize(policy_num_dendrites);
     policy_dendrite_acts_delayed.resize(policy_num_dendrites);
 
-    hidden_acts.resize(num_hidden_cells);
-    hidden_acts_delayed.resize(num_hidden_cells);
+    hidden_policy_acts.resize(num_hidden_cells);
+    hidden_policy_acts_delayed.resize(num_hidden_cells);
 
     // create (pre-allocated) history samples
     history_size = 0;
@@ -542,7 +698,7 @@ void Actor::init_random(
 
         history_samples[i].hidden_target_cis_prev.resize(num_hidden_columns);
 
-        history_samples[i].hidden_values.resize(num_hidden_columns);
+        history_samples[i].hidden_values.resize(num_value_cells);
     }
 }
 
@@ -624,7 +780,7 @@ void Actor::clear_state() {
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + 2 * sizeof(int) + hidden_cis.size() * sizeof(int) + 2 * hidden_values.size() * sizeof(float) + sizeof(int);
+    long size = sizeof(Int3) + 3 * sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_values.size() * sizeof(float) + sizeof(int);
 
     for (int vli = 0; vli < visible_layers.size(); vli++) {
         const Visible_Layer &vl = visible_layers[vli];
@@ -682,6 +838,7 @@ void Actor::write(
     Stream_Writer &writer
 ) const {
     writer.write(&hidden_size, sizeof(Int3));
+    writer.write(&value_size, sizeof(int));
     writer.write(&value_num_dendrites_per_cell, sizeof(int));
     writer.write(&policy_num_dendrites_per_cell, sizeof(int));
 
@@ -730,11 +887,13 @@ void Actor::read(
     Stream_Reader &reader
 ) {
     reader.read(&hidden_size, sizeof(Int3));
+    reader.read(&value_size, sizeof(int));
     reader.read(&value_num_dendrites_per_cell, sizeof(int));
     reader.read(&policy_num_dendrites_per_cell, sizeof(int));
 
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
+    int num_value_cells = num_hidden_columns * value_size;
     int value_num_dendrites = num_hidden_columns * value_num_dendrites_per_cell;
     int policy_num_dendrites = num_hidden_cells * policy_num_dendrites_per_cell;
     
@@ -748,8 +907,8 @@ void Actor::read(
     policy_dendrite_acts.resize(policy_num_dendrites);
     policy_dendrite_acts_delayed.resize(policy_num_dendrites);
 
-    hidden_acts.resize(num_hidden_cells);
-    hidden_acts_delayed.resize(num_hidden_cells);
+    hidden_policy_acts.resize(num_hidden_cells);
+    hidden_policy_acts_delayed.resize(num_hidden_cells);
 
     int num_visible_layers;
 
