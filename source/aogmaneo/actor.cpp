@@ -175,8 +175,8 @@ void Actor::forward(
         }
 
         float weight_center = hidden_value_acts[max_value_index];
-        float weight_lower = 0.0f;
-        float weight_upper = 0.0f;
+        float weight_lower = -1.0f;
+        float weight_upper = -1.0f;
 
         if (max_value_index > 0)
             weight_lower = hidden_value_acts[max_value_index - 1];
@@ -185,12 +185,12 @@ void Actor::forward(
             weight_upper = hidden_value_acts[max_value_index + 1];
 
         if (weight_lower > weight_upper)
-            smooth_max_value_index = weight_lower * (max_value_index - 1) + (1.0f - weight_lower) * max_value_index;
+            smooth_max_value_index = weight_lower * (max_value_index - 0.5f) + (1.0f - weight_lower) * (max_value_index + 0.5f);
         else
-            smooth_max_value_index = weight_upper * (max_value_index + 1) + (1.0f - weight_upper) * max_value_index;
+            smooth_max_value_index = weight_upper * (max_value_index + 1.5f) + (1.0f - weight_upper) * (max_value_index + 0.5f);
     }
 
-    float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
+    float value = logitf(smooth_max_value_index / static_cast<float>(value_size));
 
     hidden_values[hidden_column_index] = value;
 
@@ -436,8 +436,8 @@ void Actor::learn(
         }
 
         float weight_center = hidden_value_acts[max_value_index];
-        float weight_lower = 0.0f;
-        float weight_upper = 0.0f;
+        float weight_lower = -1.0f;
+        float weight_upper = -1.0f;
 
         if (max_value_index > 0)
             weight_lower = hidden_value_acts[max_value_index - 1];
@@ -446,12 +446,12 @@ void Actor::learn(
             weight_upper = hidden_value_acts[max_value_index + 1];
 
         if (weight_lower > weight_upper)
-            smooth_max_value_index = weight_lower * (max_value_index - 1) + (1.0f - weight_lower) * max_value_index;
+            smooth_max_value_index = weight_lower * (max_value_index - 0.5f) + (1.0f - weight_lower) * (max_value_index + 0.5f);
         else
-            smooth_max_value_index = weight_upper * (max_value_index + 1) + (1.0f - weight_upper) * max_value_index;
+            smooth_max_value_index = weight_upper * (max_value_index + 1.5f) + (1.0f - weight_upper) * (max_value_index + 0.5f);
     }
 
-    float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
+    float value = logitf(smooth_max_value_index / static_cast<float>(value_size));
 
     float max_activation = limit_min;
     float max_activation_delayed = limit_min;
@@ -530,7 +530,7 @@ void Actor::learn(
 
         int value_dendrites_start = value_num_dendrites_per_cell * value_cells_start;
 
-        float target = (smooth_max_value_index - vac) * (vac >= smooth_max_value_index && vac < smooth_new_value_index + 1.0f);
+        float target = (vac - smooth_max_value_index - 0.5f) * (vac >= smooth_max_value_index - 0.5f && vac < smooth_new_value_index + 0.5f);
 
         float error = params.vlr * (target - hidden_value_acts[value_cell_index]);
 
