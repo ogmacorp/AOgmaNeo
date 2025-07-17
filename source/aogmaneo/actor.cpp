@@ -678,7 +678,7 @@ void Actor::init_random(
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
 
-    hidden_values = Float_Buffer(num_value_cells, 0.0f);
+    hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
     value_dendrite_acts.resize(value_num_dendrites);
     policy_dendrite_acts.resize(policy_num_dendrites);
@@ -705,7 +705,7 @@ void Actor::init_random(
 
         history_samples[i].hidden_target_cis_prev.resize(num_hidden_columns);
 
-        history_samples[i].hidden_values.resize(num_value_cells);
+        history_samples[i].hidden_values.resize(num_hidden_columns);
     }
 }
 
