@@ -158,20 +158,20 @@ void Actor::forward(
     {
         float total = 0.0f;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+        for (int vac = 0; vac < value_size; vac++) {
+            int value_cell_index = vac + value_cells_start;
         
-            hidden_value_acts[hidden_cell_index] = expf(hidden_value_acts[hidden_cell_index] - max_value_activation);
+            hidden_value_acts[value_cell_index] = expf(hidden_value_acts[value_cell_index] - max_value_activation);
 
-            total += hidden_value_acts[hidden_cell_index];
+            total += hidden_value_acts[value_cell_index];
         }
 
         float total_inv = 1.0f / max(limit_small, total);
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+        for (int vac = 0; vac < value_size; vac++) {
+            int value_cell_index = vac + value_cells_start;
 
-            hidden_value_acts[hidden_cell_index] *= total_inv;
+            hidden_value_acts[value_cell_index] *= total_inv;
         }
 
         float weight_center = hidden_value_acts[max_value_index];
@@ -419,20 +419,20 @@ void Actor::learn(
     {
         float total = 0.0f;
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+        for (int vac = 0; vac < value_size; vac++) {
+            int value_cell_index = vac + value_cells_start;
         
-            hidden_value_acts[hidden_cell_index] = expf(hidden_value_acts[hidden_cell_index] - max_value_activation);
+            hidden_value_acts[value_cell_index] = expf(hidden_value_acts[value_cell_index] - max_value_activation);
 
-            total += hidden_value_acts[hidden_cell_index];
+            total += hidden_value_acts[value_cell_index];
         }
 
         float total_inv = 1.0f / max(limit_small, total);
 
-        for (int hc = 0; hc < hidden_size.z; hc++) {
-            int hidden_cell_index = hc + hidden_cells_start;
+        for (int vac = 0; vac < value_size; vac++) {
+            int value_cell_index = vac + value_cells_start;
 
-            hidden_value_acts[hidden_cell_index] *= total_inv;
+            hidden_value_acts[value_cell_index] *= total_inv;
         }
 
         float weight_center = hidden_value_acts[max_value_index];
