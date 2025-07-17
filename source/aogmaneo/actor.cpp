@@ -8,6 +8,7 @@
 
 #include "actor.h"
 #include "helpers.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -514,6 +515,7 @@ void Actor::learn(
     //history_samples[t].hidden_values[hidden_column_index] = new_value; // update to latest estimate (delayed by 1 iteration but good enough)
 
     float td_error = new_value - value;
+    std::cout << new_value << std::endl;
 
     // probability ratio
     float ratio = hidden_policy_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_policy_acts_delayed[target_ci + hidden_cells_start]);
@@ -899,7 +901,7 @@ void Actor::read(
     int num_hidden_columns = hidden_size.x * hidden_size.y;
     int num_hidden_cells = num_hidden_columns * hidden_size.z;
     int num_value_cells = num_hidden_columns * value_size;
-    int value_num_dendrites = num_hidden_columns * value_num_dendrites_per_cell;
+    int value_num_dendrites = num_value_cells * value_num_dendrites_per_cell;
     int policy_num_dendrites = num_hidden_cells * policy_num_dendrites_per_cell;
     
     hidden_cis.resize(num_hidden_columns);
