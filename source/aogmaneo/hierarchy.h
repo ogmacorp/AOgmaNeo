@@ -40,7 +40,7 @@ public:
             const Int3 &size = Int3(5, 5, 16),
             IO_Type type = prediction,
             int num_dendrites_per_cell = 4,
-            int value_num_dendrites_per_cell = 1,
+            int value_num_dendrites_per_cell = 2,
             int up_radius = 2,
             int down_radius = 2,
             int value_size = 128,
