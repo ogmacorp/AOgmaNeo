@@ -194,6 +194,11 @@ public:
         return hidden_policy_acts;
     }
 
+    // get hidden values
+    const Float_Buffer &get_hidden_values() const {
+        return hidden_values;
+    }
+
     // get the hidden size
     const Int3 &get_hidden_size() const {
         return hidden_size;
