@@ -8,6 +8,7 @@
 
 #include "actor.h"
 #include "helpers.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -190,7 +191,7 @@ void Actor::forward(
             smooth_max_value_index = weight_upper * (max_value_index + 1.0f) + (1.0f - weight_upper) * max_value_index;
     }
 
-    float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
+    float value = logitf(min(1.0f - limit_small, max(limit_small, smooth_max_value_index / static_cast<float>(value_size - 1))));
 
     hidden_values[hidden_column_index] = value;
 
@@ -451,7 +452,7 @@ void Actor::learn(
             smooth_max_value_index = weight_upper * (max_value_index + 1.0f) + (1.0f - weight_upper) * max_value_index;
     }
 
-    float value = logitf((smooth_max_value_index + 0.5f) / static_cast<float>(value_size));
+    float value = logitf(min(1.0f - limit_small, max(limit_small, smooth_max_value_index / static_cast<float>(value_size - 1))));
 
     float max_activation = limit_min;
     float max_activation_delayed = limit_min;
@@ -513,7 +514,9 @@ void Actor::learn(
 
     //history_samples[t].hidden_values[hidden_column_index] = new_value; // update to latest estimate (delayed by 1 iteration but good enough)
 
+    new_value = 2.345f;
     float td_error = new_value - value;
+    std::cout << value << std::endl;
 
     // probability ratio
     float ratio = hidden_policy_acts[target_ci + hidden_cells_start] / max(limit_small, hidden_policy_acts_delayed[target_ci + hidden_cells_start]);
