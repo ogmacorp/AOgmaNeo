@@ -168,25 +168,15 @@ void Actor::forward(
 
         float total_inv = 1.0f / max(limit_small, total);
 
+        smooth_max_value_index = 0.0f;
+
         for (int vac = 0; vac < value_size; vac++) {
             int value_cell_index = vac + value_cells_start;
 
             hidden_value_acts[value_cell_index] *= total_inv;
+
+            smooth_max_value_index += hidden_value_acts[value_cell_index] * vac;
         }
-
-        float weight_center = hidden_value_acts[max_value_index];
-        float weight_lower = 0.0f;
-        float weight_upper = 0.0f;
-
-        if (max_value_index > 0)
-            weight_lower = hidden_value_acts[max_value_index - 1];
-
-        if (max_value_index < value_size - 1)
-            weight_upper = hidden_value_acts[max_value_index + 1];
-
-        float total_weight = weight_center + weight_lower + weight_upper;
-
-        smooth_max_value_index = (weight_center * max_value_index + weight_lower * (max_value_index - 1.0f) + weight_upper * (max_value_index + 1.0f)) / max(limit_small, total_weight);
     }
 
     float value = logitf(min(1.0f - limit_small, max(limit_small, smooth_max_value_index / static_cast<float>(value_size - 1))));
@@ -428,25 +418,15 @@ void Actor::learn(
 
         float total_inv = 1.0f / max(limit_small, total);
 
+        smooth_max_value_index = 0.0f;
+
         for (int vac = 0; vac < value_size; vac++) {
             int value_cell_index = vac + value_cells_start;
 
             hidden_value_acts[value_cell_index] *= total_inv;
+
+            smooth_max_value_index += hidden_value_acts[value_cell_index] * vac;
         }
-
-        float weight_center = hidden_value_acts[max_value_index];
-        float weight_lower = 0.0f;
-        float weight_upper = 0.0f;
-
-        if (max_value_index > 0)
-            weight_lower = hidden_value_acts[max_value_index - 1];
-
-        if (max_value_index < value_size - 1)
-            weight_upper = hidden_value_acts[max_value_index + 1];
-
-        float total_weight = weight_center + weight_lower + weight_upper;
-
-        smooth_max_value_index = (weight_center * max_value_index + weight_lower * (max_value_index - 1.0f) + weight_upper * (max_value_index + 1.0f)) / max(limit_small, total_weight);
     }
 
     float value = logitf(min(1.0f - limit_small, max(limit_small, smooth_max_value_index / static_cast<float>(value_size - 1))));
