@@ -32,7 +32,6 @@ public:
         int up_radius; // encoder radius
         int down_radius; // decoder radius, also shared with actor if there is one
 
-        int value_size; // size of support for value function distribution (actor only)
         int value_num_dendrites_per_cell; // number of value function dendrites (actor only)
 
         IO_Desc(
@@ -41,7 +40,6 @@ public:
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
-            int value_size = 64,
             int value_num_dendrites_per_cell = 1
         )
         :
@@ -50,7 +48,6 @@ public:
         num_dendrites_per_cell(num_dendrites_per_cell),
         up_radius(up_radius),
         down_radius(down_radius),
-        value_size(value_size),
         value_num_dendrites_per_cell(value_num_dendrites_per_cell)
         {}
     };
