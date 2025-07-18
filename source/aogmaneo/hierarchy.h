@@ -40,7 +40,7 @@ public:
             int num_dendrites_per_cell = 4,
             int up_radius = 2,
             int down_radius = 2,
-            int value_num_dendrites_per_cell = 1
+            int value_num_dendrites_per_cell = 4
         )
         :
         size(size),
