@@ -483,9 +483,7 @@ void Actor::learn(
 
     float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-    float shift = (td_error > 0.0f) * params.bias + 1.0f - params.bias;
-
-    float policy_error_partial = params.plr * scaled_td_error * shift + mimic;
+    float policy_error_partial = params.plr * scaled_td_error + mimic;
 
     float smooth_new_value_index = sigmoidf(new_value) * (value_size - 1);
 
