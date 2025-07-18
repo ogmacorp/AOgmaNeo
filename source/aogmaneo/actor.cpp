@@ -348,12 +348,13 @@ void Actor::init_random(
         for (int i = 0; i < vl.value_weights.size(); i++)
             vl.value_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
+        vl.value_traces = Float_Buffer(vl.value_weights.size(), 0.0f);
+
         vl.policy_weights.resize(policy_num_dendrites * area * vld.size.z);
 
         for (int i = 0; i < vl.policy_weights.size(); i++)
             vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
-        vl.value_traces = Float_Buffer(vl.value_weights.size(), 0.0f);
         vl.policy_traces = Float_Buffer(vl.policy_weights.size(), 0.0f);
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
@@ -518,7 +519,7 @@ void Actor::read(
 
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_policy_acts_prev[0], hidden_policy_acts_prev.size() * sizeof(float));
-    reader.read(&value_dendrite_acts[0], value_dendrite_acts_prev.size() * sizeof(float));
+    reader.read(&value_dendrite_acts_prev[0], value_dendrite_acts_prev.size() * sizeof(float));
     reader.read(&policy_dendrite_acts_prev[0], policy_dendrite_acts_prev.size() * sizeof(float));
     reader.read(&hidden_values[0], hidden_values.size() * sizeof(float));
 
@@ -585,7 +586,7 @@ void Actor::read_state(
 ) {
     reader.read(&hidden_cis[0], hidden_cis.size() * sizeof(int));
     reader.read(&hidden_policy_acts_prev[0], hidden_policy_acts_prev.size() * sizeof(float));
-    reader.read(&value_dendrite_acts[0], value_dendrite_acts_prev.size() * sizeof(float));
+    reader.read(&value_dendrite_acts_prev[0], value_dendrite_acts_prev.size() * sizeof(float));
     reader.read(&policy_dendrite_acts_prev[0], policy_dendrite_acts_prev.size() * sizeof(float));
     reader.read(&hidden_values[0], hidden_values.size() * sizeof(float));
 
