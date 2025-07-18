@@ -49,6 +49,7 @@ public:
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float discount; // discount factor
         float td_scale_decay; // decay of max td scale
+        float bias; // bias toward positive updates
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
@@ -59,6 +60,7 @@ public:
         smoothing(0.02f),
         discount(0.99f),
         td_scale_decay(0.999f),
+        bias(0.5f),
         min_steps(16),
         history_iters(8)
         {}
