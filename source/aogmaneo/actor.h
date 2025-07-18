@@ -43,7 +43,6 @@ public:
         float plr; // policy learning rate
         float discount; // discount factor
         float trace_rate; // eligibility trace decay
-        float value_range; // maximum range of value estimates in symlog space
         float td_scale_decay; // slow decay of maximum TD magnitude scaling factor
 
         Params()
@@ -52,21 +51,17 @@ public:
         plr(0.1f),
         discount(0.99f),
         trace_rate(0.03f),
-        value_range(20.0f),
         td_scale_decay(0.999f)
         {}
     };
 
 private:
     Int3 hidden_size;
-    int value_size; // number of value bins
     int value_num_dendrites_per_cell;
     int policy_num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_value_acts;
-    Float_Buffer hidden_value_acts_prev;
     Float_Buffer hidden_policy_acts;
     Float_Buffer hidden_policy_acts_prev;
 
@@ -100,7 +95,6 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int value_size,
         int value_num_dendrites_per_cell,
         int policy_num_dendrites_per_cell,
         const Array<Visible_Layer_Desc> &visible_layer_descs
