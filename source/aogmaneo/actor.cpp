@@ -424,6 +424,8 @@ void Actor::init_random(
 
         vl.value_traces = Float_Buffer(vl.value_weights.size(), 0.0f);
         vl.policy_traces = Float_Buffer(vl.policy_weights.size(), 0.0f);
+
+        vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
 
     hidden_cis = Int_Buffer(num_hidden_columns, 0);
