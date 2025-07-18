@@ -31,9 +31,7 @@ public:
     // visible layer
     struct Visible_Layer {
         Float_Buffer value_weights;
-        Float_Buffer value_weights_delayed;
         Float_Buffer policy_weights;
-        Float_Buffer policy_weights_delayed;
     };
 
     // history sample for delayed updates
@@ -49,9 +47,6 @@ public:
         float vlr; // value learning rate
         float plr; // policy learning rate
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
-        float value_delay; // rate of delayed value weights
-        float policy_delay; // rate of delayed policy weights
-        float policy_clip; // PPO policy clipping coefficient
         float discount; // discount factor
         float td_scale_decay; // decay of max td scale
         int min_steps; // minimum steps before sample can be used
@@ -60,11 +55,8 @@ public:
         Params()
         :
         vlr(0.1f),
-        plr(0.01f),
+        plr(0.02f),
         smoothing(0.02f),
-        value_delay(0.5f),
-        policy_delay(0.001f),
-        policy_clip(0.25f),
         discount(0.99f),
         td_scale_decay(0.999f),
         min_steps(16),
@@ -85,11 +77,9 @@ private:
 
     Float_Buffer hidden_value_acts;
     Float_Buffer hidden_policy_acts;
-    Float_Buffer hidden_policy_acts_delayed;
 
     Float_Buffer value_dendrite_acts;
     Float_Buffer policy_dendrite_acts;
-    Float_Buffer policy_dendrite_acts_delayed;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
