@@ -257,8 +257,12 @@ void Actor::forward(
 
         float td_error = reward + params.discount * value - value_prev;
 
+        hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
+
+        float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
+
         float value_rate = params.vlr * td_error;
-        float policy_rate = params.plr * td_error;
+        float policy_rate = params.plr * scaled_td_error;
 
         for (int hc = 0; hc < hidden_size.z; hc++) {
             int hidden_cell_index = hc + hidden_cells_start;
