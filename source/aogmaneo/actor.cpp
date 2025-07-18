@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include "actor.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -214,8 +213,6 @@ void Actor::forward(
 
         float new_value = reward + params.discount * value;
 
-        new_value = -234.567f;
-        std::cout << value << std::endl;
         float td_error = new_value - value_prev;
 
         hidden_td_scales[hidden_column_index] = max(hidden_td_scales[hidden_column_index] * params.td_scale_decay, abs(td_error));
