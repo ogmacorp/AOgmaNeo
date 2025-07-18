@@ -431,7 +431,7 @@ void Actor::clear_state() {
 }
 
 long Actor::size() const {
-    long size = sizeof(Int3) + 3 * sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_policy_acts_prev.size() * sizeof(float) +
+    long size = sizeof(Int3) + 2 * sizeof(int) + hidden_cis.size() * sizeof(int) + hidden_policy_acts_prev.size() * sizeof(float) +
         value_dendrite_acts_prev.size() * sizeof(float) + policy_dendrite_acts_prev.size() * sizeof(float) +
         hidden_values.size() * sizeof(float) + hidden_td_scales.size() * sizeof(float) + sizeof(int);
 
