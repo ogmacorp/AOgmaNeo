@@ -377,6 +377,16 @@ inline float sigmoidf(
 #endif
 }
 
+inline float logitf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return std::log(x / (1.0f - x));
+#else
+    return logf(x / (1.0f - x));
+#endif
+}
+
 inline float tanhf(
     float x
 ) {
@@ -392,6 +402,26 @@ inline float tanhf(
     float z = expf(-2.0f * x);
 
     return -(z - 1.0f) / (z + 1.0f);
+#endif
+}
+
+inline float symlogf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return ((x > 0.0f) * 2.0f - 1.0f) * std::log(std::abs(x) + 1.0f);
+#else
+    return ((x > 0.0f) * 2.0f - 1.0f) * logf(abs(x) + 1.0f);
+#endif
+}
+
+inline float symexpf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return ((x > 0.0f) * 2.0f - 1.0f) * (std::exp(std::abs(x)) - 1.0f);
+#else
+    return ((x > 0.0f) * 2.0f - 1.0f) * (expf(abs(x)) - 1.0f);
 #endif
 }
 
