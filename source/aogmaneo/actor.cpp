@@ -8,7 +8,6 @@
 
 #include "actor.h"
 #include "helpers.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -180,7 +179,7 @@ void Actor::forward(
         }
     }
 
-    float value = logitf(min(1.0f - limit_small, max(limit_small, smooth_max_value_index / static_cast<float>(value_size - 1))));
+    float value = symexpf((smooth_max_value_index / static_cast<float>(value_size - 1) * 2.0f - 1.0f) * params.value_range);
 
     hidden_values[hidden_column_index] = value;
 
@@ -428,7 +427,7 @@ void Actor::learn(
         }
     }
 
-    float value = logitf(min(1.0f - limit_small, max(limit_small, smooth_max_value_index / static_cast<float>(value_size - 1))));
+    float value = symexpf((smooth_max_value_index / static_cast<float>(value_size - 1) * 2.0f - 1.0f) * params.value_range);
 
     float max_activation = limit_min;
 
@@ -485,7 +484,7 @@ void Actor::learn(
 
     float policy_error_partial = params.plr * scaled_td_error + mimic;
 
-    float smooth_new_value_index = sigmoidf(new_value) * (value_size - 1);
+    float smooth_new_value_index = min(1.0f, max(0.0f, symlogf(new_value) / params.value_range * 0.5f + 0.5f)) * (value_size - 1);
 
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
