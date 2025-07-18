@@ -305,7 +305,7 @@ void Actor::forward(
 
                                 int wi = di + wi_start;
 
-                                vl.policy_traces[wi] += ((vc == in_ci_prev) * policy_dendrite_acts_prev[dendrite_index] - vl.policy_traces[wi]);
+                                vl.policy_traces[wi] += params.trace_rate * ((vc == in_ci_prev) * policy_dendrite_acts_prev[dendrite_index] - vl.policy_traces[wi]);
 
                                 vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi];
                             }
