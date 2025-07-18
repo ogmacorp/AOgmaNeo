@@ -43,29 +43,35 @@ public:
         float plr; // policy learning rate
         float discount; // discount factor
         float trace_rate; // eligibility trace decay
+        float value_range; // maximum range of value estimates in symlog space
 
         Params()
         :
         vlr(0.1f),
         plr(0.1f),
         discount(0.99f),
-        trace_rate(0.03f)
+        trace_rate(0.03f),
+        value_range(20.0f)
         {}
     };
 
 private:
-    Int3 hidden_size; // hidden/output/action size
-    int num_dendrites_per_cell;
+    Int3 hidden_size;
+    int value_size; // number of value bins
+    int value_num_dendrites_per_cell;
+    int policy_num_dendrites_per_cell;
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_acts;
-    Float_Buffer hidden_acts_prev;
+    Float_Buffer hidden_value_acts;
+    Float_Buffer hidden_policy_acts;
 
-    Float_Buffer dendrite_acts;
-    Float_Buffer dendrite_acts_prev;
+    Float_Buffer value_dendrite_acts;
+    Float_Buffer policy_dendrite_acts;
 
-    Float_Buffer hidden_values;
+    Float_Buffer hidden_values; // hidden value function output buffer
+
+    Float_Buffer hidden_td_scales;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
@@ -159,7 +165,7 @@ public:
 
     // get hidden activations (q values) for actions
     const Float_Buffer &get_hidden_acts() const {
-        return hidden_acts;
+        return hidden_policy_acts;
     }
 
     // get the hidden size
