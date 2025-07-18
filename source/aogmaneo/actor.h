@@ -64,10 +64,14 @@ private:
     Int_Buffer hidden_cis; // hidden states
 
     Float_Buffer hidden_value_acts;
+    Float_Buffer hidden_value_acts_prev;
     Float_Buffer hidden_policy_acts;
+    Float_Buffer hidden_policy_acts_prev;
 
     Float_Buffer value_dendrite_acts;
+    Float_Buffer value_dendrite_acts_prev;
     Float_Buffer policy_dendrite_acts;
+    Float_Buffer policy_dendrite_acts_prev;
 
     Float_Buffer hidden_values; // hidden value function output buffer
 
@@ -94,7 +98,9 @@ public:
     // initialized randomly
     void init_random(
         const Int3 &hidden_size,
-        int num_dendrites_per_cell,
+        int value_size,
+        int value_num_dendrites_per_cell,
+        int policy_num_dendrites_per_cell,
         const Array<Visible_Layer_Desc> &visible_layer_descs
     );
 
