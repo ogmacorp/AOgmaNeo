@@ -60,7 +60,7 @@ public:
         smoothing(0.02f),
         discount(0.99f),
         td_scale_decay(0.999f),
-        value_range(10.0f),
+        value_range(20.0f),
         min_steps(16),
         history_iters(8)
         {}

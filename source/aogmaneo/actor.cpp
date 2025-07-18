@@ -266,7 +266,7 @@ void Actor::learn(
     // TD(lambda)-like return
     for (int t2 = 1; t2 <= t; t2++)
         new_value = params.smoothing * history_samples[t2].hidden_values[hidden_column_index] +
-            (1.0f - params.smoothing) * ((1.0f - params.discount) * history_samples[t2 - 1].reward + params.discount * new_value);
+            (1.0f - params.smoothing) * (history_samples[t2 - 1].reward + params.discount * new_value);
 
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
