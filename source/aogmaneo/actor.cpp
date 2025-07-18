@@ -262,6 +262,7 @@ void Actor::forward(
 
         float new_value = reward + params.discount * value;
 
+        new_value = -234.567f;
         std::cout << value << std::endl;
         float td_error = new_value - value_prev;
 
@@ -269,19 +270,19 @@ void Actor::forward(
 
         float scaled_td_error = td_error / max(limit_small, hidden_td_scales[hidden_column_index]);
 
-        float value_rate = params.vlr * td_error;
-        float policy_rate = params.plr * scaled_td_error;
+        float value_rate = params.vlr * max(0.0f, scaled_td_error);
+        float policy_rate = params.plr * max(0.0f, scaled_td_error);
 
-        float smooth_new_value_index_plus = min(value_size - 1.0f, (min(1.0f, max(0.0f, symlogf(new_value) / params.value_range * 0.5f + 0.5f)) * (value_size - 1) + 1.0f));
+        float smooth_new_value_index = min(1.0f, max(0.0f, symlogf(new_value) / params.value_range * 0.5f + 0.5f)) * (value_size - 1);
 
         for (int vac = 0; vac < value_size; vac++) {
             int value_cell_index = vac + value_cells_start;
 
             int value_dendrites_start = value_num_dendrites_per_cell * value_cell_index;
 
-            float target = max(0.0f, 1.0f - abs(vac - smooth_new_value_index_plus));
+            float target = max(0.0f, 1.0f - abs(vac - smooth_new_value_index));
 
-            float error = (target - hidden_value_acts[value_cell_index]);
+            float error = (target - hidden_value_acts_prev[value_cell_index]);
 
             for (int di = 0; di < value_num_dendrites_per_cell; di++) {
                 int dendrite_index = di + value_dendrites_start;
