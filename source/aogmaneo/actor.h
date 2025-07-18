@@ -43,15 +43,13 @@ public:
         float plr; // policy learning rate
         float discount; // discount factor
         float trace_rate; // eligibility trace decay
-        float td_scale_decay; // slow decay of maximum TD magnitude scaling factor
 
         Params()
         :
         vlr(0.1f),
-        plr(1.0f),
+        plr(0.1f),
         discount(0.99f),
-        trace_rate(0.03f),
-        td_scale_decay(0.999f)
+        trace_rate(0.03f)
         {}
     };
 
@@ -71,8 +69,6 @@ private:
     Float_Buffer policy_dendrite_acts_prev;
 
     Float_Buffer hidden_values; // hidden value function output buffer
-
-    Float_Buffer hidden_td_scales;
 
     // visible layers and descriptors
     Array<Visible_Layer> visible_layers;
