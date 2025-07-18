@@ -8,6 +8,7 @@
 
 #include "actor.h"
 #include "helpers.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -499,7 +500,7 @@ void Actor::learn(
     // https://huggingface.co/blog/deep-rl-ppo
     bool policy_clip = (ratio < (1.0f - params.policy_clip) && td_error < 0.0f) || (ratio > (1.0f + params.policy_clip) && td_error > 0.0f);
 
-    float policy_error_partial = params.plr * td_error * (!policy_clip) + mimic;
+    float policy_error_partial = params.plr * ((td_error > 0.0f) * 2.0f - 1.0f) * (!policy_clip) + mimic;
 
     float smooth_new_value_index = sigmoidf(new_value) * (value_size - 1);
 
