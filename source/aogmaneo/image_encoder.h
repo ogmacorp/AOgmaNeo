@@ -24,37 +24,32 @@ public:
         Visible_Layer_Desc()
         :
         size(32, 32, 1),
-        radius(4)
+        radius(2)
         {}
     };
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer centers; // hypersphere centers
-
-        Byte_Buffer weights_recon; // for reconstruction
+        Byte_Buffer weights;
+        Byte_Buffer recon_weights; // for reconstruction
 
         Byte_Buffer reconstruction;
     };
 
     struct Params {
-        float choice;
-        float vigilance;
+        float falloff; // amount less when not maximal (multiplier)
         float lr; // learning rate
-        float scale;
+        float scale; // scale of reconstruction
         float rr; // reconstruction rate
-        float active_ratio; // 2nd stage inhibition activity ratio
-        int l_radius; // lateral 2nd stage inhibition radius
+        int n_radius; // SOM neighborhood radius
         
         Params()
         :
-        choice(0.01f),
-        vigilance(0.9f),
-        lr(0.5f),
+        falloff(0.9f),
+        lr(0.1f),
         scale(2.0f),
-        rr(0.05f),
-        active_ratio(0.5f),
-        l_radius(1)
+        rr(0.02f),
+        n_radius(1)
         {}
     };
 
@@ -63,17 +58,10 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_dists;
+    Float_Buffer hidden_acts;
+    Float_Buffer hidden_totals;
 
-    Byte_Buffer hidden_learn_flags;
-
-    Byte_Buffer hidden_committed_flags;
-
-    Float_Buffer hidden_comparisons;
-
-    Float_Buffer hidden_radii;
-
-    Float_Buffer hidden_centers;
+    Float_Buffer hidden_resources;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -83,12 +71,8 @@ private:
     
     void forward(
         const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
-    );
-
-    void learn(
-        const Int2 &column_pos,
-        const Array<Byte_Buffer_View> &inputs
+        const Array<Byte_Buffer_View> &inputs,
+        bool learn_enabled
     );
 
     void learn_reconstruction(
@@ -116,7 +100,7 @@ public:
     void step(
         const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled, // whether to learn
-        bool learn_recon = false // whether to learn reconstruction weights
+        bool learn_recon = false // whether to learn a reconstruction as well (conditional on learn_enabled)
     );
 
     void reconstruct(
