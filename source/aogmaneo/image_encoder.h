@@ -30,8 +30,8 @@ public:
 
     // visible layer
     struct Visible_Layer {
-        Byte_Buffer centers; // hypersphere centers
-
+        Byte_Buffer weights0; // regular
+        Byte_Buffer weights1; // complement
         Byte_Buffer weights_recon; // for reconstruction
 
         Byte_Buffer reconstruction;
@@ -49,7 +49,7 @@ public:
         Params()
         :
         choice(0.01f),
-        vigilance(0.8f),
+        vigilance(0.95f),
         lr(0.5f),
         scale(2.0f),
         rr(0.05f),
@@ -63,17 +63,11 @@ private:
 
     Int_Buffer hidden_cis; // hidden states
 
-    Float_Buffer hidden_dists;
-
     Byte_Buffer hidden_learn_flags;
 
     Byte_Buffer hidden_committed_flags;
 
     Float_Buffer hidden_comparisons;
-
-    Float_Buffer hidden_radii;
-
-    Float_Buffer hidden_centers;
 
     // visible layers and associated descriptors
     Array<Visible_Layer> visible_layers;
@@ -117,6 +111,11 @@ public:
         const Array<Byte_Buffer_View> &inputs, // input states
         bool learn_enabled, // whether to learn
         bool learn_recon = false // whether to learn reconstruction weights
+    );
+
+    void step_recon(
+        const Array<Byte_Buffer_View> &inputs, // input states
+        const Array<Byte_Buffer_View> &recons // recon target states different from inputs
     );
 
     void reconstruct(
