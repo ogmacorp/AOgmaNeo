@@ -8,6 +8,7 @@
 
 #include "actor.h"
 #include "helpers.h"
+#include <iostream>
 
 using namespace aon;
 
@@ -635,7 +636,7 @@ void Actor::init_random(
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
-    hidden_td_scales = Float_Buffer(num_hidden_cells, 0.0f);
+    hidden_td_scales = Float_Buffer(num_hidden_columns, 0.0f);
 
     value_dendrite_acts.resize(value_num_dendrites);
     policy_dendrite_acts.resize(policy_num_dendrites);
@@ -890,6 +891,7 @@ void Actor::read(
     int num_history_samples;
 
     reader.read(&num_history_samples, sizeof(int));
+    std::cout << "SIZE: " << history_size << std::endl;
 
     int history_start;
 
