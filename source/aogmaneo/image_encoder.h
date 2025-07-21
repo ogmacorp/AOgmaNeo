@@ -113,11 +113,6 @@ public:
         bool learn_recon = false // whether to learn reconstruction weights
     );
 
-    void step_recon(
-        const Array<Byte_Buffer_View> &inputs, // input states
-        const Array<Byte_Buffer_View> &recons // recon target states different from inputs
-    );
-
     void reconstruct(
         Int_Buffer_View recon_cis
     );

@@ -469,36 +469,6 @@ void Image_Encoder::step(
     }
 }
 
-void Image_Encoder::step_recon(
-    const Array<Byte_Buffer_View> &inputs,
-    const Array<Byte_Buffer_View> &recons
-) {
-    int num_hidden_columns = hidden_size.x * hidden_size.y;
-    
-    PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        forward(Int2(i / hidden_size.y, i % hidden_size.y), inputs);
-
-    PARALLEL_FOR
-    for (int i = 0; i < num_hidden_columns; i++)
-        learn(Int2(i / hidden_size.y, i % hidden_size.y), inputs);
-
-    for (int vli = 0; vli < visible_layers.size(); vli++) {
-        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
-
-        int num_visible_columns = vld.size.x * vld.size.y;
-
-        unsigned int base_state = rand();
-
-        PARALLEL_FOR
-        for (int i = 0; i < num_visible_columns; i++) {
-            unsigned long state = rand_get_state(base_state + i * rand_subseed_offset);
-
-            learn_reconstruction(Int2(i / vld.size.y, i % vld.size.y), recons[vli], vli, &state);
-        }
-    }
-}
-
 void Image_Encoder::reconstruct(
     Int_Buffer_View recon_cis
 ) {
