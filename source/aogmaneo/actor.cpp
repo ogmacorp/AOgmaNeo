@@ -8,7 +8,6 @@
 
 #include "actor.h"
 #include "helpers.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -891,7 +890,6 @@ void Actor::read(
     int num_history_samples;
 
     reader.read(&num_history_samples, sizeof(int));
-    std::cout << "SIZE: " << history_size << std::endl;
 
     int history_start;
 
