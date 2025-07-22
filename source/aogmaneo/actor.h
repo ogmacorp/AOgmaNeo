@@ -49,6 +49,7 @@ public:
         float smoothing; // smooth value function, = 1 - lambda from TD(lambda)
         float discount; // discount factor
         float td_scale_decay; // decay of max td scale
+        float value_range; // maximum range of value estimates in symlog space
         int min_steps; // minimum steps before sample can be used
         int history_iters; // number of iterations over samples
 
@@ -59,6 +60,7 @@ public:
         smoothing(0.02f),
         discount(0.99f),
         td_scale_decay(0.999f),
+        value_range(10.0f),
         min_steps(16),
         history_iters(8)
         {}

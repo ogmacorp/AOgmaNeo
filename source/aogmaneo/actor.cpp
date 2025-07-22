@@ -8,7 +8,6 @@
 
 #include "actor.h"
 #include "helpers.h"
-#include <iostream>
 
 using namespace aon;
 
@@ -180,7 +179,7 @@ void Actor::forward(
         }
     }
 
-    float value = logitf(min(1.0f - limit_small, max(limit_small, smooth_max_value_index / static_cast<float>(value_size - 1))));
+    float value = symexpf((smooth_max_value_index / static_cast<float>(value_size - 1) * 2.0f - 1.0f) * params.value_range);
 
     hidden_values[hidden_column_index] = value;
 
@@ -267,7 +266,7 @@ void Actor::learn(
     // TD(lambda)-like return
     for (int t2 = 1; t2 <= t; t2++)
         new_value = params.smoothing * history_samples[t2].hidden_values[hidden_column_index] +
-            (1.0f - params.smoothing) * ((1.0f - params.discount) * history_samples[t2 - 1].reward + params.discount * new_value);
+            (1.0f - params.smoothing) * (history_samples[t2 - 1].reward + params.discount * new_value);
 
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
@@ -428,7 +427,7 @@ void Actor::learn(
         }
     }
 
-    float value = logitf(min(1.0f - limit_small, max(limit_small, smooth_max_value_index / static_cast<float>(value_size - 1))));
+    float value = symexpf((smooth_max_value_index / static_cast<float>(value_size - 1) * 2.0f - 1.0f) * params.value_range);
 
     float max_activation = limit_min;
 
@@ -485,7 +484,7 @@ void Actor::learn(
 
     float policy_error_partial = params.plr * scaled_td_error + mimic;
 
-    float smooth_new_value_index = sigmoidf(new_value) * (value_size - 1);
+    float smooth_new_value_index = min(1.0f, max(0.0f, symlogf(new_value) / params.value_range * 0.5f + 0.5f)) * (value_size - 1);
 
     for (int vac = 0; vac < value_size; vac++) {
         int value_cell_index = vac + value_cells_start;
@@ -636,7 +635,7 @@ void Actor::init_random(
 
     hidden_values = Float_Buffer(num_hidden_columns, 0.0f);
 
-    hidden_td_scales = Float_Buffer(num_hidden_cells, 0.0f);
+    hidden_td_scales = Float_Buffer(num_hidden_columns, 0.0f);
 
     value_dendrite_acts.resize(value_num_dendrites);
     policy_dendrite_acts.resize(policy_num_dendrites);

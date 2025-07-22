@@ -405,6 +405,26 @@ inline float tanhf(
 #endif
 }
 
+inline float symlogf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return ((x > 0.0f) * 2.0f - 1.0f) * std::log(std::abs(x) + 1.0f);
+#else
+    return ((x > 0.0f) * 2.0f - 1.0f) * logf(abs(x) + 1.0f);
+#endif
+}
+
+inline float symexpf(
+    float x
+) {
+#ifdef USE_STD_MATH
+    return ((x > 0.0f) * 2.0f - 1.0f) * (std::exp(std::abs(x)) - 1.0f);
+#else
+    return ((x > 0.0f) * 2.0f - 1.0f) * (expf(abs(x)) - 1.0f);
+#endif
+}
+
 const float softplus_limit = 4.0f;
 
 inline float softplusf(
