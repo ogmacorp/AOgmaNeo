@@ -188,6 +188,8 @@ void Encoder::learn(
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
+        int total_weight_delta = 0;
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -202,8 +204,10 @@ void Encoder::learn(
 
                 vl.weights[wi] = min(255, vl.weights[wi] + ceilf(rate * (255.0f - vl.weights[wi])));
 
-                vl.hidden_totals[hidden_cell_index_max] += vl.weights[wi] - w_old;
+                total_weight_delta += vl.weights[wi] - w_old;
             }
+
+        vl.hidden_totals[hidden_cell_index_max] += total_weight_delta;
     }
 
     hidden_committed_flags[hidden_cell_index_max] = true;
