@@ -202,6 +202,9 @@ void Decoder::learn(
 
         Int_Buffer_View vl_input_cis = input_cis[vli];
 
+        int total_weight_delta_target = 0;
+        int total_weight_delta_max = 0;
+
         for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
             for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
                 int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
@@ -217,7 +220,7 @@ void Decoder::learn(
 
                     vl.weights[wi] = min(255, vl.weights[wi] + ceilf(rate * (255.0f - vl.weights[wi])));
 
-                    vl.dendrite_totals[dendrite_index_target] += vl.weights[wi] - w_old;
+                    total_weight_delta_target += vl.weights[wi] - w_old;
                 }
 
                 {
@@ -227,9 +230,12 @@ void Decoder::learn(
 
                     vl.weights[wi] = max(0, vl.weights[wi] - ceilf(params.fr * vl.weights[wi]));
 
-                    vl.dendrite_totals[dendrite_index_max] += vl.weights[wi] - w_old;
+                    total_weight_delta_max += vl.weights[wi] - w_old;
                 }
             }
+
+        vl.dendrite_totals[dendrite_index_target] += total_weight_delta_target;
+        vl.dendrite_totals[dendrite_index_max] += total_weight_delta_max;
     }
 
     hidden_committed_flags[dendrite_index_target] = true;
