@@ -307,7 +307,9 @@ void Actor::forward(
 
                                 vl.policy_traces[wi] += params.trace_rate * ((vc == in_ci_prev) * policy_dendrite_acts_prev[dendrite_index] - vl.policy_traces[wi]);
 
-                                vl.policy_weights[wi] += policy_rate * vl.policy_traces[wi];
+                                vl.policy_weights[wi] = min(vl.policy_weights_delayed[wi] + params.policy_clip, max(vl.policy_weights_delayed[wi] - params.policy_clip, vl.policy_weights[wi] + policy_rate * vl.policy_traces[wi]));
+
+                                vl.policy_weights_delayed[wi] += params.delay_rate * (vl.policy_weights[wi] - vl.policy_weights_delayed[wi]);
                             }
                         }
                     }
@@ -360,6 +362,8 @@ void Actor::init_random(
             vl.policy_weights[i] = randf(-init_weight_noisef, init_weight_noisef);
 
         vl.policy_traces = Float_Buffer(vl.policy_weights.size(), 0.0f);
+
+        vl.policy_weights_delayed = vl.policy_weights;
 
         vl.input_cis_prev = Int_Buffer(num_visible_columns, 0);
     }
@@ -563,6 +567,8 @@ void Actor::read(
         reader.read(&vl.value_traces[0], vl.value_traces.size() * sizeof(float));
         reader.read(&vl.policy_weights[0], vl.policy_weights.size() * sizeof(float));
         reader.read(&vl.policy_traces[0], vl.policy_traces.size() * sizeof(float));
+
+        vl.policy_weights_delayed = vl.policy_weights;
 
         vl.input_cis_prev.resize(num_visible_columns);
 

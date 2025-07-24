@@ -33,6 +33,7 @@ public:
         Float_Buffer value_weights;
         Float_Buffer value_traces;
         Float_Buffer policy_weights;
+        Float_Buffer policy_weights_delayed;
         Float_Buffer policy_traces;
 
         Int_Buffer input_cis_prev;
@@ -44,14 +45,18 @@ public:
         float discount; // discount factor
         float trace_rate; // eligibility trace decay
         float td_scale_decay; // decay of max TD scaling
+        float delay_rate; // rate of delayed weights
+        float policy_clip; // clip to old policy weights range
 
         Params()
         :
         vlr(0.1f),
         plr(1.0f),
         discount(0.99f),
-        trace_rate(0.03f),
-        td_scale_decay(0.999f)
+        trace_rate(0.05f),
+        td_scale_decay(0.999f),
+        delay_rate(0.001f),
+        policy_clip(1.0f)
         {}
     };
 
