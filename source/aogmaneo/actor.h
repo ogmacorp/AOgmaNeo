@@ -53,10 +53,10 @@ public:
         Params()
         :
         lr(0.01f),
-        bc(0.005f),
+        bc(0.001f),
         discount(0.99f),
         delay_rate(0.01f),
-        n_steps(5),
+        n_steps(8),
         history_iters(16)
         {}
     };
