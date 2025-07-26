@@ -335,68 +335,127 @@ void Actor::learn(
 
     float td_error = target_q - q_prev;
 
-    for (int hc = 0; hc < hidden_size.z; hc++) {
-        int hidden_cell_index = hc + hidden_cells_start;
+    if (params.bc == 0.0f) {
+        int hidden_cell_index_target = target_ci + hidden_cells_start;
 
-        int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+        int dendrites_start_target = num_dendrites_per_cell * hidden_cell_index_target;
 
-        float delta = params.lr * (hc == target_ci) * td_error + params.bc * ((hc == target_ci) - expf(hidden_qs[hidden_cell_index] - max_q_prev));
+        float delta = params.lr * td_error;
 
         for (int di = 0; di < num_dendrites_per_cell; di++) {
-            int dendrite_index = di + dendrites_start;
+            int dendrite_index = di + dendrites_start_target;
 
             // re-use as deltas
             dendrite_qs[dendrite_index] = delta * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_qs[dendrite_index];
         }
-    }
 
-    for (int vli = 0; vli < visible_layers.size(); vli++) {
-        Visible_Layer &vl = visible_layers[vli];
-        const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
 
-        int diam = vld.radius * 2 + 1;
+            int diam = vld.radius * 2 + 1;
 
-        // projection
-        Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
-            static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+            // projection
+            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
 
-        Int2 visible_center = project(column_pos, h_to_v);
+            Int2 visible_center = project(column_pos, h_to_v);
 
-        // lower corner
-        Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+            // lower corner
+            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
 
-        // bounds of receptive field, clamped to input size
-        Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
-        Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+            // bounds of receptive field, clamped to input size
+            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
 
-        Int_Buffer_View vl_input_cis = history_samples[t].input_cis[vli];
+            Int_Buffer_View vl_input_cis = history_samples[t].input_cis[vli];
 
-        for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
-            for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
-                int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                    int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
 
-                int in_ci_prev = vl_input_cis[visible_column_index];
+                    int in_ci_prev = vl_input_cis[visible_column_index];
 
-                Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
 
-                int wi_start_partial = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
+                    int wi_start_partial = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
 
-                for (int hc = 0; hc < hidden_size.z; hc++) {
-                    int hidden_cell_index = hc + hidden_cells_start;
-
-                    int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
-
-                    int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
+                    int wi_start = num_dendrites_per_cell * (target_ci + wi_start_partial);
 
                     for (int di = 0; di < num_dendrites_per_cell; di++) {
-                        int dendrite_index = di + dendrites_start;
+                        int dendrite_index = di + dendrites_start_target;
 
                         int wi = di + wi_start;
 
                         vl.weights[wi] += dendrite_qs[dendrite_index];
                     }
                 }
+        }
+    }
+    else {
+        for (int hc = 0; hc < hidden_size.z; hc++) {
+            int hidden_cell_index = hc + hidden_cells_start;
+
+            int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+
+            float delta = params.lr * (hc == target_ci) * td_error + params.bc * ((hc == target_ci) - expf(hidden_qs[hidden_cell_index] - max_q_prev));
+
+            for (int di = 0; di < num_dendrites_per_cell; di++) {
+                int dendrite_index = di + dendrites_start;
+
+                // re-use as deltas
+                dendrite_qs[dendrite_index] = delta * ((di >= half_num_dendrites_per_cell) * 2.0f - 1.0f) * dendrite_qs[dendrite_index];
             }
+        }
+
+        for (int vli = 0; vli < visible_layers.size(); vli++) {
+            Visible_Layer &vl = visible_layers[vli];
+            const Visible_Layer_Desc &vld = visible_layer_descs[vli];
+
+            int diam = vld.radius * 2 + 1;
+
+            // projection
+            Float2 h_to_v = Float2(static_cast<float>(vld.size.x) / static_cast<float>(hidden_size.x),
+                static_cast<float>(vld.size.y) / static_cast<float>(hidden_size.y));
+
+            Int2 visible_center = project(column_pos, h_to_v);
+
+            // lower corner
+            Int2 field_lower_bound(visible_center.x - vld.radius, visible_center.y - vld.radius);
+
+            // bounds of receptive field, clamped to input size
+            Int2 iter_lower_bound(max(0, field_lower_bound.x), max(0, field_lower_bound.y));
+            Int2 iter_upper_bound(min(vld.size.x - 1, visible_center.x + vld.radius), min(vld.size.y - 1, visible_center.y + vld.radius));
+
+            Int_Buffer_View vl_input_cis = history_samples[t].input_cis[vli];
+
+            for (int ix = iter_lower_bound.x; ix <= iter_upper_bound.x; ix++)
+                for (int iy = iter_lower_bound.y; iy <= iter_upper_bound.y; iy++) {
+                    int visible_column_index = address2(Int2(ix, iy), Int2(vld.size.x, vld.size.y));
+
+                    int in_ci_prev = vl_input_cis[visible_column_index];
+
+                    Int2 offset(ix - field_lower_bound.x, iy - field_lower_bound.y);
+
+                    int wi_start_partial = hidden_size.z * (offset.y + diam * (offset.x + diam * (in_ci_prev + vld.size.z * hidden_column_index)));
+
+                    for (int hc = 0; hc < hidden_size.z; hc++) {
+                        int hidden_cell_index = hc + hidden_cells_start;
+
+                        int dendrites_start = num_dendrites_per_cell * hidden_cell_index;
+
+                        int wi_start = num_dendrites_per_cell * (hc + wi_start_partial);
+
+                        for (int di = 0; di < num_dendrites_per_cell; di++) {
+                            int dendrite_index = di + dendrites_start;
+
+                            int wi = di + wi_start;
+
+                            vl.weights[wi] += dendrite_qs[dendrite_index];
+                        }
+                    }
+                }
+        }
     }
 }
 
